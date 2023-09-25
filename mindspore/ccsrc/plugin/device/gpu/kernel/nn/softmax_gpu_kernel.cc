@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool SoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SoftmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -34,16 +32,14 @@ bool SoftmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_data_type = inputs.at(kIndex0)->dtype_id();
+  auto input_data_type = inputs[kIndex0]->dtype_id();
   type_id_size_ = abstract::TypeIdSize(input_data_type);
 
   return true;
 }
 
-int SoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SoftmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // input, workspace and output will be assign in InitSizeLists.
@@ -56,12 +52,12 @@ int SoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (kernel_name_ == "LogSoftmax") {
     is_log_softmax_ = true;
     // Todo, dynamic shape
-    // auto log_soft_max_ptr = std::dynamic_pointer_cast<ops::LogSoftmax>(base_operator);
+    // auto log_soft_max_ptr = std::dynamic_pointer_cast<ops::LogSoftmax>(primitive_);
     // auto log_soft_axis = LongToInt(log_soft_max_ptr->get_axis());
     // axis.push_back(log_soft_axis);
   } else {
     is_log_softmax_ = false;
-    auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(base_operator);
+    auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(primitive_);
     auto axis_me = soft_max_ptr->get_axis();
     (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                          [](const int64_t &value) { return LongToInt(value); });

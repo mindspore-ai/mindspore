@@ -24,26 +24,23 @@ namespace {
 using KernelRunFunc = CTCLossV2GradGpuKernelMod::KernelRunFunc;
 constexpr int64_t kInterval = 2;
 }  // namespace
-bool CTCLossV2GradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool CTCLossV2GradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(base_operator->GetPrim());
+  auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(primitive_);
   blank_ = kernel_ptr->get_blank();
   zero_infinity_ = kernel_ptr->get_zero_infinity();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int CTCLossV2GradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossV2GradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto log_probs_shape = inputs[kIndex1]->GetShapeVector();

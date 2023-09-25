@@ -23,9 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool SoftplusGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SoftplusGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSoftplusGrad->name()) {
     MS_LOG(ERROR) << "For 'SoftplusGrad', the kernel name must be 'SoftplusGrad', but got " << kernel_name_;
     return false;
@@ -40,13 +39,12 @@ bool SoftplusGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SoftplusGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SoftplusGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto input_element_num = SizeOf(input_shape);
   is_null_input_ = (input_element_num == 0);
   return KRET_OK;

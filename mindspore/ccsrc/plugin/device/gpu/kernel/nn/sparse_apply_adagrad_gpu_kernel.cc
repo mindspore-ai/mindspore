@@ -28,17 +28,14 @@ constexpr size_t kGradIndex = 2;
 constexpr size_t kIndicesIndex = 3;
 }  // namespace
 
-bool SparseApplyAdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdagradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseApplyAdagrad->name()) {
     MS_LOG(ERROR) << "For 'SparseApplyAdagrad', the kernel name must be 'SparseApplyAdagrad', but got " << kernel_name_;
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyAdagrad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyAdagrad>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "SparseApplyAdagrad ops failed!";
@@ -62,11 +59,9 @@ bool SparseApplyAdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseApplyAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseApplyAdagradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

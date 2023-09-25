@@ -28,10 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool DenseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
     MS_LOG(ERROR) << "For 'Dense', the kernel name must be in "
@@ -67,16 +64,14 @@ bool DenseGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
 
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
   compute_type_ = GetComputeType(dtype_a_);
 
   return true;
 }
 
-int DenseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

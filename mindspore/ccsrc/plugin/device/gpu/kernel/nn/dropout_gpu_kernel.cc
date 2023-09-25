@@ -24,9 +24,9 @@ namespace kernel {
 constexpr size_t kDropoutInputNum = 1;
 constexpr size_t kDropoutOutputNum = 2;
 
-bool DropoutFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(base_operator);
+bool DropoutFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast Dropout ops failed!";
     return false;
@@ -41,17 +41,16 @@ bool DropoutFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                       << "', it does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed0")));
-  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed1")));
+  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed0")));
+  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed1")));
   seed_ = random::GetSeed(seed0, seed1);
   return true;
 }
 
-int DropoutFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &others) {
+int DropoutFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(primitive_);
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   if (!(CHECK_SHAPE_POSITIVE(input_shape_))) {
     is_null_input_ = true;
@@ -69,10 +68,10 @@ int DropoutFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   num_count_ = std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   if (num_count_ % kDropoutTileSize == 0) {
     use_fused_dropout_ = true;
-    if (base_operator->HasAttr(kAttrOnlyUseFirstOutput)) {
-      only_use_first_output_ = GetValue<bool>(base_operator->GetAttr(kAttrOnlyUseFirstOutput));
-    } else if (base_operator->HasAttr(kAttrOnlyUseSecondOutput)) {
-      only_use_second_output_ = GetValue<bool>(base_operator->GetAttr(kAttrOnlyUseSecondOutput));
+    if (primitive_->HasAttr(kAttrOnlyUseFirstOutput)) {
+      only_use_first_output_ = GetValue<bool>(primitive_->GetAttr(kAttrOnlyUseFirstOutput));
+    } else if (primitive_->HasAttr(kAttrOnlyUseSecondOutput)) {
+      only_use_second_output_ = GetValue<bool>(primitive_->GetAttr(kAttrOnlyUseSecondOutput));
     }
   }
   if (!states_init_ && !use_fused_dropout_) {

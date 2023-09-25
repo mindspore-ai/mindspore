@@ -18,20 +18,19 @@
 
 namespace mindspore {
 namespace kernel {
-void AdamaxGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+void AdamaxGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   input_size_list_.clear();
   output_size_list_.clear();
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
-  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
-                                                       inputs.at(kIndex1)->GetDeviceShapeVector().end());
-  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
-                                                       inputs.at(kIndex2)->GetDeviceShapeVector().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex8)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex8)->GetDeviceShapeVector().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> m_shape_ = std::vector<int64_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(),
+                                                       inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<int64_t> v_shape_ = std::vector<int64_t>(inputs[kIndex2]->GetDeviceShapeVector().begin(),
+                                                       inputs[kIndex2]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex8]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex8]->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);
@@ -91,10 +90,7 @@ void AdamaxGpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   output_size_list_.push_back(v_size_);
 }
 
-bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  kernel_ptr_ = std::make_shared<ops::ApplyAdaMax>(base_operator->GetPrim());
+bool AdamaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr int INPUT_NUM = 9;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 9, but got " << inputs.size();
@@ -112,15 +108,13 @@ bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex3).dtype);
   g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex8).dtype);
 
-  InOutputResize(base_operator, inputs, outputs);
+  InOutputResize(inputs, outputs);
   return true;
 }
 
-int AdamaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  InOutputResize(base_operator, inputs, outputs);
-  kernel_ptr_ = base_operator;
+int AdamaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  InOutputResize(inputs, outputs);
+
   return KRET_OK;
 }
 

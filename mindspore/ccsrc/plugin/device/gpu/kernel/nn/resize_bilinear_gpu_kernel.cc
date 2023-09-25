@@ -35,10 +35,8 @@ constexpr size_t kThree = 3;
 
 using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGpuKernelMod::ResizeBilinearFunc>>;
 
-bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeBilinearGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputsNum && inputs.size() != kDynamicInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2"
                       << ", but got " << inputs.size();
@@ -52,24 +50,23 @@ bool ResizeBilinearGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
   kernel_func_ = func_list_[index].second;
 
-  auto align_corners_ptr = base_operator->GetAttr(kAttrAlignCorners);
+  auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
   MS_EXCEPTION_IF_NULL(align_corners_ptr);
   align_corners_ = GetValue<bool>(align_corners_ptr);
-  auto half_pixel_centers_ptr = base_operator->GetAttr(kAttrHalfPixelCenters);
+  auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
   MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
   half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
 
   return true;
 }
 
-int ResizeBilinearGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ResizeBilinearGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  auto output_shape = outputs[kIndex0]->GetShapeVector();
   auto input_element_num =
     std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);

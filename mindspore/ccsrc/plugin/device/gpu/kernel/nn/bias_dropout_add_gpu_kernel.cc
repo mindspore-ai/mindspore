@@ -38,16 +38,15 @@ constexpr size_t kOutputYIndex = 0;
 constexpr size_t kOutputMaskIndex = 1;
 }  // namespace
 
-bool BiasDropoutAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BiasDropoutAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputNum << " and " << kOutputNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasDropoutAdd>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasDropoutAdd>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "Cast BiasDropoutAdd failed!";
     return false;
@@ -73,10 +72,9 @@ bool BiasDropoutAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int BiasDropoutAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BiasDropoutAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

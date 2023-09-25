@@ -40,18 +40,18 @@ bool BiasAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int BiasAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto dy_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto dy_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
   if (is_null_input_ || IsDynamic(dy_shape)) {
     return KRET_UNKNOWN_SHAPE;
   }
   ResetResource();
-  auto dtype = inputs.at(kIndex0)->dtype_id();
+  auto dtype = inputs[kIndex0]->dtype_id();
   unit_size_ = abstract::TypeIdSize(dtype);
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(dtype));
   num_dims_ = dy_shape.size();
-  auto input_device_format = inputs.at(kIndex0)->format();
+  auto input_device_format = inputs[kIndex0]->format();
   cudnn_compute_format_ = (input_device_format == Format::NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
   data_format_ = input_device_format;
   auto format = inputs[kIndex1]->GetValueWithCheck<int64_t>();

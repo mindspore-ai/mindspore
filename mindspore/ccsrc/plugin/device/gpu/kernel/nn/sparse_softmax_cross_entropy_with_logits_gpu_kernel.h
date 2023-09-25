@@ -81,27 +81,23 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(primitive_);
     MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
     is_grad_ = kernel_ptr->get_is_grad();
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     InitResource();
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    auto logits_shape = inputs.at(kIndex0)->GetShapeVector();
-    auto labels_shape = inputs.at(kIndex1)->GetShapeVector();
+    auto logits_shape = inputs[kIndex0]->GetShapeVector();
+    auto labels_shape = inputs[kIndex1]->GetShapeVector();
     InferInputOutputSize(logits_shape, labels_shape);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_, channel_size_,

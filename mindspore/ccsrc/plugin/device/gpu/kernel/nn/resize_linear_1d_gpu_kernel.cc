@@ -25,12 +25,11 @@ constexpr const size_t kResizeInputDims = 3;
 
 namespace mindspore {
 namespace kernel {
-bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(base_operator);
+bool ResizeLinear1DGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+
   if (inputs.size() != kResizeLinear1DInputsNum || outputs.size() != kResizeLinear1DOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DInputsNum
                   << " and " << kResizeLinear1DOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -58,18 +57,17 @@ bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeLinear1DGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   batch_ = LongToSize(input_shape_[kIndex0]);
   channel_ = LongToSize(input_shape_[kIndex1]);
   in_width_ = input_shape_[kIndex2];
-  output_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
+  output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   out_width_ = output_shape_[kIndex2];
   return KRET_OK;
 }

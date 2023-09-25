@@ -90,12 +90,10 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    PrimitivePtr prim = base_operator->GetPrim();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    PrimitivePtr prim = primitive_;
     MS_EXCEPTION_IF_NULL(prim);
-    kernel_name_ = prim->name();
+
     if (inputs.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size();
     }
@@ -116,10 +114,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     ResetResource();

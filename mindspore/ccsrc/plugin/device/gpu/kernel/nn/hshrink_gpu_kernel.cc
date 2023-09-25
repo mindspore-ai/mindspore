@@ -29,16 +29,14 @@ constexpr size_t kHShrinkInputsNum = 1;
 constexpr size_t kHShrinkOutputsNum = 1;
 }  // namespace
 
-bool HShrinkGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool HShrinkGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kHShrinkInputsNum || outputs.size() != kHShrinkOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kHShrinkInputsNum << " and "
                   << kHShrinkOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrink>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrink>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast HShrink ops failed!";
     return false;
@@ -57,10 +55,8 @@ bool HShrinkGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int HShrinkGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int HShrinkGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

@@ -71,11 +71,10 @@ const std::vector<conv3dPair> &Conv3dGpuKernelMod::GetFuncList() const {
   return func_list;
 }
 
-bool Conv3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(base_operator);
+bool Conv3dGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+
   InitResource();
   size_t input_num = inputs.size();
   const size_t kInputNum = 2;
@@ -88,22 +87,20 @@ bool Conv3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   data_format_ = kOpFormat_NCDHW;
   return true;
 }
 
-int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(base_operator);
+int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto in_shape = inputs[kIndex0]->GetShapeVector();
@@ -129,7 +126,7 @@ int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                       "cudnnSetConvGroupCount failed");
   std::vector<int> pad_list;
-  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));
+  std::vector<int64_t> pad_list_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
   (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (pad_list.size() != k3DPadSize) {

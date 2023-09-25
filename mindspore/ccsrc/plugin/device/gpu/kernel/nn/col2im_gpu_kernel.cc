@@ -59,9 +59,8 @@ bool Col2ImFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   return true;
 }
 
-bool Col2ImFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool Col2ImFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -76,11 +75,10 @@ bool Col2ImFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int Col2ImFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int Col2ImFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
@@ -94,10 +92,10 @@ int Col2ImFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   channels_ = static_cast<uint32_t>(input_shape[kIndex1]);
   out_height_ = static_cast<uint32_t>(output_shape[kIndex2]);
   out_width_ = static_cast<uint32_t>(output_shape[kIndex3]);
-  auto kernel_size = GetValue<std::vector<int64_t>>(base_operator->GetAttr("kernel_size"));
-  auto dilation = GetValue<std::vector<int64_t>>(base_operator->GetAttr("dilation"));
-  auto padding = GetValue<std::vector<int64_t>>(base_operator->GetAttr("padding"));
-  auto stride = GetValue<std::vector<int64_t>>(base_operator->GetAttr("stride"));
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
+  auto padding = GetValue<std::vector<int64_t>>(primitive_->GetAttr("padding"));
+  auto stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
   pad_height_ = static_cast<uint32_t>(padding[kIndex0]);
   pad_width_ = static_cast<uint32_t>(padding[kIndex1]);
   kernel_height_ = static_cast<uint32_t>(kernel_size[kIndex0]);

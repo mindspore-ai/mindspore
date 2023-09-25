@@ -20,22 +20,22 @@
 
 namespace mindspore {
 namespace kernel {
-bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
+bool ROIAlignGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   // Check input and output numbers
   constexpr size_t kInputNum = 3;
   constexpr size_t kOutputNum = 1;
-  kernel_name_ = base_operator->name();
+
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << ".";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlignGrad>(base_operator);
+  auto op = std::dynamic_pointer_cast<ops::ROIAlignGrad>(primitive_);
   pooled_height_ = op->get_pooled_height();
   pooled_width_ = op->get_pooled_width();
   spatial_scale_ = op->get_spatial_scale();
@@ -44,19 +44,14 @@ bool ROIAlignGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int ROIAlignGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ROIAlignGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   std::vector<int64_t> xdiff_shape;
-  if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &xdiff_shape, true)) {
-    MS_LOG(ERROR) << "For " << kernel_name_ << " can't get filter_sizes input!";
-    return KRET_RESIZE_FAILED;
-  }
-
+  xdiff_shape = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
   // Get the input shapes
   auto dy_shape = inputs[kIndex0]->GetShapeVector();
   auto rois_shape = inputs[kIndex1]->GetShapeVector();

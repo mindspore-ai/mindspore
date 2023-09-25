@@ -33,11 +33,8 @@ namespace kernel {
 namespace {
 const double kValueZero = 0.;
 }  // namespace
-bool UpsampleNearest3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool UpsampleNearest3dGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -52,26 +49,22 @@ bool UpsampleNearest3dGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int UpsampleNearest3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleNearest3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
-  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
+
+  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
     scales_ = std::vector<double>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex1, kernel_name_, &scales_)) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
-    }
+    scales_ = inputs[kIndex1]->GetValueWithCheck<std::vector<double>>();
   }
   return KRET_OK;
 }

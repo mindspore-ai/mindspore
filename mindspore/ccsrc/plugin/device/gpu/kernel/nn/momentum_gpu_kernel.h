@@ -39,15 +39,12 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(base_operator);
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     if (inputs.size() != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
                         << inputs.size();
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyMomentum>(base_operator);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyMomentum>(primitive_);
     MS_EXCEPTION_IF_NULL(kernel_ptr);
     use_nesterov_ = kernel_ptr->get_use_nesterov();
 
@@ -60,9 +57,8 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    return KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return KernelMod::Resize(inputs, outputs);
   }
 
   std::vector<KernelAttr> GetOpSupport() override;

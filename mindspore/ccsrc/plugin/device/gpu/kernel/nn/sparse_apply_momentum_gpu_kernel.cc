@@ -32,18 +32,15 @@ constexpr size_t kIndicesIndex = 4;
 constexpr size_t kMomentumIndex = 5;
 }  // namespace
 
-bool SparseApplyMomentumGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyMomentumGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseApplyMomentum->name()) {
     MS_LOG(ERROR) << "For 'SparseApplyMomentum', the kernel name must be 'SparseApplyMomentum', but got "
                   << kernel_name_;
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyMomentum>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyMomentum>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "SparseApplyMomentum ops failed!";
@@ -67,10 +64,8 @@ bool SparseApplyMomentumGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseApplyMomentumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseApplyMomentumGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -78,7 +73,7 @@ int SparseApplyMomentumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     }
   }
 
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -87,18 +82,18 @@ int SparseApplyMomentumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return KRET_RESIZE_FAILED;
   }
 
-  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs.at(kVarIndex)->GetDeviceShapeVector().begin(),
-                                                        inputs.at(kVarIndex)->GetDeviceShapeVector().end());
-  std::vector<int64_t> accum_shape = std::vector<int64_t>(inputs.at(kAccIndex)->GetDeviceShapeVector().begin(),
-                                                          inputs.at(kAccIndex)->GetDeviceShapeVector().end());
-  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs.at(kLrIndex)->GetDeviceShapeVector().begin(),
-                                                       inputs.at(kLrIndex)->GetDeviceShapeVector().end());
-  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs.at(kGradIndex)->GetDeviceShapeVector().begin(),
-                                                         inputs.at(kGradIndex)->GetDeviceShapeVector().end());
-  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs.at(kIndicesIndex)->GetDeviceShapeVector().begin(),
-                                                            inputs.at(kIndicesIndex)->GetDeviceShapeVector().end());
-  std::vector<int64_t> momentum_shape = std::vector<int64_t>(inputs.at(kMomentumIndex)->GetDeviceShapeVector().begin(),
-                                                             inputs.at(kMomentumIndex)->GetDeviceShapeVector().end());
+  std::vector<int64_t> var_shape = std::vector<int64_t>(inputs[kVarIndex]->GetDeviceShapeVector().begin(),
+                                                        inputs[kVarIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> accum_shape = std::vector<int64_t>(inputs[kAccIndex]->GetDeviceShapeVector().begin(),
+                                                          inputs[kAccIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> lr_shape = std::vector<int64_t>(inputs[kLrIndex]->GetDeviceShapeVector().begin(),
+                                                       inputs[kLrIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> grad_shape = std::vector<int64_t>(inputs[kGradIndex]->GetDeviceShapeVector().begin(),
+                                                         inputs[kGradIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> indices_shape = std::vector<int64_t>(inputs[kIndicesIndex]->GetDeviceShapeVector().begin(),
+                                                            inputs[kIndicesIndex]->GetDeviceShapeVector().end());
+  std::vector<int64_t> momentum_shape = std::vector<int64_t>(inputs[kMomentumIndex]->GetDeviceShapeVector().begin(),
+                                                             inputs[kMomentumIndex]->GetDeviceShapeVector().end());
   int64_t indices_nums_ =
     std::accumulate(indices_shape.begin(), indices_shape.end(), int64_t(1), std::multiplies<int64_t>());
 

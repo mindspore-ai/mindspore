@@ -48,10 +48,10 @@ bool SoftMarginLossGpuKernelMod::Launch(const std::vector<KernelTensor *> &input
   return true;
 }
 
-bool SoftMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftMarginLoss>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SoftMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftMarginLoss>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -63,13 +63,12 @@ bool SoftMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int SoftMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SoftMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();

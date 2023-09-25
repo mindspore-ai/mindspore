@@ -36,23 +36,20 @@ constexpr size_t kIndexLr = 6;
 constexpr size_t kIndexGrad = 7;
 }  // namespace
 
-bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+bool ApplyAdamWithAmsgradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
                   << " and " << kApplyAdamWithAmsgradOutputsNum << ", but got " << inputs.size() << " and "
                   << outputs.size();
     return false;
   }
-
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr_, false);
-  beta1_ = kernel_ptr_->get_beta1();
-  beta2_ = kernel_ptr_->get_beta2();
-  epsilon_ = kernel_ptr_->get_epsilon();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(primitive_);
+  batch_rank_ = kernel_ptr->get_batch_rank();
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
+  beta1_ = kernel_ptr->get_beta1();
+  beta2_ = kernel_ptr->get_beta2();
+  epsilon_ = kernel_ptr->get_epsilon();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -66,11 +63,9 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdamWithAmsgradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

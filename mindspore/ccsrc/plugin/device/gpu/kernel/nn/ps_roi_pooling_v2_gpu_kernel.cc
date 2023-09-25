@@ -33,10 +33,8 @@ constexpr size_t kHeightIndex = 2;
 constexpr size_t kWidthIndex = 3;
 }  // namespace
 
-bool PSROIPoolingV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PSROIPoolingV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -44,14 +42,14 @@ bool PSROIPoolingV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
 
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
+  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
     MS_LOG_ERROR << "Resize failed!";
     return false;
   }
   return true;
 }
 
-int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) {
+int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor *> &inputs) {
   input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() != INPUT_SHAPE_SIZE) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[features] should be " << INPUT_SHAPE_SIZE
@@ -74,10 +72,8 @@ int PSROIPoolingV2GpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor
   return KRET_OK;
 }
 
-int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int PSROIPoolingV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto ret = ResizeCheckInputs(inputs);
@@ -105,7 +101,7 @@ int PSROIPoolingV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PSROIPooling>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PSROIPooling>(primitive_);
   auto spatial_scale_ptr = kernel_ptr->GetAttr("spatial_scale");
   MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
   spatial_scale_ = GetValue<float>(spatial_scale_ptr);

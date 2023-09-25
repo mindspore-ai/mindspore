@@ -94,7 +94,7 @@ class ThorIm2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
@@ -104,7 +104,7 @@ class ThorIm2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     is_null_input_ =
-      CHECK_SHAPE_NULL(in_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
+      CHECK_SHAPE_NULL(in_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
       InitSizeLists();
       return true;

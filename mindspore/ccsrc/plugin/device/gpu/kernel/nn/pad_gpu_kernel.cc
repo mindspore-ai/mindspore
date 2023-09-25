@@ -34,14 +34,13 @@ constexpr size_t kPadElemSize = 2;
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
-bool PadFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Pad>(base_operator);
+bool PadFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Pad>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast Pad ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
 
@@ -55,10 +54,8 @@ bool PadFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int PadFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int PadFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -72,7 +69,7 @@ int PadFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return static_cast<int>(KRET_OK);
   }
 
-  auto paddings_v = base_operator->GetAttr(kAttrPaddings);
+  auto paddings_v = primitive_->GetAttr(kAttrPaddings);
   MS_EXCEPTION_IF_NULL(paddings_v);
   std::vector<std::vector<int64_t>> paddings = GetValue<std::vector<std::vector<int64_t>>>(paddings_v);
 

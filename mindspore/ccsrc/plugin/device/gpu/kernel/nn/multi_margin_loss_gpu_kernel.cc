@@ -27,14 +27,14 @@
 
 namespace mindspore {
 namespace kernel {
-bool MultiMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLoss>(base_operator);
+bool MultiMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLoss>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
+
   p_ = kernel_ptr->get_p();
   if (p_ != p_num_1 && p_ != p_num_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' p should be 1 or 2, but got " << p_;
@@ -65,10 +65,8 @@ bool MultiMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MultiMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int MultiMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
   input_size_list_.clear();
   output_size_list_.clear();
@@ -82,7 +80,7 @@ int MultiMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   input_elements_ = SizeOf(input_shape);
   if (input_elements_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";

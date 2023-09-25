@@ -132,11 +132,10 @@ static void PrintConvolutionArgs(const ConvolutionArgs &conv_args) {
                 << "beta: " << conv_args.beta;
 }
 
-static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr &base_operator,
-                              const std::vector<KernelTensorPtr> &inputs) {
-  auto prim = base_operator->GetPrim();
+static bool InitialAttributes(const PrimitivePtr &prim, ConvolutionArgs *conv_args,
+                              const std::vector<KernelTensor *> &inputs) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto kernel_name = base_operator->name();
+  auto kernel_name_ = prim->name();
   auto out_channel = static_cast<int>(GetValue<int64_t>(prim->GetAttr("out_channel")));
   auto group = static_cast<int>(GetValue<int64_t>(prim->GetAttr("group")));
   auto pad_mode = GetValue<std::string>(prim->GetAttr("pad_mode"));
@@ -152,21 +151,22 @@ static bool InitialAttributes(ConvolutionArgs *conv_args, const BaseOperatorPtr 
   }
   auto stride_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("stride"));
   if (stride_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'stride' must be 4, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' must be 4, but got "
                       << stride_attr.size();
   }
 
   auto dilation_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
   if (dilation_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'dilation' must be 4, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 4, but got "
                       << dilation_attr.size();
   }
   auto pad_list_attr = GetValue<std::vector<int64_t>>(prim->GetAttr("pad_list"));
   if (pad_list_attr.size() != kConv2dInputDimSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of 'pad' must be 4, but got " << pad_list_attr.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got "
+                      << pad_list_attr.size();
   }
 
-  conv_args->kernel_name = kernel_name;
+  conv_args->kernel_name = kernel_name_;
   conv_args->out_channel = out_channel;
   conv_args->group = group;
   conv_args->pad_mode = pad_mode;

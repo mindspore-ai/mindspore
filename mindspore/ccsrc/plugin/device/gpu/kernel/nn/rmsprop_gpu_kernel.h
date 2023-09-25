@@ -88,9 +88,8 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
       return KRET_RESIZE_FAILED;
     }
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }
@@ -160,16 +159,15 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     }
     return true;
   }
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
-    auto node_name = base_operator->name();
-    batch_rank_ = base_operator->get_batch_rank();
-    if (node_name == "ApplyCenteredRMSProp") {
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyRMSProp>(primitive_);
+
+    batch_rank_ = kernel_ptr->get_batch_rank();
+    if (kernel_name_ == "ApplyCenteredRMSProp") {
       use_center_ = true;
     }
     auto input_shape = inputs[0]->GetShapeVector();
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "var");
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "var");
     if (is_null_input_) {
       InitSizeLists();
       return true;

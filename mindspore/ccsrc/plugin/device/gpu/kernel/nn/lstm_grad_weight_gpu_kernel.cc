@@ -20,10 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool LstmGradWeightGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -36,7 +34,7 @@ bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTMGradWeight>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTMGradWeight>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast LSTMGradWeight ops failed!";
     return false;
@@ -55,10 +53,9 @@ bool LstmGradWeightGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int LstmGradWeightGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int LstmGradWeightGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   DestroyTensorDescGrp();

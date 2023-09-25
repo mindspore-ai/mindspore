@@ -24,10 +24,7 @@ constexpr size_t kLstmInputsNum = 4;
 constexpr size_t kLstmOutputsNum = 5;
 }  // namespace
 
-bool LstmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  kernel_name_ = base_operator->name();
+bool LstmGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kLstmInputsNum || outputs.size() != kLstmOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kLstmInputsNum << " and "
                   << kLstmOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -45,7 +42,7 @@ bool LstmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   InitResource();
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTM>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTM>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast LSTM ops failed!";
     return false;
@@ -64,10 +61,8 @@ bool LstmGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int LstmGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int LstmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   DestroyTensorDescGrp();

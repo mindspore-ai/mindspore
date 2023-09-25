@@ -31,16 +31,15 @@ constexpr size_t kGradIndex = 2;
 constexpr size_t kPadHalf = 2;
 }  // namespace
 
-bool MaxPoolGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradGradInputsNum || outputs.size() != kMaxPoolGradGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaxPoolGradGradInputsNum << " and "
                   << kMaxPoolGradGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradGrad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradGrad>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "Cast MaxPoolGradGrad ops failed!";
     return false;
@@ -102,11 +101,9 @@ void MaxPoolGradGradGpuKernelMod::CalPad() {
   }
 }
 
-int MaxPoolGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolGradGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

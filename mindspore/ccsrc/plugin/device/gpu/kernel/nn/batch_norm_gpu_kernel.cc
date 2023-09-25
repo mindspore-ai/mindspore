@@ -78,11 +78,9 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   return true;
 }
 
-bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_name_ = base_operator->name();
-  auto activation_type_attr = base_operator->GetAttr(mindspore::ops::kActivationType);
+bool BatchNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  auto activation_type_attr = primitive_->GetAttr(mindspore::ops::kActivationType);
   if (activation_type_attr != nullptr) {
     activation_type_ = ActivationType(GetValue<int64_t>(activation_type_attr));
   }
@@ -137,10 +135,9 @@ bool BatchNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int BatchNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BatchNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

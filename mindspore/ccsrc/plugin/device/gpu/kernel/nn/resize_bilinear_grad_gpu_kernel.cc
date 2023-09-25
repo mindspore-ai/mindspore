@@ -35,16 +35,13 @@ constexpr size_t kDxIndexForW = 3;
 
 using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGradGpuKernelMod::ResizeBilinearGradFunc>>;
 
-bool ResizeBilinearGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBilinearGrad>(base_operator);
+bool ResizeBilinearGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBilinearGrad>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast ResizeBilinearGrad ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -54,25 +51,23 @@ bool ResizeBilinearGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   kernel_func_ = func_list_[index].second;
 
-  auto align_corners = base_operator->GetAttr(kAttrAlignCorners);
+  auto align_corners = primitive_->GetAttr(kAttrAlignCorners);
   MS_EXCEPTION_IF_NULL(align_corners);
   align_corners_ = GetValue<bool>(align_corners);
-  auto half_pixel_centers = base_operator->GetAttr(kAttrHalfPixelCenters);
+  auto half_pixel_centers = primitive_->GetAttr(kAttrHalfPixelCenters);
   MS_EXCEPTION_IF_NULL(half_pixel_centers);
   half_pixel_centers_ = GetValue<bool>(half_pixel_centers);
 
   return true;
 }
 
-int ResizeBilinearGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ResizeBilinearGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto dy_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto dx_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto dy_shape = inputs[kIndex0]->GetShapeVector();
+  auto dx_shape = outputs[kIndex0]->GetShapeVector();
   auto input_element_num = std::accumulate(dy_shape.begin(), dy_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {

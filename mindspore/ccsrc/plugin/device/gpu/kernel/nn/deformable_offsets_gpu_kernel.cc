@@ -42,13 +42,11 @@ bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
   return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
 }
 
-bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsets>(base_operator);
+bool DeformableOffsetsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsets>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it should get two inputs and one output, but got " << inputs.size()
                   << "inputs and " << outputs.size() << " outputs";
@@ -69,6 +67,7 @@ bool DeformableOffsetsGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
 
 bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::DeformableOffsets> &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_name_ = kernel->name();
   data_format_ = kernel->get_data_format();
   if (data_format_ == kOpFormat_NCHW) {
     n_axis_ = 0;
@@ -123,15 +122,13 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
   return true;
 }
 
-int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+int DeformableOffsetsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", it should get two inputs and one output, but got "
                       << inputs.size() << " inputs and " << outputs.size() << "outputs.";
   }
-  if (KernelMod::Resize(base_operator, inputs, outputs) == KRET_UNKNOWN_SHAPE) {
+  if (KernelMod::Resize(inputs, outputs) == KRET_UNKNOWN_SHAPE) {
     return KRET_UNKNOWN_SHAPE;
   }
   const auto &x_shape = inputs[0]->GetShapeVector();

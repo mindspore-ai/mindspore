@@ -49,13 +49,11 @@ bool ResizeBicubicGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
   return true;
 }
 
-bool ResizeBicubicGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_grad_ptr = std::dynamic_pointer_cast<ops::ResizeBicubicGrad>(base_operator);
+bool ResizeBicubicGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto kernel_grad_ptr = std::dynamic_pointer_cast<ops::ResizeBicubicGrad>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_grad_ptr);
-  kernel_name_ = kernel_grad_ptr->name();
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -70,18 +68,16 @@ bool ResizeBicubicGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ResizeBicubicGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBicubicGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> inp_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> inptosize_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> out_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> inp_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> inptosize_shape = inputs[kIndex1]->GetShapeVector();
+  std::vector<int64_t> out_shape = outputs[kIndex0]->GetShapeVector();
   input_shapes.emplace_back(inp_shape);
   input_shapes.emplace_back(inptosize_shape);
   output_shapes.emplace_back(out_shape);

@@ -24,9 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
+void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
@@ -34,12 +33,12 @@ void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   s_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
 
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
-  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(inputs.at(kIndex1)->GetDeviceShapeVector().begin(),
-                                                                  inputs.at(kIndex1)->GetDeviceShapeVector().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex3)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex3)->GetDeviceShapeVector().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> accumulation_shape_ = std::vector<int64_t>(inputs[kIndex1]->GetDeviceShapeVector().begin(),
+                                                                  inputs[kIndex1]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex3]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex3]->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<int64_t>());
 
   is_null_input_ = (input_elements_ == 0);
@@ -76,12 +75,12 @@ void AdagradV2GpuKernelMod::InOutputResize(const BaseOperatorPtr &base_operator,
   output_size_list_.push_back(accumulation_size_);
 }
 
-bool AdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
-  epsilon_ = kernel_ptr_->get_epsilon();
-  update_slots_ = kernel_ptr_->get_update_slots();
+bool AdagradV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(primitive_);
+
+  epsilon_ = kernel_ptr->get_epsilon();
+  update_slots_ = kernel_ptr->get_update_slots();
   constexpr int INPUT_NUM = 4;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << inputs.size();
@@ -94,15 +93,13 @@ bool AdagradV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  InOutputResize(base_operator, inputs, outputs);
+  InOutputResize(inputs, outputs);
   return true;
 }
 
-int AdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  kernel_ptr_ = base_operator;
-  InOutputResize(base_operator, inputs, outputs);
+int AdagradV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  InOutputResize(inputs, outputs);
   return KRET_OK;
 }
 

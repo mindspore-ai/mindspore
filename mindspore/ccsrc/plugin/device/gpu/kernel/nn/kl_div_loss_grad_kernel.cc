@@ -21,11 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool KLDivLossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
+bool KLDivLossGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -35,21 +35,20 @@ bool KLDivLossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_data_type = inputs.at(kIndex0)->dtype_id();
+  auto input_data_type = inputs[kIndex0]->dtype_id();
   type_id_size_ = abstract::TypeIdSize(input_data_type);
   return true;
 }
 
-int KLDivLossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int KLDivLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex1]->GetShapeVector();
   input_size_ = 1;
   input_size_ *= SizeOf(input_shape);
-  auto kl_div_loss_grad_ptr = std::dynamic_pointer_cast<ops::KLDivLossGrad>(base_operator);
+  auto kl_div_loss_grad_ptr = std::dynamic_pointer_cast<ops::KLDivLossGrad>(primitive_);
   string reduction = kl_div_loss_grad_ptr->get_reduction();
   reduction_ = kReductionModeMap[reduction];
   if (reduction_ == ReductionMode::kNone) {

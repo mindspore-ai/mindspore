@@ -56,9 +56,7 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (inputs.empty() || outputs.empty()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
       return false;
@@ -75,7 +73,7 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
                     << outputs.size();
       return false;
     }
-    auto sgd_op = std::make_shared<ops::SGD>(base_operator->GetPrim());
+    auto sgd_op = std::make_shared<ops::SGD>(primitive_);
 
     dampening_ = sgd_op->get_dampening();
     weight_decay_ = sgd_op->get_weight_decay();
@@ -83,9 +81,8 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

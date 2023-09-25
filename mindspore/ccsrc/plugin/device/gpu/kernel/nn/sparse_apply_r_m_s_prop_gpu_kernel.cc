@@ -27,8 +27,8 @@ constexpr size_t kIndicesDim = 1;
 using KernelRunFunc = SparseApplyRMSPropGpuKernelMod::KernelRunFunc;
 }  // namespace
 
-bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
-  var_shape_ = inputs.at(kIndex0)->GetShapeVector();
+bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
+  var_shape_ = inputs[kIndex0]->GetShapeVector();
   if (var_shape_.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the dimension of 'var' must be at least 1, but got scalar or None.";
@@ -36,7 +36,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
   }
   var_first_dim_size_ = var_shape_[kDim0];
 
-  auto ms_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto ms_shape = inputs[kIndex1]->GetShapeVector();
   if (!IsSameShape(var_shape_, ms_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of 'ms' must be the same as the shape of 'var', "
@@ -44,7 +44,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
                              << ms_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
-  auto mom_shape = inputs.at(kIndex2)->GetShapeVector();
+  auto mom_shape = inputs[kIndex2]->GetShapeVector();
   if (!IsSameShape(var_shape_, mom_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of 'mom' must be the same as the shape of 'var', "
@@ -53,14 +53,14 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
     return false;
   }
   // scalar
-  auto lr_shape = inputs.at(kIndex3)->GetShapeVector();
+  auto lr_shape = inputs[kIndex3]->GetShapeVector();
   if (!lr_shape.empty()) {
     MS_EXCEPTION(ValueError)
       << "For '" << kernel_name_
       << "', 'lr' must be a scalar; thus, its dimension must be 0, but got the dimension of 'lr': " << lr_shape;
     return false;
   }
-  auto grad_shape = inputs.at(kIndex4)->GetShapeVector();
+  auto grad_shape = inputs[kIndex4]->GetShapeVector();
   var_outer_dim_size_ = 1;
   for (size_t i = 1; i < var_shape_.size(); ++i) {
     if (var_shape_[i] != grad_shape[i]) {
@@ -78,7 +78,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
                              << mom_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
-  auto indices_shape = inputs.at(kIndex5)->GetShapeVector();
+  auto indices_shape = inputs[kIndex5]->GetShapeVector();
   if (indices_shape.size() != kIndicesDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'indices' must be a 1-D Tensor, but got shape: " << indices_shape;
@@ -92,7 +92,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
   }
   return true;
 }
-bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelTensor *> &outputs) {
   auto output_var_shape = outputs[kIndex0]->GetShapeVector();
   if (!IsSameShape(var_shape_, output_var_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
@@ -120,17 +120,14 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelT
   return true;
 }
 
-bool SparseApplyRMSPropGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyRMSPropGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimSparseApplyRMSProp->name()) {
     MS_LOG(ERROR) << "For 'SparseApplyRMSProp', the kernel name must be 'SparseApplyRMSProp', but got " << kernel_name_;
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   rho_ = kernel_ptr->get_rho();
   if (rho_ > 1 || rho_ < 0) {
@@ -152,21 +149,18 @@ bool SparseApplyRMSPropGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                              << epsilon_;
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int SparseApplyRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  kernel_name_ = base_operator->name();
+int SparseApplyRMSPropGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyRMSPropInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyRMSPropOutputsNum, kernel_name_);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
     return KRET_RESIZE_FAILED;

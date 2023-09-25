@@ -23,10 +23,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool ApplyPowerSignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyPowerSign>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool ApplyPowerSignGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -40,9 +38,8 @@ bool ApplyPowerSignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ApplyPowerSignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+int ApplyPowerSignGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
@@ -50,12 +47,12 @@ int ApplyPowerSignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     }
   }
   ResetResource();
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeVector().end());
-  std::vector<int64_t> learning_rate_shape_ = std::vector<int64_t>(inputs.at(kIndex2)->GetDeviceShapeVector().begin(),
-                                                                   inputs.at(kIndex2)->GetDeviceShapeVector().end());
-  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs.at(kIndex6)->GetDeviceShapeVector().begin(),
-                                                              inputs.at(kIndex6)->GetDeviceShapeVector().end());
+  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex0]->GetDeviceShapeVector().end());
+  std::vector<int64_t> learning_rate_shape_ = std::vector<int64_t>(inputs[kIndex2]->GetDeviceShapeVector().begin(),
+                                                                   inputs[kIndex2]->GetDeviceShapeVector().end());
+  std::vector<int64_t> gradient_shape_ = std::vector<int64_t>(inputs[kIndex6]->GetDeviceShapeVector().begin(),
+                                                              inputs[kIndex6]->GetDeviceShapeVector().end());
   t_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<size_t>());
   s_elements_ = std::accumulate(learning_rate_shape_.begin(), learning_rate_shape_.end(), 1, std::multiplies<size_t>());
   g_elements_ = std::accumulate(gradient_shape_.begin(), gradient_shape_.end(), 1, std::multiplies<size_t>());
@@ -130,11 +127,11 @@ bool ApplyPowerSignGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
                                gradient, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(variable_out, variable, outputs.at(kIndex0)->size(), cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(variable_out, variable, outputs[kIndex0]->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpyAsync output failed");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(accumulation_out, accumulation, outputs.at(kIndex1)->size(), cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(accumulation_out, accumulation, outputs[kIndex1]->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpyAsync output failed");
   return true;

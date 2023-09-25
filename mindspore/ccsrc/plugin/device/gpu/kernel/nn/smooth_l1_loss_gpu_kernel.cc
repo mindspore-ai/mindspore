@@ -29,12 +29,11 @@ constexpr size_t kSmoothL1LossOutputsNum = 1;
 }  // namespace
 namespace mindspore {
 namespace kernel {
-bool SmoothL1LossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1Loss>(base_operator);
+bool SmoothL1LossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1Loss>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
-  kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kSmoothL1LossInputsNum || outputs.size() != kSmoothL1LossOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossInputsNum << " and "
                   << kSmoothL1LossOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -69,10 +68,9 @@ bool SmoothL1LossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int SmoothL1LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SmoothL1LossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

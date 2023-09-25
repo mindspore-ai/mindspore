@@ -79,9 +79,9 @@ class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     // Get the number of input args
+    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_NUM) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPoolingBackGpuKernelMod needs 3 input.";

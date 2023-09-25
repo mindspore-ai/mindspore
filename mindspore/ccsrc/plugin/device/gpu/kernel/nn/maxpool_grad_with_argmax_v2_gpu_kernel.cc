@@ -44,10 +44,8 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::LaunchKernel(const std::vector<KernelT
   return true;
 }
 
-bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -58,11 +56,9 @@ bool MaxPoolGradWithArgmaxV2GpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -76,10 +72,10 @@ int MaxPoolGradWithArgmaxV2GpuKernelMod::Resize(const BaseOperatorPtr &base_oper
                   << outputs.size();
     return KRET_RESIZE_FAILED;
   }
-  auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto dy_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto index_shape = inputs.at(kIndex2)->GetShapeVector();
-  auto dx_shape = outputs.at(kIndex0)->GetShapeVector();
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
+  auto dy_shape = inputs[kIndex1]->GetShapeVector();
+  auto index_shape = inputs[kIndex2]->GetShapeVector();
+  auto dx_shape = outputs[kIndex0]->GetShapeVector();
 
   is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") ||
                    CHECK_SHAPE_NULL(index_shape, kernel_name_, "index") ||

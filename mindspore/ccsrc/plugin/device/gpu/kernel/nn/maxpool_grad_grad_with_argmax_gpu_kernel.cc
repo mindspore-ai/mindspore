@@ -29,24 +29,20 @@ constexpr size_t kMaxPoolGradGradWithArgmaxOutputsNum = 1;
 constexpr size_t kArgmaxIndex = 2;
 }  // namespace
 
-bool MaxPoolGradGradWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradGradWithArgmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradGradWithArgmaxInputsNum || outputs.size() != kMaxPoolGradGradWithArgmaxOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaxPoolGradGradWithArgmaxInputsNum
                   << " and " << kMaxPoolGradGradWithArgmaxOutputsNum << ", but get " << inputs.size() << " and "
                   << outputs.size();
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MaxPoolGradGradWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MaxPoolGradGradWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

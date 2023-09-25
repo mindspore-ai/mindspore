@@ -21,10 +21,9 @@ namespace kernel {
 constexpr size_t kZeroindex = 0;
 constexpr size_t kOneindex = 1;
 constexpr size_t kTwoindex = 2;
-bool PDistGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::PdistGrad>(base_operator);
-  kernel_name_ = kernel_ptr_->name();
+bool PDistGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::PdistGrad>(primitive_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -37,14 +36,13 @@ bool PDistGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  p_ = kernel_ptr_->get_p();
+  p_ = kernel_ptr->get_p();
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }
 
-int PDistGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int PDistGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();

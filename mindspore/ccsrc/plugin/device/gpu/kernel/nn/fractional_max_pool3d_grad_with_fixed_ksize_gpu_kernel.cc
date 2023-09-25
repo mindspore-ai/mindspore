@@ -109,11 +109,10 @@ bool FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Launch(const std::vector
   return true;
 }
 
-bool FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                             const std::vector<KernelTensorPtr> &inputs,
-                                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DGradWithFixedKsize>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DGradWithFixedKsize>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -123,13 +122,12 @@ bool FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Init(const BaseOperatorP
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  Resize(base_operator, inputs, outputs);
+  Resize(inputs, outputs);
   return true;
 }
 
-int FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Resize(
-  const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-  const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

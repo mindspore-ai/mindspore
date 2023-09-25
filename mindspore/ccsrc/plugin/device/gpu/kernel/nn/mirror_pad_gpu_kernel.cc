@@ -20,13 +20,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool MirrorPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(base_operator);
+bool MirrorPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
   }
-  kernel_name_ = kernel_ptr->name();
+
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
@@ -44,15 +44,14 @@ bool MirrorPadGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     mode_ = 1;  // symmetric mirroring
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int MirrorPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MirrorPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   input_size_list_.clear();
   output_size_list_.clear();
   auto input_shape = inputs[0]->GetShapeVector();

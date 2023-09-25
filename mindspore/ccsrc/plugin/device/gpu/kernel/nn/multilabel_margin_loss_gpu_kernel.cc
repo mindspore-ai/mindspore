@@ -69,11 +69,10 @@ bool MultilabelMarginLossGpuKernelMod::Launch(const std::vector<KernelTensor *> 
   return true;
 }
 
-bool MultilabelMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultilabelMarginLoss>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool MultilabelMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultilabelMarginLoss>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -85,10 +84,8 @@ bool MultilabelMarginLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int MultilabelMarginLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MultilabelMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();

@@ -26,9 +26,9 @@ namespace kernel {
 constexpr size_t kDropoutGradInputNum = 2;
 constexpr size_t kDropoutGradOutputNum = 1;
 
-bool DropoutGradBwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DropoutGrad>(base_operator);
+bool DropoutGradBwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::DropoutGrad>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast DropoutGrad ops failed!";
     return false;
@@ -47,9 +47,8 @@ bool DropoutGradBwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int DropoutGradBwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &others) {
+int DropoutGradBwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   dy_shape_ = inputs[kIndex0]->GetShapeVector();
   mask_shape_ = inputs[kIndex1]->GetShapeVector();

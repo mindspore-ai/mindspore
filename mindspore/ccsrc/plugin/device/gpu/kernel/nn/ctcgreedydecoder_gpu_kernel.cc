@@ -63,12 +63,10 @@ void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(max_time_ * batch_size_ * data_unit_size_);
 }
 
-bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCGreedyDecoderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(base_operator->GetPrim());
+  auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(primitive_);
   merge_repeated_ = kernel_ptr->get_merge_repeated();
   is_need_retrieve_output_shape_ = true;
 
@@ -88,10 +86,8 @@ bool CTCGreedyDecoderGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CTCGreedyDecoderGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int CTCGreedyDecoderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     return false;
   }

@@ -80,10 +80,8 @@ bool AdaptiveMaxPool3DGradGpuKernelMod::Launch(const std::vector<KernelTensor *>
   return true;
 }
 
-bool AdaptiveMaxPool3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool AdaptiveMaxPool3DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -95,11 +93,9 @@ bool AdaptiveMaxPool3DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int AdaptiveMaxPool3DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int AdaptiveMaxPool3DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -45,11 +45,8 @@ void MaxPoolWithArgmaxGpuKernelMod::SetPad() {
   pad_left_ = pad_width_ / Index2;
 }
 
-bool MaxPoolWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MaxPoolWithArgmaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolWithArgmaxInputsNum || outputs.size() != kMaxPoolWithArgmaxOutputsNum) {
     MS_LOG(EXCEPTION) << kernel_name_ << ": input and output size must be " << kMaxPoolWithArgmaxInputsNum << " and "
                       << kMaxPoolWithArgmaxOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -66,12 +63,10 @@ bool MaxPoolWithArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if (ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -97,7 +92,7 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_height_ = LongToInt(output_shape[kOutputIndexForH]);
   output_width_ = LongToInt(output_shape[kOutputIndexForW]);
   std::vector<int> window;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(primitive_);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   std::vector<int64_t> window_me = kernel_ptr->get_kernel_size();
   (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),

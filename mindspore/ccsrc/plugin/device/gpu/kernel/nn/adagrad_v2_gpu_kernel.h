@@ -41,11 +41,9 @@ class AdagradV2GpuKernelMod : public NativeGpuKernelMod {
   AdagradV2GpuKernelMod() = default;
   ~AdagradV2GpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
@@ -74,8 +72,7 @@ class AdagradV2GpuKernelMod : public NativeGpuKernelMod {
   using ApplyAdagradV2Func =
     std::function<bool(AdagradV2GpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
-  void InOutputResize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                      const std::vector<KernelTensorPtr> &outputs);
+  void InOutputResize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  private:
   constexpr static int64_t DEFAULT_SIZE_ = 4;
@@ -92,8 +89,7 @@ class AdagradV2GpuKernelMod : public NativeGpuKernelMod {
   int64_t t_size_{4};
   int64_t s_size_{4};
   int64_t input_elements_;
-  BaseOperatorPtr kernel_ptr_{nullptr};
-  std::vector<KernelTensorPtr> outputs_ = {};
+  std::vector<KernelTensor *> outputs_ = {};
 
   ApplyAdagradV2Func kernel_func_{};
   void *stream_ptr_{nullptr};

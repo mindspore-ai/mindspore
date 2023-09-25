@@ -63,12 +63,10 @@ std::vector<KernelAttr> HSigmoidGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-bool HSigmoidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoid>(base_operator);
+bool HSigmoidGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoid>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
-  kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kHSigmoidInputsNum || outputs.size() != kHSigmoidOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kHSigmoidInputsNum << " and "
                   << kHSigmoidOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
@@ -87,11 +85,10 @@ bool HSigmoidGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int HSigmoidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+int HSigmoidGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -111,8 +108,8 @@ int HSigmoidGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   // A Code Block For setting input and output shape.
   {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeVector().end());
+    input_shape_ = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
+                                       inputs[kIndex0]->GetDeviceShapeVector().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }

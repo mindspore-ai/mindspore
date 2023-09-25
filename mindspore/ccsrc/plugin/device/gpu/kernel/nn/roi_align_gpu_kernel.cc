@@ -18,19 +18,18 @@
 
 namespace mindspore {
 namespace kernel {
-bool ROIAlignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool ROIAlignGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   // Check input and output numbers
   constexpr size_t kInputNum = 2;
   constexpr size_t kOutputNum = 1;
-  kernel_name_ = base_operator->name();
+
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlign>(base_operator);
+  auto op = std::dynamic_pointer_cast<ops::ROIAlign>(primitive_);
   pooled_height_ = op->get_pooled_height();
   pooled_width_ = op->get_pooled_width();
   spatial_scale_ = op->get_spatial_scale();
@@ -39,10 +38,9 @@ bool ROIAlignGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int ROIAlignGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ROIAlignGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Get the input shapes

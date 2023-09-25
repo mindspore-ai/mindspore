@@ -80,7 +80,7 @@ bool ActivationFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   mode_ = mode_iter->second;
 
-  dtype_ = inputs.at(kIndex0)->dtype_id();
+  dtype_ = inputs[kIndex0]->dtype_id();
   return true;
 }
 
@@ -90,7 +90,7 @@ int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
 
-  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  input_shape_ = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_NULL_INPUT(input_shape_);
   if (is_null_input_) {
     return KRET_OK;
@@ -100,7 +100,7 @@ int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                       "For 'Activation', cudnnCreateTensorDescriptor failed.");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateActivationDescriptor(&activation_desc_),
                                       "For 'Activation', cudnnCreateActivationDescriptor failed.");
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   CheckTensorSize({input_shape_});
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
@@ -114,7 +114,7 @@ int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   const int split_dim = 4;
   if (input_shape_.size() <= split_dim) {
     ShapeNdTo4d(input_shape_, &shape);
-    if (inputs.at(kIndex0)->format() == mindspore::Format::NHWC) {
+    if (inputs[kIndex0]->format() == mindspore::Format::NHWC) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, LongToInt(shape[0]),
                                    LongToInt(shape[3]), LongToInt(shape[1]), LongToInt(shape[2])),

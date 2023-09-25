@@ -43,9 +43,8 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
         kernel_name_("AdaptiveMaxPool2D") {}
   ~AdaptiveMaxPool2DKernelMod() override = default;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
-    if (!InitSize(base_operator, inputs, outputs)) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (!InitSize(inputs, outputs)) {
       return KRET_RESIZE_FAILED;
     }
     return KRET_OK;
@@ -75,25 +74,23 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_EXCEPTION(ValueError)
         << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
       return false;
     }
-    kernel_name_ = kernel_ptr->name();
-    return InitSize(base_operator, inputs, outputs);
+
+    return InitSize(inputs, outputs);
   }
 
-  bool InitSize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  bool InitSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_EXCEPTION(ValueError)
         << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";

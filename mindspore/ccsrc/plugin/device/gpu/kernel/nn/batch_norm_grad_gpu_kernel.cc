@@ -29,11 +29,9 @@ namespace {
 constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
 constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 }  // namespace
-bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
+bool BatchNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   auto activation_type_attr = prim->GetAttr(mindspore::ops::kActivationType);
   if (activation_type_attr != nullptr) {
@@ -83,10 +81,9 @@ bool BatchNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int BatchNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BatchNormGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

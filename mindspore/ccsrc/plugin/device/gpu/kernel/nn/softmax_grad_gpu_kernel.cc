@@ -23,9 +23,8 @@ namespace kernel {
 constexpr size_t INPUT_NUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
 
-bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SoftmaxGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_),
                                       kernel_name_ + "create input_descriptor failed");
@@ -38,16 +37,15 @@ bool SoftmaxGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto input_data_type = inputs.at(kIndex0)->dtype_id();
+  auto input_data_type = inputs[kIndex0]->dtype_id();
   type_id_size_ = abstract::TypeIdSize(input_data_type);
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(input_data_type));
   return true;
 }
 
-int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SoftmaxGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -56,13 +54,13 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (kernel_name_ == "LogSoftmaxGrad") {
     algo_ = CUDNN_SOFTMAX_LOG;
     // Todo, dynamic shape
-    // auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
+    // auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(primitive_);
     // auto axis = LongToInt(log_soft_max_grad_ptr->get_axis());
     // InitSizeByAxis(input_shape, axis);
   } else {
     algo_ = CUDNN_SOFTMAX_ACCURATE;
     std::vector<int> axis;
-    auto soft_max_grad_ptr = std::dynamic_pointer_cast<ops::SoftmaxGrad>(base_operator);
+    auto soft_max_grad_ptr = std::dynamic_pointer_cast<ops::SoftmaxGrad>(primitive_);
     auto axis_me = soft_max_grad_ptr->get_axis();
     (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                          [](const int64_t &value) { return LongToInt(value); });

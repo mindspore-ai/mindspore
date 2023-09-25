@@ -24,10 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-
+bool DenseGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -52,7 +50,7 @@ bool DenseGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
 
-  has_bias_ = GetValue<bool>(base_operator->GetAttr("has_bias"));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
   if (has_bias_) {
     InitResource();
   }
@@ -74,10 +72,9 @@ cublasComputeType_t DenseGradGpuKernelMod::GetComputeType() {
 }
 #endif
 
-int DenseGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

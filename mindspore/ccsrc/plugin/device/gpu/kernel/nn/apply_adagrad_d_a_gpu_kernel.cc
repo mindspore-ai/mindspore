@@ -51,21 +51,19 @@ std::map<size_t, std::string> OutputNames = {
   {kVarIndex, "var"}, {kAccumIndex, "gradient_accumulator"}, {kSquaredAccumIndex, "gradient_squared_accumulator"}};
 }  // namespace
 
-bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradDA>(primitive_);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(ERROR) << "Cast ApplyAdagradDA ops failed!";
+    return false;
+  }
+  batch_rank_ = kernel_ptr->get_batch_rank();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradDA>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast ApplyAdagradDA ops failed!";
-    return false;
-  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -78,17 +76,16 @@ bool ApplyAdagradDAGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ApplyAdagradDAGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   is_null_input_ = false;
   stream_ptr_ = nullptr;
   input_elements_ = 0;
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-  std::vector<int64_t> var_shape = inputs.at(kVarIndex)->GetShapeVector();
+  std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
 
   batch_size_ = 1;

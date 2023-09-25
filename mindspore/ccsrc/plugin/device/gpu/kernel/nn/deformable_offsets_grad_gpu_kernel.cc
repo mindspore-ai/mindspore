@@ -65,9 +65,9 @@ constexpr size_t kDilationWIndex = 3;
 constexpr size_t kKernelHIndex = 0;
 constexpr size_t kKernelWIndex = 1;
 
-void CheckSize(const std::string &kernel_name, const std::string &dim_name, size_t expect, size_t actual) {
+void CheckSize(const std::string &kernel_name_, const std::string &dim_name, size_t expect, size_t actual) {
   if (actual != expect) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of '" << dim_name << "' must be " << expect
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of '" << dim_name << "' must be " << expect
                       << ", but got " << actual;
   }
 }
@@ -80,17 +80,15 @@ bool DeformableOffsetsGradGpuKernelMod::Launch(const std::vector<KernelTensor *>
   return kernel_func_(this, inputs, outputs);
 }
 
-bool DeformableOffsetsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool DeformableOffsetsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputNum << " and " << kOutputNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "Cast DeformableOffsetsGrad failed!";
     return false;
@@ -108,13 +106,13 @@ bool DeformableOffsetsGradGpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-void DeformableOffsetsGradGpuKernelMod::SetDims(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(base_operator);
+void DeformableOffsetsGradGpuKernelMod::SetDims(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast DeformableOffsetsGrad failed!";
   }
+  auto kernel_name_ = primitive_->name();
   dims_.deformable_group = LongToUint(kernel_ptr->get_deformable_groups());
   if (dims_.deformable_group == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', deformable group must be greater than 0.";
@@ -170,11 +168,9 @@ void DeformableOffsetsGradGpuKernelMod::SetDims(const BaseOperatorPtr &base_oper
     std::accumulate(grad_offset_shape.begin(), grad_offset_shape.end(), type_size_, std::multiplies<size_t>());
 }
 
-int DeformableOffsetsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DeformableOffsetsGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     MS_LOG(ERROR) << kernel_name_ << " kernel mode resize failed.";
     return ret;
@@ -184,7 +180,7 @@ int DeformableOffsetsGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operat
                   << ", but got " << input_size_list_.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
-  SetDims(base_operator, inputs, outputs);
+  SetDims(inputs, outputs);
   return KRET_OK;
 }
 

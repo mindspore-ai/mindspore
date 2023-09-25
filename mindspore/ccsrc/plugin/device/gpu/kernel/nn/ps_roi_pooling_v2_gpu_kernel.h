@@ -34,12 +34,8 @@ class PSROIPoolingV2GpuKernelMod : public NativeGpuKernelMod {
   PSROIPoolingV2GpuKernelMod() = default;
   ~PSROIPoolingV2GpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   std::vector<KernelAttr> GetOpSupport() override;
@@ -70,7 +66,7 @@ class PSROIPoolingV2GpuKernelMod : public NativeGpuKernelMod {
   bool PSROIPoolingLauncher(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                             void *stream_ptr);
 
-  int ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs);
+  int ResizeCheckInputs(const std::vector<KernelTensor *> &inputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

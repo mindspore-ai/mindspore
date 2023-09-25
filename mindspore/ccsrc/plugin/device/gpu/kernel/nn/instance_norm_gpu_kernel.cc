@@ -25,11 +25,8 @@ namespace {
 using KernelRunFunc = InstanceNormGpuKernelMod::KernelRunFunc;
 constexpr auto kNCDims = 2;
 }  // namespace
-bool InstanceNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool InstanceNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&x_desc_),
                                       "For 'InstanceNormGpuKernelMod', it create x desc failed");
@@ -37,28 +34,26 @@ bool InstanceNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
                                       "For 'InstanceNormGpuKernelMod', it create y desc failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
                                       "For 'InstanceNormGpuKernelMod', it create para desc failed");
-
-  batch_rank_ = base_operator->get_batch_rank();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNorm>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNorm>(primitive_);
+  batch_rank_ = kernel_ptr->get_batch_rank();
   epsilon_ = kernel_ptr->get_epsilon();
   exp_avg_factor_ = kernel_ptr->get_momentum();
 
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int InstanceNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_x");
   if (is_null_input_) {
     return KRET_OK;

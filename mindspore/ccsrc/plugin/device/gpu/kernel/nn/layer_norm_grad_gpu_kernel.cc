@@ -34,13 +34,13 @@ constexpr size_t kLayerNormGradOutputDgIndex = 1;
 constexpr size_t kLayerNormGradOutputDbIndex = 2;
 }  // namespace
 
-bool LayerNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
+bool LayerNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "LayerNormGradGpuKernelMod Cast ops::LayerNormGrad failed!";
   }
-  kernel_name_ = kernel_ptr->name();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -52,14 +52,13 @@ bool LayerNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int LayerNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LayerNormGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
   }

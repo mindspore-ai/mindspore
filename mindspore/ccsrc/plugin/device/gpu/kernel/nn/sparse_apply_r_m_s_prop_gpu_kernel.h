@@ -37,14 +37,12 @@ class SparseApplyRMSPropGpuKernelMod : public NativeGpuKernelMod,
   SparseApplyRMSPropGpuKernelMod() = default;
   ~SparseApplyRMSPropGpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
-  bool ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
+  bool ResizedInputSize(const std::vector<KernelTensor *> &inputs);
+  bool ResizedOutputSize(const std::vector<KernelTensor *> &outputs);
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *cuda_stream) override {

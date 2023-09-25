@@ -52,15 +52,13 @@ void BinaryCrossEntropyGradGpuKernelMod::LaunchKernel(const std::vector<KernelTe
   }
 }
 
-bool BinaryCrossEntropyGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropyGrad>(base_operator);
+bool BinaryCrossEntropyGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropyGrad>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "cast BinaryCrossEntropyGrad ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -80,11 +78,9 @@ bool BinaryCrossEntropyGradGpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int BinaryCrossEntropyGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

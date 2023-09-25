@@ -36,19 +36,18 @@ bool Conv2dFwdGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-bool Conv2dFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool Conv2dFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
-  return InitialAttributes(&conv_args_, base_operator, inputs);
+
+  return InitialAttributes(primitive_, &conv_args_, inputs);
 }
 
-int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int Conv2dFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetDeviceShapeVector();
@@ -57,26 +56,26 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (!CheckTensorSize({input_shape, filter_shape, output_shape})) {
     return KRET_RESIZE_FAILED;
   }
-  if (!conv_kernel_ptr_) {
+  if (!conv_kernel_ptr) {
     SetConvolutionInChannel(&conv_args_, input_shape);
     auto conv_kernel_type = SelectConvolutionGpuKernel(conv_args_);
-    conv_kernel_ptr_ =
+    conv_kernel_ptr =
       ConvolutionGpuKernelFactory::CreateConvolutionGpuKernel(conv_args_, conv_kernel_type, ConvType::kForward);
-    MS_EXCEPTION_IF_NULL(conv_kernel_ptr_);
+    MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
     InitResource();
   }
   ResetResource();
   // for dynamic pad in dynamic infer shape
   conv_args_.pad_list.clear();
-  auto pad_list_attr = GetValue<std::vector<int64_t>>(base_operator->GetAttr("pad_list"));
+  auto pad_list_attr = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"));
   if (pad_list_attr.size() != kConv2dInputDimSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got "
                       << pad_list_attr.size();
   }
   std::transform(pad_list_attr.begin(), pad_list_attr.end(), std::back_inserter(conv_args_.pad_list),
                  [](const int64_t &value) { return static_cast<int>(value); });
-  return conv_kernel_ptr_->InitialKernel(&conv_args_, input_shape, filter_shape, output_shape, &input_size_list_,
-                                         &output_size_list_, &workspace_size_list_);
+  return conv_kernel_ptr->InitialKernel(&conv_args_, input_shape, filter_shape, output_shape, &input_size_list_,
+                                        &output_size_list_, &workspace_size_list_);
 }
 
 template <typename T>
@@ -87,25 +86,25 @@ bool Conv2dFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   T *filter_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  MS_EXCEPTION_IF_NULL(conv_kernel_ptr_);
-  return conv_kernel_ptr_->LaunchKernel<T>(conv_args_, input_addr, filter_addr, output_addr, workspace, stream_ptr_);
+  MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+  return conv_kernel_ptr->LaunchKernel<T>(conv_args_, input_addr, filter_addr, output_addr, workspace, stream_ptr_);
 }
 
 void Conv2dFwdGpuKernelMod::InitResource() {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->InitResource();
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->InitResource();
   }
 }
 
 void Conv2dFwdGpuKernelMod::DestroyResource() noexcept {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->DestroyResource();
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->DestroyResource();
   }
 }
 
 void Conv2dFwdGpuKernelMod::ResetResource() noexcept {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->ResetResource(&conv_args_, &input_size_list_, &output_size_list_, &workspace_size_list_);
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->ResetResource(&conv_args_, &input_size_list_, &output_size_list_, &workspace_size_list_);
   }
 }
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Conv2D, Conv2dFwdGpuKernelMod);

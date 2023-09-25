@@ -44,54 +44,50 @@ bool Conv2dInputGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inpu
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-bool Conv2dInputGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool Conv2dInputGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
+
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   const auto &inplace_algo_attr = prim->GetAttr("inplace_algo");
   auto inplace_algo_value = inplace_algo_attr == nullptr ? "cover" : GetValue<std::string>(inplace_algo_attr);
   conv_args_.beta = inplace_algo_value == "cover" ? 0 : 1;
 
-  return InitialAttributes(&conv_args_, base_operator, inputs);
+  return InitialAttributes(primitive_, &conv_args_, inputs);
 }
 
-int Conv2dInputGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int Conv2dInputGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto dy_shape = inputs[0]->GetDeviceShapeVector();
   auto filter_shape = inputs[kIndex1]->GetDeviceShapeVector();
   std::vector<int64_t> input_shape;
-  if (!TryGetIntValue(inputs, kShapeIndex, kernel_name_, &input_shape, true)) {
-    MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get input_sizes input!";
-  }
+  input_shape = inputs[kShapeIndex]->GetValueWithCheck<std::vector<int64_t>>();
 
   if (!CheckTensorSize({input_shape, dy_shape, filter_shape})) {
     return KRET_RESIZE_FAILED;
   }
 
-  if (!conv_kernel_ptr_) {
+  if (!conv_kernel_ptr) {
     if (conv_args_.data_format_attr == kOpFormat_NCHW && conv_args_.data_format == kOpFormat_NHWC) {
       ShapeNCHW2NHWC(&input_shape);
     }
 
     SetConvolutionInChannel(&conv_args_, input_shape);
     auto conv_kernel_type = SelectConvolutionGpuKernel(conv_args_);
-    conv_kernel_ptr_ =
+    conv_kernel_ptr =
       ConvolutionGpuKernelFactory::CreateConvolutionGpuKernel(conv_args_, conv_kernel_type, ConvType::kInputGrad);
-    MS_EXCEPTION_IF_NULL(conv_kernel_ptr_);
+    MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
     InitResource();
   }
   ResetResource();
-  return conv_kernel_ptr_->InitialKernel(&conv_args_, dy_shape, input_shape, filter_shape, &input_size_list_,
-                                         &output_size_list_, &workspace_size_list_);
+  return conv_kernel_ptr->InitialKernel(&conv_args_, dy_shape, input_shape, filter_shape, &input_size_list_,
+                                        &output_size_list_, &workspace_size_list_);
 }
 
 template <typename T>
@@ -102,25 +98,25 @@ bool Conv2dInputGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   T *w = GetDeviceAddress<T>(inputs, 1);
   T *dx = GetDeviceAddress<T>(outputs, 0);
 
-  MS_EXCEPTION_IF_NULL(conv_kernel_ptr_);
-  return conv_kernel_ptr_->LaunchKernel<T>(conv_args_, dy, w, dx, workspace, stream_ptr_);
+  MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+  return conv_kernel_ptr->LaunchKernel<T>(conv_args_, dy, w, dx, workspace, stream_ptr_);
 }
 
 void Conv2dInputGradGpuKernelMod::InitResource() {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->InitResource();
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->InitResource();
   }
 }
 
 void Conv2dInputGradGpuKernelMod::DestroyResource() noexcept {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->DestroyResource();
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->DestroyResource();
   }
 }
 
 void Conv2dInputGradGpuKernelMod::ResetResource() noexcept {
-  if (conv_kernel_ptr_) {
-    conv_kernel_ptr_->ResetResource(&conv_args_, &input_size_list_, &output_size_list_, &workspace_size_list_);
+  if (conv_kernel_ptr) {
+    conv_kernel_ptr->ResetResource(&conv_args_, &input_size_list_, &output_size_list_, &workspace_size_list_);
   }
 }
 

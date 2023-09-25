@@ -86,10 +86,10 @@ bool MaxUnpool2DGPUKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-bool MaxUnpool2DGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  auto maxunpool2d_kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2D>(base_operator);
-  kernel_name_ = maxunpool2d_kernel_ptr->name();
+bool MaxUnpool2DGPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  auto maxunpool2d_kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2D>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -101,9 +101,8 @@ bool MaxUnpool2DGPUKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MaxUnpool2DGPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaxUnpool2DGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {

@@ -34,9 +34,8 @@ constexpr size_t kIndexEpsilon = 8;
 constexpr size_t kIndexGrad = 9;
 }  // namespace
 
-bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto prim = base_operator->GetPrim();
+bool AdamGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
 
   if (prim->HasAttr("use_locking")) {
@@ -46,8 +45,8 @@ bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
   }
 
-  kernel_name_ = prim->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Adam>(primitive_);
+  batch_rank_ = kernel_ptr->get_batch_rank();
   constexpr size_t input_num = 10;
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -62,10 +61,8 @@ bool AdamGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AdamGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

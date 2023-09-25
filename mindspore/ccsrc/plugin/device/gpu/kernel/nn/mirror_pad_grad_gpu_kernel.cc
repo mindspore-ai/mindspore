@@ -60,15 +60,13 @@ bool MirrorPadGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
   return true;
 }
 
-bool MirrorPadGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
+bool MirrorPadGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPadGrad>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPadGrad>(primitive_);
   std::string mode = kernel_ptr->get_mode();
   if (mode == "REFLECT") {
     mode_ = 0;  // reflected mirroring
@@ -78,8 +76,8 @@ bool MirrorPadGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
                       << mode;
   }
-  input_type_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->dtype_id());
-  padding_type_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
+  input_type_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
+  padding_type_size_ = abstract::TypeIdSize(inputs[kIndex1]->dtype_id());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -101,15 +99,14 @@ void MirrorPadGradGpuKernelMod::CalculateWorkspace(const ShapeVector &input_shap
   workspace_size_list_.push_back(input_size_list_[0]);
 }
 
-int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MirrorPadGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
   input_size_list_.clear();
   output_size_list_.clear();
 
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   if (!IsValidShape(input_shape)) {
     ret = KRET_UNKNOWN_SHAPE;
     input_size_list_.push_back(input_type_size_);
@@ -136,7 +133,7 @@ int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     input_size_list_.push_back(num_input_ * input_type_size_);
   }
 
-  auto padding_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto padding_shape = inputs[kIndex1]->GetShapeVector();
   if (!IsValidShape(padding_shape)) {
     ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
     input_size_list_.push_back(padding_type_size_);
@@ -147,7 +144,7 @@ int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     input_size_list_.push_back(kLongSizeCoeff * num_paddings_ * padding_type_size_);  // for 64 bit int defined in API
   }
 
-  auto shape_signed = outputs.at(kIndex0)->GetShapeVector();
+  auto shape_signed = outputs[kIndex0]->GetShapeVector();
   auto output_shape = Convert2SizeTClipNeg(shape_signed);
   if (output_shape.size() <= 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output.shape is empty.";

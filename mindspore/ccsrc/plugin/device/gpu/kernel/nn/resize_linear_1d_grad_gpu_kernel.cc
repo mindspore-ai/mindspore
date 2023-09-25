@@ -26,13 +26,11 @@ constexpr const size_t kResizeInputDims = 3;
 
 namespace mindspore {
 namespace kernel {
-bool ResizeLinear1DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(base_operator);
+bool ResizeLinear1DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(primitive_);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
+
   if (inputs.size() != kResizeLinear1DGradInputsNum || outputs.size() != kResizeLinear1DGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', grad_output and grad_input size must be "
                   << kResizeLinear1DGradInputsNum << " and " << kResizeLinear1DGradOutputsNum << ", but got "
@@ -61,21 +59,19 @@ bool ResizeLinear1DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeLinear1DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != KRET_OK) {
     return ret;
   }
 
-  grad_output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
+  grad_output_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   batch_ = grad_output_shape_[kIndex0];
   channel_ = grad_output_shape_[kIndex1];
   out_width_ = grad_output_shape_[kIndex2];
 
-  grad_input_shape_ = outputs.at(kIndex0)->GetDeviceShapeVector();
+  grad_input_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   in_width_ = grad_input_shape_[kIndex2];
   size_t work_space_size = SizeOf(grad_input_shape_);
   workspace_size_list_.push_back(work_space_size * sizeof(float));
@@ -96,7 +92,7 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
 
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   MS_EXCEPTION_IF_NULL(cuda_stream);
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_input, 0, outputs.at(kIndex0)->size(), cuda_stream),
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_input, 0, outputs[kIndex0]->size(), cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_input.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(grad_work, 0, workspace.at(kIndex0)->size(), cuda_stream),
                                     "For ResizeLinear1DGradGpuKernelMod failed to cudaMemset grad_work.");

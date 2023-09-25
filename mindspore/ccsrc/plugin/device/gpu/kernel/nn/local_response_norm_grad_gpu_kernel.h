@@ -94,11 +94,10 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::LRNGrad>(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::LRNGrad>(primitive_);
     MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    kernel_name_ = kernel_ptr->name();
+
     size_t input_num = inputs.size();
     if (input_num != k3DSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
@@ -120,10 +119,8 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
     }
@@ -149,7 +146,7 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       transpose_shape_.push_back(input_shape_[1]);
     } else {
       lrn_mode_ = CUDNN_LRN_CROSS_CHANNEL_DIM1;
-      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->dtype_id()));
+      cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
       SetCUDNNDescriptors(input_shape_, lrnN, lrnAlpha);
     }
 

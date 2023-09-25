@@ -53,14 +53,13 @@ class GridSampler2DGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2D>(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2D>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_EXCEPTION(ValueError) << "For primitive[GridSampler2D], cast op from BaseOperator to GridSampler2D failed.";
       return false;
     }
-    kernel_name_ = kernel_ptr->name();
+
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerOutputNum, kernel_name_);
     interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
@@ -69,9 +68,8 @@ class GridSampler2DGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }
@@ -172,14 +170,13 @@ class GridSampler3DGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3D>(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3D>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_EXCEPTION(ValueError) << "For primitive[GridSampler3D], cast op from BaseOperator to GridSampler3D failed.";
       return false;
     }
-    kernel_name_ = kernel_ptr->name();
+
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerOutputNum, kernel_name_);
     interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
@@ -188,9 +185,8 @@ class GridSampler3DGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
     }

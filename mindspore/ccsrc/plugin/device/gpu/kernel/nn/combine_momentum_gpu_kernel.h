@@ -79,12 +79,12 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     combine_num_ = GetAttr<size_t>(kernel_node, "combine_num");
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name == kCombineMomentumOpName) {
+
+    if (kernel_name_ == kCombineMomentumOpName) {
       input_num_ = kCombineMomentumInputsNum;
-    } else if (kernel_name == kCombineScaleMomentumOpName) {
+    } else if (kernel_name_ == kCombineScaleMomentumOpName) {
       input_num_ = kCombineScaleMomentumInputsNum;
-    } else if (kernel_name == kCombineWeightDecayScaleMomentumOpName) {
+    } else if (kernel_name_ == kCombineWeightDecayScaleMomentumOpName) {
       input_num_ = kCombineWeightDecayMomentumInputsNum;
     } else {
       MS_LOG(EXCEPTION) << "Combine kernel name is invalid.";

@@ -33,26 +33,25 @@ constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr size_t kInputNum = 3;
 constexpr size_t kAvgPool3DGradDynamicInputNum = 2;
 
-bool PoolingGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto pool_grad_ptr = std::make_shared<ops::PoolGrad>(base_operator->GetPrim());
+bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  auto pool_grad_ptr = std::make_shared<ops::PoolGrad>(primitive_);
   format_attr_ = pool_grad_ptr->get_format();
   pad_mode_ = pool_grad_ptr->get_pad_mode();
   stride_me_ = pool_grad_ptr->get_strides();
   window_me_ = pool_grad_ptr->get_kernel_size();
   if (kernel_name_ == kMaxPool3DGrad) {
-    auto kernel_ptr = std::make_shared<ops::MaxPool3DGrad>(base_operator->GetPrim());
+    auto kernel_ptr = std::make_shared<ops::MaxPool3DGrad>(primitive_);
     pad_list_ = kernel_ptr->get_pad_list();
   } else if (kernel_name_ == kAvgPool3DGrad) {
-    auto kernel_ptr = std::make_shared<ops::AvgPool3DGrad>(base_operator->GetPrim());
+    auto kernel_ptr = std::make_shared<ops::AvgPool3DGrad>(primitive_);
     pad_list_ = kernel_ptr->get_pad_list();
     divisor_override_ = kernel_ptr->get_divisor_override();
     ceil_mode_ = kernel_ptr->get_ceil_mode();
     include_ = kernel_ptr->get_count_include_pad();
   }
   SetFirstInputIndex(inputs.size());
-  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(first_input_index_)->dtype_id()));
+  cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[first_input_index_]->dtype_id()));
   SetPoolingMode();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -65,30 +64,30 @@ bool PoolingGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-inline void CheckInputNum(const std::string &kernel_name, const size_t input_num) {
-  if (kernel_name != kAvgPool3DGrad) {
+inline void CheckInputNum(const std::string &kernel_name_, const size_t input_num) {
+  if (kernel_name_ != kAvgPool3DGrad) {
     if (input_num != kInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << kInputNum << ", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputNum << ", but got "
                         << input_num;
     }
   } else {
     if (input_num != kAvgPool3DGradDynamicInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << kAvgPool3DGradDynamicInputNum
-                        << ", but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
+                        << kAvgPool3DGradDynamicInputNum << ", but got " << input_num;
     }
   }
 }
 
-int PoolingGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int PoolingGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
+  kernel_name_ = primitive_->name();
   CheckInputNum(kernel_name_, inputs.size());
-  input_shape_ = inputs.at(first_input_index_)->GetShapeVector();
-  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  input_shape_ = inputs[first_input_index_]->GetShapeVector();
+  output_shape_ = outputs[kIndex0]->GetShapeVector();
   int nbDims = SizeToInt(input_shape_.size());
   int dimA[kPoolingNbDims];
   int strideAin[kPoolingNbDims];
@@ -197,21 +196,21 @@ bool PoolingGradGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
   return true;
 }
 
-bool PoolingGradGpuKernelMod::InitShape(const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs, int *dimA, int *strideAin,
+bool PoolingGradGpuKernelMod::InitShape(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs, int *dimA, int *strideAin,
                                         int *dimAy, int *strideAiny, int *dimAdy, int *strideAdy, int *dimAout,
                                         int *strideAout, int nbDims) {
   ShapeVector dout_shape, input_mask, output_shape, input_shape;
   if (kernel_name_ == kAvgPool3DGrad) {
-    dout_shape = inputs.at(first_input_index_)->GetDeviceShapeVector();
-    output_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
+    dout_shape = inputs[first_input_index_]->GetDeviceShapeVector();
+    output_shape = outputs[kIndex0]->GetDeviceShapeVector();
     input_mask = dout_shape;
     input_shape = output_shape;
   } else {
-    input_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
-    input_mask = inputs.at(kIndex1)->GetDeviceShapeVector();
-    dout_shape = inputs.at(kIndex2)->GetDeviceShapeVector();
-    output_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
+    input_shape = inputs[kIndex0]->GetDeviceShapeVector();
+    input_mask = inputs[kIndex1]->GetDeviceShapeVector();
+    dout_shape = inputs[kIndex2]->GetDeviceShapeVector();
+    output_shape = outputs[kIndex0]->GetDeviceShapeVector();
   }
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(input_mask, kernel_name_, "mask") ||
@@ -220,7 +219,7 @@ bool PoolingGradGpuKernelMod::InitShape(const std::vector<KernelTensorPtr> &inpu
     InitSizeLists();
     return false;
   }
-  auto data_format = GetFormatFromEnumToStr(inputs.at(first_input_index_)->format());
+  auto data_format = GetFormatFromEnumToStr(inputs[first_input_index_]->format());
   if (Anyone(format_attr_, Format::NHWC, Format::NDHWC)) {
     data_format = GetFormatFromEnumToStr(format_attr_);
   }

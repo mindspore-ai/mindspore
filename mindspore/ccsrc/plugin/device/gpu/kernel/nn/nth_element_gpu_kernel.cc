@@ -62,10 +62,10 @@ bool NthElementGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-bool NthElementGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool NthElementGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -82,9 +82,8 @@ bool NthElementGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int NthElementGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NthElementGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
@@ -94,9 +93,9 @@ int NthElementGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();
-  std::vector<int64_t> input_n_shape = inputs.at(kIndex1)->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> input_n_shape = inputs[kIndex1]->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
   input_shapes.emplace_back(input_shape);
   input_shapes.emplace_back(input_n_shape);
   output_shapes.emplace_back(output_shape);

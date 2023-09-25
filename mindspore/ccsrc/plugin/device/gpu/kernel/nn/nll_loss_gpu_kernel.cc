@@ -27,14 +27,12 @@ std::map<Reduction, ReductionMode> kReductionMap = {{Reduction::MEAN, ReductionM
                                                     {Reduction::REDUCTION_SUM, ReductionMode::kSum},
                                                     {Reduction::NONE, ReductionMode::kNone}};
 }
-bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLoss>(base_operator);
+bool NLLLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLoss>(primitive_);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast NLLLoss ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->GetPrim()->name();
 
   auto reduction = kernel_ptr->get_reduction();
   reduction_ = kReductionMap[reduction];
@@ -50,11 +48,9 @@ bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int NLLLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int NLLLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

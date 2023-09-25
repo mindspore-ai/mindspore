@@ -100,16 +100,12 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    MS_EXCEPTION_IF_NULL(base_operator);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
 
-    MS_EXCEPTION_IF_NULL(base_operator);
-    PrimitivePtr prim = base_operator->GetPrim();
+    PrimitivePtr prim = primitive_;
     MS_EXCEPTION_IF_NULL(prim);
-    kernel_name_ = prim->name();
 
     preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr("preprocess_collapse_repeated"));
     ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr("ctc_merge_repeated"));
@@ -118,11 +114,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
     auto shape_signed = inputs[kPrevOutput0th]->GetShapeVector();

@@ -79,11 +79,10 @@ bool LayerNormGradGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
   return true;
 }
 
-bool LayerNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGradGrad>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool LayerNormGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGradGrad>(primitive_);
+
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
@@ -96,7 +95,7 @@ bool LayerNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
-  int ret = Resize(kernel_ptr, inputs, outputs);
+  int ret = Resize(inputs, outputs);
   if (ret == KRET_RESIZE_FAILED) {
     return false;
   }
@@ -104,10 +103,8 @@ bool LayerNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int LayerNormGradGradGpuKernelMod::Resize(
-  const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-  const std::vector<KernelTensorPtr> &outputs,
-  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {  // check input size
+int LayerNormGradGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {  // check input size
   if (inputs.size() != kLayerNormGradGradInputsNum || outputs.size() != kLayerNormGradGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kLayerNormGradGradInputsNum
                   << " and " << kLayerNormGradGradOutputsNum << ", but got " << inputs.size() << " and "

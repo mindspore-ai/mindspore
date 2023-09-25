@@ -65,14 +65,13 @@ void CheckAddrNum(const std::vector<KernelTensor *> &inputs, const std::vector<K
 }  // namespace
 
 template <typename T, typename S>
-bool ClipByNormGpuKernelMod<T, S>::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
+bool ClipByNormGpuKernelMod<T, S>::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   // Get `ClipByNorm` c++ primitive
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
+
+  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(primitive_);
   MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
+
   // Check whether current input and output attributes are valid.
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (!MatchKernelAttr(kernel_attr, GetOpSupport()).first) {
@@ -83,15 +82,13 @@ bool ClipByNormGpuKernelMod<T, S>::Init(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-int ClipByNormGpuKernelMod<T, S>::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ClipByNormGpuKernelMod<T, S>::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
+
+  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(primitive_);
   ResetResource();
   InitIOShape(inputs, outputs);
   InitResource();
@@ -214,8 +211,8 @@ void ClipByNormGpuKernelMod<T, S>::InitResource() {
 }
 
 template <typename T, typename S>
-void ClipByNormGpuKernelMod<T, S>::InitIOShape(const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
+void ClipByNormGpuKernelMod<T, S>::InitIOShape(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num_expected = 2;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == input_num_expected, "The size of input tensors should be 2.");
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The size of output tensors should be 1.");
@@ -345,7 +342,7 @@ void ClipByNormGpuKernelMod<T, S>::InitSizeLists() {
 }
 
 template <typename T, typename S>
-void ClipByNormGpuKernelMod<T, S>::DetermineDeviceDataInfoForCudnn(const KernelTensorPtr &x_tensor) {
+void ClipByNormGpuKernelMod<T, S>::DetermineDeviceDataInfoForCudnn(const KernelTensor *x_tensor) {
   MS_EXCEPTION_IF_NULL(x_tensor);
   data_type_ = CUDNN_DATA_FLOAT;
   // Determine device data info for `inputA_descriptor`

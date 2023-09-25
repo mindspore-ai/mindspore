@@ -56,15 +56,14 @@ void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   }
 }
 
-bool BinaryCrossEntropyGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(base_operator);
+bool BinaryCrossEntropyGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
     return false;
   }
-  kernel_name_ = kernel_ptr->name();
+
   const auto reduction = kernel_ptr->get_reduction();
   if (reduction == Reduction::NONE) {
     reduction_ = ReductionMode::kNone;
@@ -85,11 +84,9 @@ bool BinaryCrossEntropyGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int BinaryCrossEntropyGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }
