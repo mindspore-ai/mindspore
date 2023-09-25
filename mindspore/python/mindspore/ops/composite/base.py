@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from functools import partial
 
 from types import FunctionType, MethodType
+import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -742,6 +743,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        for arg in args:
+            if isinstance(arg, np.ndarray):
+                raise TypeError("For 'MultitypeFuncGraph', the input can not be numpy.ndarray")
         if len(self.entries) == 1:
             output = self.entries[0][1](*args)
             return output
