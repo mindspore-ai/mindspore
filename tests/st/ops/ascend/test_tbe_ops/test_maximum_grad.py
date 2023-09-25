@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ def gen_data(inputA_np, inputB_np, grad_=None):
     if isinstance(inputB_np, np.ndarray):
         inputB_me = Tensor(inputB_np)
     if grad_ is None:
-        grad_ = np.random.randn(2).astype(np.float32)
+        grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
     print("----inputA---")
     print(inputA_np)
     print("----inputB---")
