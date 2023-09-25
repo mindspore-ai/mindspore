@@ -107,6 +107,7 @@ template <typename T1, typename T2, typename T3>
 uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   // get x
   Tensor *input_data = ctx.Input(0);
+  KERNEL_CHECK_NULLPTR(input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   auto input_shape = input_data->GetTensorShape();
   std::vector<int64_t> dims = input_shape->GetDimSizes();
@@ -119,6 +120,7 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   }
   // get dimension
   Tensor *axes_data = ctx.Input(1);
+  KERNEL_CHECK_NULLPTR(axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
   if (axes_data_addr[0] > kDimsNum - 1 || axes_data_addr[0] < -kDimsNum) {
     KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum, kDimsNum - 1,
@@ -130,6 +132,7 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   }
   // get y
   Tensor *output_data = ctx.Output(0);
+  KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   auto output_data_addr = reinterpret_cast<T3 *>(output_data->GetData());
   int64_t output_data_num = output_data->NumElements();
   if (output_data_num * sizeof(T3) < kDataSize) {
