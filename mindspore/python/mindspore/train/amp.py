@@ -97,6 +97,8 @@ def _allow_mix_precision(node, allowed_list, dtype) -> bool:
     node_inst = node.get_instance()
     if node_inst in allowed_list:
         return True
+    if node.get_targets() is None:
+        return False
     if not issubclass(node.get_instance_type(), (Primitive, nn.Cell)):
         return False
     if isinstance(node_inst, P.Cast):
@@ -122,7 +124,11 @@ def _insert_cast_operator_process(node, stree, dtype):
             position = stree.before(node)
             new_node = P.Cast()
             cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, dtype_str], [arg.scope, ""])
-            cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
+            arg_provider = node.get_handler().get_arg_providers()[idx]
+            if arg_provider and len(arg_provider[0].get_target_users(arg_provider[1])) > 1:
+                cast_targets = [stree.unique_name(str(arg))]
+            else:
+                cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
             new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
                                                              targets=cast_targets,
                                                              args=cast_args,
@@ -164,9 +170,10 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
     to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
     if isinstance(net, nn.Cell) and hasattr(net, to_float_flag) and getattr(net, to_float_flag):
         return
-    for node in stree.nodes():
-        if node.get_targets() is None:
-            continue
+    node_list = []
+    node_list.extend(list(stree.nodes()))
+    while node_list:
+        node = node_list.pop()
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
@@ -175,6 +182,10 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
             _insert_cast_operator_white_list(substree, white_list, dtype)
+        elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
+            if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):
+                nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
+                node_list.extend(nodes)
         elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list, dtype):
             _insert_cast_operator_process(node, stree, dtype)
 
@@ -194,7 +205,13 @@ def _need_removed_cast_pair(node, dtype):
     # all user nodes should be P.Cast()(x, mindspore.float16) or Cell with to_float(mindspore.float16/bfloat16)
     if not node.get_users():
         return False
+    all_nodes = [ms.rewrite.Node(n) for n in node.get_handler().get_node_manager().nodes()]
     for user in node.get_users():
+        # If ControlFlow node(if statement) exists between current node and user node,
+        # cast pair should not be removed.
+        middle_nodes = all_nodes[all_nodes.index(node): all_nodes.index(user)]
+        if any([n.get_node_type() == ms.rewrite.NodeType.ControlFlow for n in middle_nodes]):
+            return False
         if isinstance(user.get_instance(), nn.Cell):
             to_float_flag = "bf16" if dtype == mstype.bfloat16 else "fp16"
             if not (hasattr(user.get_instance(), to_float_flag) and getattr(user.get_instance(), to_float_flag)):
@@ -214,16 +231,29 @@ def _removed_cast_pair_process(stree, cast_f32_node):
     # remove cast f16 nodes
     for user_node in cast_f32_users:
         if user_node.get_instance_type() == P.Cast:
-            stree.erase(user_node)
+            cast_f16_node = user_node
+            # modify arguments using cast_f16's target[0] to cast_f32's args[0], which is f16 type
+            for cast_f16_user in cast_f16_node.get_users():
+                for idx, arg in enumerate(cast_f16_user.get_args()):
+                    if arg == cast_f16_node.get_targets()[0]:
+                        cast_f16_user.set_arg(idx, cast_f32_node.get_args()[0])
+            stree.erase(cast_f16_node)
+        # update args of cell f16 nodes
+        elif isinstance(user_node.get_instance(), nn.Cell):
+            cell_f16_node = user_node
+            for idx, arg in enumerate(cell_f16_node.get_args()):
+                if arg == cast_f32_node.get_targets()[0]:
+                    cell_f16_node.set_arg(idx, cast_f32_node.get_args()[0])
     # remove the cast f32 node
     stree.erase(cast_f32_node)
 
 
 def _remove_duplicated_cast(stree, dtype):
     """remove the duplicated cast operators."""
-    for node in stree.nodes():
-        if node.get_targets() is None:
-            continue
+    node_list = []
+    node_list.extend(list(stree.nodes()))
+    while node_list:
+        node = node_list.pop()
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
@@ -231,6 +261,10 @@ def _remove_duplicated_cast(stree, dtype):
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
             substree = ms.rewrite.TreeNodeHelper.get_sub_tree(node)
             _remove_duplicated_cast(substree, dtype)
+        elif node.get_node_type() in [ms.rewrite.NodeType.CallFunction, ms.rewrite.NodeType.ControlFlow]:
+            if isinstance(node.get_handler(), ms.rewrite.node.NodeManager):
+                nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
+                node_list.extend(nodes)
         elif _need_removed_cast_pair(node, dtype):
             _removed_cast_pair_process(stree, node)
 
