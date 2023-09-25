@@ -519,12 +519,11 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
     op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(abs_list);
   }
   UpdateOutputStubNodeAbs(op_run_info);
+  CreateInputAddressForViewOp(view_input_tensor, op_run_info, 0);
 
   for (size_t i = 0; i < storage_infos.size(); i++) {
     MS_LOG(INFO) << "View op " << op_run_info->base_op_run_info.op_name << ", i:" << i
                  << ", storage_info:" << storage_infos[i]->ToString();
-
-    CreateInputAddressForViewOp(view_input_tensor, op_run_info, i);
     CreateViewOutputTensor(op_run_info, view_input_tensor, storage_infos[i]);
   }
 
@@ -1094,7 +1093,9 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   if (check_view_device_address()) {
     return;
   }
-  backend_queue_->Wait();
+  if (input_tensor->address_future() == nullptr) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+  }
   if (check_view_device_address()) {
     return;
   }
