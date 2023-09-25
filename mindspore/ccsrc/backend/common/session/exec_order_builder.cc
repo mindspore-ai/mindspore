@@ -126,6 +126,7 @@ void ExecOrderBuilder::BuildLinkInfo() {
       MS_EXCEPTION_IF_NULL(input);
       (void)(*node_output_edges_)[input].emplace_back(node);
       if (IsTrivialNode(input)) {
+        GetTrivialInputNode(input, seen);
         continue;
       }
       if (!is_pynative_kernel_graph_) {
@@ -138,6 +139,20 @@ void ExecOrderBuilder::BuildLinkInfo() {
       }
       to_visit.emplace(input);
       input->seen_ = seen;
+    }
+  }
+}
+
+void ExecOrderBuilder::GetTrivialInputNode(const AnfNodePtr &node, SeenNum seen) {
+  if (!node->isa<CNode>()) {
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  for (auto &in : cnode->inputs()) {
+    (void)(*node_output_edges_)[in].emplace_back(node);
+    if (in->seen_ != seen && IsTrivialNode(in)) {
+      GetTrivialInputNode(in, seen);
+      in->seen_ = seen;
     }
   }
 }
