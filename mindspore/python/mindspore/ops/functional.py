@@ -20,6 +20,7 @@ from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.function.array_func import narrow, flatten
+from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P
 from mindspore.ops.operations import array_ops
 from mindspore.ops.primitive import Primitive
@@ -127,7 +128,7 @@ tensor_operator_registry.register('add', P.Add)
 tensor_operator_registry.register('addr', addr)
 tensor_operator_registry.register('addcdiv', P.Addcdiv)
 tensor_operator_registry.register('addcmul', P.Addcmul)
-tensor_operator_registry.register('all', P.ReduceAll)
+tensor_operator_registry.register('all', all)
 tensor_operator_registry.register('angle', angle)
 tensor_operator_registry.register('any', P.ReduceAny)
 tensor_operator_registry.register('atan2', atan2)
