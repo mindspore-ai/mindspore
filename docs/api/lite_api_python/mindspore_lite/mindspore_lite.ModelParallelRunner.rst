@@ -26,12 +26,13 @@ mindspore_lite.ModelParallelRunner
         返回：
             list[Tensor]，模型的输入Tensor列表。
 
-    .. py:method:: predict(inputs)
+    .. py:method:: predict(inputs, outputs=None)
 
         对模型并行Runner进行推理。
 
         参数：
             - **inputs** (list[Tensor]) - 包含所有输入Tensor的顺序列表。
+            - **outputs** (list[Tensor]) - 包含所有输出Tensor的顺序列表。
 
         返回：
             list[Tensor]，模型的输出Tensor列表。
