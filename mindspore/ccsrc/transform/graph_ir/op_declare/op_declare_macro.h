@@ -152,6 +152,10 @@
         auto p = std::static_pointer_cast<OpType>(op);                         \
         (void)p->create_dynamic_input_##name(num);                             \
       },                                                                       \
+      [](const OperatorPtr op, unsigned int num, size_t index) {               \
+        auto p = std::static_pointer_cast<OpType>(op);                         \
+        (void)p->create_dynamic_input_byindex_##name(num, index);              \
+      },                                                                       \
       [](const OperatorPtr op, unsigned int index, const OperatorPtr input) {  \
         auto p = std::static_pointer_cast<OpType>(op);                         \
         (void)p->set_dynamic_input_##name(index, *input);                      \

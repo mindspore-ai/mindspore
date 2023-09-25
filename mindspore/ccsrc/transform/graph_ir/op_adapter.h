@@ -77,7 +77,8 @@ class OpAdapterImpl {
   Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) const;
   Status SetNormalOpInput(const OperatorPtr &op, int index, const OutHandler &handle);
   int setInput(const OperatorPtr &op, int index, const OutHandler &handle);
-  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec);
+  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec,
+               bool use_create_byindex_func = false, size_t dyn_index = 0);
   OutHandler getOutput(const OperatorPtr &op, int index);
   std::vector<OutHandler> getOutputs(const OperatorPtr &op) const;
   OutHandler getCustomOutput(const OperatorPtr &op, int index) const;
@@ -309,8 +310,9 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->setInput(op, index, handle);
   }
 
-  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec) override {
-    return impl_->setInput(op, index, handler_vec);
+  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec,
+               bool use_create_byindex_func = false, size_t dyn_index = 0) override {
+    return impl_->setInput(op, index, handler_vec, use_create_byindex_func, dyn_index);
   }
 
   OutHandler getOutput(const OperatorPtr &op, int index) override { return impl_->getOutput(op, index); }

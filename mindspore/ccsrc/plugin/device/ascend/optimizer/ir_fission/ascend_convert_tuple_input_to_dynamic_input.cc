@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
@@ -43,8 +45,9 @@ const AnfNodePtr AscendConvertTupleInputToDynamicInput::Process(const FuncGraphP
   // pack_fission, addn_fission, and HandleControlFlow
 
   static const PrimitiveSet need_unfold_calculate_node = {
-    prim::kPrimAddN,  prim::kPrimConcatD, prim::kPrimPack,          prim::kPrimStack,
-    prim::kPrimPrint, prim::kPrimConcat,  prim::kPrimAccumulateNV2, prim::kPrimMeshgrid};
+    prim::kPrimAddN,          prim::kPrimConcatD,      prim::kPrimPack,          prim::kPrimStack,
+    prim::kPrimPrint,         prim::kPrimConcat,       prim::kPrimAccumulateNV2, prim::kPrimMeshgrid,
+    prim::kPrimTensorSummary, prim::kPrimDynamicStitch};
 
   static const PrimitiveSet need_unfold_control_node = {prim::kPrimSwitchLayer, prim::kPrimCall, prim::kPrimSwitch,
                                                         prim::kPrimCallInline};
