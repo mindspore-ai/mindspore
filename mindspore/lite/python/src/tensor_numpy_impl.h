@@ -40,8 +40,12 @@ class TensorNumpyImpl : public MutableTensorImpl {
       : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape) {}
   ~TensorNumpyImpl() {
     {
-      py::gil_scoped_acquire acquire;
-      { buffer_ = py::buffer_info(); }
+      if (PyGILState_Check() == 0) {
+        py::gil_scoped_acquire acquire;
+        { buffer_ = py::buffer_info(); }
+      } else {
+        buffer_ = py::buffer_info();
+      }
     }
     if (device_data_ != nullptr) {
       MS_LOG(INFO) << "free device data in tensor numpy impl.";
