@@ -31,7 +31,7 @@ class MemoryManagerStub : public MemoryManager {
 
   size_t GetAvailableMemSize() override { return kDeviceMemSize; }
 
-  void *MallocMemFromMemPool(size_t mem_size, bool useless = false) override {
+  void *MallocMemFromMemPool(size_t mem_size, bool useless = false, bool another_useless = false) override {
     if (device_virtual_count_ >= kDeviceMemSize) {
       return nullptr;
     }

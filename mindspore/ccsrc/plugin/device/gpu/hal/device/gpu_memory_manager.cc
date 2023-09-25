@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool) {
   return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem);
 }
 

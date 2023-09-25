@@ -46,6 +46,15 @@ size_t AscendMemAdapter::GetRoundUpAlignSize(size_t input_size) {
   return ((input_size + kAscendMemAlignSize - 1) / kAscendMemAlignSize) * kAscendMemAlignSize;
 }
 
+bool AscendMemAdapter::IsMemoryPoolRecycle() {
+  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
+  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto runtime_num_threads = static_cast<size_t>(context_ptr->get_param<uint32_t>(MS_CTX_RUNTIME_NUM_THREADS));
+  return memory_pool_recycle == "1" && runtime_num_threads == 1 && common::IsEnableRefMode();
+}
+
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
     return true;
@@ -111,6 +120,7 @@ bool AscendMemAdapter::Initialize() {
   static_mem_offset_ = ms_used_hbm_size_;
   cur_dynamic_mem_offset_ = 0;
   max_dynamic_mem_offset_ = 0;
+  history_max_dynamic_mem_offset_ = 0;
   MS_LOG(INFO) << "Ascend Memory Adapter initialize success, Memory Statistics:" << DevMemStatistics();
   initialized_ = true;
   return true;
@@ -136,6 +146,7 @@ bool AscendMemAdapter::DeInitialize() {
 
     cur_dynamic_mem_offset_ = 0;
     max_dynamic_mem_offset_ = 0;
+    history_max_dynamic_mem_offset_ = 0;
     dynamic_memory_block_list_.clear();
 
     static_mem_offset_ = 0;
@@ -180,12 +191,20 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   auto memory_block_ptr = device_mem_base_addr_ + cur_dynamic_mem_offset_;
   cur_dynamic_mem_offset_ = new_dynamic_offset;
   max_dynamic_mem_offset_ = std::max(cur_dynamic_mem_offset_, max_dynamic_mem_offset_);
+  history_max_dynamic_mem_offset_ = std::max(max_dynamic_mem_offset_, history_max_dynamic_mem_offset_);
   dynamic_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
 
   return memory_block_ptr;
 }
 
-void AscendMemAdapter::ResetDynamicMemory() { cur_dynamic_mem_offset_ = 0; }
+uint8_t *AscendMemAdapter::GetBaseAddr() const { return device_mem_base_addr_; }
+
+void AscendMemAdapter::ResetDynamicMemory() {
+  cur_dynamic_mem_offset_ = 0;
+  if (IsMemoryPoolRecycle()) {
+    max_dynamic_mem_offset_ = 0;
+  }
+}
 
 std::string AscendMemAdapter::DevMemStatistics() const {
   std::ostringstream oss;
@@ -193,7 +212,10 @@ std::string AscendMemAdapter::DevMemStatistics() const {
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
   oss << "\nMindSpore memory base address: " << reinterpret_cast<void *>(device_mem_base_addr_);
   oss << "\nTotal Static Memory size: " << (ms_used_hbm_size_ - static_mem_offset_) / kMBToByte << "M";
-  oss << "\nTotal Dynamic memory size: " << max_dynamic_mem_offset_ / kMBToByte << "M";
+  oss << "\nTotal Dynamic memory size: " << history_max_dynamic_mem_offset_ / kMBToByte << "M";
+  if (IsMemoryPoolRecycle()) {
+    oss << "\nActual peak memory usage: " << actual_peak_memory_ / kMBToByte << "M";
+  }
   oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
   oss << std::endl;
   return oss.str();
