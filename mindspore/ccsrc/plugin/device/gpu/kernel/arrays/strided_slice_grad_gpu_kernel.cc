@@ -77,6 +77,9 @@ int StridedSliceGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 template <typename T, typename S = int64_t>
 bool StridedSliceGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                 const std::vector<AddressPtr> &outputs) {
+  if (IsEmptyInput(inputs[0]->size)) {
+    return true;
+  }
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *dx = GetDeviceAddress<T>(outputs, 0);
   auto status = FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(cuda_stream_));
