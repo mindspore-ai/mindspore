@@ -90,6 +90,9 @@ class _MathBinaryOp(_BinaryOp):
         """Staticmethod of infer dtype for _MathBinaryOp."""
         args_type = {"x": x_dtype, "y": y_dtype}
         complex_types = [mstype.TensorType(mstype.complex64), mstype.TensorType(mstype.complex128)]
+        if (not isinstance(x_dtype, type(mstype.tensor_type))) or \
+           (not isinstance(y_dtype, type(mstype.tensor_type))):
+            raise TypeError('Only Tensor type support Complex')
         if x_dtype in complex_types or y_dtype in complex_types:
             type_infer_dict = {
                 (mstype.complex64, mstype.complex64): mstype.TensorType(mstype.complex64),
