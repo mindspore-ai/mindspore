@@ -1462,11 +1462,10 @@ size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index, size_t data_dims
   size_t specified_dimensions = std::count_if(new_tuple_index.begin(), new_tuple_index.end(), [](auto const &obj) {
     return (obj != Py_None && obj != Py_Ellipsis && obj != Py_True && obj != Py_False);
   });
-  constexpr size_t min_data_dim = 1;
   constexpr size_t max_data_dim = 8;
-  if (data_dims < min_data_dim) {
-    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [" << min_data_dim << ", " << max_data_dim
-                             << "], but got '" << data_dims << "'.";
+  if (data_dims > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [0, " << max_data_dim << "], but got '"
+                             << data_dims << "'.";
   }
   if (specified_dimensions > data_dims) {
     MS_EXCEPTION(IndexError) << "too many indices for tensor of dimension" << data_dims;
