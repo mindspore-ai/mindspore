@@ -28,7 +28,8 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
                       << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
                       << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
-                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
+                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                      << " origin ref count:" << input_data->data_->original_ref_count();
   }
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
@@ -38,6 +39,7 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run
                 << ", sequential num:" << sequential_num << ", the input data:" << input_data->data_
                 << " input index:" << input_data->index_ << ", size:" << input_data->data_->GetSize()
+                << " ptr:" << input_data->data_->GetMutablePtr()
                 << ", origin ref count:" << input_data->data_->original_ref_count()
                 << ", current ref count:" << input_data->data_->ref_count()
                 << ", dynamic ref count:" << input_data->data_->dynamic_ref_count()

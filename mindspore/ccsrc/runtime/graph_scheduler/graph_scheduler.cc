@@ -2572,7 +2572,8 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
         auto kernel_actor = dynamic_cast<KernelActor *>(auto_monad_actor);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         from_kernel = kernel_actor->kernel().get();
-      } else if (auto_monad_actor->type() == KernelTransformType::kSuperKernelActor) {
+      } else if (auto_monad_actor->type() == KernelTransformType::kSuperKernelActor ||
+                 auto_monad_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
         auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(auto_monad_actor);
         MS_EXCEPTION_IF_NULL(super_kernel_actor);
         from_graph = super_kernel_actor->graph();
