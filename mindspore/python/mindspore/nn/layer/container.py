@@ -45,7 +45,7 @@ def _valid_index_for_inserting(cell_num, index, op_name=None):
     if not -cell_num <= index <= cell_num:
         raise IndexError(f"{msg_prefix} value of 'index' must be a number in range [{-cell_num}, {cell_num}], "
                          f"but got {index}.")
-    return index % cell_num if cell_num != 0 else index
+    return index % cell_num if (cell_num != 0 and index != cell_num) else index
 
 
 def _valid_cell(cell, op_name=None):
@@ -458,6 +458,9 @@ class CellList(_CellListBase, Cell):
                             f"should be instance of list, but got {type(cells).__name__}.")
         prefix, _ = _get_prefix_and_index(self._cells)
         for cell in cells:
+            if isinstance(cell, CellDict):
+                raise TypeError(f"For '{cls_name}', the type of cell can not be CellDict, "
+                                f"but got {type(cell).__name__}.")
             if _valid_cell(cell, cls_name):
                 if self._auto_prefix:
                     cell.update_parameters_name(prefix + str(len(self)) + ".")
