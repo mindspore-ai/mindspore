@@ -198,8 +198,8 @@ bool MatrixDiagV3CpuKernelMod::DoLaunch(const std::vector<kernel::KernelTensor *
   auto *output_data = static_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_data);
   int64_t elem = 0;
-  size_t num_element = static_cast<size_t>(outputs[0]->size / sizeof(T));
-  size_t input_num_element = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  size_t num_element = static_cast<size_t>(outputs[0]->size() / sizeof(T));
+  size_t input_num_element = static_cast<size_t>(inputs[0]->size() / sizeof(T));
   if (static_cast<size_t>(num_batches_ * num_rows_ * num_cols_) > num_element) {
     MS_LOG(ERROR) << "For MatrixDiagV3, output buffer size is smaller than expected.";
     return false;

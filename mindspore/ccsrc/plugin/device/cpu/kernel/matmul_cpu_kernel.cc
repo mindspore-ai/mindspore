@@ -110,8 +110,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator
      []() { return std::make_shared<MatmulDoubleCpuKernelFunc>(); }}}}};
 
 template <typename T>
-void LaunchEmptyTensor(const std::vector<AddressPtr> &outputs) {
-  auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+void LaunchEmptyTensor(const std::vector<KernelTensor *> &outputs) {
+  auto output = reinterpret_cast<T *>(outputs[kIndex0]->device_ptr());
   output[kIndex0] = 0;
 }
 

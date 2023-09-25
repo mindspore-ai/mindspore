@@ -606,57 +606,6 @@ void AscendSession::BindAddressToTensor(
   }
 }
 
-void AscendSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                              std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                              const std::vector<int64_t> &tensors_mask) {
-  RunOpImplOrigin(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
-}
-
-void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
-                                    std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                                    const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  ProcessInputTensorsForHeterogeneous("Ascend", *input_tensors);
-  const auto &graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
-  EraseValueNodeTensor(tensors_mask, input_tensors);
-
-  // wait for allreduce
-  for (auto &tensor : *input_tensors) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->NeedWaitDevice()) {
-      tensor->WaitDevice();
-    }
-  }
-
-  // malloc mem
-  RunOpRemoveNopNode(graph);
-  RunOpMemoryAlloc(*input_tensors, graph, op_run_info->is_gradient_out);
-  RunOpGenKernelEvent(graph.get());
-  AnfAlgo::CacheAddrForGraph(graph);
-
-  // load input data to device
-  LoadInputData(graph, *input_tensors);
-  // run op
-  Execute(graph, false);
-  // get output
-  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
-  UpdateOutputs(graph, outputs, *input_tensors, &tensor_to_node);
-  RunOpMemoryClear(graph.get());
-}
-
-KernelGraphPtr AscendSession::PreBuildOp(const BackendOpRunInfoPtr &op_run_info,
-                                         const std::vector<tensor::TensorPtr> &input_tensors,
-                                         const std::vector<int64_t> &tensors_mask) {
-  // Construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask, true);
-  MS_EXCEPTION_IF_NULL(graph);
-  opt::RunOpAscendBackendIRFusionOptimization(graph);
-  SelectKernel(graph);
-  RunOpHardwareOptimize(graph);
-  runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);
-  return graph;
-}
-
 void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
                                           const std::vector<tensor::TensorPtr> &graph_inputs,
                                           const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
