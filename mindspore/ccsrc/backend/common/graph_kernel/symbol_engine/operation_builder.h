@@ -46,6 +46,7 @@ class SymbolCache {
 
   void InitInputs(const AnfNodePtrList &parameters);
   bool UpdateInputs(const AbstractBasePtrList &inputs);
+  const HashMap<AnfNodePtr, size_t> &GetInputIndex() const { return input_index_; }
 
   /// \brief bind nodes in cache. after that, queries with `ref_node` will get the result of `real_node`.
   void BindNode(const AnfNodePtr &ref_node, const AnfNodePtr &real_node) { node_binder_[ref_node] = real_node; }

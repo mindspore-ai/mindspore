@@ -16,11 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SET_INFERSHAPE_FUNCTOR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SET_INFERSHAPE_FUNCTOR_H_
 #include <string>
+#include <vector>
 
 #include "ir/func_graph.h"
 #include "ir/functor.h"
 #include "include/backend/visible.h"
 #include "include/backend/optimizer/pass.h"
+#include "backend/common/graph_kernel/symbol_engine/jit/cpp_visitor.h"
 
 namespace mindspore::graphkernel {
 class SymbolEngineInfer : public InferShapeFunctor {
@@ -29,6 +31,28 @@ class SymbolEngineInfer : public InferShapeFunctor {
   ~SymbolEngineInfer() override = default;
   MS_DECLARE_PARENT(SymbolEngineInfer, InferShapeFunctor)
   BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) override;
+};
+
+class SymbolEngineJitInfer : public InferShapeFunctor {
+ public:
+  explicit SymbolEngineJitInfer(const std::string &name, const std::string &func_name,
+                                const symbol::CppVisitorPtr &cpp_visitor, const symbol::SymbolPtr &output_symbol)
+      : InferShapeFunctor(name), func_name_(func_name), cpp_visitor_(cpp_visitor), output_symbol_(output_symbol) {
+    Init(output_symbol);
+  }
+  MS_DECLARE_PARENT(SymbolEngineJitInfer, InferShapeFunctor)
+  BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) override;
+
+ protected:
+  void Init(const symbol::SymbolPtr &output_symbol);
+
+ private:
+  std::string func_name_;
+  symbol::CppVisitorPtr cpp_visitor_;
+  symbol::SymbolPtr output_symbol_;
+  symbol::CppVisitor::DynFuncType infer_func_ = nullptr;
+  std::vector<int64_t *> output_parm_;
+  ShapeArray out_shapes_;
 };
 
 class SetInferShapeFunctor : public opt::Pass {

@@ -38,28 +38,13 @@ class SymbolVisitor {
   virtual void Visit(ListSymbol *symbol) {}
   virtual void Visit(IListSymbol *symbol) {}
 
-  void Visit(ops::Operation *op);
+  virtual void Visit(ops::Operation *op) { VisitInputs(op); }
 
   inline void VisitInputs(ops::Operation *op) {
     for (auto &s : op->inputs()) {
       Visit(s.get());
     }
   }
-  virtual void Visit(ops::ScalarAdd *op) { VisitInputs(op); }
-  virtual void Visit(ops::ScalarSub *op) { VisitInputs(op); }
-  virtual void Visit(ops::ScalarMul *op) { VisitInputs(op); }
-  virtual void Visit(ops::ScalarDiv *op) { VisitInputs(op); }
-  virtual void Visit(ops::ScalarMin *op) { VisitInputs(op); }
-  virtual void Visit(ops::ScalarMax *op) { VisitInputs(op); }
-
-  virtual void Visit(ops::infershape::RealShape *op) { VisitInputs(op); }
-  virtual void Visit(ops::infershape::BinElemwise *op) { VisitInputs(op); }
-  virtual void Visit(ops::infershape::Reduce *op) { VisitInputs(op); }
-  virtual void Visit(ops::infershape::Reshape *op) { VisitInputs(op); }
-  virtual void Visit(ops::infershape::Transpose *op) { VisitInputs(op); }
-  virtual void Visit(ops::infershape::MatMul *op) { VisitInputs(op); }
-
-  virtual void Visit(ops::infervalue::RealValue *op) { VisitInputs(op); }
 };
 }  // namespace mindspore::graphkernel::symbol
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_SYMBOL_ENGINE_SYMBOL_VISITOR_H_

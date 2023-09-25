@@ -65,6 +65,8 @@ class SymbolEngineImpl : public SymbolEngine {
   std::string ToString() const override { return name_; }
   void Dump() const;
 
+  const SymbolCache &cache() const { return cache_; }
+
  protected:
   // build subgraph's symbol engine that can refer to maingraph's info.
   void BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine);
