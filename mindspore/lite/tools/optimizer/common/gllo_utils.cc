@@ -1082,12 +1082,16 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
   MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
   ops::Cast cast_node;
   auto new_cast_c = cast_node.GetPrim();
-  TypePtr dst_type_ptr = TypeIdToType(dst_type);
-  new_cast_c->AddAttr(ops::kDstType, dst_type_ptr);
   if (new_cast_c == nullptr) {
     MS_LOG(ERROR) << "new_cast_c is nullptr";
     return nullptr;
   }
+  TypePtr dst_type_ptr = TypeIdToType(dst_type);
+  if (dst_type_ptr == nullptr) {
+    MS_LOG(ERROR) << "dst_type_ptr is nullptr";
+    return nullptr;
+  }
+  new_cast_c->AddAttr(ops::kDstType, dst_type_ptr);
   ValueNodePtr value_node = NewValueNode(new_cast_c);
   if (value_node == nullptr) {
     MS_LOG(ERROR) << "NewValueNode Failed";
