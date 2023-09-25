@@ -1657,8 +1657,8 @@ bool DfGraphConvertor::IsConstantOp(const OperatorPtr &op) const {
 }
 
 void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas) {
-  MS_LOG(WARNING) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
-                  << ConfigManager::GetInstance().dataset_mode();
+  MS_LOG(INFO) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
+               << ConfigManager::GetInstance().dataset_mode();
   AddInputInDataSink(inputs);
   auto params = anf_graph_->parameters();
   MS_LOG(INFO) << "Parameters size " << params.size();
