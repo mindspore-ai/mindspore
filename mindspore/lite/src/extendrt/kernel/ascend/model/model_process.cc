@@ -974,8 +974,10 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs)
         input_buffer = device_data->addr;
       } else {
         // memcpy device data from src device to current device.
-        if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
-              device_data->addr, info.device_data, info.buffer_size, input_device_id, device_id_) != kSuccess) {
+        auto data_copy_size = inputs[i]->GetSizeInBytes();
+        if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(device_data->addr, info.device_data,
+                                                                        data_copy_size, info.buffer_size,
+                                                                        input_device_id, device_id_) != kSuccess) {
           MS_LOG(ERROR) << "Copy input data from device to current device failed.";
           return false;
         }
@@ -1293,9 +1295,9 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
       }
     } else if (output_device_id != device_id_) {
       // memcpy output data from current device to output device.
-      if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(output_info.cur_device_data,
-                                                                      output->GetData()->addr, output_info.buffer_size,
-                                                                      device_id_, output_device_id) != kSuccess) {
+      if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
+            output_info.cur_device_data, output->GetData()->addr, output->GetSizeInBytes(), output_info.buffer_size,
+            device_id_, output_device_id) != kSuccess) {
         MS_LOG(ERROR) << "Copy output data from device to current device failed.";
         return false;
       }

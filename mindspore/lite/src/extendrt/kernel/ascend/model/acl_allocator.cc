@@ -164,11 +164,11 @@ Status AclAllocator::CopyHostDataToDevice(void *host_data, void *device_data, si
   return kSuccess;
 }
 
-Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_device_data, size_t data_size,
-                                            int src_device_id, int dst_device_id) {
+Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_device_data, size_t src_data_size,
+                                            size_t dst_data_size, int src_device_id, int dst_device_id) {
   MS_LOG(INFO) << "src device id: " << src_device_id << ", dst device id: " << dst_device_id;
   MS_LOG(DEBUG) << "src device addr: " << src_device_data << ", dst device addr: " << dst_device_data
-                << ", with size: " << data_size;
+                << ", with src size: " << src_data_size << ", and dst size: " << dst_data_size;
   if (dst_device_id == -1 || src_device_id == -1) {
     MS_LOG(ERROR) << "device data copy device data, need set src device id and dst device id, now src device id: "
                   << src_device_id << ", dst device id: " << dst_device_id;
@@ -180,8 +180,12 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
                   << ", dst device id: " << dst_device_id << ", device count: " << device_count;
     return kLiteError;
   }
+  if (src_data_size > dst_data_size) {
+    MS_LOG(ERROR) << "src data_size: " << src_data_size << " cannot be greater than dst data_size: " << dst_data_size;
+    return kLiteError;
+  }
   if (src_device_id == dst_device_id) {
-    auto ret = aclrtMemcpy(dst_device_data, data_size, src_device_data, data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
+    auto ret = aclrtMemcpy(dst_device_data, dst_data_size, src_device_data, src_data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtMemcpy failed.";
       return kLiteError;
@@ -223,7 +227,7 @@ Status AclAllocator::CopyDeviceDataToDevice(void *src_device_data, void *dst_dev
     MS_LOG(ERROR) << "aclrtDeviceEnablePeerAccess failed.";
     return kLiteError;
   }
-  ret = aclrtMemcpy(dst_device_data, data_size, src_device_data, data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
+  ret = aclrtMemcpy(dst_device_data, dst_data_size, src_device_data, src_data_size, ACL_MEMCPY_DEVICE_TO_DEVICE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtMemcpy failed.";
     return kLiteError;

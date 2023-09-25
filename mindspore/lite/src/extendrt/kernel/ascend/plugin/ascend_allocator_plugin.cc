@@ -195,8 +195,8 @@ Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host
   return kSuccess;
 }
 
-Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size,
-                                                     int src_device_id, int dst_device_id) {
+Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t src_data_size,
+                                                     size_t dst_data_size, int src_device_id, int dst_device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -213,8 +213,8 @@ Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst
   if (ascend_allocator_plugin_impl_ == nullptr) {
     return kLiteMemoryFailed;
   }
-  return ascend_allocator_plugin_impl_->CopyDeviceDataToDevice(src_device, dst_device, data_size, src_device_id,
-                                                               dst_device_id);
+  return ascend_allocator_plugin_impl_->CopyDeviceDataToDevice(src_device, dst_device, src_data_size, dst_data_size,
+                                                               src_device_id, dst_device_id);
 #endif
   return kSuccess;
 }
