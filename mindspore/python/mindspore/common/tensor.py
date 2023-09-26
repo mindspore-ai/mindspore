@@ -1214,7 +1214,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             if len(shape) != 1:
                 raise ValueError(f"Only one tuple is needed, but got {shape}")
             shape = shape[0]
-        return tensor_operator_registry.get('reshape')()(self, shape)
+        return tensor_operator_registry.get('reshape')(self, shape)
 
     def view_as(self, other):
         r"""
@@ -1810,7 +1810,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         new_shape = validator.check_reshape_shp(shape)
-        return tensor_operator_registry.get('reshape')()(self, new_shape)
+        return tensor_operator_registry.get('reshape')(self, new_shape)
 
     def reshape_as(self, other):
         """
@@ -1838,7 +1838,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
              [ 0.5 -3.2]]
         """
         self._init_check()
-        return tensor_operator_registry.get('reshape')()(self, other.shape)
+        return tensor_operator_registry.get('reshape')(self, other.shape)
 
     def ravel(self):
         """
@@ -1864,7 +1864,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             (24,)
         """
         self._init_check()
-        reshape_op = tensor_operator_registry.get('reshape')()
+        reshape_op = tensor_operator_registry.get('reshape')
         return reshape_op(self, (-1,))
 
     def round(self):
@@ -3798,7 +3798,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.tile`.
         """
-        return tensor_operator_registry.get('tile')()(self, reps)
+        return tensor_operator_registry.get('tile')(self, reps)
 
     def topk(self, k, dim=None, largest=True, sorted=True):
         r"""
