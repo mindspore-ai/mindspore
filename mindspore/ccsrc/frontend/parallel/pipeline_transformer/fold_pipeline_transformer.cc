@@ -44,6 +44,9 @@
 
 namespace mindspore {
 namespace parallel {
+mindspore::HashMap<int64_t, int64_t> fold_send_tag_map;
+mindspore::HashMap<int64_t, int64_t> fold_recv_tag_map;
+
 void FoldPipelineTransformer::CreateForwardGroup2() {
   auto rank_id = g_device_manager->global_rank();
   auto stage_id = g_device_manager->stage_id();
@@ -195,20 +198,20 @@ SendAttr FoldPipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_
   int64_t send_tag;
   auto stage_num = g_device_manager->stage_num();
   if (node_stage == 0 && user_node_stage > 1 && stage_num > 2) {
-    if (recv_tag_map_.find(dest_rank) != recv_tag_map_.end()) {
-      send_tag = recv_tag_map_[dest_rank] + 1;
-      recv_tag_map_[dest_rank] += 1;
+    if (fold_recv_tag_map.find(dest_rank) != fold_recv_tag_map.end()) {
+      send_tag = fold_recv_tag_map[dest_rank] + 1;
+      fold_recv_tag_map[dest_rank] += 1;
     } else {
       send_tag = 0;
-      recv_tag_map_[dest_rank] = 0;
+      fold_recv_tag_map[dest_rank] = 0;
     }
   } else {
-    if (send_tag_map_.find(dest_rank) != send_tag_map_.end()) {
-      send_tag = send_tag_map_[dest_rank] + 1;
-      send_tag_map_[dest_rank] += 1;
+    if (fold_send_tag_map.find(dest_rank) != fold_send_tag_map.end()) {
+      send_tag = fold_send_tag_map[dest_rank] + 1;
+      fold_send_tag_map[dest_rank] += 1;
     } else {
       send_tag = 0;
-      send_tag_map_[dest_rank] = 0;
+      fold_send_tag_map[dest_rank] = 0;
     }
   }
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
@@ -279,20 +282,20 @@ int64_t FoldPipelineTransformer::ComputeRecvTag(int64_t node_stage, int64_t user
                                                 int64_t src_rank) {
   int64_t recv_tag;
   if (node_stage == 0 && user_node_stage > 1 && stage_num > 2) {
-    if (send_tag_map_.find(src_rank) != send_tag_map_.end()) {
-      recv_tag = send_tag_map_[src_rank] + 1;
-      send_tag_map_[src_rank] += 1;
+    if (fold_send_tag_map.find(src_rank) != fold_send_tag_map.end()) {
+      recv_tag = fold_send_tag_map[src_rank] + 1;
+      fold_send_tag_map[src_rank] += 1;
     } else {
       recv_tag = 0;
-      send_tag_map_[src_rank] = 0;
+      fold_send_tag_map[src_rank] = 0;
     }
   } else {
-    if (recv_tag_map_.find(src_rank) != recv_tag_map_.end()) {
-      recv_tag = recv_tag_map_[src_rank] + 1;
-      recv_tag_map_[src_rank] += 1;
+    if (fold_recv_tag_map.find(src_rank) != fold_recv_tag_map.end()) {
+      recv_tag = fold_recv_tag_map[src_rank] + 1;
+      fold_recv_tag_map[src_rank] += 1;
     } else {
       recv_tag = 0;
-      recv_tag_map_[src_rank] = 0;
+      fold_recv_tag_map[src_rank] = 0;
     }
   }
   return recv_tag;
@@ -668,8 +671,8 @@ void FoldPipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map_.clear();
-  recv_tag_map_.clear();
+  fold_send_tag_map.clear();
+  fold_recv_tag_map.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }
