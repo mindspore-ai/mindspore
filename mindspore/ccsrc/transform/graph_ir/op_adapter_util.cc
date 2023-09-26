@@ -402,7 +402,7 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
   auto io_format_map = IOFormatMap::get();
   auto iter = io_format_map.find(prim->name());
   if (iter == io_format_map.end()) {
-    return "NCHW";
+    return kOpFormat_DEFAULT;
   }
   if (iter->second == "format") {
     ValuePtr format = prim->GetAttr("format");
