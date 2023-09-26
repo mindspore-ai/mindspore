@@ -5,7 +5,7 @@ mindspore.dataset.vision.Rescale
 
     基于给定的缩放和平移因子调整图像的像素大小。输出图像的像素大小为：output = image * rescale + shift。
 
-    .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
+    .. note:: 此操作默认通过 CPU 执行，也支持异构加速到 GPU 或 Ascend 上执行。
 
     参数：
         - **rescale** (float) - 缩放因子。

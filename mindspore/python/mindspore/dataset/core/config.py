@@ -104,19 +104,21 @@ def _init_device_info():
 
 def set_seed(seed):
     """
-    Set the seed so the random generated number will be fixed for deterministic results.
+    Set the seed for the random number generator in data pipeline.
+
+    The seed can be set to control the initial state of the random generator
+    for the purpose of fixing the result of random number generation.
 
     Note:
-        This set_seed function sets the seed in the Python random library and numpy.random library
-        for deterministic Python augmentations using randomness. This set_seed function should
-        be called when iterator is created to reset the random seed.
+        This interface will set the random seed of the `random`, `numpy.random`
+        and `mindspore.dataset` modules to the specified value at the same time.
 
     Args:
-        seed(int): Random number seed. It is used to generate deterministic random numbers.
+        seed (int): The desired seed. Must be non-negative.
 
     Raises:
-        TypeError: If `seed` isn't of type int.
-        ValueError: If `seed` < 0 or `seed` > UINT32_MAX(4294967295).
+        TypeError: If `seed` is not of type int.
+        ValueError: If `seed` is a negative value.
 
     Examples:
         >>> # Set a new global configuration value for the seed value.
@@ -647,18 +649,20 @@ def get_enable_shared_mem():
 
 def set_enable_shared_mem(enable):
     """
-    Set the default state of shared memory flag. If set to ``True``, will use shared memory queues
-    to pass data to processes that are created for operations that set `python_multiprocessing` to ``True``.
-    It is enabled by default.
+    Set whether to use shared memory for interprocess communication when data processing multiprocessing is turned on.
+
+    Using shared memory can speed up the efficiency of data transfer between processes.
+
+    Shared memory is used by default.
 
     Note:
-        `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
+        Windows and MacOS systems are not supported yet.
 
     Args:
-        enable (bool): Whether to use shared memory in operations when `python_multiprocessing` is ``True``.
+        enable (bool): Whether to use shared memory for interprocess communication.
 
     Raises:
-        TypeError: If `enable` is not a boolean data type.
+        TypeError: If `enable` is not of type bool.
 
     Examples:
         >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
@@ -978,10 +982,10 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
 def get_debug_mode():
     """
-    Get the debug_mode flag of the dataset pipeline, it is set to False by default.
+    Get whether debug mode is currently enabled for the data pipeline.
 
     Returns:
-        bool, whether dataset pipeline debug mode is enabled
+        bool, whether data pipeline debug mode is enabled.
 
     Examples:
         >>> import mindspore.dataset as ds

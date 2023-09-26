@@ -1,16 +1,18 @@
 mindspore.dataset.config.set_seed
-==================================
+=================================
 
 .. py:function:: mindspore.dataset.config.set_seed(seed)
 
-    设置随机种子，产生固定的随机数来达到确定的结果。
+    设置数据处理中的随机数生成器的种子。
+
+    设置种子能够控制随机生成器的初始状态，起到固定随机数生成结果的目的。
 
     .. note::
-        此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。
+        该接口将同时设置 `random` 、 `numpy.random` 和 `mindspore.dataset` 模块的随机种子为指定值。
 
     参数：
-        - **seed** (int) - 表示随机数量的种子。该参数用于生成确定性随机数。
+        - **seed** (int) - 想要设置的种子值。需为非负数。
 
     异常：
-        - **TypeError** - `seed` 不是int类型。
-        - **ValueError** - `seed` 小于0或 `seed` 大于 `UINT32_MAX(4294967295)` 时， `seed` 无效。
+        - **TypeError** - 当 `seed` 不为int类型。
+        - **ValueError** - 当 `seed` 为负数。
