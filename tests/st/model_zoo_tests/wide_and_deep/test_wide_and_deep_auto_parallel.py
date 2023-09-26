@@ -16,9 +16,10 @@ import os
 import pytest
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_wide_and_deep():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
