@@ -374,7 +374,7 @@ class _MindsporeFunctionExecutor:
 
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
-        generate_name = self._get_generate_name()
+        generate_name, echo_function_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
         create_time = ''
@@ -414,7 +414,7 @@ class _MindsporeFunctionExecutor:
         if phase in ms_compile_cache:
             return phase
 
-        self._check_recompile(full_function_name, create_time)
+        self._check_recompile(full_function_name, create_time, echo_function_name)
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -446,7 +446,7 @@ class _MindsporeFunctionExecutor:
 
         return phase
 
-    def _check_recompile(self, full_function_name, create_time):
+    def _check_recompile(self, full_function_name, create_time, echo_function_name):
         """Warning when the function has been compiled."""
         ignore_dirs = ["mindspore/ops", "mindspore/nn"]
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
@@ -457,11 +457,11 @@ class _MindsporeFunctionExecutor:
             if len(function_phases[full_function_name]) >= warning_times \
                     and create_time not in function_phases[full_function_name]:
                 tips = "Try to decorate the function with @jit(hash_args=...) " \
-                       "or @jit(compile_once=True). " \
+                       "or @jit(compile_once=True) to reduce the compile time. " \
                        "For more details, get instructions about `jit` at " \
                        "https://www.mindspore.cn/search?inputValue=jit."
 
-                logger.warning(f"The function '{full_function_name}' has been compiled again. "
+                logger.warning(f"The {echo_function_name} has been compiled again. "
                                f"{tips} ")
         else:
             function_phases[full_function_name] = set()
@@ -494,13 +494,15 @@ class _MindsporeFunctionExecutor:
 
     def _get_generate_name(self):
         """get generate name."""
-        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + str(
+            self.fn.__code__.co_firstlineno)
+        echo_function_name = "function \"" + self.fn.__name__ + "\" at the file \"" + self.fn.__code__.co_filename \
+                             + "\", line " + str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
-        return generate_name
+        return generate_name, echo_function_name
 
 
     def _set_compile_cache_dep_files(self):
