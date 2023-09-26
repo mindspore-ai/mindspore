@@ -90,7 +90,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 #endif
   auto converter = transform::NewConverter(anf_graph);
   std::string net_id = "0";
-  std::string checkpoint_name = "save." + net_id;
+  std::string checkpoint_name = "save_" + net_id;
   std::string compute_graph_name = anf_graph->ToString();
   auto option = options_.lock();
   if (option != nullptr && !option->GetDumpModelName().empty()) {
@@ -109,7 +109,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
   }
   (void)transform::AddGraph(anf_graph->ToString(), transform::GetComputeGraph(converter));
   if (!common::IsEnableRefMode()) {
-    std::string init_graph = "init_subgraph." + net_id;
+    std::string init_graph = "init_subgraph_" + net_id;
     (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   }
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));

@@ -119,7 +119,7 @@ void GetInputTensor(const FuncGraphPtr &anf_graph, const pybind11::dict &init_pa
 void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, const pybind11::dict &init_params) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::RunOptions run_options;
-  run_options.name = "init_subgraph." + anf_graph->ToString();
+  run_options.name = "init_subgraph_" + anf_graph->ToString();
 
   auto graph_runner = transform::CheckAndGetGraphRunner(run_options);
   if (graph_runner == nullptr) {
