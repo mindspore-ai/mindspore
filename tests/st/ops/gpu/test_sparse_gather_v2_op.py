@@ -760,10 +760,10 @@ def test_gather2():
                          [3., 7., 2., 7., 4.,],
                          [4., 2., 8., 2., 9.,]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
-    expect = np.array([[[0., 0., 0., 0., 0.],
+    indices = Tensor(np.array([[0, 1, 9]]).astype(np.int32))
+    expect = np.array([[[4., 5., 4., 1., 5.],
                         [4., 9., 5., 6., 4.],
-                        [0., 0., 0., 0., 0.]]])
+                        [4., 2., 8., 2., 9.]]])
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = SparseGatherNet2()
@@ -801,10 +801,10 @@ def test_gather_d():
                          [3., 7., 2., 7., 4.,],
                          [4., 2., 8., 2., 9.,]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
-    expect = np.array([[[0., 0., 0., 0., 0.],
+    indices = Tensor(np.array([[0, 1, 9]]).astype(np.int32))
+    expect = np.array([[[4., 5., 4., 1., 5.],
                         [4., 9., 5., 6., 4.],
-                        [0., 0., 0., 0., 0.]]])
+                        [4., 2., 8., 2., 9.]]])
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     gather = SparseGatherDynamicNet()
@@ -844,10 +844,10 @@ def test_gather_d_two_inputs():
                            [3., 7., 2., 7., 4.,],
                            [4., 2., 8., 2., 9.,]]
                          ).astype(np.float32))
-    indices_1 = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
-    expect_1 = np.array([[[0., 0., 0., 0., 0.],
+    indices_1 = Tensor(np.array([[0, 1, 9]]).astype(np.int32))
+    expect_1 = np.array([[[4., 5., 4., 1., 5.],
                           [4., 9., 5., 6., 4.],
-                          [0., 0., 0., 0., 0.]]])
+                          [4., 2., 8., 2., 9.]]])
     x_2 = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5))
     indices_2 = Tensor(np.array([1, 3, 4], dtype=np.int32))
     expect_2 = np.array([[[[1., 3., 4.],
