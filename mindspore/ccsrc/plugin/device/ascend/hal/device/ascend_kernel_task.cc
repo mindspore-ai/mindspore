@@ -267,7 +267,9 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
 bool LaunchAsyncCopy(const AddressAndStorageInfoPtr &src_addr_info, const AddressAndStorageInfoPtr &dst_addr_info,
                      const size_t &copy_size, const device::DeviceContext *device_context, void *stream_ptr) {
   MS_LOG(DEBUG) << "Start";
-
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
   MS_EXCEPTION_IF_NULL(src_addr_info);
   MS_EXCEPTION_IF_NULL(dst_addr_info);
   auto src_addr = MallocMemoryForDeviceAddress(src_addr_info->addr, device_context);
