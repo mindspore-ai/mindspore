@@ -521,7 +521,8 @@ def _convert_cell_param_and_names_to_dict(save_obj, choice_func):
         not_sliced = not param.sliced
         is_graph_mode = context.get_context('mode') == context.GRAPH_MODE
         # All parameters are initialized immediately under PyNative mode, skip this judgement.
-        if is_graph_mode and _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
+        judgment = not_sliced or param.has_init
+        if is_graph_mode and _is_in_auto_parallel_mode() and judgment:
             continue
         if choice_func is not None and not choice_func(param.name):
             continue
