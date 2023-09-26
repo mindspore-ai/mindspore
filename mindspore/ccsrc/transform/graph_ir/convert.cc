@@ -1706,7 +1706,6 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector
       } else {
         MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
       }
-      UpdateConstOpDesc(it, vars_[name]);
       inputs->push_back(*op);
       input_datas->push_back(op);
     }
@@ -3329,7 +3328,20 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto fusion_value = primitive->GetAttr("fusion");
-  auto fusion = GetValue<int64_t>(fusion_value);
+  if (fusion_value == nullptr) {
+    MS_LOG(WARNING) << "Failed to get attr fusion for gather node " << node->fullname_with_scope();
+    return;
+  }
+  int64_t fusion = 0;
+  if (fusion_value->isa<Int64Imm>()) {
+    fusion = GetValue<int64_t>(fusion_value);
+  } else if (fusion_value->isa<Int32Imm>()) {
+    fusion = GetValue<int32_t>(fusion_value);
+  } else {
+    MS_LOG(WARNING) << "Attr fusion is not int64/int32 type, real type " << fusion_value->type_name()
+                    << ", gather node " << node->fullname_with_scope();
+    return;
+  }
   int64_t fusion_id = -1;
 
   // fusion 0: no fusion; 1(default): fusion; 2: fusion the ops by fusion id.
