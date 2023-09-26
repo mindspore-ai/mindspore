@@ -222,12 +222,14 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
     }
   }
   ge_options["ge.exec.device_id"] = std::to_string(GetDeviceID());
-  if (!offline_mode_) {
-    ge_options["ge.featureBaseRefreshable"] = "1";
-  } else {
-    ge_options["ge.featureBaseRefreshable"] = "0";
+  if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
+    if (!offline_mode_) {
+      ge_options["ge.featureBaseRefreshable"] = "1";
+    } else {
+      ge_options["ge.featureBaseRefreshable"] = "0";
+    }
+    ge_options["ge.constLifecycle"] = "graph";
   }
-  ge_options["ge.constLifecycle"] = "graph";
 
   config_it = config_infos_.find(lite::kAscendContextSection);
   if (config_it != config_infos_.end()) {
