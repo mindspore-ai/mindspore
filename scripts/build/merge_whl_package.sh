@@ -53,6 +53,7 @@ do
   # dataset library "mindspore/_c_dataengine.*.so" with 910b dvpp which is biggest should be used
   file_size_src=`du ./$i/mindspore/_c_dataengine.*.so | awk '{print $1;}'`
   file_size_dst=`du $BASE_PACKAGE_UNZIP_DIR/mindspore/_c_dataengine.*.so | awk '{print $1;}'`
+  echo "_c_dataengine.*.so, file_size_src: ${file_size_src}, file_size_dst: ${file_size_dst}"
   if [ $file_size_src -gt $file_size_dst ]; then
     \cp -rf ./$i/mindspore/_c_dataengine.*.so $BASE_PACKAGE_UNZIP_DIR/mindspore/
   fi;
