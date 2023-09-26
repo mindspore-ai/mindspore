@@ -149,6 +149,9 @@ int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 
   auto shape_signed = outputs.at(kIndex0)->GetShapeVector();
   auto output_shape = Convert2SizeTClipNeg(shape_signed);
+  if (output_shape.size() <= 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output.shape is empty.";
+  }
   if (!IsValidShape(shape_signed)) {
     ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
     output_size_list_.push_back(input_type_size_);
