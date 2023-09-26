@@ -159,7 +159,7 @@ void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 
   transform::RunOptions run_options;
-  run_options.name = "init_subgraph." + anf_graph->ToString();
+  run_options.name = "init_subgraph_" + anf_graph->ToString();
 
   auto graph_runner = transform::CheckAndGetGraphRunner(run_options);
   if (graph_runner == nullptr) {
@@ -1197,7 +1197,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
 
 void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
   transform::RunOptions run_options;
-  run_options.name = "init_subgraph." + graph_name;
+  run_options.name = "init_subgraph_" + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {
     MS_LOG(WARNING) << "Can not find " << run_options.name
                     << " sub graph, don't need data init subgraph in INFER mode.";
