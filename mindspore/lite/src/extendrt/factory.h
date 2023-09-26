@@ -57,6 +57,10 @@ class Factory {
     for (auto &item : creators_) {
       MS_EXCEPTION_IF_NULL(item);
       auto val = item();
+      if (val == nullptr) {
+        MS_LOG(ERROR) << "creator nullptr!device type:" << device_type;
+        return nullptr;
+      }
       if (val->CheckDeviceSupport(device_type)) {
         return val;
       }

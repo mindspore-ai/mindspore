@@ -208,6 +208,9 @@ std::vector<kernel::KernelTensorPtr> CloudTensorUtils::LiteTensorToKernelTensorP
   std::vector<kernel::KernelTensorPtr> kernel_tensor_list;
 
   for (auto lite_tensor : lite_tensors) {
+    if (lite_tensor == nullptr) {
+      continue;
+    }
     auto kernel_tensor_ptr = LiteTensorToKernelTensorPtr(lite_tensor);
     kernel_tensor_list.push_back(kernel_tensor_ptr);
   }
