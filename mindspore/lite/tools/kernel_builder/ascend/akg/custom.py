@@ -385,7 +385,7 @@ class Reduce(OpInfer):
             ori_shape, cur_shape = self.input_desc[0]["ori_shape"], self.input_desc[0]["shape"]
             ori_rank = len(ori_shape)
             rank = len(cur_shape)
-            axis = self._get_axis(rank)
+            axis = self._get_axis(ori_rank)
             new_axis = []
             for i in axis:
                 if i == ori_rank - 1:
