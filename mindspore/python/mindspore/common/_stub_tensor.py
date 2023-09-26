@@ -144,6 +144,8 @@ class StubTensor:
     slice_num_of_persistent_data = _stub_method(Tensor.slice_num_of_persistent_data)
     slice_shape_of_persistent_data = _stub_method(Tensor.slice_shape_of_persistent_data)
     flush_from_cache = _stub_method(Tensor.flush_from_cache)
+    contiguous = _stub_method(Tensor.contiguous)
+    is_contiguous = _stub_method(Tensor.is_contiguous)
 
     def stub_sync(self):
         """sync real tensor."""

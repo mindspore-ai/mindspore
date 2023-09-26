@@ -749,8 +749,8 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Set contiguous callback function to this Tensor
   ///
   /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
-  void set_contiguous_callback(
-    const std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> &contiguous_callback) {
+  void set_contiguous_callback(const std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &,
+                                                                 const TensorStorageInfoPtr &)> &contiguous_callback) {
     contiguous_callback_ = contiguous_callback;
   }
 
@@ -877,6 +877,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief unpin tensor memory.
   void UnPinMemory();
 
+  /// \brief Convert tensor into contiguous memory.
+  void contiguous();
+
+  /// \brief Determines whether the memory of tensor is contiguous.
+  ///
+  /// \return True if tensor memory is contiguous, false otherwise.
+  bool is_contiguous();
+
  private:
   void ExecuteLazyTask() const;
 
@@ -901,7 +909,8 @@ class MS_CORE_API Tensor : public MetaTensor {
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
-  std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> contiguous_callback_{nullptr};
+  std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &, const TensorStorageInfoPtr &)>
+    contiguous_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
   AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};

@@ -1165,13 +1165,13 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
                                                                    const TensorStorageInfoPtr &storage_info) {
   MS_EXCEPTION_IF_NULL(device_address);
   // Gil might be release  by ACL, so release here to reduce conflict
-  GilReleaseWithCheck release_gil;
   auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device_address);
   MS_EXCEPTION_IF_NULL(device_addr);
   if (storage_info == nullptr) {
     return device_addr;
   }
 
+  GilReleaseWithCheck release_gil;
   const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   // as_numpy sync promise contiguous run_sync
@@ -1198,10 +1198,20 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   auto output_tensor = std::make_shared<tensor::Tensor>(input_tensor->data_type(), storage_info->shape);
   output_tensor->set_storage_info(storage_info);
   output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-  output_tensor->set_contiguous_callback(
-    [this](const DeviceSyncPtr &device_address, const TensorStorageInfoPtr &storage_info) {
-      return TensorContiguousCallback(device_address, storage_info);
-    });
+  output_tensor->set_contiguous_callback([this](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
+                                                const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
+    if (tensor != nullptr) {
+      frontend_queue_->Wait();
+      backend_queue_->Wait();
+
+      auto new_addr = TensorContiguousCallback(tensor->device_address(), tensor->storage_info());
+      tensor->set_device_address(new_addr);
+      tensor->set_storage_info(nullptr);
+
+      return nullptr;
+    }
+    return TensorContiguousCallback(device_address, storage_info);
+  });
 
   if (input_tensor->address_future() != nullptr) {
     output_tensor->set_address_future(input_tensor->address_future());
