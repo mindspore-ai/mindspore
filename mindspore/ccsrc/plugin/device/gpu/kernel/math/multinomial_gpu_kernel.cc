@@ -54,6 +54,9 @@ int MultinomialGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   auto input_shape_0 = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
+  if (input_shape_0.size() <= 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input0.shape is empty.";
+  }
   if (input_shape_0.size() == 1) {
     distributions_ = 1;
     categories_ = input_shape_0[0];
