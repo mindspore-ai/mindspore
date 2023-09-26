@@ -187,6 +187,35 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_indices_out_of_range(func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for ScatterNd* like functions with invalid indices
+    Expectation: raise RuntimeError
+    """
+    inputx = Tensor(np.zeros((4, 4, 4)), data_type)
+    indices = Tensor(np.array([[0], [4]]), index_type)
+    updates = Tensor(
+        np.array(
+            [
+                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+            ]
+        ),
+        data_type,
+    )
+
+    with pytest.raises(RuntimeError):
+        _ = TestScatterNdFuncNet(func, inputx, indices, updates)()
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
