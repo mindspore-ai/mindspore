@@ -336,10 +336,7 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
 
 void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
                              const GradParamPtr &grad_param) const {
-  {
-    py::gil_scoped_release gil_release;
-    grad_executor->bprop_queue()->Wait();
-  }
+  grad_executor->WaitBpropTask();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for jit cnode";
