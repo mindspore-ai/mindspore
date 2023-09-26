@@ -46,6 +46,8 @@ using mindspore::kernel::KernelTensor;
 const size_t kDeviceContextsNumOne = 1;
 const size_t kDeviceContextsNumTwo = 2;
 
+constexpr auto kAttrNotSupportOpForDevice = "not_support_op_for_device";
+constexpr auto kAttrGraphSplitGroup = "graph_split_group";
 struct DeviceContextKey {
   // device type name, such as 'GPU' 'Ascend' 'CPU'.
   std::string device_name_;
