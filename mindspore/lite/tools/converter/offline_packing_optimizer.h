@@ -40,7 +40,7 @@ enum class BackendType : uint8_t {
 class PackDataWrapper {
  public:
   static PackDataWrapper &GetInstance() {
-    static PackDataWrapper instance;
+    static PackDataWrapper instance{};
     return instance;
   }
 
@@ -61,8 +61,6 @@ class PackDataWrapper {
  private:
   PackDataWrapper() = default;
   ~PackDataWrapper() = default;
-
- private:
   std::map<std::string, const kernel::LiteKernel *> pack_mapping_;
 };
 

@@ -589,6 +589,7 @@ int LiteSession::CompileGraph(Model *model) {
   ret = lite::PackWeightManager::GetInstance()->StoreOriginTensorData(model, &tensors_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StoreOriginTensorData failed.";
+    is_running_.store(false);
     return RET_ERROR;
   }
   InitGraphInputTensors(model);
@@ -1152,6 +1153,7 @@ int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
 
   if (!PlatformInstructionSetSupportCheck()) {
     MS_LOG(ERROR) << "Device not support isa";
+    is_running_.store(false);
     return RET_NOT_SUPPORT;
   }
 
@@ -1171,6 +1173,7 @@ int LiteSession::Init(const std::shared_ptr<InnerContext> &context) {
   ret = AscendInit(context);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Open Ascend kernel plugin failed";
+    is_running_.store(false);
     return ret;
   }
 
