@@ -42,15 +42,15 @@ DatasetIteratorKernelMod::DatasetIteratorKernelMod()
 
 DatasetIteratorKernelMod::~DatasetIteratorKernelMod() { DataQueueMgr::GetInstance().Close(queue_name_); }
 
-bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
-  dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
+bool DatasetIteratorKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    dynamic_shape_ |= IsDynamic(outputs[i]->GetShapeVector());
+  }
+  queue_name_ = GetValue<std::string>(primitive_->GetAttr("shared_name"));
   std::vector<std::vector<int>> shapes;
   std::vector<TypePtr> type_ptrs;
-  GetShapeAndType(kernel_node, &shapes, &type_ptrs);
+  GetShapeAndType(primitive_, &shapes, &type_ptrs);
   for (auto item : type_ptrs) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -85,13 +85,10 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
 int DatasetIteratorKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   if (dynamic_shape_) {
-    auto data_kernel = kernel_node_.lock();
-    device::UpdateGetNextNode(data_kernel);
+    device::UpdateGetNextNode(primitive_, inputs, outputs, &output_size_list_);
   }
-  return KernelErrorCode::KRET_OK;
+  return KRET_OK;
 }
-
-void DatasetIteratorKernelMod::InitSizeLists() { return; }
 
 const uint32_t log_interval_step = 30;  // log info in each 30s when getnext timeout
 
@@ -177,25 +174,27 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<KernelTensor *> &, const
     void *output_addr = GetDeviceAddress<void>(outputs, i);
     auto device_addr = output_data_[i].device_addr;
     auto data_len = output_data_[i].data_len;
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(output_addr, device_addr, data_len, cudaMemcpyDeviceToDevice,
-                                               reinterpret_cast<cudaStream_t>(stream)),
-                               "Cuda Memcpy Failed");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_addr, device_addr, data_len, cudaMemcpyDeviceToDevice,
+                                                       reinterpret_cast<cudaStream_t>(stream)),
+                                       "Cuda Memcpy Failed");
   }
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream)),
-                             "cudaStreamSynchronize failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream)),
+                                     "cudaStreamSynchronize failed");
   (void)DataQueueMgr::GetInstance().Pop(queue_name_);
   return true;
 }
 
-void DatasetIteratorKernelMod::SyncOutputShape() {
+void DatasetIteratorKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   std::vector<ShapeVector> shapes;
   size_t idx = 0;
   for (const auto &item : output_data_) {
     ShapeVector shape;
     std::transform(item.shapes.begin(), item.shapes.end(), std::back_inserter(shape), LongToSize);
     shapes.push_back(shape);
-    outputs_[idx++]->SetShapeVector(shape);
+    outputs[idx]->SetShapeVector(shape);
+    outputs[idx]->set_size(output_size_list_[idx]);
+    ++idx;
   }
 }
 }  // namespace kernel

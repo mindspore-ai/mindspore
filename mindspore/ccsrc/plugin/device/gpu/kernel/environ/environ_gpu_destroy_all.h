@@ -23,17 +23,14 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironDestroyAllGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class EnvironDestroyAllGpuKernelMod : public NativeGpuKernelMod {
  public:
   EnvironDestroyAllGpuKernelMod() = default;
   ~EnvironDestroyAllGpuKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel_node) override;
-
- protected:
-  void InitSizeLists() override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 };
 
 MS_REG_GPU_KERNEL(EnvironDestroyAll, EnvironDestroyAllGpuKernelMod)

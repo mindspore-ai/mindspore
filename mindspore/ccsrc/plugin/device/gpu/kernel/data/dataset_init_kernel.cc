@@ -27,13 +27,15 @@ using mindspore::device::DataQueueMgr;
 
 DatasetInitKernelMod::DatasetInitKernelMod() : total_bytes_(0) {}
 
-bool DatasetInitKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
-  queue_name_ = GetAttr<std::string>(kernel_node, "queue_name");
+int DatasetInitKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  queue_name_ = GetValue<std::string>(primitive_->GetAttr("queue_name"));
   std::vector<std::vector<int>> shapes;
   std::vector<TypePtr> types;
-  GetShapeAndType(kernel_node, &shapes, &types);
+  GetShapeAndType(primitive_, &shapes, &types);
   for (auto item : types) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -44,10 +46,8 @@ bool DatasetInitKernelMod::Init(const CNodePtr &kernel_node) {
     shapes_.push_back(bytes);
     total_bytes_ += bytes;
   }
-  return true;
+  return KRET_OK;
 }
-
-void DatasetInitKernelMod::InitSizeLists() { return; }
 
 bool DatasetInitKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
                                   const std::vector<KernelTensor *> &, void *) {

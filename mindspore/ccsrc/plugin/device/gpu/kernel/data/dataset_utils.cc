@@ -34,12 +34,13 @@ int ElementNums(const std::vector<int> &shape) {
   return nums;
 }
 
-void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> *shapes, std::vector<TypePtr> *types) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+void GetShapeAndType(const PrimitivePtr &primitive, std::vector<std::vector<int>> *shapes,
+                     std::vector<TypePtr> *types) {
+  MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(shapes);
   MS_EXCEPTION_IF_NULL(types);
   std::vector<std::vector<int64_t>> shapes_me;
-  shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+  shapes_me = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("shapes"));
   (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(*shapes),
                        [](const std::vector<int64_t> &values) {
                          std::vector<int> shape;
@@ -52,7 +53,7 @@ void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> 
                          return shape;
                        });
 
-  *types = common::AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
+  *types = GetValue<std::vector<TypePtr>>(primitive->GetAttr("types"));
   if (shapes->size() != types->size()) {
     MS_LOG(EXCEPTION) << "Invalid shapes: " << *shapes << ", types: " << *types;
   }

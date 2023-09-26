@@ -19,21 +19,18 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironDestroyAllGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_node_ = kernel_node;
+bool EnvironDestroyAllGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   // Check the output type.
-  auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  auto output_type = outputs[kIndex0]->dtype_id();
   if (output_type != TypeId::kNumberTypeBool) {
     MS_LOG(ERROR) << "The output type is invalid: " << output_type;
     return false;
   }
 
-  InitSizeLists();
+  output_size_list_.push_back(sizeof(bool));
   return true;
 }
-
-void EnvironDestroyAllGpuKernelMod::InitSizeLists() { output_size_list_.push_back(sizeof(bool)); }
 
 bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
                                            const std::vector<KernelTensor *> &, void *) {
