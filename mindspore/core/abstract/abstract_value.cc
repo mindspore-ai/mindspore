@@ -880,8 +880,14 @@ AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &ot
   auto this_sequence_nodes_size = (this->sequence_nodes() == nullptr ? 0 : this->sequence_nodes()->size());
   auto other_sequence_nodes_size =
     (other_sequence->sequence_nodes() == nullptr ? 0 : other_sequence->sequence_nodes()->size());
-  if (this_sequence_nodes_size == 0 || other_sequence_nodes_size == 0) {
+  // The tuple or list output which has sequence_nodes may be joined with a tuple output node like top_k,
+  // we should return the branch which has sequence_nodes.
+  if (this_sequence_nodes_size == 0 && other_sequence_nodes_size == 0) {
     return sequence_nodes;
+  } else if (this_sequence_nodes_size == 0) {
+    return *(other_sequence->sequence_nodes());
+  } else if (other_sequence_nodes_size == 0) {
+    return *(this->sequence_nodes());
   }
   // Collect this and other sequence nodes.
   if (this->sequence_nodes() != nullptr) {
