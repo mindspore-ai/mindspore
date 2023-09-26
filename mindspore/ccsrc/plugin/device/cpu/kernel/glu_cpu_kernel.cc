@@ -26,10 +26,14 @@ constexpr const size_t kGLUInputsNum = 1;
 constexpr const size_t kGLUOutputsNum = 1;
 constexpr const int64_t kParallelDataNum = 16 * 1024;
 const int64_t kEvenNum = 2;
+const int64_t kZero = 0;
 }  // namespace
 
 template <typename T>
 bool GLUCpuKernelMod::SplitWithDimZero(T *input_data_ptr, T *output_data_ptr) {
+  if (value_shape_vec_[0] == kZero) {
+    return true;
+  }
   int64_t copy_num = shape_value_ / value_shape_vec_[0];
   T *input_copy_ptr = input_data_ptr;
   if (value_shape_vec_[0] % kEvenNum != 0) {
