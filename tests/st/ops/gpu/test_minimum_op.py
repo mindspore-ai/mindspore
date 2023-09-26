@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -236,3 +236,25 @@ def test_broadcast_int32():
     output1_np = np.where(x1_np < x2_np, 0, dy_np)
     assert np.allclose(output_ms[0].asnumpy(), output0_np)
     assert np.allclose(output_ms[1].asnumpy(), output1_np)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_minimum_grad_with_same_input():
+    """
+    Feature: test minimumgrad on GPU
+    Description: test the minimumgrad with same input.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = Grad(MinimumNet())
+    output = net(Tensor(x_np), Tensor(y_np), Tensor(dout))
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([0.5, -0.5, 0.])
+    expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
