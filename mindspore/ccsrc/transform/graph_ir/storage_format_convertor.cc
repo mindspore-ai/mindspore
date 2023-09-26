@@ -43,7 +43,7 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   while (!anf_queue.empty()) {
     auto queue_front = anf_queue.front();
     anf_queue.pop();
-    if (AnfUtils::IsRealKernel(queue_front.first)) {
+    if (AnfUtils::IsRealKernel(queue_front.first) && common::AnfAlgo::GetCNodeName(queue_front.first) != kCastOpName) {
       res.push_back(queue_front);
       continue;
     }
