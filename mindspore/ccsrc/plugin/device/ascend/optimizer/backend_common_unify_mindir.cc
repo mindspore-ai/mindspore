@@ -22,6 +22,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
@@ -70,6 +71,8 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AdamWeightDecayFission>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<CdistFission>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<CdistGradFission>());
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

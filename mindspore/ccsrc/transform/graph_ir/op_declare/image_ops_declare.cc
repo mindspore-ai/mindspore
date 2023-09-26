@@ -17,8 +17,8 @@
 #include "transform/graph_ir/op_declare/image_ops_declare.h"
 #include <string>
 #include <vector>
-#include "ops/image_ops.h"
 #include "ops/ascend_op_name.h"
+#include "ops/image_ops.h"
 
 namespace mindspore::transform {
 // ResizeNearestNeighborV2
@@ -86,12 +86,13 @@ OUTPUT_MAP(Resize) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Resize, kNameResize, ADPT_DESC(Resize))
 
 // CropAndResize
-INPUT_MAP(CropAndResize) = {
-  {1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};
-ATTR_MAP(CropAndResize) = {{"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
-                           {"method", ATTR_DESC(method, AnyTraits<std::string>())}};
-OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResize))
+INPUT_MAP(CropAndResizeD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}};
+INPUT_ATTR_MAP(CropAndResizeD) = {{4, ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(CropAndResizeD) = {{"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
+                            {"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                            {"crop_size", ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(CropAndResizeD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResizeD))
 
 // DecodeImage
 INPUT_MAP(DecodeImage) = {{1, INPUT_DESC(contents)}};
