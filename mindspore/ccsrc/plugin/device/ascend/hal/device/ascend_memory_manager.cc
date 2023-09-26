@@ -45,9 +45,10 @@ uint64_t AscendMemoryManager::GetMsMaxMemSize() const { return AscendMemAdapter:
 
 uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
 
-void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle) {
   auto align_size = GetCommonAlignSize(size);
-  const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem);
+  const auto device_addr =
+    AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle);
   return device_addr;
 }
 
@@ -59,6 +60,8 @@ void *AscendMemoryManager::MallocOverflowMemFromMemFromMemPool(size_t size, bool
 void AscendMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   AscendMemoryPool::GetInstance().FreeTensorMem(device_ptr);
 }
+
+size_t AscendMemoryManager::GetMaxUsedMemorySize() const { return AscendMemoryPool::GetInstance().GetMaxUsedMemSize(); }
 
 uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) {
   size_t align_size = 0;

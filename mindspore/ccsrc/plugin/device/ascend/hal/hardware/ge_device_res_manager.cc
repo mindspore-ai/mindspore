@@ -64,9 +64,42 @@ void GeDeviceResManager::Destroy() {
   }
 }
 
+bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
+  if (device_name_in_address != device_context_->device_context_key().device_name_) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
+                      << ", type name in context:" << device_context_->device_context_key().device_name_;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
+  }
+
+  if (runtime_instance_ != nullptr) {
+    runtime_instance_->SetContext();
+  }
+  void *device_ptr =
+    mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), address->need_recycle());
+  if (!device_ptr) {
+    return false;
+  }
+
+  address->set_ptr(device_ptr);
+  address->set_from_mem_pool(true);
+  return true;
+}
+
 void *GeDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->MallocMemFromMemPool(size, false);
+}
+
+size_t GeDeviceResManager::GetMaxUsedMemorySize() const {
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  return mem_manager_->GetMaxUsedMemorySize();
 }
 
 void GeDeviceResManager::FreeMemory(void *ptr) const {
@@ -186,6 +219,14 @@ bool GeDeviceResManager::SyncStream(size_t stream_id) const {
     return false;
   }
   return AscendStreamMng::GetInstance().SyncStream(stream_id);
+}
+
+bool GeDeviceResManager::SyncAllStreams() const {
+  if (runtime_instance_ == nullptr) {
+    return true;
+  }
+  runtime_instance_->SetContext();
+  return AscendStreamMng::GetInstance().SyncAllStreams();
 }
 }  // namespace ascend
 }  // namespace device

@@ -131,7 +131,7 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr &address, size_t
   return true;
 }
 
-void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
+void *MemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool) {
   if (size == 0) {
     MS_LOG(ERROR) << "MallocMemFromMemPool size is 0.";
   }

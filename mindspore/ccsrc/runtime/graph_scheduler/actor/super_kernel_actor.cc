@@ -247,6 +247,8 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     } else if (common::IsNeedProfileMemory()) {
       auto memory_size = device_contexts_[0]->graph_executor_->GetGraphFeatureMemory(graph_);
       MS_LOG(WARNING) << "Need Profile Memory, graph: " << graph_->ToString() << ", feature memory: " << memory_size;
+      MS_LOG(WARNING) << "Need Profile Memory, max used static memory: "
+                      << device_contexts_[0]->device_res_manager_->GetMaxUsedMemorySize();
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();

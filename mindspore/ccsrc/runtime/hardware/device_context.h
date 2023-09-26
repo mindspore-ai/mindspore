@@ -154,6 +154,7 @@ class BACKEND_EXPORT DeviceResManager {
   // Relevant function to allocate and free device memory of DeviceAddress.
   virtual bool AllocateMemory(DeviceAddress *const &address) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
+  virtual size_t GetMaxUsedMemorySize() const { return 0; }
 
   // Allocate host memory with raii and ref count
   virtual std::shared_ptr<void> AllocateHostMemory(size_t size) const {

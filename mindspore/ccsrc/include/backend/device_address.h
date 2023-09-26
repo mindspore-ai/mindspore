@@ -170,6 +170,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   const ShapeVector &device_shape() const { return device_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
+  bool need_recycle() const { return need_recycle_; }
+  void set_need_recycle(bool need_recycle) { need_recycle_ = need_recycle; }
   virtual bool mem_offloaded() const { return false; }
   void set_status(DeviceAddressStatus status) { status_ = status; }
   DeviceAddressStatus status() const { return status_; }
@@ -330,6 +332,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
+  bool need_recycle_{false};
 
   // The device address flag.
   size_t flag_{0};
