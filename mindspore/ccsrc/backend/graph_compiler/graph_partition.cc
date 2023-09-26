@@ -759,7 +759,8 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
 
 namespace {
 bool IsAnyTypeCut(const AnfNodePtr &node) {
-  return common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute) && common::AnfAlgo::IsAnyTypeOutput(node);
+  return common::GetEnv("MS_RUNTIME_COMPILE") != "1" &&
+         common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute) && common::AnfAlgo::IsAnyTypeOutput(node);
 }
 
 void ProcessNodeToSegments(const std::string &cur_flag, const std::string &flag, std::vector<AnfNodePtr> *segment_nodes,

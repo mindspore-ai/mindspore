@@ -1691,7 +1691,7 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
 std::string AnfAlgo::GetGraphSplitGroup(const AnfNodePtr &node) {
   return HasNodeAttr(kAttrGraphSplitGroup, node->cast<CNodePtr>())
            ? GetNodeAttr<std::string>(node->cast<CNodePtr>(), kAttrGraphSplitGroup)
-           : kDefaultGroup;
+           : "DefaultGroup";
 }
 
 void AnfAlgo::GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *used_kernels,
