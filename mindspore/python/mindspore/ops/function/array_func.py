@@ -839,7 +839,7 @@ def chunk(input, chunks, axis=0):
     Cut the input Tensor into `chunks` sub-tensors along the specified axis.
 
     Note:
-        This function may return less then the specified number of chunks!
+        This function may return less than the specified number of chunks!
 
     Args:
         input (Tensor): A Tensor to be cut.
