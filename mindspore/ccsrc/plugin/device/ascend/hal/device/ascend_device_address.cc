@@ -22,6 +22,7 @@
 #include <algorithm>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
@@ -42,6 +43,7 @@
 #include "debug/tensor_load.h"
 #endif
 
+namespace py = pybind11;
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -397,8 +399,8 @@ std::shared_ptr<LaunchTransData> AscendDeviceAddress::CreateLaunchTransData(cons
   if (format_ == kOpFormat_FRAC_Z) {
     groups = GetGroupsWithCache();
   }
-  auto launch_trans_data = std::make_shared<LaunchTransData>(stream, static_cast<uint8_t *>(ptr_), type_id_, size_,
-                                                             ori_format, dst_format, host_shape, groups);
+  auto launch_trans_data =
+    std::make_shared<LaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape, groups);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
@@ -414,12 +416,15 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   // launch transdata
+  GilReleaseWithCheck release_gil;
+  launch_transdata_->SetInputAddr(ptr_);
   launch_transdata_->LaunchOpKernel();
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
     launch_transdata_->FreeDeviceMem();
-    MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
+    MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output, actual output size: "
+                      << output_addr_vec.size();
   }
   if (type_id_ == type) {
     SyncMemory(host_ptr, output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -432,12 +437,10 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
       launch_transdata_->FreeDeviceMem();
-      launch_transdata_ = nullptr;
       return false;
     }
   }
   launch_transdata_->FreeDeviceMem();
-  launch_transdata_ = nullptr;
   return sync_ok;
 }
 
