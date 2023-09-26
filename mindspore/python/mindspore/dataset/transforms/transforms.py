@@ -341,6 +341,14 @@ class Compose(CompoundOperation):
         """
         return util.compose(self.transforms, *args)
 
+    def __call__(self, *args):
+        '''
+        If PY op exists in self.transforms, should use _execute_py to keep the output types unchanged.
+        '''
+        if any([t.implementation == Implementation.PY for t in self.transforms]):
+            self.implementation = Implementation.PY
+        return super().__call__(*args)
+
 
 class Concatenate(TensorOperation):
     """

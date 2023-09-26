@@ -17,6 +17,7 @@ Test Compose op in Dataset
 """
 import numpy as np
 import pytest
+from PIL import Image
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
@@ -326,6 +327,32 @@ def test_compose_with_custom_function():
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         res.append(i["col0"].tolist())
     assert res == [[[3, 6], [9, 36]]]
+
+
+def test_compose_mix_ctrans_pytrans():
+    """
+    Feature: Compose op
+    Description: Test Python Compose op mix with c transforms and py transforms
+    Expectation: No error occurred
+    """
+    transform_img = transforms.Compose([
+        vision.RandomCropDecodeResize(size=(255, 255), scale=(0.2, 1.0)),
+        transforms.RandomApply([vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1)], prob=0.8),
+        vision.ToPIL(),
+        vision.RandomGrayscale(prob=0.2),
+    ])
+
+    dataset = ds.ImageFolderDataset("../data/dataset/testPK/data/", shuffle=False, num_samples=2)
+    dataset = dataset.map(transform_img)
+
+    # pipeline mode
+    for _ in dataset:
+        pass
+
+    # eager mode
+    img = np.fromfile("../data/dataset/testPK/data/class1/0.jpg", np.uint8)
+    img = transform_img(img)[0]
+    assert isinstance(img, Image.Image)
 
 
 if __name__ == "__main__":
