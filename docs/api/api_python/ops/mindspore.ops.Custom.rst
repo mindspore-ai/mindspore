@@ -8,7 +8,8 @@ mindspore.ops.Custom
     关于自定义算子的详细说明和介绍，包括参数的正确书写，见 `自定义算子教程 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html>`_ 。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 这是一个实验性API，后续可能修改或删除。
+        - 当前自定义算子功能不支持Ascend 910B。
 
     .. note::
         不同自定义算子的函数类型（func_type）支持的平台类型不同。每种类型支持的平台如下：
