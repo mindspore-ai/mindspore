@@ -87,7 +87,7 @@ def test_net():
 def test_max_tensor_grad_with_same_input():
     """
     Feature: test maxinum grad on ascend
-    Description: test minimumgrad with same input.
+    Description: test maximumgrad with same input.
     Expectation: result match to torch result.
     """
     inputA_np = np.array([1.8, 5.6, 9.3]).astype(np.float32)
