@@ -163,31 +163,7 @@ const std::vector<std::pair<KernelAttr, ScatterPtrCreatorFunc>> kernel_attr = {
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeUInt64)
      .AddOutputAttr(kNumberTypeUInt64),
-   CreateScatterKernelPtr<uint64_t, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   CreateScatterKernelPtr<Complex<float>, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex64)
-     .AddOutputAttr(kNumberTypeComplex64),
-   CreateScatterKernelPtr<Complex<float>, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   CreateScatterKernelPtr<Complex<double>, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeComplex128)
-     .AddOutputAttr(kNumberTypeComplex128),
-   CreateScatterKernelPtr<Complex<double>, int64_t>}};
+   CreateScatterKernelPtr<uint64_t, int64_t>}};
 }  // namespace
 
 bool ScatterGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
