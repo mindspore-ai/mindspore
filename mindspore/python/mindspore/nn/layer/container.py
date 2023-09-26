@@ -327,8 +327,9 @@ class CellList(_CellListBase, Cell):
     Holds Cells in a list. For more details about Cell, please refer to
     `Cell <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_.
 
-    CellList can be used like a regular Python list, the Cells it contains have been initialized. Unlike the
-    SequentialCell, the cells in CellList are not connected.
+    CellList can be used like a regular Python list, the Cells it contains have been initialized and
+    the types of Cells it contains can not be CellDict.
+    Unlike the SequentialCell, the cells in CellList are not connected.
 
     Args:
         args (list, optional): List of subclass of Cell.
@@ -447,7 +448,7 @@ class CellList(_CellListBase, Cell):
         Appends Cells from a Python iterable to the end of the list.
 
         Args:
-            cells(list): The Cells to be extended.
+            cells(list): The Cells to be extended, the types of Cells can not be CellDict.
 
         Raises:
             TypeError: If the argument cells are not a list of Cells.
@@ -523,9 +524,9 @@ class CellDict(_CellDictBase, Cell):
     `CellDict` can be used like a regular Python dictionary.
 
     Args:
-        args (iterable, optional): An iterable of key-value pairs of (key, cell), or a mapping(dictionary) from string
-                                   to Cell. The type of key-value pairs is (string, Cell).
-                                   The type of cell can not be CellDict, CellList or SequentialCell.
+        args (iterable, optional): An iterable of key-value pairs of (key, Cell), the type of key-value pairs is
+                                   (string, Cell); Or a mapping(dictionary) from string to Cell.
+                                   The type of Cell can not be CellDict, CellList or SequentialCell.
                                    The key can not be same with the attributes of class Cell, can not contain '.',
                                    can not be an empty string.
                                    The key of type string is used to search corresponding Cell in the CellDict.
@@ -688,9 +689,9 @@ class CellDict(_CellDictBase, Cell):
         Update the CellDict by overwriting the existing keys with the key-value pairs from a mapping or an iterable.
 
         Args:
-            cells (iterable): An iterable of key-value pairs of (key, cell),
-                              or a mapping(dictionary) from string to Cell. The type of key-value pairs is
-                              (string, Cell).The type of cell can not be CellDict, CellList or SequentialCell.
+            cells (iterable): An iterable of key-value pairs of (key, Cell), the type of key-value pairs is
+                              (string, Cell); Or a mapping(dictionary) from string to Cell.
+                              The type of Cell can not be CellDict, CellList or SequentialCell.
                               The key can not be same with the attributes of class Cell, can not contain '.',
                               can not be an empty string.
 
