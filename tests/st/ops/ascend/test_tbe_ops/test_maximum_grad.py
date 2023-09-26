@@ -75,7 +75,7 @@ def gen_data(inputA_np, inputB_np, grad_=None):
 
 def test_net():
     """
-    Feature: test maxinum grad on ascend
+    Feature: test maximum grad on ascend
     Description: test maximumgrad with 4D input.
     Expectation: result match to torch result.
     """
@@ -86,7 +86,7 @@ def test_net():
 
 def test_max_tensor_grad_with_same_input():
     """
-    Feature: test maxinum grad on ascend
+    Feature: test maximum grad on ascend
     Description: test maximumgrad with same input.
     Expectation: result match to torch result.
     """
