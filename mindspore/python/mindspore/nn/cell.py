@@ -64,6 +64,11 @@ class Cell(Cell_):
     graph in GRAPH_MODE (static graph mode) and used as the basic module of neural networks in
     PYNATIVE_MODE (dynamic graph mode).
 
+    .. note::
+        Cell is the inference mode by default. For a class that inherits a Cell,
+        if the training and inference have different structures, the subclass performs the inference branch by default.
+        To set the training mode, refer to `mindspore.nn.Cell.set_train` .
+
     Args:
         auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its child cells. It also
                       affects the names of parameters in the `Cell`. If set to ``True`` , the parameter name will be

@@ -7,6 +7,9 @@
 
     `mindspore.nn` 中神经网络层也是Cell的子类，如 :class:`mindspore.nn.Conv2d` 、 :class:`mindspore.nn.ReLU` 等。Cell在GRAPH_MODE(静态图模式)下将编译为一张计算图，在PYNATIVE_MODE(动态图模式)下作为神经网络的基础模块。
 
+    .. note::
+        Cell默认情况下是推理模式。对于继承Cell的类，如果训练和推理具有不同结构，子类会默认执行推理分支。设置训练模式，请参考 `mindspore.nn.Cell.set_train` 。
+
     参数：
         - **auto_prefix** (bool，可选) - 是否自动为Cell及其子Cell生成NameSpace。该参数同时会影响 `Cell` 中权重参数的名称。如果设置为 ``True`` ，则自动给权重参数的名称添加前缀，否则不添加前缀。通常情况下，骨干网络应设置为 ``True`` ，否则会产生重名问题。用于训练骨干网络的优化器、 :class:`mindspore.nn.TrainOneStepCell` 等，应设置为 ``False`` ，否则骨干网络的权重参数名会被误改。默认值： ``True`` 。
         - **flags** (dict，可选) - Cell的配置信息，目前用于绑定Cell和数据集。用户也通过该参数自定义Cell属性。默认值： ``None`` 。

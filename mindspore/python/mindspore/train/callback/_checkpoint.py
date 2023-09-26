@@ -104,8 +104,6 @@ class CheckpointConfig:
         exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
         kwargs (dict): Configuration options dictionary.
 
-            - incremental (bool): whether export checkpoint for MapParameter incrementally.
-
     Raises:
         ValueError: If input parameter is not the correct type.
 
