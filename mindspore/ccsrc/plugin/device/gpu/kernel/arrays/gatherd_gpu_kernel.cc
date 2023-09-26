@@ -28,8 +28,8 @@ using Complex = mindspore::utils::Complex<T>;
 
 template <typename T, typename S>
 bool GatherDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
-                                         const std::vector<KernelTensor *> &workspace,
-                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+                                       const std::vector<KernelTensor *> &workspace,
+                                       const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }
@@ -41,7 +41,7 @@ bool GatherDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
 
   auto status = GatherD(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[kIndex2], dims_[kIndex3],
-                       cuda_stream, GET_CTX_DEVICE_ID);
+                        cuda_stream, GET_CTX_DEVICE_ID);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -53,7 +53,7 @@ bool GatherDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
       .AddInputAttr(DT2)                                 \
       .AddOutputAttr(DT1),                               \
-      &GatherDGpuKernelMod::LaunchKernel<T1, T2>       \
+      &GatherDGpuKernelMod::LaunchKernel<T1, T2>         \
   }
 
 #define GATHER_D_GPU_REGISTER(DT, T) \
@@ -99,8 +99,7 @@ bool GatherDGpuKernelMod::SetDimParam(int64_t dim_value) {
   return true;
 }
 
-bool GatherDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                 const std::vector<KernelTensor *> &outputs) {
+bool GatherDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -111,8 +110,7 @@ bool GatherDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-int GatherDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {
+int GatherDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -150,7 +148,6 @@ std::vector<KernelAttr> GatherDGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, GatherFwdFunc> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, GatherD, GatherDGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

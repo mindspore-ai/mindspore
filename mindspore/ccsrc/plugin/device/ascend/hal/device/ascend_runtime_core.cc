@@ -429,10 +429,11 @@ bool AscendRuntimeCore::RunTaskCore(const session::KernelGraph &graph) {
         auto real_input_index = AnfAlgo::GetInputGraphIdxByKernelIdx(node, i);
         auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, real_input_index);
         MS_EXCEPTION_IF_NULL(device_address);
-        MS_LOG(INFO) << "Input idx " << i << " size " << device_address->size_ << " addr " << device_address->ptr_;
+        MS_LOG(INFO) << "Input idx " << i << " size " << device_address->GetSize() << " addr "
+                     << device_address->GetDevicePtr();
         int32_t value = 0;
-        auto ret =
-          aclrtMemcpy(&value, sizeof(int32_t), device_address->ptr_, device_address->size_, ACL_MEMCPY_DEVICE_TO_HOST);
+        auto ret = aclrtMemcpy(&value, sizeof(int32_t), device_address->GetDevicePtr(), device_address->GetSize(),
+                               ACL_MEMCPY_DEVICE_TO_HOST);
         if (ret == ACL_ERROR_NONE) {
           MS_LOG(INFO) << "Value = " << value;
         }
