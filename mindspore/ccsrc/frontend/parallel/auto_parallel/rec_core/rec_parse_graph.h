@@ -38,7 +38,7 @@ static const std::set<OperatorType> EliminateOpType = {
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
   OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
   OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone,
-  OperatorType::kRecPadV3};
+  OperatorType::kRecPadV3,        OperatorType::kRecBatchMatMul};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
