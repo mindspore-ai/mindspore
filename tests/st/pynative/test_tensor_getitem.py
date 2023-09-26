@@ -127,6 +127,18 @@ def test_reduce_dimension():
     assert np.all(output4.asnumpy() == input_np[1] + np.ones([8, 10]))
 
 
+class NetWorkSliceStep(Cell):
+    def __init__(self):
+        super(NetWorkSliceStep, self).__init__()
+        self.tensor_ret1 = Tensor(np.ones([6, 5, 10], np.int32))
+        self.tensor_ret2 = Tensor(np.ones([3, 5, 5], np.int32))
+
+    def construct(self, tensor):
+        ret1 = tensor[::1, -5::, ::-1] + self.tensor_ret1
+        ret2 = tensor[::2, -5::, ::2] + self.tensor_ret2
+        return ret1, ret2
+
+
 @pytest.mark.level1
 # ascend op stridedslice has bug, and has not been fixed.
 @pytest.mark.platform_x86_gpu_training
@@ -363,6 +375,20 @@ def test_setitem_by_mixed_tensors_0():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
+class TensorSetItemByMixedTensors_1(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByMixedTensors_1, self).__init__()
+        self.const = Tensor(np.ones((3, 4, 5), np.float32))
+        self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
+                               name="x")
+        self.value = value
+
+    def construct(self, index_0, index_1, index_2):
+        self.param[0:2, index_0, ...] = self.value
+        ret = self.param + self.const
+        return ret
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -382,6 +408,20 @@ def test_setitem_by_mixed_tensors_1():
     out = net(index_0_ms, index_1_ms, index_2_ms)
     input_np[0:2, index_0, ...] = value
     assert np.all(out.asnumpy() == (input_np + const))
+
+
+class TensorSetItemByMixedTensors_2(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByMixedTensors_2, self).__init__()
+        self.const = Tensor(np.ones((3, 4, 5), np.float16))
+        self.param = Parameter(Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float16),
+                               name="x")
+        self.value = value
+
+    def construct(self, index_0, index_1, index_2):
+        self.param[..., index_0, 1] = self.value
+        ret = self.param + self.const
+        return ret
 
 
 @pytest.mark.level1
