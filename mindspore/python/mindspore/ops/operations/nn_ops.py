@@ -11316,3 +11316,49 @@ class WKV(Primitive):
         """Initialize WKV."""
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "sp", "sq", "sm"],
                                 outputs=["output", "out_sp", "out_sq", "out_sm"])
+
+
+class PromptFlashAttention(Primitive):
+    r"""
+    The interface for fully inference.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **key** (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **value** (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
+        - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int.
+        - **num_heads**  (int): The number of heads.
+        - **scale_value** (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        - **pre_tokens** (int): Previous tokens. Default: 2147483547.
+        - **next_tokens** (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        - **input_layout** (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        - **num_key_value_heads** (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+
+    Outputs:
+        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+
+    Supported Platforms:
+        ``Ascend910B``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PromptFlashAttention."""
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths",
+                                        "num_heads", "scale_value", "pre_tokens", "next_tokens", "input_layout",
+                                        "num_key_value_heads"], outputs=["attention_out"])

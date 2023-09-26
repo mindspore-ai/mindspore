@@ -205,6 +205,7 @@ GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSamp
 GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMROpName));
 GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffleOpName));
+GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
 }  // namespace prim
 }  // namespace mindspore
 

@@ -483,6 +483,7 @@ constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 constexpr const char kNameNonZeroV2[] = "NonZeroV2";
 constexpr const char kNameResize[] = "Resize";
 constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
+constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
 
 class OpAdapterDesc;
 
