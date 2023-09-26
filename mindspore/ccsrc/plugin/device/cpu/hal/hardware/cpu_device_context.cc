@@ -452,7 +452,7 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (!kernel::IfNeedSkipResize(node)) {
+      if (kernel::CheckResizeCondition(node)) {
         if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
           MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
                                      << "] resize failed.";

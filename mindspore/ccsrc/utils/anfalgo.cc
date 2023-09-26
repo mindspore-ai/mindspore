@@ -29,6 +29,8 @@
 #include "ops/array_ops.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
+#include "ops/op_utils.h"
+#include "ops/op_def.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/common/utils/utils.h"
@@ -1572,6 +1574,43 @@ bool AnfAlgo::IsDynamicShape(const AnfNodePtr &node) {
     return ret;
   }
   return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape);
+}
+
+bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(DEBUG) << "Node is not a cnode.";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->HasAttr(ops::kHasDynamicValue)) {
+    return true;
+  }
+  auto depend_list = mindspore::ops::GetInputDependValueList(GetCNodePrimitive(cnode));
+  if (!depend_list.empty()) {
+    mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(GetCNodeName(cnode));
+    size_t reg_input_num = depend_list.size();
+    size_t real_input_num = cnode->size() - 1;  // exclude primitive in input[0]
+    if (op_def != nullptr) {
+      reg_input_num = op_def->args_.size();
+    }
+    if (reg_input_num == real_input_num) {
+      for (auto i = depend_list.begin(); i != depend_list.end(); i++) {
+        if (!cnode->input(*i + 1)->isa<ValueNode>()) {
+          cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
+          return true;
+        }
+      }
+    } else {
+      for (size_t i = 1; i < depend_list.size() + 1; i++) {
+        if (!cnode->input(real_input_num - i + 1)->isa<ValueNode>()) {
+          cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 void AnfAlgo::GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape) {

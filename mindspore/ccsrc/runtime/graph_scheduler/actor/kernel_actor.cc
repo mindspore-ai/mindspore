@@ -53,6 +53,7 @@ void KernelActor::Init() {
   kernel_mod_ = kernel_info_->MutableKernelMod();
   MS_EXCEPTION_IF_NULL(kernel_mod_);
   is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
+  is_dynamic_value_ = common::AnfAlgo::IsDynamicValue(kernel_);
   if (is_dynamic_shape_ && IsSomasEnable(somas_info_)) {
     MS_LOG(EXCEPTION) << "Not support the somas for the dynamic shape: " << GetAID().Name();
   }
@@ -182,6 +183,11 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     PROFILER_START(start_time);
     InferShapeAndResize();
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name(), false);
+  } else if (is_dynamic_value_) {
+    int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
+    if (ret != kernel::KRET_OK) {
+      MS_LOG(EXCEPTION) << "Resize failed for kernel " << kernel_->fullname_with_scope();
+    }
   }
 
   FetchOutputDeviceTensor(context);

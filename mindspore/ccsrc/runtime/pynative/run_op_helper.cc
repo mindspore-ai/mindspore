@@ -1021,6 +1021,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto inputs = GetInputKernelTensors(runtime_info, node);
+    auto outputs = GetOutputKernelTensors(runtime_info);
     if (is_dynamic_shape) {
       InferNodeRealShape(node);
       auto args = kernel::GetArgsFromCNode(node);
@@ -1030,14 +1031,19 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
         ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
       }
 #endif
+    } else if (common::AnfAlgo::IsDynamicValue(node)) {
+      auto kernel_mod = runtime_info->GetKernelMod();
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      if (kernel_mod->Resize(inputs, outputs) != static_cast<int>(kernel::KRET_OK)) {
+        MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " resize failed";
+      }
     }
-
     auto workspaces = GetWorkspaceKernelTensors(runtime_info, device_context, node, is_dynamic_shape);
 
     if (!MallocForKernelOutput(runtime_info, node, device_context)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
-    auto outputs = GetOutputKernelTensors(runtime_info);
+
     const size_t stream_id = AnfAlgo::GetStreamId(node);
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(true));

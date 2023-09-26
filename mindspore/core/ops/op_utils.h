@@ -224,10 +224,12 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 bool IsValueKnown(const ValuePtr &value);
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
+MS_CORE_API std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";
 constexpr auto kCSRDenseShape = "dense_shape";
 constexpr auto kCSRAxis = "axis";
+constexpr auto kHasDynamicValue = "has_dynamic_value";
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

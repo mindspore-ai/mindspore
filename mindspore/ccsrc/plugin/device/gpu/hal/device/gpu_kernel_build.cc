@@ -143,7 +143,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
           MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
                             << kernel->fullname_with_scope() << "] failed.";
         }
-        if (!kernel::IfNeedSkipResize(kernel)) {
+        if (kernel::CheckResizeCondition(kernel)) {
           if (gpu_kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
             MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
                               << "] Resize failed.";

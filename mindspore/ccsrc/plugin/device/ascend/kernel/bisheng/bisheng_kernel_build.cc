@@ -75,7 +75,7 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   if (!kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(cnode), input_kernel_tensors, output_kernel_tensors)) {
     MS_LOG(EXCEPTION) << "Initialize bisheng kernel op[" << cnode->fullname_with_scope() << "] failed.";
   }
-  if (!IfNeedSkipResize(cnode)) {
+  if (CheckResizeCondition(cnode)) {
     if (kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "Bisheng kernel op[" << cnode->fullname_with_scope() << "] Resize failed.";
     }

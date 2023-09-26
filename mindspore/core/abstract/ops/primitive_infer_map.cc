@@ -37,6 +37,7 @@
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/op_def.h"
 #include "ops/shape_calc.h"
+#include "ops/op_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
@@ -181,12 +182,7 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   } else if (ori.empty()) {
     MS_LOG(DEBUG) << "Not find infer function GetValueDependArgIndices, prim name: " << prim_name;
     // if not found in infer, consider all the non-tensor inputs as value depend args.
-    size_t input_num = cnode->size();
-    for (size_t i = 1; i < input_num; i++) {
-      if (!IsValueNode<tensor::Tensor>(cnode->input(i))) {
-        (void)ori.insert(i - 1);
-      }
-    }
+    ori = ops::GetInputDependValueList(primitive);
   }
   if (ori.empty()) {
     return ori;

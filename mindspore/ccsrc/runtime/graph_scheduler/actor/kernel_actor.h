@@ -65,6 +65,7 @@ class KernelActor : public DebugAwareActor {
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
         kernel_(kernel),
         is_dynamic_shape_(false),
+        is_dynamic_value_(false),
         kernel_info_(nullptr),
         real_input_num_(0),
         strategy_(strategy),
@@ -110,6 +111,7 @@ class KernelActor : public DebugAwareActor {
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
+  bool is_dynamic_value_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
   // The kernel launch info is fetched by the device tensors.

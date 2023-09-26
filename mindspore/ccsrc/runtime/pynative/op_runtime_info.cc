@@ -217,6 +217,11 @@ size_t OpRuntimeInfo::GetWorkspaceSize() const {
   return kernel_info_->workspace_address_list().size();
 }
 
+kernel::KernelMod *OpRuntimeInfo::GetKernelMod() const {
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  return kernel_info_->MutableKernelMod();
+}
+
 void OpRuntimeInfo::Resize(const AnfNodePtr &node) {
   auto output_num = AnfAlgo::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
