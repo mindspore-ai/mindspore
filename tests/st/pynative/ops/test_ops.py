@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import os
 import numpy as np
 import mindspore.nn as nn
 
@@ -223,3 +224,56 @@ def test_bn_with_special_format():
     out2_except = np.array([[-0.99999505, -0.99999505, -0.999995], [0.99999505, 0.99999505, 0.999995]],
                            dtype=np.float32)
     assert (out2.asnumpy() == out2_except).all()
+
+
+class CumProd(nn.Cell):
+    def __init__(self, exclusive, reverse, axis):
+        super().__init__()
+        self.op = ops.CumProd(exclusive=exclusive, reverse=reverse)
+        self.axis = axis
+
+    def construct(self, input_x):
+        return self.op(input_x, self.axis)
+
+
+class CumProdTest():
+    def __init__(self, input_shape, exclusive, reverse, axis, dtypex):
+        self.input_np = np.random.randn(*input_shape).astype(dtype=dtypex)
+        self.exclusive = exclusive
+        self.reverse = reverse
+        self.axis = axis
+        self.dtype = dtypex
+        self.output_grad_np = np.random.randn(*input_shape).astype(dtype=dtypex)
+
+    def forward_mindspore_impl(self):
+        inputa = Tensor(self.input_np)
+        net = CumProd(self.exclusive, self.reverse, self.axis)
+        out = net(inputa)
+        return out.asnumpy()
+
+    def grad_mindspore_impl(self):
+        inputa = Tensor(self.input_np)
+        output_grad = Tensor(self.output_grad_np.astype(self.dtype))
+        net = CumProd(self.exclusive, self.reverse, self.axis)
+        grad_net = GradOfFirstInput(net)
+        grad_net.set_train()
+        input_grad = grad_net(inputa, output_grad)
+        return input_grad.asnumpy()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_cumprod_with_acl():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test CumProd with acl.
+    Expectation: No exception.
+    """
+    os.environ['MS_DEV_FORCE_ACL'] = '1'
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    fact = CumProdTest((1024, 2048), False, False, 0, np.float32)
+    fact.forward_mindspore_impl()
+    fact.grad_mindspore_impl()
+    del os.environ['MS_DEV_FORCE_ACL']
