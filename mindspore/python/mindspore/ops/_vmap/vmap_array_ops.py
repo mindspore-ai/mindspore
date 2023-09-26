@@ -356,7 +356,6 @@ def get_unstack_vmap_rule(prim, axis_size):
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
 
-
     @_primexpr
     def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
         def _check(neg_index, target_shape):
@@ -1033,12 +1032,9 @@ def get_matrix_diag_v3_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.TensorShape)
+@vmap_rules_getters.register("TensorShape")
 def get_tensor_shape_vmap_rule(prim, axis_size):
     """VmapRule for `TensorShape` operation."""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-
     def vmap_rule(input_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim)
         if is_all_none:
@@ -1923,7 +1919,7 @@ def get_stridedslice_vmap_rule(prim, axis_size):
     new_ellipsis_mask = prim.ellipsis_mask
     new_new_axis_mask = prim.new_axis_mask * 2
     new_shrink_axis_mask = prim.shrink_axis_mask * 2
-    batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
+    batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
                                         new_shrink_axis_mask)
 
     @_primexpr
@@ -1964,7 +1960,7 @@ def get_stridedslice_grad_vmap_rule(prim, axis_size):
     new_ellipsis_mask = prim.ellipsis_mask
     new_new_axis_mask = prim.new_axis_mask * 2
     new_shrink_axis_mask = prim.shrink_axis_mask * 2
-    batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask, \
+    batch_stridedslice_grad = G.StridedSliceGrad(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
                                                  new_shrink_axis_mask)
 
     @_primexpr

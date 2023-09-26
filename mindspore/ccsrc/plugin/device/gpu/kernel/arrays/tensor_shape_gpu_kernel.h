@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DYNAMIC_SHAPE_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DYNAMIC_SHAPE_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SHAPE_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SHAPE_GPU_KERNEL_H_
 
 #include <cuda_runtime.h>
-
 #include <vector>
-#include <map>
-
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
 class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
  public:
-  TensorShapeGpuKernelMod() { ResetResource(); }
-  ~TensorShapeGpuKernelMod() = default;
+  TensorShapeGpuKernelMod() = default;
+  ~TensorShapeGpuKernelMod() override = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override {
@@ -56,52 +52,32 @@ class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    auto shape = inputs.at(kIndex0)->GetShapeVector();
+    auto shape = inputs[kIndex0]->GetShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
-      input_size_list_.clear();
       output_size_list_.clear();
-      input_size_list_.push_back(0);
       output_size_list_.push_back(0);
       return KRET_OK;
     }
+
     if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    ResetResource();
-    input_size_ = SizeOf(shape);
+
+    prev_node_output_shape_.clear();
     for (auto x : shape) {
       prev_node_output_shape_.push_back(static_cast<S>(x));
     }
-    output_size_ = prev_node_output_shape_.size();
-
-    InitSizeLists();
+    output_size_list_.clear();
+    output_size_list_.push_back(prev_node_output_shape_.size() * sizeof(S));
     return KRET_OK;
   }
 
-  void ResetResource() noexcept {
-    input_size_ = 0;
-    output_size_ = 0;
-    is_null_input_ = false;
-    prev_node_output_shape_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(output_size_ * sizeof(S));
-  }
-
  private:
-  size_t input_size_;
-  size_t output_size_;
   bool is_null_input_;
   std::vector<S> prev_node_output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DYNAMIC_SHAPE_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SHAPE_GPU_KERNEL_H_

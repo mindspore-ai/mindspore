@@ -704,30 +704,6 @@ class Shape(Primitive):
         raise TypeError(f"For primitive[{self.name}], the input argument must be Tensor, but got {type(x)}.")
 
 
-class TensorShape(Primitive):
-    """
-    Returns the shape of the input tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = ops.TensorShape()
-        >>> output = shape(input_x)
-        >>> print(output)
-        [3 2 1]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """init Shape"""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-
 class Unsqueeze(PrimitiveWithCheck):
     """Unsqueeze"""
 

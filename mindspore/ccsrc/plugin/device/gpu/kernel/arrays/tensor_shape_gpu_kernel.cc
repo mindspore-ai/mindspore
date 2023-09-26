@@ -15,8 +15,9 @@
  */
 #include <cstdint>
 
-#include "plugin/device/gpu/kernel/arrays/dynamic_shape_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/arrays/tensor_shape_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {

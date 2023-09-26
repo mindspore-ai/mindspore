@@ -32,7 +32,6 @@ from .arg_max_with_value import _arg_max_with_value_cpu
 from .dropout import _dropout_cpu
 from .dropout_grad import _dropout_grad_cpu
 from .gather_d import _gather_cpu
-from .tensor_shape import _tensor_shape_cpu
 from .gather_d_grad import _gather_d_grad_cpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_cpu
 from .gather_v2 import _gather_v2_cpu

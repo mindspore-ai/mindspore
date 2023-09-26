@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DYNAMIC_SHAPE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DYNAMIC_SHAPE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SHAPE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SHAPE_CPU_KERNEL_H_
 
 #include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/factory/ms_factory.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::kernel {
 class TensorShapeCpuKernelMod : public NativeCpuKernelMod {
  public:
   TensorShapeCpuKernelMod() = default;
   ~TensorShapeCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
-
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
-
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   ShapeVector input_shape_;
   ShapeVector output_shape_;
 };
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DYNAMIC_SHAPE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SHAPE_CPU_KERNEL_H_

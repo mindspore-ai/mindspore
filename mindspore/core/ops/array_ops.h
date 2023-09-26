@@ -69,7 +69,6 @@ GVAR_DEF(PrimitivePtr, kPrimStridedRead, std::make_shared<Primitive>("StridedRea
 GVAR_DEF(PrimitivePtr, kPrimStridedWrite, std::make_shared<Primitive>("StridedWrite"));
 GVAR_DEF(PrimitivePtr, kPrimStridedSlice, std::make_shared<Primitive>(kStridedSliceOpName));
 GVAR_DEF(PrimitivePtr, kPrimStridedSliceGrad, std::make_shared<Primitive>(kStridedSliceGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimTensorShape, std::make_shared<Primitive>(kTensorShapeOpName));
 GVAR_DEF(PrimitivePtr, kPrimDynamicShape, std::make_shared<Primitive>(kDynamicShapeOpName));
 GVAR_DEF(PrimitivePtr, kPrimCheckNumerics, std::make_shared<Primitive>(kCheckNumericsOpName));
 GVAR_DEF(PrimitivePtr, kPrimSize, std::make_shared<Primitive>("Size"));
