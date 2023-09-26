@@ -92,7 +92,7 @@ AbstractBasePtr Atan2Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   auto base_type = Atan2InferType(primitive, input_args);
   auto base_shape = Atan2InferShape(primitive, input_args);
-  return abstract::MakeAbstract(base_shape, base_type);
+  return abstract::MakeAbstractTensor(base_shape, base_type);
 }
 
 // AG means auto generated
