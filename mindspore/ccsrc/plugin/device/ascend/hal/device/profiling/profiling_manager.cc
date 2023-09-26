@@ -118,6 +118,14 @@ bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t
   profiling_path_ = profiling_path;
   device_id_ = device_id;
 
+  auto ms_context = MsContext::GetInstance();
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "Profiling backend is: " << backend;
+    return true;
+  }
+  MS_LOG(INFO) << "Profiling backend is: " << backend;
+
   bool ret = ProfRegisterCtrlCallback();
   if (ret == false) {
     return ret;
