@@ -59,9 +59,7 @@ __global__ void ScatterMaxKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit);
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicMax(&input[current_pos], updates[pos]);
   }
@@ -73,9 +71,7 @@ __global__ void ScatterMinKernel(S size_limit, const size_t inner_size, const si
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
-    if (indices[index] < 0 || indices[index] >= size_limit) {
-      continue;
-    }
+    CUDA_KERNEL_ASSERT(indices[index] >= 0 && indices[index] < size_limit);
     const size_t current_pos = indices[index] * inner_size + offset;
     MsAtomicMin(&input[current_pos], updates[pos]);
   }
