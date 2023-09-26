@@ -80,3 +80,18 @@ def test_lgamma_graph_float64():
     expect = np.array([0.00000000e+00, 7.29359005e-01, 1.06046029e+01,
                        1.99549382e-01, 1.03024502e+05]).astype(np.float64)
     assert np.allclose(z_ms.asnumpy(), expect, 0.00001, 0.00001)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_lgamma_invalid_input():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Lgamma
+    Expectation: throw type error
+    """
+    net = LgammaNet()
+    try:
+        net("invalid input")
+    except TypeError:
+        pass

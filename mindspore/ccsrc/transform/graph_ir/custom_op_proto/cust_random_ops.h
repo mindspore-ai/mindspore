@@ -39,14 +39,5 @@ REG_CUST_OP(Dropout2D)
   .OUTPUT(mask, TensorType({DT_BOOL}))
   .REQUIRED_ATTR(keep_prob, Float)
   .CUST_OP_END_FACTORY_REG(Dropout2D)
-
-REG_CUST_OP(StandardLaplace)
-  .INPUT(shape, TensorType({DT_INT32, DT_INT64}))
-  .INPUT(seed, TensorType({DT_INT64}))
-  .INPUT(seed2, TensorType({DT_INT64}))
-  .OUTPUT(output, TensorType({DT_FLOAT}))
-  .REQUIRED_ATTR(seed, Int)
-  .REQUIRED_ATTR(seed2, Int)
-  .CUST_OP_END_FACTORY_REG(StandardLaplace)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_RANDOM_OPS_H_
