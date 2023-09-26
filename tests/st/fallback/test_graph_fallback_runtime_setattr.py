@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
+import os
 import pytest
 import numpy as np
 
@@ -48,6 +49,36 @@ def test_setattr_self_non_param():
     ret = test_net()
     assert ret == 2
     assert test_net.data == 2
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_self_non_param_in_strict():
+    """
+    Feature: Enable setattr for class non-param attribute.
+    Description: Support self.attr=target when self.attr is not parameter.
+    Expectation: No exception.
+    """
+    class TestNet(nn.Cell):
+        def __init__(self, origin_input):
+            super(TestNet, self).__init__()
+            self.data = origin_input
+
+        def construct(self):
+            self.data = 2
+            return self.data
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    with pytest.raises(TypeError) as error_info:
+        test_net = TestNet(1)
+        ret = test_net()
+        assert ret == 2
+        assert test_net.data == 2
+    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(error_info.value)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1

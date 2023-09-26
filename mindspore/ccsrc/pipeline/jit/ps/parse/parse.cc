@@ -3739,10 +3739,12 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
       std::string var_name = "self." + attr_name;
       auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
       auto obj_type = obj.attr("__class__").attr("__name__");
-      MS_EXCEPTION(TypeError) << "'" << var_name
-                              << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
+      MS_EXCEPTION(TypeError) << "In JIT strict mode, if need to modify a member attribute of a class with " << var_name
+                              << ", the member attribute must be of the Parameter type. But got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
-                              << py::str(obj_type).cast<std::string>() << ".\n\n"
+                              << py::str(obj_type).cast<std::string>()
+                              << "'. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
+                              << "to enable the JIT lax mode to support the current syntax.\n\n"
                               << trace::GetDebugInfoStr(target_node->debug_info());
     }
     MS_LOG(DEBUG) << "Erase unused node: " << target_node->DebugString();
