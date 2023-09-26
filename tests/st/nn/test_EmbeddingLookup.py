@@ -18,12 +18,13 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
+from mindspore import Tensor
 
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.embeddinglookup = nn.EmbeddingLookup(4, 2, dtype=ms.int32)
+        self.embeddinglookup = nn.EmbeddingLookup(4, 2, dtype=ms.float32)
 
     def construct(self, x):
         out = self.embeddinglookup(x)
@@ -46,7 +47,7 @@ def test_embeddinglookup_para_customed_dtype(mode):
     """
     ms.set_context(mode=mode)
     net = Net()
-    x = ms.Tensor(np.array([[1, 0], [3, 2]]), ms.int32)
+    x = Tensor(np.array([[1, 0], [3, 2]]), ms.int32)
     output = net(x)
     expect_output_shape = (2, 2, 2)
     assert np.allclose(expect_output_shape, output.shape)
