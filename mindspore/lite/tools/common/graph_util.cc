@@ -702,8 +702,7 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
     MS_LOG(ERROR) << "malloc model_buf failed";
     return RET_ERROR;
   }
-  (void)memcpy_s(*model_buf, *size, content, *size);
-  return RET_OK;
+  return memcpy_s(*model_buf, *size, content, *size);
 }
 
 int InitEncryptKey(const std::shared_ptr<ConverterPara> &param, unsigned char *encKey, size_t *keyLen) {
