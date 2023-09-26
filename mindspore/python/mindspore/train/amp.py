@@ -15,7 +15,6 @@
 """Auto mixed precision."""
 from __future__ import absolute_import
 
-import os
 import mindspore as ms
 from mindspore import nn
 from mindspore import _checkparam as validator
@@ -62,6 +61,7 @@ AMP_BLACK_LIST = [
     nn.LayerNorm
 ]
 
+MS_AMP_BY_REWRITE = False
 
 class _OutputTo16(nn.Cell):
     """Wrap cell for amp. Cast network output back to float16."""
@@ -85,6 +85,17 @@ class _OutputTo32(nn.Cell):
     def construct(self, *args, **kwargs):
         out = self._backbone(*args, **kwargs)
         return F.mixed_precision_cast(mstype.float32, out)
+
+
+class CastNet(nn.Cell):
+    """Cast net"""
+    def __init__(self, dtype):
+        super().__init__()
+        self.cast = P.Cast()
+        self.dtype = dtype
+
+    def construct(self, x):
+        return self.cast(x, self.dtype)
 
 
 def _allow_mix_precision(node, allowed_list, dtype) -> bool:
@@ -175,6 +186,8 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
     while node_list:
         node = node_list.pop()
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
+            if MS_AMP_BY_REWRITE:
+                _insert_cast_for_cell_container(node, stree, dtype, allowed_list, white_list=white_list)
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
                     _insert_cast_operator_white_list(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)),
@@ -188,6 +201,33 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
                 node_list.extend(nodes)
         elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list, dtype):
             _insert_cast_operator_process(node, stree, dtype)
+
+
+def _insert_cast_for_cell_container(cell_container, stree, dtype, allowed_list, *, white_list=None, black_list=None):
+    """
+    Insert cast for cell containers.
+    Only one of white_list and black_list can be set.
+    """
+    cast_flag = False
+    current_node = None
+    for node in cell_container.get_handler().nodes():
+        current_node = ms.rewrite.Node(node)
+        if (white_list and current_node.get_instance_type() in white_list) or \
+           (black_list and current_node.get_instance_type() not in black_list) and \
+           (_allow_mix_precision(current_node, allowed_list, dtype)):
+            cast_flag = True
+            current_node.get_instance().to_float(dtype)
+        elif cast_flag:
+            # cast next node back to float32
+            current_node.get_instance().to_float(mstype.float32)
+            cast_flag = False
+    if cast_flag and current_node:
+        # if last node in cell_container is casted to fp16/bf16, insert a cast node to cast value back to fp32
+        cast_node = ms.rewrite.Node.create_call_cell(cell=CastNet(mstype.float32),
+                                                     args=[current_node.get_targets()[0]],
+                                                     targets=[current_node.get_targets()[0]],
+                                                     name=f"outcast_{cell_container.get_name()}")
+        stree.insert(stree.after(current_node), cast_node)
 
 
 def _need_removed_cast_pair(node, dtype):
@@ -287,6 +327,11 @@ def _insert_cast_operator_black_list(stree, black_list, dtype):
         return
     for node in stree.nodes(all_nodes=True):
         if node.get_targets() is None:
+            continue
+        if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
+            _insert_cast_for_cell_container(node, stree, dtype, allowed_list, black_list=black_list)
+        elif isinstance(node.get_handler().get_node_manager(), ms.rewrite.node.CellContainer):
+            # nodes in CellContainer are processed by _insert_cast_for_cell_container
             continue
         elif node.get_instance_type() not in black_list and _allow_mix_precision(node, allowed_list, dtype):
             _insert_cast_operator_process(node, stree, dtype)
@@ -414,13 +459,13 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
     if amp_level == "O1":
         network = _auto_white_list(network, AMP_WHITE_LIST, dtype)
     elif amp_level == "O2":
-        if os.environ.get("MS_AMP_BY_REWRITE"):
+        if MS_AMP_BY_REWRITE:
             network = _auto_black_list_rewrite(network, AMP_BLACK_LIST, dtype)
         else:
             network = _auto_black_list(network, AMP_BLACK_LIST, dtype)
             network = _OutputTo32(network)
     elif amp_level == "O3":
-        if os.environ.get("MS_AMP_BY_REWRITE"):
+        if MS_AMP_BY_REWRITE:
             network = _auto_black_list_rewrite(network, [], dtype)
         else:
             network.to_float(dtype)
@@ -546,7 +591,7 @@ def _is_grad_accumulation(mcell):
 
 def _auto_mixed_precision_process(network, config, level):
     """Auto mixed precision process."""
-    if os.environ.get("MS_AMP_BY_REWRITE"):
+    if MS_AMP_BY_REWRITE:
         if config["cast_model_type"] == mstype.float16 or level == "O2":
             level = "O2" if config["keep_batchnorm_fp32"] else "O3"
         elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
@@ -797,8 +842,11 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         network = _auto_white_list(network, white_list, dtype)
     else:
         _list_check(black_list, "black_list")
-        network = _auto_black_list(network, black_list, dtype)
-        network = _OutputTo32(network)
+        if MS_AMP_BY_REWRITE:
+            network = _auto_black_list_rewrite(network, black_list, dtype)
+        else:
+            network = _auto_black_list(network, black_list, dtype)
+            network = _OutputTo32(network)
     return network
 
 
@@ -829,3 +877,8 @@ def _list_check(custom_list: list, list_name: str):
         for elem in AMP_BLACK_LIST:
             if elem not in custom_list:
                 logger.warning(f"{elem} is removed from internal black list.")
+
+def _config_amp(*, enable_rewrite: bool = False): # pylint: disable=unused-variable
+    """Configure auto mixed precision."""
+    global MS_AMP_BY_REWRITE
+    MS_AMP_BY_REWRITE = enable_rewrite
