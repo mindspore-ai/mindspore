@@ -47,6 +47,12 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
   {AllocatorType::kOther, "other"},
 };
 
+bool IsMemoryPoolRecycle() {
+  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
+  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
+  return memory_pool_recycle == "1";
+}
+
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
   common_mem_->clear();
@@ -76,7 +82,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", device address addr: " << device_addr << ", size: " << size;
   }
 
-  mem_bufs_.insert(device_addr);
+  if (IsMemoryPoolRecycle()) {
+    mem_bufs_.insert(device_addr);
+  }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
                 << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
@@ -373,7 +381,9 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
     CombineMemBuf(mem_block, device_addr, common_mem_);
   }
 
-  mem_bufs_.erase(device_addr);
+  if (IsMemoryPoolRecycle()) {
+    mem_bufs_.erase(device_addr);
+  }
   MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()
                 << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
