@@ -1647,6 +1647,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto mask = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto dmask = ib->OutZeros(mask);
   mask = ib->Cast(mask, kFloat32);
   dout = ib->Cast(dout, kFloat32);
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
@@ -1669,7 +1670,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
   }
-  return {dinput, ib->OutZeros(mask), dvalue};
+  return {dinput, dmask, dvalue};
 });
 
 REG_BPROP_BUILDER("Coalesce").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
