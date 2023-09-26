@@ -41,6 +41,7 @@ bool BoundingBoxDecodeGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
 
   auto stds = base_operator->GetAttr("stds");
+  MS_EXCEPTION_IF_NULL(stds);
   if (stds->isa<api::ValueSequence>()) {
     stds_ = api::GetValue<std::vector<float>>(stds);
   } else if (stds->isa<api::FloatImm>()) {
