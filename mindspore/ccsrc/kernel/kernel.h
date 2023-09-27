@@ -157,6 +157,10 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     if (value) {
       SetValue(value);
     }
+
+    // Update size_ at constructing KernelTensor.
+    // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
+    CalculateMemSize();
   }
 
   // Constructor of KernelTensor by AbstractBase and device info.
@@ -549,6 +553,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Synchronize value data from device to host side.
   bool SyncDataFromDevieToHost() const;
 
+  // Calculate memory size need by the KernelTensor.
+  void CalculateMemSize();
+
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
   // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
   // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
@@ -566,6 +573,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   TypePtr dtype_{kTypeNone};
   // The data enum type id of the KernelTensor.
   TypeId dtype_id_{kTypeUnknown};
+
+  // The memory in bytes of each element in KernelTensor.
+  size_t element_size_in_bytes_{0};
 
   // Saves the contents after the value is converted to continuous memory storage.
   mutable KernelTensorValuePtr kernel_tensor_value_{nullptr};

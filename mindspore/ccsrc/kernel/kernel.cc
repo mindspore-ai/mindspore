@@ -54,6 +54,16 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   }
 }
 
+void KernelTensor::CalculateMemSize() {
+  if (type_id_ == kObjectTypeNumber) {
+    size_ = element_size_in_bytes_;
+  } else {
+    // If shape_vector_ is a dynamic shape, size_ will be 0.
+    size_t element_num = shape_vector_.empty() ? 0 : SizeOf(shape_vector_);
+    size_ = element_num * element_size_in_bytes_;
+  }
+}
+
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   if (type_id_ != kObjectTypeTensorType) {
     MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently.";
@@ -136,6 +146,8 @@ void KernelTensor::SetType(const TypePtr &type) {
     default:
       MS_LOG(EXCEPTION) << "Can not set object type for: " << type->ToString();
   }
+
+  element_size_in_bytes_ = GetTypeByte(dtype_);
 }
 
 void KernelTensor::SetSequenceDType(const TypePtr &element_type) {
