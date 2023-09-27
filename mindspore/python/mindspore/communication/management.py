@@ -188,7 +188,7 @@ def init(backend_name=None):
 
 def release():
     """
-    Release distributed resource. e.g. HCCL/NCCL.
+    Release distributed resource. e.g. HCCL/NCCL/MCCL.
 
     Note:
         This method should be used after init().
@@ -197,7 +197,7 @@ def release():
         RuntimeError: If failed to release distributed resource.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         .. note::

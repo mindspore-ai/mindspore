@@ -39,7 +39,7 @@ mindspore.communication
 
 .. py:function:: mindspore.communication.release()
 
-    释放分布式资源，例如 `HCCL` 或 `NCCL` 服务。
+    释放分布式资源，例如 `HCCL` 或 `NCCL` 或 `MCCL` 服务。
 
     .. note::
         - `release` 方法应该在 `init` 方法之后使用。
@@ -252,3 +252,7 @@ mindspore.communication
 .. py:data:: mindspore.communication.NCCL_WORLD_COMM_GROUP
 
     ``"nccl_world_group"`` 字符串，指的是由NCCL创建的默认通信组。在GPU硬件平台下，初始化通信服务后该字符串与 ``GlobalComm.WORLD_COMM_GROUP`` 等价，推荐使用 ``GlobalComm.WORLD_COMM_GROUP`` 获取当前全局通信组。
+
+.. py:data:: mindspore.communication.MCCL_WORLD_COMM_GROUP
+
+    ``"mccl_world_group"`` 字符串，指的是由MCCL创建的默认通信组。在CPU硬件平台下，初始化通信服务后该字符串与 ``GlobalComm.WORLD_COMM_GROUP`` 等价，推荐使用 ``GlobalComm.WORLD_COMM_GROUP`` 获取当前全局通信组。
