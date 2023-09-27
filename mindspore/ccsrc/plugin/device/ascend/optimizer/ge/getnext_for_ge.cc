@@ -127,6 +127,11 @@ const AnfNodePtr GetNextForGE::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  if (kernel_graph != nullptr && kernel_graph->is_from_single_op()) {
+    MS_LOG(INFO) << "Run GetNext by ACL and skip this process";
+    return nullptr;
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
