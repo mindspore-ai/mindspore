@@ -20,6 +20,7 @@ import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
+from mindspore.common.api import _pynative_executor
 
 
 class Net(nn.Cell):
@@ -115,8 +116,15 @@ def scatternd_indices_out_of_range(nptype):
     arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
     shape = (2, 2)
     scatternd = Net(shape)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     with pytest.raises(RuntimeError):
         _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0

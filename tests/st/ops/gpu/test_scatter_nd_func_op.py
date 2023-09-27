@@ -21,6 +21,7 @@ import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
+from mindspore.common.api import _pynative_executor
 import mindspore.ops as ops
 from mindspore.ops.operations.array_ops import ScatterNdMul
 from mindspore.ops.operations.array_ops import ScatterNdMax
@@ -192,8 +193,9 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
-                         [mstype.uint8])
-@pytest.mark.parametrize('index_type', [mstype.int32])
+                         [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
+                          mstype.uint64, mstype.int64, mstype.float16, mstype.float32, mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32, mstype.int64])
 def test_scatter_nd_func_indices_out_of_range(func, data_type, index_type):
     """
     Feature: ALL To ALL
@@ -212,8 +214,14 @@ def test_scatter_nd_func_indices_out_of_range(func, data_type, index_type):
         data_type,
     )
 
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     with pytest.raises(RuntimeError):
         _ = TestScatterNdFuncNet(func, inputx, indices, updates)()
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    with pytest.raises(RuntimeError):
+        _ = TestScatterNdFuncNet(func, inputx, indices, updates)()
+        _pynative_executor.sync()
 
 
 @pytest.mark.level1
