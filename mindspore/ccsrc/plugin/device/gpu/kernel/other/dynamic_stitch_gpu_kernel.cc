@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/other/dynamic_stitch_gpu_kernel.h"
+#include <functional>
+#include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_stitch_impl.cuh"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
@@ -27,25 +29,25 @@ DynamicStitchKernelMod::DynamicStitchKernelMod()
 
 DynamicStitchKernelMod::~DynamicStitchKernelMod() {}
 
-bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
-  kernel_node_ = kernel_node;
+bool DynamicStitchKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   // Inputs: (indexlist, datalist)
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  size_t input_num = inputs.size();
   n_ = input_num / kDivNum2;
 
-  auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-  auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, n_);
+  auto output_shape = GetShapeAdaptively(outputs, 0);
+  auto data_type = inputs[n_]->dtype_id();
   // Index type is restricted to int32 by kernel prim.
   size_t index_type_size = sizeof(int);
   data_type_size_ = GetDtypeNbyte(TypeIdToString(data_type, true));
-  auto first_data_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_));
-  auto first_index_dims = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size();
+  auto first_data_shape = Convert2SizeTClipNeg(GetShapeAdaptively(inputs, n_));
+  auto first_index_dims = GetShapeAdaptively(inputs, 0).size();
   one_data_ele_num_ = 1;
   for (size_t d = first_index_dims; d < first_data_shape.size(); ++d) {
     one_data_ele_num_ *= first_data_shape[d];
   }
   for (size_t i = 0; i < n_; i++) {
-    auto data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_ + i);
+    auto data_shape = GetShapeAdaptively(inputs, n_ + i);
     size_t data_size = std::accumulate(data_shape.begin(), data_shape.end(), size_t(1), std::multiplies<size_t>());
     //  Data size
     input_size_list_.push_back(data_size * data_type_size_);
@@ -63,10 +65,24 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void DynamicStitchKernelMod::SyncOutputShape() {
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                             "DynamicStitch cudaStreamSynchronized failed");
-  auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
+ShapeVector DynamicStitchKernelMod::GetShapeAdaptively(const std::vector<KernelTensor *> &data, size_t index) {
+  auto device_shape = data[index]->GetShapeVector();
+  if (IsDynamic(device_shape)) {
+    auto ConvertNegOneToDefault = [](int64_t size) {
+      constexpr int64_t kDefaultValueForDynamicDim = 16;
+      return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
+    };
+    (void)std::transform(device_shape.begin(), device_shape.end(), device_shape.begin(), ConvertNegOneToDefault);
+  }
+
+  return device_shape;
+}
+
+void DynamicStitchKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "DynamicStitch cudaStreamSynchronized failed");
+  auto output_shape = GetShapeAdaptively(outputs, 0);
   output_shape[0] = max_index_ + 1;
   // auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
   // common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
@@ -80,8 +96,6 @@ void DynamicStitchKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-void DynamicStitchKernelMod::InitSizeLists() { return; }
-
 bool DynamicStitchKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &workspace,
                                     const std::vector<KernelTensor *> &outputs, void *stream) {
@@ -90,10 +104,10 @@ bool DynamicStitchKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   auto max_index_dev = GetDeviceAddress<int>(workspace, 0);
   auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);
   // Init output  and max_index with 0
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(output_addr, 0, output_size_list_[0], cuda_stream),
-                             "Init output with cudamemset failed");
-  CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(max_index_dev, 0, sizeof(int), cuda_stream),
-                             "Init max_index_dev with cudamemset failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(output_addr, 0, output_size_list_[0], cuda_stream),
+                                     "Init output with cudamemset failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(max_index_dev, 0, sizeof(int), cuda_stream),
+                                     "Init max_index_dev with cudamemset failed");
 
   for (size_t i = 0; i < n_; i++) {
     auto index_addr = GetDeviceAddress<int>(inputs, i);
@@ -103,8 +117,8 @@ bool DynamicStitchKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                              max_index_dev, cuda_stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
   }
-  CHECK_CUDA_RET_WITH_EXCEPT(
-    kernel_node_, cudaMemcpyAsync(&max_index_, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&max_index_, max_index_dev, sizeof(int), cudaMemcpyDeviceToHost, cuda_stream),
     "For 'DynamicStitch', copy max_index failed");
   if (cudaStreamQuery(cuda_stream) != cudaSuccess) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "For 'DynamicStitch', cudaStreamSyncFailed");

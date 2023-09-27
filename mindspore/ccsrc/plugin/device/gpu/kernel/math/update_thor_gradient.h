@@ -42,7 +42,7 @@ struct GradientSize {
   cudaDataType_t dtype;
 };
 template <typename T>
-class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
  public:
   UpdateThorGradientGpuKernelMod() : split_dim(128), handle_(nullptr) {}
   ~UpdateThorGradientGpuKernelMod() = default;
@@ -90,8 +90,7 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto stride_c = SizeToInt(gradient_size.h * (gradient_size.ori_w + gradient_size.pad_w));
 
     try {
-      CHECK_CUBLAS_RET_WITH_EXCEPT(
-        kernel_node_,
+      CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
         cublasGemmStridedBatchedEx(handle_, CUBLAS_OP_N, CUBLAS_OP_N, SizeToInt(gradient_size.ori_w),
                                    SizeToInt(gradient_size.h), SizeToInt(gradient_size.h), &alpha, input2_addr,
                                    gradient_size.dtype, ldb, stride_b, input1_addr, gradient_size.dtype, lda, stride_a,
@@ -124,8 +123,7 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (gradient_size.need_convert) {
       r_output_addr = workspace3_addr;
     }
-    CHECK_CUBLAS_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasGemmStridedBatchedEx(handle_, CUBLAS_OP_N, CUBLAS_OP_N, SizeToInt(gradient_size.w),
                                  SizeToInt(gradient_size.h), SizeToInt(gradient_size.w), &alpha, input3_addr,
                                  gradient_size.dtype, ldb_r, stride_b, r_input_addr, gradient_size.dtype, lda_r,
@@ -148,25 +146,16 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    (void)SetProperty(kernel_node);
+    (void)SetProperty(primitive_, inputs, outputs);
     InitSizeLists();
     return true;
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     size_t unit_size = sizeof(T);
-    size_t input_size_ = gradient_size.h * gradient_size.h * gradient_size.batch_h * unit_size;
-    input_size_list_.push_back(input_size_);
-
-    input_size_ = gradient_size.ori_h * gradient_size.ori_w * unit_size;
-    input_size_list_.push_back(input_size_);
-
-    input_size_ = gradient_size.w * gradient_size.w * gradient_size.batch_w * unit_size;
-    input_size_list_.push_back(input_size_);
 
     size_t output_size = gradient_size.ori_h * gradient_size.ori_w * unit_size;
     output_size_list_.push_back(output_size);
@@ -190,11 +179,12 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  void SetProperty(const CNodePtr &kernel_node) {
-    auto matrix_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  void SetProperty(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+                   const std::vector<KernelTensor *> &outputs) {
+    const auto &matrix_a_shape = inputs[kIndex0]->GetShapeVector();
+    const auto &shape_signed = inputs[kIndex1]->GetShapeVector();
     auto gradient_shape = Convert2SizeTClipNeg(shape_signed);
-    auto matrix_g_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    const auto &matrix_g_shape = inputs[kIndex2]->GetShapeVector();
     if (AnfAlgo::IsShapesDynamic({matrix_a_shape, shape_signed, matrix_g_shape})) {
       return;
     }
@@ -205,7 +195,7 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return;
     }
 
-    split_dim = LongToSize(GetAttr<int64_t>(kernel_node, "split_dim"));
+    split_dim = LongToSize(GetValue<int64_t>(primitive->GetAttr("split_dim")));
     if (split_dim == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", divide by zero, split_dim cannot be 0, but got " << split_dim;
     }
@@ -247,7 +237,7 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     gradient_size.ori_w = gradient_shape[1];
     gradient_size.ori_h = gradient_shape[0];
-    gradient_size.dtype = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));
+    gradient_size.dtype = GetCudaDataType(TypeIdLabel(inputs[kIndex1]->dtype_id()));
   }
 
   size_t split_dim;

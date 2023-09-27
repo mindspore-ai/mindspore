@@ -27,9 +27,9 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CastAllFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CastAllFwdGpuKernelMod() : max_(0), input_size_(0), output_size_(0), num_input_(0), is_null_input_(false) {}
+  CastAllFwdGpuKernelMod() : max_(0), output_size_(0), num_input_(0), is_null_input_(false) {}
   ~CastAllFwdGpuKernelMod() override = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -47,32 +47,36 @@ class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T **inputs_dev = GetDeviceAddress<T *>(workspace, 0);
     S **outputs_dev = GetDeviceAddress<S *>(workspace, 1);
     size_t *size_dev = GetDeviceAddress<size_t>(workspace, 2);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(inputs_dev, in_addr.get(), sizeof(T *) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(outputs_dev, out_addr.get(), sizeof(S *) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemcpyAsync(size_dev, size_.get(), sizeof(size_t) * num_input_, cudaMemcpyHostToDevice, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(size_dev, size_.get(), sizeof(size_t) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
     auto status = CastAllKernel(inputs_dev, outputs_dev, max_, num_input_, size_dev, stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    num_input_ = GetAttr<size_t>(kernel_node, "n");
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
+      return ret;
+    }
+    num_input_ = GetValue<size_t>(primitive_->GetAttr("n"));
     size_ = std::make_unique<size_t[]>(num_input_);
+    output_size_list_.clear();
     for (size_t i = 0; i < num_input_; i++) {
-      auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
+      const auto &shape = inputs[i]->GetShapeVector();
+      is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
       if (is_null_input_) {
-        InitSizeLists();
+        output_size_list_.push_back(output_size_);
         return true;
       }
       size_t s = SizeOf(shape);
@@ -80,25 +84,17 @@ class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         max_ = s;
       }
       size_[i] = s;
-      input_size_ = sizeof(T) * s;
       output_size_ = sizeof(S) * s;
-      InitSizeLists();
+      output_size_list_.push_back(output_size_);
     }
     workspace_size_list_.push_back(sizeof(T *) * num_input_);
     workspace_size_list_.push_back(sizeof(S *) * num_input_);
     workspace_size_list_.push_back(sizeof(size_t) * num_input_);
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
+    return KRET_OK;
   }
 
   std::unique_ptr<size_t[]> size_;
   size_t max_;
-  size_t input_size_;
   size_t output_size_;
   size_t num_input_;
   bool is_null_input_;

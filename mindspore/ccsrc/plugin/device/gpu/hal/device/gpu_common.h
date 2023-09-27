@@ -219,13 +219,12 @@ namespace gpu {
     }                                                                                  \
   } while (0);
 
-#define CHECK_NCCL_RET_WITH_EXCEPT(node, expression, message)                                    \
-  do {                                                                                           \
-    int result = (expression);                                                                   \
-    if (result != ncclSuccess) {                                                                 \
-      MS_LOG(EXCEPTION) << "#umsg#NCCL Error:#umsg#" << message << " | Error Number: " << result \
-                        << trace::DumpSourceLines(node.lock());                                  \
-    }                                                                                            \
+#define CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(expression, message)                                   \
+  do {                                                                                            \
+    int result = (expression);                                                                    \
+    if (result != ncclSuccess) {                                                                  \
+      MS_LOG(EXCEPTION) << "#umsg#NCCL Error:#umsg#" << message << " | Error Number: " << result; \
+    }                                                                                             \
   } while (0);
 
 #define CHECK_NCCL_RET_WITH_EXCEPT_NOTRACE(expression, message)                                   \

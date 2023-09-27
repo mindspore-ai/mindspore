@@ -26,15 +26,14 @@
 
 namespace mindspore {
 namespace kernel {
-class TrtKernelMod : public DeprecatedNativeGpuKernelMod {
+class TrtKernelMod : public NativeGpuKernelMod {
  public:
   TrtKernelMod() : serialize_(""), runtime_(nullptr), engine_(nullptr), context_(nullptr) {}
   ~TrtKernelMod() = default;
 
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  void InitSizeLists() override{};
   void ReleaseResource();
 
  private:

@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
  public:
   CholeskyTrsmGpuKernelMod()
       : batch_(0),
@@ -64,12 +64,10 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    const auto &shape_signed = inputs[kIndex0]->GetShapeVector();
     if (IsDynamic(shape_signed)) {
       return true;
     }
@@ -79,9 +77,9 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
+    split_dim_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("split_dim")));
     if (split_dim_ == 0) {
-      if (!InitDim0(kernel_node, in_shape)) {
+      if (!InitDim0(in_shape)) {
         return false;
       }
     } else {
@@ -91,18 +89,16 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       if (in_shape[0] != in_shape[1]) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input should be square matrix";
       }
-      InitDimOthers(kernel_node, in_shape);
+      InitDimOthers(in_shape);
     }
     InitSizeLists();
     return true;
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     if (!use_split_matrix_) {
       size_t unit_size = sizeof(T);
-      size_t input_size = batch_ * m_ * lda_ * unit_size;
-      input_size_list_.push_back(input_size);
       size_t output_size = batch_ * m_ * lda_ * unit_size;
       output_size_list_.push_back(output_size);
       size_t workspace_size = batch_ * sizeof(T *);
@@ -113,8 +109,6 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       workspace_size_list_.push_back(workspace_size);
     } else {
       size_t unit_size = sizeof(T);
-      size_t input_size = height_ * width_ * unit_size;
-      input_size_list_.push_back(input_size);
       size_t output_size = batch_ * m_ * lda_ * unit_size;
       output_size_list_.push_back(output_size);
       size_t workspace_size = batch_ * sizeof(T *);
@@ -139,26 +133,24 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < batch_; i++) {
       h_array_[i] = input1_addr + i * lda_ * m_;
       h_identity_[i] = output_addr + i * ldb_ * m_;
-      CHECK_CUDA_RET_WITH_ERROR(
-        kernel_node_,
+      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
         cudaMemcpyAsync(output_addr + i * ldb_ * m_, h_identity_data_.data(), sizeof(T) * ldb_ * m_,
                         cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cuda memcopy Fail");
     }
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
-    CHECK_CUSOLVER_RET_WITH_EXCEPT(
-      kernel_node_, cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+      cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
       "cusolver cholesky batched Fail");
     float alpha = 1;
-    CHECK_CUBLAS_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasStrsmBatched(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, m_, m_, &alpha,
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
@@ -182,26 +174,25 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     status = MatrixSplit(batch_ * split_dim_ * split_dim_, split_dim_, width_, input1_addr, d_batch_input_addr,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_STATUS(status, "MatrixSplit called by " + kernel_name_);
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
-    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                              cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_,
-                                              cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "cuda memcopy Fail");
-    CHECK_CUSOLVER_RET_WITH_EXCEPT(
-      kernel_node_, cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_array_addr, h_array_.data(), sizeof(T *) * batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+      cudaMemcpyAsync(d_identity_addr, h_identity_.data(), sizeof(T *) * batch_, cudaMemcpyHostToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cuda memcopy Fail");
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
+      cusolverDnSpotrfBatched(handle_, uplo_, m_, d_array_addr, lda_, d_info_array_addr, batch_),
       "cusolver cholesky batched Fail");
     float alpha = 1;
-    CHECK_CUBLAS_RET_WITH_EXCEPT(
-      kernel_node_,
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasStrsmBatched(blas_handle_, CUBLAS_SIDE_LEFT, uplo_, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, m_, m_, &alpha,
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
   }
 
-  bool InitDim0(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
+  bool InitDim0(const std::vector<size_t> &in_shape) {
     use_split_matrix_ = false;
     if (in_shape.size() == 2) {
       batch_ = 1;
@@ -239,7 +230,7 @@ class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     return true;
   }
-  void InitDimOthers(const CNodePtr &kernel_node, const std::vector<size_t> &in_shape) {
+  void InitDimOthers(const std::vector<size_t> &in_shape) {
     height_ = in_shape[0];
     width_ = in_shape[1];
     if (SizeToInt(height_) <= split_dim_) {
