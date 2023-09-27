@@ -35,9 +35,7 @@ class MIND_API PromptFlashAttention : public BaseOperator {
   MIND_API_BASE_MEMBER(PromptFlashAttention);
   /// \brief Constructor.
   PromptFlashAttention() : BaseOperator(kNamePromptFlashAttention) {
-    InitIOName({"query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths", "num_heads", "scale_value",
-                "pre_tokens", "next_tokens", "input_layout", "num_key_value_heads"},
-               {"attention_out"});
+    InitIOName({"query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"}, {"attention_out"});
   }
 };
 AbstractBasePtr PromptFlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
