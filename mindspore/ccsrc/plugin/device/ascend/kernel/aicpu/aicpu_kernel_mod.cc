@@ -398,6 +398,7 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
     auto wingman_queue = device::GetTdtWingManQueue(cnode);
+    MS_EXCEPTION_IF_NULL(wingman_queue);
     std::vector<device::DataQueueItem> data;
     RetryPeakItemFromDataQueue(cnode, wingman_queue, &data);
     (void)wingman_queue->Pop();

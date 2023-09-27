@@ -1764,6 +1764,7 @@ void DfGraphConvertor::BuildInitDataGraph(const std::string &name) {
     }
   }
   OperatorPtr init_data_op = Convert(init_dataset_queue_node);
+  MS_EXCEPTION_IF_NULL(init_data_op);
   if (error_ != SUCCESS) {
     return;
   }
@@ -3728,6 +3729,7 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
     MS_EXCEPTION_IF_NULL(vec[i]);
     if (vec[i]->isa<MeTensor>()) {
       GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_NCHW);
+      MS_EXCEPTION_IF_NULL(ge_tensor);
       auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
       AddGraphConstInput(const_op);
       (void)const_op->set_attr_value(*ge_tensor);
