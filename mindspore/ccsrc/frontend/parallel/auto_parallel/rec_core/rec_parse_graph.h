@@ -190,14 +190,14 @@ const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
 Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 
-OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                   Graph::NodeType NewTensor);
+void CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                            Graph::NodeType *NewTensor);
 
-TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+void Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                      const size_t iter_input_tensors, Graph::NodeType *NewTensor);
 
-TensorParam Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+void Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                      const size_t iter_input_tensors, Graph::NodeType *NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names);

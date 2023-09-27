@@ -321,7 +321,7 @@ Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
   return Node;
 }
 
-size_t GetStratNumber(const Graph::NodeType Node) { return Node.apply.strs.size(); }
+size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
 
 void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> &graph) {
   if (!ENABLE_PIPE_ALGO) {
