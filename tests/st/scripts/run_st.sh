@@ -2,7 +2,7 @@
 
 # Usage:
 #    Command: sh run_st.sh -p ascend -c ascend910
-#    Options: 
+#    Options:
 #        -p: platform type(ascend, gpu, all)
 #        -c: driver version(cuda-10.1, cuda-11.1 ascend910, ascend310)
 #        -l: testcase level(level0, level1, level2, level3)
@@ -19,7 +19,7 @@ function CHECK_PARAMETER() {
     local bool_empty=${4:-"true"}
     local flag_check=1
     local param=""
-    
+
     # If in the parameter list
     for param in ${param_list//,/ }; do
         if [ "${current_param}" = "${param}" ]; then
@@ -27,12 +27,12 @@ function CHECK_PARAMETER() {
             break
         fi
     done
-    
+
     # If empty
     if [ "${bool_empty}" = "true" ] && [ -z "${current_param}" ]; then
         flag_check=0
     fi
-    
+
     # Check result
     if [ "${flag_check}" = "1" ];then
         echo "Input parameter of ${param_name} is invalid. (Value: ${param_list})"
@@ -49,7 +49,6 @@ CURR_DIR=$(cd -P "${CURR_DIR}"; pwd -P)
 CONFIG_PATH="${CURR_DIR}/config"
 TESTCASE_LEVEL='level0'
 TESTCASE_ROOT="${CURR_DIR}/../"
-MACHINE_TYPE=$(uname -m)
 
 # Get input parameter
 while getopts ':p:c:l:r:' opt; do
@@ -85,13 +84,11 @@ ENV_TYPE="ASCEND_ARM_EULEROS"
 cat ${CONFIG_PATH}/case_env_config_template.yaml|grep -A 8 "all_case_type" > ${CONFIG_PATH}/case_env_config.yaml
 echo -e "\ncase_type:" >> ${CONFIG_PATH}/case_env_config.yaml
 if [ "${PLATFORM_TYPE}" = "ascend" ] || [ "${PLATFORM_TYPE}" = "all" ]; then
-    if [ "$MACHINE_TYPE" == "x86_64" ]; then
-        ENV_TYPE="ASCEND_X86_EULEROS"
-        echo -e "  platform_arm_ascend_training: ASCEND_X86_EULEROS" >> ${CONFIG_PATH}/case_env_config.yaml
-    else
-        ENV_TYPE="ASCEND_ARM_EULEROS"
-        echo -e "  platform_arm_ascend_training: ASCEND_ARM_EULEROS" >> ${CONFIG_PATH}/case_env_config.yaml
-    fi
+    ENV_TYPE="ASCEND_ARM_EULEROS"
+    echo -e "  platform_arm_ascend_training: ASCEND_ARM_EULEROS" >> ${CONFIG_PATH}/case_env_config.yaml
+elif [ "${PLATFORM_TYPE}" = "ascend910b" ] || [ "${PLATFORM_TYPE}" = "all" ]; then
+    ENV_TYPE="ASCEND_ARM_EULEROS_910B"
+    echo -e "  platform_arm_ascend910b_training: ASCEND_ARM_EULEROS_910B" >> ${CONFIG_PATH}/case_env_config.yaml
 elif [ "${PLATFORM_TYPE}" = "gpu" ] || [ "${PLATFORM_TYPE}" = "all" ]; then
     if [ "${DRIVER_VERSION}" = "cuda-10.1" ]; then
         ENV_TYPE="GPU_X86_UBUNTU_CUDA10"
