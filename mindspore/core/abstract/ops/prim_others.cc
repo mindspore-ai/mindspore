@@ -411,31 +411,6 @@ AbstractBasePtr InferImplMemCpyAsync(const AnalysisEnginePtr &, const PrimitiveP
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
 }
 
-AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  // GPU has 2 inputs while tbe has 1 only. Skip CheckArgsSize.
-  auto input_x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(input_x);
-
-  ValuePtr dst_type;
-  constexpr auto kCastInputSize = 2;
-  if (args_abs_list.size() < kCastInputSize) {
-    dst_type = primitive->GetAttr("dst_type");
-  } else {
-    auto type_abs = CheckArg<AbstractType>(op_name, args_abs_list, 1);
-    dst_type = type_abs->BuildValue();
-  }
-
-  MS_EXCEPTION_IF_NULL(dst_type);
-  if (!dst_type->isa<Type>()) {
-    MS_LOG(EXCEPTION) << "Invalid Cast dst_type " << dst_type->ToString();
-  }
-  auto input_type = dst_type->cast<TypePtr>();
-  auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape());
-  return ret;
-}
-
 AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_abs_list) {
   constexpr size_t input_size = 1;

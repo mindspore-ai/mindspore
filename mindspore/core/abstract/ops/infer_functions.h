@@ -168,8 +168,6 @@ MIND_API AbstractBasePtr InferImplMemCpyAsync(const AnalysisEnginePtr &, const P
                                               const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const AbstractBasePtrList &args_abs_list);
-MIND_API AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplMinimum(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
                                           const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
