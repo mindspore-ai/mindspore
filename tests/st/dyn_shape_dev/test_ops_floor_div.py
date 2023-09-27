@@ -33,6 +33,7 @@ def floor_div_backward_func(x, y):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_floor_div_forward():
     """
     Feature: Ops.
@@ -51,6 +52,7 @@ def test_floor_div_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend_training
 def test_floor_div_backward():
     """
     Feature: Auto grad.
@@ -68,6 +70,7 @@ def test_floor_div_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_floor_div_vmap():
     """
     Feature: test vmap function.
