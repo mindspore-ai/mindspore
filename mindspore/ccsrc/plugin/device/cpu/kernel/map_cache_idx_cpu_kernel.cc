@@ -62,12 +62,13 @@ void CheckMissCount(size_t miss_count, int count_size, float total_count, float 
 bool MapCacheIdxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+  kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
   is_need_retrieve_output_shape_ = true;
   outputs_size_ = outputs.size();
   for (size_t i = 0; i < outputs_size_; i++) {
+    MS_EXCEPTION_IF_NULL(outputs[i]);
     dtypes_.push_back(outputs[i]->GetDtype());
   }
 
@@ -89,18 +90,15 @@ int MapCacheIdxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, ret: " << ret;
     return ret;
   }
-
   auto hashmap_shape = inputs[kIndex0]->GetShapeVector();
   auto emb_idx_shape = inputs[kIndex1]->GetShapeVector();
   batch_size_ = SizeOf(emb_idx_shape);
-
   hashmap_length_ = LongToSize(hashmap_shape[0]);
   if (hashmap_length_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first dimension of 'HashMap' must be greater than 0, but got "
                   << hashmap_length_;
     return KRET_RESIZE_FAILED;
   }
-
   return KRET_OK;
 }
 
@@ -108,15 +106,22 @@ template <typename T>
 bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->addr);
-  auto input_indices = reinterpret_cast<T *>(inputs[1]->addr);
-  T *step_ = reinterpret_cast<T *>(inputs[2]->addr);
-  T emb_max_num = *reinterpret_cast<T *>(inputs[3]->addr);
-  T offset = *reinterpret_cast<T *>(inputs[4]->addr);
-  auto output_cache_idx = reinterpret_cast<T *>(outputs[0]->addr);
-  auto output_old_emb_idx = reinterpret_cast<T *>(outputs[1]->addr);
-  auto output_miss_emb_idx = reinterpret_cast<T *>(outputs[2]->addr);
-  auto output_swap_cache_idx = reinterpret_cast<T *>(outputs[3]->addr);
+  HashmapEntry<T> *hashmap = GetDeviceAddress<HashmapEntry<T>>(inputs, kIndex0);
+  auto input_indices = GetDeviceAddress<T>(inputs, kIndex1);
+  T *step_ = GetDeviceAddress<T>(inputs, kIndex2);
+  T *emb_max_num_ptr = GetDeviceAddress<T>(inputs, kIndex3);
+  T *offset_ptr = GetDeviceAddress<T>(inputs, kIndex4);
+  auto output_cache_idx = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output_old_emb_idx = GetDeviceAddress<T>(outputs, kIndex1);
+  auto output_miss_emb_idx = GetDeviceAddress<T>(outputs, kIndex2);
+  auto output_swap_cache_idx = GetDeviceAddress<T>(outputs, kIndex3);
+  MS_EXCEPTION_IF_NULL(hashmap);
+  MS_EXCEPTION_IF_NULL(input_indices);
+  MS_EXCEPTION_IF_NULL(step_);
+  MS_EXCEPTION_IF_NULL(emb_max_num_ptr);
+  MS_EXCEPTION_IF_NULL(offset_ptr);
+  T emb_max_num = *emb_max_num_ptr;
+  T offset = *offset_ptr;
   std::vector<T> miss_idx;
   miss_count_ = 0;
   float total_count = 0;
@@ -197,7 +202,6 @@ bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   for (size_t i = 0; i < miss_count_; ++i) {
     output_cache_idx[miss_idx[i]] = output_swap_cache_idx[i];
   }
-
   return true;
 }
 

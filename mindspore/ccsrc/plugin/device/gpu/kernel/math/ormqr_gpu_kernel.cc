@@ -30,6 +30,7 @@ namespace kernel {
 bool OrmqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Ormqr>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -118,10 +119,17 @@ bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *tau = GetDeviceAddress<T>(inputs, kIndex1);
   T *other = GetDeviceAddress<T>(inputs, kIndex2);
   T *output_y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(tau);
+  MS_EXCEPTION_IF_NULL(other);
+  MS_EXCEPTION_IF_NULL(output_y);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
   T *d_x = GetDeviceAddress<T>(workspace, kIndex1);
   T *d_other = GetDeviceAddress<T>(workspace, kIndex2);
+  MS_EXCEPTION_IF_NULL(dev_info);
+  MS_EXCEPTION_IF_NULL(d_x);
+  MS_EXCEPTION_IF_NULL(d_other);
 
   TransposeInfo x_info;
   TransposeInfo y_info;

@@ -78,6 +78,9 @@ bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<AddressPtr> &inp
   StateType *input_state = GetDeviceAddress<StateType>(inputs, kIndex0);
   LogProbType *log_probs = GetDeviceAddress<LogProbType>(inputs, kIndex1);
   LogProbType *output = GetDeviceAddress<LogProbType>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_state);
+  MS_EXCEPTION_IF_NULL(log_probs);
+  MS_EXCEPTION_IF_NULL(output);
   auto blocks = batch_size_ * beam_size_;
   auto mem_size = (seq_len_ + 1) * sizeof(StateType);
 

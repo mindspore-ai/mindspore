@@ -41,12 +41,14 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputNoBatch = 2;
   const int64_t kInputWithBatch = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
   const size_t kTwo = 2;
+  MS_EXCEPTION_IF_NULL(prim);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, prim->name());
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   if (IsDynamic(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
@@ -92,6 +94,9 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &, const std::vector<Abstr
 }
 
 TypePtr OrgqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
   auto x_type = input_args[0]->BuildType();
@@ -105,9 +110,6 @@ TypePtr OrgqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 MIND_API_OPERATOR_IMPL(Orgqr, BaseOperator);
 AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = OrgqrInferType(primitive, input_args);
   auto infer_shape = OrgqrInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

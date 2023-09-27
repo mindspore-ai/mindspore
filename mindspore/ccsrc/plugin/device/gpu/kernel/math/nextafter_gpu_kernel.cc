@@ -21,6 +21,7 @@ namespace mindspore {
 namespace kernel {
 bool NextAfterGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   kernel_ptr_ = std::make_shared<ops::NextAfter>(base_operator->GetPrim());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -90,9 +91,12 @@ template <typename T>
 bool NextAfterGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
-  T *input1 = GetDeviceAddress<T>(inputs, 0);
-  T *input2 = GetDeviceAddress<T>(inputs, 1);
-  T *output = GetDeviceAddress<T>(outputs, 0);
+  T *input1 = GetDeviceAddress<T>(inputs, kIndex0);
+  T *input2 = GetDeviceAddress<T>(inputs, kIndex1);
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input1);
+  MS_EXCEPTION_IF_NULL(input2);
+  MS_EXCEPTION_IF_NULL(output);
   auto status =
     NextAfter(input_elements_, input1, input2, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);

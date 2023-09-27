@@ -65,6 +65,8 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
+    const int64_t input_num = 3;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto gamma_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto beta_shape_ptr = input_args[kInputIndex2]->BuildShape();
@@ -127,7 +129,6 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
     // outputs: y, mean, variance
     MS_EXCEPTION_IF_NULL(primitive);
     const std::string op_name = primitive->name();
-    MS_EXCEPTION_IF_NULL(primitive);
     const int64_t input_num = 3;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
 

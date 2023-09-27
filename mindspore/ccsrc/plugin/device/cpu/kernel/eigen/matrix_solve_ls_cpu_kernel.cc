@@ -207,10 +207,14 @@ template <typename T>
 bool MatrixSolveLsCpuKernelMod::ComplexCholesky(const std::vector<kernel::AddressPtr> &inputs,
                                                 const std::vector<kernel::AddressPtr> &outputs) {
   auto dims = matrix_shape_.size();
-  auto l2 = reinterpret_cast<double *>(inputs[2]->addr);
-  auto aptr = reinterpret_cast<std::complex<T> *>(inputs[0]->addr);
-  auto bptr = reinterpret_cast<std::complex<T> *>(inputs[1]->addr);
-  auto xptr = reinterpret_cast<std::complex<T> *>(outputs[0]->addr);
+  auto l2 = GetDeviceAddress<double>(inputs, kIndex2);
+  auto aptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex0);
+  auto bptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex1);
+  auto xptr = GetDeviceAddress<std::complex<T>>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(l2);
+  MS_EXCEPTION_IF_NULL(aptr);
+  MS_EXCEPTION_IF_NULL(bptr);
+  MS_EXCEPTION_IF_NULL(xptr);
   int64_t m = matrix_shape_[dims - kNum2];
   int64_t k = matrix_shape_[dims - 1];
   int64_t n = 1;
@@ -243,9 +247,12 @@ template <typename T>
 bool MatrixSolveLsCpuKernelMod::RealQr(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   auto dims = matrix_shape_.size();
-  auto aptr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto bptr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto xptr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto aptr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto bptr = GetDeviceAddress<T>(inputs, kIndex1);
+  auto xptr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(aptr);
+  MS_EXCEPTION_IF_NULL(bptr);
+  MS_EXCEPTION_IF_NULL(xptr);
   int64_t m = matrix_shape_[dims - kNum2];
   int64_t k = matrix_shape_[dims - 1];
   int64_t n = 1;
@@ -291,9 +298,12 @@ bool MatrixSolveLsCpuKernelMod::ComplexQr(const std::vector<kernel::AddressPtr> 
   const int64_t res_size = n * k;
   const int64_t batch = data_num / mat_size;
   const int64_t kParallelDataNum = 16 * mat_size;
-  auto aptr = reinterpret_cast<std::complex<T> *>(inputs[0]->addr);
-  auto bptr = reinterpret_cast<std::complex<T> *>(inputs[1]->addr);
-  auto xptr = reinterpret_cast<std::complex<T> *>(outputs[0]->addr);
+  auto aptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex0);
+  auto bptr = GetDeviceAddress<std::complex<T>>(inputs, kIndex1);
+  auto xptr = GetDeviceAddress<std::complex<T>>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(aptr);
+  MS_EXCEPTION_IF_NULL(bptr);
+  MS_EXCEPTION_IF_NULL(xptr);
   if (data_num >= kParallelDataNum) {
     auto sharder_matrix_solve_ls = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; i++) {
@@ -313,10 +323,14 @@ template <typename T>
 bool MatrixSolveLsCpuKernelMod::RealCholesky(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   auto dims = matrix_shape_.size();
-  auto aptr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto bptr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto xptr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto l2 = reinterpret_cast<double *>(inputs[2]->addr);
+  auto l2 = GetDeviceAddress<double>(inputs, kIndex2);
+  auto aptr = GetDeviceAddress<T>(inputs, kIndex0);
+  auto bptr = GetDeviceAddress<T>(inputs, kIndex1);
+  auto xptr = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(l2);
+  MS_EXCEPTION_IF_NULL(aptr);
+  MS_EXCEPTION_IF_NULL(bptr);
+  MS_EXCEPTION_IF_NULL(xptr);
   int64_t m = matrix_shape_[dims - kNum2];
   int64_t k = matrix_shape_[dims - 1];
   int64_t n = 1;
@@ -378,10 +392,6 @@ int MatrixSolveLsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(inputs[kMatrixInputIndex]);
-  MS_EXCEPTION_IF_NULL(inputs[kRhsInputIndex]);
-  MS_EXCEPTION_IF_NULL(inputs[kL2InputIndex]);
-  MS_EXCEPTION_IF_NULL(outputs[kOutputIndex]);
   matrix_shape_ = inputs[kMatrixInputIndex]->GetShapeVector();
   rhs_shape_ = inputs[kRhsInputIndex]->GetShapeVector();
   l2_shape_ = inputs[kL2InputIndex]->GetShapeVector();

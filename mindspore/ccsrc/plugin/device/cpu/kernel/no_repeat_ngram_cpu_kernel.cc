@@ -96,9 +96,12 @@ bool NoRepeatNGramCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
                                              const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNoRepeatNGramInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNoRepeatNGramOutputsNum, kernel_name_);
-  auto *state_seq = reinterpret_cast<int32_t *>(inputs[kIndex0]->addr);
-  auto *log_probs = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto state_seq = GetDeviceAddress<int32_t>(inputs, kIndex0);
+  auto log_probs = GetDeviceAddress<T>(inputs, kIndex1);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(state_seq);
+  MS_EXCEPTION_IF_NULL(log_probs);
+  MS_EXCEPTION_IF_NULL(output);
   CheckAndInitParams();
 
   for (size_t i = 0; i < LongToSize(output_size_); i++) {

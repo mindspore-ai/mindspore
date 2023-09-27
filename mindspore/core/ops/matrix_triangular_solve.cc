@@ -65,6 +65,8 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  const int64_t kTwo = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, prim_name);
   auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (IsDynamicRank(matrix_shape) || IsDynamicRank(rhs_shape)) {
@@ -122,6 +124,8 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
 
 TypePtr MatrixTriangularSolveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kTwo = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, primitive->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("matrix", input_args[0]->BuildType());
   (void)types.emplace("rhs", input_args[1]->BuildType());
@@ -133,9 +137,6 @@ TypePtr MatrixTriangularSolveInferType(const PrimitivePtr &primitive, const std:
 MIND_API_OPERATOR_IMPL(MatrixTriangularSolve, BaseOperator);
 AbstractBasePtr MatrixTriangularSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kTwo = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, primitive->name());
   auto infer_type = MatrixTriangularSolveInferType(primitive, input_args);
   auto infer_shape = MatrixTriangularSolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
