@@ -423,7 +423,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
-            `kernel_size` will be used. Default: ``0`` .
+            `kernel_size` will be used. Default: ``0``, which means not specified.
 
     Returns:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -531,7 +531,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         count_include_pad (bool, optional): If ``True`` , averaging calculation
             will include the zero-padding. Default: ``True`` .
         divisor_override (int, optional): If specified, it will be used as divisor in the averaging calculation,
-            otherwise `kernel_size` will be used. Default: ``0`` .
+            otherwise `kernel_size` will be used. Default: ``0`` , which means not specified.
 
     Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
