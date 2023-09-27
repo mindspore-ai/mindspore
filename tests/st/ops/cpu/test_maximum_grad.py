@@ -203,3 +203,25 @@ def test_broadcast_grad_cpu():
     result = net(Tensor(x), Tensor(y), Tensor(dout))
     assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_same_input():
+    """
+    Feature: test maximumgrad on CPU
+    Description: test maximumgrad with same input.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = MaxmumGradNet()
+    output = net(Tensor(x_np), Tensor(y_np), Tensor(dout))
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([0.5, -0.5, 0.])
+    expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
