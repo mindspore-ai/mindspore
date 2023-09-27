@@ -11357,8 +11357,14 @@ class PromptFlashAttention(Primitive):
         ``Ascend910B``
     """
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
+                 num_key_value_heads=0):
         """Initialize PromptFlashAttention."""
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths",
-                                        "num_heads", "scale_value", "pre_tokens", "next_tokens", "input_layout",
-                                        "num_key_value_heads"], outputs=["attention_out"])
+        validator.check_value_type('num_heads', num_heads, [int], self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name)
+        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
+        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
+        validator.check_value_type('input_layout', input_layout, [str], self.name)
+        validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"],
+                                outputs=["attention_out"])

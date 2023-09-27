@@ -37,12 +37,6 @@ enum PromptFlashAttentionInputIndex : size_t {
   kPromptFlashAttentionInputAttnMaskIndex,
   kPromptFlashAttentionInputPaddingMaskIndex,
   kPromptFlashAttentionInputActualSeqLengthsIndex,
-  kPromptFlashAttentionInputNumHeadsIndex,
-  kPromptFlashAttentionInputScaleValueIndex,
-  kPromptFlashAttentionInputPreTokensIndex,
-  kPromptFlashAttentionInputNextTokensIndex,
-  kPromptFlashAttentionInputInputLayoutIndex,
-  kPromptFlashAttentionInputNumKeyValueHeadsIndex,
   kPromptFlashAttentionInputsNum,
 };
 
@@ -77,16 +71,9 @@ abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primi
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kPromptFlashAttentionInputsNum, op_name);
-  auto input_layout_valueptr = input_args[kPromptFlashAttentionInputInputLayoutIndex]->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_layout_valueptr);
-  if (!(input_layout_valueptr->isa<StringImm>())) {
-    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the input_layout should be string. but got "
-                      << input_layout_valueptr->ToString();
-  }
-  auto input_layout = GetValue<std::string>(input_layout_valueptr);
-  auto num_heads =
-    GetScalarCastValue<int64_t>(op_name, input_args[kPromptFlashAttentionInputNumHeadsIndex]->BuildValue());
 
+  auto input_layout = GetValue<std::string>(primitive->GetAttr("input_layout"));
+  auto num_heads = GetValue<int64_t>(primitive->GetAttr("num_heads"));
   if (num_heads == 0) {
     MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the num_heads should not be zero.";
   }
