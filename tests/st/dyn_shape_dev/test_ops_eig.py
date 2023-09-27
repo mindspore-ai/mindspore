@@ -27,6 +27,8 @@ def eig_forward_func(input_x, compute_v):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_eig_forward():
     """
     Feature: Ops.
