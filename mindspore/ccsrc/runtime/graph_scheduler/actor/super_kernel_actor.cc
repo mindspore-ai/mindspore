@@ -317,6 +317,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     }
     // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
     node_device_tensor->SetSize(input_device_tensor->GetSize());
+    node_device_tensor->set_user_data(input_device_tensor->user_data());
+    node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
@@ -329,8 +331,6 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for supporting
         // zero copy.
         node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
-        node_device_tensor->set_user_data(input_device_tensor->user_data());
-        node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
         MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
                       << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
         node_device_tensor->set_from_mem_pool(false);
@@ -352,6 +352,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       }
       copy_device_tensor = copy_input_device_tensors_[i];
       MS_EXCEPTION_IF_NULL(copy_device_tensor);
+      copy_device_tensor->set_user_data(node_device_tensor->user_data());
+      copy_device_tensor->set_sync_user_data_handler(node_device_tensor->sync_user_data_handler());
       if ((copy_device_tensor->GetPtr() == nullptr) &&
           (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
         MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
