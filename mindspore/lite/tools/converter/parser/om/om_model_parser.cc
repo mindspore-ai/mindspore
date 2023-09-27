@@ -441,11 +441,11 @@ std::vector<TypeId> OMModelParser::ParseDataTypes(const std::map<std::string, st
     return {};
   }
   auto data_type_str = SplitStringToVector(ret->second, ':');
-  const std::map<std::string, TypeId> supported_data_type_map = {{"FLOAT32", kNumberTypeFloat32},
-                                                                 {"FLOAT16", kNumberTypeFloat16},
-                                                                 {"UINT8", kNumberTypeUInt8},
-                                                                 {"INT32", kNumberTypeInt32},
-                                                                 {"INT64", kNumberTypeInt64}};
+  const std::map<std::string, TypeId> supported_data_type_map = {
+    {"FLOAT16", kNumberTypeFloat16}, {"FLOAT32", kNumberTypeFloat32}, {"FLOAT64", kNumberTypeFloat64},
+    {"UINT8", kNumberTypeUInt8},     {"UINT16", kNumberTypeUInt16},   {"UINT32", kNumberTypeUInt32},
+    {"UINT64", kNumberTypeUInt64},   {"INT8", kNumberTypeInt8},       {"INT16", kNumberTypeInt16},
+    {"INT32", kNumberTypeInt32},     {"INT64", kNumberTypeInt64}};
   std::vector<TypeId> data_types;
   std::transform(
     data_type_str.begin(), data_type_str.end(), std::back_inserter(data_types),
