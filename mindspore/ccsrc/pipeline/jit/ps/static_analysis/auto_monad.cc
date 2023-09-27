@@ -1089,8 +1089,8 @@ class SideEffectFinder {
       return TraceOutputEffectInfo(func_cnode);
     }
 
-    // %0 = ExtractKeywordArg("key", value) // maybe func_graph which has side effect.
-    // %1 = %0(arg1, arg2)                  // need add monad
+    // %0 = ExtractKeywordArg("key", value) // Maybe func_graph which has side effect.
+    // %1 = %0(arg1, arg2)                  // Need add monad.
     if (IsPrimitiveCNode(cnode, prim::kPrimExtractKeywordArg)) {
       auto abs = cnode->abstract();
       auto real_func = GetFuncGraphFromFuncGraphAbstract(abs);

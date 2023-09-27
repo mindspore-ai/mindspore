@@ -2509,17 +2509,15 @@ def tuple_func(*data):
     """Implementation of `tuple`."""
     data_len = len(data)
     if data_len >= 2:
-        const_utils.raise_type_error("tuple() requires 0 or 1 arguments.")
+        raise TypeError("tuple() requires 0 or 1 arguments.")
     if data_len == 0:
         return F.make_tuple()
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error(
-            "tuple() does not support single sparse tensor input.")
+        raise TypeError("tuple() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
+        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
