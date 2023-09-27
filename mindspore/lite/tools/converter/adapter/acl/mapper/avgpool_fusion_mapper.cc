@@ -77,7 +77,7 @@ void AvgPoolFusionMapper::CreateTargetPrim(const PrimitivePtr &src_prim, Primiti
       *dst_prim = std::make_shared<acl::GlobalAveragePool>();
     } else {
       auto kernel_size = opt::CastToInt(val_ptr);
-      MS_CHECK_TRUE_RET_VOID(kernel_size.size() == 2);
+      MS_CHECK_TRUE_RET_VOID(kernel_size.size() == kDim2);
       if (kernel_size.at(0) <= kSizeHW && kernel_size.at(1) <= kSizeHW &&
           kernel_size.at(0) * kernel_size.at(1) <= kSizeHWMul) {
         *dst_prim = std::make_shared<acl::AvgPoolV2>();
