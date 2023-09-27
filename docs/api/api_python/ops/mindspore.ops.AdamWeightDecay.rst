@@ -25,7 +25,7 @@ mindspore.ops.AdamWeightDecay
             w  = w - lr * update
         \end{array}
 
-    :math:`m` 代表第一个矩向量，:math:`v` 代表第二个矩向量，:math:`g` 代表 `gradient` ，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ，:math:`lr` 代表 `learning_rate` ，:math:`w` 代表 `var` ，:math:`decay` 代表 `weight_decay` ， :math:`\epsilon` 代表 `epsilon` 。
+    :math:`m` 代表第一个矩向量，:math:`v` 代表第二个矩向量，:math:`g` 代表 `gradient` ，:math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ，:math:`lr` 代表 `learning_rate` ，:math:`w` 代表 `var` ， :math:`decay` 代表 `weight_decay` ， :math:`\epsilon` 代表 `epsilon` 。
 
     参数：
         - **use_locking** (bool) - 是否对参数更新加锁保护。如果为 ``True`` ，则 `var` 、 `m` 和 `v` 张量的更新将受到锁的保护。如果为 ``False`` ，则结果不可预测。默认值： ``False`` 。
