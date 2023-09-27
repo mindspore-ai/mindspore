@@ -413,6 +413,8 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
      SpecializeArithLogComplexFunc<uint16_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogComplexFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithLogComplexFunc<uint64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogComplexFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
