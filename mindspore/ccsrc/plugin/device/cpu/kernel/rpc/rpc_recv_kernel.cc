@@ -72,10 +72,7 @@ bool RpcRecvKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   return true;
 }
 
-bool RpcRecvKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool RpcRecvKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   // If the inputs size is 0, this means the input is a monad value.
   if (inputs.empty()) {
     recv_monad_ = true;

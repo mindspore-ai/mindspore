@@ -35,21 +35,17 @@ class RpcSendKernelMod : public RpcKernelMod {
     return true;
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   // Get the rpc message size of dynamic shape data input.
-  size_t GetDynamicShapeMsgSize(const KernelTensorPtr &dynamic_shape_input) const;
+  size_t GetDynamicShapeMsgSize(const KernelTensor *dynamic_shape_input);
 
   // Assign the workspace size.
-  void AssignWorkspaceSize(const std::vector<KernelTensorPtr> &inputs);
+  void AssignWorkspaceSize(const std::vector<KernelTensor *> &inputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

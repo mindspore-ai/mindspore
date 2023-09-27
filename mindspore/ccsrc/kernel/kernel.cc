@@ -513,7 +513,17 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   return static_cast<int>(ret);
 }
 
+// ===========================Old interface===========================
 std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors) {
+  std::vector<std::vector<int64_t>> shapes(tensors.size());
+  for (size_t idx = 0; idx < shapes.size(); idx++) {
+    shapes[idx] = tensors[idx]->GetShapeVector();
+  }
+  return shapes;
+}
+
+// ===========================New interface===========================
+std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors) {
   std::vector<std::vector<int64_t>> shapes(tensors.size());
   for (size_t idx = 0; idx < shapes.size(); idx++) {
     shapes[idx] = tensors[idx]->GetShapeVector();

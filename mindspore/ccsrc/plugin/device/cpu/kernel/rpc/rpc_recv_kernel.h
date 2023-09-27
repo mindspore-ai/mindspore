@@ -32,8 +32,7 @@ class RpcRecvKernelMod : public RpcKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   void set_real_data_offset(const std::vector<size_t> &real_data_offset) { real_data_offset_ = real_data_offset; }
 
