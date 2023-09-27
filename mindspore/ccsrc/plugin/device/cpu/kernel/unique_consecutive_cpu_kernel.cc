@@ -142,22 +142,15 @@ void OutputYSet(const std::vector<int64_t> &y_shape_, const std::vector<int64_t>
 }
 }  // namespace
 
-bool UniqueConsecutiveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniqueConsecutive>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast UniqueConsecutive ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool UniqueConsecutiveCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   // Get attrs from primitive.
-  auto axis_ptr = base_operator->GetAttr("axis");
-  return_idx_ = GetValue<bool>(base_operator->GetAttr("return_idx"));
-  return_counts_ = GetValue<bool>(base_operator->GetAttr("return_counts"));
+  auto axis_ptr = primitive_->GetAttr("axis");
+  return_idx_ = GetValue<bool>(primitive_->GetAttr("return_idx"));
+  return_counts_ = GetValue<bool>(primitive_->GetAttr("return_counts"));
   // Get input shape
   if (axis_ptr == nullptr || GetValue<int64_t>(axis_ptr) == kNone) {
     axis_ = kNone;
@@ -168,11 +161,9 @@ bool UniqueConsecutiveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int UniqueConsecutiveCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   input_shape_ = inputs[0]->GetShapeVector();
   int64_t input_size = SizeToLong(input_shape_.size());
   axis_ = axis_ < 0 ? (axis_ + input_size) : axis_;

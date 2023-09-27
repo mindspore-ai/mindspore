@@ -18,22 +18,13 @@
 
 #include <algorithm>
 #include <limits>
-#include <map>
 #include <memory>
-#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cfloat>
-#include <cmath>
-#include <iostream>
-#include <functional>
 #include <random>
-#include <limits>
-
 #include "mindspore/core/ops/uniform.h"
 #include "kernel/common_utils.h"
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
@@ -82,21 +73,17 @@ uint32_t UniformCpuKernelMod::GenerateSingle() {
   return unused_results_[used_result_index_++];
 }
 
-bool UniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto op = std::dynamic_pointer_cast<ops::Uniform>(base_operator);
-  kernel_name_ = op->name();
+bool UniformCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  kernel_ptr_ = std::make_shared<ops::Uniform>(base_operator->GetPrim());
+  kernel_ptr_ = std::make_shared<ops::Uniform>(primitive_);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Uniform does not support this kernel data type: " << kernel_attr;
   }
-  from_ = op->get_from();
-  to_ = op->get_to();
-  int64_t seed = op->get_seed();
-  int64_t offset = op->get_offset();
+  from_ = GetValue<float>(primitive_->GetAttr(ops::kFrom));
+  to_ = GetValue<float>(primitive_->GetAttr(ops::kTo));
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  int64_t offset = GetValue<int64_t>(primitive_->GetAttr(ops::kOffset));
   InitPhiloxRandom(seed, offset);
   if (from_ > to_) {
     MS_LOG(ERROR) << "For Uniform, 'minval' must <= 'maxval', but got 'minval'=" << from_ << " ,'maxval'=" << to_;
@@ -105,11 +92,9 @@ bool UniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int UniformCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int UniformCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input_elements_ = SizeToLong(SizeOf(inputs.at(kIndex0)->GetShapeVector()));

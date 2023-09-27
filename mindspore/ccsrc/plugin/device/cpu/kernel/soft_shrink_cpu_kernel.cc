@@ -61,31 +61,24 @@ bool SoftShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor
   return true;
 }
 
-bool SoftShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SoftShrinkCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftShrink>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast SoftShrink ops failed!";
-    return false;
-  }
-  lambd_ = kernel_ptr->get_lambd();
+  lambd_ = GetValue<float>(primitive_->GetAttr(ops::kLambd));
 
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+  if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }
   return true;
 }
 
-int SoftShrinkCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SoftShrinkCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

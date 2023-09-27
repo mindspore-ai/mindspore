@@ -43,17 +43,12 @@ static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_di
 }
 }  // namespace
 
-bool MatrixDiagPartV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
+bool MatrixDiagPartV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   const std::string input_str = "input number";
   const size_t input_number = 3;
-  kernel_name_ = base_operator->name();
   (void)CheckAndConvertUtils::CheckInteger(input_str, SizeToLong(inputs.size()), kEqual, input_number, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagPartV3>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  auto align = op_prim->get_align();
+  auto align = GetValue<std::string>(primitive_->GetAttr(ops::kAlign));
   if (!align.empty()) {
     align_ = align;
   }
@@ -62,12 +57,10 @@ bool MatrixDiagPartV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MatrixDiagPartV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MatrixDiagPartV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto padding_dtype = inputs[kIndex2]->dtype_id();

@@ -170,14 +170,11 @@ void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(std::complex<double> *variable,
   }
 }
 
-bool RMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool RMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
 
-  auto node_name = base_operator->name();
-  if (node_name == "ApplyCenteredRMSProp") {
+  if (kernel_name_ == "ApplyCenteredRMSProp") {
     use_center_ = true;
   }
   if (kernel_name_ != kernel_type_) {
@@ -220,10 +217,8 @@ int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector
   return ret;
 }
 
-int RMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int RMSPropCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

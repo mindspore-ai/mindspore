@@ -71,27 +71,18 @@ void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *a
 }
 }  // namespace
 
-bool CTCLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool CTCLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
 
-  MS_EXCEPTION_IF_NULL(base_operator);
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
-
-  preprocess_collapse_repeated_ = GetValue<bool>(prim->GetAttr(PCR));
-  ctc_merge_repeated_ = GetValue<bool>(prim->GetAttr(CTR));
-  ignore_longer_outputs_than_inputs_ = GetValue<bool>(prim->GetAttr(ILOTI));
+  preprocess_collapse_repeated_ = GetValue<bool>(primitive_->GetAttr(PCR));
+  ctc_merge_repeated_ = GetValue<bool>(primitive_->GetAttr(CTR));
+  ignore_longer_outputs_than_inputs_ = GetValue<bool>(primitive_->GetAttr(ILOTI));
   return true;
 }
 
-int CTCLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   probs_shape_ = inputs[0]->GetShapeVector();

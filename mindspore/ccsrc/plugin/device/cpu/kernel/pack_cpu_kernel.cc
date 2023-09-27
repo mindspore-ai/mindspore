@@ -45,8 +45,8 @@ int PackFwdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return ret;
   }
   // Todo:
-  // auto kernel_ptr = std::make_shared<ops::Stack>(base_operator->GetPrim());
-  // axis_ = kernel_ptr->get_axis();
+  // auto kernel_ptr = std::make_shared<ops::Stack>(primitive_);
+  // axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   // if (axis_ < 0) {
   //   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   //   axis_ += (SizeToInt(input_shape.size()) + 1);

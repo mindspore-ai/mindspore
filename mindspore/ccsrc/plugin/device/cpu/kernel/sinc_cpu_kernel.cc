@@ -25,11 +25,8 @@ constexpr size_t kSincInputsNum = 1;
 constexpr size_t kSincOutputsNum = 1;
 }  // namespace
 
-bool SincCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool SincCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T>

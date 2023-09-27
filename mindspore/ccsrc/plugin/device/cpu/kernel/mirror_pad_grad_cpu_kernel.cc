@@ -30,13 +30,9 @@ constexpr size_t kMirrorPadGradOutputsNum = 1;
 constexpr size_t kPadMaxSupportDim = 5;
 }  // namespace
 
-bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  std::string mode = GetValue<std::string>(prim->GetAttr("mode"));
+bool MirrorPadGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  std::string mode = GetValue<std::string>(primitive_->GetAttr("mode"));
   dtype_ = inputs[0]->dtype_id();
   pad_dtype_ = inputs[1]->dtype_id();
   if (mode == "REFLECT") {
@@ -50,10 +46,9 @@ bool MirrorPadGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int MirrorPadGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int MirrorPadGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

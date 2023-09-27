@@ -48,24 +48,21 @@ T RowMax(const T *m, int r, int *c, int dimension) {
 }
 }  // namespace
 
-bool CTCGreedyDecoderCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCGreedyDecoderCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
 
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(base_operator->GetPrim());
-  merge_repeated_ = kernel_ptr->get_merge_repeated();
+  merge_repeated_ = GetValue<bool>(primitive_->GetAttr(ops::kMergeRepeated));
 
   max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
   batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];
   num_classes_raw_ = inputs[kIndex0]->GetShapeVector()[kIndex2];
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -78,11 +75,9 @@ bool CTCGreedyDecoderCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int CTCGreedyDecoderCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int CTCGreedyDecoderCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kInputNum << ", but got "

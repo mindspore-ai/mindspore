@@ -31,23 +31,17 @@ const std::unordered_map<Reduction, ReductionType> kReductionMap = {
   {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
 }  // namespace
 
-bool NLLLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLossGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NLLLossGrad ops failed!";
-    return false;
-  }
-  auto kernel_name = kernel_ptr->GetPrim()->name();
+bool NLLLossGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_name << " does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
 
-  auto reduction = kernel_ptr->get_reduction();
+  auto reduction = Reduction(GetValue<int64_t>(primitive_->GetAttr(ops::kReduction)));
 
   auto pair = kReductionMap.find(reduction);
   if (pair == kReductionMap.end()) {
@@ -56,15 +50,14 @@ bool NLLLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   reduction_type_ = pair->second;
-  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
+  ignore_index_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kIgnoreIndex)));
   return true;
 }
 
-int NLLLossGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NLLLossGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

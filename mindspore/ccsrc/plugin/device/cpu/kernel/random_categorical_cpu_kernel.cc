@@ -62,26 +62,20 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomCategoricalCpuKer
   return func_list;
 }
 
-bool RandomCategoricalCpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool RandomCategoricalCpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int RandomCategoricalCpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int RandomCategoricalCpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs.at(0)->GetShapeVector();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
   return KRET_OK;
 }
 

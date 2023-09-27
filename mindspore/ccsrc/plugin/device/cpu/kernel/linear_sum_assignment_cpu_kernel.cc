@@ -48,10 +48,8 @@ inline bool check_value(const T *cost, int64_t nr, int64_t nc) {
 }
 }  // namespace
 
-bool LinearSumAssignmentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool LinearSumAssignmentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != prim::kPrimLinearSumAssignment->name()) {
     MS_LOG(ERROR) << "For 'LinearSumAssignment', the kernel name must be 'LinearSumAssignment', but got "
                   << kernel_name_;
@@ -62,17 +60,15 @@ bool LinearSumAssignmentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int LinearSumAssignmentCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LinearSumAssignmentCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << kernel_name_ << "resized failed";
     return ret;

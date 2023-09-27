@@ -46,27 +46,20 @@ bool CompareAll(T pos1, T pos2) {
 }
 }  // namespace
 
-bool MedianCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool MedianCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMedianInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMedianOutputsNum, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   input_type_ = inputs[kIndex0]->dtype_id();
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  global_median_ = kernel_ptr->get_global_median();
-  axis_ = kernel_ptr->get_axis();
-  keepdim_ = kernel_ptr->get_keep_dims();
-  ignore_nan_ = kernel_ptr->get_ignore_nan();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  keepdim_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+  ignore_nan_ = GetValue<bool>(primitive_->GetAttr(ops::kIgnoreIndex));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MedianCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MedianCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

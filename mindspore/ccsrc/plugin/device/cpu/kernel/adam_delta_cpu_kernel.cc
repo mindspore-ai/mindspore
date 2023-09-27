@@ -68,22 +68,15 @@ void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, floa
   ParallelLaunchAutoSearch(task, size, this, &parallel_search_info_);
 }
 
-bool AdamDeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs's size is 0!";
-  }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
+bool AdamDeltaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AdamDeltaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   if (inputs.empty()) {
@@ -101,9 +94,7 @@ int AdamDeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto use_nesterov_ptr = prim->GetAttr("use_nesterov");
+  auto use_nesterov_ptr = primitive_->GetAttr("use_nesterov");
   if (use_nesterov_ptr != nullptr) {
     use_nesterov_ = GetValue<bool>(use_nesterov_ptr);
   }

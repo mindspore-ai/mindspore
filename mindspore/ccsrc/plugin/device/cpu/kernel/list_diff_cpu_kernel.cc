@@ -37,11 +37,8 @@ constexpr size_t kListDiffOutputNum = 2;
   }
 }  // namespace
 
-bool ListDiffCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool ListDiffCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   is_need_retrieve_output_shape_ = true;
-  kernel_name_ = base_operator->name();
   TypeId x_type = inputs.at(kIndex0)->dtype_id();
   TypeId y_type = inputs.at(kIndex1)->dtype_id();
   out_type_ = outputs.at(kIndex0)->dtype_id();
@@ -65,9 +62,8 @@ void ListDiffCPUKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-int ListDiffCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ListDiffCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   for (auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShapeVector();

@@ -66,9 +66,8 @@ bool SegmentMaxMinCPUKernelMod::GetComputeFunc() {
   return true;
 }
 
-bool SegmentMaxMinCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SegmentMaxMinCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   input_x_dtype_ = inputs.at(kIndex0)->dtype_id();
   segment_ids_dtype_ = inputs.at(kIndex1)->dtype_id();
   output_dtype_ = outputs.at(kIndex0)->dtype_id();
@@ -81,10 +80,9 @@ bool SegmentMaxMinCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int SegmentMaxMinCPUKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SegmentMaxMinCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_x_shape_ = inputs.at(kIndex0)->GetShapeVector();

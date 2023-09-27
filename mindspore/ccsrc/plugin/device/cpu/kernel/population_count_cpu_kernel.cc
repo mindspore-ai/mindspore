@@ -51,10 +51,8 @@ inline uint8_t Table_PopCnt(T n) {
 }
 }  // namespace
 
-bool PopulationCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PopulationCountCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kPopulationCountInputsNum || outputs.size() != kPopulationCountOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kPopulationCountInputsNum
                   << " and " << kPopulationCountOutputsNum << ", but get " << inputs.size() << " and "

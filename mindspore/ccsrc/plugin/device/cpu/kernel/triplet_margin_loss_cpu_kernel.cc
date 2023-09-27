@@ -20,27 +20,20 @@
 
 namespace mindspore {
 namespace kernel {
-bool TripletMarginLossCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TripletMarginLossCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumber, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNumber, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::TripletMarginLoss>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  p_ = op_prim->get_p();
-  swap_ = op_prim->get_swap();
-  eps_ = op_prim->get_eps();
-  reduction_ = op_prim->get_reduction();
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  swap_ = GetValue<bool>(primitive_->GetAttr(ops::kSwap));
+  eps_ = GetValue<float>(primitive_->GetAttr(ops::kEps));
+  reduction_ = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   return true;
 }
 
-int TripletMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int TripletMarginLossCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

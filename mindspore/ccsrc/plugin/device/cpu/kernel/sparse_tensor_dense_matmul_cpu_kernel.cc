@@ -32,14 +32,10 @@ constexpr size_t kIndicesSizeNum = 2;
 constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
 
-bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  adj_st_ = GetValue<bool>(prim->GetAttr(ADJ_ST));
-  adj_dt_ = GetValue<bool>(prim->GetAttr(ADJ_dT));
+bool SparseTensorDenseMatmulCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  adj_st_ = GetValue<bool>(primitive_->GetAttr(ADJ_ST));
+  adj_dt_ = GetValue<bool>(primitive_->GetAttr(ADJ_dT));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,11 +45,9 @@ bool SparseTensorDenseMatmulCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseTensorDenseMatmulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseTensorDenseMatmulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto indices_shape = inputs.at(kIndex0)->GetShapeVector();

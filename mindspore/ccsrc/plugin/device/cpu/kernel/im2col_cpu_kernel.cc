@@ -51,22 +51,14 @@ inline bool data_index_step(T *x, const T *X, Args &&... args) {
 }
 }  // namespace
 
-bool Im2ColCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool Im2ColCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Im2Col>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast HShrink ops failed!";
-    return false;
-  }
-  ksizes_ = kernel_ptr->get_ksizes();
-  strides_ = kernel_ptr->get_strides();
-  dilations_ = kernel_ptr->get_dilations();
-  pads_ = kernel_ptr->get_pads();
+  ksizes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kSize));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  dilations_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
+  pads_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -78,10 +70,8 @@ bool Im2ColCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int Im2ColCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int Im2ColCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

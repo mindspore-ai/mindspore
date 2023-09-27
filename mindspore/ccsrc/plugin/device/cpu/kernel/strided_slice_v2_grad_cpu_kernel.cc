@@ -258,24 +258,22 @@ std::vector<bool> GradDec2Bin(const int64_t &mask) {
 }
 
 template <typename T>
-void ParseStrideSliceGradMasksST(const BaseOperatorPtr &base_operator, std::vector<T> *begin, std::vector<T> *end,
+void ParseStrideSliceGradMasksST(const PrimitivePtr &primitive, std::vector<T> *begin, std::vector<T> *end,
                                  std::vector<T> *stride, ShapeVector *input_shape, const ShapeVector output_shape,
                                  int shape_dim_output, int slice_len) {
   std::vector<T> &_begin_attr = *begin;
   std::vector<T> &_end_attr = *end;
   std::vector<T> &_stride_attr = *stride;
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
 
-  auto begin_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrBeginMask));
+  auto begin_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrBeginMask));
   auto begin_mask = GradDec2Bin(begin_mask_int);
-  auto end_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEndMask));
+  auto end_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrEndMask));
   auto end_mask = GradDec2Bin(end_mask_int);
-  auto ellipsis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEllipsisMask));
+  auto ellipsis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrEllipsisMask));
   auto ellipsis_mask = GradDec2Bin(ellipsis_mask_int);
-  auto new_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrNewAxisMask));
+  auto new_axis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrNewAxisMask));
   auto new_axis_mask = GradDec2Bin(new_axis_mask_int);
-  auto shrink_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrShrinkAxisMask));
+  auto shrink_axis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrShrinkAxisMask));
   auto shrink_axis_mask = GradDec2Bin(shrink_axis_mask_int);
   int i = 0;
   int j = 0;
@@ -368,12 +366,8 @@ void FillEmptyDimsSTGrad(std::vector<T> *begin, std::vector<T> *end, std::vector
 }
 }  // namespace
 
-bool StridedSliceV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool StridedSliceV2GradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input can not be empty.";
   }
@@ -392,11 +386,9 @@ bool StridedSliceV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int StridedSliceV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int StridedSliceV2GradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -410,11 +402,8 @@ int StridedSliceV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (inputs.size() == kStridedSliceV2GradDynamicInputsNum) {  // Dynamic Shape
     return KRET_OK;
   }
-
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  std::vector<int64_t> strides_me = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
-  std::vector<int64_t> end_me = GetValue<std::vector<int64_t>>(prim->GetAttr(END));
+  std::vector<int64_t> strides_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(STRIDES));
+  std::vector<int64_t> end_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(END));
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
                        [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
@@ -487,7 +476,7 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Kernel
   shape_dim_output = SizeToInt(output_shape_.size());
   slice_len = SizeToInt(begin.size());
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
-  ParseStrideSliceGradMasksST<T>(op_, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
+  ParseStrideSliceGradMasksST<T>(primitive_, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
                                  slice_len);
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_), [](const T &value) { return value; });

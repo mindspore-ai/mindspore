@@ -33,16 +33,9 @@ const size_t kSvdInputsNum = 1;
 const size_t kSvdOutputsNum = 3;
 }  // namespace
 
-bool SvdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Svd>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast Svd op failed!";
-  }
-
-  kernel_name_ = kernel_ptr->name();
-  full_matrices_ = kernel_ptr->full_matrices();
-  compute_uv_ = kernel_ptr->compute_uv();
+bool SvdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  full_matrices_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrFullMatrices));
+  compute_uv_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrComputeUV));
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSvdInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSvdOutputsNum, kernel_name_);
@@ -64,10 +57,8 @@ bool SvdCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const st
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-int SvdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &onHost) {
-  int ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, onHost);
+int SvdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

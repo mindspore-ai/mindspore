@@ -39,17 +39,9 @@ constexpr size_t kOutputShapeIndexW = 2;
 constexpr size_t kOutputShapeIndexC = 3;
 }  // namespace
 
-bool FractionalMaxPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Init FractionalMaxPool kernel ptr failed.";
-    return false;
-  }
-
-  pooling_ratio_ = kernel_ptr->get_pooling_ratio();
+bool FractionalMaxPoolCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  pooling_ratio_ = GetValue<std::vector<float>>(primitive_->GetAttr("pooling_ratio"));
   if (pooling_ratio_.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the size of parameter 'pooling_ratio' must be 4, but got " << pooling_ratio_.size()
@@ -61,11 +53,11 @@ bool FractionalMaxPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                              << "', the first and last elements of parameter 'pooling_ratio' must be 1.0.";
   }
 
-  pseudo_random_ = kernel_ptr->get_pseudo_random();
-  overlapping_ = kernel_ptr->get_overlapping();
-  deterministic_ = kernel_ptr->get_deterministic();
-  seed_ = kernel_ptr->get_seed();
-  seed2_ = kernel_ptr->get_seed2();
+  pseudo_random_ = GetValue<bool>(primitive_->GetAttr("pseudo_random"));
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
+  deterministic_ = GetValue<bool>(primitive_->GetAttr("deterministic"));
+  seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  seed2_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -77,11 +69,9 @@ bool FractionalMaxPoolCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int FractionalMaxPoolCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPoolCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

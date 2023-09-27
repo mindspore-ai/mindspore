@@ -125,8 +125,8 @@ void UniformCandidateSamplerCpuKernelMod::CheckAttribute() {
   }
 }
 
-void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vector<KernelTensorPtr> &inputs,
-                                                                const std::vector<KernelTensorPtr> &outputs) {
+void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vector<KernelTensor *> &inputs,
+                                                                const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', inputs or outputs can not be empty.";
   }
@@ -162,16 +162,9 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   }
 }
 
-bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniformCandidateSampler>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "UniformCandiadataSampler ops is null.";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  batch_rank_ = kernel_ptr->get_batch_rank();
+bool UniformCandidateSamplerCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
 
   if (kernel_name_ != prim::kPrimUniformCandidateSampler->name()) {
     MS_LOG(EXCEPTION) << "For UniformCandidateSamplerCpuKernelMod, it's name must be UniformCandidateSampler, but got "
@@ -179,12 +172,12 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   }
 
   // get attribute
-  num_true_ = kernel_ptr->get_num_true();
-  num_sampled_ = kernel_ptr->get_num_sampled();
-  unique_ = kernel_ptr->get_unique();
-  range_max_ = kernel_ptr->get_range_max();
-  int64_t seed_ = kernel_ptr->get_seed();
-  remove_accidental_hits_ = kernel_ptr->get_remove_accidental_hits();
+  num_true_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumTrue));
+  num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
+  unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
+  range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
+  int64_t seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  remove_accidental_hits_ = GetValue<bool>(primitive_->GetAttr("remove_accidental_hits"));
 
   if (seed_ < 0) {
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'seed' can not be less than 0, but got: "
@@ -195,17 +188,15 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   // check the attribute, inputs and outputs
   CheckAttribute();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int UniformCandidateSamplerCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

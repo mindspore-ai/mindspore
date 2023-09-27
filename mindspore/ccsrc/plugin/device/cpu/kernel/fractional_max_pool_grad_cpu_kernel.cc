@@ -41,13 +41,10 @@ constexpr size_t kInputIndex3 = 3;
 constexpr size_t kInputIndex4 = 4;
 }  // namespace
 
-bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool FractionalMaxPoolGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
@@ -57,18 +54,14 @@ bool FractionalMaxPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  overlapping_ = kernel_ptr->get_overlapping();
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int FractionalMaxPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPoolGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

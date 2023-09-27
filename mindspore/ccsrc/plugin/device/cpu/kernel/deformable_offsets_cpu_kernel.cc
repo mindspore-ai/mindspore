@@ -91,60 +91,57 @@ T DeformableBilinear(const T *input, T x, T y, int64_t width, int64_t height) {
 }
 }  // namespace
 
-bool DeformableOffsetsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool DeformableOffsetsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kInputsSize || outputs.size() != kOutputsSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it should get " << kInputsSize << " inputs and " << kOutputsSize
                   << " outputs, but got " << inputs.size() << " inputs and " << outputs.size() << " outputs.";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::DeformableOffsets>(base_operator->GetPrim());
   // Check args.
   n_axis_ = kIndex0;
   c_axis_ = kIndex1;
   h_axis_ = kIndex2;
   w_axis_ = kIndex3;
-  strides_ = kernel_ptr->get_strides();
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   if (strides_.size() != kStridesSize || strides_[n_axis_] != 1 || strides_[c_axis_] != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'strides' should be a vector with size " << kStridesSize
                   << " and the values according to N and C dimensions must be set to 1. But got 'strides': "
                   << strides_;
     return false;
   }
-  pads_ = kernel_ptr->get_pads();
+  pads_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
   if (pads_.size() != kPadsSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'pads' should be a vector with size " << kPadsSize
                   << ". But got 'pads': " << pads_;
     return false;
   }
-  kernel_size_ = kernel_ptr->get_kernel_size();
+  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   if (kernel_size_.size() != kKernelSizeSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'kernel_size' should be a vector with size " << kKernelSizeSize
                   << ". But got 'kernel_size': " << kernel_size_;
     return false;
   }
-  dilations_ = kernel_ptr->get_dilations();
+  dilations_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
   if (dilations_.size() != kDilationsSize || dilations_[n_axis_] != 1 || dilations_[c_axis_] != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dilations' should be a vector with size " << kDilationsSize
                   << " and the values according to N and C dimensions must be set to 1. But got 'dilations': "
                   << dilations_;
     return false;
   }
-  deformable_groups_ = kernel_ptr->get_deformable_groups();
+  deformable_groups_ = GetValue<int64_t>(primitive_->GetAttr(kAttrDfmGroup));
   if (deformable_groups_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'deformable_groups' should be greater than 0, but got "
                   << deformable_groups_;
     return false;
   }
-  modulated_ = kernel_ptr->get_modulated();
+  modulated_ = GetValue<bool>(primitive_->GetAttr(kAttrModulated));
   if (!modulated_) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'modulated' only support to be set to True.";
     return false;
   }
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 void DeformableOffsetsCpuKernelMod::ResetResource() noexcept {
@@ -153,12 +150,10 @@ void DeformableOffsetsCpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-int DeformableOffsetsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
+int DeformableOffsetsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

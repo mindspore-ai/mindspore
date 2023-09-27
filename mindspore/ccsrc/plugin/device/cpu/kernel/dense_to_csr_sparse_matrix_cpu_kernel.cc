@@ -36,20 +36,16 @@ constexpr size_t kDenseToCSRSparseMatrixOutputsNum = 5;
 constexpr int64_t kInitPrevBatch = -1;
 }  // namespace
 
-bool DenseToCSRSparseMatrixCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool DenseToCSRSparseMatrixCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   indices_type_ = inputs[kInputIndex1]->dtype_id();
   values_type_ = inputs[kInputIndex0]->dtype_id();
   return true;
 }
 
-int DenseToCSRSparseMatrixCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseToCSRSparseMatrixCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

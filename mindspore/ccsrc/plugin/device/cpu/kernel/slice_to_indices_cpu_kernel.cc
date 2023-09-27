@@ -27,16 +27,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool SliceToIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SliceToIndicesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SliceToIndices>(base_operator);
-  index_axis_ = IntToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrTupleIndexAxis)));
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  expand_dims_mask_ = GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsMask));
-  init_by_none_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrInitByNone));
+  index_axis_ = IntToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrTupleIndexAxis)));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  expand_dims_mask_ = GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsMask));
+  init_by_none_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrInitByNone));
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
@@ -59,10 +56,9 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-int SliceToIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &others) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SliceToIndicesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }

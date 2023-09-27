@@ -36,14 +36,11 @@ class MaxPoolWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
-  void ResizedInputSize(const std::vector<KernelTensorPtr> &inputs);
-  void ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  void ResizedInputSize(const std::vector<KernelTensor *> &inputs);
+  void ResizedOutputSize(const std::vector<KernelTensor *> &outputs);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

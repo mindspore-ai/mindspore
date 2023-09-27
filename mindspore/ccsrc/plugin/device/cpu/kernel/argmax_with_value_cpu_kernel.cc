@@ -97,10 +97,8 @@ bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
   return true;
 }
 
-bool ArgMaxWithValueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ArgMaxWithValueCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   auto input_type_id = inputs.at(kIndex0)->dtype_id();
   switch (input_type_id) {
     case kNumberTypeFloat64:
@@ -142,21 +140,16 @@ bool ArgMaxWithValueCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int ArgMaxWithValueCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ArgMaxWithValueCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetDeviceShapeVector());
   size_t shape_len = shape_.size();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  int64_t axis = kernel_ptr->axis();
+  int64_t axis = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   if (CheckNullInput(input_shape)) {
-    kernel_name_ = base_operator->name();
     MS_LOG(EXCEPTION) << kernel_name_ << " cannot deal with empty input. Please try other inputs.";
   }
   axis += static_cast<int64_t>(shape_len);

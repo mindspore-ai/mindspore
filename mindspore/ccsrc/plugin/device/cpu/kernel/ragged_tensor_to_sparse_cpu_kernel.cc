@@ -58,13 +58,8 @@ constexpr int64_t kOutputShape = 2;
   } while (0);
 }  // namespace
 
-bool RaggedTensorToSparseCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
+bool RaggedTensorToSparseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   n_ = static_cast<int64_t>(input_num - 1);
   splits_type_ = inputs[0]->dtype_id();
@@ -107,11 +102,9 @@ bool RaggedTensorToSparseCpuKernelMod::Launch(const std::vector<KernelTensor *> 
   return true;
 }
 
-int RaggedTensorToSparseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int RaggedTensorToSparseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto ret = NativeCpuKernelMod::Resize(inputs, outputs);
   input2_shape_ = inputs[n_]->GetShapeVector();
   output1_shape_ = outputs[1]->GetShapeVector();
   return ret;

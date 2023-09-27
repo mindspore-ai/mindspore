@@ -118,22 +118,18 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   UniqueCpuKernelMod() = default;
   ~UniqueCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
     is_need_retrieve_output_shape_ = true;
-    auto batch_rank = base_operator->get_batch_rank();
+    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
     if (batch_rank < 0) {
       return false;
     }
     batch_rank_ = static_cast<size_t>(batch_rank);
     return true;
   }
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
-    auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    auto ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
       return ret;
     }
@@ -159,8 +155,8 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
         std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());
       input_size_ = static_cast<size_t>(input_shape[batch_rank_]);
     }
-    if (base_operator->HasAttr(SORTED)) {
-      auto value_ptr = base_operator->GetAttr(SORTED);
+    if (primitive_->HasAttr(SORTED)) {
+      auto value_ptr = primitive_->GetAttr(SORTED);
       sorted_ = GetValue<bool>(value_ptr);
     }
     workspace_size_list_.clear();

@@ -33,20 +33,16 @@ constexpr size_t kCSRSparseMatrixToDenseInputsNum = 5;
 constexpr size_t kCSRSparseMatrixToDenseOutputsNum = 1;
 }  // namespace
 
-bool CSRSparseMatrixToDenseCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CSRSparseMatrixToDenseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   indices_type = inputs[kInputIndex0]->dtype_id();
   values_type = inputs[kInputIndex4]->dtype_id();
   return true;
 }
 
-int CSRSparseMatrixToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int CSRSparseMatrixToDenseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

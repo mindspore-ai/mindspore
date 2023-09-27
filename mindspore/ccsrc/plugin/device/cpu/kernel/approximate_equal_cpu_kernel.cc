@@ -29,8 +29,8 @@ constexpr size_t kYIndex = 1;
 constexpr int64_t kMaxShape = 8;
 }  // namespace
 
-void ApproximateEqualCpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) const {
+void ApproximateEqualCpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) const {
   // inputs: x, y
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApproximateEqualIutputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApproximateEqualOutputsNum, kernel_name_);
@@ -58,18 +58,10 @@ void ApproximateEqualCpuKernelMod::CheckParam(const std::vector<KernelTensorPtr>
   }
 }
 
-bool ApproximateEqualCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ApproximateEqualCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CheckParam(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApproximateEqual>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast 'ApproximateEqual' ops failed!";
-    return false;
-  }
-
-  tolerance_ = kernel_ptr->get_tolerance();
+  tolerance_ = GetValue<float>(primitive_->GetAttr(ops::kTolerance));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   // pair = (is_match, index)

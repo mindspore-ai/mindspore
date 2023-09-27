@@ -51,31 +51,23 @@ size_t CalcSizePerThread(size_t total_block) {
 }
 }  // namespace
 
-bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexAdd>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast IndexAdd ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  axis_ = kernel_ptr->get_axis();
+bool IndexAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   if (inputs.size() != kIndexAddInputsNum || outputs.size() != kIndexAddOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kIndexAddInputsNum
                   << " and " << kIndexAddOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int IndexAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Get input, output and attr info

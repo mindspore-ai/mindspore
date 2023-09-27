@@ -32,9 +32,8 @@ void CheckShape(ShapeVector *shape) {
 }
 }  // namespace
 
-bool MaximumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaximumGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaximumGradInputsNum || outputs.size() != kMaximumGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaximumGradInputsNum << " and "
                   << kMaximumGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -44,10 +43,9 @@ bool MaximumGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MaximumGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int MaximumGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

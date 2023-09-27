@@ -30,18 +30,11 @@ constexpr size_t kScaleAndTranslateGradOutputsNum = 1;
 constexpr float kScaleAndTranslateBlock = 1000.0f;
 }  // namespace
 
-bool ScaleAndTranslateCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleAndTranslate>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ScaleAndTranslate ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool ScaleAndTranslateCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   input0_dtype_ = inputs[kIndex0]->dtype_id();
-  kernel_type_ = kernel_ptr->get_kernel_type();
-  antialias_ = kernel_ptr->get_antialias();
+  kernel_type_ = GetValue<std::string>(primitive_->GetAttr(ops::kKernelType));
+  antialias_ = GetValue<bool>(primitive_->GetAttr(ops::kAntialias));
   switch (input0_dtype_) {
     case kNumberTypeInt8:
       kernel_func_ = &ScaleAndTranslateCpuKernelMod::LaunchKernel<int8_t>;
@@ -71,17 +64,10 @@ bool ScaleAndTranslateCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-bool ScaleAndTranslateGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ScaleAndTranslateGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ScaleAndTranslateGrad ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  kernel_type_ = kernel_ptr->get_kernel_type();
-  antialias_ = kernel_ptr->get_antialias();
+bool ScaleAndTranslateGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  kernel_type_ = GetValue<std::string>(primitive_->GetAttr(ops::kKernelType));
+  antialias_ = GetValue<bool>(primitive_->GetAttr(ops::kAntialias));
   kernel_func_ = &ScaleAndTranslateGradCpuKernelMod::LaunchKernel<float>;
   return true;
 }
@@ -490,11 +476,9 @@ bool ScaleAndTranslateGradCpuKernelMod::LaunchKernel(const std::vector<kernel::K
   return true;
 }
 
-int ScaleAndTranslateCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, others); ret != KRET_OK) {
+int ScaleAndTranslateCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -505,11 +489,9 @@ int ScaleAndTranslateCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return 0;
 }
 
-int ScaleAndTranslateGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, others); ret != KRET_OK) {
+int ScaleAndTranslateGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input0_shape_ = inputs[kIndex0]->GetShapeVector();

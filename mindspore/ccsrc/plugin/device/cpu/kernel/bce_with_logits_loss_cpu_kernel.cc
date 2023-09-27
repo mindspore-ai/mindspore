@@ -31,10 +31,8 @@ namespace kernel {
 namespace {
 using KernelRunFunc = BCEWithLogitsLossCpuKernelMod::KernelRunFunc;
 }  // namespace
-bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool BCEWithLogitsLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -43,8 +41,7 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For 'BCEWithLogitsLoss', it's kernel name invalid, got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::BCEWithLogitsLoss>(base_operator->GetPrim());
-  const auto reduction = kernel_ptr->get_reduction();
+  const auto reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   if (reduction == NONE) {
     reduction_ = kNone;
     is_reduction_ = false;
@@ -59,14 +56,12 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << reduction;
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int BCEWithLogitsLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

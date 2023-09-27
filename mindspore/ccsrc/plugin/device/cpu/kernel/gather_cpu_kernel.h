@@ -32,11 +32,9 @@ class GatherCpuKernelMod : public NativeCpuKernelMod {
   GatherCpuKernelMod() = default;
   ~GatherCpuKernelMod() override = default;
 
-  bool Init(const std::vector<kernel::KernelTensor *> &inputs,
-            const std::vector<kernel::KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const std::vector<kernel::KernelTensor *> &inputs,
-             const std::vector<kernel::KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {

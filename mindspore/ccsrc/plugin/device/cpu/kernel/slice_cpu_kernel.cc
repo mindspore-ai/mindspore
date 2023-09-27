@@ -40,10 +40,7 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
   return std::min(begin_pos, dim_len - 1);
 }
 
-bool SliceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SliceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
                                                                 {kNumberTypeInt8, sizeof(int8_t)},
                                                                 {kNumberTypeInt16, sizeof(int16_t)},
@@ -110,11 +107,9 @@ void SliceCpuKernelMod::InitSliceParam(const ShapeVector &input_shape, const std
   slice_param_.param_length_ = DIMENSION_8D;
 }
 
-int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int SliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   is_got_value_ = false;
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -136,11 +131,9 @@ int SliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
                       << "(INT_MAX) bytes, but got " << input_size;
   }
 
-  std::vector<int64_t> begin;
-  std::vector<int64_t> size;
-  auto got_begin = TryGetIntValue(inputs, 1, kernel_name_, &begin, false);
-  auto got_size = TryGetIntValue(inputs, kSliceInputIndex2, kernel_name_, &size, false);
-  if (got_begin && got_size) {
+  auto begin = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  auto size = inputs[kSliceInputIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  if (!begin.empty() && !size.empty()) {
     if (begin.size() != input_shape.size() || size.size() != input_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the lengths of 'begin' and 'size' must be equal to "

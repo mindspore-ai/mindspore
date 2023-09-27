@@ -79,26 +79,19 @@ KernelAttr AddKernel(const TypeId &ms_type1, const TypeId &ms_type2, const TypeI
   } while (0);
 }  // namespace
 
-bool SparseMatrixTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseMatrixTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixTranspose>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  conjugate = kernel_ptr->get_conjugate();
+  conjugate = GetValue<bool>(primitive_->GetAttr(ops::kConjugate));
   indiceT_ = inputs.at(kInputIndex0)->dtype_id();
   valueT_ = inputs.at(kInputIndex4)->dtype_id();
   return true;
 }
 
-int SparseMatrixTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseMatrixTransposeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_dense_shape = inputs.at(kIndex0)->GetShapeVector();

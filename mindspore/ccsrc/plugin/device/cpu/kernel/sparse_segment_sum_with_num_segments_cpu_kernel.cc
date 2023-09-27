@@ -35,11 +35,8 @@ constexpr size_t kOutputsNum = 1;
   }
 }  // namespace
 
-bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                       const std::vector<KernelTensorPtr> &inputs,
-                                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -52,11 +49,9 @@ bool SparseSegmentSumWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &ba
   return true;
 }
 
-int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                        const std::vector<KernelTensorPtr> &inputs,
-                                                        const std::vector<KernelTensorPtr> &outputs,
-                                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseSegmentSumWithNumSegmentsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

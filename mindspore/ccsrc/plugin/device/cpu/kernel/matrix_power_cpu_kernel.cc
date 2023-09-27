@@ -30,21 +30,16 @@ constexpr size_t kOutputSize = 1;
 static constexpr int kNumber2 = 2;
 }  // namespace
 
-bool MatrixPowerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MatrixPowerCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[kIndex0]->dtype_id();
-  auto op_prim = std::dynamic_pointer_cast<ops::MatrixPower>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  power_ = op_prim->get_exponent();
+  power_ = GetValue<int64_t>(primitive_->GetAttr("n"));
   return true;
 }
 
-int MatrixPowerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MatrixPowerCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

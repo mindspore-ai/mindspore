@@ -53,10 +53,8 @@ inline int64_t calc_target_idx(const std::vector<int64_t> &coord, const std::uno
 }
 }  // namespace
 
-bool ReverseV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ReverseV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -68,16 +66,15 @@ bool ReverseV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int ReverseV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ReverseV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   input_dims_ = SizeToLong(input_shape_.size());
-  if (base_operator->HasAttr("axis")) {
-    auto axis = GetValue<std::vector<int64_t>>(base_operator->GetAttr("axis"));
+  if (primitive_->HasAttr("axis")) {
+    auto axis = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
     (void)std::transform(axis.begin(), axis.end(), std::inserter(axis_, axis_.begin()),
                          [input_dims = input_dims_](int64_t x) { return x >= 0 ? x : input_dims + x; });
   }

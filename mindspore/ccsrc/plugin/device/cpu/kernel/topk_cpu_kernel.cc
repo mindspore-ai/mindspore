@@ -91,19 +91,12 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   ParallelLaunch(tasks);
 }
 
-bool TopKCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
-  sorted_ = kernel_ptr->get_attr("sorted");
+bool TopKCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TopKCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -118,8 +111,7 @@ int TopKCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   }
   inner_size_ = x_shape_[x_shape_.size() - 1];
 
-  auto kernel_ptr = std::make_shared<ops::TopK>(base_operator->GetPrim());
-  sorted_ = kernel_ptr->get_attr("sorted");
+  sorted_ = GetValue<bool>(primitive_->GetAttr(ops::kSorted));
   dtype_ = inputs[0]->dtype_id();
 
   size_t element_size = outer_size_ * inner_size_;

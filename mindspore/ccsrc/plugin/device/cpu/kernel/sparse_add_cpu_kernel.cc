@@ -40,11 +40,8 @@ constexpr size_t kSumIndicesIdx = 0;
 constexpr size_t kSumValuesIdx = 1;
 constexpr size_t kSumShapeIdx = 2;
 
-bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAdd>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  kernel_name_ = kernel_ptr->name();
+bool SparseAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(ERROR) << "For " << kernel_name_
@@ -52,7 +49,7 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << kInputNum << " tensors, but get " << input_num;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -64,11 +61,10 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   dense_shape_ = inputs.at(kAShapeIdx)->GetShapeVector();
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();

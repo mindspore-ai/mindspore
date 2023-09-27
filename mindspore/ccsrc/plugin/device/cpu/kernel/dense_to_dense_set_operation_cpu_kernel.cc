@@ -129,11 +129,9 @@ void GetGroupSet(const kernel::KernelTensor *input, const size_t last_dim, const
   }
 }
 
-bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  std::string kernel_name = base_operator->GetPrim()->name();
-  std::string set_operation_str = GetValue<std::string>(base_operator->GetAttr(SET_OPERATION));
+bool DenseToDenseSetOperationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  std::string set_operation_str = GetValue<std::string>(primitive_->GetAttr(SET_OPERATION));
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
   if (set_operation_str == "a-b") {
     set_operation_ = A_MINUS_B;
@@ -144,7 +142,7 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   } else if (set_operation_str == "union") {
     set_operation_ = UNION;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << ","
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ","
                       << ", the attr set_operation must be any one of "
                          "['a-b','b-a','intersection','union'], "
                       << "but got " << set_operation_str << ".";
@@ -153,7 +151,7 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -161,11 +159,9 @@ bool DenseToDenseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_oper
   return true;
 }
 
-int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DenseToDenseSetOperationCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }

@@ -174,14 +174,9 @@ static inline T ComputeLerpByBiCubic(T *data, float x_lerp, float y_lerp, float 
   return static_cast<T>(result);
 }
 
-bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeV2>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
+bool ResizeV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  std::string coordinate_transformation_mode =
+    GetValue<std::string>(primitive_->GetAttr("coordinate_transformation_mode"));
   if (coordinate_transformation_mode == "align_corners") {
     align_corners_ = true;
   } else if (coordinate_transformation_mode == "pytorch_half_pixel") {
@@ -192,7 +187,7 @@ bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  std::string mode = kernel_ptr->get_mode();
+  std::string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "nearest") {
     mode_ = "nearest";
     align_corners_ = false;
@@ -213,18 +208,17 @@ bool ResizeV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     }
   }
   sizes_dtype_ = inputs[kIndex3]->dtype_id();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int ResizeV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> shape = inputs[kIndex0]->GetShapeVector();

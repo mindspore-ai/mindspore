@@ -38,13 +38,9 @@ constexpr size_t kCOOElementNum = 3;
 constexpr auto kConcatDim = "concat_dim";
 }  // namespace
 
-bool SparseConcatCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  concat_dim_ = GetValue<int64_t>(prim->GetAttr(kConcatDim));
-  kernel_name_ = base_operator->name();
+bool SparseConcatCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  concat_dim_ = GetValue<int64_t>(primitive_->GetAttr(kConcatDim));
   input_num_ = inputs.size();
   size_t N = input_num_ / kCOOTensorNum;
   values_dtype_ = inputs[N]->dtype_id();

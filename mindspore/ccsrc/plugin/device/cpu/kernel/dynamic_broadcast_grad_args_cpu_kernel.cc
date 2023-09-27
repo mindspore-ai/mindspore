@@ -140,16 +140,8 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<ke
   return true;
 }
 
-bool DynamicBroadcastGradientArgsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DynamicBroadcastGradientArgs>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast DynamicBroadcastGradientArgs ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
+bool DynamicBroadcastGradientArgsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kDynamicBroadcastGradientArgsInputsNum ||
       outputs.size() != kDynamicBroadcastGradientArgsOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kDynamicBroadcastGradientArgsInputsNum
@@ -158,18 +150,16 @@ bool DynamicBroadcastGradientArgsCpuKernelMod::Init(const BaseOperatorPtr &base_
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int DynamicBroadcastGradientArgsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost) == static_cast<int>(KRET_RESIZE_FAILED)) {
+int DynamicBroadcastGradientArgsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  if (KernelMod::Resize(inputs, outputs) == static_cast<int>(KRET_RESIZE_FAILED)) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return static_cast<int>(KRET_RESIZE_FAILED);
   }

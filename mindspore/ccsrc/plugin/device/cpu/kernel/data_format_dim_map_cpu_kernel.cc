@@ -64,15 +64,10 @@ const std::vector<dataFormatPair> &DataFormatDimMapCpuKernelMod::GetFuncList() c
   return func_list;
 }
 
-bool DataFormatDimMapCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DataFormatDimMap>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  src_format_ = kernel_ptr->get_src_format();
-  dst_format_ = kernel_ptr->get_dst_format();
+bool DataFormatDimMapCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  src_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kSrcFormat));
+  dst_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kDstFormat));
   if (inputs.size() != kDataFormatDimMapInputsNum || outputs.size() != kDataFormatDimMapOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kDataFormatDimMapInputsNum
                   << " and " << kDataFormatDimMapOutputsNum << ", but got " << inputs.size() << " and "
@@ -80,7 +75,7 @@ bool DataFormatDimMapCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -99,12 +94,10 @@ bool DataFormatDimMapCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int DataFormatDimMapCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int DataFormatDimMapCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();

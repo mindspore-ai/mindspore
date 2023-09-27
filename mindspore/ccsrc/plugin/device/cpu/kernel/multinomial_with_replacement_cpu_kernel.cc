@@ -79,30 +79,23 @@ uint32_t MultinomialWithReplacementCpuKernelMod::GenerateSingle() {
   return unused_results_[used_result_index_++];
 }
 
-bool MultinomialWithReplacementCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto op = std::dynamic_pointer_cast<ops::MultinomialWithReplacement>(base_operator);
-  kernel_name_ = op->name();
+bool MultinomialWithReplacementCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  kernel_ptr_ = std::make_shared<ops::MultinomialWithReplacement>(base_operator->GetPrim());
   if (!is_match) {
     MS_LOG(ERROR) << "MultinomialWithReplacement does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  numsamples_ = op->get_numsamples();
-  replacement_ = op->get_replacement();
+  numsamples_ = GetValue<float>(primitive_->GetAttr("numsamples"));
+  replacement_ = GetValue<bool>(primitive_->GetAttr("replacement"));
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int MultinomialWithReplacementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                   const std::vector<KernelTensorPtr> &inputs,
-                                                   const std::vector<KernelTensorPtr> &outputs,
-                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MultinomialWithReplacementCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x_shape_ = inputs[0]->GetShapeVector();

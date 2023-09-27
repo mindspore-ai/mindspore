@@ -33,11 +33,8 @@ constexpr size_t kResizeBilinearOutputsNum = 1;
 
 using FuncVec = const std::vector<std::pair<KernelAttr, ResizeBilinearCpuKernelMod::KernelRunFunc>>;
 
-bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool ResizeBilinearCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum << " or "
                   << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
@@ -49,30 +46,20 @@ bool ResizeBilinearCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
 
-  if (kernel_name_ == prim::kPrimResizeBilinear->name()) {
-    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinear>(base_operator);
-    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
-    align_corners_ = resize_bilinear_op->get_align_corners();
-    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
-  } else {
-    auto resize_bilinear_op = std::dynamic_pointer_cast<ops::ResizeBilinearV2>(base_operator);
-    MS_EXCEPTION_IF_NULL(resize_bilinear_op);
-    align_corners_ = resize_bilinear_op->get_align_corners();
-    half_pixel_centers_ = resize_bilinear_op->get_half_pixel_centers();
-  }
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
+  half_pixel_centers_ = GetValue<bool>(primitive_->GetAttr(ops::kHalfPixelCenters));
 
   if (half_pixel_centers_ == true && align_corners_ == true) {
     MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;
   }
 
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ResizeBilinearCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());

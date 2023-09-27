@@ -42,10 +42,8 @@ using KernelRunFunc = SparseApplyMomentumCpuKernelMod::KernelRunFunc;
     .AddOutputAttr(kNumberType##t7)
 }  // namespace
 
-bool SparseApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyMomentumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -60,9 +58,8 @@ bool SparseApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << ", but got " << outputs.size() << ".";
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyMomentum>(base_operator->GetPrim());
-  use_nesterov_ = kernel_ptr->get_use_nesterov();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  use_nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kUseNesterov));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -79,12 +76,10 @@ void SparseApplyMomentumCpuKernelMod::ResetResource() noexcept {
   use_nesterov_ = false;
 }
 
-int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyMomentumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

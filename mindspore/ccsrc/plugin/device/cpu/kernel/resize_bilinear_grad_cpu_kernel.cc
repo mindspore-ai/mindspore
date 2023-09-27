@@ -245,27 +245,22 @@ void ResizeBilinearGrad_HPC(T *float_dloss_addr, T *float_output_addr, T *output
   }
 }
 
-bool ResizeBilinearGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeBilinearGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeBilinearGradInputsNum || outputs.size() != kResizeBilinearGradOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be "
                   << kResizeBilinearGradInputsNum << " and " << kResizeBilinearGradOutputNum << ", but got "
                   << inputs.size() << " and " << outputs.size();
     return false;
   }
-  align_corners_ = GetValue<bool>(base_operator->GetAttr(kAttrAlignCorners));
-  half_pixel_centers_ = GetValue<bool>(base_operator->GetAttr(kAttrHalfPixelCenters));
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(kAttrAlignCorners));
+  half_pixel_centers_ = GetValue<bool>(primitive_->GetAttr(kAttrHalfPixelCenters));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int ResizeBilinearGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBilinearGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());

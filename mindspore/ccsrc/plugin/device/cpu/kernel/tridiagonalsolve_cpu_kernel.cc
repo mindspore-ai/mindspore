@@ -33,17 +33,10 @@ constexpr size_t LastSecondRowOfU = 2;
 constexpr int64_t ParallelDataNumSameShape = 8 * 1024;
 }  // namespace
 
-bool TridiagonalSolveCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool TridiagonalSolveCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   diag_dtype_ = inputs.at(kIndex0)->dtype_id();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::TridiagonalSolve>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  partial_pivoting_ = kernel_ptr->get_partial_pivoting();
+  partial_pivoting_ = GetValue<bool>(primitive_->GetAttr("partial_pivoting"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -54,11 +47,9 @@ bool TridiagonalSolveCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int TridiagonalSolveCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TridiagonalSolveCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input0_shape = inputs.at(kIndex0)->GetShapeVector();

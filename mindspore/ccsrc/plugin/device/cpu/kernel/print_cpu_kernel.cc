@@ -30,18 +30,14 @@ using mindspore::tensor::Tensor;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PrintCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     TypeId type = inputs[i]->dtype_id();
     (void)data_types_.emplace_back(type);
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Print>(base_operator);
-  if (kernel_ptr->HasAttr("value_type")) {
-    auto value_type = kernel_ptr->get_value_type();
-    auto value_type_pos = kernel_ptr->get_value_type_pos();
+  if (primitive_->HasAttr("value_type")) {
+    auto value_type = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type"));
+    auto value_type_pos = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type_type"));
     for (size_t i = 0; i < value_type.size(); i++) {
       value_type_[value_type_pos[i]] = value_type[i];
     }
@@ -49,10 +45,8 @@ bool PrintCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int PrintCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int PrintCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

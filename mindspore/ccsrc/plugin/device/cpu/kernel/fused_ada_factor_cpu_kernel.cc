@@ -47,25 +47,24 @@ constexpr size_t kGlobalNormIndex = 12;
 constexpr size_t kWorkSpaceUpdateIndex = 0;
 constexpr size_t kWorkSpaceRFactorIndex = 1;
 constexpr size_t kWorkSpaceCFactorIndex = 2;
+auto constexpr kEnableScaleParameter = "enable_scale_parameter";
+auto constexpr kEnableFirstMoment = "enable_first_moment";
+auto constexpr kEnableWeightDecay = "enable_weight_decay";
 }  // namespace
 
-bool FusedAdaFactorCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool FusedAdaFactorCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   param_dtype_ = inputs[kParamIndex]->dtype_id();
-  auto op_ptr = std::dynamic_pointer_cast<ops::FusedAdaFactor>(base_operator);
-  MS_EXCEPTION_IF_NULL(op_ptr);
-  enable_scale_parameter_ = op_ptr->get_enable_scale_parameter();
-  enable_first_moment_ = op_ptr->get_enable_first_moment();
-  enable_weight_decay_ = op_ptr->get_enable_weight_decay();
+
+  enable_scale_parameter_ = GetValue<bool>(primitive_->GetAttr(kEnableScaleParameter));
+  enable_first_moment_ = GetValue<bool>(primitive_->GetAttr(kEnableFirstMoment));
+  enable_weight_decay_ = GetValue<bool>(primitive_->GetAttr(kEnableWeightDecay));
   return true;
 }
 
-int FusedAdaFactorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int FusedAdaFactorCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

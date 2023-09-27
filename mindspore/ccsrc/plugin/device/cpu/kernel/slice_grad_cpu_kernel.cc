@@ -64,9 +64,8 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 using KernelTensor = kernel::KernelTensor;
 
-bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SliceGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto input_num = inputs.size();
   MS_EXCEPTION_IF_CHECK_FAIL(input_num == kSliceGradInputsNum || input_num == kStridedSliceGradInputsNum,
                              "Input number check failed!");
@@ -75,11 +74,11 @@ bool SliceGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensorPtr> &inputs, const size_t idx,
+std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensor *> &inputs, const size_t idx,
                                              const std::string &kernel_name, std::vector<int64_t> *attr_value,
                                              const std::string &param_name, size_t *len) {
-  auto res = TryGetIntValue(inputs, idx, kernel_name, attr_value, false);
-  if (!res) {
+  *attr_value = inputs[idx]->GetValueWithCheck<std::vector<int64_t>>();
+  if (!attr_value->empty()) {
     auto shape = inputs[idx]->GetShapeVector();
     if (shape.size() != 1) {
       MS_LOG(ERROR) << kernel_name << "'s `" << param_name << "` shape should be one dim, but got " << shape.size();
@@ -92,10 +91,9 @@ std::pair<bool, bool> GetSliceGradParamValue(const std::vector<KernelTensorPtr> 
   return {true, true};
 }
 
-int SliceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SliceGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

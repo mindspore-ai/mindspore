@@ -27,17 +27,13 @@
 namespace mindspore {
 namespace kernel {
 static const size_t max_indices_num = 8;
-bool GetTupleIndexInfoCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GetTupleIndexInfo>(base_operator);
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  if (kernel_ptr->HasAttr(kAttrTupleIndexInfoType)) {
-    tuple_index_info_type_ = GetValue<string>(kernel_ptr->GetAttr(kAttrTupleIndexInfoType));
+bool GetTupleIndexInfoCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  if (primitive_->HasAttr(kAttrTupleIndexInfoType)) {
+    tuple_index_info_type_ = GetValue<string>(primitive_->GetAttr(kAttrTupleIndexInfoType));
   }
-  expand_dims_count_ = GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsCnt));
+  expand_dims_count_ = GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsCnt));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -49,11 +45,9 @@ bool GetTupleIndexInfoCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int GetTupleIndexInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int GetTupleIndexInfoCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  KernelMod::Resize(inputs, outputs);
   data_shapes_ = GetShapes(inputs);
   output_size_list_ = std::vector<size_t>(outputs.size(), sizeof(size_t) * max_indices_num);
   return KRET_OK;

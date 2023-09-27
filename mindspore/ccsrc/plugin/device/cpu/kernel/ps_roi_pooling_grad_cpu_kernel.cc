@@ -122,11 +122,8 @@ void PSROIPoolingGradCpuKernelMod::PSROIPoolBackward(size_t start, size_t end, c
   }
 }
 
-bool PSROIPoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PSROIPoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -134,7 +131,7 @@ bool PSROIPoolingGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
+  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
     MS_LOG_ERROR << "Resize failed!";
     return false;
   }
@@ -148,7 +145,7 @@ bool PSROIPoolingGradCpuKernelMod::IsSupportedDtype(TypeId type_id) {
   return false;
 }
 
-int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) const {
+int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor *> &inputs) const {
   size_t input_num = inputs.size();
   if (input_num != INPUT_NUM) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number is expected to be " << input_num
@@ -196,11 +193,8 @@ int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTens
   return KRET_OK;
 }
 
-int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int PSROIPoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
@@ -228,23 +222,23 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   rois_num_ = static_cast<int32_t>(rois_shape[ROIS_NUM_INDEX]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto spatial_scale_ptr = base_operator->GetAttr("spatial_scale");
+  auto spatial_scale_ptr = primitive_->GetAttr("spatial_scale");
   MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
   spatial_scale_ = GetValue<float>(spatial_scale_ptr);
 
-  auto input_size_ptr = base_operator->GetAttr("input_size");
+  auto input_size_ptr = primitive_->GetAttr("input_size");
   MS_EXCEPTION_IF_NULL(input_size_ptr);
   auto input_size = GetValue<std::vector<int64_t>>(input_size_ptr);
   height_ = static_cast<int32_t>(input_size[0]);
   width_ = static_cast<int32_t>(input_size[1]);
 
-  auto group_size_ptr = base_operator->GetAttr("group_size");
+  auto group_size_ptr = primitive_->GetAttr("group_size");
   MS_EXCEPTION_IF_NULL(group_size_ptr);
   pooled_height_ = static_cast<int32_t>(GetValue<int64_t>(group_size_ptr));
   pooled_width_ = static_cast<int32_t>(GetValue<int64_t>(group_size_ptr));
   group_size_ = static_cast<int32_t>(GetValue<int64_t>(group_size_ptr));
 
-  auto output_dim_ptr = base_operator->GetAttr("output_dim");
+  auto output_dim_ptr = primitive_->GetAttr("output_dim");
   output_channels_ = static_cast<int32_t>(GetValue<int64_t>(output_dim_ptr));
   feature_channels_ = output_channels_ * group_size_ * group_size_;
 

@@ -20,18 +20,14 @@
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
+bool CropAndResizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CropAndResize>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
   // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
   // for the moment to support dynamic shape.
-  std::string method = GetValue<std::string>(kernel_ptr->GetAttr("method"));
+  std::string method = GetValue<std::string>(primitive_->GetAttr("method"));
   if (method == "bilinear") {
     method_ = BILINEAR;
   } else if (method == "nearest") {
@@ -39,7 +35,7 @@ bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   } else {  //  bilinear-v2
     method_ = BILINEAR_V2;
   }
-  extrapolation_value_ = kernel_ptr->get_extrapolation_value();
+  extrapolation_value_ = GetValue<float>(primitive_->GetAttr(ops::kExtrapolationValue));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -51,10 +47,9 @@ bool CropAndResizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  input image

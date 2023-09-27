@@ -31,11 +31,9 @@ constexpr size_t kSpaceToDepthOutputsNum = 1;
 constexpr size_t kSpaceToDepthInputShapeSize = 4;
 constexpr size_t kSpaceToDepthMinBlockSize = 2;
 }  // namespace
-bool SpaceToDepthCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto node_pointer = std::dynamic_pointer_cast<ops::SpaceToDepth>(base_operator);
-  block_size_ = LongToSize(node_pointer->get_block_size());
+bool SpaceToDepthCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  block_size_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBlockSize)));
   if (block_size_ < kSpaceToDepthMinBlockSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' must be greater than or equal to "
                       << kSpaceToDepthMinBlockSize << ", but got " << block_size_;
@@ -49,9 +47,8 @@ bool SpaceToDepthCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   kernel_func_ = func_list_[index].second;
   return true;
 }
-int SpaceToDepthCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SpaceToDepthCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
@@ -61,7 +58,7 @@ int SpaceToDepthCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

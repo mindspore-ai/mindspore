@@ -46,30 +46,27 @@ static inline int64_t get_target_prime(const target_t *target, int64_t offset, i
   }
 }
 }  // namespace
-bool CTCLossV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool CTCLossV2GradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
 
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(base_operator->GetPrim());
-  blank_ = kernel_ptr->get_blank();
-  zero_infinity_ = kernel_ptr->get_zero_infinity();
+  blank_ = GetValue<int64_t>(primitive_->GetAttr(kAttrBlank));
+  zero_infinity_ = GetValue<bool>(primitive_->GetAttr(kAttrZeroInfinity));
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int CTCLossV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CTCLossV2GradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto log_probs_shape = inputs[kIndex1]->GetShapeVector();

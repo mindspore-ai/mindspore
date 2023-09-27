@@ -29,13 +29,10 @@ const size_t kOutputsNum = 2;
 
 namespace mindspore {
 namespace kernel {
-bool GridSampler2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool GridSampler2DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = kInputsNum;
   constexpr size_t output_num = kOutputsNum;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   dtype_ = inputs[kZero]->dtype_id();
@@ -45,19 +42,15 @@ bool GridSampler2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2DGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  interpolation_mode_ = kernel_ptr->get_interpolation_mode();
-  padding_mode_ = kernel_ptr->get_padding_mode();
-  align_corners_ = kernel_ptr->get_align_corners();
+  interpolation_mode_ = GetValue<std::string>(primitive_->GetAttr("interpolation_mode"));
+  padding_mode_ = GetValue<std::string>(primitive_->GetAttr("padding_mode"));
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   return true;
 }
 
-int GridSampler2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int GridSampler2DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

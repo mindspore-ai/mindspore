@@ -152,11 +152,8 @@ bool LaunchAdjustSaturationKernel(const std::vector<KernelTensor *> &inputs,
 }
 }  // namespace detail
 
-bool AdjustSaturationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool AdjustSaturationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdjustSaturationTwo, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdjustSaturationOne, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

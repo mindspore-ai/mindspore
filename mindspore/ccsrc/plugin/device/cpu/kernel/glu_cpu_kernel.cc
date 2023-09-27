@@ -127,13 +127,8 @@ const std::vector<std::pair<KernelAttr, GLUCpuKernelMod::KernelRunFunc>> &GLUCpu
   return func_list;
 }
 
-bool GLUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::GLU>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-  split_dim_ = kernel_ptr->get_axis();
+bool GLUCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  split_dim_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   value_shape_vec_ = inputs.at(kIndex0)->GetShapeVector();
   int64_t dim_value = SizeToLong(value_shape_vec_.size());
   for (auto &k : value_shape_vec_) {
@@ -147,7 +142,7 @@ bool GLUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   if (split_dim_ < 0) {
     split_dim_ += dim_value;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 

@@ -31,8 +31,7 @@ namespace {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
-bool GatherCpuKernelMod::Init(const std::vector<kernel::KernelTensor *> &inputs,
-                              const std::vector<kernel::KernelTensor *> &outputs) {
+bool GatherCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -45,8 +44,7 @@ bool GatherCpuKernelMod::Init(const std::vector<kernel::KernelTensor *> &inputs,
   return true;
 }
 
-int GatherCpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs,
-                               const std::vector<kernel::KernelTensor *> &outputs) {
+int GatherCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   input_shape_ = inputs[kIndexZero]->GetShapeVector();
   indices_shape_ = inputs[kIndexOne]->GetShapeVector();

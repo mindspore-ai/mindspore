@@ -26,20 +26,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool LogUniformCandidateSamplerCpuKernel::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  auto op = std::dynamic_pointer_cast<ops::LogUniformCandidateSampler>(base_operator);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "cast op LogUniformCandidateSampler failed!";
-    return false;
-  }
-  this->num_true_ = op->get_num_true();
-  this->num_sampled_ = op->get_num_sampled();
-  this->unique_ = op->get_unique();
-  this->seed_ = op->get_seed();
-  this->range_max_ = op->get_range_max();
-  kernel_name_ = base_operator->name();
+bool LogUniformCandidateSamplerCpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  num_true_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumTrue));
+  num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
+  unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
+  seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
   constexpr int32_t ZERO = 0;
   if (range_max_ == ZERO) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -76,12 +69,10 @@ int64_t LogUniformCandidateSamplerCpuKernel::Sample(random::SinglePhiloxRandom *
   return val % range_max_;
 }
 
-int LogUniformCandidateSamplerCpuKernel::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int LogUniformCandidateSamplerCpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto true_classes_shape = inputs[0]->GetShapeVector();

@@ -190,18 +190,13 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::GenerateRandomCrop(int ms_origina
   return true;
 }
 
-bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                    const std::vector<KernelTensorPtr> &inputs,
-                                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::SampleDistortedBoundingBoxV2>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  seed_ = op_prim->get_seed();
-  seed2_ = op_prim->get_seed2();
-  aspect_ratio_range_ = op_prim->get_aspect_ratio_range();
+  seed_ = GetValue<int64_t>(primitive_->GetAttr("seed"));
+  seed2_ = GetValue<int64_t>(primitive_->GetAttr("seed2"));
+  aspect_ratio_range_ = GetValue<std::vector<float>>(primitive_->GetAttr("aspect_ratio_range"));
   if (aspect_ratio_range_.size() != kShapeSize2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', aspect_ratio_range field must specify 2 dimensions.";
     return false;
@@ -211,7 +206,7 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
                   << aspect_ratio_range_[kIndex0] << "], [" << aspect_ratio_range_[kIndex1] << "].";
     return false;
   }
-  area_range_ = op_prim->get_area_range();
+  area_range_ = GetValue<std::vector<float>>(primitive_->GetAttr("area_range"));
   if (area_range_.size() != kShapeSize2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', area_range field must specify 2 dimensions.";
     return false;
@@ -226,12 +221,12 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
                   << area_range_[kIndex0] << "], [" << area_range_[kIndex1] << "].";
     return false;
   }
-  max_attempts_ = op_prim->get_max_attempts();
+  max_attempts_ = GetValue<int64_t>(primitive_->GetAttr("max_attempts"));
   if (max_attempts_ <= SizeToLong(kNumber0)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', max_attempts must be positive: [" << max_attempts_ << "].";
     return false;
   }
-  use_image_if_no_bounding_boxes_ = op_prim->get_use_image();
+  use_image_if_no_bounding_boxes_ = GetValue<bool>(primitive_->GetAttr("use_image_if_no_bounding_boxes"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match.first) {
@@ -242,11 +237,9 @@ bool SampleDistortedBoundingBoxV2CPUKernelMod::Init(const BaseOperatorPtr &base_
   return true;
 }
 
-int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs,
-                                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SampleDistortedBoundingBoxV2CPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -62,9 +62,8 @@ inline void CumMinMax(const T *input_ptr, T *value_ptr, S *index_ptr, BinaryOp o
 }
 }  // namespace
 
-bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumMinMaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCumInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCumOutputsNum, kernel_name_);
 
@@ -74,29 +73,18 @@ bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[cum_op_type_][index].second;
-  switch (cum_op_type_) {
-    case CUMMIN: {
-      auto kernel_ptr = std::make_shared<ops::Cummin>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    case CUMMAX: {
-      auto kernel_ptr = std::make_shared<ops::Cummax>(base_operator->GetPrim());
-      axis_ = kernel_ptr->get_axis();
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << "CumMin/CumMax Something unexpected happened!";
-      return false;
-    }
+  if (primitive_->HasAttr(ops::kAxis)) {
+    axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
+  } else {
+    MS_LOG(ERROR) << "CumMin/CumMax Something unexpected happened!";
+    return false;
   }
   return true;
 }
 
-int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
+int CumMinMaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     return ret;
   }
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());

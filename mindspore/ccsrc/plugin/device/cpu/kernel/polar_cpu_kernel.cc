@@ -36,10 +36,7 @@ constexpr size_t kPolarOutputsNum = 1;
 
 namespace mindspore {
 namespace kernel {
-bool PolarCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PolarCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   input1_dtype_ = inputs[0]->dtype_id();
   return true;
 }

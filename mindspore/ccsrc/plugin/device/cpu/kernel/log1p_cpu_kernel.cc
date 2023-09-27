@@ -26,12 +26,7 @@ constexpr size_t kLog1pInputsNum = 1;
 constexpr size_t kLog1pOutputsNum = 1;
 }  // namespace
 
-bool Log1pCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = prim->name();
+bool Log1pCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLog1pInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLog1pOutputsNum, kernel_name_);
   input_dtype_ = inputs[0]->dtype_id();

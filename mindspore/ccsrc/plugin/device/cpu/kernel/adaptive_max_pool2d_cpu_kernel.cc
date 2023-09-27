@@ -27,22 +27,15 @@
 
 namespace mindspore {
 namespace kernel {
-bool AdaptiveMaxPool2dCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
+bool AdaptiveMaxPool2dCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   // (H_out, W_out)
-  auto output_size = kernel_ptr->output_size();
+  auto output_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kOutputSize));
   (void)std::copy(output_size.begin(), output_size.end(), std::back_inserter(attr_output_size_));
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-bool AdaptiveMaxPool2dCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+bool AdaptiveMaxPool2dCpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
   auto input_shape = inputs[0]->GetShapeVector();
   size_t rank = static_cast<size_t>(input_shape.size());
   if (rank != ops::kFormatCHWShapeSize && rank != ops::kFormatNCHWShapeSize) {
@@ -79,18 +72,10 @@ bool AdaptiveMaxPool2dCpuKernelMod::ResizedOutputSize() {
   return true;
 }
 
-int AdaptiveMaxPool2dCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AdaptiveMaxPool2dCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
-  }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-    return KRET_RESIZE_FAILED;
   }
 
   // Check the parameters valid.

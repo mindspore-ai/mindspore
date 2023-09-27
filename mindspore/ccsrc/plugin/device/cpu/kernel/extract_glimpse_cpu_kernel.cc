@@ -39,10 +39,8 @@ std::normal_distribution<float> dis_normal(kNumber10, kNumber11);
 
 namespace mindspore {
 namespace kernel {
-bool ExtractGlimpseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool ExtractGlimpseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 3;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -53,19 +51,16 @@ bool ExtractGlimpseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ExtractGlimpse>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  centered_ = kernel_ptr->get_centered();
-  normalized_ = kernel_ptr->get_normalized();
-  uniform_noise_ = kernel_ptr->get_uniform_noise();
-  noise_ = kernel_ptr->get_noise();
+  centered_ = GetValue<bool>(primitive_->GetAttr("centered"));
+  normalized_ = GetValue<bool>(primitive_->GetAttr(ops::kNormalized));
+  uniform_noise_ = GetValue<bool>(primitive_->GetAttr("uniform_noise"));
+  noise_ = GetValue<std::string>(primitive_->GetAttr("noise"));
   return true;
 }
 
-int ExtractGlimpseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ExtractGlimpseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();

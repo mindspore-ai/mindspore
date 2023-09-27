@@ -346,19 +346,14 @@ void CombinedNonMaxSuppressionCpuKernelMod::CheckOutput() {
   }
 }
 
-bool CombinedNonMaxSuppressionCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CombinedNonMaxSuppressionCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 
-int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int CombinedNonMaxSuppressionCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -387,10 +382,8 @@ int CombinedNonMaxSuppressionCpuKernelMod::Resize(const BaseOperatorPtr &base_op
 
   pad_per_class_ = false;
   clip_boxes_ = true;
-
-  PrimitivePtr prim = base_operator->GetPrim();
-  auto pad_per_class = prim->GetAttr("pad_per_class");
-  auto clip_boxes = prim->GetAttr("clip_boxes");
+  auto pad_per_class = primitive_->GetAttr("pad_per_class");
+  auto clip_boxes = primitive_->GetAttr("clip_boxes");
   if (pad_per_class != nullptr) {
     pad_per_class_ = GetValue<bool>(pad_per_class);
   }

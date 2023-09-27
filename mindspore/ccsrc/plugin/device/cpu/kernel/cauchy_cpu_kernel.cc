@@ -27,15 +27,10 @@ namespace {
 constexpr size_t kCauchyOutputNum = 1;
 }  // namespace
 
-bool CauchyCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool CauchyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCauchyOutputNum, kernel_name_);
-  auto prim = std::dynamic_pointer_cast<ops::Cauchy>(base_operator);
-  MS_ERROR_IF_NULL(prim);
-  sigma_ = prim->get_sigma();
-  median_ = prim->get_median();
+  sigma_ = GetValue<float>(primitive_->GetAttr("sigma"));
+  median_ = GetValue<float>(primitive_->GetAttr("median"));
   return true;
 }
 

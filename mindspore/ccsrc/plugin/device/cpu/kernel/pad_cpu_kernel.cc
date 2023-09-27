@@ -29,26 +29,21 @@ constexpr size_t kPadOutputsNum = 1;
 constexpr size_t kPadElemSize = 2;
 }  // namespace
 
-bool PadCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PadCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kPadInputsNum || outputs.size() != kPadOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kPadInputsNum << " and "
                   << kPadOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int PadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int PadCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
-  auto paddings = base_operator->GetAttr(kAttrPaddings);
+  auto paddings = primitive_->GetAttr(kAttrPaddings);
   MS_EXCEPTION_IF_NULL(paddings);
   paddings_ = GetValue<std::vector<std::vector<int64_t>>>(paddings);
   auto output_shape = outputs[kIndex0]->GetShapeVector();

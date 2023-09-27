@@ -42,11 +42,9 @@ class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod,
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  bool Init(const std::vector<kernel::KernelTensor *> &inputs,
-            const std::vector<kernel::KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const std::vector<kernel::KernelTensor *> &inputs,
-             const std::vector<kernel::KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 

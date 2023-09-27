@@ -115,20 +115,16 @@ ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
-bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool ResizeLinear1DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kResizeLinear1DInputsNum || outputs.size() != kResizeLinear1DOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DInputsNum
                   << " and " << kResizeLinear1DOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
+  std::string coordinate_transformation_mode =
+    GetValue<std::string>(primitive_->GetAttr("coordinate_transformation_mode"));
   if (coordinate_transformation_mode == "align_corners") {
     coordinate_transformation_mode_ = ALIGN_CORNERS_;
   } else if (coordinate_transformation_mode == "half_pixel") {
@@ -141,13 +137,13 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   x_type_ = inputs[kIndex0]->dtype_id();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-void ResizeLinear1DCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void ResizeLinear1DCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensor *> &inputs) {
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
   workspace_size_list_.push_back(sizeof(size_t) * out_width_);
   if (x_type_ == kNumberTypeFloat32) {
@@ -157,11 +153,10 @@ void ResizeLinear1DCpuKernelMod::SetWorkSpaceSize(const std::vector<KernelTensor
   }
 }
 
-int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeLinear1DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape = inputs.at(kIndex0)->GetShapeVector();

@@ -59,20 +59,15 @@ void TensorCopySlicesCpuKernelMod::InitOffsetAndCopySize(const std::vector<int64
   copy_size_ = GetCopySize(dim_offset, begin, end) * type_size;
 }
 
-bool TensorCopySlicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool TensorCopySlicesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   data_type_ = inputs.at(kIndex0)->dtype_id();
   return true;
 }
 
-int TensorCopySlicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int TensorCopySlicesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -82,11 +77,10 @@ int TensorCopySlicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   end_shape_ = inputs.at(kIndex3)->GetShapeVector();
   stride_shape_ = inputs.at(kIndex4)->GetShapeVector();
   get_value_before_launch_ = false;
-  std::vector<int64_t> begin, end, stride;
-  auto get_begin = TryGetIntValue(inputs, kBeginIdx, kernel_name_, &begin, false);
-  auto get_end = TryGetIntValue(inputs, kEndIdx, kernel_name_, &end, false);
-  auto get_stride = TryGetIntValue(inputs, kStridesIdx, kernel_name_, &stride, false);
-  if (get_begin && get_end && get_stride) {
+  auto begin = inputs[kBeginIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  auto end = inputs[kEndIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  auto stride = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
+  if (!begin.empty() && !end.empty() && !stride.empty()) {
     FillSlice(&begin, &end);
     InitOffsetAndCopySize(begin, end, stride);
     get_value_before_launch_ = true;

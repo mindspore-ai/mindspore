@@ -80,28 +80,23 @@ uint32_t BernoulliCpuKernelMod::GenerateSingle() {
   return unused_results_[used_result_index_++];
 }
 
-bool BernoulliCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto op = std::dynamic_pointer_cast<ops::Bernoulli>(base_operator);
-  kernel_name_ = op->name();
+bool BernoulliCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  kernel_ptr_ = std::make_shared<ops::Bernoulli>(base_operator->GetPrim());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Bernoulli does not support this kernel data type: " << kernel_attr;
   }
-  seed_ = op->get_seed();
+  seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
   offset_ = kBernoulliDefaultOffset;
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int BernoulliCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+int BernoulliCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   x_shape_ = inputs.at(kIndex0)->GetShapeVector();

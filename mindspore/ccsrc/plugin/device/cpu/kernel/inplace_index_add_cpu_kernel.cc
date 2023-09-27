@@ -27,34 +27,19 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kInplaceIndexAddInputsNum = 3;
-constexpr size_t kInplaceIndexAddOutputsNum = 1;
-}  // namespace
 
-bool InplaceIndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::InplaceIndexAdd>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast InplaceIndexAdd ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool InplaceIndexAddCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int InplaceIndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int InplaceIndexAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Get input, output and attr info
@@ -124,8 +109,6 @@ template <typename T>
 bool InplaceIndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                                const std::vector<kernel::KernelTensor *> &,
                                                const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInplaceIndexAddInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInplaceIndexAddOutputsNum, kernel_name_);
   auto *x = static_cast<T *>(inputs[kIndex0]->device_ptr());
   auto *indices = static_cast<int32_t *>(inputs[kIndex1]->device_ptr());
   auto *y = static_cast<T *>(inputs[kIndex2]->device_ptr());

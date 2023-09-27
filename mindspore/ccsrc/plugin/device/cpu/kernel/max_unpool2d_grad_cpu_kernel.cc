@@ -32,14 +32,9 @@ constexpr size_t kInputIndex2 = 2;
 constexpr size_t kInputIndex3 = 3;
 }  // namespace
 
-bool MaxUnpool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool2DGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  data_format_ = kernel_ptr->get_format();
+bool MaxUnpool2DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -54,11 +49,9 @@ bool MaxUnpool2DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int MaxUnpool2DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaxUnpool2DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

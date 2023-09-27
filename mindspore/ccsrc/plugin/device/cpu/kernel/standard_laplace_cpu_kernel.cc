@@ -25,14 +25,9 @@ namespace {
 constexpr size_t kStandardLaplaceInputsNum = 1;
 constexpr size_t kStandardLaplaceOutputsNum = 1;
 }  // namespace
-bool StandardLaplaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-                                       const std::vector<KernelTensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+bool StandardLaplaceCpuKernelMod::Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) {
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
   return true;

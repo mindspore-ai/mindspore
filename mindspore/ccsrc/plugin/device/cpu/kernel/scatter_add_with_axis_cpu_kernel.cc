@@ -50,16 +50,11 @@ const int32_t kOutputNum = 1;
 const int32_t KSplitSize = 64 * 1024;
 }  // namespace
 
-bool ScatterAddWithAxisCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ScatterAddWithAxisCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::ScatterAddWithAxis>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  axis_ = op_prim->get_axis();
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match.first) {
@@ -69,11 +64,9 @@ bool ScatterAddWithAxisCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ScatterAddWithAxisCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ScatterAddWithAxisCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -24,20 +24,15 @@ namespace {
 constexpr size_t kApplyMomentumInputsNum = 5;
 }  // namespace
 
-bool ApplyMomentumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
+bool ApplyMomentumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
   return true;
 }
 
-int ApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int ApplyMomentumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,

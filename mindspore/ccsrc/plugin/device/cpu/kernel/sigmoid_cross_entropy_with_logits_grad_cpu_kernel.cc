@@ -25,18 +25,14 @@ constexpr size_t kSigmoidCrossEntropyWithLogitsGradInputsNum = 3;
 constexpr size_t kSigmoidCrossEntropyWithLogitsGradOutputsNum = 1;
 }  // namespace
 
-bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   return True;
 }
 
-int SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs,
-                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   dtype_ = inputs.at(0)->dtype_id();

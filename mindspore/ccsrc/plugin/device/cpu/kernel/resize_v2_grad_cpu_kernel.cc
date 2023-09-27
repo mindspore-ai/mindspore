@@ -122,16 +122,12 @@ static inline void GetCubicCoefficients(T coeffs[4], T t, float cubic_coeff_t) {
   coeffs[kIndex3] = CubicConvolutionTwo<T>(x2 + static_cast<T>(1.0), A);
 }
 
-bool ResizeV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeV2Grad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
+bool ResizeV2GradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  std::string coordinate_transformation_mode =
+    GetValue<std::string>(primitive_->GetAttr("coordinate_transformation_mode"));
   if (coordinate_transformation_mode == "align_corners") align_corners_ = true;
-  mode_ = kernel_ptr->get_mode();
+  mode_ = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode_ != "nearest" && mode_ != "linear" && mode_ != "cubic") {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', mode: " << mode_ << " not support now.";
     return false;
@@ -145,18 +141,17 @@ bool ResizeV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     }
   }
   sizes_dtype_ = inputs[kIndex3]->dtype_id();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int ResizeV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ResizeV2GradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

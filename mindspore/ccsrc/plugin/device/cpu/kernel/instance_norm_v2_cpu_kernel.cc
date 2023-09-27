@@ -189,13 +189,8 @@ void InstanceNormV2CpuKernelMod::TransformInput(const std::vector<kernel::Kernel
   CPUKernelUtils::ParallelFor(loop_transform, batch, block_size);
 }
 
-bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
+bool InstanceNormV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInstanceNormV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kInstanceNormV2OutputNum, kernel_name_);
 
@@ -206,9 +201,9 @@ bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
 
   in_type_ = inputs[kIndex0]->dtype_id();
-  is_training_ = GetValue<bool>(prim->GetAttr(kAttrIsTraining));
-  momentum_ = GetValue<float>(prim->GetAttr(kAttrMomentum));
-  epsilon_ = GetValue<float>(prim->GetAttr(kAttrEpsilon));
+  is_training_ = GetValue<bool>(primitive_->GetAttr(kAttrIsTraining));
+  momentum_ = GetValue<float>(primitive_->GetAttr(kAttrMomentum));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(kAttrEpsilon));
   if (momentum_ > momentum_max || momentum_ < momentum_min) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "momentum value should be in [0, 1], but get momentum = " << momentum_ << ".";
@@ -221,10 +216,9 @@ bool InstanceNormV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int InstanceNormV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int InstanceNormV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

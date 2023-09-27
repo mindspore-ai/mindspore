@@ -40,23 +40,17 @@ const std::vector<KernelAttr> kernel_attr = {
 };
 }  // namespace
 
-bool MaxPoolGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MaxPoolGradGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaxPoolGradGradInputsNum || outputs.size() != kMaxPoolGradGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaxPoolGradGradInputsNum << " and "
                   << kMaxPoolGradGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast MaxPoolGradGrad ops failed!";
-    return false;
-  }
-  kernels_ = kernel_ptr->get_kernel_size();
-  strides_ = kernel_ptr->get_strides();
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  kernels_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
   if (pad_mode_ != PadMode::SAME && pad_mode_ != PadMode::VALID) {
     MS_LOG(ERROR) << kernel_name_ << " only support pad mode same or valid, but get " << pad_mode_;
     return false;
@@ -128,12 +122,10 @@ void MaxPoolGradGradCpuKernelMod::CalPad() {
   }
 }
 
-int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaxPoolGradGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   workspace_size_list_.clear();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

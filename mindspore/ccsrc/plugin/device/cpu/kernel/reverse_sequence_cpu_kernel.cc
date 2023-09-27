@@ -54,8 +54,8 @@ int ReverseSequenceCpuKernelMod::CalcCountAfterAxis(const std::vector<int64_t> &
 }
 
 template <typename T>
-void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
+void ReverseSequenceCpuKernelMod::ResizeKernel(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   input0_shape_ = inputs[kIndex0]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   ndim_ = static_cast<int64_t>(input0_shape_.size());
@@ -130,14 +130,10 @@ void ReverseSequenceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
   ParallelLaunchAutoSearch(task, outer_count_, this, &parallel_search_info_, pool_);
 }
 
-bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
-  seq_dim_ = GetValue<int64_t>(prim->GetAttr(kSeqDim));
-  batch_dim_ = GetValue<int64_t>(prim->GetAttr(kBatchDim));
+bool ReverseSequenceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  seq_dim_ = GetValue<int64_t>(primitive_->GetAttr(kSeqDim));
+  batch_dim_ = GetValue<int64_t>(primitive_->GetAttr(kBatchDim));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -150,11 +146,9 @@ bool ReverseSequenceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   return true;
 }
 
-int ReverseSequenceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ReverseSequenceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   resize_func_(this, inputs, outputs);

@@ -44,11 +44,8 @@ void UpsampleNearest3DGradCpuKernelMod::ComputeNearestIndex(int64_t *const indic
   ParallelLaunch(loop, static_cast<size_t>(output_size), block_size);
 }
 
-bool UpsampleNearest3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool UpsampleNearest3DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -59,11 +56,9 @@ bool UpsampleNearest3DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int UpsampleNearest3DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   output_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
@@ -74,15 +69,15 @@ int UpsampleNearest3DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operat
   workspace_size_list_.push_back(unit_size * static_cast<size_t>(output_shape_[kIndex3]));
   workspace_size_list_.push_back(unit_size * static_cast<size_t>(output_shape_[kIndex4]));
   // none_list
-  MS_EXCEPTION_IF_NULL(base_operator);
-  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+  none_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrNoneList));
   if (none_list_.size() != kIndex1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
   if (none_list_[kIndex0] == static_cast<int64_t>(kIndex3)) {
     scales_ = std::vector<double>(kIndex3, kValueZero);
   } else {
-    if (!TryGetFloatValue(inputs, kIndex2, kernel_name_, &scales_, false)) {
+    scales_ = inputs[kIndex2]->GetValueWithCheck<std::vector<double>>();
+    if (scales_.empty()) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get scales input! ";
     }
   }

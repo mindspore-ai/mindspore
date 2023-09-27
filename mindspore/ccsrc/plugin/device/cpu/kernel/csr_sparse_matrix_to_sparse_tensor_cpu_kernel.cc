@@ -51,27 +51,21 @@ constexpr char kKernelName[] = "CSRSparseMatrixToSparseTensor";
     .AddOutputAttr(kNumberType##t8)
 }  // namespace
 
-bool CSRSparseMatrixToSparseTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                     const std::vector<KernelTensorPtr> &inputs,
-                                                     const std::vector<KernelTensorPtr> &outputs) {
+bool CSRSparseMatrixToSparseTensorCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCSRSparseMatrixToSparseTensorInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCSRSparseMatrixToSparseTensorOutputsNum, kKernelName);
   indice_type_ = inputs[kInputIndex0]->dtype_id();
   value_type_ = inputs[kInputIndex4]->dtype_id();
-  kernel_name_ = base_operator->GetPrim()->name();
   return true;
 }
 
-int CSRSparseMatrixToSparseTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                      const std::vector<KernelTensorPtr> &inputs,
-                                                      const std::vector<KernelTensorPtr> &outputs,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int CSRSparseMatrixToSparseTensorCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
-
-  kernel_name_ = base_operator->GetPrim()->name();
   auto x_indices_shape = inputs[kInputIndex4]->GetShapeVector();
   auto dense_shape_shape = inputs[kInputIndex0]->GetShapeVector();
   total_nnz_ = static_cast<size_t>(x_indices_shape[kZero]);

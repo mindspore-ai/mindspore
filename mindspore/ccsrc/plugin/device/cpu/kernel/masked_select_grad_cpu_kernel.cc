@@ -33,11 +33,8 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool MaskedSelectGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool MaskedSelectGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
@@ -55,15 +52,13 @@ bool MaskedSelectGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int MaskedSelectGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &) {
+int MaskedSelectGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   input_shape_a_ = inputs[kIndexInput]->GetShapeVector();
   input_shape_b_ = inputs[kIndexMask]->GetShapeVector();
   grad_shape_ = inputs[kIndexGrad]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
-  const auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+  const auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

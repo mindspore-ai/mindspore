@@ -32,10 +32,9 @@ constexpr size_t kRhoIndex = 4;
 constexpr size_t kEpsilonIndex = 5;
 constexpr size_t kGradIndex = 6;
 
-bool ApplyAdadeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
+bool ApplyAdadeltaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
 
   auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
@@ -47,7 +46,7 @@ bool ApplyAdadeltaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr> &inputs) {
+int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensor *> &inputs) {
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> accum_shape = inputs[kAccumIndex]->GetShapeVector();
   std::vector<int64_t> accum_update_shape = inputs[kAccumUpdateIndex]->GetShapeVector();
@@ -99,10 +98,9 @@ int ApplyAdadeltaCpuKernelMod::CheckShapeSize(std::vector<int64_t> var_shape, st
   return KRET_OK;
 }
 
-int ApplyAdadeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdadeltaCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

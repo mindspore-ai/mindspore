@@ -33,14 +33,9 @@ constexpr size_t kInputIndex3 = 3;
 constexpr size_t kInputIndex4 = 4;
 }  // namespace
 
-bool MaxUnpool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxUnpool3D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  data_format_ = kernel_ptr->get_format();
+bool MaxUnpool3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -55,10 +50,9 @@ bool MaxUnpool3DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int MaxUnpool3DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaxUnpool3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

@@ -111,21 +111,16 @@ void AdamCpuKernelMod::LaunchAdamNnacl(const std::vector<kernel::KernelTensor *>
   }
 }
 
-bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
-  if (prim->HasAttr("use_locking")) {
-    use_locking_ = GetValue<bool>(prim->GetAttr("use_locking"));
+bool AdamCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (primitive_->HasAttr("use_locking")) {
+    use_locking_ = GetValue<bool>(primitive_->GetAttr("use_locking"));
   }
-  if (prim->HasAttr("use_nesterov")) {
-    use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
+  if (primitive_->HasAttr("use_nesterov")) {
+    use_nesterov_ = GetValue<bool>(primitive_->GetAttr("use_nesterov"));
   }
 
   dtype_ = inputs.at(kIndex0)->dtype_id();
-  kernel_name_ = prim->name();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamOutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -138,10 +133,8 @@ bool AdamCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-int AdamCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AdamCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

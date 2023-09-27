@@ -309,12 +309,10 @@ bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector
   return true;
 }
 
-int DenseToSparseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DenseToSparseSetOperationCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     shape1_ = inputs.at(kInputX1)->GetShapeVector();
     set2_nums_ = SizeToLong(inputs.at(kInputX2Values)->GetShapeVector()[0]);
@@ -383,18 +381,12 @@ bool DenseToSparseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kerne
   return OutputSparseTensor<T>(inputs, outputs, &group_shape, num_result_values, group_sets);
 }
 
-bool DenseToSparseSetOperationCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  kernel_name_ = base_operator->name();
-
-  std::string set_operation_str = GetValue<std::string>(prim->GetAttr("set_operation"));
+bool DenseToSparseSetOperationCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  std::string set_operation_str = GetValue<std::string>(primitive_->GetAttr("set_operation"));
 
   (void)std::transform(set_operation_str.begin(), set_operation_str.end(), set_operation_str.begin(), ::tolower);
-  validate_indices_ = GetValue<bool>(prim->GetAttr("validate_indices"));
+  validate_indices_ = GetValue<bool>(primitive_->GetAttr("validate_indices"));
 
   if (set_operation_str == AMinusBStr) {
     set_operation_ = A_MINUS_B;

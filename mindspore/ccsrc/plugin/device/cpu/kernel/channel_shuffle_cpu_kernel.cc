@@ -32,11 +32,10 @@ constexpr size_t kChannelShuffleOutputsNum = 1;
   }
 }  // namespace
 
-bool ChannelShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ChannelShuffleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   input_dtype_ = inputs[0]->dtype_id();
-  group_ = GetValue<int64_t>(base_operator->GetAttr("group"));
+  group_ = GetValue<int64_t>(primitive_->GetAttr("group"));
   return true;
 }
 
@@ -64,10 +63,9 @@ bool ChannelShuffleCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *
   return true;
 }
 
-int ChannelShuffleCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ChannelShuffleCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[0]->GetShapeVector();

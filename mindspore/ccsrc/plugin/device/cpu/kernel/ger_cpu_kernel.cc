@@ -37,13 +37,7 @@ const size_t kGerOutputsNum = 1;
 const size_t kNoBatchNum = 1;
 }  // namespace
 
-bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  if (!base_operator) {
-    MS_LOG(ERROR) << "For " << kernel_type_ << ", cast " << kernel_type_ << " ops failed!";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
+bool GerCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kGerInputsNum || outputs.size() != kGerOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kGerInputsNum << " and "
                   << kGerOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -57,17 +51,15 @@ bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != 0) {
+int GerCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }

@@ -45,24 +45,20 @@ void SquareSum(const T *in0, const T *in1, float *out0, float *out1, int64_t bat
 }
 }  // namespace
 
-bool SquareSumAllCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SquareSumAllCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs.at(kIndex0)->dtype_id();
   dtype_size_ = abstract::TypeIdSize(dtype_);
-  PrimitivePtr prim = base_operator->GetPrim();
-  if (prim->HasAttr(kBatchRank)) {
-    int64_t batch_rank = GetValue<int64_t>(prim->GetAttr(kBatchRank));
+  if (primitive_->HasAttr(kBatchRank)) {
+    int64_t batch_rank = GetValue<int64_t>(primitive_->GetAttr(kBatchRank));
     batch_rank_ = LongToSize(batch_rank);
   }
   return true;
 }
 
-int SquareSumAllCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SquareSumAllCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetDeviceShapeVector();

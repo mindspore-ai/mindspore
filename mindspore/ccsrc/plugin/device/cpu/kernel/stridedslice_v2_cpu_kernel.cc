@@ -318,22 +318,21 @@ static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
       .AddOutputAttr(kNumberTypeComplex128)}}};
 
 template <typename T>
-void ParseStrideSliceMasksST(const BaseOperatorPtr &base_operator, std::vector<T> *begin, std::vector<T> *end,
+void ParseStrideSliceMasksST(const PrimitivePtr &primitive, std::vector<T> *begin, std::vector<T> *end,
                              std::vector<T> *stride, const ShapeVector &input_shape, size_t shape_dim_input,
                              size_t slice_len) {
   std::vector<T> &_begin_attr = *begin;
   std::vector<T> &_end_attr = *end;
   std::vector<T> &_stride_attr = *stride;
-  auto prim = base_operator->GetPrim();
-  auto begin_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrBeginMask));
+  auto begin_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrBeginMask));
   auto begin_mask = Dec2Bin(begin_mask_int);
-  auto end_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEndMask));
+  auto end_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrEndMask));
   auto end_mask = Dec2Bin(end_mask_int);
-  auto ellipsis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrEllipsisMask));
+  auto ellipsis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrEllipsisMask));
   auto ellipsis_mask = Dec2Bin(ellipsis_mask_int);
-  auto new_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrNewAxisMask));
+  auto new_axis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrNewAxisMask));
   auto new_axis_mask = Dec2Bin(new_axis_mask_int);
-  auto shrink_axis_mask_int = GetValue<int64_t>(prim->GetAttr(kAttrShrinkAxisMask));
+  auto shrink_axis_mask_int = GetValue<int64_t>(primitive->GetAttr(kAttrShrinkAxisMask));
   auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_int);
   size_t i = 0;
   size_t j = 0;
@@ -387,14 +386,14 @@ void ParseStrideSliceMasksST(const BaseOperatorPtr &base_operator, std::vector<T
 }
 
 template <typename T>
-void FillEmptyDimsST(const BaseOperatorPtr &base_operator, std::vector<T> *begin, std::vector<T> *end,
-                     std::vector<T> *stride, ShapeVector *input_shape) {
+void FillEmptyDimsST(const std::string &kernel_name, std::vector<T> *begin, std::vector<T> *end, std::vector<T> *stride,
+                     ShapeVector *input_shape) {
   std::vector<T> &_begin = *begin;
   std::vector<T> &_end = *end;
   std::vector<T> &_stride = *stride;
   auto &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << base_operator->name()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
                          "and less than or equal to the dimension of 'input_x', but got the length of 'begin': "
                       << _begin.size() << ", the length of 'stride': " << _stride.size()
@@ -423,11 +422,8 @@ void FillEmptyDimsST(const BaseOperatorPtr &base_operator, std::vector<T> *begin
 }
 }  // namespace
 
-bool StridedSliceV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool StridedSliceV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kStridedSliceV2InputsNum && inputs.size() != kStridedSliceV2DynamicInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kStridedSliceV2InputsNum
                       << " or " << kStridedSliceV2DynamicInputsNum << ", but got " << inputs.size();
@@ -447,10 +443,9 @@ bool StridedSliceV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int StridedSliceV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int StridedSliceV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -463,12 +458,10 @@ int StridedSliceV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (inputs.size() == kStridedSliceV2DynamicInputsNum) {
     return KRET_OK;
   }
-
-  auto prim = base_operator->GetPrim();
-  auto begin = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrBegin));
-  auto end = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrEnd));
-  auto stride = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrStrides));
-  InitSliceParam<int64_t>(base_operator, &begin, &end, &stride);
+  auto begin = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrBegin));
+  auto end = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrEnd));
+  auto stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrStrides));
+  InitSliceParam<int64_t>(&begin, &end, &stride);
 
   parallel_ = MatchParallelPattern();
   if (parallel_) {
@@ -530,8 +523,7 @@ void StridedSliceV2CpuKernelMod::InitParallelParam() {
 }
 
 template <typename T>
-void StridedSliceV2CpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_operator, std::vector<T> *begin,
-                                                std::vector<T> *end, std::vector<T> *stride) {
+void StridedSliceV2CpuKernelMod::InitSliceParam(std::vector<T> *begin, std::vector<T> *end, std::vector<T> *stride) {
   static const std::unordered_map<TypeId, std::pair<TypeIdC, int>> type_convert_map = {
     {kNumberTypeBool, {::kNumberTypeBool, sizeof(bool)}},
     {kNumberTypeInt8, {::kNumberTypeInt8, sizeof(int8_t)}},
@@ -559,9 +551,9 @@ void StridedSliceV2CpuKernelMod::InitSliceParam(const BaseOperatorPtr &base_oper
   slice_param_.data_type = type_pair->second.first;
   auto input_shape_pad = input_shape_;
   shape_dim_input = input_shape_.size();
-  FillEmptyDimsST<T>(base_operator, begin, end, stride, &input_shape_pad);
-  ParseStrideSliceMasksST<T>(base_operator, begin, end, stride, input_shape_, shape_dim_input, slice_len);
-  FillEmptyDimsST<T>(base_operator, begin, end, stride, &input_shape_pad);
+  FillEmptyDimsST<T>(kernel_name_, begin, end, stride, &input_shape_pad);
+  ParseStrideSliceMasksST<T>(primitive_, begin, end, stride, input_shape_, shape_dim_input, slice_len);
+  FillEmptyDimsST<T>(kernel_name_, begin, end, stride, &input_shape_pad);
 
   std::vector<T> &_begin = *begin;
   std::vector<T> &_end = *end;
@@ -649,7 +641,7 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vect
   std::vector<T> end{end_ptr, end_ptr + end_shape_[0]};
   std::vector<T> stride{strides_ptr, strides_ptr + stride_shape_[0]};
   slice_len = begin.size();
-  InitSliceParam<T>(op_, &begin, &end, &stride);
+  InitSliceParam<T>(&begin, &end, &stride);
 }
 
 void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kernel::KernelTensor *> &inputs,

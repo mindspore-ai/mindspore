@@ -68,22 +68,13 @@ std::map<TypeId, AssertCpuKernelMod::AssertPrintFunc> AssertCpuKernelMod::func_m
   {kNumberTypeUInt16, PrintData<uint16_t>}, {kNumberTypeUInt32, PrintData<uint32_t>},
   {kNumberTypeUInt64, PrintData<uint64_t>}, {kNumberTypeBool, PrintData<bool>}};
 
-bool AssertCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assert>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast Assert ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  summarize_ = kernel_ptr->get_summarize();
-
+bool AssertCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  summarize_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSummarize));
   return true;
 }
 
-int AssertCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int AssertCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

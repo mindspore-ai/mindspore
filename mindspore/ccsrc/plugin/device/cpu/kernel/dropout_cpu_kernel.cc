@@ -33,35 +33,25 @@ constexpr size_t kDropoutOutputsNum = 2;
 
 using FuncVec = const std::vector<std::pair<KernelAttr, DropoutCpuKernelMod::KernelRunFunc>>;
 
-bool DropoutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Dropout ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool DropoutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kDropoutInputsNum || outputs.size() != kDropoutOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kDropoutInputsNum
                   << " and " << kDropoutOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  keep_prob_ = kernel_ptr->get_keep_prob();
+  keep_prob_ = GetValue<float>(primitive_->GetAttr(ops::kKeepProb));
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
-  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed0")));
-  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed1")));
+  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed0")));
+  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed1")));
   uint64_t init_seed = random::GetSeed(seed0, seed1);
   rng_.seed(init_seed);
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int DropoutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int DropoutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   tensor_size_ = 1;

@@ -27,11 +27,8 @@ constexpr size_t kResizeNearestNeighborGradInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 }  // namespace
 
-bool ResizeNearestNeighborGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeNearestNeighborGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -41,20 +38,16 @@ bool ResizeNearestNeighborGradCpuKernelMod::Init(const BaseOperatorPtr &base_ope
   return true;
 }
 
-int ResizeNearestNeighborGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                  const std::vector<KernelTensorPtr> &inputs,
-                                                  const std::vector<KernelTensorPtr> &outputs,
-                                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ResizeNearestNeighborGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto shape_signed = inputs[kIndex0]->GetShapeVector();
   auto input_shape = Convert2SizeTClipNeg(shape_signed);
   auto output_size = outputs[kIndex0]->GetShapeVector();
-  auto op_prim = std::dynamic_pointer_cast<ops::ResizeNearestNeighborGrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(op_prim, KRET_RESIZE_FAILED);
-  align_corners_ = op_prim->get_align_corners();
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   dtype_ = inputs[kIndex0]->dtype_id();
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {

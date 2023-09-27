@@ -36,18 +36,11 @@ constexpr size_t kLRIndex = 2;
 constexpr size_t kGradIndex = 3;
 }  // namespace
 
-bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  batch_rank_ = base_operator->get_batch_rank();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast ApplyAdagradV2 ops failed!";
-    return false;
-  }
-  epsilon_ = kernel_ptr->get_epsilon();
-  update_slots_ = kernel_ptr->get_update_slots();
+bool ApplyAdagradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -59,8 +52,8 @@ bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) const {
+int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) const {
   // inputs: var, accum, lr, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradV2OutputsNum, kernel_name_);
@@ -91,10 +84,9 @@ int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &i
   return KRET_OK;
 }
 
-int ApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdagradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

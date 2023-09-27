@@ -28,25 +28,18 @@ constexpr size_t kDimLowerLimit = 4;
 constexpr size_t kInputDims = 4;
 }  // namespace
 
-bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
-    return false;
-  }
-
-  stride_height_ = LongToInt(kernel_ptr->get_strides()[kDim2]);
-  stride_width_ = LongToInt(kernel_ptr->get_strides()[kDim3]);
+bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  stride_height_ = LongToInt(strides[kDim2]);
+  stride_width_ = LongToInt(strides[kDim3]);
   if (stride_height_ < 1 || stride_width_ < 1) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', expected strides to be Union[int, tuple[int]] with value no less than 1 "
                                 "but got the window height: "
                              << stride_height_ << ", and the window width: " << stride_height_;
   }
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
   // pair = [is_match, index]
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -58,7 +51,7 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-void MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+void MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
   auto x_shape = inputs[kDim0]->GetShapeVector();
   if (x_shape.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
@@ -104,19 +97,12 @@ void MaxPoolGradWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<Kerne
   }
 }
 
-int MaxPoolGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int MaxPoolGradWithArgmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradWithArgmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradWithArgmaxOutputsNum, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolingGradWithArgmax failed.";
-    return KRET_RESIZE_FAILED;
   }
   ResizedInputSize(inputs);
   return KRET_OK;

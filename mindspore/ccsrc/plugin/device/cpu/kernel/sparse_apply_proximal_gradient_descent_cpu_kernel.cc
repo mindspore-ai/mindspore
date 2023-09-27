@@ -42,11 +42,8 @@ using KernelRunFunc = SparseApplyProximalGradientDescentCpuKernelMod::KernelRunF
     .AddOutputAttr(kNumberType##t7)
 }  // namespace
 
-bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -61,7 +58,7 @@ bool SparseApplyProximalGradientDescentCpuKernelMod::Init(const BaseOperatorPtr 
                   << kSparseApplyProximalGradientDescentOutputsNum << ", but got " << outputs.size() << ".";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -77,12 +74,10 @@ void SparseApplyProximalGradientDescentCpuKernelMod::ResetResouce() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs,
-                                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
   ResetResouce();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != static_cast<int>(KRET_OK)) {
     return ret;
   }

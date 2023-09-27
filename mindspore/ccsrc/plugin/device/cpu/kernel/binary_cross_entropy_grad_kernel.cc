@@ -98,16 +98,13 @@ bool BinaryCrossEntropyGradCpuKernelMod::Launch(const std::vector<KernelTensor *
   return true;
 }
 
-bool BinaryCrossEntropyGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropyGrad>(base_operator);
+bool BinaryCrossEntropyGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceGradInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
 
-  const auto reduction = kernel_ptr->get_reduction();
+  const auto reduction = GetValue<int64_t>(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = kNone;
   } else if (reduction == Reduction::MEAN) {
@@ -118,11 +115,9 @@ bool BinaryCrossEntropyGradCpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int BinaryCrossEntropyGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

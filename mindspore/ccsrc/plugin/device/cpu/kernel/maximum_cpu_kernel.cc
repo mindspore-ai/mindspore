@@ -34,32 +34,23 @@ constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Maximum>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Maximum ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool MaximumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kMaximumInputsNum || outputs.size() != kMaximumOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size must be " << kMaximumInputsNum << " and "
                   << kMaximumOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   input_x_shape_ = inputs[0]->GetShapeVector();

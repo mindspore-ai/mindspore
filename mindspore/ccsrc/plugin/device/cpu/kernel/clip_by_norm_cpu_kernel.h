@@ -33,10 +33,8 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
  public:
   ClipByNormCpuKernelMod() = default;
   ~ClipByNormCpuKernelMod() override = default;
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &,
-             const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;
   std::vector<KernelAttr> GetOpSupport() override;
@@ -44,8 +42,8 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
  private:
   // Init function
   void ResetResource();
-  void InitIOShape(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  void InitAxisAndEpsilon(const ops::ClipByNormPtr &prim);
+  void InitIOShape(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void InitAxisAndEpsilon();
   void InitSizeLists();
   // Launch function
   template <typename T, typename S>

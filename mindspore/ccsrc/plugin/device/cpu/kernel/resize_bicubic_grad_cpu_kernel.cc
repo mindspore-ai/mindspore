@@ -308,11 +308,8 @@ inline void ResizeBicubicGrad(const float *input_grad, const ResizerGradState &R
   }
 }
 
-bool ResizeBicubicGradCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ResizeBicubicGradCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBicubicGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBicubicGradOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -322,19 +319,14 @@ bool ResizeBicubicGradCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBicubicGrad>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners = kernel_ptr->get_align_corners();
-  half_pixel_centers = kernel_ptr->get_half_pixel_centers();
+  align_corners = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
+  half_pixel_centers = GetValue<bool>(primitive_->GetAttr(ops::kHalfPixelCenters));
   return true;
 }
 
-int ResizeBicubicGradCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ResizeBicubicGradCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   resize_shape = inputs.at(kIndex0)->GetDeviceShapeVector();

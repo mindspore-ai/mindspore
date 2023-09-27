@@ -37,11 +37,9 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
   UniqueWithPadCpuKernelMod() = default;
   ~UniqueWithPadCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override {
-    kernel_name_ = base_operator->name();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
-    auto batch_rank = base_operator->get_batch_rank();
+    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
     if (batch_rank < 0) {
       return false;
     }
@@ -49,9 +47,7 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
     return true;
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs,
-             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override;

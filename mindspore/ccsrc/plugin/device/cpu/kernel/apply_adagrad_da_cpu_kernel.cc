@@ -41,21 +41,19 @@ constexpr size_t kL2Index = 6;
 constexpr size_t kStepIndex = 7;
 }  // namespace
 
-bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ApplyAdagradDACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty()) {
     MS_EXCEPTION(ValueError) << "ApplyAdagradDA input is empty";
   }
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
   return true;
 }
 
-int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int ApplyAdagradDACpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

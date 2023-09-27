@@ -93,9 +93,8 @@ void FusedSparseFtrlCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-bool FusedSparseFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool FusedSparseFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -105,28 +104,27 @@ bool FusedSparseFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::FusedSparseFtrl>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
   }
-  l1_ = kernel_ptr->get_l1();
+  l1_ = GetValue<float>(primitive_->GetAttr(ops::kL1));
   if (l1_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l1' must be a non-negative scalar, but got " << l1_;
     return false;
   }
-  l2_ = kernel_ptr->get_l2();
+  l2_ = GetValue<float>(primitive_->GetAttr(ops::kL2));
   if (l2_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l2' must be a non-negative scalar, but got " << l2_;
     return false;
   }
-  lr_power_ = kernel_ptr->get_lr_power();
+  lr_power_ = GetValue<float>(primitive_->GetAttr(ops::kLrPower));
   if (lr_power_ > 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr_power' must be a non-negative scalar, but got " << lr_power_;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -142,12 +140,10 @@ void FusedSparseFtrlCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int FusedSparseFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int FusedSparseFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -284,9 +280,8 @@ bool FusedSparseFtrlCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
   return true;
 }
 
-bool SparseApplyFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -296,29 +291,28 @@ bool SparseApplyFtrlCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
                   << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyFtrl>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
   }
-  l1_ = kernel_ptr->get_l1();
+  l1_ = GetValue<float>(primitive_->GetAttr(ops::kL1));
   if (l1_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l1' must be a non-negative scalar, but got " << l1_;
     return false;
   }
-  l2_ = kernel_ptr->get_l2();
+  l2_ = GetValue<float>(primitive_->GetAttr(ops::kL2));
   if (l2_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'l2' must be a non-negative scalar, but got " << l2_;
     return false;
   }
-  lr_power_ = kernel_ptr->get_lr_power();
+  lr_power_ = GetValue<float>(primitive_->GetAttr(ops::kLrPower));
   if (lr_power_ > 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr_power' must be a non-negative scalar, but got " << lr_power_;
     return false;
   }
-  batch_rank_ = base_operator->get_batch_rank();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -333,12 +327,10 @@ void SparseApplyFtrlCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyFtrlCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

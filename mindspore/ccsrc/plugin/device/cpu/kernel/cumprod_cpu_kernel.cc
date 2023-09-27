@@ -32,20 +32,15 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
-bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumProd>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  kernel_name_ = kernel_ptr->name();
-
+bool CumProdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs[kIndex0] == nullptr || inputs[kIndex1] == nullptr) {
     MS_LOG(ERROR) << "Inputs have nullptr, please check inputs";
     return false;
   }
 
   dtype_ = inputs[kIndex0]->dtype_id();
-  exclusive_ = kernel_ptr->GetExclusive();
-  reverse_ = kernel_ptr->GetReverse();
+  exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
+  reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
 
   auto input_num = inputs.size();
@@ -60,17 +55,15 @@ bool CumProdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int CumProdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &) {
+int CumProdCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   shape_ = inputs[kIndex0]->GetShapeVector();

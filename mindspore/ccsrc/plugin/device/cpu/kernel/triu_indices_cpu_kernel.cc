@@ -21,16 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool TriuIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
-  row_ = GetValue<int64_t>(prim->GetAttr("row"));
-  col_ = GetValue<int64_t>(prim->GetAttr("col"));
-  offset_ = GetValue<int64_t>(prim->GetAttr("offset"));
+bool TriuIndicesCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  row_ = GetValue<int64_t>(primitive_->GetAttr("row"));
+  col_ = GetValue<int64_t>(primitive_->GetAttr("col"));
+  offset_ = GetValue<int64_t>(primitive_->GetAttr("offset"));
   if (row_ < 0) {
     MS_EXCEPTION(ValueError) << "For TriuIndices, row is " << row_ << ", but row should be greater than or equal to 0.";
   }
@@ -46,21 +41,20 @@ bool TriuIndicesCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int TriuIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  return KernelMod::Resize(base_operator, inputs, outputs);
+int TriuIndicesCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  return KernelMod::Resize(inputs, outputs);
 }
 
 template <typename T>
 bool TriuIndicesCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &,
                                            const std::vector<kernel::KernelTensor *> &,
                                            const std::vector<kernel::KernelTensor *> &outputs) {
-  auto offset1_ = offset_ - 1;
-  auto m_first_row = offset1_ > 0 ? std::min<int64_t>(col_, 1 + offset1_) : row_ + offset1_ > 0;
-  auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset1_));
-  auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset1_));
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
+  auto offset1 = offset_ - 1;
+  auto m_first_row = offset1 > 0 ? std::min<int64_t>(col_, 1 + offset1) : row_ + offset1 > 0;
+  auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col_, row_ + offset1));
+  auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row_, row_ + offset1));
   auto n_row_trapezoid = (m_last_row - m_first_row + 1);
   auto tril_size = (static_cast<size_t>((m_first_row + m_last_row) * n_row_trapezoid)) >> 1;
   auto diff_row = n_row_all - n_row_trapezoid;

@@ -106,10 +106,8 @@ void PSROIPoolingCpuKernelMod::PSROIPoolForward(size_t start, size_t end, const 
   }
 }
 
-bool PSROIPoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool PSROIPoolingCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(tensor_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -117,14 +115,14 @@ bool PSROIPoolingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
 
-  if (Resize(base_operator, inputs, outputs) == KRET_RESIZE_FAILED) {
+  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
     MS_LOG_ERROR << "Resize failed!";
     return false;
   }
   return true;
 }
 
-int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) {
+int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensor *> &inputs) {
   input_shape = inputs[0]->GetShapeVector();
   if (input_shape.size() != INPUT_SHAPE_SIZE) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[features] should be " << INPUT_SHAPE_SIZE
@@ -147,10 +145,8 @@ int PSROIPoolingCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPt
   return KRET_OK;
 }
 
-int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int PSROIPoolingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
     MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
@@ -179,17 +175,17 @@ int PSROIPoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto spatial_scale_ptr = base_operator->GetAttr("spatial_scale");
+  auto spatial_scale_ptr = primitive_->GetAttr("spatial_scale");
   MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
   spatial_scale_ = GetValue<float>(spatial_scale_ptr);
 
-  auto group_size_ptr = base_operator->GetAttr("group_size");
+  auto group_size_ptr = primitive_->GetAttr("group_size");
   MS_EXCEPTION_IF_NULL(group_size_ptr);
   pooled_height_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   pooled_width_ = LongToInt(GetValue<int64_t>(group_size_ptr));
   group_size_ = LongToInt(GetValue<int64_t>(group_size_ptr));
 
-  auto output_dim_ptr = base_operator->GetAttr("output_dim");
+  auto output_dim_ptr = primitive_->GetAttr("output_dim");
   output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
 
   for (auto tensor_ptr : inputs) {

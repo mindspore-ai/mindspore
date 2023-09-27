@@ -30,27 +30,20 @@ const size_t kTwo = 2;
 constexpr char kKernelName[] = "MultiMarginLoss";
 }  // namespace
 
-bool MultiMarginLossCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLoss>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  reduction = kernel_ptr->get_reduction();
-  p = kernel_ptr->get_p();
-  margin = kernel_ptr->get_margin();
+bool MultiMarginLossCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
+  p = GetValue<float>(primitive_->GetAttr(ops::kP));
+  margin = GetValue<float>(primitive_->GetAttr(ops::kMargin));
 
   dtype_ = inputs[kZero]->dtype_id();
   input_num = inputs.size();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MultiMarginLossCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MultiMarginLossCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

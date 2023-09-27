@@ -17,14 +17,13 @@
 #include "plugin/device/cpu/kernel/meshgrid_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include <string>
 #include "mindspore/core/ops/meshgrid.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool MeshgridCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != outputs.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be equal, but get " << inputs.size()
                   << " and " << outputs.size();
@@ -43,12 +42,7 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_func_ = func_list_[pair.second].second;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Meshgrid>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', Cast Meshgrid ops failed!";
-    return false;
-  }
-  auto indexing = kernel_ptr->get_indexing();
+  auto indexing = GetValue<std::string>(primitive_->GetAttr(ops::kIndexing));
   if (indexing == "xy") {
     swap_indexing_ = true;
   } else if (indexing == "ij") {
@@ -62,10 +56,9 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MeshgridCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

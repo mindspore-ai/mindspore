@@ -32,23 +32,19 @@ using device::cpu::kMCCLGlobalGroupName;
 using device::cpu::MsCollectiveCommLib;
 #endif
 
-bool BroadcastCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool BroadcastCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
 #if defined(__linux__) && defined(WITH_BACKEND)
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  auto group = GetValue<std::string>(prim->GetAttr(GROUP));
+  auto group = GetValue<std::string>(primitive_->GetAttr(GROUP));
   if (group != kMCCLGlobalGroupName) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support " << kMCCLGlobalGroupName << " on CPU, but got " << group;
   }
-  root_rank_ = LongToUint(GetValue<std::int64_t>(prim->GetAttr("root_rank")));
+  root_rank_ = LongToUint(GetValue<std::int64_t>(primitive_->GetAttr("root_rank")));
   input_dtype_ = inputs[0]->dtype_id();
 #else
   MS_LOG(EXCEPTION) << "The CPU kernel broadcast is only supported on linux platform.";

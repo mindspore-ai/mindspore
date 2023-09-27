@@ -21,14 +21,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool SparseSegmentMeanCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
+bool SparseSegmentMeanCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t inputs_num = 3;
   constexpr size_t outputs_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), inputs_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), outputs_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -39,18 +37,16 @@ bool SparseSegmentMeanCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int SparseSegmentMeanCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SparseSegmentMeanCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto indices_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   auto y_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
-  auto batch_rank = base_operator->get_batch_rank();
+  auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank, size_t(1), std::multiplies{});
   outer_size_ = x_shape.at(LongToSize(batch_rank));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank + 1, x_shape.end(), size_t(1), std::multiplies{});

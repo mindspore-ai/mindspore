@@ -50,22 +50,17 @@ constexpr size_t kOutputsNum = 1;
     .AddOutputAttr(kNumberType##t4)
 }  // namespace
 
-bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                             const std::vector<KernelTensorPtr> &inputs,
-                                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
   out_backprop_type_ = inputs[kInputIndex1]->dtype_id();
   argmax_type_ = inputs[kInputIndex2]->dtype_id();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DGradWithFixedKsize>(base_operator);
-  data_format_ = kernel_ptr->get_data_format();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   return true;
 }
 
-int FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                              const std::vector<KernelTensorPtr> &inputs,
-                                                              const std::vector<KernelTensorPtr> &outputs,
-                                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

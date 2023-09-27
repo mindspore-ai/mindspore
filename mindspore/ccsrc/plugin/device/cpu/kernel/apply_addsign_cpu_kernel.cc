@@ -36,9 +36,8 @@ constexpr size_t kApplyAddsignInputsNum = 7;
 constexpr size_t kApplyAddsignOutputsNum = 2;
 }  // namespace
 
-bool ApplyAddsignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool ApplyAddsignCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
   return true;
 }
@@ -63,11 +62,10 @@ bool ApplyAddsignCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-int ApplyAddsignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ApplyAddsignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     MS_LOG(WARNING) << kernel_name_ << "reinit failed.";
     return ret;
   }

@@ -39,8 +39,8 @@ const std::vector<std::vector<double>> b18 = {
   {0., 0., -9.23364619367118555360e-02, -1.69364939002081722752e-02, -1.40086798182036094347e-05}};
 }  // namespace
 
-bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
+bool MatrixExpCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   //  Todo, dynamic shape
   //  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixExp>(base_operator);
   //  if (!kernel_ptr) {
@@ -49,14 +49,13 @@ bool MatrixExpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   //  }
   //  kernel_name_ = kernel_ptr->name();
   data_type_ = inputs.at(kIndex0)->dtype_id();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int MatrixExpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
+int MatrixExpCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

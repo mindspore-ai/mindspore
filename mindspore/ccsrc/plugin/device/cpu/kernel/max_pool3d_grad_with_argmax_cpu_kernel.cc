@@ -32,21 +32,15 @@ const size_t DIM_SIZE_1 = 1;
 const size_t DIM_SIZE_5 = 5;
 }  // namespace
 
-bool MaxPool3DGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool MaxPool3DGradWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   x_dtype_ = inputs[kZero]->dtype_id();
   argmax_dtype_ = inputs[kTwo]->dtype_id();
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DGradWithArgmax>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  ksize_list_ = kernel_ptr->get_kernel_size();
-  strides_list_ = kernel_ptr->get_strides();
-  pads_list_ = kernel_ptr->get_pads();
-  dilation_list_ = kernel_ptr->get_dilation();
+  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  pads_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
+  dilation_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -58,11 +52,9 @@ bool MaxPool3DGradWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int MaxPool3DGradWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int MaxPool3DGradWithArgmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

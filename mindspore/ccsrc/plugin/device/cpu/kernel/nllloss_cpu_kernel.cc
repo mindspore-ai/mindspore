@@ -30,15 +30,7 @@ const std::map<Reduction, ReductionType> kReductionMap = {
   {Reduction::MEAN, Reduction_Mean}, {Reduction::REDUCTION_SUM, Reduction_Sum}, {Reduction::NONE, Reduction_None}};
 }  // namespace
 
-bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NLLLoss>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast NLLLoss ops failed!";
-    return false;
-  }
-
-  kernel_name_ = kernel_ptr->GetPrim()->name();
+bool NLLLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -48,22 +40,20 @@ bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   kernel_func_ = func_list_[index].second;
 
-  auto reduction = kernel_ptr->get_reduction();
+  auto reduction = Reduction(GetValue<int64_t>(primitive_->GetAttr(ops::kReduction)));
   auto pair = kReductionMap.find(reduction);
   if (pair == kReductionMap.end()) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
   reduction_type_ = pair->second;
-  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
+  ignore_index_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kIgnoreIndex)));
   return true;
 }
 
-int NLLLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int NLLLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

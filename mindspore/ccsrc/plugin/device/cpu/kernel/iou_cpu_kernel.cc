@@ -31,12 +31,11 @@ constexpr auto kIou = "iou";
 constexpr auto kIof = "iof";
 }  // namespace
 
-bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operator,
-                           const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) {
+bool IOUCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
 
-  auto mode_value_ptr = base_operator->GetAttr(kAttrMode);
+  auto mode_value_ptr = primitive_->GetAttr(kAttrMode);
   MS_EXCEPTION_IF_NULL(mode_value_ptr);
   auto mode = GetValue<std::string>(mode_value_ptr);
   if (mode == kIou) {
@@ -46,8 +45,6 @@ bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', mode only support 'iou' or 'iof'.";
   }
-
-  kernel_name_ = base_operator->GetPrim()->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -58,12 +55,10 @@ bool IOUCpuKernelMod::Init(const mindspore::kernel::BaseOperatorPtr &base_operat
   return true;
 }
 
-int IOUCpuKernelMod::Resize(const mindspore::kernel::BaseOperatorPtr &base_operator,
-                            const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int IOUCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIOUInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIOUOutputsNum, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

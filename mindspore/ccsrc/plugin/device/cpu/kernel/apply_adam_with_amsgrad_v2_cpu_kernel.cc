@@ -33,15 +33,10 @@ constexpr size_t kApplyAdamWithAmsgradV2OutputsNum = 4;
 constexpr size_t kScalarIndex = 0;
 }  // namespace
 
-bool ApplyAdamWithAmsgradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgradV2>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool ApplyAdamWithAmsgradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
 
   if (inputs.size() != kApplyAdamWithAmsgradV2InputsNum || outputs.size() != kApplyAdamWithAmsgradV2OutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be "
@@ -60,12 +55,10 @@ bool ApplyAdamWithAmsgradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operat
   return true;
 }
 
-int ApplyAdamWithAmsgradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ApplyAdamWithAmsgradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

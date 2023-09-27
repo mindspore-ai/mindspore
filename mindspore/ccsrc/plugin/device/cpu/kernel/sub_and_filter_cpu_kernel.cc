@@ -25,19 +25,16 @@ constexpr size_t kSubAndFilterInputsNum = 3;
 constexpr size_t kSubAndFilterOutputNum = 2;
 }  // namespace
 
-bool SubAndFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SubAndFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   x_dtype_ = inputs.at(kIndex0)->dtype_id();
   x_dtype_size_ = abstract::TypeIdSize(x_dtype_);
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SubAndFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
+int SubAndFilterCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   for (auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShapeVector();

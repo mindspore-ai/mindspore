@@ -35,11 +35,9 @@ class AffineGridCpuKernelMod : public NativeCpuKernelMod {
   AffineGridCpuKernelMod() = default;
   ~AffineGridCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
@@ -69,7 +67,7 @@ class AffineGridCpuKernelMod : public NativeCpuKernelMod {
   TypeId output_type_;
   std::vector<int64_t> output_size_dims_;
   bool align_corners_{false};
-  std::vector<KernelTensorPtr> outputs_;
+  std::vector<KernelTensor *> outputs_;
   ShapeVector output_shape_;
 };
 }  // namespace kernel

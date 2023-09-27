@@ -89,20 +89,12 @@ bool ArgminCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
 
   return true;
 }
-bool ArgminCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMin>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ArgMin ops failed!";
-    return false;
-  }
+bool ArgminCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() < 1) {
     MS_LOG(ERROR) << "Argmin input size can not less than 1!";
     return false;
   }
-
-  kernel_name_ = kernel_ptr->name();
-  axis_ = kernel_ptr->get_axis();
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -112,11 +104,9 @@ bool ArgminCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int ArgminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int ArgminCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMinInputsNum, kernel_name_);

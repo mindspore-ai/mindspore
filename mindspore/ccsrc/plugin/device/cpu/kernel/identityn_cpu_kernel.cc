@@ -41,10 +41,8 @@ bool IdentityNCpuKernelMod::CheckType(TypeId idx_type, size_t idx) {
   return true;
 }
 
-bool IdentityNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool IdentityNCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != outputs.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', inputs size should be equal to outputs size: " << inputs.size()
                   << " vs " << outputs.size();
@@ -53,10 +51,9 @@ bool IdentityNCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int IdentityNCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IdentityNCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

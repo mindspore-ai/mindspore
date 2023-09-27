@@ -37,7 +37,7 @@ bool UnpackCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
   //   MS_LOG(ERROR) << "cast unstack ops failed!";
   //   return false;
   // }
-  // unstack_param_.axis_ = kernel_ptr->get_axis();
+  // unstack_param_.axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   // origin_axis_ = unstack_param_.axis_;
   // unstack_param_.pre_dims_ = 1;
   // unstack_param_.axis_dim_ = 1;

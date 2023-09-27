@@ -27,22 +27,17 @@ constexpr size_t kLogSpaceInputsNum = 2;
 constexpr size_t kLogSpaceOutputsNum = 1;
 }  // namespace
 
-bool LogSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool LogSpaceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSpaceInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSpaceOutputsNum, kernel_name_);
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSpace>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  steps_ = kernel_ptr->get_steps();
+  steps_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSteps));
   if (steps_ < 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', attr[steps] must be greater than 0, but got steps: " << steps_
                   << ".";
     return false;
   }
-  base_ = kernel_ptr->get_base();
+  base_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBase));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -54,10 +49,9 @@ bool LogSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int LogSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LogSpaceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

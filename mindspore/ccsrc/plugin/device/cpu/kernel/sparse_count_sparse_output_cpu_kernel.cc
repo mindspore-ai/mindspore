@@ -87,11 +87,8 @@ void SparseCountSparseOutputCpuKernelMod::CheckValidValuesAndWeights(const T *va
   }
 }
 
-bool SparseCountSparseOutputCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseCountSparseOutputCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kSparseCountSparseOutputInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSparseCountSparseOutputInputsNum
                   << ", but got " << inputs.size();
@@ -108,10 +105,9 @@ bool SparseCountSparseOutputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
                       << "support kernel input type and format: " << GetOpSupport();
   }
   kernel_func_ = func_list_[index].second;
-  auto kernel_ptr = std::make_shared<ops::SparseCountSparseOutput>(base_operator->GetPrim());
-  binary_output_ = kernel_ptr->get_binary_output();
-  minlength_ = kernel_ptr->get_minlength();
-  maxlength_ = kernel_ptr->get_maxlength();
+  binary_output_ = GetValue<bool>(primitive_->GetAttr(kAttrBinaryOutput));
+  minlength_ = GetValue<int64_t>(primitive_->GetAttr(kAttrMinLength));
+  maxlength_ = GetValue<int64_t>(primitive_->GetAttr(kAttrMaxLength));
 
   (void)types_.emplace_back(TypeId::kNumberTypeInt64);
   (void)types_.emplace_back(inputs[1]->dtype_id());
@@ -120,15 +116,13 @@ bool SparseCountSparseOutputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int SparseCountSparseOutputCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseCountSparseOutputCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
   indices_shape_ = inputs[kIndicesIndex]->GetShapeVector();
   values_shape_ = inputs[kValuesIndex]->GetShapeVector();
   shape_shape_ = inputs[kShapeIndex]->GetShapeVector();
   weights_shape_ = inputs[kWeightsIndex]->GetShapeVector();
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }

@@ -32,14 +32,10 @@ constexpr auto kAttrMean = "mean";
 constexpr auto kAttrStd = "std";
 }  // namespace
 
-bool LogNormalReverseCpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(prim);
-  input_mean_ = GetValue<float>(prim->GetAttr(kAttrMean));
-  input_std_ = GetValue<float>(prim->GetAttr(kAttrStd));
+bool LogNormalReverseCpuKernel::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  input_mean_ = GetValue<float>(primitive_->GetAttr(kAttrMean));
+  input_std_ = GetValue<float>(primitive_->GetAttr(kAttrStd));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto is_match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match.first) {
@@ -49,10 +45,9 @@ bool LogNormalReverseCpuKernel::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int LogNormalReverseCpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LogNormalReverseCpuKernel::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

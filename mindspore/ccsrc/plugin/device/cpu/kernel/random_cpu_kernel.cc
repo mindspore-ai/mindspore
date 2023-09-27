@@ -36,13 +36,13 @@ constexpr size_t kStandardNormalOutputsNum = 1;
 constexpr char kKernelName[] = "Random";
 }  // namespace
 
-void LaunchStandardNormal(std::default_random_engine  *rng,  const std::vector<KernelTensor *> &outputs) {
+void LaunchStandardNormal(std::default_random_engine *rng, const std::vector<KernelTensor *> &outputs) {
   // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
-  
+
   // Init sample number.
   size_t num_sample = outputs[0]->size() / sizeof(float);
-  
+
   // Init random normal generator.
   std::normal_distribution<float> distribution;
 
@@ -76,8 +76,7 @@ void LaunchUniformInt(std::mt19937 *rng, const std::vector<KernelTensor *> &inpu
   }
 }
 
-void LaunchUniformReal(std::mt19937 *rng,
-                       const std::vector<KernelTensor *> &outputs) {
+void LaunchUniformReal(std::mt19937 *rng, const std::vector<KernelTensor *> &outputs) {
   // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->device_ptr());
 
@@ -93,8 +92,7 @@ void LaunchUniformReal(std::mt19937 *rng,
   }
 }
 
-bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
+bool RandomCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto iter = kRandomOpTypeMap.find(kernel_type_);
   if (iter == kRandomOpTypeMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_
@@ -103,8 +101,8 @@ bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   } else {
     random_op_type_ = iter->second;
   }
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
-  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   mtrng_.seed(init_seed);
   dfrng_.seed(init_seed);
@@ -117,10 +115,8 @@ bool RandomCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int RandomCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RandomCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   return KRET_OK;

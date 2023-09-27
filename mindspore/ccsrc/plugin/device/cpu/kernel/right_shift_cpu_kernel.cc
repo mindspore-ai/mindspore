@@ -26,9 +26,8 @@ const size_t kRightShiftInputsNum = 2;
 const size_t kRightShiftOutputsNum = 1;
 }  // namespace
 
-bool RightShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool RightShiftCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRightShiftInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRightShiftOutputsNum, kernel_name_);
   input_type_1_ = inputs.at(kIndex0)->dtype_id();
@@ -39,10 +38,9 @@ bool RightShiftCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int RightShiftCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RightShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_1_ = inputs.at(kIndex0)->GetShapeVector();

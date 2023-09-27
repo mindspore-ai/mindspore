@@ -71,21 +71,17 @@ void change_axes(Eigen::array<unsigned int, size> *axes) {
 }
 }  // namespace
 
-bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool FFTWithSizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
 
-  signal_ndim_ = GetValue<int64_t>(prim->GetAttr("signal_ndim"));
-  inverse_ = GetValue<bool>(prim->GetAttr("inverse"));
-  onesided_ = GetValue<bool>(prim->GetAttr("onesided"));
-  normalized_ = GetValue<string>(prim->GetAttr("norm"));
-  real_ = GetValue<bool>(prim->GetAttr("real"));
-  raw_checked_signal_size_ = GetValue<std::vector<int64_t>>(prim->GetAttr("signal_sizes"));
+  signal_ndim_ = GetValue<int64_t>(primitive_->GetAttr("signal_ndim"));
+  inverse_ = GetValue<bool>(primitive_->GetAttr("inverse"));
+  onesided_ = GetValue<bool>(primitive_->GetAttr("onesided"));
+  normalized_ = GetValue<string>(primitive_->GetAttr("norm"));
+  real_ = GetValue<bool>(primitive_->GetAttr("real"));
+  raw_checked_signal_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("signal_sizes"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -96,12 +92,10 @@ bool FFTWithSizeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   return true;
 }
 
-int FFTWithSizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int FFTWithSizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   x_shape_ = inputs[0]->GetShapeVector();

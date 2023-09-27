@@ -205,23 +205,18 @@ struct CrossTraits<true, int64_t> {
   using Updater = OutputUpdater<int64_t>;
 };
 
-bool SparseCrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  hash_key_ = static_cast<uint64_t>(GetValue<int64_t>(prim->GetAttr("hash_key")));
-  hash_out_ = GetValue<bool>(prim->GetAttr("hashed_output"));
-  num_buckets_ = GetValue<int64_t>(prim->GetAttr("num_buckets"));
+bool SparseCrossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  hash_key_ = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("hash_key")));
+  hash_out_ = GetValue<bool>(primitive_->GetAttr("hashed_output"));
+  num_buckets_ = GetValue<int64_t>(primitive_->GetAttr("num_buckets"));
   is_need_retrieve_output_shape_ = true;
   return true;
 }
 
-int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs,
-                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseCrossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
@@ -232,7 +227,7 @@ int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
       return KRET_RESIZE_FAILED;
     }
   }
-  N_ = GetValue<int64_t>(base_operator->GetPrim()->GetAttr("N"));
+  N_ = GetValue<int64_t>(primitive_->GetAttr("N"));
   return KRET_OK;
 }
 

@@ -43,12 +43,9 @@ constexpr size_t kFirstPartitionInputIndex = 3;
   }
 }  // namespace
 
-bool RaggedTensorToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  row_partition_types_ = GetValue<std::vector<std::string>>(base_operator->GetAttr("row_partition_types"));
+bool RaggedTensorToTensorCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  row_partition_types_ = GetValue<std::vector<std::string>>(primitive_->GetAttr("row_partition_types"));
   ragged_rank_ = GetRaggedRank(row_partition_types_);
   shape_dtype_ = inputs[kShapeInputIndex]->dtype_id();
   values_dtype_ = inputs[kValueInputIndex]->dtype_id();
@@ -57,11 +54,9 @@ bool RaggedTensorToTensorCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   return true;
 }
 
-int RaggedTensorToTensorCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int RaggedTensorToTensorCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   values_shape_ = inputs[kValueInputIndex]->GetShapeVector();

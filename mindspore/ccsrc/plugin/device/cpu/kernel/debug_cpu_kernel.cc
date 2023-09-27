@@ -24,9 +24,7 @@ constexpr size_t kDebugInputsNum = 1;
 constexpr size_t kDebugOutputsNum = 1;
 }  // namespace
 
-bool DebugCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool DebugCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 

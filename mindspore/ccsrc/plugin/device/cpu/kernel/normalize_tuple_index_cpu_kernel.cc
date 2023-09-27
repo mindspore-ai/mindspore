@@ -25,17 +25,13 @@
 
 namespace mindspore {
 namespace kernel {
-bool NormalizeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NormalizeTupleIndex>(base_operator);
-  index_types_ = GetValue<string>(kernel_ptr->GetAttr(kAttrOriginIndexType));
-  tuple_index_types_ = GetValue<std::vector<int64_t>>(kernel_ptr->GetAttr(kAttrTupleIndexTypes));
-  dim_index_ = LongToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrTupleIndexAxis)));
-  if (kernel_ptr->HasAttr(kAttrExpandDimsMask)) {
-    expand_dims_mask_ = LongToSize(GetValue<int64_t>(kernel_ptr->GetAttr(kAttrExpandDimsMask)));
+bool NormalizeTupleIndexCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  index_types_ = GetValue<string>(primitive_->GetAttr(kAttrOriginIndexType));
+  tuple_index_types_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrTupleIndexTypes));
+  dim_index_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrTupleIndexAxis)));
+  if (primitive_->HasAttr(kAttrExpandDimsMask)) {
+    expand_dims_mask_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(kAttrExpandDimsMask)));
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -45,7 +41,6 @@ bool NormalizeTupleIndexCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   kernel_func_ = func_list_[index].second;
   is_need_retrieve_output_shape_ = true;
-  outputs_ = outputs;
   return true;
 }
 
@@ -110,11 +105,9 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeBoolSequenceIndex(const ShapeVect
   output_sizes_.emplace_back(out.size());
 }
 
-int NormalizeTupleIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int NormalizeTupleIndexCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  KernelMod::Resize(inputs, outputs);
   data_shapes_ = GetShapes(inputs);
   return KRET_OK;
 }

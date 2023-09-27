@@ -134,20 +134,13 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<KernelTensor *> &i
   return true;
 }
 
-bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+bool BinaryCrossEntropyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
 
-  const auto reduction = kernel_ptr->get_reduction();
+  const auto reduction = GetValue<int64_t>(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = kNone;
   } else if (reduction == Reduction::MEAN) {
@@ -158,11 +151,9 @@ bool BinaryCrossEntropyCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int BinaryCrossEntropyCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int BinaryCrossEntropyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

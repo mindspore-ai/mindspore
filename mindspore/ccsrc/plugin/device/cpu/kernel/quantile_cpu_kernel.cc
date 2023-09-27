@@ -27,25 +27,17 @@ constexpr size_t kQuantileOutputsNum = 1;
 constexpr int kQuantileDefaultDim = 10000;
 }  // namespace
 
-bool QuantileCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Quantile ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-  dim_ = GetValue<int64_t>(base_operator->GetAttr("dim"));
-  keep_dims_ = GetValue<bool>(base_operator->GetAttr("keep_dims"));
-  ignore_nan_ = GetValue<bool>(base_operator->GetAttr("ignore_nan"));
-  return MatchKernelFunc(base_operator, inputs, outputs);
+bool QuantileCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  dim_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  keep_dims_ = GetValue<bool>(primitive_->GetAttr("keep_dims"));
+  ignore_nan_ = GetValue<bool>(primitive_->GetAttr("ignore_nan"));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int QuantileCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+int QuantileCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != KRET_OK) {
+  if ((ret = NativeCpuKernelMod::Resize(inputs, outputs)) != KRET_OK) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }

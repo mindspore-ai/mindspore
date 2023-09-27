@@ -44,13 +44,9 @@ static std::pair<int64_t, int64_t> ComputeTwo(int64_t diag_index, int64_t max_di
 }
 }  // namespace
 
-bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto op_prim = std::dynamic_pointer_cast<ops::MatrixDiagV3>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  auto align = op_prim->get_align();
+bool MatrixDiagV3CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  auto align = GetValue<std::string>(primitive_->GetAttr(ops::kAlign));
   if (!align.empty()) {
     align_ = align;
   }
@@ -66,11 +62,9 @@ bool MatrixDiagV3CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int MatrixDiagV3CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_ERROR_IF_NULL(base_operator);
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int MatrixDiagV3CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

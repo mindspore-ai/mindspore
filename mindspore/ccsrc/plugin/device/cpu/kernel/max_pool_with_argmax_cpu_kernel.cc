@@ -29,14 +29,11 @@ constexpr size_t kIndex3 = 3;
 constexpr int kPadHalf = 2;
 }  // namespace
 
-bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
-  data_format_ = kernel_ptr->get_format();
-  auto kernel_size = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
+bool MaxPoolWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  data_format_ = Format(GetValue<int64_t>(primitive_->GetAttr(ops::kFormat)));
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   if (kernel_size.size() < kIndex3 || strides.size() < kIndex3) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 3, but got "
                       << strides.size();
@@ -61,7 +58,7 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                 "but got the window height: "
                              << window_height_ << ", and the window width: " << window_width_;
   }
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
   if (pad_mode_ == PadMode::SAME) {
     int tmp_height = (input_height_ / stride_height_) * stride_height_ == input_height_
                        ? (input_height_ / stride_height_)
@@ -84,7 +81,7 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-void MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+void MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   if (x_shape.size() != kInputRank) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
@@ -110,7 +107,7 @@ void MaxPoolWithArgmaxCpuKernelMod::ResizedInputSize(const std::vector<KernelTen
   }
 }
 
-void MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+void MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensor *> &outputs) {
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   output_height_ = LongToInt(output_shape[kDim2]);
   output_width_ = LongToInt(output_shape[kDim3]);
@@ -123,19 +120,12 @@ void MaxPoolWithArgmaxCpuKernelMod::ResizedOutputSize(const std::vector<KernelTe
   }
 }
 
-int MaxPoolWithArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int MaxPoolWithArgmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolWithArgmaxInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolWithArgmaxOutputsNum, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to MaxPoolWithArgmax failed.";
-    return KRET_RESIZE_FAILED;
   }
   ResizedInputSize(inputs);
   ResizedOutputSize(outputs);

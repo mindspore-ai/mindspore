@@ -29,28 +29,22 @@ constexpr size_t kDepthToSpaceOutputsNum = 1;
 constexpr size_t kDepthToSpaceInputDimension = 4;
 }  // namespace
 
-bool DepthToSpaceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DepthToSpace>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  block_size_ = LongToSize(kernel_ptr->get_block_size());
+bool DepthToSpaceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
+  block_size_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBlockSize)));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
-    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-int DepthToSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DepthToSpaceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

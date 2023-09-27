@@ -33,20 +33,14 @@ const size_t kInputMinDim = 2;
 constexpr int64_t kParallelDataNums = 512 * 1024;
 }  // namespace
 
-bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool FillDiagonalCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillDiagonalInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillDiagonalOutputNum, kernel_name_);
 
   input_type_ = inputs[0]->dtype_id();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FillDiagonal>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Init FillDiagonal kernel ptr failed.";
-    return false;
-  }
-  fill_value_ = kernel_ptr->get_fill_value();
-  wrap_ = kernel_ptr->get_wrap();
+  fill_value_ = GetValue<float>(primitive_->GetAttr(ops::kFillValue));
+  wrap_ = GetValue<bool>(primitive_->GetAttr(ops::kWrap));
 
   if (IsOneOfUnsignedType(input_type_) && fill_value_ < 0) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
@@ -55,10 +49,9 @@ bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FillDiagonalCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

@@ -36,16 +36,13 @@ constexpr size_t kFormatCHWIndexW = 2;
 constexpr int64_t kValue2 = 2;
 }  // namespace
 
-bool Dilation2DBackpropFilterCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dilation2DBackpropFilter>(base_operator);
-  kernel_name_ = kernel_ptr->name();
-  stride_ = kernel_ptr->get_stride();
-  dilation_ = kernel_ptr->get_dilation();
-  pad_mode_ = kernel_ptr->get_pad_mode();
-  format_ = kernel_ptr->get_format();
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+bool Dilation2DBackpropFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  stride_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStride));
+  dilation_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));
+  pad_mode_ = GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode));
+  format_ = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -57,11 +54,9 @@ bool Dilation2DBackpropFilterCpuKernelMod::Launch(const std::vector<KernelTensor
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-int Dilation2DBackpropFilterCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int Dilation2DBackpropFilterCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

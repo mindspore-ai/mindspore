@@ -50,13 +50,7 @@ struct BitwiseXorFunc {
 };
 }  // namespace
 
-bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
-  if (!base_operator) {
-    MS_LOG(ERROR) << "For " << kernel_type_ << ", cast " << kernel_type_ << " ops failed!";
-    return false;
-  }
-  kernel_name_ = base_operator->name();
+bool BitwiseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kBitwiseInputsNum || outputs.size() != kBitwiseOutputsNum) {
     MS_LOG(ERROR) << "For" << kernel_name_ << ": input and output size should be " << kBitwiseInputsNum << " and "
                   << kBitwiseOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
@@ -70,16 +64,14 @@ bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
+int BitwiseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != 0) {
     return ret;
   }
   input_shape_1_ = inputs[kIndex0]->GetShapeVector();

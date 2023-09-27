@@ -65,10 +65,7 @@ int64_t IndexPutCpuKernelMod::Multiplicative(const std::vector<int64_t> &tensors
   return result;
 }
 
-bool IndexPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::IndexPut>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool IndexPutCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto type_id = inputs[0]->dtype_id();
   input_info_.push_back(type_id);
   type_id = inputs[1]->dtype_id();
@@ -78,14 +75,13 @@ bool IndexPutCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     input_info_.push_back(type_id);
   }
   inputs_nums = inputs.size();
-  accumulate = GetValue<int64_t>(base_operator->GetAttr("accumulate"));
+  accumulate = GetValue<int64_t>(primitive_->GetAttr("accumulate"));
   return true;
 }
 
-int IndexPutCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int IndexPutCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

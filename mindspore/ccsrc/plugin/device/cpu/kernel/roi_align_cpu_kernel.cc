@@ -127,36 +127,32 @@ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_s
 }
 }  // namespace
 
-bool ROIAlignCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+bool ROIAlignCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   // Check input and output numbers
-  kernel_name_ = base_operator->name();
   constexpr size_t kInputSize = 2;
   constexpr size_t kOutputSize = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlign>(base_operator);
-  pooled_height_ = LongToInt(op->get_pooled_height());
-  pooled_width_ = LongToInt(op->get_pooled_width());
-  spatial_scale_ = op->get_spatial_scale();
-  sample_num_ = LongToInt(op->get_sample_num());
-  roi_end_mode_ = LongToInt(op->get_roi_end_mode());
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledHeight)));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledWidth)));
+  spatial_scale_ = GetValue<float>(primitive_->GetAttr(ops::kSpatialScale));
+  sample_num_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kSampleNum)));
+  roi_end_mode_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kRoiEndMode)));
 
   MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height_);
   MS_EXCEPTION_IF_ZERO("pooled_width", pooled_width_);
   return true;
 }
 
-int ROIAlignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ROIAlignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  Get the input shapes

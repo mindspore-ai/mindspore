@@ -46,11 +46,8 @@ constexpr float kNumImage = 0.5;
 
 namespace mindspore {
 namespace kernel {
-bool CropAndResizeGradImageCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CropAndResizeGradImageCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumsImage, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutNumImage, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -60,20 +57,13 @@ bool CropAndResizeGradImageCpuKernelMod::Init(const BaseOperatorPtr &base_operat
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto crop_and_resize_ptr = std::dynamic_pointer_cast<ops::CropAndResizeGradImage>(base_operator);
-  MS_EXCEPTION_IF_NULL(crop_and_resize_ptr);
-  // suppose use kernel_ptr->get_method(), but the definition in lite is enumeration, not std::string. So we use this
-  // for the moment to support dynamic shape.
-  attr_method_ = GetValue<std::string>(crop_and_resize_ptr->GetAttr("method"));
+  attr_method_ = GetValue<std::string>(primitive_->GetAttr("method"));
   return true;
 }
 
-int CropAndResizeGradImageCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs,
-                                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CropAndResizeGradImageCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   //  input grads

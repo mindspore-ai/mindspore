@@ -26,12 +26,9 @@ const size_t kNumber3 = 3;
 
 namespace mindspore {
 namespace kernel {
-bool CrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool CrossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   constexpr size_t output_num = 1;
-  kernel_name_ = base_operator->GetPrim()->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -43,19 +40,15 @@ bool CrossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CrossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input1_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
   input2_shape_ = inputs[kIndex1]->GetDeviceShapeVector();
   output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   input1_dtype_ = inputs[kIndex0]->dtype_id();
-  auto cross_ptr = std::dynamic_pointer_cast<ops::Cross>(base_operator);
-  MS_EXCEPTION_IF_NULL(cross_ptr);
-  dim_ = cross_ptr->get_dim();
+  dim_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDim));
   int64_t default_dim = -65530;
   if (dim_ == default_dim) {
     int64_t dim_size_value = 3;

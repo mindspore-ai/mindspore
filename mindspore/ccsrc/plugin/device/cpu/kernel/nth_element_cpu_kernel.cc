@@ -25,22 +25,17 @@ constexpr size_t kNthElementOutputsNum = 1;
 constexpr size_t kParallelDataNums = 32 * 1024;
 }  // namespace
 
-bool NthElementCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool NthElementCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNthElementInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNthElementOutputsNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  reverse_ = kernel_ptr->get_reverse();
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  reverse_ = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
-int NthElementCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int NthElementCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();

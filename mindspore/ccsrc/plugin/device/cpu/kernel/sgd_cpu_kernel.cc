@@ -37,9 +37,7 @@ constexpr size_t kIndexStat = 5;
 using KernelRunFunc = SGDCpuKernelMod::KernelRunFunc;
 }  // namespace
 
-bool SGDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SGDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -54,22 +52,19 @@ bool SGDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
                   << outputs.size();
     return false;
   }
-  auto sgd_op = std::make_shared<ops::SGD>(base_operator->GetPrim());
 
-  dampening_ = sgd_op->get_dampening();
-  weight_decay_ = sgd_op->get_weight_decay();
-  nesterov_ = sgd_op->get_nesterov();
+  dampening_ = GetValue<float>(primitive_->GetAttr(ops::kDampening));
+  weight_decay_ = GetValue<float>(primitive_->GetAttr(ops::kWeightDecay));
+  nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kNesterov));
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
 }
 
-int SGDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SGDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

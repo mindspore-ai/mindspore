@@ -32,18 +32,14 @@ const uint32_t kInputNum = 1;
 const uint32_t kOutputNum = 1;
 }  // namespace
 
-bool HistogramCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool HistogramCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   x_type_ = inputs[kIndex0]->dtype_id();
-  auto op_prim = std::dynamic_pointer_cast<ops::Histogram>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  bins_ = op_prim->get_bins();
-  min_attr_ = op_prim->get_min();
-  max_attr_ = op_prim->get_max();
+  bins_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBins));
+  min_attr_ = GetValue<float>(primitive_->GetAttr(ops::kMin));
+  max_attr_ = GetValue<float>(primitive_->GetAttr(ops::kMax));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {

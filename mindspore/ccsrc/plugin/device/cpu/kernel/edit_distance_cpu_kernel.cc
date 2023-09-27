@@ -27,11 +27,8 @@ constexpr size_t kMaximumInputsNum = 6;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-bool EditDistanceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
+bool EditDistanceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -42,19 +39,16 @@ bool EditDistanceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-int EditDistanceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int EditDistanceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   for (size_t i = 0; i < kMaximumInputsNum; ++i) {
     shapes_.push_back(inputs[i]->GetShapeVector());
   }
   shapes_.push_back(outputs[0]->GetShapeVector());
-  auto kernel_ptr = std::make_shared<ops::EditDistance>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  normalize_ = kernel_ptr->normalize();
+  normalize_ = GetValue<bool>(primitive_->GetAttr("normalize"));
   return KRET_OK;
 }
 

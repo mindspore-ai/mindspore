@@ -30,11 +30,9 @@ constexpr size_t kShapeIndexW = 2;
 constexpr size_t kShapeIndexC = 3;
 }  // namespace
 
-bool FractionalAvgPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  overlapping_ = GetValue<bool>(base_operator->GetAttr("overlapping"));
+bool FractionalAvgPoolGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  overlapping_ = GetValue<bool>(primitive_->GetAttr("overlapping"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -45,11 +43,9 @@ bool FractionalAvgPoolGradCpuKernelMod::Init(const BaseOperatorPtr &base_operato
   return true;
 }
 
-int FractionalAvgPoolGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                              const std::vector<KernelTensorPtr> &inputs,
-                                              const std::vector<KernelTensorPtr> &outputs,
-                                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int FractionalAvgPoolGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                              const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

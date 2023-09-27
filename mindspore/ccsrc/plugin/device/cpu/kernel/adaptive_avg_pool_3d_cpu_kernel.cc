@@ -62,15 +62,9 @@ inline int64_t EndIndex(int64_t offset, int64_t out_size, int64_t in_size) {
 }
 }  // namespace
 
-bool AdaptiveAvgPool3DCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool3D>(base_operator);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  output_size_data_ = kernel_ptr->get_output_size();
+bool AdaptiveAvgPool3DCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  output_size_data_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kOutputSize));
   if (output_size_data_.size() != kOuputSizeLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'output_size' should be 3, but got "
                       << output_size_data_.size();
@@ -86,11 +80,9 @@ bool AdaptiveAvgPool3DCPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int AdaptiveAvgPool3DCPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int AdaptiveAvgPool3DCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_dim_sizes_ = inputs.at(kIndex0)->GetDeviceShapeVector();

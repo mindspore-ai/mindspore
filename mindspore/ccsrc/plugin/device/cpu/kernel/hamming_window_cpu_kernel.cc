@@ -31,17 +31,14 @@ const size_t kHammingWindowOutputNum = 1;
 const size_t kHammingWindowInputNum = 1;
 }  // namespace
 
-bool HammingWindowCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool HammingWindowCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHammingWindowInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHammingWindowOutputNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::HammingWindow>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  periodic_ = op_prim->get_periodic();
-  alpha_ = op_prim->get_alpha();
-  beta_ = op_prim->get_beta();
+  periodic_ = GetValue<bool>(primitive_->GetAttr(ops::kPeriodic));
+
+  alpha_ = GetValue<float>(primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<float>(primitive_->GetAttr(ops::kBeta));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

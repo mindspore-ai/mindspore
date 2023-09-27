@@ -33,7 +33,7 @@ constexpr char kKernelName[] = "SparseApplyRMSProp";
 using KernelRunFunc = SparseApplyRMSPropCpuKernelMod::KernelRunFunc;
 }  // namespace
 
-bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTensorPtr> &inputs) {
+bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTensor *> &inputs) {
   var_shape_ = inputs.at(kIndex0)->GetShapeVector();
   if (var_shape_.empty()) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
@@ -99,7 +99,7 @@ bool SparseApplyRMSPropCpuKernelMod::ResizedInputSize(const std::vector<KernelTe
   return true;
 }
 
-bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensorPtr> &outputs) {
+bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelTensor *> &outputs) {
   auto output_var_shape = outputs[kIndex0]->GetShapeVector();
   if (!IsSameShape(var_shape_, output_var_shape)) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
@@ -135,21 +135,13 @@ void SparseApplyRMSPropCpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+int SparseApplyRMSPropCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   ResetResource();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyRMSPropInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyRMSPropOutputsNum, kKernelName);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
-    return KRET_RESIZE_FAILED;
   }
   if (!ResizedInputSize(inputs)) {
     return KRET_RESIZE_FAILED;
@@ -160,35 +152,29 @@ int SparseApplyRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return KRET_OK;
 }
 
-bool SparseApplyRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
-    return false;
-  }
-  rho_ = kernel_ptr->get_rho();
+bool SparseApplyRMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  rho_ = GetValue<float>(primitive_->GetAttr(ops::kRho));
   if (rho_ > 1 || rho_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument rho should be between 0 and 1, but got the value of rho: " << rho_;
     return false;
   }
-  momentum_ = kernel_ptr->get_momentum();
+  momentum_ = GetValue<float>(primitive_->GetAttr(ops::kMomentum));
   if (momentum_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument momentum should be no less than 0, but got the value of momentum: "
                              << momentum_;
     return false;
   }
-  epsilon_ = kernel_ptr->get_epsilon();
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
   if (epsilon_ <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << kKernelName
                              << "', the argument momentum should be greater than 0, but got the value of epsilon: "
                              << epsilon_;
     return false;
   }
-  return MatchKernelFunc(base_operator, inputs, outputs);
+  return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 template <typename T, typename I>

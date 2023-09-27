@@ -44,11 +44,8 @@ using complex128 = std::complex<double>;
 constexpr size_t kMaxTransposeSerialSize = 50331648;
 }  // namespace
 
-bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool ConjugateTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs.at(kIndex0)->dtype_id();
   perm_type_ = inputs.at(kIndex1)->dtype_id();
   launch_map_[kNumberTypeBool] = &ConjugateTransposeCpuKernelMod::LaunchKernel<bool>;
@@ -74,11 +71,9 @@ bool ConjugateTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int ConjugateTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ConjugateTransposeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

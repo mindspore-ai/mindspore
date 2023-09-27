@@ -32,11 +32,8 @@ constexpr size_t kSparseSegmentSqrtNWithNumSegmentsOutputsNum = 1;
     .AddOutputAttr(kNumberType##t5)
 }  // namespace
 
-bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                         const std::vector<KernelTensorPtr> &inputs,
-                                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSegmentSqrtNWithNumSegmentsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSegmentSqrtNWithNumSegmentsOutputsNum, kernel_name_);
   xdtype_ = inputs.at(kIndex0)->dtype_id();
@@ -44,14 +41,11 @@ bool SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Init(const BaseOperatorPtr &
   return true;
 }
 
-int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                          const std::vector<KernelTensorPtr> &inputs,
-                                                          const std::vector<KernelTensorPtr> &outputs,
-                                                          const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSegmentSqrtNWithNumSegmentsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(base_operator);
   x_shape_ = inputs.at(kIndex0)->GetDeviceShapeVector();
   indices_shape_ = inputs.at(kIndex1)->GetDeviceShapeVector();
   segment_ids_shape_ = inputs.at(kIndex2)->GetDeviceShapeVector();

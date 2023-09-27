@@ -39,15 +39,10 @@ constexpr size_t kIndexLr = 6;
 constexpr size_t kIndexGrad = 7;
 }  // namespace
 
-bool ApplyAdamWithAmsgradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  kernel_name_ = kernel_ptr->name();
+bool ApplyAdamWithAmsgradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = base_operator->get_batch_rank();
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
 
   if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
@@ -63,19 +58,17 @@ bool ApplyAdamWithAmsgradCpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
 
-  beta1_ = kernel_ptr->get_beta1();
-  beta2_ = kernel_ptr->get_beta2();
-  epsilon_ = kernel_ptr->get_epsilon();
+  beta1_ = GetValue<float>(primitive_->GetAttr(ops::kBeta1));
+  beta2_ = GetValue<float>(primitive_->GetAttr(ops::kBeta2));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
 
   return true;
 }
 
-int ApplyAdamWithAmsgradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ApplyAdamWithAmsgradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 

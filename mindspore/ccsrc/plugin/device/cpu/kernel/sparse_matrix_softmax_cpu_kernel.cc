@@ -38,10 +38,8 @@ constexpr size_t logits_row_pointers = 3;
 constexpr size_t logits_values = 4;
 constexpr char kKernelName[] = "sparse_matrix_softmax";
 }  // namespace
-bool SparseMatrixSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseMatrixSoftmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[logits_values]->dtype_id();
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
@@ -52,11 +50,9 @@ bool SparseMatrixSoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   }
   return true;
 }
-int SparseMatrixSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs,
-                                            const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+int SparseMatrixSoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
   }

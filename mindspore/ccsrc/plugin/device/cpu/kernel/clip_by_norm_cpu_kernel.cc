@@ -44,11 +44,9 @@ size_t GetDeviceSize(const std::vector<KernelTensor *> &addr_list, size_t index)
 }
 }  // namespace
 
-bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
+bool ClipByNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   // Get C++ primitive and kernel_name
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
   // Check whether current input and output data types are valid.
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (!MatchKernelAttr(kernel_attr, GetOpSupport()).first) {
@@ -59,10 +57,9 @@ bool ClipByNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-int ClipByNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int ClipByNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   ResetResource();
@@ -70,9 +67,7 @@ int ClipByNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   InitIOShape(inputs, outputs);
   // Init the `l2_norm` reduce shape according to `axis`
   l2_norm_output_shape_ = x_shape_;
-  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(base_operator);
-  MS_EXCEPTION_IF_NULL(prim);
-  InitAxisAndEpsilon(prim);
+  InitAxisAndEpsilon();
   (void)std::for_each(axis_.begin(), axis_.end(), [this](const size_t &idx) { l2_norm_output_shape_[idx] = 1; });
   InitSizeLists();
   return KRET_OK;
@@ -117,8 +112,8 @@ void ClipByNormCpuKernelMod::ResetResource() {
   workspace_size_list_.clear();
 }
 
-void ClipByNormCpuKernelMod::InitIOShape(const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
+void ClipByNormCpuKernelMod::InitIOShape(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num_expected = 2;
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == input_num_expected, "The size of input tensors should be 2.");
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The size of output tensors should be 1.");
@@ -144,17 +139,16 @@ void ClipByNormCpuKernelMod::InitIOShape(const std::vector<KernelTensorPtr> &inp
   MS_EXCEPTION_IF_CHECK_FAIL(output_shape_ == x_shape_, "Output shape should be same with input x shape.");
 }
 
-void ClipByNormCpuKernelMod::InitAxisAndEpsilon(const ops::ClipByNormPtr &prim) {
-  MS_EXCEPTION_IF_NULL(prim);
+void ClipByNormCpuKernelMod::InitAxisAndEpsilon() {
   epsilon_ = 0.000001f;
   // Get axis vector from attribute
-  auto axis_value = prim->GetAttr(kAttrAxis);
+  auto axis_value = primitive_->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
   std::vector<int64_t> temp_axis;
-  if (axis_value->isa<api::ValueSequence>()) {
-    temp_axis = api::GetValue<std::vector<int64_t>>(axis_value);
-  } else if (axis_value->isa<api::Int64Imm>()) {
-    (void)temp_axis.emplace_back(api::GetValue<int64_t>(axis_value));
+  if (axis_value->isa<ValueSequence>()) {
+    temp_axis = GetValue<std::vector<int64_t>>(axis_value);
+  } else if (axis_value->isa<Int64Imm>()) {
+    (void)temp_axis.emplace_back(GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For `" << kernel_name_ << "`, the type of attribute `axis` is invalid.";
   }

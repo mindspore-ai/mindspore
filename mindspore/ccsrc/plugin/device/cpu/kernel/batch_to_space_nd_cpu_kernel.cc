@@ -115,36 +115,28 @@ bool BatchToSpaceNDCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTe
   return true;
 }
 
-bool BatchToSpaceNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchToSpaceND>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast BatchToSpaceND ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
-
+bool BatchToSpaceNDCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   if (inputs.size() != kBatchToSpaceNDInputsNum || outputs.size() != kBatchToSpaceNDOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kBatchToSpaceNDInputsNum << " and "
                   << kBatchToSpaceNDOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  block_shape_ = kernel_ptr->get_block_shape();
-  crops_ = kernel_ptr->get_crops();
+  block_shape_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kBlockShape));
+  crops_ = GetValue<std::vector<std::vector<int64_t>>>(primitive_->GetAttr(ops::kCrops));
   block_rank_ = block_shape_.size();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
   return true;
 }
 
-int BatchToSpaceNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto res = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); res != KRET_OK) {
+int BatchToSpaceNDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto res = KernelMod::Resize(inputs, outputs); res != KRET_OK) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return res;
   }

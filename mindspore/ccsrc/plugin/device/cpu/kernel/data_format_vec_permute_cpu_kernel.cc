@@ -27,10 +27,8 @@ constexpr size_t kDataFormatVecPermuteInputsNum = 1;
 constexpr size_t kDataFormatVecPermuteOutputsNum = 1;
 }  // namespace
 
-bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool DataFormatVecPermuteCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,19 +36,16 @@ bool DataFormatVecPermuteCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   }
   kernel_func_ = func_list_[index].second;
 
-  auto kernel_ptr = std::make_shared<ops::DataFormatVecPermute>(base_operator->GetPrim());
-  src_format_ = kernel_ptr->get_src_format();
-  dst_format_ = kernel_ptr->get_dst_format();
+  src_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kSrcFormat));
+  dst_format_ = GetValue<std::string>(primitive_->GetAttr(ops::kDstFormat));
   input_type_ = inputs[0]->dtype_id();
   output_type_ = outputs[0]->dtype_id();
   return true;
 }
 
-int DataFormatVecPermuteCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int DataFormatVecPermuteCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

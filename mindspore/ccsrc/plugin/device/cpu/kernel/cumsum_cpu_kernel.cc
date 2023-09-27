@@ -115,9 +115,7 @@ inline void CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1, si
 }
 }  // namespace
 
-bool CumSumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool CumSumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
   auto input_num = inputs.size();
   if (input_num != kCumSumInputsNum) {
@@ -141,19 +139,15 @@ bool CumSumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-int CumSumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int CumSumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs.at(kIndex0)->GetShapeVector();
   shape_.clear();
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_), LongToSize);
-  auto kernel_ptr = std::make_shared<ops::CumSum>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  exclusive_ = kernel_ptr->get_exclusive();
-  reverse_ = kernel_ptr->get_reverse();
+  exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
+  reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
   workspace_size_list_.push_back(input_size_list_.at(kIndex0));
   return KRET_OK;
 }

@@ -30,14 +30,9 @@ namespace kernel {
 const size_t kMyAddInputsNum = 2;
 const size_t kMyAddOutputsNum = 1;
 
-bool KLDivLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::KLDivLoss>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(EXCEPTION) << "cast KLDivLoss ops failed!";
-  }
-  kernel_name_ = kernel_ptr->name();
-  reductionMode_ = kernel_ptr->get_reduction();
+bool KLDivLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  reductionMode_ = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMyAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMyAddOutputsNum, kernel_name_);
@@ -59,11 +54,10 @@ bool KLDivLossCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   return kernel_func_(this, inputs, workspace, outputs);
 }
 
-int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &onHost) {
+int KLDivLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, onHost);
+  ret = NativeCpuKernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;

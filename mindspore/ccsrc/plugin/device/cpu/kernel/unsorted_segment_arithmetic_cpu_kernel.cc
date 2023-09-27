@@ -123,8 +123,8 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
   return true;
 }
 
-bool UnsortedSegmentArithmeticCpuKernelMod::Init(const std::vector<kernel::KernelTensor *> &inputs,
-                                                 const std::vector<kernel::KernelTensor *> &outputs) {
+bool UnsortedSegmentArithmeticCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &outputs) {
   auto batch_rank_ptr = primitive_->GetAttr(ops::kBatchRank);
   if (batch_rank_ptr != nullptr) {
     batch_rank_ = GetValue<int64_t>(batch_rank_ptr);
@@ -136,8 +136,8 @@ bool UnsortedSegmentArithmeticCpuKernelMod::Init(const std::vector<kernel::Kerne
   return true;
 }
 
-int UnsortedSegmentArithmeticCpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs,
-                                                  const std::vector<kernel::KernelTensor *> &outputs) {
+int UnsortedSegmentArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   if (auto ret = NativeCpuKernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }

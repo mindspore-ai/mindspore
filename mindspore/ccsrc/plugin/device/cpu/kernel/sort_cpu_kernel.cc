@@ -26,14 +26,11 @@ namespace kernel {
 constexpr int kSortInputsNum = 1;
 constexpr int kSortOutputsNum = 2;
 
-bool SortCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+bool SortCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSortInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSortOutputsNum, kernel_name_);
 
-  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
-  descending_ = static_cast<bool>(kernel_ptr->get_descending());
+  descending_ = GetValue<bool>(primitive_->GetAttr(ops::kDescending));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -104,16 +101,13 @@ bool SortCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-int SortCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int SortCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[0]->GetShapeVector();
-  auto kernel_ptr = std::make_shared<ops::Sort>(base_operator->GetPrim());
-  auto axis = static_cast<int64_t>(kernel_ptr->get_axis());
+  auto axis = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_t >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "

@@ -24,10 +24,8 @@ constexpr size_t kEqualCountInputsNum = 2;
 constexpr size_t kEqualCountOutputsNum = 1;
 }  // namespace
 
-bool EqualCountCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-
+bool EqualCountCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   return true;
 }
 

@@ -25,20 +25,17 @@ const size_t kInputRank = 2;
 const size_t kLastDim = 4;
 }  // namespace
 
-bool BoundingBoxDecodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool BoundingBoxDecodeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 2;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
 
   const size_t coordinate_size = 4;
-  auto means = base_operator->GetAttr("means");
-  if (means->isa<api::ValueSequence>()) {
-    means_ = api::GetValue<std::vector<float>>(means);
-  } else if (means->isa<api::FloatImm>()) {
-    float mean = api::GetValue<float>(means);
+  auto means = primitive_->GetAttr("means");
+  if (means->isa<ValueSequence>()) {
+    means_ = GetValue<std::vector<float>>(means);
+  } else if (means->isa<FloatImm>()) {
+    float mean = GetValue<float>(means);
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)means_.emplace_back(mean);
     }
@@ -47,12 +44,20 @@ bool BoundingBoxDecodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                       << "', the input 'means' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
+<<<<<<< HEAD
   auto stds = base_operator->GetAttr("stds");
   MS_EXCEPTION_IF_NULL(stds);
   if (stds->isa<api::ValueSequence>()) {
     stds_ = api::GetValue<std::vector<float>>(stds);
   } else if (stds->isa<api::FloatImm>()) {
     float std = api::GetValue<float>(stds);
+=======
+  auto stds = primitive_->GetAttr("stds");
+  if (stds->isa<ValueSequence>()) {
+    stds_ = GetValue<std::vector<float>>(stds);
+  } else if (stds->isa<FloatImm>()) {
+    float std = GetValue<float>(stds);
+>>>>>>> modify common cpu kernelMod
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)stds_.emplace_back(std);
     }
@@ -68,12 +73,12 @@ bool BoundingBoxDecodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                       << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
 
-  auto max_shape = base_operator->GetAttr("max_shape");
-  std::vector<int64_t> max_shape_me = api::GetValue<std::vector<int64_t>>(max_shape);
+  auto max_shape = primitive_->GetAttr("max_shape");
+  std::vector<int64_t> max_shape_me = GetValue<std::vector<int64_t>>(max_shape);
   (void)std::transform(max_shape_me.begin(), max_shape_me.end(), std::back_inserter(max_shape_),
                        [](const int64_t &value) { return LongToInt(value); });
-  auto wh_ratio_clip = base_operator->GetAttr("wh_ratio_clip");
-  wh_ratio_clip_ = api::GetValue<float>(wh_ratio_clip);
+  auto wh_ratio_clip = primitive_->GetAttr("wh_ratio_clip");
+  wh_ratio_clip_ = GetValue<float>(wh_ratio_clip);
 
   if (max_shape_.size() < MIN_MAX_SHAPE_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -90,11 +95,9 @@ bool BoundingBoxDecodeCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-int BoundingBoxDecodeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int BoundingBoxDecodeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

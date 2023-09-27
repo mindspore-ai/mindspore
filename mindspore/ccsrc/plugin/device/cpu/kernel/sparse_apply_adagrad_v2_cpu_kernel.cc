@@ -45,10 +45,8 @@ void SparseApplyAdagradV2CpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(batch_size_ * indices_size_ * sizeof(T));
 }
 
-bool SparseApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
+bool SparseApplyAdagradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -58,11 +56,10 @@ bool SparseApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator
                   << ", but got " << inputs.size();
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::SparseApplyAdagradV2>(base_operator->GetPrim());
-  lr_ = kernel_ptr->get_lr();
-  epsilon_ = kernel_ptr->get_epsilon();
-  update_slots_ = kernel_ptr->get_update_slots();
-  batch_rank_ = base_operator->get_batch_rank();
+  lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;
@@ -71,7 +68,7 @@ bool SparseApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'epsilon' must be a positive scalar, but got " << epsilon_;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
   return true;
@@ -87,12 +84,10 @@ void SparseApplyAdagradV2CpuKernelMod::ResetResource() noexcept {
   var_outer_dim_size_ = 1;
 }
 
-int SparseApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+int SparseApplyAdagradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

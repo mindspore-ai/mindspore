@@ -39,17 +39,15 @@ constexpr size_t kOutIndicesIdx = 3;
 constexpr size_t kDx1Idx = 0;
 constexpr size_t kDx2Idx = 1;
 
-bool SparseAddGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAddGrad>(base_operator);
-  kernel_name_ = kernel_ptr->name();
+bool SparseAddGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", input should be dout, x1_indices, x2_indices and out_indices total "
                   << kInputNum << " tensors, but get " << input_num;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }
 
@@ -62,11 +60,10 @@ void SparseAddGradCpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-int SparseAddGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int SparseAddGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  auto ret = KernelMod::Resize(inputs, outputs);
   indices_column_ = inputs.at(1)->GetShapeVector()[1];
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     if (input_size_list_.size() != kInputNum) {

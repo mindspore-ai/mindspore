@@ -25,13 +25,8 @@ constexpr auto kSelfAdjopintEig = "SelfAdjopintEig";
 constexpr const size_t kInputsNum = 1;
 constexpr const size_t kOutputsNum = 2;
 
-bool SelfAdjointEigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-
+bool SelfAdjointEigCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -42,15 +37,14 @@ bool SelfAdjointEigCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   }
 
   dtype_ = inputs[kIndex0]->dtype_id();
-  compute_v_ = GetValue<bool>(prim->GetAttr("compute_v"));
+  compute_v_ = GetValue<bool>(primitive_->GetAttr("compute_v"));
 
   return true;
 }
 
-int SelfAdjointEigCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs,
-                                       const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SelfAdjointEigCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   input_shape_ = inputs[kIndex0]->GetShapeVector();

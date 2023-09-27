@@ -23,9 +23,8 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kMinIndiceRank = 2;
-bool ScatterUpdateArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                               const std::vector<KernelTensorPtr> &inputs,
-                                               const std::vector<KernelTensorPtr> &outputs) {
+bool ScatterUpdateArithmeticCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                               const std::vector<KernelTensor *> &outputs) {
   if (kernel_type_ != "ScatterNdUpdate" && kernel_type_ != "TensorScatterUpdate") {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', the current operator does not support this operation.";
   }
@@ -39,11 +38,9 @@ bool ScatterUpdateArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   return true;
 }
 
-int ScatterUpdateArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs,
-                                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int ScatterUpdateArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape = inputs[0]->GetShapeVector();

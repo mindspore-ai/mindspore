@@ -31,16 +31,10 @@ static constexpr int kNumber2 = 2;
 constexpr size_t kParallelDataNums = 1 * 1024;
 }  // namespace
 
-bool MatrixInverseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixInverse>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast " << kernel_name_ << "  ops failed!";
-    return false;
-  }
+bool MatrixInverseCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[kIndex0]->dtype_id();
-  adjoint_ = kernel_ptr->get_adjoint();
+  adjoint_ = GetValue<bool>(primitive_->GetAttr(ops::kAdjoint));
   return true;
 }
 
@@ -61,12 +55,11 @@ bool MatrixInverseCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *>
   return true;
 }
 
-int MatrixInverseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int MatrixInverseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   // Judge whether the input shape matches
