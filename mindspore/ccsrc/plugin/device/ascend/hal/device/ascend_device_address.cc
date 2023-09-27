@@ -196,6 +196,17 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "SyncStream Finish!";
 }
 
+bool AscendDeviceAddress::SyncStream(size_t stream_id) const {
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
+  BindDevice();
+  if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
+    MS_LOG(ERROR) << "Sync default stream failed.";
+    return false;
+  }
+  return true;
+}
+
 bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, size_t size, bool async,
                                            size_t stream_id) const {
   return CopyBetweenHostDevice(dst, src, size, async, stream_id, false);
@@ -227,7 +238,7 @@ bool AscendDeviceAddress::DeviceToFileDirectly(void *ptr, size_t size, const std
     size_t write_size = (i == count - 1) ? (size % buf_size) : buf_size;
     DeviceToDevice(dargs, static_cast<uint8_t *>(ptr) + ptr_offset, write_size, stream_id);
     size_t w_size = write(nvme_fd, buf, write_size);
-    if (w_size != write_size) {
+    if (w_size != write_size || !SyncStream(stream_id)) {
       MS_LOG(ERROR) << "Write file failed, file name:" << file_name << ", size:" << size;
       close(nvme_fd);
       return false;
@@ -260,7 +271,7 @@ bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std
     size_t ptr_offset = i * buf_size;
     size_t read_size = (i == count - 1) ? (size % buf_size) : buf_size;
     size_t r_size = read(nvme_fd, buf, read_size);
-    if (r_size != read_size) {
+    if (r_size != read_size || !SyncStream(stream_id)) {
       MS_LOG(ERROR) << "Read file failed, file name:" << file_name << ", size:" << size;
       close(nvme_fd);
       return false;
@@ -268,11 +279,6 @@ bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std
     DeviceToDevice(static_cast<uint8_t *>(ptr) + ptr_offset, dargs, read_size, stream_id);
   }
   close(nvme_fd);
-  auto res = unlink(file_name.c_str());
-  if (res != 0) {
-    MS_LOG(ERROR) << "Delete file failed, file name:" << file_name;
-  }
-  storage_info_.file_name_ = "";
   return true;
 #else
   return false;

@@ -158,10 +158,17 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
     if (ptr_ == nullptr) {
       ptr_ = swap_manager->AllocDeviceMemory(size_);
     }
+    MS_EXCEPTION_IF_NULL(ptr_);
     if (FileToDeviceDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
-      storage_info_.host_ptr_ = nullptr;
+      if (storage_info_.file_name_mutable_ && !storage_info_.file_name.empty()) {
+        (void)swap_manager->DeleteFile(storage_info_.file_name);
+        storage_info_.file_name = "";
+      }
+      if (storage_info_.host_ptr_mutable_) {
+        swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+        storage_info_.host_ptr_ = nullptr;
+      }
       status_ = DeviceAddressStatus::kInDevice;
-      MS_LOG(INFO) << "Copy data from file to device success by dma. file name:" << storage_info_.file_name_;
       return true;
     }
 #endif
@@ -205,13 +212,19 @@ bool LoadableDeviceAddress::MoveToFile(bool async, size_t stream_id) const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (status_ == DeviceAddressStatus::kInDevice) {
 #if defined(RT_MEMORY_P2PDMA)
-    storage_info_.file_name_ = GetSwapFileName();
+    if (storage_info_.file_name_.empty() || storage_info_.file_name_mutable_) {
+      storage_info_.file_name_ = GetSwapFileName();
+    }
     if (DeviceToFileDirectly(ptr_, size_, storage_info_.file_name_, stream_id)) {
-      storage_info_.host_ptr_ = nullptr;
       status_ = DeviceAddressStatus::kInFile;
-      swap_manager->FreeDeviceMemory(ptr_);
-      ptr_ = nullptr;
-      MS_LOG(INFO) << "Copy data from device to file success by dma. file name:" << storage_info_.file_name_;
+      if (ptr_ != nullptr) {
+        swap_manager->FreeDeviceMemory(ptr_);
+        ptr_ = nullptr;
+      }
+      if (storage_info_.host_ptr_ != nullptr) {
+        swap_manager->FreeHostMemory(storage_info_.host_ptr_);
+        storage_info_.host_ptr_ = nullptr;
+      }
       return true;
     }
 #endif

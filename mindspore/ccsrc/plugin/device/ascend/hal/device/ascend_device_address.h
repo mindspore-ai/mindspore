@@ -95,6 +95,7 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
                                                         mindspore::TypeId type, void *host_ptr) const;
   bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const;
   void SyncStream() const;
+  bool SyncStream(size_t stream_id) const;
   ShapeVector GetDeviceShape(ShapeVector *host_shape) const;
   std::shared_ptr<LaunchTransData> CreateLaunchTransData(const ShapeVector &host_shape, const std::string &ori_format,
                                                          const std::string &dst_format) const;
