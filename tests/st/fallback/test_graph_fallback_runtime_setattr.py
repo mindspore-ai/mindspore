@@ -926,3 +926,30 @@ def test_getattr_assign(class_type_choice):
 
     assert res1 == 2
     assert res2 == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_in_loop():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        for _ in range(5):
+            obj.x = obj.x + 1
+        return obj.x
+
+    obj = Inner()
+    res = foo()
+    assert res == 6

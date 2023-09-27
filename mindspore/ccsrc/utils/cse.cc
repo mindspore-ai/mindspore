@@ -236,6 +236,9 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) {
     if (IsPrimitiveCNode(c_main, prim::kPrimJ)) {
       return false;
     }
+    if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+      return false;
+    }
     const auto &inputs1 = c_main->inputs();
     const auto &inputs2 = c_node->inputs();
     if (inputs1.size() != inputs2.size()) {
