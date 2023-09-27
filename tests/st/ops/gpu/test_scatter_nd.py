@@ -18,6 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common.api import _pynative_executor
 
 
 class Net(nn.Cell):
@@ -87,14 +88,19 @@ def scatternd_negative(nptype):
     scatternd_net(arr_indices, arr_update, shape, expect)
 
 def scatternd_indices_out_of_range(nptype):
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
     arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 2]]).astype(np.int16)
     arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
     shape = (2, 2)
     scatternd = Net(shape)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     with pytest.raises(RuntimeError):
         _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+        _pynative_executor.sync()
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
