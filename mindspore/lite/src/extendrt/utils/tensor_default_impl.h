@@ -120,8 +120,6 @@ class TensorDefaultImpl : public MutableTensorImpl {
   void *GetDeviceData() override { return device_data_; }
   bool IsConst() const override { return is_const_; }
   void SetIsConst(bool is_const) { is_const_ = is_const; }
-  bool IsAclHost() const { return is_acl_host_; }
-  void SetAclHost(bool is_acl_host) { is_acl_host_ = is_acl_host; }
 
   bool IsDevice() const override { return device_data_ != nullptr; }
 
@@ -130,7 +128,27 @@ class TensorDefaultImpl : public MutableTensorImpl {
     return std::shared_ptr<const void>(data_, [](const void *) {});
   }
 
+  void SetAclHostData(void *data) {
+    if (own_data_ && data_ != nullptr && data_ != buffer_.Data()) {
+      free(const_cast<void *>(data_));
+    }
+    if (is_acl_host_ && data_ != nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().FreeHost(const_cast<void *>(data_));
+      is_acl_host_ = false;
+    }
+    data_ = data;
+    is_acl_host_ = true;
+    own_data_ = false;
+  }
+
   void SetData(void *data, bool own_data) override {
+    if (own_data_ && data_ != nullptr && data_ != buffer_.Data()) {
+      free(const_cast<void *>(data_));
+    }
+    if (is_acl_host_ && data_ != nullptr) {
+      kernel::AscendAllocatorPlugin::GetInstance().FreeHost(const_cast<void *>(data_));
+      is_acl_host_ = false;
+    }
     data_ = data;
     own_data_ = own_data;
   }
