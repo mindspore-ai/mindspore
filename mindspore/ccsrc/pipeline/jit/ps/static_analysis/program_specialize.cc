@@ -848,8 +848,8 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
     }
   }
 
-  auto name = sequence_value->name();
-  auto keys = sequence_value->key();
+  const auto &name = sequence_value->name();
+  const auto &keys = sequence_value->key();
   abstract::AbstractBasePtrList key_abs;
   (void)std::transform(keys.begin(), keys.end(), std::back_inserter(key_abs), [](const ValuePtr &key) {
     MS_EXCEPTION_IF_NULL(key);
