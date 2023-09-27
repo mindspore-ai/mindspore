@@ -24,6 +24,9 @@ GraphRuntimeRegistry &GraphRuntimeRegistry::GetInstance() {
 }
 
 void GraphRuntimeRegistry::RegRuntime(const mindspore::GraphRuntimeType &type, const GraphRuntimeRegFunc &creator) {
+  if (creator == nullptr) {
+    return;
+  }
   graph_runtime_map_[type] = creator;
 }
 

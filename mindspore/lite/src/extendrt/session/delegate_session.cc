@@ -362,6 +362,9 @@ MutableTensorImplPtr GraphSinkSession::GetInputByTensorName(uint32_t graph_id, c
 }
 static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_ptr<Context> &ctx,
                                                             const ConfigInfos &config_infos) {
+  if (ctx == nullptr) {
+    return nullptr;
+  }
   auto &device_contexts = ctx->MutableDeviceInfo();
   if (device_contexts.empty()) {
     return nullptr;

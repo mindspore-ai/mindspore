@@ -26,6 +26,7 @@ namespace mindspore {
 namespace numa {
 namespace {
 static constexpr auto kNodeBase = "/sys/devices/system/node/node";
+constexpr int kBase = 10;
 }  // namespace
 
 NUMAAdapter::NUMAAdapter() {
@@ -191,8 +192,8 @@ std::vector<int> NUMAAdapter::GetCPUList(int node_id) {
     if (cpu_range.size() != kMaxRangeNum) {
       continue;
     }
-    int begin = std::stoi(cpu_range[0]);
-    int end = std::stoi(cpu_range[1]);
+    int begin = static_cast<int>(strtol(cpu_range[0].c_str(), nullptr, kBase));
+    int end = static_cast<int>(strtol(cpu_range[1].c_str(), nullptr, kBase));
     for (int j = begin; j <= end; ++j) {
       cpu_list.emplace_back(j);
     }

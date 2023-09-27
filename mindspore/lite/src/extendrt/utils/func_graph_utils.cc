@@ -360,6 +360,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> FuncGraphUtils::Transfo
   FuncGraphPtr fg = nullptr;
   {
     // limit the lifetime of guard.
+    MS_EXCEPTION_IF_NULL(lst[0]);
     MS_EXCEPTION_IF_NULL(lst[0]->cast<CNodePtr>());
     MS_EXCEPTION_IF_NULL(lst[0]->cast<CNodePtr>()->func_graph());
     TraceGuard guard(std::make_shared<TraceSegmentTransform>(lst[0]->cast<CNodePtr>()->func_graph()->debug_info()));

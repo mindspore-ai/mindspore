@@ -440,6 +440,10 @@ bool SlicePreposePass::SiblingsAreSameSlice(const NodeUsedListPtr &output_node_l
   MS_CHECK_TRUE_MSG(slices.size() >= output_node_list->size(), false, "slices.size() is wrong");
   for (size_t i = 1; i < output_node_list->size(); ++i) {
     auto slice = GetSlice(slices[i]);
+    if (slice == nullptr) {
+      MS_LOG(WARNING) << "slice is nullptr!";
+      continue;
+    }
     auto axes = slice->get_axes();
     auto begin = GetSliceBeginAndSize(slices[i], SliceBeginIndex);
     auto size = GetSliceBeginAndSize(slices[i], SliceSizeIndex);
