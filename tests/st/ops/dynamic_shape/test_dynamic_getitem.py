@@ -520,6 +520,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
             x = ops.reduce_min(x, axis)
             x0 = x[Tensor(np.ones((25), int)), :,
                    Tensor(np.ones((5, 5), bool))]
+            x0 = x0[x0.min(), 0:1]
             return x0
 
     class NumpyNet():
@@ -527,6 +528,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
         def __call__(cls, x, axis):
             x = x.min(axis=axis[0])
             x0 = x[np.ones((25), int), :, np.ones((5, 5), bool)]
+            x0 = x0[x0.min(), 0:1]
             return x0
 
     net_ms = Net()
