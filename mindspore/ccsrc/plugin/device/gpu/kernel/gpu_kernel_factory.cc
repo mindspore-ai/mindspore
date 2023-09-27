@@ -189,19 +189,41 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
       continue;
     }
     bool flag = true;
-    auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
+    auto cur_kernel_attr = (iter->second)[attr_index].first;
+    auto attr_size = cur_kernel_attr.GetInputSize();
+    auto input_size = kernel_info->GetInputNum();
     if (kernel_info->GetInputNum() > 0) {
       MS_EXCEPTION_IF_ZERO("attr size", attr_size);
     }
     // data type matching check of all input parameters of kernel
-    for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      NativeGpuKernelModFactory::CheckSM(kernel_info, input_index);
-      if (kernel_info->GetInputDeviceType(input_index) !=
-          (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).dtype) {
+    size_t cur_all_same_input_num = cur_kernel_attr.GetAllSameInputNum();  // default 0; else >=1 when allsame=true
+    size_t cur_standalone_input_num = input_size - cur_all_same_input_num;
+    size_t each_attr_input_num =
+      (input_size - cur_standalone_input_num) / (cur_all_same_input_num == 0 ? 1 : cur_all_same_input_num);
+    // deal with the allsame inputs
+    for (size_t i = 0; i < cur_all_same_input_num; ++i) {
+      NativeGpuKernelModFactory::CheckSM(kernel_info, i * each_attr_input_num);  // check each allsame input[0]
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+        auto start = j + i * each_attr_input_num;
+        if (kernel_info->GetInputDeviceType(start) != dtype) {
+          flag = false;
+          break;
+        }
+      }
+    }
+    // deal with the rest except allsame inputs
+    for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
+      auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+      auto start = each_attr_input_num * cur_all_same_input_num + i;
+      MS_LOG(WARNING) << "Input dtype " << start << ", " << kernel_info->GetInputDeviceType(start) << ", attr "
+                      << dtype;
+      if (kernel_info->GetInputDeviceType(start) != dtype) {
         flag = false;
         break;
       }
     }
+
     if (!flag) {
       continue;
     }
