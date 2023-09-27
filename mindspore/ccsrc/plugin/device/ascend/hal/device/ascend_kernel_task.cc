@@ -268,8 +268,6 @@ bool LaunchAsyncCopy(const AddressAndStorageInfoPtr &src_addr_info, const Addres
                      const size_t &copy_size, const device::DeviceContext *device_context, void *stream_ptr) {
   MS_LOG(DEBUG) << "Start";
   MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
   MS_EXCEPTION_IF_NULL(src_addr_info);
   MS_EXCEPTION_IF_NULL(dst_addr_info);
   auto src_addr = MallocMemoryForDeviceAddress(src_addr_info->addr, device_context);
@@ -525,6 +523,8 @@ void RefreshFormat(const DeviceAddressPtr &output_address) {
 bool AscendContiguousKernelTask::RunWithRet() {
   auto device_context = context_->device_context();
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
   auto input_addr_info =
     std::make_shared<AddressAndStorageInfo>(context_->GetInputAddr(0), context_->GetInputStorage(0));
@@ -593,6 +593,8 @@ bool AscendCopyWithSliceKernelTask::RunWithRet() {
   MS_LOG(DEBUG) << "Start";
   auto device_context = context_->device_context();
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
   auto dst_addr_info = std::make_shared<AddressAndStorageInfo>(context_->GetInputAddr(0), context_->GetInputStorage(0));
   auto src_addr_info = std::make_shared<AddressAndStorageInfo>(context_->GetInputAddr(1), context_->GetInputStorage(1));
