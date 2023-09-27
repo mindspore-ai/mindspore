@@ -310,7 +310,8 @@ def _log(x, attrs=None):
     if base <= 0 and not math.isclose(base, -1.0, rel_tol=1e-8, abs_tol=0.0):
         raise ValueError("base must be strictly positive or -1, but got {}".format(base))
     from impl.log import log_compute
-    return log_compute(x, None, base, scale, shift, kernel_name=attrs["fusion_op_name"])
+    outputDesc = {"dtype": x.dtype, "shape": x.shape}
+    return log_compute(x, outputDesc, base, scale, shift, kernel_name=attrs["fusion_op_name"])
 
 
 @reg_op("Maximum", pattern=OpPattern.ELEMWISE)
@@ -349,7 +350,8 @@ def _mul(x0, x1, attrs=None):
         return tbe.dsl.vmuls(x1, x0)
     x0, x1 = _broadcast(x0, x1)
     from impl.mul import mul_compute
-    return mul_compute(x0, x1, None, kernel_name=attrs["fusion_op_name"])
+    outputDesc = {"dtype": x0.dtype, "shape": x0.shape}
+    return mul_compute(x0, x1, outputDesc, kernel_name=attrs["fusion_op_name"])
 
 
 @reg_op("Neg", pattern=OpPattern.ELEMWISE)
