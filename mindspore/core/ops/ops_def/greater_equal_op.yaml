@@ -1,0 +1,13 @@
+#operator greater_equal
+greater_equal:
+    args:
+        x:
+            dtype: tensor
+            type_cast: number
+        y:
+            dtype: tensor
+            type_cast: number
+    returns:
+        output: 
+            dtype: tensor
+            type_cast: bool

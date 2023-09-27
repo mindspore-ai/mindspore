@@ -41,8 +41,6 @@ GVAR_DEF(PrimitivePtr, kPrimBitOr, std::make_shared<Primitive>("bit_or"));
 GVAR_DEF(PrimitivePtr, kPrimBitXor, std::make_shared<Primitive>("bit_xor"));
 GVAR_DEF(PrimitivePtr, kPrimBitLeftShift, std::make_shared<Primitive>("bit_left_shift"));
 GVAR_DEF(PrimitivePtr, kPrimBitRightShift, std::make_shared<Primitive>("bit_right_shift"));
-GVAR_DEF(PrimitivePtr, kPrimGreater, std::make_shared<Primitive>("Greater"));
-GVAR_DEF(PrimitivePtr, kPrimGreaterEqual, std::make_shared<Primitive>("GreaterEqual"));
 GVAR_DEF(PrimitivePtr, kPrimLess, std::make_shared<Primitive>("Less"));
 GVAR_DEF(PrimitivePtr, kPrimLessEqual, std::make_shared<Primitive>("LessEqual"));
 GVAR_DEF(PrimitivePtr, kPrimEqualCount, std::make_shared<Primitive>("EqualCount"));
