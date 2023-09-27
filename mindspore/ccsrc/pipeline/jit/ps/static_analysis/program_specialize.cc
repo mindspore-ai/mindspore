@@ -637,6 +637,25 @@ void FuncGraphSpecializer::SecondPass() {
 }
 
 namespace {
+
+void UpdateForEmptySequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node,
+                                const AbstractSequencePtr &old_sequence_abs) {
+  if (!IsValueNode<ValueTuple>(new_node) && !IsValueNode<ValueList>(new_node)) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(old_sequence_abs);
+  auto sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_node));
+  old_sequence_abs->set_sequence_nodes(sequence_nodes);
+  auto flags = GetSequenceNodeElementsUseFlags(old_node);
+  if (flags != nullptr) {
+    SetSequenceNodeElementsUseFlags(new_node, flags);
+  } else {
+    SetSequenceNodeElementsUseFlags(new_node,
+                                    std::make_shared<std::vector<bool>>(old_sequence_abs->elements().size(), true));
+  }
+}
+
 // Update elements use flags for MakeTuple/tuple node,
 // and update the node's AbstractSequence 'sequence_nodes' info.
 void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, const AbstractBasePtr &old_abs) {
@@ -644,10 +663,16 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     return;
   }
   MS_EXCEPTION_IF_NULL(old_node);
-  auto old_sequence_abs = dyn_cast_ptr<AbstractSequence>(old_abs);
-  if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes() == nullptr ||
-      old_sequence_abs->sequence_nodes()->empty()) {
+  auto old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
+  if (old_sequence_abs == nullptr) {
+    MS_LOG(DEBUG) << "The abstract is not AbstractSequence, " << old_node->DebugString() << " --> "
+                  << new_node->DebugString();
+    return;
+  }
+  if (old_sequence_abs->sequence_nodes() == nullptr || old_sequence_abs->sequence_nodes()->empty()) {
     MS_LOG(DEBUG) << "No sequence node in old abs, " << old_node->DebugString() << " --> " << new_node->DebugString();
+    // The abstract of old_node may have not sequence_nodes when it is a parameter or tuple output cnode.
+    UpdateForEmptySequenceNode(new_node, old_node, old_sequence_abs);
     return;
   }
 
