@@ -25,18 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-bool LrnCpuKernelMod::GetLrnAttr(const BaseOperatorPtr &base_operator) {
+bool LrnCpuKernelMod::GetLrnAttr() {
   if (kernel_name_ != ops::kNameLRN) {
     MS_LOG(ERROR) << "For 'LRN' kernel name get failed, but got " << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LRN>(base_operator->GetPrim());
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  depth_radius_ = kernel_ptr->get_depth_radius();
-  bias_ = kernel_ptr->get_bias();
-  alpha_ = kernel_ptr->get_alpha();
-  beta_ = kernel_ptr->get_beta();
-  norm_region_ = kernel_ptr->get_norm_region();
+  depth_radius_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
+  bias_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBias));
+  alpha_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
+  norm_region_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(ops::kNormRegion));
   if (norm_region_ != "ACROSS_CHANNELS") {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "''s attribute 'norm_region' must be ACROSS_CHANNELS but got "
                   << norm_region_;
@@ -46,15 +44,12 @@ bool LrnCpuKernelMod::GetLrnAttr(const BaseOperatorPtr &base_operator) {
   return true;
 }
 
-bool LrnCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LrnCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!GetLrnAttr(base_operator)) {
+  if (!GetLrnAttr()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got GetReductionAttr failed.";
     return false;
   }
@@ -68,10 +63,8 @@ bool LrnCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
   return true;
 }
 
-int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs,
-                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int LrnCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   constexpr size_t kInputsNum = 1;

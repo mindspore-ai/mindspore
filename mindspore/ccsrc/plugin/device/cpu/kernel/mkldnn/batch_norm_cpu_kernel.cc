@@ -26,10 +26,8 @@ constexpr size_t kBatchNormOutputsNum = 5;
 constexpr size_t kBatchNormInputShapeMaxSize = 4;
 }  // namespace
 
-bool BatchNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool BatchNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -38,11 +36,10 @@ bool BatchNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BatchNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 
@@ -50,7 +47,7 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeMaxSize - x_shape.size(), 1);
 
   batch_size_ = x_shape[0];
-  channel_ = x_shape[1];
+  channel_ = x_shape[kIndex1];
   hw_size_ = x_shape[kIndex2] * x_shape[kIndex3];
   nhw_size_ = x_shape[0] * hw_size_;
 
@@ -79,14 +76,13 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   AddArgument(DNNL_ARG_DST, x_desc);
 
   InitWorkspaceSize(inputs);
-  inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
 
-void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void BatchNormCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor *> &inputs) {
   size_t type_size = sizeof(float);
   auto shape = inputs[0]->GetDeviceShapeVector();
-  size_t tensor_size = static_cast<size_t>(shape[1]) * 2 * type_size;  // [2, c] to store scale and bias
+  size_t tensor_size = static_cast<size_t>(shape[kIndex1]) * 2 * type_size;  // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
@@ -95,44 +91,34 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &in
                                    const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
-  // From CPUKernelExecutor::LaunchKernel
-  if (!Init(op_, inputs_, outputs_)) {
-    MS_LOG(ERROR) << "Re-init BatchNormCpuKernelMod while launching failed";
-    return false;
-  }
-  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
-  if (resize_ret != KRET_OK) {
-    MS_LOG(ERROR) << "Resize BatchNormCpuKernelMod while launching failed: " << resize_ret;
-    return false;
-  }
   auto wksp = reinterpret_cast<float *>(workspace[0]->device_ptr());
-  auto scale_ret = memcpy_s(wksp, workspace[0]->size(), inputs[1]->device_ptr(), inputs[1]->size());
-  auto max_size = workspace[0]->size() - inputs[1]->size();
-  auto bias_ret =
-    memcpy_s(wksp + (inputs[1]->size() / sizeof(float)), max_size, inputs[2]->device_ptr(), inputs[2]->size());
+  auto scale_ret = memcpy_s(wksp, workspace[0]->size(), inputs[kIndex1]->device_ptr(), inputs[kIndex1]->size());
+  auto max_size = workspace[0]->size() - inputs[kIndex1]->size();
+  auto bias_ret = memcpy_s(wksp + (inputs[kIndex1]->size() / sizeof(float)), max_size, inputs[kIndex2]->device_ptr(),
+                           inputs[kIndex2]->size());
   if (scale_ret != EOK || bias_ret != EOK) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
   }
   if (is_train_) {
     SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_MEAN, outputs[3]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[4]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_MEAN, outputs[kIndex3]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_VARIANCE, outputs[kIndex4]->device_ptr());
     SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
     SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();
 
-    auto moving_mean = reinterpret_cast<float *>(inputs[3]->device_ptr());
-    auto moving_variance = reinterpret_cast<float *>(inputs[4]->device_ptr());
-    auto mean = reinterpret_cast<float *>(outputs[3]->device_ptr());
-    auto variance = reinterpret_cast<float *>(outputs[4]->device_ptr());
-    for (size_t i = 0; i < inputs[3]->size() / sizeof(float); ++i) {
+    auto moving_mean = reinterpret_cast<float *>(inputs[kIndex3]->device_ptr());
+    auto moving_variance = reinterpret_cast<float *>(inputs[kIndex4]->device_ptr());
+    auto mean = reinterpret_cast<float *>(outputs[kIndex3]->device_ptr());
+    auto variance = reinterpret_cast<float *>(outputs[kIndex4]->device_ptr());
+    for (size_t i = 0; i < inputs[kIndex3]->size() / sizeof(float); ++i) {
       moving_mean[i] = moving_mean[i] * (1 - momentum_) + mean[i] * momentum_;
       moving_variance[i] = moving_variance[i] * (1 - momentum_) + variance[i] * momentum_;
     }
   } else {
     SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_MEAN, inputs[3]->device_ptr());
-    SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[4]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_MEAN, inputs[kIndex3]->device_ptr());
+    SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[kIndex4]->device_ptr());
     SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->device_ptr());
     SetArgumentHandle(DNNL_ARG_DST, outputs[0]->device_ptr());
     ExecutePrimitive();

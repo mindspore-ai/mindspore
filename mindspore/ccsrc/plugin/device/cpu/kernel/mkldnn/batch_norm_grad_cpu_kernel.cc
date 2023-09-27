@@ -27,10 +27,8 @@ constexpr size_t kBatchNormGradInputShapeMaxSize = 4;
 constexpr size_t kBatchNormGradInputShapeMinSize = 2;
 constexpr size_t kScaleShiftNum = 2;
 }  // namespace
-bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool BatchNormGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   bool is_match = MatchKernelAttr(kernel_attr, GetOpSupport()).first;
   if (!is_match) {
@@ -39,11 +37,10 @@ bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int BatchNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
   }
 
@@ -90,11 +87,10 @@ int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
 
   InitWorkspaceSize(inputs);
-  inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
 
-void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensorPtr> &inputs) {
+void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor *> &inputs) {
   size_t type_size = sizeof(float);
   auto shape = inputs[kIndex0]->GetDeviceShapeVector();
   size_t tensor_size = static_cast<size_t>(shape[C]) * kScaleShiftNum * type_size;
@@ -110,17 +106,6 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *>
                                        const std::vector<kernel::KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
-  // From CPUKernelExecutor::LaunchKernel
-  if (!Init(op_, inputs_, outputs_)) {
-    MS_LOG(ERROR) << "Re-init BatchNormGradCpuKernelMod while launching failed";
-    return false;
-  }
-  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
-  if (resize_ret != KRET_OK) {
-    MS_LOG(ERROR) << "Resize BatchNormGradCpuKernelMod while launching failed: " << resize_ret;
-    return false;
-  }
-
   auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->device_ptr());
   auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size(), inputs[SCALE]->device_ptr(), inputs[SCALE]->size());
   if (scale_ret != EOK) {

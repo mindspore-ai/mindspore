@@ -49,20 +49,15 @@ using dim = dnnl::memory::dims;
 using dt = dnnl::memory::data_type;
 }  // namespace
 
-bool LSTMGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool LSTMGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
-  auto op_prim = std::dynamic_pointer_cast<ops::LSTMGrad>(base_operator);
-  MS_ERROR_IF_NULL(op_prim);
-  bidirectional_ = op_prim->get_bidirectional();
-  input_size_ = op_prim->get_input_size();
-  hidden_size_ = op_prim->get_hidden_size();
-  num_layers_ = op_prim->get_num_layers();
-  has_bias_ = op_prim->get_has_bias();
-  proj_size_ = op_prim->get_proj_size();
+  bidirectional_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kBidirectional));
+  input_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kInputSize));
+  hidden_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kHidden_size));
+  num_layers_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kNumLayers));
+  has_bias_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kHasBias));
+  proj_size_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kProjection_size));
   real_hidden_size_ = proj_size_ > 0 ? proj_size_ : hidden_size_;
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -73,10 +68,9 @@ bool LSTMGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int LSTMGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int LSTMGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }

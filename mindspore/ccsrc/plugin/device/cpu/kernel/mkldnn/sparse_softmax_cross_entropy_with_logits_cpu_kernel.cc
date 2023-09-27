@@ -30,26 +30,19 @@ constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputsNum = 1;
 constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
-bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                                           const std::vector<KernelTensorPtr> &inputs,
-                                                           const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
+bool SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                           const std::vector<KernelTensor *> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(base_operator);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  is_grad_ = kernel_ptr->get_is_grad();
+  is_grad_ = GetValue<bool>(KernelMod::primitive_->GetAttr(ops::kIsGrad));
   return true;
 }
 
-int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                            const std::vector<KernelTensorPtr> &inputs,
-                                                            const std::vector<KernelTensorPtr> &outputs,
-                                                            const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 

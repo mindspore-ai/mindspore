@@ -86,12 +86,10 @@ void PoolingCpuKernelNnaclMod::InitPooling3DParams() {
   pooling_param_.divisor_override_ = divisor_override_;
 }
 
-bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                    const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
+bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
+                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-  kernel_name_ = base_operator->name();
   if (kernel_name_ == kAvgPool3DOpName || kernel_name_ == kAvgPoolOpName) {
     pool_mode_ = MEAN_POOLING;
   } else if (kernel_name_ == kMaxPool3DOpName || kernel_name_ == kMaxPoolOpName) {
@@ -101,23 +99,22 @@ bool PoolingCpuKernelNnaclMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
   dtype_ = inputs[0]->dtype_id();
-  format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
-  pad_mode_ = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
-  kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
-  stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
-  if (base_operator->HasAttr(COUNT_INCLUDE_PAD)) {
-    count_include_pad_ = GetValue<bool>(base_operator->GetAttr(COUNT_INCLUDE_PAD));
+  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
+  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  kernel_size_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
+  stride_size_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
+  if (KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD)) {
+    count_include_pad_ = GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD));
   }
-  if (base_operator->HasAttr(DIVISOR_OVERRIDE)) {
-    divisor_override_ = GetValue<int64_t>(base_operator->GetAttr(DIVISOR_OVERRIDE));
+  if (KernelMod::primitive_->HasAttr(DIVISOR_OVERRIDE)) {
+    divisor_override_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE));
   }
   return true;
 }
 
-int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) {
+  if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   in_size_ = inputs[0]->GetDeviceShapeVector();
@@ -134,8 +131,8 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
   // kernel_size_/stride_size_/pad_list_ in 4D will be extended to 5D later, so here we need to reset
   // kernel_size_/stride_size_/pad_list_ before the extending.
   if (src_dim == SHAPE_4D) {
-    kernel_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(KERNEL_SIZE));
-    stride_size_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(STRIDES));
+    kernel_size_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
+    stride_size_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
     pad_list_.clear();
   }
 
@@ -149,7 +146,7 @@ int PoolingCpuKernelNnaclMod::Resize(const BaseOperatorPtr &base_operator, const
     GetPadList(src_dim, padlist_len);
   } else {
     // PAD_LIST has been calculated during infer shape, so it can be directly obtained here
-    pad_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
+    pad_list_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(PAD_LIST));
   }
 
   if (pad_list_.size() != padlist_len) {

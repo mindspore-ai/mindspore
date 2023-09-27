@@ -27,25 +27,19 @@ constexpr size_t kConv3DTransposeInputsNum = 2;
 constexpr size_t kConv3DTransposeOutputsNum = 1;
 }  // namespace
 
-bool Conv3DTransposeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                       const std::vector<KernelTensorPtr> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  PrimitivePtr prim = base_operator->GetPrim();
-  MS_EXCEPTION_IF_NULL(prim);
-  group = LongToSize(GetValue<int64_t>(prim->GetAttr(GROUP)));
-  format = GetValue<std::string>(prim->GetAttr(FORMAT));
-  pad_mode = GetValue<std::string>(prim->GetAttr(PAD_MODE));
-  strides_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(STRIDES));
-  dilation_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(DILATIONS));
+bool Conv3DTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs) {
+  group = LongToSize(GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP)));
+  format = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
+  pad_mode = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
+  dilation_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(DILATIONS));
   return true;
 }
 
-int Conv3DTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+int Conv3DTransposeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                        const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   std::vector<int64_t> src_shape = outputs.at(kIndex0)->GetDeviceShapeVector();
@@ -87,7 +81,7 @@ int Conv3DTransposeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   (void)std::transform(dilation.begin(), dilation.end(), std::back_inserter(dilates),
                        [](const int64_t &value) { return value - 1; });
   PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(base_operator, src_shape, padding_info);
+  GetPadding(src_shape, padding_info);
 
   const auto forward_desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,

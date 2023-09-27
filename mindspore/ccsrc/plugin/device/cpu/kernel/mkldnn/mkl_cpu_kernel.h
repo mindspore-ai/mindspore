@@ -252,8 +252,7 @@ class MKLCpuKernelMod : public NativeCpuKernelMod {
  protected:
   bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
                        std::vector<size_t> *dst_shape) const;
-  void GetPadding(const BaseOperatorPtr &base_operator, const std::vector<int64_t> &src_shape,
-                  const PaddingInfo &padding_info) const;
+  void GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info) const;
   void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
   void SetArgumentHandle(int arg_key, void *ptr);
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;

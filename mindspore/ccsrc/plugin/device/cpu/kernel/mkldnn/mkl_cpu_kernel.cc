@@ -180,7 +180,6 @@ void DeprecatedMKLCpuKernelMod::SetArgumentHandle(int arg_key, void *ptr) {
 }
 
 void DeprecatedMKLCpuKernelMod::ExecutePrimitive() {
-  MS_EXCEPTION_IF_NULL(primitive_);
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   // add auto search
   const std::vector<size_t> kSearchThreadList{4, 8, 16, 24, 32};
@@ -263,9 +262,7 @@ void DeprecatedMKLCpuKernelMod::Reorder(dnnl::memory *src_mem, dnnl::memory *dst
   MS_LOG(DEBUG) << "begin to invoke primitive::execute";
 }
 
-void MKLCpuKernelMod::GetPadding(const BaseOperatorPtr &base_operator, const std::vector<int64_t> &src_shape,
-                                 const PaddingInfo &padding_info) const {
-  MS_EXCEPTION_IF_NULL(base_operator);
+void MKLCpuKernelMod::GetPadding(const std::vector<int64_t> &src_shape, const PaddingInfo &padding_info) const {
   MS_EXCEPTION_IF_NULL(padding_info.padding_l);
   MS_EXCEPTION_IF_NULL(padding_info.padding_r);
   size_t src_dim = src_shape.size();
@@ -294,7 +291,7 @@ void MKLCpuKernelMod::GetPadding(const BaseOperatorPtr &base_operator, const std
       padding_info.padding_r->push_back(0);
     }
   } else {
-    std::vector<int64_t> pad = GetValue<std::vector<int64_t>>(base_operator->GetAttr(PAD_LIST));
+    std::vector<int64_t> pad = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(PAD_LIST));
     GeneratePaddingForPadMode(padding_info, shape_exclude_nc, pad);
   }
 }
@@ -388,7 +385,6 @@ void MKLCpuKernelMod::SetArgumentHandle(int arg_key, void *ptr) {
 }
 
 void MKLCpuKernelMod::ExecutePrimitive() {
-  MS_EXCEPTION_IF_NULL(primitive_);
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   // add auto search
   const std::vector<size_t> kSearchThreadList{4, 8, 16, 24, 32};

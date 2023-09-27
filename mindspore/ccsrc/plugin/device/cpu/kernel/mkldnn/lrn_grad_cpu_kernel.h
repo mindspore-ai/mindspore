@@ -35,11 +35,9 @@ class LrnGradCpuKernelMod : public MKLCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -49,7 +47,7 @@ class LrnGradCpuKernelMod : public MKLCpuKernelMod {
                     const std::vector<kernel::KernelTensor *> &outputs);
   using LrnGradFunc = std::function<bool(LrnGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                                          const std::vector<kernel::KernelTensor *> &)>;
-  bool GetLrnGradAttr(const BaseOperatorPtr &base_operator);
+  bool GetLrnGradAttr();
   int64_t depth_radius_{1};
   float bias_{0.0};
   float alpha_{0.0};

@@ -25,22 +25,15 @@ constexpr size_t kConvInputsNum = 2;
 constexpr size_t kConvOutputsNum = 1;
 }  // namespace
 
-bool ConvCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                            const std::vector<KernelTensorPtr> &outputs) {
-  MS_ERROR_IF_NULL(base_operator);
-  kernel_name_ = base_operator->name();
-  auto prim = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(prim);
-  format_ = GetValue<std::string>(prim->GetAttr(kAttrFormat));
-  group_ = GetValue<int64_t>(prim->GetAttr(kAttrGroup));
-  pad_mode_ = GetValue<std::string>(prim->GetAttr(kAttrPadMode));
+bool ConvCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrFormat));
+  group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(kAttrGroup));
+  pad_mode_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(kAttrPadMode));
   return true;
 }
 
-int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                             const std::vector<KernelTensorPtr> &outputs,
-                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs);
+int ConvCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
   }
@@ -76,10 +69,8 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   const auto stride_attr = src_dim == SHAPE_4D ? STRIDE : STRIDES;
   const auto dilation_attr = src_dim == SHAPE_4D ? DILATION : DILATIONS;
-  auto prim = base_operator->GetPrim();
-  MS_ERROR_IF_NULL(prim);
-  const auto strides_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(stride_attr));
-  const auto dilation_include_nc = GetValue<std::vector<int64_t>>(prim->GetAttr(dilation_attr));
+  const auto strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(stride_attr));
+  const auto dilation_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(dilation_attr));
   if (strides_include_nc.size() != src_dim) {
     MS_LOG(ERROR) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
                   << strides_include_nc.size() << "D!";
@@ -98,7 +89,7 @@ int ConvCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   (void)std::transform(dilation.begin(), dilation.end(), std::back_inserter(dilates),
                        [](const int64_t &value) { return value - 1; });
   PaddingInfo padding_info{pad_mode_, kernel_size, strides, dilation, &padding_l, &padding_r};
-  GetPadding(base_operator, src_shape, padding_info);
+  GetPadding(src_shape, padding_info);
 
   const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,

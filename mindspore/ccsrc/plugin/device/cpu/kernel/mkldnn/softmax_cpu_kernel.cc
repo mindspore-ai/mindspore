@@ -21,15 +21,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool SoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
+bool SoftmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
-  kernel_name_ = base_operator->GetPrim()->name();
-  auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(base_operator);
-  auto axis_list_me = soft_max_ptr->get_axis();
+  auto axis_list_me = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(ops::kAxis));
   (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list_),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (axis_list_.size() != 1) {
@@ -39,10 +36,8 @@ bool SoftmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int SoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+int SoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto src_shape = inputs[kIndex0]->GetShapeVector();
