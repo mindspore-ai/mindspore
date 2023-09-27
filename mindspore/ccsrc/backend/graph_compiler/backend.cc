@@ -578,13 +578,13 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
   }
 
   device_tensor->SetNodeIndex(output_node, output_index);
+  device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   const auto &kernel_tensor = device_tensor->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto tensor = std::make_shared<tensor::Tensor>(kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector());
-  kernel_tensor->SetPaddingType(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
   // Put device tensor into host tensor.
   tensor->set_device_address(device_tensor);

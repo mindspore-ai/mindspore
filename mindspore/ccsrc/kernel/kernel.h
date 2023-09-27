@@ -409,11 +409,11 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set the data format of string type.
   void SetStringFormat(const std::string &format);
 
-  // Get the padding_type of string type.
-  std::string GetPaddingType() const;
+  // Get the padding type of format.
+  const std::string &padding_type() const;
 
-  // Set the padding_type of string type.
-  void SetPaddingType(const std::string &padding_type);
+  // Set the padding type of format.
+  void set_padding_type(const std::string &padding_type);
 
   // Get pointer to the device side that corresponds to KernelTensor, used in runtime.
   void *device_ptr() const { return device_ptr_; }
@@ -567,8 +567,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // The data format of the KernelTensor.
   mindspore::Format format_{Format::DEFAULT_FORMAT};
 
-  // The padding type of kernel tensor.
-  // TODO(shiliang): need to change type from string to enum.
+  // The padding type corresponds to data format.
   std::string padding_type_;
 
   // The buffer used to store the content which is copied from device side.

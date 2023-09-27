@@ -194,8 +194,8 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   std::string format() const { return kernel_tensor_->GetStringFormat(); }
   void set_format(const std::string &format) { kernel_tensor_->SetStringFormat(format); }
-  const std::string padding_type() const { return kernel_tensor_->GetPaddingType(); }
-  void set_padding_type(const std::string &padding_type) { kernel_tensor_->SetStringFormat(padding_type);  }
+  const std::string &padding_type() const { return kernel_tensor_->padding_type(); }
+  void set_padding_type(const std::string &padding_type) { kernel_tensor_->set_padding_type(padding_type); }
   TypeId type_id() const { return kernel_tensor_->dtype_id(); }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }

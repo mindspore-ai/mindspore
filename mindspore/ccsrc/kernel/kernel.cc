@@ -158,9 +158,9 @@ std::string KernelTensor::GetStringFormat() const { return GetFormatFromEnumToSt
 
 void KernelTensor::SetStringFormat(const std::string &format) { format_ = GetFormatFromStrToEnum(format); }
 
-std::string KernelTensor::GetPaddingType() const { return padding_type_; }
+const std::string &KernelTensor::padding_type() const { return padding_type_; }
 
-void KernelTensor::SetPaddingType(const std::string &format) { padding_type_ = GetFormatFromStrToEnum(format); }
+void KernelTensor::set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
 
 string KernelTensor::GetAbstractName() const {
   const TensorInfo &info = std::get<TensorInfo>(meta_);
