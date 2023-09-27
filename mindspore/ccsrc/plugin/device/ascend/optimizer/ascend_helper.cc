@@ -485,7 +485,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
     return new_node;
   }
   // Single output, output is tuple
-  if (outputs_num == 1 && common::AnfAlgo::IsTupleOutput(node)) {
+  if (outputs_num == 1 && common::AnfAlgo::IsTupleOutput(node) && orig_node->isa<Parameter>()) {
     return node;
   }
   // Multiple output
