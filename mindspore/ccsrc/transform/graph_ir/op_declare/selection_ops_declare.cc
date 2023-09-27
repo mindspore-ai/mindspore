@@ -105,6 +105,7 @@ OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(Gather, prim::kPrimGather->name(), ADPT_DESC(GatherV2))
 REG_ADPT_DESC(GatherV2D, kNameGatherV2D, ADPT_DESC(GatherV2))
+REG_ADPT_DESC(SparseGatherV2, prim::kPrimSparseGatherV2->name(), ADPT_DESC(GatherV2))
 
 // ScatterNd
 INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
