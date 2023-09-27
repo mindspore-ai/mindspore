@@ -24,6 +24,7 @@
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -107,7 +108,12 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
-  ms_used_hbm_size_ = SizeToLong(GetRoundDownAlignSize(ms_used_hbm_size_));
+  if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+    ms_used_hbm_size_ = SizeToLong(AscendGmemAdapter::GetInstance().GetRoundDownAlignSize(ms_used_hbm_size_));
+  } else {
+    ms_used_hbm_size_ = SizeToLong(GetRoundDownAlignSize(ms_used_hbm_size_));
+  }
+  max_available_ms_hbm_size_ = ms_used_hbm_size_;
   MS_LOG(INFO) << "Device HBM Size:" << device_hbm_total_size_ / kMBToByte
                << "M, Device free HBM Size:" << device_hbm_free_size_ / kMBToByte
                << "M, Reserved HBM size for Other Components(HCCL/rts/etc.):"
@@ -132,7 +138,7 @@ bool AscendMemAdapter::DeInitialize() {
     return false;
   }
 
-  auto ret = FreeToRts(device_mem_base_addr_);
+  auto ret = FreeToRts(device_mem_base_addr_, ms_used_hbm_size_);
   if (ret) {
     MS_LOG(INFO) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
     if (common::IsNeedProfileMemory() || common::IsNeedMemoryStatistic()) {
@@ -204,6 +210,9 @@ void AscendMemAdapter::ResetDynamicMemory() {
   if (IsMemoryPoolRecycle()) {
     max_dynamic_mem_offset_ = 0;
   }
+  if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+    AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(device_mem_base_addr_, ms_used_hbm_size_);
+  }
 }
 
 std::string AscendMemAdapter::DevMemStatistics() const {
@@ -271,6 +280,10 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
 
 uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   uint8_t *ptr = nullptr;
+  if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+    return AscendGmemAdapter::GetInstance().MmapMemory(size, reinterpret_cast<void *>(ptr));
+  }
+
   auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM, 0);
   if (ret != ACL_RT_SUCCESS) {
     if (ret == ACL_ERROR_RT_MEMORY_ALLOCATION) {
@@ -295,8 +308,11 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   return ptr;
 }
 
-bool AscendMemAdapter::FreeToRts(void *devPtr) const {
+bool AscendMemAdapter::FreeToRts(void *devPtr, const size_t size) const {
   if (devPtr != nullptr) {
+    if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
+      return AscendGmemAdapter::GetInstance().MunmapMemory(devPtr, size);
+    }
     auto ret = aclrtFree(devPtr);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtFree mem [" << devPtr << "] fail, ret[" << ret << "]";

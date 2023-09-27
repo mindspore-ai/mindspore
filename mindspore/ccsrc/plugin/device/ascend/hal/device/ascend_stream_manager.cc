@@ -28,6 +28,7 @@
 #include "runtime/stream.h"
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -130,6 +131,7 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
     }
   }
   (void)streams_.emplace_back(*stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
 }
 
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
@@ -147,6 +149,7 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
@@ -162,6 +165,7 @@ void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, 
     }
   }
   (void)streams_.emplace_back(*stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
@@ -179,6 +183,7 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
 }
 
 bool AscendStreamMng::DestroyStream(size_t stream_id) {
@@ -195,6 +200,7 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
+  AscendGmemAdapter::GetInstance().RemoveCallbackThread(streams_.at(stream_id));
   streams_[stream_id] = nullptr;
   return true;
 }
@@ -206,6 +212,7 @@ bool AscendStreamMng::DestroyAllStreams() {
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
+    AscendGmemAdapter::GetInstance().RemoveCallbackThread(stream);
   }
   streams_.clear();
   return true;

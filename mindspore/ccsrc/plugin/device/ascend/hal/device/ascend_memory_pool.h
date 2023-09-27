@@ -35,6 +35,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t GetMaxUsedMemSize() const override;
   size_t free_mem_size() override;
+  uint64_t total_mem_size() const override;
   // Set mem pool block size
   void SetMemPoolBlockSize(size_t available_device_mem_size) override;
 
@@ -51,6 +52,12 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
  protected:
   // Calculate memory block required alloc size when adding the memory block.
   size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle = false) override;
+
+  // The related interface of device memory eager free.
+  const bool IsEnableEagerFree() const override;
+  const bool SyncAllStreams() override;
+  size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) override;
+  size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) override;
 
  private:
   AscendMemoryPool() = default;
