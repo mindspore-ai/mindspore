@@ -56,7 +56,7 @@ bool LogitGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 bool LogitGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
   //  Todo, dynamic shape
-  //  auto kernel_ptr = std::make_shared<ops::LogitGrad>(primitive_);
+  //  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogitGrad>(primitive_);
 
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());

@@ -59,7 +59,7 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
                     << kMedianOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
       return false;
     }
-    auto kernel_ptr = std::make_shared<ops::Median>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(primitive_);
     if (kernel_ptr->get_ignore_nan()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attribute ignore_nan is not supported on GPU yet.";
       return false;

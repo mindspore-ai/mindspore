@@ -88,7 +88,7 @@ void AdadeltaGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inp
 }
 
 bool AdadeltaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  std::make_shared<ops::ApplyAdadelta>(primitive_);
+  std::dynamic_pointer_cast<ops::ApplyAdadelta>(primitive_);
   constexpr int INPUT_NUM = 7;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 7, but got " << inputs.size();

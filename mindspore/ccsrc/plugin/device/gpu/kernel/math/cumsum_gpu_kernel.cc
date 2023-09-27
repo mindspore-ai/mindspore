@@ -52,7 +52,7 @@ int CumSumGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   if (is_null_input_) {
     return KRET_OK;
   }
-  auto kernel_ptr = std::make_shared<ops::CumSum>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumSum>(primitive_);
 
   exclusive_ = kernel_ptr->get_exclusive();
   reverse_ = kernel_ptr->get_reverse();

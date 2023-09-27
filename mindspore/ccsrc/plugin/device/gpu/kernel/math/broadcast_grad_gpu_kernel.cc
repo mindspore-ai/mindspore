@@ -53,11 +53,11 @@ bool BroadcastOpGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
     return false;
   }
   if (op_type_ == BROADCAST_GRAD_TYPE_MAXIMUM) {
-    auto kernel_ptr = std::make_shared<ops::MaximumGrad>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::MaximumGrad>(primitive_);
     grad_x_ = kernel_ptr->get_grad_x();
     grad_y_ = kernel_ptr->get_grad_y();
   } else {
-    auto kernel_ptr = std::make_shared<ops::MinimumGrad>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::MinimumGrad>(primitive_);
     grad_x_ = kernel_ptr->get_grad_x();
     grad_y_ = kernel_ptr->get_grad_y();
   }

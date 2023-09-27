@@ -105,9 +105,9 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
     int64_t dims = SizeToLong(shape.size());
     if (kernel_name_ == "ArgMinWithValue") {
-      axis_ = std::make_shared<ops::ArgMinWithValue>()->axis();
+      axis_ = std::dynamic_pointer_cast<ops::ArgMinWithValue>(primitive_)->axis();
     } else {
-      axis_ = std::make_shared<ops::ArgMaxWithValue>()->axis();
+      axis_ = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(primitive_)->axis();
     }
     is_zero_dim_ = (dims == 0);
 

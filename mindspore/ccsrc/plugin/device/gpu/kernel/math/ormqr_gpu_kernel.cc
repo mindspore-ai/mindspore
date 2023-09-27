@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 bool OrmqrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::make_shared<ops::Ormqr>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Ormqr>(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

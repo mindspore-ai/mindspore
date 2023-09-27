@@ -53,7 +53,7 @@ bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTe
 
 bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::make_shared<ops::MaxPool3DWithArgmax>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DWithArgmax>(primitive_);
   auto ksize = kernel_ptr->get_kernel_size();
   auto strides = kernel_ptr->get_strides();
   auto pads = kernel_ptr->get_pads();

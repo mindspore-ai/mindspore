@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int kQuantileDefaultDim = 10000;
 bool QuantileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::make_shared<ops::Quantile>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(primitive_);
   if (kernel_ptr == nullptr) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
     return false;

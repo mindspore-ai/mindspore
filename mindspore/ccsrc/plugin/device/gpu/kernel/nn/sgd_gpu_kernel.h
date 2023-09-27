@@ -73,7 +73,7 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
                     << outputs.size();
       return false;
     }
-    auto sgd_op = std::make_shared<ops::SGD>(primitive_);
+    auto sgd_op = std::dynamic_pointer_cast<ops::SGD>(primitive_);
 
     dampening_ = sgd_op->get_dampening();
     weight_decay_ = sgd_op->get_weight_decay();

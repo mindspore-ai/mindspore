@@ -27,7 +27,7 @@ constexpr int64_t kInterval = 2;
 bool CTCLossV2GradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   // Getting values
-  auto kernel_ptr = std::make_shared<ops::CTCLossV2Grad>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CTCLossV2Grad>(primitive_);
   blank_ = kernel_ptr->get_blank();
   zero_infinity_ = kernel_ptr->get_zero_infinity();
 

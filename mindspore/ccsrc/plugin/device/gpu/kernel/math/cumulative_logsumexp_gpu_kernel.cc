@@ -57,7 +57,7 @@ int CumulativeLogsumexpGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   if (is_null_input_) {
     return true;
   }
-  auto kernel_ptr = std::make_shared<ops::CumulativeLogsumexp>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumulativeLogsumexp>(primitive_);
 
   exclusive_ = kernel_ptr->get_exclusive();
   reverse_ = kernel_ptr->get_reverse();

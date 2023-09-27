@@ -35,16 +35,16 @@ constexpr size_t kAvgPool3DGradDynamicInputNum = 2;
 
 bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  auto pool_grad_ptr = std::make_shared<ops::PoolGrad>(primitive_);
+  auto pool_grad_ptr = std::dynamic_pointer_cast<ops::PoolGrad>(primitive_);
   format_attr_ = pool_grad_ptr->get_format();
   pad_mode_ = pool_grad_ptr->get_pad_mode();
   stride_me_ = pool_grad_ptr->get_strides();
   window_me_ = pool_grad_ptr->get_kernel_size();
   if (kernel_name_ == kMaxPool3DGrad) {
-    auto kernel_ptr = std::make_shared<ops::MaxPool3DGrad>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DGrad>(primitive_);
     pad_list_ = kernel_ptr->get_pad_list();
   } else if (kernel_name_ == kAvgPool3DGrad) {
-    auto kernel_ptr = std::make_shared<ops::AvgPool3DGrad>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::AvgPool3DGrad>(primitive_);
     pad_list_ = kernel_ptr->get_pad_list();
     divisor_override_ = kernel_ptr->get_divisor_override();
     ceil_mode_ = kernel_ptr->get_ceil_mode();

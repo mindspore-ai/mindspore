@@ -73,7 +73,7 @@ bool MatrixSolveGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   const auto dtype = inputs.at(kIndex0)->dtype_id();
 
-  auto kernel_ptr = std::make_shared<ops::MatrixSolve>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::MatrixSolve>(primitive_);
   bool adjoint = kernel_ptr->get_adjoint();
 
   if (dtype == kNumberTypeComplex64 || dtype == kNumberTypeComplex128) {

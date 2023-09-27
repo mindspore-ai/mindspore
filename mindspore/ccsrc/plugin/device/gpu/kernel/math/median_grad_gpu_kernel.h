@@ -78,7 +78,7 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::make_shared<ops::MedianGrad>(primitive_);
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(primitive_);
     if (kernel_ptr == nullptr) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
       return false;

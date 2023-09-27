@@ -27,7 +27,7 @@ bool SolveTriangularGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  auto kernel_ptr = std::make_shared<ops::SolveTriangular>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SolveTriangular>(primitive_);
   bool lower = kernel_ptr->get_lower();
   // reverting the trans flag by default, so also flip the lower flag
   lower = !lower;

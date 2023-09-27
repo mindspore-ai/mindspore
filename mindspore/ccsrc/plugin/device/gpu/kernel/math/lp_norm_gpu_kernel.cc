@@ -35,7 +35,7 @@ bool LpNormGpuKernelMod::GetLpNormAttr() {
                   << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::make_shared<ops::LpNorm>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LpNorm>(primitive_);
 
   axis_ = kernel_ptr->get_axis();
   p_ = kernel_ptr->get_p();

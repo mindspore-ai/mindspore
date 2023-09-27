@@ -69,7 +69,7 @@ int EuclideanNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
 
-  auto kernel_ptr = std::make_shared<ops::EuclideanNorm>(primitive_);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::EuclideanNorm>(primitive_);
 
   keep_dims_ = kernel_ptr->get_keep_dims();
   axes_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
