@@ -28,7 +28,7 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/geqrf.h"
+#include "mindspore/core/ops/ops_func_impl/geqrf.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
