@@ -24,6 +24,7 @@ namespace mindspore {
 namespace kernel {
 bool CastGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -38,6 +39,8 @@ int CastGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
   input_size_ = 0;
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(outputs[kIndex0]);
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   is_null_input_ =
@@ -47,7 +50,7 @@ int CastGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     output_size_list_.push_back(0);
     return KRET_OK;
   }
-
+  MS_EXCEPTION_IF_NULL(base_operator);
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;

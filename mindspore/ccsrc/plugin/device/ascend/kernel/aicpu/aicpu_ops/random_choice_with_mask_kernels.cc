@@ -23,15 +23,23 @@
 #include "common/distinct_uniform_int_distribution.h"
 #include "common/tensor.h"
 #include "common/random_utils.h"
+#include "cpu_kernel/common/status.h"
 
 namespace aicpu {
 namespace {
 const uint32_t kCountsIndex = 1;
 const uint32_t kStatesIndex = 2;
+const size_t kIndex0 = 0;
+const size_t kIndex3 = 3;
+const size_t kIndex4 = 4;
 }  // namespace
 static void ParseOutputCoordinate(std::vector<int64_t> dims_, int64_t output_length, int64_t input_dim_size,
                                   int64_t input_total_count, const int *tmp_output, int *output) {
   int it = 0;
+  bool containZeroDim = std::any_of(dims_.begin(), dims_.end(), [](int64_t dim) { return dim == 0; });
+  if (containZeroDim) {
+    KERNEL_LOG_ERROR("Input dim cannot contain 0.");
+  }
   int column = LongToInt(input_total_count / dims_[0]);
   for (int64_t i = 0; i < output_length; i++) {
     int tmp_output_number = tmp_output[LongToSize(i)];
@@ -152,9 +160,9 @@ static bool GenerateRandomMask(std::mt19937 *rng, const int64_t &output_length, 
 }
 
 uint32_t RandomChoiceWithMaskKernel::DoCompute() {
-  auto *input = reinterpret_cast<bool *>(io_addrs_[0]);
-  auto *output_coordinate = reinterpret_cast<int32_t *>(io_addrs_[3]);
-  auto *mask = reinterpret_cast<bool *>(io_addrs_[4]);
+  auto *input = reinterpret_cast<bool *>(io_addrs_[kIndex0]);
+  auto *output_coordinate = reinterpret_cast<int32_t *>(io_addrs_[kIndex3]);
+  auto *mask = reinterpret_cast<bool *>(io_addrs_[kIndex4]);
   int64_t input_dim_size = static_cast<int64_t>(dims_.size());
   int64_t non_zero_num = 0;
   int64_t input_total_count = 1;

@@ -69,8 +69,10 @@ void Cast(CastCpuKernelFunc<S, T> *content, const S *in, T *out, size_t size) {
 template <typename S, typename T>
 bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                       const std::vector<AddressPtr> &outputs) {
-  const auto *input = reinterpret_cast<S *>(inputs[0]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *input = GetDeviceAddress<S>(inputs, kIndex0);
+  auto *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
   MS_LOG(DEBUG) << "Type source: " << typeid(S).name() << "; target: " << typeid(T).name();
   Cast<S, T>(this, input, output, outputs[0]->size / sizeof(T));
   return true;
@@ -815,6 +817,7 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
 
 bool CastCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   source_dtype_ = inputs[kIndex0]->GetDtype();
   target_dtype_ = outputs[kIndex0]->GetDtype();
