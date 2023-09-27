@@ -157,8 +157,6 @@ class BatchNormInfer : public abstract::OpInferBase {
     auto variance_shape_ptr = input_args[kInputIndex4]->BuildShape();
     auto variance_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variance_shape_ptr)[kShape];
 
-    auto is_training = GetValue<bool>(primitive->GetAttr(kIsTraining));
-
     (void)CheckAndConvertUtils::CheckInteger("rank of scale", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("rank of bias", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
 
@@ -183,7 +181,7 @@ class BatchNormInfer : public abstract::OpInferBase {
         (void)CheckAndConvertUtils::CheckInteger("rank of mean", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
         (void)CheckAndConvertUtils::CheckInteger("rank of variance", SizeToLong(variance_shape.size()), kEqual, 1,
                                                  prim_name);
-        if (!is_training && (mean_shape[0] != variance_shape[0] || variance_shape[0] != scale_shape[0])) {
+        if (mean_shape[0] != variance_shape[0] || variance_shape[0] != scale_shape[0]) {
           MS_EXCEPTION(ValueError)
             << "For '" << prim_name
             << "', 'scale', 'bias', 'mean', and 'variance' should have the same size during training, but got "
