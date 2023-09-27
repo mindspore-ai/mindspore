@@ -517,8 +517,8 @@ bool GeKernelExecutor::PySyncRuning() const {
   return true;
 }
 
-bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs,
-                                       const vector<AddressPtr> &outputs) const {
+bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<KernelTensor *> &inputs,
+                                       const vector<KernelTensor *> &outputs) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Launch MemoryCopyAsync instead for kernel " << node->fullname_with_scope();
   if (inputs.size() != 1 || outputs.size() != 1) {
@@ -528,18 +528,18 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Addres
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   MS_EXCEPTION_IF_NULL(stream);
-  aclError status = aclrtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                     ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
+  aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                     inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size
-                  << " count:" << inputs[0]->size;
+    MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size()
+                  << " count:" << inputs[0]->size();
     return false;
   }
   return true;
 }
 
-bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                    const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
+bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
+                                    const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     size_t stream_id) const {
   MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
