@@ -28,7 +28,13 @@ Node::Node(const AnfNodePtr &node, Emitter *emitter) : anf_node_(node), emitter_
 
 AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared_from_this()); }
 
+bool Node::HasAbstractValue() {
+  ValuePtr value = abstract()->BuildValue();
+  return (value != nullptr && value != kValueAny);
+}
+
 ValuePtr Node::BuildValue() {
+  is_used_value_ = true;
   if (value_ == nullptr) {
     if (anf_node_->isa<ValueNode>()) {
       return value_ = anf_node_->cast<ValueNodePtr>()->value();
@@ -36,7 +42,6 @@ ValuePtr Node::BuildValue() {
       return value_ = abstract()->BuildValue();
     }
   }
-  is_used_value_ = true;
   return value_;
 }
 

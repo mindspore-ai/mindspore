@@ -50,6 +50,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   void SetValue(const ValuePtr &val) { value_ = val; }
   ValuePtr Value() { return value_; }
   ValuePtr BuildValue();
+  bool HasAbstractValue();
 
   std::vector<int64_t> shape();
   std::vector<std::vector<int64_t>> shapes();
