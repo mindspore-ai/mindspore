@@ -100,6 +100,7 @@ Strategies PrepareMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorIn
 Dimensions PrepareBatchMatMulStrategy(Graph::NodeType *node, const bool transpose_a, const bool transpose_b,
                                       const size_t iter_op_inputs, const size_t dim_num);
 Strategies PrepareBatchMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorInfo> &op);
+Strategies PreparePropagateBatchMatMul(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra);
 Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &strategy);
 Strategies PrepareStridedSlice(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra, bool dyn_shape_tmp_fix);
 Strategies PrepareSoftMax(const std::shared_ptr<OperatorInfo> &op, const Dimensions &basic_stra);

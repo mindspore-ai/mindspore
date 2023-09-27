@@ -297,39 +297,34 @@ double CostBatchMatMul::cost(Axis a, const Graph::NodeType &node) {
   if (batch_dims_size == 1) {
     mc_ratio = static_cast<double>(NUMBER_ASCEND_CORES);
   } else {
-    mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(batch_dims_size), 0.0);
+    mc_ratio = std::max(NUMBER_ASCEND_CORES / static_cast<double>(batch_dims_size) - 1, 0.0);
   }
   double min_size = minNodeSize(node);
-  const auto mem_coef = CostModelContext::GetInstance()->rp_matmul_mem_coef();
 
   switch (a) {
     // Calculate the cost if the Batch-axis of BatchMatMul is cut
     case B:
-      return (mc_ratio * min_size) * mem_coef;
+      return (mc_ratio * min_size);
 
     // Calculate the cost if the Expert-axis of BatchMatMul is cut
     case X:
-      return (mc_ratio * min_size);
+      return (mc_ratio * min_size) - 1;
 
     // Calculate the cost if the I-axis of BatchMatMul is cut
-    // Currently, I dimension is not allowed to cut. Thus, DOUBLE_MAX / 2.0 is added.
     case I:
-      return costOfDistributing(node.apply.arguments[1]) + DOUBLE_MAX / 2.0;
+      return costOfDistributing(node.apply.arguments[1]);
 
     // Calculate the cost if the J-axis of BatchMatMul is cut
-    // Currently, J dimension is not allowed to cut. Thus, DOUBLE_MAX / 2.0 is added.
     case J:
-      return costOfDistributing(node.apply.arguments[0]) + DOUBLE_MAX / 2.0;
+      return costOfDistributing(node.apply.arguments[0]);
 
     // Calculate the cost if the K-axis of BatchMatMul is cut
-    // Currently, J dimension is not allowed to cut. Thus, DOUBLE_MAX / 2.0 is added.
     case K:
-      return costOfDistributing(node.tensor_parm) + DOUBLE_MAX / 2.0;
+      return costOfDistributing(node.tensor_parm);
 
     // Calculate the cost if BatchMatMul is not cut
-    // Currently, J dimension is not allowed to cut. Thus, DOUBLE_MAX / 2.0 is added.
     case R:
-      return min_size * min_size / REPLICATE_BELOW + DOUBLE_MAX / 2.0;
+      return min_size * min_size / REPLICATE_BELOW;
 
     default:
       MS_LOG(EXCEPTION) << "Axis " << a << " is not taken into account";
