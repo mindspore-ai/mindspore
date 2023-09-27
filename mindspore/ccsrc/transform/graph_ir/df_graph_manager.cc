@@ -259,6 +259,7 @@ void DfGraphManager::AoeGeGraph() {
 
   for (auto &graph_name : wait_optimize_graphs_) {
     auto wrapper = GetGraphByName(graph_name);
+    MS_EXCEPTION_IF_NULL(wrapper);
     if (AoeUtil::GetInstance().IsSaveOptimizedGraph(wrapper->id_)) {
       continue;
     }
