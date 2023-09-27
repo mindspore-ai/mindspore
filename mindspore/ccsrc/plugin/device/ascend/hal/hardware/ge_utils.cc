@@ -156,7 +156,7 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
       transform::Status::SUCCESS) {
     return false;
   }
-  if (transform::AddGraph(init_graph, transform::GenFakeGraph("init")) != transform::Status::SUCCESS) {
+  if (transform::AddGraph(init_graph, transform::GetInitGraph(converter)) != transform::Status::SUCCESS) {
     return false;
   }
   if (transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast")) != transform::Status::SUCCESS) {
