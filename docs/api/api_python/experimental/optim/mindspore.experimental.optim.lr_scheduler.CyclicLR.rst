@@ -23,7 +23,7 @@ mindspore.experimental.optim.lr_scheduler.CyclicLR
         - **mode** (str, 可选) - "triangular", "triangular2" 或 "exp_range"}。对应的计算策略详见上文，如果 `scale_fn` 不是None，则此参数无效。默认值：``"triangular"``。
         - **gamma** (float, 可选) - 'exp_range' 模式下的常量，计算方式为 `gamma**(cycle iterations)`。默认值：``1.0``。
         - **scale_fn** (function, 可选) - 由单个参数的 lambda 匿名函数定义的自定义扩展策略，其中对所有的 `x >= 0`，`0 <= scale_fn（x） <= 1` 。如果设定了此参数，则 `mode` 设定值将被忽略。默认值：``None``。
-        - **scale_mode** (str, 可选) - ``'cycle'`` 或 ``'iterations'``。定义 `scale_fn` 是按周期数还是周期内的迭代次数（当前周期内训练迭代的次数）。默认值： ``'cycle'``。
+        - **scale_mode** (str, 可选) - ``'cycle'`` 或 ``'iterations'``。定义 `scale_fn` 是按周期数还是周期内的迭代次数（当前周期内训练迭代的次数）。若传入不合法输入，将默认使用 ``'iterations'`` 模式。默认值： ``'cycle'``。
         - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值： ``-1``。
 
     异常：
