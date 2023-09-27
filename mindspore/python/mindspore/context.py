@@ -943,7 +943,8 @@ def set_offload_context(offload_config):
             - aio_block_size (str): The size of aio block. The format is "xxGB".
             - aio_queue_depth (int): The depth of aio queue.
             - offload_param (str):  The param for offload destination, cpu or disk, Default: ``""``.
-            - offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk, Default: ``""``.
+            - offload_checkpoint (str):  The checkpoint for offload destination, only valid if recompute is turned on,
+              cpu or disk, Default: ``""``.
             - auto_offload (bool): The flag of whether auto offload. Default: ``True``.
             - host_mem_block_size (str): The memory block size of host memory pool. The format is "xxGB"
 
