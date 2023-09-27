@@ -67,14 +67,8 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     """
     if not isinstance(network, nn.Cell):
         raise TypeError("network must be nn.Cell, but got {}.".format(type(network)))
-    if not os.path.exists(ckpt_files):
-        raise ValueError("{} is not exist, please check the input 'ckpt_files'.".format(ckpt_files))
-    if not Path(ckpt_files).is_dir():
-        raise TypeError("ckpt_files must be a directory path, but got {}.".format(ckpt_files))
-    if not os.path.exists(saved_path):
-        raise ValueError("{} is not exist, please check the input 'saved_path'.".format(saved_path))
-    if not Path(saved_path).is_dir():
-        raise TypeError("saved_path must be a directory path, but got {}.".format(saved_path))
+    _check_dir_path('ckpt_files', ckpt_files)
+    _check_dir_path('saved_path', saved_path)
     # Try to find default target modules
     if target_modules is None:
         to_split_modules = _get_default_target_modules(ckpt_files)
@@ -167,6 +161,8 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
         raise TypeError("network must be nn.Cell, but got {}.".format(type(network)))
     if not isinstance(obf_ratios, Tensor):
         raise TypeError("obf_ratios must be MindSpore Tensor, but got {}.".format(type(obf_ratios)))
+    if obf_ratios.size == 0:
+        raise ValueError("obf_ratios can not be empty.")
     if not _check_valid_target(network, target_modules):
         raise ValueError("{} is not exist, please check the input 'target_modules'.".format(target_modules))
     if len(target_modules) >= 1 and target_modules[0] == '/':
@@ -182,6 +178,16 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
     return rewrite_network
 
 
+def _check_dir_path(name, dir_path):
+    """check directory path"""
+    if not isinstance(dir_path, str):
+        raise TypeError("{} must be string, but got {}.".format(name, type(dir_path)))
+    if not os.path.exists(dir_path):
+        raise ValueError("{} is not exist, please check the input {}.".format(dir_path, name))
+    if not Path(dir_path).is_dir():
+        raise TypeError("{} must be a directory path, but got {}.".format(name, dir_path))
+
+
 def _check_valid_target(network, target_modules):
     """check whether the input 'target_modules' exists"""
     if not isinstance(target_modules, list):
@@ -189,12 +195,18 @@ def _check_valid_target(network, target_modules):
     if len(target_modules) != 2:
         raise ValueError("target_modules should contain two string values, in the form of ['A/B/C', 'D1|D2'],"
                          "but got {}.".format(target_modules))
+    if (not isinstance(target_modules[0], str)) or (not isinstance(target_modules[1], str)):
+        raise TypeError("The values of target_modules should be string, but got {} and {}.".
+                        format(type(target_modules[0]), type(target_modules[1])))
+
     if not target_modules[1]:
         raise ValueError("{} should be a non-empty string value, in the form of 'D1|D2'"
                          .format(target_modules[1]))
     if not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\/*_*)*', string=target_modules[0])\
-            or not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\|*)*', string=target_modules[1]):
+            or not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\|*_*)*', string=target_modules[1]):
         raise ValueError("please check the input 'target_modules'{},it should be in the form of ['A/B/C', 'D1|D2']."
+                         "target_modules[0] can only contain uppercase and lowercase letters, numbers, '_' and '/',"
+                         "target_modules[1] can only contain uppercase and lowercase letters, numbers, '_' and '|'"
                          .format(target_modules))
     # target_modules[0] is allowed to be '', it means the main network path
     path_list = target_modules[0].split('/')
@@ -216,7 +228,8 @@ def _check_valid_target(network, target_modules):
             elif isinstance(net, nn.Cell):
                 stk.append(net)
             else:
-                raise TypeError("obfuscation only support nn.Cell(nn.CellList) now, but got type {}".format(type(net)))
+                raise TypeError("Target_modules[0] should be a subgraph and it's type should be  nn.Cell(nn.CellList),"
+                                "but got type {}".format(type(net)))
     if target_modules[0] != '' and i != len(path_list):
         raise ValueError("the path {} does not exist.".format(target_modules[0]))
     # check whether target_list is valid
