@@ -774,6 +774,33 @@ def test_batch_multiprocessing_with_in_out_rowsize():
             assert lsof == new_lsof
 
 
+def test_per_batch_map_getter():
+    """
+    Feature: Batch op
+    Description: call getter on batch with multiprocessing or multithreading
+    Expectation: success
+    """
+    def gen(num):
+        for i in range(num):
+            yield (np.array([i]),)
+
+    def simple_copy(col_list, batch_info):
+        _ = batch_info
+        return ([np.copy(arr) for arr in col_list],)
+
+    dataset = ds.GeneratorDataset((lambda: gen(4)), ["num"])
+    dataset = dataset.batch(batch_size=2, drop_remainder=False, input_columns=["num"],
+                            per_batch_map=simple_copy, python_multiprocessing=True)
+    getter1 = [dataset.output_shapes(), dataset.output_types()]
+
+    dataset = ds.GeneratorDataset((lambda: gen(4)), ["num"])
+    dataset = dataset.batch(batch_size=2, drop_remainder=False, input_columns=["num"],
+                            per_batch_map=simple_copy, python_multiprocessing=False)
+    getter2 = [dataset.output_shapes(), dataset.output_types()]
+
+    assert getter1 == getter2
+
+
 if __name__ == '__main__':
     logger.info("Running test_var_batch_map.py test_batch_corner_cases() function")
     test_batch_corner_cases()
@@ -811,3 +838,5 @@ if __name__ == '__main__':
     test_batch_multiprocessing_with_in_out_rowsize()
 
     test_batch_multiprocessing_with_in_out_rowsize_exception()
+
+    test_per_batch_map_getter()
