@@ -31,6 +31,11 @@ class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
   BufferAppendCpuKernelMod() : element_nums_(0), exp_batch_(0), capacity_(0) {}
 
   ~BufferAppendCpuKernelMod() override = default;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;

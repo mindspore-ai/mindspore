@@ -29,6 +29,9 @@ class InstanceNormV2GradCpuKernelMod : public NativeCpuKernelMod {
  public:
   InstanceNormV2GradCpuKernelMod() = default;
   ~InstanceNormV2GradCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

@@ -32,6 +32,11 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
   BufferCPUSampleKernelMod() : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), unique_(false) {}
 
   ~BufferCPUSampleKernelMod() override = default;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     auto shapes = GetValue<std::vector<int64_t>>(primitive_->GetAttr("buffer_elements"));
     auto types = GetValue<std::vector<TypePtr>>(primitive_->GetAttr("buffer_dtype"));

@@ -29,6 +29,9 @@ class GluGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   GluGradCpuKernelMod() = default;
   ~GluGradCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

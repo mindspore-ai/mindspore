@@ -29,6 +29,9 @@ class TensorsQueueCreateCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCreateCpuKernelMod();
   ~TensorsQueueCreateCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -51,6 +54,9 @@ class TensorsQueuePutCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueuePutCpuKernelMod();
   ~TensorsQueuePutCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -70,6 +76,9 @@ class TensorsQueueGetCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueGetCpuKernelMod();
   ~TensorsQueueGetCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -89,6 +98,9 @@ class TensorsQueueClearCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueClearCpuKernelMod();
   ~TensorsQueueClearCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -105,6 +117,9 @@ class TensorsQueueCloseCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCloseCpuKernelMod();
   ~TensorsQueueCloseCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -121,6 +136,9 @@ class TensorsQueueSizeCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueSizeCpuKernelMod();
   ~TensorsQueueSizeCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;

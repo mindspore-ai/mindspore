@@ -29,6 +29,9 @@ class LUSolverCpuKernelMod : public NativeCpuKernelMod {
  public:
   LUSolverCpuKernelMod() = default;
   ~LUSolverCpuKernelMod() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {

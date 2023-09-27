@@ -33,6 +33,10 @@ class PriorityReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
   PriorityReplayBufferCreateCpuKernel() = default;
   ~PriorityReplayBufferCreateCpuKernel() override = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
@@ -53,6 +57,10 @@ class PriorityReplayBufferPushCpuKernel : public NativeCpuKernelMod {
   PriorityReplayBufferPushCpuKernel() = default;
   ~PriorityReplayBufferPushCpuKernel() override = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
@@ -67,6 +75,10 @@ class PriorityReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferSampleCpuKernel() = default;
   ~PriorityReplayBufferSampleCpuKernel() override = default;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
@@ -84,6 +96,10 @@ class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferUpdateCpuKernel() = default;
   ~PriorityReplayBufferUpdateCpuKernel() override = default;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
@@ -107,6 +123,10 @@ class PriorityReplayBufferDestroyCpuKernel : public NativeCpuKernelMod {
  public:
   PriorityReplayBufferDestroyCpuKernel() = default;
   ~PriorityReplayBufferDestroyCpuKernel() override = default;
+
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

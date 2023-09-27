@@ -45,6 +45,9 @@ class PyFuncCpuKernelMod : public NativeCpuKernelMod {
   PyFuncCpuKernelMod() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
   ~PyFuncCpuKernelMod() = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   // Construct arguments with raw memory, invoke Python function and then convert result to raw memory.
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,

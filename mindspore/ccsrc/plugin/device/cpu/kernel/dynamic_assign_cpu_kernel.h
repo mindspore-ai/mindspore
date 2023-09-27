@@ -31,6 +31,10 @@ class DynamicAssignCpuKernelMod : public NativeCpuKernelMod {
   DynamicAssignCpuKernelMod() = default;
   ~DynamicAssignCpuKernelMod() override = default;
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
