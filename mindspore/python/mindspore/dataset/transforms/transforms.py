@@ -896,7 +896,7 @@ class Slice(TensorOperation):
             Negative index is also supported.
             If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
             it will slice according to its specified start position, stop position and step size.
-            If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>>`_ ,
+            If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
             all elements will be sliced.
             If the input is None, all elements will be sliced.
 
