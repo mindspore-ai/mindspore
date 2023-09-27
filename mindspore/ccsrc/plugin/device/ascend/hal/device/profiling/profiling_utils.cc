@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include <sys/syscall.h>
 #include <algorithm>
+#include <mutex>
 #include "kernel/kernel.h"
 #include "ops/structure_op_name.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
@@ -41,6 +42,7 @@ constexpr uint64_t kProfilingFpStartLogId = 2;
 constexpr uint64_t kProfilingBpEndLogId = 3;
 constexpr uint64_t kProfilingIterEndLogId = 4;
 constexpr auto kDouble = 2;
+std::mutex ProfilingUtils::profiler_mutex;
 
 const std::unordered_map<std::string, GeProfInfoType> kNamesToProfTypes = {
   {"ModelExecute", GeProfInfoType::kModelExecute},
@@ -738,9 +740,13 @@ uint32_t ProfilingUtils::GetBlockDim(const CNodePtr &node) {
   return ascend_kernel_mod->block_dim();
 }
 
-void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
+void ProfilingUtils::InitReportNode(const CNodePtr &cnode, bool init_begin_time) {
+  std::lock_guard<std::mutex> lock(profiler_mutex);
   MS_EXCEPTION_IF_NULL(cnode);
   ProfNodeAdditionInfo addition_info{};
+  if (init_begin_time) {
+    addition_info.api.beginTime = MsprofSysCycleTime();
+  }
   MsprofCompactInfo &basic_info = addition_info.node_basic_info;
   basic_info.level = MSPROF_REPORT_NODE_LEVEL;
   basic_info.type = MSPROF_REPORT_NODE_BASIC_INFO_TYPE;
