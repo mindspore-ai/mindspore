@@ -33,5 +33,18 @@ STATUS GetMatchNodeIndex(schema::MetaGraphT *graph,
   MS_CHECK_TRUE_MSG(*node_index < graph->nodes.size(), RET_ERROR, "node_index is out of range");
   return RET_OK;
 }
+
+bool IsMultiOutputNode(schema::MetaGraphT *graph, size_t out_node_index) {
+  uint32_t count = 0;
+  for (auto &node : graph->nodes) {
+    if (std::find(node->inputIndex.begin(), node->inputIndex.end(), out_node_index) != node->inputIndex.end()) {
+      count++;
+    }
+    if (count > 1) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

@@ -74,11 +74,8 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   MetaGraphT *graph, const std::string &pattern_name,
   const std::unordered_map<std::string, std::shared_ptr<Path>> &matched_path) {
   MS_CHECK_TRUE_RET(graph != nullptr, RET_NULL_PTR);
-  if (matched_path.size() != opt::kMatchPathLenThree) {
-    MS_LOG(ERROR) << "Reshape-Gather-Reshape-Fusion should have three NodeIndex in matchedPair";
-    return RET_PARAM_INVALID;
-  }
-
+  MS_CHECK_TRUE_MSG(matched_path.size() == opt::kMatchPathLenThree, RET_PARAM_INVALID,
+                    "Reshape-Gather-Reshape-Fusion should have three NodeIndex in matchedPair");
   size_t reshape1_index = 0;
   STATUS ret = opt::GetMatchNodeIndex(graph, matched_path, std::string(Reshape1Name), &reshape1_index);
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "cannot get reshape1_index");
@@ -94,7 +91,6 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "cannot get reshape2_index");
   auto &reshape2_node = graph->nodes.at(reshape2_index);
   MS_CHECK_TRUE_MSG(reshape2_node != nullptr, RET_NULL_PTR, "reshape2_node is nullptr");
-
   if (reshape1_node->inputIndex.size() != opt::kInputSizeTwo ||
       reshape1_node->outputIndex.size() != opt::kOutputSizeOne ||
       reshape1_node->quantType == schema::QuantType_QUANT_ALL ||
@@ -108,7 +104,11 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
     MS_LOG(ERROR) << "reshape_node cannot fusion";
     return RET_NO_CHANGE;
   }
-
+  if (opt::IsMultiOutputNode(graph, reshape1_node->outputIndex.at(0)) ||
+      opt::IsMultiOutputNode(graph, gather_node->outputIndex.at(0))) {
+    MS_LOG(ERROR) << "reshape node or gather node is multi-output node, cannot fusion";
+    return RET_NO_CHANGE;
+  }
   auto old_shape = graph->allTensors.at(reshape2_node->outputIndex.at(opt::kOutputIndexZero))->dims;
   auto gather_shape0 = graph->allTensors.at(gather_node->inputIndex.at(opt::kInputIndexZero))->dims;
   auto gather_shape1 = graph->allTensors.at(reshape1_node->inputIndex.at(opt::kInputIndexZero))->dims;
@@ -130,10 +130,8 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   if (gather_shape0 != old_shape) {
     return RET_NO_CHANGE;
   }
-
   gather_node->inputIndex.at(opt::kInputIndexOne) = reshape1_node->inputIndex.at(opt::kInputIndexZero);
   gather_node->outputIndex.at(opt::kOutputIndexZero) = reshape2_node->outputIndex.at(opt::kOutputIndexZero);
-
   // cannot delete node here, otherwise will destroy order in other pattern's node index
   // make it an isolated node to be removed in IsolatedNodeRemovePass
   reshape1_node->inputIndex.clear();

@@ -130,6 +130,7 @@ class TrainSession : virtual public lite::LiteSession {
   virtual void CompileTrainOutputs();
   virtual void CompileEvalOutputs();
   virtual int InitCallBack();
+  virtual int FindConstFoldedKernels();
   std::shared_ptr<Model> model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::lite::Tensor *> orig_output_tensor_map_;
@@ -145,6 +146,8 @@ class TrainSession : virtual public lite::LiteSession {
 
   std::vector<kernel::KernelExec *> inference_kernels_;
   std::vector<kernel::KernelExec *> train_kernels_;
+  std::vector<kernel::KernelExec *> const_fold_kernels_;
+  std::vector<lite::Tensor *> const_output_tensors_;
   TrainCfg cfg_;
 
  private:

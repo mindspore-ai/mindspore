@@ -47,8 +47,10 @@ class TrainExport {
   explicit TrainExport(Buffer *model_buffer) : model_buffer_(model_buffer) {}
   virtual ~TrainExport();
   int ExportNet(const std::vector<mindspore::kernel::KernelExec *> &kernels,
-                const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names,
-                const Model *model, QuantizationType quant_type, const Model *bb_model = nullptr);
+                const std::vector<mindspore::lite::Tensor *> &tensors,
+                const std::vector<mindspore::lite::Tensor *> const_folded_output,
+                const std::vector<std::string> &output_names, const Model *model, QuantizationType quant_type,
+                const Model *bb_model = nullptr);
   int ExportInit(const std::string model_name, std::string version);
   int SaveToFile();
   int SaveToBuffer();
@@ -75,7 +77,9 @@ class TrainExport {
   int TopologicalSort();
   void PrepareRemap(int offset);
   LiteGraph::Node *FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model);
-  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor, int preferred_dim,
+  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor,
+                                                const std::vector<mindspore::lite::Tensor *> const_folded_output,
+                                                schema::Tensor *scTensor, int preferred_dim,
                                                 const int tensor_quant_type);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::KernelExec *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
@@ -93,6 +97,7 @@ class TrainExport {
                              size_t *target_index);
   int KeepGraphInputsInOrder(const Model *model);
   int ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
+                   const std::vector<mindspore::lite::Tensor *> const_folded_output,
                    const std::vector<std::pair<size_t, tensor_info>> &map_index,
                    const std::vector<std::string> &output_names, const std::set<size_t> &out_set);
   virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor,
