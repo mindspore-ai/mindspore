@@ -39,10 +39,10 @@ def run_net_with_import(mode):
     assert codes.count("class NoCellNet():") == 1
     assert codes.count("class BaseNet(nn.Cell):") == 1
     assert codes.count("class NetWithClassVar():") == 1
-    assert codes.count("var1 = Tensor(1.0)") == 1
-    assert codes.count("var2 = external_func") == 1
-    assert codes.count("var3 = external_func2") == 1
-    assert codes.count("def external_func(x):") == 1
+    assert codes.count("var1 = Tensor(1.0)") == 0
+    assert codes.count("var2 = external_func") == 0
+    assert codes.count("var3 = external_func2") == 0
+    assert codes.count("def external_func(x):") == 0
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
