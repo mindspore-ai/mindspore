@@ -29,4 +29,4 @@ mindspore.experimental.optim.lr_scheduler.CyclicLR
     异常：
         - **ValueError** - `base_lr` 为list或tuple时，长度不等于参数组数目。
         - **ValueError** - `max_lr` 为list或tuple时，长度不等于参数组数目。
-        - **ValueError** - `mode` 不是[``'triangular'``, ``'triangular2'``, ``'exp_range'``]且`scale_fn` 为 ``None``。
+        - **ValueError** - `mode` 不是[``'triangular'``, ``'triangular2'``, ``'exp_range'``]且 `scale_fn` 为 ``None``。

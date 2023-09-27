@@ -760,7 +760,8 @@ class SequentialLR:
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
-        schedulers (list[:class:`mindspore.experimental.optim.Optimizer`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.experimental.optim.lr_scheduler.LRScheduler`]):
+            List of learning rate schedulers.
         milestones (list): List of integers that reflects milestone points.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 

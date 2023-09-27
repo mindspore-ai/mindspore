@@ -15,6 +15,6 @@ mindspore.experimental.optim.lr_scheduler.MultiStepLR
         - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值：``-1``。
 
     异常：
-        - **ValueError** - `milestones` 不是列表。
+        - **TypeError** - `milestones` 不是列表。
         - **TypeError** - `milestones` 的元素不是int类型。
-        - **ValueError** - `gamma` 不是float类型。
+        - **TypeError** - `gamma` 不是float类型。

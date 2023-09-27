@@ -18,7 +18,7 @@ mindspore.train.Callback
         在网络执行之前被调用一次。与 `on_train_begin` 和 `on_eval_begin` 方法具有兼容性。
 
         .. note::
-            `begin` 接口将在后续版本中废弃，请使用`on_train_begin` 和 `on_eval_begin`。
+            `begin` 接口将在后续版本中废弃，请使用 `on_train_begin` 和 `on_eval_begin`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -28,7 +28,7 @@ mindspore.train.Callback
         网络执行后被调用一次。与 `on_train_end` 和 `on_eval_end` 方法具有兼容性。
 
         .. note::
-            `end` 接口将在后续版本中废弃，请使用`on_train_end` 和 `on_eval_end`。
+            `end` 接口将在后续版本中废弃，请使用 `on_train_end` 和 `on_eval_end`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -38,7 +38,7 @@ mindspore.train.Callback
         在每个epoch开始之前被调用。与 `on_train_epoch_begin` 和 `on_eval_epoch_begin` 方法具有兼容性。
 
         .. note::
-            `epoch_begin` 接口将在后续版本中废弃，请使用`on_train_epoch_begin` 和 `on_eval_epoch_begin`。
+            `epoch_begin` 接口将在后续版本中废弃，请使用 `on_train_epoch_begin` 和 `on_eval_epoch_begin`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -48,7 +48,7 @@ mindspore.train.Callback
         在每个epoch结束后被调用。与 `on_train_epoch_end` 和 `on_eval_epoch_end` 方法具有兼容性。
 
         .. note::
-            `epoch_end` 接口将在后续版本中废弃，请使用`on_train_epoch_end` 和 `on_eval_epoch_end`。
+            `epoch_end` 接口将在后续版本中废弃，请使用 `on_train_epoch_end` 和 `on_eval_epoch_end`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -142,7 +142,7 @@ mindspore.train.Callback
         在每个step开始之前被调用。与 `on_train_step_begin` 和 `on_eval_step_begin` 方法具有兼容性。
 
         .. note::
-            `step_begin` 接口将在后续版本中废弃，请使用`on_train_step_begin` 和 `on_eval_step_begin`。
+            `step_begin` 接口将在后续版本中废弃，请使用 `on_train_step_begin` 和 `on_eval_step_begin`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。
@@ -152,7 +152,7 @@ mindspore.train.Callback
         在每个step完成后被调用。与 `on_train_step_end` 和 `on_eval_step_end` 方法具有兼容性。
 
         .. note::
-            `step_end` 接口将在后续版本中废弃，请使用`on_train_step_end` 和 `on_eval_step_end`。
+            `step_end` 接口将在后续版本中废弃，请使用 `on_train_step_end` 和 `on_eval_step_end`。
 
         参数：
             - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.train.RunContext`。

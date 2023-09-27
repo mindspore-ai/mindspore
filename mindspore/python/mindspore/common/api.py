@@ -613,7 +613,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
         compile_once(bool): ``True``: The function would be compiled once when it was created many times.
-            But it may be wrong if the free variables were changed.``False``: It would be recompiled when
+            But it may be wrong if the free variables were changed. ``False`` : It would be recompiled when
             it was created again
             Default: ``False`` .
 
