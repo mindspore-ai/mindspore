@@ -25,8 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int INPUT_NUM = 2;
-constexpr int OUTPUT_NUM = 2;
 constexpr int OUT_PUT_SHAPE_SIZE = 4;
 constexpr int X_SHAPE_SIZE = 4;
 constexpr int ROI_SHAPE_SIZE = 2;
@@ -38,7 +36,7 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class PsROIPoolingFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
   PsROIPoolingFwdGpuKernelMod()
       : pooled_height_(0),
@@ -78,38 +76,36 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    // Get the number of input args
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPooling needs 2 input.";
-      return false;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    // Get primitive args
+    pooled_height_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("pooled_height")));
+    pooled_width_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("pooled_width")));
+    num_rois_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_rois")));
+    spatial_scale_ = static_cast<T>(GetValue<float>(primitive_->GetAttr("spatial_scale")));
+    out_dim_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("out_dim")));
+    group_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group_size")));
+    return true;
+  }
 
-    // Get the number of output args
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != OUTPUT_NUM) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPooling needs 2 output.";
-      return false;
-    }
-
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     // Get the input shapes
-    auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    const auto &x_shape = inputs[kIndex0]->GetShapeVector();
+    const auto &rois_shape = inputs[kIndex1]->GetShapeVector();
     is_null_input_ =
-      CHECK_SHAPE_NULL(x_shape, kernel_name, "input") || CHECK_SHAPE_NULL(rois_shape, kernel_name, "roi");
+      CHECK_SHAPE_NULL(x_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(rois_shape, kernel_name_, "roi");
     if (is_null_input_) {
       MS_LOG(WARNING) << "For 'PsROIPoolingFwdGpuKernelMod', input is null.";
-      InitSizeLists();
-      return true;
+      output_size_list_.push_back(output_size_);
+      output_size_list_.push_back(out_mapping_channel_size_);
+      return KRET_UNKNOWN_SHAPE;
     }
 
     auto x_shape_size = x_shape.size();
     if (x_shape_size != X_SHAPE_SIZE) {
       MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but must be 4.";
-      return false;
+      return KRET_RESIZE_FAILED;
     }
 
     // Get channels, height & width
@@ -128,14 +124,6 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     rois_size_ = LongToSizeClipNeg(rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1]) * sizeof(T);
     rois_shape_ = {LongToInt(rois_shape[ROI_SHAPE_INDEX0]), LongToInt(rois_shape[ROI_SHAPE_INDEX1])};
 
-    // Get primitive args
-    pooled_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_height"));
-    pooled_width_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_width"));
-    num_rois_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_rois"));
-    spatial_scale_ = static_cast<T>(GetAttr<float>(kernel_node, "spatial_scale"));
-    out_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "out_dim"));
-    group_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group_size"));
-
     // Get output_shape
     output_shape_ = {num_rois_, out_dim_, pooled_height_, pooled_width_};
     output_size_ = sizeof(T);
@@ -147,16 +135,9 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     out_mapping_channel_shape_ = {num_rois_, out_dim_, pooled_height_, pooled_width_};
     out_mapping_channel_size_ = num_rois_ * out_dim_ * pooled_height_ * pooled_width_ * sizeof(int);
 
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(x_size_);
-    input_size_list_.push_back(rois_size_);
     output_size_list_.push_back(output_size_);
     output_size_list_.push_back(out_mapping_channel_size_);
+    return KRET_OK;
   }
 
  private:

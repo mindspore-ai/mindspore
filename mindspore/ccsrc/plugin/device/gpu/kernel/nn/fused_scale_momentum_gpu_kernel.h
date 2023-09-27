@@ -23,9 +23,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/momentum_impl.cuh"
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 6;
 template <typename T, typename S>
-class FusedScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class FusedScaleMomentumGpuKernelMod : public NativeGpuKernelMod {
  public:
   FusedScaleMomentumGpuKernelMod() : element_num_(1), is_null_input_(false) {}
   ~FusedScaleMomentumGpuKernelMod() override = default;
@@ -47,36 +46,22 @@ class FusedScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_STATUS(status, kernel_name_);
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    kernel_node_ = kernel_node;
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be " << INPUT_NUM << ", but got "
-                        << input_num;
-    }
-
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    element_num_ *= SizeOf(variable_shape);
-
-    InitSizeLists();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(S));
-    input_size_list_.push_back(sizeof(T));
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto variable_shape = inputs[kIndex1]->GetShapeVector();
+    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "input");
+    if (is_null_input_) {
+      output_size_list_.push_back(element_num_ * sizeof(T));
+      return KRET_UNKNOWN_SHAPE;
+    }
+    element_num_ *= SizeOf(variable_shape);
     output_size_list_.push_back(element_num_ * sizeof(T));
+    return KRET_OK;
   }
 
  private:

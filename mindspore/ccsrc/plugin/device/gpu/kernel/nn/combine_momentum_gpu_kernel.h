@@ -30,10 +30,9 @@ constexpr int kCombineMomentumInputsNum = 5;
 constexpr int kCombineScaleMomentumInputsNum = 6;
 constexpr int kCombineWeightDecayMomentumInputsNum = 7;
 template <typename T, typename S, typename G>
-class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class CombineMomentumGpuKernelMod : public NativeGpuKernelMod {
  public:
-  CombineMomentumGpuKernelMod()
-      : element_num_(1), combine_num_(0), input_num_(0), is_null_input_(false), kernel_name_("CombineMomentum") {}
+  CombineMomentumGpuKernelMod() : element_num_(1), combine_num_(0), input_num_(0), is_null_input_(false) {}
   ~CombineMomentumGpuKernelMod() override = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
@@ -75,11 +74,9 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    combine_num_ = GetAttr<size_t>(kernel_node, "combine_num");
 
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    combine_num_ = GetValue<size_t>(primitive_->GetAttr("combine_num"));
     if (kernel_name_ == kCombineMomentumOpName) {
       input_num_ = kCombineMomentumInputsNum;
     } else if (kernel_name_ == kCombineScaleMomentumOpName) {
@@ -89,33 +86,25 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else {
       MS_LOG(EXCEPTION) << "Combine kernel name is invalid.";
     }
-    for (size_t i = 0; i < combine_num_; i++) {
-      auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
-      is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
-                                        "input[" + std::to_string(i * input_num_ + input_num_ - 5) + "]");
-      if (is_null_input_ || IsDynamic(variable_shape)) {
-        InitSizeLists();
-        return true;
-      }
-      element_num_ = SizeOf(variable_shape);
-      elements_.push_back(element_num_);
-      InitSizeLists();
-    }
     return true;
   }
 
- protected:
-  void InitSizeLists() override {
-    if (input_num_ == 7) {
-      input_size_list_.push_back(sizeof(T));
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    for (size_t i = 0; i < combine_num_; i++) {
+      auto variable_shape = inputs[i * input_num_ + input_num_ - kIndex5]->GetShapeVector();
+      is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
+                                        "input[" + std::to_string(i * input_num_ + input_num_ - kIndex5) + "]");
+      if (is_null_input_ || IsDynamic(variable_shape)) {
+        output_size_list_.push_back(element_num_ * sizeof(T));
+        return KRET_UNKNOWN_SHAPE;
+      }
+      element_num_ = SizeOf(variable_shape);
+      elements_.push_back(element_num_);
+      output_size_list_.push_back(element_num_ * sizeof(T));
     }
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(T));
-    input_size_list_.push_back(sizeof(T));
-    input_size_list_.push_back(element_num_ * sizeof(S));
-    input_size_list_.push_back(sizeof(T));
-    output_size_list_.push_back(element_num_ * sizeof(T));
+    return KRET_OK;
   }
 
  private:
@@ -124,7 +113,6 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t combine_num_;
   int input_num_;
   bool is_null_input_;
-  std::string kernel_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore

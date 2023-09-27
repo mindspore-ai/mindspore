@@ -27,41 +27,28 @@ namespace kernel {
 FakeLearnedScaleQuantPerLayerGpuKernelMod::FakeLearnedScaleQuantPerLayerGpuKernelMod()
     : input_size_(0), quant_num_(1), global_step_(0), quant_delay_(0), training_(false), neg_trunc_(false) {}
 
-bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  kernel_node_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kSize3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-  }
+bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  quant_delay_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("quant_delay")));
+  training_ = GetValue<bool>(primitive_->GetAttr("training"));
+  neg_trunc_ = GetValue<bool>(primitive_->GetAttr("neg_trunc"));
+  return true;
+}
 
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kSize1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-  }
-
-  quant_delay_ =
-    static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
-  training_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("training"));
-  neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
-
+int FakeLearnedScaleQuantPerLayerGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                                      const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
   for (size_t i = 0; i < input_shape.size(); ++i) {
     quant_num_ *= LongToInt(input_shape[i]);
   }
   input_size_ = sizeof(float) * quant_num_;
-  InitSizeLists();
-  return true;
-}
-
-void FakeLearnedScaleQuantPerLayerGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);      // x
-  input_size_list_.push_back(sizeof(float));    // alpha
-  input_size_list_.push_back(sizeof(float));    // quant_max
   output_size_list_.push_back(input_size_);     // y
   workspace_size_list_.push_back(input_size_);  // input_div_alpha
   workspace_size_list_.push_back(input_size_);  // input_quant
+  return KRET_OK;
 }
 
 bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
@@ -92,10 +79,9 @@ bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Launch(const std::vector<KernelT
                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
-      CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
-                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "Copy gpu memory failed");
+      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
+                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                        "Copy gpu memory failed");
     }
     global_step_++;
   } else {

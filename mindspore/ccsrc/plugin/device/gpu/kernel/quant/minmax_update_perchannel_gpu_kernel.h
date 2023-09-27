@@ -23,17 +23,15 @@
 
 namespace mindspore {
 namespace kernel {
-class MinMaxUpdatePerChannelGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class MinMaxUpdatePerChannelGpuKernelMod : public NativeGpuKernelMod {
  public:
   MinMaxUpdatePerChannelGpuKernelMod();
   ~MinMaxUpdatePerChannelGpuKernelMod() = default;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  bool Init(const CNodePtr &kernel) override;
-
- protected:
-  void InitSizeLists() override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
   size_t input_size_;

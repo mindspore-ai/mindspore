@@ -37,34 +37,21 @@ FakeQuantPerLayerGpuKernelMod::FakeQuantPerLayerGpuKernelMod()
       is_null_input_(false),
       symmetric_(false) {}
 
-bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  kernel_node_ = kernel_node;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kSize3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
-  }
-
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kSize1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
-  }
-
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
-  quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
-  training_ = GetValue<bool>(prim->GetAttr("training"));
-  symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
-  narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
+bool FakeQuantPerLayerGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(primitive_->GetAttr("num_bits")));
+  quant_delay_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("quant_delay")));
+  training_ = GetValue<bool>(primitive_->GetAttr("training"));
+  symmetric_ = GetValue<bool>(primitive_->GetAttr("symmetric"));
+  narrow_range_ = GetValue<bool>(primitive_->GetAttr("narrow_range"));
 
   if (num_bits_ <= kMinQuantBit || num_bits_ >= kMaxQuantBit) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of num_bits should be in (2, 16), but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of num_bits should be in (2, 16), but got "
                       << num_bits_;
   }
 
   if (quant_delay_ < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of quant_delay_ cannot be less than 0, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of quant_delay_ cannot be less than 0, but got "
                       << quant_delay_;
   }
   // quant min and max value
@@ -73,29 +60,32 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   if (narrow_range_) {
     quant_min_++;
   }
-
-  // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-  if (is_null_input_) {
-    InitSizeLists();
-    return true;
-  }
-  auto size = SizeOf(input_shape);
-  quant_num_ = SizeToInt(size);
-  input_size_ = sizeof(float) * size;
-  InitSizeLists();
   return true;
 }
 
-void FakeQuantPerLayerGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);        // x
-  input_size_list_.push_back(sizeof(float));      // min
-  input_size_list_.push_back(sizeof(float));      // max
+void FakeQuantPerLayerGpuKernelMod::SetSizeLists() {
   output_size_list_.push_back(input_size_);       // y
   workspace_size_list_.push_back(sizeof(float));  // scale
   workspace_size_list_.push_back(sizeof(float));  // nudge_min
   workspace_size_list_.push_back(sizeof(float));  // nudge_max
+}
+
+int FakeQuantPerLayerGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  // init size
+  auto input_shape = inputs[kIndex0]->GetShapeVector();
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
+  if (is_null_input_) {
+    SetSizeLists();
+    return KRET_UNKNOWN_SHAPE;
+  }
+  auto size = SizeOf(input_shape);
+  quant_num_ = SizeToInt(size);
+  input_size_ = sizeof(float) * size;
+  SetSizeLists();
+  return KRET_OK;
 }
 
 bool FakeQuantPerLayerGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
@@ -123,10 +113,9 @@ bool FakeQuantPerLayerGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
                                     reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, kernel_name_);
     } else {
-      CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
-                                cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
-                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                "Copy gpu memory failed");
+      CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
+                                                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                        "Copy gpu memory failed");
     }
     global_step_++;
   } else {

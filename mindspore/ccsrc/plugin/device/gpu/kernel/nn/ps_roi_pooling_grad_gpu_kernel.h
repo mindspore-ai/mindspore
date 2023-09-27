@@ -25,8 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int INPUT_NUM = 3;
-constexpr int OUTPUT_NUM = 1;
 constexpr int OUT_PUT_SHAPE_SIZE = 4;
 constexpr int MAPPING_CHANNEL_SHAPE = 4;
 constexpr int ROI_SHAPE_SIZE = 2;
@@ -38,7 +36,7 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class PsROIPoolingBackGpuKernelMod : public NativeGpuKernelMod {
  public:
   PsROIPoolingBackGpuKernelMod()
       : batch_size_(0),
@@ -78,35 +76,35 @@ class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    kernel_node_ = kernel_node;
-    // Get the number of input args
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but PsROIPoolingBackGpuKernelMod needs 3 input.";
-      return false;
-    }
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    // Get primitive args
+    batch_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_size")));
+    num_rois_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_rois")));
+    spatial_scale_ = static_cast<T>(GetValue<float>(primitive_->GetAttr("spatial_scale")));
+    channels_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("channels")));
+    height_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("height")));
+    width_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("width")));
+    pooled_height_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("pooled_height")));
+    pooled_width_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("pooled_width")));
+    out_dim_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("out_dim")));
+    return true;
+  }
 
-    // Get the number of output args
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != OUTPUT_NUM) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but PsROIPoolingBackGpuKernelMod needs 1 output.";
-      return false;
-    }
-
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     // Get the input shapes
-    auto dx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto mapping_channel_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    const auto &dx_shape = inputs[kIndex0]->GetShapeVector();
+    const auto &rois_shape = inputs[kIndex1]->GetShapeVector();
+    const auto &mapping_channel_shape = inputs[kIndex2]->GetShapeVector();
 
-    is_null_input_ = CHECK_SHAPE_NULL(dx_shape, kernel_name, "input") ||
-                     CHECK_SHAPE_NULL(rois_shape, kernel_name, "rois") ||
-                     CHECK_SHAPE_NULL(mapping_channel_shape, kernel_name, "map");
+    is_null_input_ = CHECK_SHAPE_NULL(dx_shape, kernel_name_, "input") ||
+                     CHECK_SHAPE_NULL(rois_shape, kernel_name_, "rois") ||
+                     CHECK_SHAPE_NULL(mapping_channel_shape, kernel_name_, "map");
     if (is_null_input_) {
       MS_LOG(WARNING) << "For 'PsROIPoolingBackGpuKernelMod', input is null.";
-      InitSizeLists();
-      return true;
+      output_size_list_.push_back(output_size_);
+      return KRET_UNKNOWN_SHAPE;
     }
 
     dx_size_ = sizeof(T) * SizeOf(dx_shape);
@@ -134,33 +132,14 @@ class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                             static_cast<int>(mapping_channel_shape[MAPPING_CHANNEL_SHAPE_INDEX2]) *
                             static_cast<int>(mapping_channel_shape[MAPPING_CHANNEL_SHAPE_INDEX3]) * sizeof(T);
 
-    // Get primitive args
-    batch_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "batch_size"));
-    num_rois_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_rois"));
-    spatial_scale_ = static_cast<T>(GetAttr<float>(kernel_node, "spatial_scale"));
-    channels_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "channels"));
-    height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "height"));
-    width_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "width"));
-    pooled_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_height"));
-    pooled_width_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_width"));
-    out_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "out_dim"));
-
     // Get output_shape
     output_shape_ = {batch_size_, channels_, height_, width_};
     output_size_ = sizeof(T);
     for (size_t i = 0; i < OUT_PUT_SHAPE_SIZE; i++) {
       output_size_ *= output_shape_[i];
     }
-    InitSizeLists();
-    return true;
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(dx_size_);
-    input_size_list_.push_back(rois_size_);
-    input_size_list_.push_back(mapping_channel_size_);
     output_size_list_.push_back(output_size_);
+    return KRET_OK;
   }
 
  private:

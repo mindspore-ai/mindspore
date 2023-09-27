@@ -25,9 +25,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 8;
 template <typename T>
-class BatchNormFold2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class BatchNormFold2GpuKernelMod : public NativeGpuKernelMod {
  public:
   BatchNormFold2GpuKernelMod()
       : cudnn_handle_(nullptr),
@@ -63,60 +62,41 @@ class BatchNormFold2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
+    freeze_bn_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("freeze_bn")));
+    return true;
+  }
 
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be " << INPUT_NUM << ", but got "
-                        << input_num;
-    }
-
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    auto shape_signed = inputs[kIndex0]->GetShapeVector();
     if (IsDynamic(shape_signed)) {
-      return true;
+      return KRET_UNKNOWN_SHAPE;
     }
     auto input_shape = Convert2SizeTClipNeg(shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
-      InitSizeLists();
-      return true;
+      output_size_list_.push_back(batch_size_ * channel_ * height_ * width_ * sizeof(T));
+      return KRET_UNKNOWN_SHAPE;
     }
 
     if (input_shape.size() != kSize4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
                         << input_shape.size();
     }
     batch_size_ = input_shape[kIndex0];
     channel_ = input_shape[kIndex1];
     height_ = input_shape[kIndex2];
     width_ = input_shape[kIndex3];
-    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-    MS_EXCEPTION_IF_NULL(prim);
-    freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));
 
-    InitSizeLists();
-    return true;
+    output_size_list_.push_back(batch_size_ * channel_ * height_ * width_ * sizeof(T));
+    return KRET_OK;
   }
 
  protected:
   void InitResource() override { cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
-
-  void InitSizeLists() override {
-    size_t input_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
-    size_t weight_size = channel_ * sizeof(T);
-    input_size_list_.push_back(input_size);
-    input_size_list_.push_back(weight_size);      // beta
-    input_size_list_.push_back(weight_size);      // gamma
-    input_size_list_.push_back(weight_size);      // batch_std
-    input_size_list_.push_back(weight_size);      // batch_mean
-    input_size_list_.push_back(weight_size);      // running_std
-    input_size_list_.push_back(weight_size);      // running_mean
-    input_size_list_.push_back(sizeof(int32_t));  // global_step
-    output_size_list_.push_back(input_size);
-  }
 
  private:
   cudnnHandle_t cudnn_handle_;
