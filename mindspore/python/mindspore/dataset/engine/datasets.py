@@ -423,8 +423,8 @@ class Dataset:
         ir_children = [d.parse_tree(getter_mode) for d in self.children]
         # Bootstrap can only be performed on a copy of the original dataset node.
         # Bootstrap on original dataset node will make all iterators share the same process pool
-        self.iterator_bootstrap()
         self.pre_parse(getter_mode)
+        self.iterator_bootstrap()
         ir_node = self.parse(ir_children)
         ir_node = self.post_parse(ir_node)
         return ir_node
