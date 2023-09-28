@@ -33,6 +33,7 @@ def gather_backward_func(input_params, input_indices, axis, batch_dims=0):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_gather_forward():
     """
     Feature: Ops.
@@ -52,6 +53,7 @@ def test_gather_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_gather_backward():
     """
     Feature: Auto grad.
