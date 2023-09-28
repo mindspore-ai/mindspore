@@ -87,6 +87,7 @@
     mindspore.Tensor.clip
     mindspore.Tensor.col2im
     mindspore.Tensor.conj
+    mindspore.Tensor.contiguous
     mindspore.Tensor.copy
     mindspore.Tensor.copysign
     mindspore.Tensor.cos
@@ -177,6 +178,7 @@
     mindspore.Tensor.isreal
     mindspore.Tensor.is_signed
     mindspore.Tensor.is_complex
+    mindspore.Tensor.is_contiguous
     mindspore.Tensor.item
     mindspore.Tensor.itemset
     mindspore.Tensor.itemsize

@@ -1056,6 +1056,46 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return self
 
+    def contiguous(self):
+        """
+        Converts a Tensor into a continuous-memory Tensor that contains the same data as the original Tensor.
+
+        Returns:
+            A contiguous in memory tensor containing the same data as self tensor.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
+            >>> y = ops.transpose(x, (1, 0))
+            >>> y.contiguous()
+            >>> y[:, 1] = 1
+            >>> print(x)
+            [[1. 2. 3.]
+             [4. 5. 6.]]
+        """
+        Tensor_.contiguous(self)
+        return self
+
+    def is_contiguous(self):
+        """
+        Determines whether the memory of tensor is contiguous.
+
+        Returns:
+            bool: True if tensor memory is contiguous, False otherwise.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
+            >>> y = ops.transpose(x, (1, 0))
+            >>> print(y.is_contiguous())
+            False
+        """
+        return Tensor_.is_contiguous(self)
+
     def flush_from_cache(self):
         """
         Flush cache data to host if tensor is cache enable.
