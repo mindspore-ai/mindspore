@@ -68,3 +68,24 @@ def test_equal_backward(mode):
     output = equal_backward_func(x, y)
     expect = [0, 0, 0, 0]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_equal_vmap(mode):
+    """
+    Feature: test vmap function.
+    Description: test equal op vmap.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x = Tensor(np.array([[[2, 4], [-1, 3]]]), ms.float32)
+    y = Tensor(np.array([[[3, 4], [-1, 3]]]), ms.float32)
+    nest_vmap = ops.vmap(ops.vmap(equal_forward_func, in_axes=(0, 0)), in_axes=(0, 0))
+    output = nest_vmap(x, y)
+    expect = [[[False, True], [True, True]]]
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
