@@ -69,6 +69,10 @@ class Cell(Cell_):
         if the training and inference have different structures, the subclass performs the inference branch by default.
         To set the training mode, refer to `mindspore.nn.Cell.set_train` .
 
+    .. warning::
+        In the subclass of Cell, it's not allowed to define a method named 'cast' and not allowed to define an attribute
+        named 'phase' or 'cells', otherwise, an error will be raised.
+
     Args:
         auto_prefix (bool, optional): Whether to automatically generate NameSpace for Cell and its child cells. It also
                       affects the names of parameters in the `Cell`. If set to ``True`` , the parameter name will be
