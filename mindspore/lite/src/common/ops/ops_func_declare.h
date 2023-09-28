@@ -91,7 +91,6 @@
 #include "ops/scatter_nd_update.h"
 #include "ops/select.h"
 #include "ops/sgd.h"
-#include "ops/shape.h"
 #include "ops/sigmoid_cross_entropy_with_logits.h"
 #include "ops/skip_gram.h"
 #include "ops/smooth_l1_loss.h"

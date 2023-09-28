@@ -43,7 +43,8 @@ class ShapeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Sh
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   // The input addresses that are not used in the kernel launch.
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex0}; }
+  // Input required for the infer.
+  // std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex0}; }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }

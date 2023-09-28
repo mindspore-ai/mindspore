@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for array."""
+# pylint: disable=unused-import
 import copy
 import itertools
 import numbers
@@ -40,7 +41,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero)
-from .manually_defined import Rank
+from .manually_defined import Rank, Shape
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -543,43 +544,6 @@ class Col2Im(Primitive):
         self.add_prim_attr('dilation', self.dilation)
         self.add_prim_attr('padding', self.padding)
         self.add_prim_attr('stride', self.stride)
-
-
-class Shape(Primitive):
-    """
-    Returns the shape of the input tensor.
-
-    Refer to :func:`mindspore.ops.shape` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        tuple[int], the output tuple is constructed by multiple integers,
-        :math:`(x_1, x_2, ..., x_R)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = ops.Shape()
-        >>> output = shape(input_x)
-        >>> print(output)
-        (3, 2, 1)
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Shape"""
-
-    def __call__(self, x):
-        if isinstance(x, (Tensor, COOTensor, CSRTensor, Tensor_)):
-            return x.shape
-        raise TypeError(f"For primitive[{self.name}], the input argument must be Tensor, but got {type(x)}.")
 
 
 class Unsqueeze(PrimitiveWithCheck):

@@ -19,14 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kShapeInputsNum = 1;
-constexpr size_t kShapeOutputsNum = 1;
-}  // namespace
-
 bool ShapeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kShapeInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kShapeOutputsNum, kernel_name_);
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 

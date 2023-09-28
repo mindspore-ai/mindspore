@@ -136,7 +136,6 @@ function(__install_white_list_ops)
         #     ${TOP_DIR}/mindspore/core/ops/rsqrt.h
         #     ${TOP_DIR}/mindspore/core/ops/scatter_nd.h
             ${TOP_DIR}/mindspore/core/ops/sgd.h
-            ${TOP_DIR}/mindspore/core/ops/shape.h
             ${TOP_DIR}/mindspore/core/ops/sigmoid_cross_entropy_with_logits.h
         #     ${TOP_DIR}/mindspore/core/ops/sin.h
             ${TOP_DIR}/mindspore/core/ops/skip_gram.h

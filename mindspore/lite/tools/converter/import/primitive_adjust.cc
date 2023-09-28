@@ -75,7 +75,7 @@
 #include "ops/resize.h"
 #include "ops/resize_bilinear.h"
 #include "ops/resize_nearest_neighbor.h"
-#include "ops/shape.h"
+// #include "ops/shape.h"
 // #include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"

@@ -17,7 +17,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "ops/shape.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/nn_ops.h"
 #include "include/errorcode.h"

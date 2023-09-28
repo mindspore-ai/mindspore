@@ -20,7 +20,7 @@ from mindspore.ops import signature as sig
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
-from mindspore.common import Tensor
+from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 
 
@@ -217,3 +217,70 @@ def rank(x):
     """
     rank_op = _get_cache_prim(Rank)()
     return rank_op(x)
+
+
+class Shape(Primitive):
+    """
+    Returns the shape of the input tensor.
+
+    Refer to :func:`mindspore.ops.shape` for more details.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        tuple[int], the output tuple is constructed by multiple integers,
+        :math:`(x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+        >>> shape = ops.Shape()
+        >>> output = shape(input_x)
+        >>> print(output)
+        (3, 2, 1)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Shape"""
+
+    def __call__(self, x):
+        if isinstance(x, (Tensor, COOTensor, CSRTensor, Tensor_)):
+            return x.shape
+        raise TypeError(f"For primitive[{self.name}], the input argument must be Tensor, but got {type(x)}.")
+
+
+def shape_(input_x):
+    """
+    Returns the shape of the input tensor.
+
+    Args:
+        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Returns:
+        tuple[int], the output tuple is constructed by multiple integers,
+        :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
+        >>> output = ops.shape(input_x)
+        >>> print(output)
+        (3, 2, 1)
+    """
+    shape_op = _get_cache_prim(Shape)()
+    return shape_op(input_x)

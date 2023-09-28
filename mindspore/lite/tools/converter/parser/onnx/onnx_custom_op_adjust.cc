@@ -26,7 +26,6 @@
 #include "mindspore/core/ops/op_name.h"
 #include "tools/converter/ops/ops_def.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/shape.h"
 #include "ops/uniform_real.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"

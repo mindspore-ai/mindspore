@@ -56,7 +56,6 @@ GVAR_DEF(PrimitivePtr, kPrimIdentityMath, std::make_shared<Primitive>("Identity"
 // Shape
 GVAR_DEF(PrimitivePtr, kPrimShapeMul, std::make_shared<Primitive>("shape_mul"));
 GVAR_DEF(PrimitivePtr, kPrimShapeMulGrad, std::make_shared<Primitive>("ShapeMulGrad"));
-GVAR_DEF(PrimitivePtr, kPrimShape, std::make_shared<Primitive>("Shape"));
 GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 
 // SideEffectPropagate

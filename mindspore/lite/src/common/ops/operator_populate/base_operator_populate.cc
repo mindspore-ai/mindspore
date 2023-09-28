@@ -38,7 +38,6 @@
 #include "ops/sparse_reshape.h"
 #include "ops/sparse_fill_empty_rows.h"
 #include "ops/size.h"
-#include "ops/shape.h"
 #include "ops/select.h"
 #include "ops/scatter_nd_update.h"
 #include "ops/tensor_scatter_add.h"
