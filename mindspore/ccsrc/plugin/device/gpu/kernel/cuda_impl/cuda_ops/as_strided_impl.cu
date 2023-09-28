@@ -20,7 +20,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace {
-constexpr size_t kMaxDim = 8;
+// dim will be 9, when op is pixel shuffle
+constexpr size_t kMaxDim = 9;
 }
 
 template <size_t N>
