@@ -137,6 +137,7 @@ struct AdParam {
   OrderedSet<VariableAdjointPtr> variable_adjoint_set_;
   // Record cnode's input map for tape_
   expander::bprop::UserMap users_;
+  std::vector<std::tuple<AnfNodePtr, CNodePtr, size_t>> lazy_user_data_;
 };
 using AdParamPtr = std::shared_ptr<AdParam>;
 
@@ -221,6 +222,7 @@ class AutoGradCellImpl {
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const tensor::TensorPtrList &weights, bool weight_param_is_tuple);
   void LazyAddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index);
+  void UpdateLazyUser();
   void AddTupleGetItemUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, UserType *user, bool need_update = false);
   // To elimate tuplegetitem cnode
@@ -242,7 +244,6 @@ class AutoGradCellImpl {
   AdParamPtr ad_param_{nullptr};
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
-  std::vector<std::tuple<AnfNodePtr, CNodePtr, size_t>> lazy_user_data_;
   // These weights need to calculate gradient.
   mindspore::HashSet<std::string> need_grad_weights_;
   AnfNodePtrList weights_used_in_graph_;
