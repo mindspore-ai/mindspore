@@ -101,6 +101,7 @@ file(GLOB_RECURSE EXTEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/frontend/optimizer/*.cc"
         "../../../mindspore/ccsrc/frontend/parallel/*.cc"
         "../../../mindspore/ccsrc/frontend/operator/*.cc"
+        "../../../mindspore/ccsrc/frontend/expander/*.cc"
         )
 list(REMOVE_ITEM EXTEND_SRC_LIST
         "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")

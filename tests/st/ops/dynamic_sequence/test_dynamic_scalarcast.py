@@ -21,7 +21,7 @@ from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
 from sequence_help import context_prepare
 
-context.set_context(mode=context.GRAPH_MODE)
+context.set_context(mode=context.GRAPH_MODE, grad_for_scalar=True)
 context_prepare()
 
 

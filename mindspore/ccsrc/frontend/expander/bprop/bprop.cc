@@ -558,6 +558,8 @@ void RegGradOtherOps();
 void RegGradQuantOps();
 void RegGradScipyOps();
 void RegGradSparseOps();
+void RegGradSequenceOps();
+void RegGradScalarOps();
 
 WinBpropRegister::WinBpropRegister() {
   RegGradArrayOps();
@@ -574,6 +576,8 @@ WinBpropRegister::WinBpropRegister() {
   RegGradQuantOps();
   RegGradScipyOps();
   RegGradSparseOps();
+  RegGradSequenceOps();
+  RegGradScalarOps();
 }
 #endif
 }  // namespace bprop

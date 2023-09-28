@@ -26,7 +26,7 @@ class MIND_API scalar_gt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(scalar_gt);
   /// \brief Constructor.
-  scalar_gt() : BaseOperator(kScalarGtOpName) {}
+  scalar_gt() : BaseOperator(kScalarGtOpName) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

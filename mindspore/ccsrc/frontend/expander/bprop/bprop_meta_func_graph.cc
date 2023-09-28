@@ -107,13 +107,24 @@ FuncGraphPtr GetBpropMetaFuncGraph(const PrimitivePtr &primal, const CNodePtr &c
   if (!CanExpand(prim_name) || handle == nullptr) {
     return nullptr;
   }
-  std::vector<AnfNodePtr> node_lists = cnode->inputs();
-  auto forward_inputs_size = cnode->inputs().size() - 1;
-  for (size_t i = 1; i < node_lists.size(); i++) {
-    auto input_i = node_lists[i];
-    if (HasAbstractMonad(input_i)) {
-      --forward_inputs_size;
+  size_t forward_inputs_size = 0;
+  if (cnode) {
+    std::vector<AnfNodePtr> node_lists = cnode->inputs();
+    forward_inputs_size = cnode->inputs().size() - 1;
+    for (size_t i = 1; i < node_lists.size(); i++) {
+      auto input_i = node_lists[i];
+      if (HasAbstractMonad(input_i)) {
+        --forward_inputs_size;
+      }
     }
+  } else {
+    const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    const auto iter = op_primc_fns.find(prim_name);
+    if (iter == op_primc_fns.end()) {
+      MS_LOG(EXCEPTION) << "The " << prim_name << " operator is not registered";
+    }
+    auto primc = iter->second();
+    forward_inputs_size = GetValue<std::vector<std::string>>(primc->GetAttr(kAttrInputNames)).size();
   }
   auto fg = std::make_shared<FuncGraph>();
   auto meta_graph = std::make_shared<BpropMetaFuncGraph>(primal, handle);
