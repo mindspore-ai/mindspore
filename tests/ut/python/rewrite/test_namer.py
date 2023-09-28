@@ -22,6 +22,7 @@ class Network(Cell):
         self.conv1 = Conv2d(1, 6, 5, pad_mode='valid')
         self.conv2 = Conv2d(6, 16, 5, pad_mode='valid')
         self.relu = ReLU()
+        self.relu_ = ReLU()
 
     def construct(self, x):
         x_1 = self.conv1(x)
@@ -29,6 +30,7 @@ class Network(Cell):
         x_1 = self.relu(x_2)
         x = self.relu(x_1)
         x = self.relu(x)
+        x = self.relu_(x)
         return x
 
 
@@ -45,4 +47,6 @@ def test_target_namer():
     assert len(inputs) == 1
     input0 = inputs[0]
     assert input0.get_name() == 'relu'
+    relu_ = stree.get_node('relu_')
+    assert relu_.get_name() == 'relu_'
     stree.get_network()
