@@ -1713,9 +1713,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.mean`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
-        return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
+        return tensor_operator_registry.get('mean')(self, axis, keep_dims)
 
     def amin(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
@@ -3257,7 +3255,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis = ()
         else:
             axis = validator.check_and_canonicalize_axes(axis, self.ndim)
-        x_mean = tensor_operator_registry.get('mean')(True)(self, axis)
+        x_mean = tensor_operator_registry.get('mean')(self, axis, True)
         x_sub = tensor_operator_registry.get('__sub__')(self, x_mean)
         x_pow = tensor_operator_registry.get('__pow__')(x_sub, 2)
         x_sum = tensor_operator_registry.get('reducesum')(bool(keepdims))(x_pow, axis)

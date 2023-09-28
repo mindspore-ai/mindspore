@@ -58,7 +58,6 @@ size_op_ = P.Size()
 _format = Format()
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
-_mean_keepdims = P.ReduceMean(True)
 _csr_mm = _csr_ops.CSRMM()
 
 itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
@@ -92,10 +91,7 @@ def mean(x, axis=None, keep_dims=False):
         >>> print(output)
         2.0
     """
-    if axis is None:
-        axis = ()
-    reduce_mean = P.ReduceMean(keep_dims)
-    return reduce_mean(x, axis)
+    return F.mean(x, axis, keep_dims)
 
 
 def ndimension(x):
@@ -2021,7 +2017,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
         axis = ()
     else:
         axis = check_and_canonicalize_axes(axis, x.ndim)
-    x_mean = _mean_keepdims(x, axis)
+    x_mean = F.mean(x, axis, True)
     x_sub = F.tensor_sub(x, x_mean)
     x_pow = F.tensor_pow(x_sub, 2)
     if keepdims:
