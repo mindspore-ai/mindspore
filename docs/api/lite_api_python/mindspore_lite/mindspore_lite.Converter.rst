@@ -72,14 +72,6 @@ mindspore_lite.Converter
         返回：
             int，转换模型时的目标设备。仅对Ascend设备有效。
 
-    .. py:method:: rank_id
-        :property:
-
-        设置/获取转换分布式模型时的目标设备rank编号。
-
-        返回：
-            int，转换模型时的目标设备rank编号。仅对Ascend设备有效。
-
     .. py:method:: enable_encryption
         :property:
 
@@ -175,6 +167,14 @@ mindspore_lite.Converter
             - **DataType.INT8**    - 8位整型数。
             - **DataType.UINT8**   - 无符号8位整型数。
             - **DataType.UNKNOWN** - 设置与模型输出Tensor相同的DataType。
+
+    .. py:method:: rank_id
+        :property:
+
+        设置/获取转换分布式模型时的目标设备rank编号。
+
+        返回：
+            int，转换模型时的目标设备rank编号。仅对Ascend设备有效。
 
     .. py:method:: save_type
         :property:
