@@ -36,9 +36,9 @@ class LLMReq:
         check_isinstance("req_id", req_id, int)
         check_isinstance("prompt_length", prompt_length, int)
         self.llm_request_ = LLMReq_()
-        self.prompt_cluster_id = prompt_cluster_id
-        self.req_id = req_id
-        self.prompt_length = prompt_length
+        self.llm_request_.prompt_cluster_id = prompt_cluster_id
+        self.llm_request_.req_id = req_id
+        self.llm_request_.prompt_length = prompt_length
 
     _llm_req_id = 0
     _llm_req_id_lock = threading.Lock()
@@ -74,14 +74,25 @@ class LLMReq:
 
     @property
     def prompt_cluster_id(self):
-        """Get prompt cluster id of this inference task in Prompt LLMEngine"""
+        """Get prompt cluster id of this inference task in LLMEngine"""
         return self.llm_request_.prompt_cluster_id
 
     @prompt_cluster_id.setter
     def prompt_cluster_id(self, prompt_cluster_id: int):
-        """Set prompt cluster id of this inference task in Prompt LLMEngine"""
+        """Set prompt cluster id of this inference task in LLMEngine"""
         check_isinstance("prompt_cluster_id", prompt_cluster_id, int)
         self.llm_request_.prompt_cluster_id = prompt_cluster_id
+
+    @property
+    def decoder_cluster_id(self):
+        """Get decoder cluster id of this inference task in LLMEngine"""
+        return self.llm_request_.decoder_cluster_id
+
+    @decoder_cluster_id.setter
+    def decoder_cluster_id(self, decoder_cluster_id: int):
+        """Set decoder cluster id of this inference task in LLMEngine"""
+        check_isinstance("prompt_cluster_id", decoder_cluster_id, int)
+        self.llm_request_.decoder_cluster_id = decoder_cluster_id
 
 
 class LLMEngineStatus:
@@ -182,6 +193,15 @@ class LLMEngine:
             role_str = 'Prompt' if self.role == LLMRole.Prompt else 'Decoder'
             raise RuntimeError(f"Failed to init LLMEngine, model paths {model_paths}, role {role_str},"
                                f" cluster id {self.cluster_id}, options {options}")
+
+    def finalize(self):
+        """
+        Finalize LLMEngine.
+        """
+        if not self.engine_:
+            print(f"LLMEngine is not inited or init failed", flush=True)
+            return
+        self.engine_.finalize()
 
     def predict(self, llm_req: LLMReq, inputs: Union[Tuple[Tensor], List[Tensor]]):
         """

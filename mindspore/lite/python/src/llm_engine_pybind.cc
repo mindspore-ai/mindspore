@@ -46,7 +46,8 @@ void LLMEnginePyBind(const py::module &m) {
     .def(py::init<>())
     .def_readwrite("req_id", &LLMReq::req_id)
     .def_readwrite("prompt_length", &LLMReq::prompt_length)
-    .def_readwrite("prompt_cluster_id", &LLMReq::prompt_cluster_id);
+    .def_readwrite("prompt_cluster_id", &LLMReq::prompt_cluster_id)
+    .def_readwrite("decoder_cluster_id", &LLMReq::decoder_cluster_id);
 
   py::class_<LLMEngineStatus>(m, "LLMEngineStatus_")
     .def(py::init<>())
@@ -55,6 +56,7 @@ void LLMEnginePyBind(const py::module &m) {
   (void)py::class_<LLMEngine, std::shared_ptr<LLMEngine>>(m, "LLMEngine_")
     .def(py::init<>())
     .def("init", &LLMEngine::Init, py::call_guard<py::gil_scoped_release>())
+    .def("finalize", &LLMEngine::Finalize, py::call_guard<py::gil_scoped_release>())
     .def("predict", &PyLLMEnginePredict, py::call_guard<py::gil_scoped_release>())
     .def("complete_request", &LLMEngine::CompleteRequest, py::call_guard<py::gil_scoped_release>())
     .def("fetch_status", &LLMEngine::FetchStatus, py::call_guard<py::gil_scoped_release>());

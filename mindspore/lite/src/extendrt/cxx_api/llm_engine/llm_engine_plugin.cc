@@ -30,6 +30,7 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   ~LLMEnginePlugin();
   Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
               const std::map<std::string, std::string> &options) override;
+  void Finalize() override;
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
   Status CompleteRequest(const LLMReq &req) override;
   LLMEngineStatus FetchStatus() override;
@@ -43,13 +44,14 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
   Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
   Status InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos);
+  void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
 };
 
 LLMEnginePluginBase *CreateLLMEnginePlugin() { return new LLMEnginePlugin(); }
 
 LLMEnginePlugin::LLMEnginePlugin() {}
 
-LLMEnginePlugin::~LLMEnginePlugin() {}
+LLMEnginePlugin::~LLMEnginePlugin() { LLMEnginePlugin::Finalize(); }
 
 Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos) {
   for (size_t i = 1; i < model_infos.size(); i++) {
@@ -168,6 +170,19 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
   return kSuccess;
 }
 
+void LLMEnginePlugin::Finalize() {
+  if (llm_engine_ != nullptr) {
+    MS_LOG(INFO) << "Start to call LLMEngineFinalize";
+    auto ge_status = llm_engine_->LLMEngineFinalize();
+    llm_engine_ = nullptr;
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineFinalize";
+      return;
+    }
+    MS_LOG(INFO) << "End to call LLMEngineFinalize";
+  }
+}
+
 #ifndef LLM_RUN_ASYNC
 Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor> &ge_inputs,
                             std::vector<::ge::Tensor> *outputs) {
@@ -239,6 +254,18 @@ Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor
 }
 #endif
 
+void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) const {
+  if (llm_req_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input argument llm_req_ptr is nullptr";
+    return;
+  }
+  llm::LLMReq &llm_req = *llm_req_ptr;
+  llm_req.SetReqId(req.req_id);
+  llm_req.SetPromptLength(req.prompt_length);
+  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  llm_req.SetDecoderClusterId(req.decoder_cluster_id);
+}
+
 Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
                                 std::vector<MSTensor> *outputs) {
   if (llm_engine_ == nullptr) {
@@ -265,12 +292,11 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
     }
     ge_inputs.emplace_back(tensor);
   }
-  MS_LOG(INFO) << "Start to call predict, req_id " << req.req_id << ", prompt_length " << req.prompt_length
-               << ", prompt_cluster_id: " << req.prompt_cluster_id;
   llm::LLMReq llm_req;
-  llm_req.SetReqId(req.req_id);
-  llm_req.SetPromptLength(req.prompt_length);
-  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  TransLLMReq(req, &llm_req);
+  MS_LOG(INFO) << "Start to call predict, req_id " << llm_req.GetReqId() << ", prompt_length "
+               << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
+               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId();
   std::vector<::ge::Tensor> ge_outputs;
   auto ret = Run(&llm_req, ge_inputs, &ge_outputs);
   if (ret != kSuccess) {
@@ -297,9 +323,7 @@ Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
   MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMReqComplete, req_id " << req.req_id << ", prompt_length "
                << req.prompt_length << ", prompt_cluster_id: " << req.prompt_cluster_id;
   llm::LLMReq llm_req;
-  llm_req.SetReqId(req.req_id);
-  llm_req.SetPromptLength(req.prompt_length);
-  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  TransLLMReq(req, &llm_req);
   auto ret = llm_engine_->LLMReqComplete(llm_req);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::LLMReqComplete";

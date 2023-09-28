@@ -465,6 +465,8 @@ if(PLATFORM_ARM64)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
             __install_ascend_ascendc()
         endif()
@@ -714,6 +716,8 @@ elseif(PLATFORM_ARM32)
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
             __install_ascend_ascendc()
         endif()
@@ -914,6 +918,8 @@ else()
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
             __install_ascend_ascendc()
             if(MSLITE_ASCEND_TARGET)
