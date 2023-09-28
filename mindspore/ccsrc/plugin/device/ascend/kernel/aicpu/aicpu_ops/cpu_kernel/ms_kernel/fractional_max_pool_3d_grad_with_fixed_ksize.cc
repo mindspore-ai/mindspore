@@ -19,8 +19,6 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <vector>
-
 #include "cpu_kernel_utils.h"
 #include "securec.h"
 #include "utils/eigen_tensor.h"
@@ -37,7 +35,7 @@ const char *kFractionalMaxPool3DGradWithFixedKsize = "FractionalMaxPool3DGradWit
 }  // namespace
 
 namespace aicpu {
-uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(const CpuKernelContext &ctx) {
+uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *origin_input = ctx.Input(0);
   Tensor *out_backprop = ctx.Input(1);
   Tensor *argmax = ctx.Input(2);
@@ -84,139 +82,68 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::GetInputAndCheck(const 
 }
 
 template <typename backprop_t, typename argmax_t>
-uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::Process4DCase(const CpuKernelContext &ctx, TmpVar *tmp_var) {
-  auto out_backprop_data = reinterpret_cast<backprop_t *>(ctx.Input(1)->GetData());
-  auto argmax_data = reinterpret_cast<argmax_t *>(ctx.Input(2)->GetData());
-  auto output_data = reinterpret_cast<backprop_t *>(ctx.Output(0)->GetData());
-  uint32_t min_core_num = 1;
-  uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
-  if (max_core_num > tmp_var->inputC) {
-    max_core_num = tmp_var->inputC;
-  }
-  if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max_core_num should not be 0.");
-  }
-  CpuKernelUtils::ParallelFor(ctx, tmp_var->inputC, tmp_var->inputC / max_core_num, [&](int64_t start, int64_t end) {
-    for (auto plane = start; plane < end; ++plane) {
-      backprop_t *outputForPlane = output_data + plane * tmp_var->inputT * tmp_var->inputH * tmp_var->inputW;
-      backprop_t *outbackpropForPlane =
-        out_backprop_data + plane * tmp_var->outputT * tmp_var->outputH * tmp_var->outputW;
-      argmax_t *argmaxForPlane = argmax_data + plane * tmp_var->outputT * tmp_var->outputH * tmp_var->outputW;
-      int64_t h, w, t;
-      for (t = 0; t < tmp_var->outputT; ++t) {
-        for (h = 0; h < tmp_var->outputH; ++h) {
-          for (w = 0; w < tmp_var->outputW; ++w) {
-            argmax_t outputIndex = t * tmp_var->outputH * tmp_var->outputW + h * tmp_var->outputW + w;
-            argmax_t index = argmaxForPlane[outputIndex];
-            KERNEL_CHECK_FALSE(index >= 0 && index < tmp_var->inputT * tmp_var->inputH * tmp_var->inputW,
-                               KERNEL_STATUS_PARAM_INVALID,
-                               "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
-            outputForPlane[index] += outbackpropForPlane[outputIndex];
-          }
-        }
-      }
-    }
-    return KERNEL_STATUS_OK;
-  });
-  return KERNEL_STATUS_OK;
-}
-
-template <typename backprop_t, typename argmax_t>
-uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::Process5DCase(const CpuKernelContext &ctx, TmpVar *tmp_var) {
-  auto out_backprop_data = reinterpret_cast<backprop_t *>(ctx.Input(1)->GetData());
-  auto argmax_data = reinterpret_cast<argmax_t *>(ctx.Input(2)->GetData());
-  auto output_data = reinterpret_cast<backprop_t *>(ctx.Output(0)->GetData());
-  uint32_t min_core_num = 1;
-  uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
-  if (max_core_num > tmp_var->inputN) {
-    max_core_num = tmp_var->inputN;
-  }
-  if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max_core_num should not be 0.");
-  }
-  CpuKernelUtils::ParallelFor(ctx, tmp_var->inputN, tmp_var->inputN / max_core_num, [&](int64_t start, int64_t end) {
-    for (auto batch = start; batch < end; ++batch) {
-      for (auto plane = 0; plane < tmp_var->inputC; ++plane) {
-        auto output_data_n =
-          output_data + batch * tmp_var->inputC * tmp_var->inputW * tmp_var->inputH * tmp_var->inputT;
-        auto out_backprop_data_n =
-          out_backprop_data + batch * tmp_var->inputC * tmp_var->outputW * tmp_var->outputH * tmp_var->outputT;
-        auto argmax_data_n =
-          argmax_data + batch * tmp_var->inputC * tmp_var->outputW * tmp_var->outputH * tmp_var->outputT;
-        backprop_t *outputForPlane = output_data_n + plane * tmp_var->inputT * tmp_var->inputH * tmp_var->inputW;
-        backprop_t *outbackpropForPlane =
-          out_backprop_data_n + plane * tmp_var->outputT * tmp_var->outputH * tmp_var->outputW;
-        argmax_t *argmaxForPlane = argmax_data_n + plane * tmp_var->outputT * tmp_var->outputH * tmp_var->outputW;
-        int64_t h;
-        int64_t w;
-        int64_t t;
-        for (t = 0; t < tmp_var->outputT; ++t) {
-          for (h = 0; h < tmp_var->outputH; ++h) {
-            for (w = 0; w < tmp_var->outputW; ++w) {
-              argmax_t outputIndex = t * tmp_var->outputH * tmp_var->outputW + h * tmp_var->outputW + w;
-              argmax_t index = argmaxForPlane[outputIndex];
-              KERNEL_CHECK_FALSE(index >= 0 && index < tmp_var->inputT * tmp_var->inputH * tmp_var->inputW,
-                                 KERNEL_STATUS_PARAM_INVALID,
-                                 "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
-              outputForPlane[index] += outbackpropForPlane[outputIndex];
-            }
-          }
-        }
-      }
-    }
-    return KERNEL_STATUS_OK;
-  });
-  return KERNEL_STATUS_OK;
-}
-
-template <typename backprop_t, typename argmax_t>
 uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGradWithFixedKsizeOutCpuTemplate(
-  const CpuKernelContext &ctx) {
+  CpuKernelContext &ctx) {
+  auto out_backprop_data = reinterpret_cast<backprop_t *>(ctx.Input(1)->GetData());
+  auto argmax_data = reinterpret_cast<argmax_t *>(ctx.Input(2)->GetData());
+  auto output_data = reinterpret_cast<backprop_t *>(ctx.Output(0)->GetData());
   int64_t input_dims = input_shape.size();
   std::string format = "NCDHW";
   AttrValue *data_format = ctx.GetAttr("data_format");
   if (data_format != nullptr) {
     format = data_format->GetString();
   }
-  TmpVar tmp_var;
+  int64_t c_dim = 0;
+  int64_t d_dim = 0;
+  int64_t h_dim = 0;
+  int64_t w_dim = 0;
+  int64_t inputN = 0;
+  int64_t inputC = 0;
+  int64_t inputT = 0;
+  int64_t inputH = 0;
+  int64_t inputW = 0;
+  int64_t outputT = 0;
+  int64_t outputH = 0;
+  int64_t outputW = 0;
+
   if (format == "NCDHW") {
-    tmp_var.c_dim = 0;
-    tmp_var.d_dim = 1;
-    tmp_var.h_dim = Num2;
-    tmp_var.w_dim = Num3;
+    c_dim = 0;
+    d_dim = 1;
+    h_dim = Num2;
+    w_dim = Num3;
     if (input_dims == Num5) {
-      tmp_var.inputN = input_shape[0];
-      tmp_var.c_dim++;
-      tmp_var.d_dim++;
-      tmp_var.h_dim++;
-      tmp_var.w_dim++;
+      inputN = input_shape[0];
+      c_dim++;
+      d_dim++;
+      h_dim++;
+      w_dim++;
     }
-    tmp_var.inputC = input_shape[tmp_var.c_dim];
-    tmp_var.inputT = input_shape[tmp_var.d_dim];
-    tmp_var.inputH = input_shape[tmp_var.h_dim];
-    tmp_var.inputW = input_shape[tmp_var.w_dim];
-    tmp_var.outputT = out_backprop_shape[tmp_var.d_dim];
-    tmp_var.outputH = out_backprop_shape[tmp_var.h_dim];
-    tmp_var.outputW = out_backprop_shape[tmp_var.w_dim];
+    inputC = input_shape[c_dim];
+    inputT = input_shape[d_dim];
+    inputH = input_shape[h_dim];
+    inputW = input_shape[w_dim];
+    outputT = out_backprop_shape[d_dim];
+    outputH = out_backprop_shape[h_dim];
+    outputW = out_backprop_shape[w_dim];
   } else {
-    tmp_var.c_dim = Num3;
-    tmp_var.d_dim = 0;
-    tmp_var.h_dim = 1;
-    tmp_var.w_dim = Num2;
+    c_dim = Num3;
+    d_dim = 0;
+    h_dim = 1;
+    w_dim = Num2;
     if (input_dims == Num5) {
-      tmp_var.inputN = input_shape[0];
-      tmp_var.c_dim++;
-      tmp_var.d_dim++;
-      tmp_var.h_dim++;
-      tmp_var.w_dim++;
+      inputN = input_shape[0];
+      c_dim++;
+      d_dim++;
+      h_dim++;
+      w_dim++;
     }
-    tmp_var.inputC = input_shape[tmp_var.c_dim];
-    tmp_var.inputT = input_shape[tmp_var.d_dim];
-    tmp_var.inputH = input_shape[tmp_var.h_dim];
-    tmp_var.inputW = input_shape[tmp_var.w_dim];
-    tmp_var.outputT = out_backprop_shape[tmp_var.d_dim];
-    tmp_var.outputH = out_backprop_shape[tmp_var.h_dim];
-    tmp_var.outputW = out_backprop_shape[tmp_var.w_dim];
+    inputC = input_shape[c_dim];
+    inputT = input_shape[d_dim];
+    inputH = input_shape[h_dim];
+    inputW = input_shape[w_dim];
+    outputT = out_backprop_shape[d_dim];
+    outputH = out_backprop_shape[h_dim];
+    outputW = out_backprop_shape[w_dim];
   }
 
   auto output_size = ctx.Output(0)->GetDataSize();
@@ -233,13 +160,74 @@ uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::FractionalMaxPool3DGrad
   }
 
   if (input_dims == Num4) {
-    return Process4DCase<backprop_t, int32_t>(ctx, &tmp_var);
+    uint32_t min_core_num = 1;
+    uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
+    if (max_core_num > inputC) {
+      max_core_num = inputC;
+    }
+    if (max_core_num == 0) {
+      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+    }
+    CpuKernelUtils::ParallelFor(ctx, inputC, inputC / max_core_num, [&](int64_t start, int64_t end) {
+      for (auto plane = start; plane < end; ++plane) {
+        backprop_t *outputForPlane = output_data + plane * inputT * inputH * inputW;
+        backprop_t *outbackpropForPlane = out_backprop_data + plane * outputT * outputH * outputW;
+        argmax_t *argmaxForPlane = argmax_data + plane * outputT * outputH * outputW;
+        int64_t h, w, t;
+        for (t = 0; t < outputT; ++t) {
+          for (h = 0; h < outputH; ++h) {
+            for (w = 0; w < outputW; ++w) {
+              argmax_t outputIndex = t * outputH * outputW + h * outputW + w;
+              argmax_t index = argmaxForPlane[outputIndex];
+              KERNEL_CHECK_FALSE(index >= 0 && index < inputT * inputH * inputW, KERNEL_STATUS_PARAM_INVALID,
+                                 "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
+              outputForPlane[index] += outbackpropForPlane[outputIndex];
+            }
+          }
+        }
+      }
+      return KERNEL_STATUS_OK;
+    });
+  } else {
+    uint32_t min_core_num = 1;
+    uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
+    if (max_core_num > inputN) {
+      max_core_num = inputN;
+    }
+    if (max_core_num == 0) {
+      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+    }
+    CpuKernelUtils::ParallelFor(ctx, inputN, inputN / max_core_num, [&](int64_t start, int64_t end) {
+      for (auto batch = start; batch < end; ++batch) {
+        for (auto plane = 0; plane < inputC; ++plane) {
+          auto output_data_n = output_data + batch * inputC * inputW * inputH * inputT;
+          auto out_backprop_data_n = out_backprop_data + batch * inputC * outputW * outputH * outputT;
+          auto argmax_data_n = argmax_data + batch * inputC * outputW * outputH * outputT;
+          backprop_t *outputForPlane = output_data_n + plane * inputT * inputH * inputW;
+          backprop_t *outbackpropForPlane = out_backprop_data_n + plane * outputT * outputH * outputW;
+          argmax_t *argmaxForPlane = argmax_data_n + plane * outputT * outputH * outputW;
+          int64_t h, w, t;
+          for (t = 0; t < outputT; ++t) {
+            for (h = 0; h < outputH; ++h) {
+              for (w = 0; w < outputW; ++w) {
+                argmax_t outputIndex = t * outputH * outputW + h * outputW + w;
+                argmax_t index = argmaxForPlane[outputIndex];
+                KERNEL_CHECK_FALSE(index >= 0 && index < inputT * inputH * inputW, KERNEL_STATUS_PARAM_INVALID,
+                                   "FractionalMaxPool3DGradWithFixedKsize index value is illegal.");
+                outputForPlane[index] += outbackpropForPlane[outputIndex];
+              }
+            }
+          }
+        }
+      }
+      return KERNEL_STATUS_OK;
+    });
   }
-  return Process5DCase<backprop_t, int32_t>(ctx, &tmp_var);
+  return KERNEL_STATUS_OK;
 }
 
 template <typename backprop_t>
-uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::DoComputeWithArgmaxType(const CpuKernelContext &ctx,
+uint32_t FractionalMaxPool3DGradWithFixedKsizeCpuKernel::DoComputeWithArgmaxType(CpuKernelContext &ctx,
                                                                                  DataType argmax_type) {
   switch (argmax_type) {
     case DT_INT32:
