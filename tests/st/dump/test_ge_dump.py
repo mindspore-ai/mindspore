@@ -37,6 +37,7 @@ from tests.security_utils import security_off_wrap
 
 
 os.environ['MS_ENABLE_GE'] = '1'
+os.environ['MS_DISABLE_REF_MODE'] = '1'
 
 
 class Net(nn.Cell):

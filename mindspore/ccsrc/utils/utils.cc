@@ -36,6 +36,8 @@
 #include "ops/sparse_op_name.h"
 #include "ops/structure_op_name.h"
 #include "utils/convert_utils_base.h"
+#include "utils/ms_context.h"
+
 namespace mindspore {
 namespace {
 constexpr size_t kKBToByte = 1024;
@@ -251,6 +253,14 @@ bool IsOneOfDynRankNeedPadShape(const std::string &format) {
                                             kOpFormat_NDC1HWC0,     kOpFormat_C1HWNCoC0,     kOpFormat_NC1HWC0_C04,
                                             kOpFormat_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_C04, kOpFormat_NCDHW};
   return kOpFormats.find(format) != kOpFormats.end();
+}
+
+bool IsEnableRefMode() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  static const bool is_enable_ge = context_ptr->backend_policy() == "ge";
+  return ((is_enable_ge && common::GetEnv("MS_DISABLE_REF_MODE") != "1") ||
+          !common::GetEnv("MS_DEV_FORCE_ACL").empty());
 }
 
 size_t GetSystemMemorySize(const std::string &key) {

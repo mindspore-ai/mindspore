@@ -326,8 +326,9 @@ void EnableAoeOffline() { AoeUtil::GetInstance().SetOfflineEnvDumpGeGraph(); }
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix,
+                                 RefModeFlag ref_mode_type) {
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type);
   return converter;
 }
 

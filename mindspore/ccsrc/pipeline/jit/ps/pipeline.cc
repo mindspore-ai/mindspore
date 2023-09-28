@@ -1531,7 +1531,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
-    if (!common::IsEnableRefMode()) {
+    if (!IsEnableRefMode()) {
       GeFirstInitParams();
     }
     std::string phase_prefix = GetPhasePrefix(phase);

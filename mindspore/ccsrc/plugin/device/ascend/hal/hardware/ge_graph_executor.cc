@@ -839,7 +839,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   // cppcheck-suppress unreadVariable
   ContextReset reset_context(device_context_);
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);
   } else {
@@ -1037,7 +1037,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
       return false;
     }
@@ -1134,7 +1134,7 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   }
 
   if (export_air) {
-    // export air can use session->AddGraph, it will cause atc error.
+    // export air can't use session->AddGraph, it will cause atc error.
     return anf_graph;
   }
 

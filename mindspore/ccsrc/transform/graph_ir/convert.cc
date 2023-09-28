@@ -1805,7 +1805,7 @@ DfGraphConvertor &DfGraphConvertor::GenFakeComputeGraph(const std::string &name)
     MS_EXCEPTION_IF_NULL(anf_graph_);
     anf_graph_->set_flag(kGraphFlagHasGetNext, true);
   }
-  if (!common::IsEnableRefMode()) {
+  if (!IsEnableRefMode()) {
     return *this;
   }
   size_t index = 0;
