@@ -700,7 +700,7 @@ REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(i
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shp = ib->GetShape(x);
-  auto axis_int = CheckRange(GetValue<int64_t>(axis->BuildValue()), SizeToLong(x_shp.size()));
+  auto axis_int = CheckRange(GetIntList(axis->BuildValue())[0], SizeToLong(x_shp.size()));
   if (axis_int == 0) {
     ShapeVector values_shape{ib->GetSize(indices)};
     if (x_shp.size() > 1) {
