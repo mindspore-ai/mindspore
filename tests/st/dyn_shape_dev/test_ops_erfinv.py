@@ -33,6 +33,7 @@ def erfinv_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_erfinv_forward():
     """
     Feature: Ops.
@@ -49,6 +50,7 @@ def test_erfinv_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_erfinv_backward():
     """
     Feature: Auto grad.
@@ -65,6 +67,7 @@ def test_erfinv_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_erfinv_vmap():
     """
     Feature: test vmap function.
