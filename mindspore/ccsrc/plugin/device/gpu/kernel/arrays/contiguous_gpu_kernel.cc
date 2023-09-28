@@ -24,9 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename U>
-using Complex = mindspore::utils::Complex<U>;
-
 std::unordered_map<TypeId, ContiguousGpuKernel::ContiguousFunc> ContiguousGpuKernel::func_list_ = {
   {kNumberTypeFloat16, &ContiguousGpuKernel::LaunchContiguousImpl<half>},
   {kNumberTypeFloat32, &ContiguousGpuKernel::LaunchContiguousImpl<float>},
@@ -36,8 +33,8 @@ std::unordered_map<TypeId, ContiguousGpuKernel::ContiguousFunc> ContiguousGpuKer
   {kNumberTypeInt32, &ContiguousGpuKernel::LaunchContiguousImpl<int32_t>},
   {kNumberTypeInt64, &ContiguousGpuKernel::LaunchContiguousImpl<int64_t>},
   {kNumberTypeBool, &ContiguousGpuKernel::LaunchContiguousImpl<bool>},
-  {kNumberTypeComplex64, &ContiguousGpuKernel::LaunchContiguousImpl<Complex<float>>},
-  {kNumberTypeComplex128, &ContiguousGpuKernel::LaunchContiguousImpl<Complex<double>>},
+  {kNumberTypeComplex64, &ContiguousGpuKernel::LaunchContiguousImpl<float>},
+  {kNumberTypeComplex128, &ContiguousGpuKernel::LaunchContiguousImpl<double>},
   {kNumberTypeUInt8, &ContiguousGpuKernel::LaunchContiguousImpl<uint8_t>},
   {kNumberTypeUInt16, &ContiguousGpuKernel::LaunchContiguousImpl<uint16_t>},
   {kNumberTypeUInt32, &ContiguousGpuKernel::LaunchContiguousImpl<uint32_t>},
@@ -50,26 +47,29 @@ bool ContiguousGpuKernel::LaunchContiguous(TypeId type_id, const kernel::Address
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << type_id << " is invalid";
   }
+  bool is_complex = (type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128);
 
-  return iter->second(this, input, input_storage_info, output, stream_ptr);
+  return iter->second(this, input, input_storage_info, output, is_complex, stream_ptr);
 }
 
 template <typename T>
 bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::AddressPtr &output, void *stream_ptr) {
+                                               const kernel::AddressPtr &output, bool is_complex, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
   T *input_addr = GetDeviceAddress<T>({input}, 0);
   T *output_addr = GetDeviceAddress<T>({output}, 0);
+  int64_t type_size = is_complex ? 2 : 1;
   const auto &output_shape = input_storage_info->shape;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
-
+  output_size *= type_size;
   if (input_storage_info->is_contiguous) {
     auto &offset = input_storage_info->storage_offset;
-    if ((offset + output_size) * sizeof(T) > input->size) {
+    auto input_size = input->size * type_size;
+    if ((offset + output_size) * sizeof(T) > input_size) {
       MS_LOG(EXCEPTION) << "Offset is out of bounds, offset:" << (offset * sizeof(T))
-                        << " output_size:" << (output_size * sizeof(T)) << " input->size:" << input->size;
+                        << " output_size:" << (output_size * sizeof(T)) << " input->size:" << input_size;
     }
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(output_addr, input_addr + offset, output_size * sizeof(T), cudaMemcpyDeviceToDevice,

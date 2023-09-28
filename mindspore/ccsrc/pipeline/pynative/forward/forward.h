@@ -143,7 +143,7 @@ class ForwardExecutor {
                                                     const TensorStorageInfoPtr &storage_info);
 
   void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                              const TensorStorageInfoPtr &storage_info);
+                              const TensorStorageInfoPtr &storage_info, const TypePtr &real_type);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                const size_t &input_idx, bool need_wait = false);

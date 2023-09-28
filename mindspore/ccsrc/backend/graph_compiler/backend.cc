@@ -1300,8 +1300,12 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  if (old_storage_info->data_type == kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
+  }
+  auto type_id = old_storage_info->data_type;
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, old_device_address->type_id(), old_storage_info->shape);
+    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape);
   new_device_address->set_device_shape(old_storage_info->shape);
 
   if (enable_async) {

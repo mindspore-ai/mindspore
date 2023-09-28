@@ -33,11 +33,11 @@ class ContiguousGpuKernel {
 
  private:
   using ContiguousFunc = std::function<bool(ContiguousGpuKernel *, const kernel::AddressPtr &,
-                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, void *)>;
+                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, bool, void *)>;
 
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs, void *stream_ptr);
+                            const kernel::AddressPtr &outputs, bool is_complex, void *stream_ptr);
   static std::unordered_map<TypeId, ContiguousFunc> func_list_;
 };
 }  // namespace kernel

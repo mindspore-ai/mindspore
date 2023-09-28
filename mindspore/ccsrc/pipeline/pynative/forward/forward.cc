@@ -46,6 +46,7 @@ namespace {
 const mindspore::HashMap<std::string, mindspore::HashMap<size_t, std::string>> kSliceOpInputToAttr = {
   {kBroadcastToOpName, {{0, ops::kShape}}}};
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "StopGradient", "HookBackward", "CellBackwardHook"};
+const std::set<std::string> kViewOpForComplexToOtherType = {"Real", "Imag"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
 constexpr auto kOpNameCustom = "Custom";
@@ -493,6 +494,16 @@ void ForwardExecutor::RunContiguousTask(const tensor::TensorPtr &tensor, bool en
   cur_mind_rt_backend->RunContiguousTask(tensor, enable_async);
 }
 
+TypePtr InferTypeForViewComplex(const tensor::TensorPtr &tensor) {
+  if (tensor->data_type() == kNumberTypeComplex64) {
+    return TypeIdToType(kNumberTypeFloat32);
+  } else if (tensor->data_type() == kNumberTypeComplex128) {
+    return TypeIdToType(kNumberTypeFloat64);
+  } else {
+    MS_LOG(EXCEPTION) << "tensor->data_type() is " << TypeIdToString(tensor->data_type()) << " unsupported";
+  }
+}
+
 void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info,
                                           const TensorStorageInfoPtrList &storage_infos) {
   if (op_run_info->op_grad_info->input_value.empty()) {
@@ -505,15 +516,20 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
   auto view_input_tensor = view_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(view_input_tensor);
 
+  TypePtr data_type = view_input_tensor->Dtype();
+  if (kViewOpForComplexToOtherType.find(op_run_info->base_op_run_info.op_name) != kViewOpForComplexToOtherType.end()) {
+    data_type = InferTypeForViewComplex(view_input_tensor);
+  }
   // Generate output abs by storage_info.
   if (storage_infos.size() == 1) {
-    op_run_info->base_op_run_info.abstract = abstract::MakeAbstractTensor(
-      std::make_shared<abstract::Shape>(storage_infos[0]->shape), view_input_tensor->Dtype());
+    op_run_info->base_op_run_info.abstract =
+      abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(storage_infos[0]->shape), data_type);
+    storage_infos[0]->data_type = data_type->type_id();
   } else {
     AbstractBasePtrList abs_list;
     for (const auto &storage_info : storage_infos) {
-      auto abs = abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(storage_info->shape),
-                                              view_input_tensor->Dtype());
+      auto abs = abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(storage_info->shape), data_type);
+      storage_info->data_type = data_type->type_id();
       (void)abs_list.emplace_back(abs);
     }
     op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(abs_list);
@@ -524,7 +540,7 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
   for (size_t i = 0; i < storage_infos.size(); i++) {
     MS_LOG(INFO) << "View op " << op_run_info->base_op_run_info.op_name << ", i:" << i
                  << ", storage_info:" << storage_infos[i]->ToString();
-    CreateViewOutputTensor(op_run_info, view_input_tensor, storage_infos[i]);
+    CreateViewOutputTensor(op_run_info, view_input_tensor, storage_infos[i], data_type);
   }
 
   if (op_run_info->base_op_run_info.output_tensors.size() == 1) {
@@ -1191,11 +1207,10 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
 
 void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info,
                                              const tensor::TensorPtr &input_tensor,
-                                             const TensorStorageInfoPtr &storage_info) {
+                                             const TensorStorageInfoPtr &storage_info, const TypePtr &real_type) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(storage_info);
-
-  auto output_tensor = std::make_shared<tensor::Tensor>(input_tensor->data_type(), storage_info->shape);
+  auto output_tensor = std::make_shared<tensor::Tensor>(real_type->type_id(), storage_info->shape);
   output_tensor->set_storage_info(storage_info);
   output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
   output_tensor->set_contiguous_callback(

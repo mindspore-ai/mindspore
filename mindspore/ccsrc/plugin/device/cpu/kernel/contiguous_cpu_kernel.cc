@@ -15,16 +15,12 @@
  */
 
 #include "plugin/device/cpu/kernel/contiguous_cpu_kernel.h"
-#include <complex>
 #include <functional>
 #include "utils/log_adapter.h"
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
-using complex64 = std::complex<float>;
-using complex128 = std::complex<double>;
-
 std::unordered_map<TypeId, ContiguousCpuKernel::ContiguousFunc> ContiguousCpuKernel::func_list_ = {
   {kNumberTypeFloat16, &ContiguousCpuKernel::LaunchContiguousImpl<float16>},
   {kNumberTypeFloat32, &ContiguousCpuKernel::LaunchContiguousImpl<float>},
@@ -34,8 +30,8 @@ std::unordered_map<TypeId, ContiguousCpuKernel::ContiguousFunc> ContiguousCpuKer
   {kNumberTypeInt32, &ContiguousCpuKernel::LaunchContiguousImpl<int32_t>},
   {kNumberTypeInt64, &ContiguousCpuKernel::LaunchContiguousImpl<int64_t>},
   {kNumberTypeBool, &ContiguousCpuKernel::LaunchContiguousImpl<bool>},
-  {kNumberTypeComplex64, &ContiguousCpuKernel::LaunchContiguousImpl<complex64>},
-  {kNumberTypeComplex128, &ContiguousCpuKernel::LaunchContiguousImpl<complex128>},
+  {kNumberTypeComplex64, &ContiguousCpuKernel::LaunchContiguousImpl<float>},
+  {kNumberTypeComplex128, &ContiguousCpuKernel::LaunchContiguousImpl<double>},
   {kNumberTypeUInt8, &ContiguousCpuKernel::LaunchContiguousImpl<uint8_t>},
   {kNumberTypeUInt16, &ContiguousCpuKernel::LaunchContiguousImpl<uint16_t>},
   {kNumberTypeUInt32, &ContiguousCpuKernel::LaunchContiguousImpl<uint32_t>},
@@ -48,24 +44,27 @@ bool ContiguousCpuKernel::LaunchContiguous(TypeId type_id, const kernel::Address
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << type_id << " is invalid";
   }
+  bool is_complex = (type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128);
 
-  return iter->second(this, input, input_storage_info, output);
+  return iter->second(this, input, input_storage_info, output, is_complex);
 }
 
 template <typename T>
 bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                                                const TensorStorageInfoPtr &input_storage_info,
-                                               const kernel::AddressPtr &output) {
+                                               const kernel::AddressPtr &output, bool is_complex) {
   MS_EXCEPTION_IF_NULL(input_storage_info);
   T *input_addr = GetDeviceAddress<T>({input}, 0);
   T *output_addr = GetDeviceAddress<T>({output}, 0);
   const auto &output_shape = input_storage_info->shape;
+  int64_t type_size = is_complex ? 2 : 1;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
   if (output_size == 0) {
     // CPU unsupported zero copy
     return true;
   }
+  output_size *= type_size;
   if (input_storage_info->is_contiguous) {
     auto &offset = input_storage_info->storage_offset;
     auto ret = memcpy_s(output_addr, output_size * sizeof(T), input_addr + offset, output_size * sizeof(T));
