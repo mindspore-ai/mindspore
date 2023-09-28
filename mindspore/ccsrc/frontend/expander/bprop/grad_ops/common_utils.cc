@@ -744,12 +744,41 @@ ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin, int64_t end) {
 NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
-    MS_LOG_EXCEPTION << "MatrixTranspose doesn't support dynamic rank now";
+    auto dim = ib->Emit("Rank", {x});
+    auto perm = ib->Range(ib->Tensor(0, kInt64), ib->Emit("Cast", {dim, ib->EmitValue(kInt64)}), ib->Tensor(1, kInt64));
+    auto stridedslice_helper = [&perm, &ib](const NodePtr &x) {
+      return ib->Emit("StridedSlice",
+                      {perm, ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(0))),
+                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(1))),
+                       ib->TupleGetItem(x, ib->Value(static_cast<int64_t>(2)))},
+                      {{"begin_mask", MakeValue<int64_t>(0LL)},
+                       {"end_mask", MakeValue<int64_t>(0LL)},
+                       {"ellipsis_mask", MakeValue<int64_t>(0LL)},
+                       {"new_axis_mask", MakeValue<int64_t>(0LL)},
+                       {"shrink_axis_mask", MakeValue<int64_t>(0LL)}});
+    };
+    auto normalize_slice_helper = [&perm, &ib](int64_t x, int64_t y, int64_t z,
+                                               const std::vector<int64_t> &init_by_none) {
+      return ib->Emit("NormalizeSlice",
+                      {perm, ib->Value(static_cast<int64_t>(x)), ib->Value(static_cast<int64_t>(y)),
+                       ib->Value(static_cast<int64_t>(z))},
+                      {{kAttrTupleIndexAxis, MakeValue(static_cast<int64_t>(0))},
+                       {kAttrTupleIndexTypes, MakeValue({})},
+                       {kAttrExpandDimsMask, MakeValue(static_cast<int64_t>(0))},
+                       {kAttrInitByNone, MakeValue(init_by_none)}});
+    };
+    auto range_1 = normalize_slice_helper(0, -2, 0, {1, 0, 1});
+    auto range_2 = normalize_slice_helper(-1, 0, 0, {0, 1, 1});
+    auto range_3 = normalize_slice_helper(-2, -1, 0, {0, 0, 1});
+    auto part_1 = stridedslice_helper(range_1);
+    auto part_2 = stridedslice_helper(range_2);
+    auto part_3 = stridedslice_helper(range_3);
+    perm = ib->Concat({part_1, part_2, part_3}, -1);
+    return ib->Transpose(x, perm);
   }
   auto dim = shape.size();
   if (dim < kDim2) {
-    MS_LOG_EXCEPTION << "To do MatrixTranspose for input a's ndim is not greater or equal to 2, which is invalid: "
-                     << dim;
+    MS_LOG_EXCEPTION << "For MatrixTranspose, input's ndim " << dim << " is less or equal to 2, which is invalid";
   }
   std::vector<int64_t> perm(dim);
   for (size_t i = 0; i < dim; i++) {
