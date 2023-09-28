@@ -513,7 +513,7 @@ class TransposePatternTree : public PatternTree {
       MS_LOG(DEBUG) << "Skip dynamic rank case";
       return false;
     }
-    auto perm_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>(origin_root->input(1));
+    auto perm_tensornode = origin_root->input(1)->As<inner::ConstTensorNode>();
     MS_EXCEPTION_IF_NULL(perm_tensornode);
     auto perm =
       CheckAndConvertUtils::CheckTensorIntValue(perm_tensornode->format, perm_tensornode->data(), "Transpose");
@@ -521,26 +521,25 @@ class TransposePatternTree : public PatternTree {
       MS_LOG(DEBUG) << "The length of input shape " << input_shape << " and perm " << perm << " is not same";
       return false;
     }
-    std::vector<std::pair<int64_t, int64_t>> exchange_axes;
     auto rank = SizeToLong(input_shape.size());
+    // If the axes which have dimension size greater than 1 keep ascending order in permutation, then this transpose can
+    // be replaced by reshape
+    ShapeValueDType prev_non_one_axis = -1;
     for (size_t i = 0; i < input_shape.size(); ++i) {
       if (perm[i] < -rank || perm[i] >= rank) {
         MS_LOG(DEBUG) << "perm[" << i << "] is " << perm[i] << ", which is out of range[-" << rank << ", " << rank
                       << ")";
         return false;
       }
-      auto perm_i = perm[i] < 0 ? (perm[i] + rank) : perm[i];
-      auto i_v = static_cast<int64_t>(i);
-      if (perm_i != i_v) {
-        (void)exchange_axes.emplace_back(i_v, perm_i);
-      }
-    }
-    // if there is only 1 non-one shape value within the perm indices, then Transpose --> Reshape is ok
-    for (const auto &axes : exchange_axes) {
-      auto l = axes.first < axes.second ? axes.first : axes.second;
-      auto r = axes.first < axes.second ? axes.second : axes.first;
-      if (std::count_if(input_shape.begin() + l, input_shape.begin() + r + 1, [](int64_t s) { return s != 1; }) > 1) {
-        return false;
+      perm[i] = perm[i] < 0 ? (perm[i] + rank) : perm[i];
+      if (input_shape[perm[i]] > 1) {
+        if (perm[i] < prev_non_one_axis) {
+          MS_LOG(DEBUG) << "perm[" << i << "] is axis " << perm[i]
+                        << ", which is greater than the previous non-one axis " << prev_non_one_axis
+                        << ", replace failed";
+          return false;
+        }
+        prev_non_one_axis = perm[i];
       }
     }
     return true;
