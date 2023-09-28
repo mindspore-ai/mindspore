@@ -1777,11 +1777,6 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
       UpdateTapeParameter(tensor);
     }
   }
-
-  // For lazy add user data, we need emplace to user.
-  for (const auto &user_data : lazy_user_data_) {
-    AddUser(std::get<kInputNum1>(user_data), std::get<kInputNum2>(user_data), std::get<kInputNum3>(user_data));
-  }
 }
 
 OrderedSet<VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeReverseIter() {
@@ -1796,6 +1791,7 @@ OrderedSet<VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeRe
 }
 
 void AutoGradCellImpl::BackPropagate() {
+  UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   SeenNum seen = NewSeenGeneration();
   for (auto iter = last_node_reverse_iter; iter != ad_param()->variable_adjoint_set_.rend(); ++iter) {
@@ -1964,7 +1960,14 @@ void AutoGradCellImpl::SetOutput(const tensor::TensorPtrList &weights, const std
 void AutoGradCellImpl::LazyAddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(user);
-  (void)lazy_user_data_.emplace_back(std::make_tuple(node, user, index));
+  (void)ad_param()->lazy_user_data_.emplace_back(std::make_tuple(node, user, index));
+}
+
+void AutoGradCellImpl::UpdateLazyUser() {
+  // For lazy add user data, we need emplace to user.
+  for (const auto &user_data : ad_param()->lazy_user_data_) {
+    AddUser(std::get<kInputNum1>(user_data), std::get<kInputNum2>(user_data), std::get<kInputNum3>(user_data));
+  }
 }
 
 void AutoGradCellImpl::AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
