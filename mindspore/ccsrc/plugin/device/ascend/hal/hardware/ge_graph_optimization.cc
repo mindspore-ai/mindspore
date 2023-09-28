@@ -28,22 +28,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-namespace {
-// Don't need to set KernelInfo for graph on CPU/GPU when
-// the graph is split and run in single op.
-void SetKernelInfoBeforeIRPass(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
-    return;
-  }
-  const auto &nodes = TopoSort(graph->get_return());
-  for (const auto &node : nodes) {
-    if (node->kernel_info() == nullptr) {
-      graph->SetKernelInfoForNode(node);
-    }
-  }
-}
-}  // namespace
 void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Status record: start optimize ge graph. graph id: " << graph->graph_id();
@@ -100,10 +84,7 @@ void GEGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
-void GEGraphOptimization::GEMindIRPass(const KernelGraphPtr &graph) const {
-  SetKernelInfoBeforeIRPass(graph);
-  opt::GEUnifyMindIR(graph);
-}
+void GEGraphOptimization::GEMindIRPass(const KernelGraphPtr &graph) const { opt::GEUnifyMindIR(graph); }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
