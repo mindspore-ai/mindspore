@@ -769,9 +769,12 @@ def _convert_stub_tensor(data):
     if is_stub_tensor(data):
         return data.stub_sync()
     if isinstance(data, tuple):
-        # Skip namedtuple since its type is tuple.
+        # Handle namedtuple since its type is tuple.
         if hasattr(data, "_fields"):
-            return data
+            type_name = data.__class__.__name__
+            data_dict = data._asdict()
+            fields = data_dict.keys()
+            return namedtuple(type_name, fields)(**_convert_stub_tensor(data_dict))
         return tuple(_convert_stub_tensor(x) for x in data)
     if isinstance(data, list):
         # Keep the list object not change.

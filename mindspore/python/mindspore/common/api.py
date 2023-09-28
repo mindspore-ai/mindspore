@@ -26,7 +26,7 @@ import inspect
 import importlib
 import hashlib
 import contextlib
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -84,9 +84,12 @@ def _convert_python_data(data):
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
     if isinstance(data, tuple):
-        # Skip namedtuple since its type is tuple.
+        # Handle namedtuple since its type is tuple.
         if hasattr(data, "_fields"):
-            return data
+            type_name = data.__class__.__name__
+            data_dict = data._asdict()
+            fields = data_dict.keys()
+            return namedtuple(type_name, fields)(**_convert_python_data(data_dict))
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
         # Keep list object not change for inplace operation.
