@@ -57,8 +57,8 @@ bool AscendAllocatorPlugin::Register() {
     return true;
   }
   MS_LOG(INFO) << "AscendAllocatorPlugin Register.";
-  auto ret =
-    DLSoPath({"libmindspore-lite.so", "_c_lite", "tools/converter/lib"}, kAscendkernelPluginSoNmae, &plugin_path_);
+  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite", "tools/converter/lib", "libmindspore_converter.so"},
+                      kAscendkernelPluginSoNmae, &plugin_path_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "get real path of " << kAscendkernelPluginSoNmae << " failed.";
     return false;
