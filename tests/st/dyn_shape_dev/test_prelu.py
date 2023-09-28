@@ -46,6 +46,13 @@ def test_prelu_forward(mode):
     weight = Tensor(np.array([0.1, 0.6, -0.3]).astype(np.float32))
     output = prelu_forward_func(x, weight)
     print("output:", output)
+    expect_output = np.array([[[-0.6, -0.5],
+                               [-2.4, -1.8],
+                               [0.6, 0.3]],
+                              [[0., 1.],
+                               [2., 3.],
+                               [4., 5.]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expect_output, decimal=4)
 
 
 @pytest.mark.level0

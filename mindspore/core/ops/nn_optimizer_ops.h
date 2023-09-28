@@ -39,7 +39,6 @@ GVAR_DEF(PrimitivePtr, kPrimReLUV2, std::make_shared<Primitive>(kReLUV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimReluV2, std::make_shared<Primitive>("ReluV2"));
 GVAR_DEF(PrimitivePtr, kPrimReLUV3, std::make_shared<Primitive>(kReLUV3OpName));
 GVAR_DEF(PrimitivePtr, kPrimPRelu, std::make_shared<Primitive>("PRelu"));
-GVAR_DEF(PrimitivePtr, kPrimPReLUGrad, std::make_shared<Primitive>("PReLUGrad"));
 GVAR_DEF(PrimitivePtr, kPrimGLU, std::make_shared<Primitive>(kGLUOpName));
 GVAR_DEF(PrimitivePtr, kPrimGluGrad, std::make_shared<Primitive>(kGluGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimSeLU, std::make_shared<Primitive>("SeLU"));

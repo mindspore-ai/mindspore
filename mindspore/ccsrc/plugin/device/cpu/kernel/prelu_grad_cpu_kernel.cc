@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/prelu_grad_cpu_kernel.h"
 #include <utility>
 #include <algorithm>
-#include "ops/grad/prelu_grad.h"
 
 namespace mindspore {
 namespace kernel {
