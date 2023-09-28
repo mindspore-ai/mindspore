@@ -271,7 +271,7 @@ def test_single_for():
         print("res:", res)
 
 
-@case_register.level1
+@case_register.level0
 @case_register.target_gpu
 def test_single_for_with_not_iterable_object():
     """
@@ -287,5 +287,5 @@ def test_single_for_with_not_iterable_object():
             ret = ret + i
         return ret
 
-    with pytest.raises(TypeError, match="object is not iterable in graph mode"):
+    with pytest.raises(TypeError, match="object of type 'int' has no len()"):
         control_flow_for_with_not_iterable_object()
