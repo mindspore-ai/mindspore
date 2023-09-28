@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <functional>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/grad/fast_gelu_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
@@ -69,12 +68,8 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &FastGeLUGradCpuKernelMo
 
 bool FastGeLUGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kFastGeluGradInputsNum || outputs.size() != kFastGeluGradOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kFastGeluGradInputsNum << " and "
-                  << kFastGeluGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
-
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }

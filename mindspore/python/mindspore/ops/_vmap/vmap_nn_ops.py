@@ -519,11 +519,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.SoftShrinkGrad)
 def get_common_activation_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
-    if isinstance(prim, str):
-        prim_name = prim
-        prim = Primitive(prim)
-    else:
-        prim_name = prim.name
+    prim_name = prim.name()
 
     def vmap_rule(x_bdim, dy_bdim):
         x, x_dim = x_bdim

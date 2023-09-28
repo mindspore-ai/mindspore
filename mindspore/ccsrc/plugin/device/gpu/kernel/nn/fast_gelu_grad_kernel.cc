@@ -19,7 +19,6 @@
 #include <functional>
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/grad/fast_gelu_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,14 +57,8 @@ std::vector<KernelAttr> FastGeLUGradGpuKernelMod::GetOpSupport() {
 
 bool FastGeLUGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FastGeLUGrad>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
-  if (inputs.size() != kFastGeluGradInputsNum || outputs.size() != kFastGeluGradOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kFastGeluGradInputsNum << " and "
-                  << kFastGeluGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
