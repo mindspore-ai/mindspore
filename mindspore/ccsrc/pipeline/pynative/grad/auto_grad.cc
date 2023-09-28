@@ -1077,11 +1077,23 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
     }
     if (input_node->isa<ValueNode>()) {
       auto v_node = input_node->cast<ValueNodePtr>();
-      (void)PyNativeAlgo::Common::SetValueGradInfo(v_node->value(), nullptr, TensorGradType::kConstant);
+      auto v = v_node->value();
+      if (v != nullptr && v->isa<tensor::Tensor>()) {
+        const auto &t = v->cast<tensor::TensorPtr>();
+        const auto &grad_meta = t->auto_grad_meta_data();
+        // Jit forward graph has no parameters(input is tuple or constant), so input used in graph as valuenode, but it
+        // is used by tape_ as parameter also
+        if (grad_meta != nullptr && PyNativeAlgo::Common::IsParam(grad_meta->grad_type())) {
+          auto new_tensor = std::make_shared<tensor::Tensor>(t->data_type(), t->shape(), t->data_ptr());
+          new_tensor->set_device_address(t->device_address());
+          v = new_tensor;
+        }
+      }
+      (void)PyNativeAlgo::Common::SetValueGradInfo(v, nullptr, TensorGradType::kConstant);
       // In case of jit forward graph and pynative bprop graph used same valuenode
-      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v_node->value(), v_node->abstract());
+      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v, v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
-      (void)input_value.emplace_back(v_node->value());
+      (void)input_value.emplace_back(v);
     } else {
       // Make Fake value
       auto v = MakeValue(0);

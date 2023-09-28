@@ -169,6 +169,7 @@ def test_primitive_avgpool():
     Description: Test ops avgpool grad.
     Expectation: No exception.
     """
+
     def test_inner(net_ms1, net_ms2, *inputs):
         net_ms1.set_grad()
         net_ms2.set_grad()
@@ -277,3 +278,40 @@ def test_cumprod_with_acl():
     fact.forward_mindspore_impl()
     fact.grad_mindspore_impl()
     del os.environ['MS_DEV_FORCE_ACL']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jit_graph_has_no_parameter():
+    """
+    Feature: PyNative jit.
+    Description: Test jit forward graph is has no parameter.
+    Expectation: No exception.
+    """
+
+    class ClipByNormFuncNet(nn.Cell):
+        def __init__(self, max_norm, norm_type=2.0, error_if_nonfinite=False):
+            super().__init__()
+            self.max_norm = max_norm
+            self.norm_type = norm_type
+            self.error_if_nonfinite = error_if_nonfinite
+
+        def construct(self, *x):
+            return ops.clip_by_norm(x, self.max_norm, self.norm_type, self.error_if_nonfinite)
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(sens_param=True)
+
+        def construct(self, *x):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*x)
+
+    net = ClipByNormFuncNet(max_norm=1, norm_type=2, error_if_nonfinite=True)
+    net.set_train()
+    inputx = [ops.randn(2, 2), ops.randn(2,)]
+    ms_output = net(*inputx)
+    GradNetWrtX(net)(*inputx, ms_output)
