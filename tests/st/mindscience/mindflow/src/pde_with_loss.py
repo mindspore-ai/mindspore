@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """
 Base class of user-defined pde problems.
 """
-from __future__ import absolute_import
 from sympy import diff, Function, symbols, Symbol
 import numpy as np
 from mindspore import jit_class
@@ -115,7 +114,8 @@ class PDEWithLoss:
         self.param_val = params_val
         pde_nodes = self.pde() or dict()
         if isinstance(pde_nodes, dict) and pde_nodes:
-            self.pde_nodes = sympy_to_mindspore(pde_nodes, in_vars, out_vars, params)
+            self.pde_nodes = sympy_to_mindspore(
+                pde_nodes, in_vars, out_vars, params)
 
     def pde(self):
         """
@@ -159,7 +159,8 @@ class PDEWithLoss:
             jacobian = None
 
         if self.param_val is None:
-            data_map = {"inputs": inputs, "outputs": outputs, "jacobian": jacobian, "hessian": hessian, "norm": norm}
+            data_map = {"inputs": inputs, "outputs": outputs,
+                        "jacobian": jacobian, "hessian": hessian, "norm": norm}
         else:
             data_map = {"inputs": inputs, "outputs": outputs, "jacobian": jacobian, "hessian": hessian,
                         "norm": norm, "params": self.param_val}
@@ -226,7 +227,7 @@ class Burgers(PDEWithLoss):
             dict, user defined sympy symbolic equations.
         """
         burgers_eq = diff(self.u, (self.t, 1)) + self.u * diff(self.u, (self.x, 1)) - \
-                     self.mu * diff(self.u, (self.x, 2))
+            self.mu * diff(self.u, (self.x, 2))
 
         equations = {"burgers": burgers_eq}
         return equations
@@ -305,12 +306,15 @@ class NavierStokes(PDEWithLoss):
             dict, user defined sympy symbolic equations.
         """
         momentum_x = self.u.diff(self.t) + self.u * self.u.diff(self.x) + self.v * self.u.diff(self.y) + \
-                     self.p.diff(self.x) - self.number * (diff(self.u, (self.x, 2)) + diff(self.u, (self.y, 2)))
+            self.p.diff(self.x) - self.number * \
+            (diff(self.u, (self.x, 2)) + diff(self.u, (self.y, 2)))
         momentum_y = self.v.diff(self.t) + self.u * self.v.diff(self.x) + self.v * self.v.diff(self.y) + \
-                     self.p.diff(self.y) - self.number * (diff(self.v, (self.x, 2)) + diff(self.v, (self.y, 2)))
+            self.p.diff(self.y) - self.number * \
+            (diff(self.v, (self.x, 2)) + diff(self.v, (self.y, 2)))
         continuty = self.u.diff(self.x) + self.v.diff(self.y)
 
-        equations = {"momentum_x": momentum_x, "momentum_y": momentum_y, "continuty": continuty}
+        equations = {"momentum_x": momentum_x,
+                     "momentum_y": momentum_y, "continuty": continuty}
         return equations
 
 

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """
 construct nodes for sympy expressions
 """
-from __future__ import absolute_import
 
 import functools as ft
 
@@ -81,6 +80,7 @@ MINDSPORE_SYMPY_TRANSLATIONS = {
 @jit_class
 class AddNode:
     """Compute add terms in sympy expression"""
+
     def __init__(self, nodes=None):
         self.nodes = nodes or list()
 
@@ -96,6 +96,7 @@ class AddNode:
 @jit_class
 class PowNode:
     """Compute pow terms in sympy expression"""
+
     def __init__(self, nodes=None):
         self.nodes = nodes or list()
 
@@ -106,6 +107,7 @@ class PowNode:
 @jit_class
 class MulNode:
     """Compute multiplication terms in sympy expression"""
+
     def __init__(self, nodes=None):
         self.nodes = nodes or list()
 
@@ -120,6 +122,7 @@ class MulNode:
 @jit_class
 class NumberNode:
     """Compute number terms in sympy expression"""
+
     def __init__(self, nodes=None):
         self.nodes = nodes or list()
 
@@ -133,6 +136,7 @@ class NumberNode:
 @jit_class
 class SymbolNode:
     """Compute symbol terms in sympy expression"""
+
     def __init__(self, in_vars, in_var_idx=None):
         self.input_split = ops.Split(1, len(in_vars))
         self.in_var_idx = in_var_idx
@@ -147,6 +151,7 @@ class SymbolNode:
 @jit_class
 class ParamNode:
     """Compute parameter terms in sympy expression"""
+
     def __init__(self, params, param_var_idx=None):
         self.param_split = ops.Split(-1, len(params))
         self.param_var_idx = param_var_idx
@@ -161,6 +166,7 @@ class ParamNode:
 @jit_class
 class NetOutputNode:
     """Compute network function terms in sympy expression"""
+
     def __init__(self, out_vars, out_var_idx=None):
         self.output_split = ops.Split(1, len(out_vars))
         self.out_var_idx = out_var_idx
@@ -175,6 +181,7 @@ class NetOutputNode:
 @jit_class
 class MSFunctionNode:
     """Compute function which can be translated into mindspore function in sympy expression"""
+
     def __init__(self, nodes=None, fn=None):
         self.nodes = nodes or list()
         self.fn = fn
@@ -188,6 +195,7 @@ class MSFunctionNode:
 @jit_class
 class DerivativeNode:
     """Compute derivative terms in sympy expression"""
+
     def __init__(self, in_vars, order=None, in_var_idx=None, out_var_idx=None, is_norm=False):
         self.input_split = ops.Split(1, len(in_vars))
         self.order = order

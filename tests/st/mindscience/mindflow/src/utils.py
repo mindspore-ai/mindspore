@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ def get_loss_metric(name):
         0.6666667
     """
     if not isinstance(name, str):
-        raise TypeError("the type of name should be str but got {}".format(type(name)))
+        raise TypeError(
+            "the type of name should be str but got {}".format(type(name)))
 
     if name not in _loss_metric:
         raise ValueError("Unknown loss function type: {}".format(name))
