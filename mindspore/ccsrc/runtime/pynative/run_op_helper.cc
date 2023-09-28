@@ -897,7 +897,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     }
 
     // Fetch output kernel tensor.
-    const auto &output_device_addresses = execute_kernel.inputs_device_address_;
+    const auto &output_device_addresses = execute_kernel.outputs_device_address_;
     size_t output_size = output_device_addresses.size();
     output_kernel_tensors.resize(output_size);
     for (size_t j = 0; j < output_size; j++) {
