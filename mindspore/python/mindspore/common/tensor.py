@@ -1192,9 +1192,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.all`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
-        return tensor_operator_registry.get('all')(keep_dims)(self, axis)
+        return tensor_operator_registry.get('all')(self, axis, keep_dims)
 
     def angle(self):
         r"""
