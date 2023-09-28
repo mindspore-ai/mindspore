@@ -37,7 +37,9 @@ class AvgPoolCreateInstanceNet(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_avg_pool():
     """
     Feature: DynamicShape.
@@ -53,7 +55,9 @@ def test_avg_pool():
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_avg_pool_create_instance_const_args():
     """
     Feature: DynamicShape.
@@ -67,9 +71,12 @@ def test_avg_pool_create_instance_const_args():
     print("out:", out)
 
 
+@pytest.mark.skip(reason="Graph mode does not support str.upper() in gen_arg_handler.py")
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_avg_pool_create_instance_var_args():
     """
     Feature: DynamicShape.
@@ -99,7 +106,9 @@ class PowCreateInstanceNet(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_pow_type_cast():
     """
     Feature: DynamicShape.
@@ -114,7 +123,9 @@ def test_pow_type_cast():
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 def test_pow_create_instance_type_cast():
     """
     Feature: DynamicShape.

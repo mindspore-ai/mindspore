@@ -58,7 +58,7 @@ enum ParseTargetType {
 // Define python module name.
 const char PYTHON_MOD_MODULE[] = "mindspore";
 const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
-const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.arg_handler";
+const char PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE[] = "mindspore.ops.auto_generate.gen_arg_handler";
 const char PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE[] = "mindspore.ops_generate.arg_dtype_cast";
 const char PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE[] = "mindspore.ops.auto_generate.gen_labels";
 const char PYTHON_MOD_PRIMITIVE_OP_TYPE_IT[] = "type_it";
