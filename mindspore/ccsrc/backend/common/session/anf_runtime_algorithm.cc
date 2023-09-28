@@ -950,6 +950,18 @@ std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllOutputKernelTenso
   return output_kernel_tensors;
 }
 
+std::vector<size_t> AnfRuntimeAlgorithm::GetNodeInputSizeList(const AnfNodePtr &node) {
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(node);
+  size_t input_num = input_kernel_tensors.size();
+  std::vector<size_t> input_size_list(input_num, 0);
+  for (size_t i = 0; i < input_num; i++) {
+    MS_EXCEPTION_IF_NULL(input_kernel_tensors[i]);
+    input_size_list[i] = input_kernel_tensors[i]->size();
+  }
+
+  return input_size_list;
+}
+
 size_t AnfRuntimeAlgorithm::GetOutputAddressNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());

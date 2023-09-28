@@ -166,14 +166,12 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
   MS_EXCEPTION_IF_NULL(size_list);
   MS_EXCEPTION_IF_NULL(total_size);
 
-  const auto &kernel_mod = AnfAlgo::GetKernelMod(node);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
   (*addr_list).clear();
   (*size_list).clear();
   *total_size = 0;
 
   if (is_input) {
-    const auto &intput_sizes = kernel_mod->GetInputSizeList();
+    const auto &intput_sizes = AnfAlgo::GetNodeInputSizeList(node);
     for (size_t i = 0; i < intput_sizes.size(); ++i) {
       const auto &device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
@@ -182,6 +180,8 @@ void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr
       (void)addr_list->emplace_back(device_tensor);
     }
   } else {
+    const auto &kernel_mod = AnfAlgo::GetKernelMod(node);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
     const auto &output_sizes = kernel_mod->GetOutputSizeList();
     for (size_t i = 0; i < output_sizes.size(); ++i) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);

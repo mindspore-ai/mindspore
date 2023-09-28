@@ -35,7 +35,6 @@ class RtKernel : public AscendKernelMod {
   void SetInputSizeList(const std::vector<size_t> &size_list) override;
   void SetOutputSizeList(const std::vector<size_t> &size_list) override;
   void SetWorkspaceSizeList(const std::vector<size_t> &size_list) override;
-  const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
 

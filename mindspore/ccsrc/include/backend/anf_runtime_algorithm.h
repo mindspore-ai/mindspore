@@ -134,6 +134,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // Get all output kernel tensor if exists, otherwise create new KernelTensor and set into node.
   static std::vector<KernelTensor *> GetOrCreateAllOutputKernelTensors(const AnfNodePtr &node);
 
+  // Get all input memory size list for node.
+  static std::vector<size_t> GetNodeInputSizeList(const AnfNodePtr &node);
+
   static size_t GetOutputAddressNum(const AnfNodePtr &node);
   // set output device addr of anf_node
   static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, AnfNode *node);

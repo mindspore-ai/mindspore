@@ -677,7 +677,7 @@ class BACKEND_EXPORT KernelMod {
   virtual void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
   virtual void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
   virtual void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
-  virtual const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
+  const std::vector<size_t> &GetInputSizeList() const { MS_LOG(EXCEPTION) << "Call deprecated interface."; }
   virtual const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
 
