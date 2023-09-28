@@ -1174,7 +1174,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
@@ -1441,7 +1441,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
         valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)

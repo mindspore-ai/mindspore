@@ -31,4 +31,4 @@ mindspore.ops.margin_ranking_loss
         - **TypeError** - `input1` 和 `target` 类型不一致。
         - **ValueError** - `input1` 和 `input2` shape不一致。
         - **ValueError** - `input1` 和 `target` shape不一致。
-        - **ValueError** - `reduction` 不为 ``"none"`` ， ``"mean"`` 或 ``"sum"`` 。
+        - **ValueError** - `reduction` 不为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` 。
