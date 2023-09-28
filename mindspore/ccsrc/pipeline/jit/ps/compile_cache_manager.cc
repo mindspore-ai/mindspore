@@ -244,6 +244,8 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
 
 bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_name) {
   MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
+  auto &context = CompileCacheContext::GetInstance();
+  context.set_has_cached_queue_name(true);
   const auto &filename = GetDataQueueNameCachePath();
   nlohmann::json name_json;
   if (!Common::FileExists(filename)) {
@@ -307,6 +309,11 @@ std::string GetDataQueueName(const FuncGraphPtr &fg) {
 std::string CompileCacheManager::GetCachedDataQueueName(const std::string &dataset_phase) {
   std::string queue_name;
   if (!CompileCacheEnable()) {
+    return queue_name;
+  }
+  // if queue name has cached, we should not get it again from cache file in the same process.
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.has_cached_queue_name()) {
     return queue_name;
   }
   auto &config_mng = ConfigManager::GetInstance();
