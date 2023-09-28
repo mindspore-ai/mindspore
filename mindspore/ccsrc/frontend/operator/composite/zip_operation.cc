@@ -50,13 +50,20 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
 
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
   ret_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-
+  bool has_tensor = false;
+  for (auto arg : args_abs_list) {
+    if (arg->isa<abstract::AbstractTensor>()) {
+      const auto &build_shape = arg->BuildShape();
+      if (build_shape->IsDimZero()) {
+        MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";
+      }
+      has_tensor = true;
+    }
+  }
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   bool has_any = std::any_of(args_abs_list.begin(), args_abs_list.end(),
                              [](const AbstractBasePtr &abs) { return fallback::ContainsSequenceAnyType(abs); });
-  bool has_not_seq = std::any_of(args_abs_list.begin(), args_abs_list.end(),
-                                 [](const AbstractBasePtr &abs) { return !abs->isa<AbstractSequence>(); });
-  if (allow_fallback_runtime && (has_any || has_not_seq)) {
+  if (allow_fallback_runtime && (has_any || has_tensor)) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
@@ -91,9 +98,8 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
       } else {
         error_index = std::to_string(idx) + "th";
       }
-      MS_LOG(EXCEPTION) << "For 'zip', the all inputs must be list or tuple, but the " << error_index
-                        << " argument is not list or tuple.\nThe " << error_index
-                        << " argument detail: " << args_abs_list[idx]->ToString() << ".";
+      MS_LOG(EXCEPTION) << "For 'zip', the all inputs must be list, tuple or multi dimensional Tensor, but the "
+                        << error_index << " argument is:" << args_abs_list[idx]->ToString() << ".";
     }
     if (abs->cast<AbstractSequencePtr>()->dynamic_len()) {
       MS_LOG(EXCEPTION) << "For 'zip', the dynamic length input is unsupported in graph mode";
