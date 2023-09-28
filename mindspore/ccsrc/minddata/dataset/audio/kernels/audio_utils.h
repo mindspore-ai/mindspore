@@ -324,8 +324,8 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     b_coeffs[i] /= a_coeffs[0];
   }
   // Sliding window
-  T *m_px = new T[m_num_order + 1];
-  T *m_py = new T[m_den_order + 1];
+  std::vector<T> m_px(m_num_order + 1, static_cast<T>(0));
+  std::vector<T> m_py(m_den_order + 1, static_cast<T>(0));
 
   // Tensor -> vector
   for (auto itr = input->begin<T>(); itr != input->end<T>();) {
@@ -378,8 +378,6 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   // unpack batch
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_vect, input_shape, &out));
   *output = out;
-  delete[] m_px;
-  delete[] m_py;
   return Status::OK();
 }
 
@@ -1703,13 +1701,13 @@ Status TensorRound(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 
 template <typename T>
 Status ApplyProbabilityDistribution(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                    DensityFunction density_function, std::mt19937 rnd) {
+                                    DensityFunction density_function, std::mt19937 *rnd) {
   int channel_size = input->shape()[0] - 1;
   int time_size = input->shape()[-1] - 1;
   std::uniform_int_distribution<> dis_channel(0, channel_size);
-  int random_channel = channel_size > 0 ? dis_channel(rnd) : 0;
+  int random_channel = channel_size > 0 ? dis_channel(*rnd) : 0;
   std::uniform_int_distribution<> dis_time(0, time_size);
-  int random_time = time_size > 0 ? dis_time(rnd) : 0;
+  int random_time = time_size > 0 ? dis_time(*rnd) : 0;
   int number_of_bits = 16;
   int up_scaling = static_cast<int>(pow(2, number_of_bits - 1) - 2);
   int down_scaling = static_cast<int>(pow(2, number_of_bits - 1));
@@ -1731,8 +1729,8 @@ Status ApplyProbabilityDistribution(const std::shared_ptr<Tensor> &input, std::s
     iter_in += (time_size + 1) * random_channel + random_time;
     auto gaussian = *(iter_in);
     for (int i = 0; i < num_rand_variables; i++) {
-      int rand_channel = channel_size > 0 ? dis_channel(rnd) : 0;
-      int rand_time = time_size > 0 ? dis_time(rnd) : 0;
+      int rand_channel = channel_size > 0 ? dis_channel(*rnd) : 0;
+      int rand_time = time_size > 0 ? dis_time(*rnd) : 0;
 
       auto iter_in_rand = input->begin<T>();
       iter_in_rand += (time_size + 1) * rand_channel + rand_time;
@@ -1796,7 +1794,7 @@ Status AddNoiseShaping(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 /// \return Status code.
 template <typename T>
 Status Dither(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, DensityFunction density_function,
-              bool noise_shaping, std::mt19937 rnd) {
+              bool noise_shaping, std::mt19937 *rnd) {
   TensorShape shape = input->shape();
   TensorShape new_shape({input->Size() / shape[-1], shape[-1]});
   RETURN_IF_NOT_OK(input->Reshape(new_shape));

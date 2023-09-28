@@ -279,6 +279,8 @@ Status WIDERFaceOp::WalkFolders(const std::string &wf_path) {
   for (std::set<std::string>::iterator it = folder_names_.begin(); it != folder_names_.end(); ++it) {
     Path folder_dir(img_folder / (*it));
     auto folder_it = Path::DirIterator::OpenDirectory(&folder_dir);
+    CHECK_FAIL_RETURN_UNEXPECTED(folder_it != nullptr, "Invalid path, failed to open dir: " + folder_dir.ToString() +
+                                                         ", not exists or permission denied.");
     while (folder_it->HasNext()) {
       Path file = folder_it->Next();
       if (file.Extension() == kExtension) {

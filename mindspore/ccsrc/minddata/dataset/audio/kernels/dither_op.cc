@@ -31,11 +31,11 @@ Status DitherOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   RETURN_IF_NOT_OK(ValidateTensorNumeric("Dither", input));
 
   if (input->type() == DataType(DataType::DE_FLOAT64)) {
-    return Dither<double>(input, output, density_function_, noise_shaping_, rnd_);
+    return Dither<double>(input, output, density_function_, noise_shaping_, &rnd_);
   } else {
     std::shared_ptr<Tensor> float_input;
     RETURN_IF_NOT_OK(TypeCast(input, &float_input, DataType(DataType::DE_FLOAT32)));
-    return Dither<float>(float_input, output, density_function_, noise_shaping_, rnd_);
+    return Dither<float>(float_input, output, density_function_, noise_shaping_, &rnd_);
   }
 }
 
