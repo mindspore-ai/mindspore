@@ -24,6 +24,7 @@
 #include "inc/ops/transformation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
+#include "inc/ops/data_flow_ops.h"
 
 DECLARE_OP_ADAPTER(Shape)
 DECLARE_OP_USE_OUTPUT(Shape)
@@ -165,4 +166,7 @@ DECLARE_CUST_OP_USE_OUTPUT(NoRepeatNGram)
 
 DECLARE_OP_ADAPTER(NonZero)
 DECLARE_OP_USE_OUTPUT(NonZero)
+
+DECLARE_OP_ADAPTER(OutfeedEnqueueOpV2)
+DECLARE_OP_USE_DYN_INPUT(OutfeedEnqueueOpV2)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

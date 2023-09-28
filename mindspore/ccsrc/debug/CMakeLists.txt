@@ -48,6 +48,7 @@ if(NOT ENABLE_SECURITY)
         "${CMAKE_CURRENT_SOURCE_DIR}/data_dump/npy_header.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/utils.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/common/csv_writer.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/summary/summary.cc"
         )
     if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         list(APPEND _DEBUG_SRC_LIST

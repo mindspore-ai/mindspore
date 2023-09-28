@@ -82,7 +82,6 @@ namespace session {
 MS_REG_SESSION(kSessionBasic, SessionBasic);
 
 namespace {
-constexpr int kSummaryGetItem = 2;
 constexpr int64_t kInvalidShape = -2;
 static bool IsPynativeMode() {
   auto ms_context = MsContext::GetInstance();
@@ -1113,122 +1112,30 @@ void SessionBasic::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::Te
 #ifndef ENABLE_SECURITY
 void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
   MS_EXCEPTION_IF_NULL(callback);
-  summary_callback_ = callback;
-}
-
-void SessionBasic::SetSummaryNodesForAllGraphs(KernelGraph *graph, const std::vector<KernelGraphPtr> &all_graphs) {
-  MS_LOG(DEBUG) << "Set summary nodes for all graphs start.";
-  MS_EXCEPTION_IF_NULL(graph);
-  auto summary_nodes = graph->summary_nodes();
-  std::map<std::string, std::pair<AnfNodePtr, int>> summary;
-  summary.insert(summary_nodes.cbegin(), summary_nodes.cend());
-  RecurseSetSummaryNodes(graph, all_graphs, &summary);
-  graph->set_summary_nodes(summary);
-  MS_LOG(INFO) << "The total summary nodes is: " << summary.size();
+  Summary::GetInstance().RegisterSummaryCallBackFunc(callback);
 }
 
 void SessionBasic::RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph) {
   MS_LOG(INFO) << "Recurse set summary nodes for all graphs in graph: " << graph->graph_id() << " start";
   MS_EXCEPTION_IF_NULL(graph);
-  SetSummaryNodes(graph);
-  auto &summary_nodes = graph->summary_nodes();
-  std::map<std::string, std::pair<AnfNodePtr, int>> summary;
-  summary.insert(summary_nodes.cbegin(), summary_nodes.cend());
-  auto &child_graphs = graph->child_graph_order();
-  for (auto &child_graph : child_graphs) {
-    SetSummaryNodes(child_graph.lock().get());
-    auto &child_graph_summary = child_graph.lock()->summary_nodes();
-    summary.insert(child_graph_summary.cbegin(), child_graph_summary.cend());
-    RecurseSetSummaryNodesForAllGraphs(child_graph.lock().get());
-  }
-  graph->set_summary_nodes(summary);
-  MS_LOG(INFO) << "The total summary nodes is: " << summary.size() << " for graph: " << graph->graph_id();
+  Summary::GetInstance().RecurseSetSummaryNodesForAllGraphs(graph);
 }
 
 void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->summary_node_exist()) {
-    return;
-  }
-  auto summary = graph->summary_nodes();
-  auto apply_list = TopoSort(graph->get_return());
-  for (auto &n : apply_list) {
-    MS_EXCEPTION_IF_NULL(n);
-    if (AnfAlgo::IsSummaryNode(n)) {
-      auto cnode = n->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode->inputs().size() <= kSummaryGetItem) {
-        MS_LOG(EXCEPTION) << "The node Summary should have 2 inputs at least, but got " << (cnode->inputs().size() - 1)
-                          << "." << trace::DumpSourceLines(cnode);
-      }
-      auto node = cnode->input(kSummaryGetItem);
-      MS_EXCEPTION_IF_NULL(node);
-      auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
-      MS_EXCEPTION_IF_NULL(item_with_index.first);
-      if (!AnfUtils::IsRealKernel(item_with_index.first)) {
-        MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
-      }
-      summary[n->fullname_with_scope()] = item_with_index;
-    }
-  }
-  graph->set_summary_nodes(summary);
-  MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
-}
-
-void SessionBasic::RecurseSetSummaryNodes(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs,
-                                          std::map<std::string, std::pair<AnfNodePtr, int>> *summary) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(summary);
-  for (auto &child_graph : all_graphs) {
-    MS_EXCEPTION_IF_NULL(child_graph);
-    SetSummaryNodes(child_graph.get());
-    auto child_graph_summary = child_graph->summary_nodes();
-    summary->insert(child_graph_summary.cbegin(), child_graph_summary.cend());
-  }
-  graph->set_summary_nodes(*summary);
+  Summary::GetInstance().SetSummaryNodes(graph);
 }
 
 void SessionBasic::Summary(KernelGraph *graph) {
-  if (summary_callback_ == nullptr) {
-    return;
-  }
   MS_EXCEPTION_IF_NULL(graph);
-  bool exist_summary = graph->summary_node_exist();
-  if (!exist_summary) {
-    return;
-  }
-
   static bool is_first = true;
   if (is_first && !IsSupportSummary()) {
     is_first = false;
     MS_LOG(WARNING) << "The Summary operator can not collect data correctly. Detail: the data sink mode is used and the"
                        " sink size(in model.train() python api) is not equal to 1.";
   }
-  SetSummaryNodes(graph);
-  auto summary_outputs = graph->summary_nodes();
-  std::map<std::string, tensor::TensorPtr> params_list;
-  // fetch outputs apply kernel in session & run callback functions
-  for (const auto &output_item : summary_outputs) {
-    auto node = output_item.second.first;
-    size_t index = IntToSize(output_item.second.second);
-    auto address = AnfAlgo::GetOutputAddr(node, index, false);
-    auto shape = common::AnfAlgo::GetOutputInferShape(node, index);
-    TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
-    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-    MS_EXCEPTION_IF_NULL(address);
-    if (!address->GetPtr()) {
-      continue;
-    }
-    if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, index), LongToSize(tensor->data().nbytes()),
-                                   tensor->data_type(), tensor->data_c())) {
-      MS_LOG(ERROR) << "Failed to sync output from device to host.";
-    }
-    tensor->set_sync_status(kNoNeedSync);
-    params_list[output_item.first] = tensor;
-  }
-  // call callback function here
-  summary_callback_(0, params_list);
+  Summary::GetInstance().SummaryTensor(graph);
 }
 #endif
 
