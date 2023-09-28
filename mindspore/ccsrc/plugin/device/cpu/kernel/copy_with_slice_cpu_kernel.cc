@@ -69,6 +69,8 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
   MS_EXCEPTION_IF_NULL(dst_storage_info);
   T *copy_src_addr = GetDeviceAddress<T>({src_addr}, 0);
   T *self_addr = GetDeviceAddress<T>({dst_addr}, 0);
+  MS_EXCEPTION_IF_NULL(copy_src_addr);
+  MS_EXCEPTION_IF_NULL(self_addr);
   const auto &output_shape = dst_storage_info->shape;
   int64_t type_size = is_complex ? 2 : 1;
   auto output_size =
@@ -81,7 +83,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
       MS_LOG(EXCEPTION) << "src data_type:" << src_storage_info->data_type
                         << "  dst data_type:" << dst_storage_info->data_type;
     }
-    src_storage_offset = src_storage_info->storage_offset;
+    src_storage_offset = static_cast<int64_t>(src_storage_info->storage_offset);
   }
   auto src_is_contiguous = src_storage_info == nullptr || src_storage_info->is_contiguous;
 

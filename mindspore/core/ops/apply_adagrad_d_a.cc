@@ -92,9 +92,6 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
 
 TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  if (input_args.size() < 8) {
-    MS_EXCEPTION(ValueError) << "ApplyAdagradDA input size is " << input_args.size();
-  }
   auto prim_name = prim->name();
   const int64_t input_num = 8;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,

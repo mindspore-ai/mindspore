@@ -42,8 +42,6 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
   using ContiguousFunc = std::function<bool(ContiguousCpuKernel *, const kernel::AddressPtr &,
                                             const TensorStorageInfoPtr &, const kernel::AddressPtr &, const int64_t &)>;
 
-  // const ContiguousFunc GetFunc(TypeId type_id);
-
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
                             const kernel::AddressPtr &outputs, const int64_t &type_size);

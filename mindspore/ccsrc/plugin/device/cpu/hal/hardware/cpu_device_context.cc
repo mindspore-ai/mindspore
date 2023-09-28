@@ -81,10 +81,8 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
   switch (task_type) {
     case pynative::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<CpuContiguousKernelTask>(task_context);
-      break;
     case pynative::KernelTaskType::kCOPY_TASK:
       return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
-      break;
     default:
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
   }
@@ -522,10 +520,6 @@ bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_t
                                                                     input_storage_list, output_addr_list, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
-
-  // TODO(wangchangheng): need PROFILER_END
-  // PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
-  // kernel->fullname_with_scope(), false);
 
   auto ret = task->RunWithRet();
   if (!ret) {

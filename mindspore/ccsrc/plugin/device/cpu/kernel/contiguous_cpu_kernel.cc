@@ -62,6 +62,8 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
   MS_EXCEPTION_IF_NULL(input_storage_info);
   T *input_addr = GetDeviceAddress<T>({input}, 0);
   T *output_addr = GetDeviceAddress<T>({output}, 0);
+  MS_EXCEPTION_IF_NULL(input_addr);
+  MS_EXCEPTION_IF_NULL(output_addr);
   const auto &output_shape = input_storage_info->shape;
   auto output_size =
     LongToSize(std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>()));
@@ -80,11 +82,11 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
     }
   } else {
     size_t ndim = input_storage_info->shape.size();
-    size_t storage_offset = input_storage_info->storage_offset;
+    int64_t storage_offset = static_cast<int64_t>(input_storage_info->storage_offset);
     auto strides = input_storage_info->strides;
     auto task = [&](size_t start, size_t end) {
       for (size_t pos = start; pos < end; ++pos) {
-        int64_t tmp_idx = pos;
+        int64_t tmp_idx = static_cast<int64_t>(pos);
         int64_t offset = 0;
         for (size_t dim = 0; dim < ndim; dim++) {
           auto index = ndim - dim - 1;
