@@ -50,9 +50,14 @@ class DynamicAkgGpuKernelManager {
       }
     }
   }
+  CUresult GetCUResult(const char *kernel_content, bool force_reload, std::vector<uint32_t> *thread_info,
+                       CUfunction *func, const std::string kernel_name, std::unordered_map<string, int64_t> map_info);
   CUresult GetFunction(const KernelPackPtr &kernel_pack, bool force_reload, std::vector<uint32_t> *thread_info,
-                       CUfunction *func, std::unordered_map<std::string, int64_t> map_info,
-                       const std::string kernel_name);
+                       CUfunction *func, const std::string kernel_name,
+                       std::unordered_map<std::string, int64_t> map_info);
+  CUresult GetFunctionFromStr(const std::string ptx_str, bool force_reload, std::vector<uint32_t> *thread_info,
+                              CUfunction *func, const std::string kernel_name,
+                              std::unordered_map<std::string, int64_t> map_info);
 
  private:
   std::unordered_map<std::string, GpuKernelMetaPtr> infotable_;
@@ -77,10 +82,12 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
   void InitMappingInfo();
+  void GetDeviceShape();
+  void CheckJsonParsed();
   void UpdateMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  std::vector<std::vector<int64_t>> GetArgSizeVec();
-
+  void GetDeviceArgSizeVec();
+  void ReplacePTX();
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
@@ -95,8 +102,12 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   CUfunction kernel_addr_{nullptr};
   bool is_dynamic_{false};
   std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<size_t> ndims_;
+  std::vector<std::vector<int64_t>> device_shape_list_;
   std::unordered_map<std::string, int64_t> map_info_;
+  std::vector<std::vector<int64_t>> arg_size_vec_;
+  std::unordered_map<std::string, int64_t> symbol_map_;
+  nlohmann::json parsed_js_;
+  std::string replaced_ptx_;
 };
 
 class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
