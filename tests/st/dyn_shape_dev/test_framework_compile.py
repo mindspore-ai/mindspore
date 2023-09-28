@@ -20,6 +20,9 @@ from mindspore import nn, mutable
 from mindspore.ops import auto_generate as ops
 
 
+ms.set_context(jit_syntax_level=ms.STRICT)
+
+
 class AvgPoolNet(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -71,7 +74,6 @@ def test_avg_pool_create_instance_const_args():
     print("out:", out)
 
 
-@pytest.mark.skip(reason="Graph mode does not support str.upper() in gen_arg_handler.py")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
