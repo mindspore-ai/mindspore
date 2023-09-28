@@ -110,7 +110,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {REVERSEV2, OperatorType::kRecSoftmax},
   {LOG_SOFTMAX, OperatorType::kRecSoftmax},
   {CHOLESKY, OperatorType::kRecSoftmax},
-  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmaxCrossEntropyWithLogits},
+  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSoftmax},
   {FLATTEN, OperatorType::kRecFlatten},
   {PAD_V3, OperatorType::kRecPadV3},
   {CUM_SUM, OperatorType::kRecCum},
