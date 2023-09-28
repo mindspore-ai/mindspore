@@ -105,6 +105,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   void CopyDeviceToHost(void *dst, uint64_t size) const;
   bool CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
                              bool host_to_device) const;
+  bool CopyBetweenFileDeviceDirectly(void *ptr, const std::string &file_name, size_t size, size_t stream_id,
+                                     bool file_to_device) const;
 
   // The 'const' for this class is irrational, but I abide by it
   int64_t GetGroupsWithCache() const;
