@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_forward_func(input_params, input_indices, axis, batch_dims=0):
     return ops.auto_generate.gather(input_params, input_indices, axis, batch_dims)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_backward_func(input_params, input_indices, axis, batch_dims=0):
     return ops.grad(gather_forward_func, (0,))(input_params, input_indices, axis, batch_dims)
 
@@ -34,12 +35,14 @@ def gather_backward_func(input_params, input_indices, axis, batch_dims=0):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gather_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_forward(mode):
     """
     Feature: Ops.
     Description: test op gather.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), ms.float32)
     input_indices = Tensor(np.array([0, 2, 1]), ms.int32)
     axis = 1
@@ -54,12 +57,14 @@ def test_gather_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gather_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op gather.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_params = Tensor(np.array([1, 2, 3]), ms.float32)
     input_indices = Tensor(np.array([0, 2, 1]), ms.int32)
     axis = 0
@@ -70,12 +75,14 @@ def test_gather_backward():
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-def test_gather_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_vmap(mode):
     """
     Feature: test vmap function.
     Description: test gather op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int32))
     axis = 0

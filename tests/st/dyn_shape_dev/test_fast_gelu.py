@@ -15,22 +15,23 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fastgelu_forward_func(x):
     return ops.auto_generate.fast_gelu(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fastgelu_backward_func(x):
     return ops.grad(fastgelu_forward_func, 0)(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fastgelu_vmap_func(x):
     return ops.vmap(fastgelu_forward_func, in_axes=0, out_axes=0)(x)
 

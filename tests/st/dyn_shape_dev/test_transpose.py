@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def transpose_forward_func(x):
     return ops.auto_generate.transpose(x, (1, 2, 0))
 
 
-@ms.jit
+@test_utils.run_with_cell
 def transpose_backward_func(x):
     return ops.grad(transpose_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def transpose_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_transpose_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_transpose_forward(mode):
     """
     Feature: Ops.
     Description: test op relu.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.arange(24).reshape(4, 3, 2).astype(np.float32))
     out = transpose_forward_func(x)
     expect = np.array([[[[0, 6, 12, 18],
@@ -56,12 +59,14 @@ def test_transpose_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_transpose_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_transpose_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op relu.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.arange(24).reshape(4, 3, 2).astype(np.float32))
     grad = transpose_backward_func(x)
     expect_grad = np.ones((4, 3, 2)).astype(np.float32)
@@ -73,12 +78,14 @@ def test_transpose_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_transpose_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_transpose_vmap(mode):
     """
     Feature: test vmap function.
     Description: test avgpool op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.arange(24).reshape(2, 3, 1, 2, 2).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(transpose_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)

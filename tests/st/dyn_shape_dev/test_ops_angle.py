@@ -14,18 +14,14 @@
 # ============================================================================
 import pytest
 import numpy as np
-import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import auto_generate as P
+import test_utils
 
 
-class AngleTEST(nn.Cell):
-    def __init__(self):
-        super(AngleTEST, self).__init__()
-        self.Angle = P.Angle()
-
-    def construct(self, x):
-        return self.Angle(x)
+@test_utils.run_with_cell
+def angle_forward_func(x):
+    return P.Angle()(x)
 
 
 @pytest.mark.level0
@@ -38,8 +34,7 @@ def test_Angle_op_cpu(data_type):
     Description: test the Angle alpha = 1.0.
     Expectation: match to np benchmark.
     """
-    Angle = AngleTEST()
     x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
     context.set_context(mode=context.GRAPH_MODE, precompile_only=True)
-    output = Angle(x)
+    output = angle_forward_func(x)
     print(f"output:{output}")

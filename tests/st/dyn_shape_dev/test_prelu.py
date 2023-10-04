@@ -17,14 +17,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def prelu_forward_func(x, weight):
     return ops.auto_generate.prelu(x, weight)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def prelu_backward_func(x, weight):
     return ops.grad(prelu_forward_func, (0, 1))(x, weight)
 

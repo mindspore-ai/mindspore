@@ -14,12 +14,13 @@
 # ============================================================================
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def sqrt_grad_forward_func(dy, x):
     return ops.auto_generate.sqrt_grad(dy, x)
 
@@ -29,12 +30,14 @@ def sqrt_grad_forward_func(dy, x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_sqrt_grad_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sqrt_grad_forward(mode):
     """
     Feature: Ops.
     Description: test op sqrt_grad.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x_np = np.array([[0.02595769, 0.25027096]]).astype(np.float32)
     dy = ms.Tensor(x_np)
     x = ms.Tensor(x_np * x_np)
@@ -49,12 +52,14 @@ def test_sqrt_grad_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_sqrt_grad_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sqrt_grad_vmap(mode):
     """
     Feature: test vmap function.
     Description: test sqrt_grad op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = (0, 0)
     x_np = np.array([[[0.21901467, 1.9256916]]]).astype(np.float32)
     dy = ms.Tensor(x_np)

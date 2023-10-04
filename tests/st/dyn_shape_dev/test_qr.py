@@ -17,14 +17,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def qr_forward_func(x, full_matrices):
     return ops.auto_generate.qr_(x, full_matrices)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def qr_backward_func(x, full_matrices):
     return ops.grad(qr_forward_func, (0, 1))(x, full_matrices)
 

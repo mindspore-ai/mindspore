@@ -18,14 +18,15 @@ import mindspore as ms
 from mindspore import context
 from mindspore import ops
 from mindspore.common import dtype as mstype
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def randperm_v2_forward_func(n):
     return ops.auto_generate.randperm(n, seed=0, offset=0, dtype=mstype.float16)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def randperm_v2_backward_func(n):
     return ops.grad(randperm_v2_forward_func, (0))(n)
 

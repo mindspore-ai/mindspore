@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def erfc_forward_func(x):
     return ops.auto_generate.erfc(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def erfc_backward_func(x):
     return ops.grad(erfc_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def erfc_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfc_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfc_forward(mode):
     """
     Feature: Ops.
     Description: test op erfc.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([-2, -1, 0, 1, 2]), ms.float32)
     output = erfc_forward_func(x)
     expect = [1.9953222, 1.8427008, 1., 0.1572992, 0.00467774]
@@ -51,12 +54,14 @@ def test_erfc_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfc_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfc_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op erfc.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([-1, 0, 1]), ms.float32)
     output = erfc_backward_func(x)
     expect = np.array([-0.41510752, -1.1283791, -0.41510752])
@@ -68,12 +73,14 @@ def test_erfc_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfc_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfc_vmap(mode):
     """
     Feature: test vmap function.
     Description: test erfc op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[-2., -1.], [0., 1.]]]))
     nest_vmap = ops.vmap(ops.vmap(erfc_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)

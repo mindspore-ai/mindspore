@@ -17,14 +17,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def range_forward_func(start, limit, delta):
     return ops.auto_generate.range(start, limit, delta, maxlen=10)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def range_backward_func(start, limit, delta):
     return ops.grad(range_forward_func, (0, 1, 2))(start, limit, delta)
 

@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def greater_equal_forward_func(x, y):
     return ops.auto_generate.greater_equal(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def greater_equal_backward_func(x, y):
     return ops.grad(greater_equal_forward_func, (0,))(x, y)
 
@@ -34,12 +35,14 @@ def greater_equal_backward_func(x, y):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_greater_equal_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_greater_equal_forward(mode):
     """
     Feature: Ops.
     Description: test op greater_equal.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
     y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
     expect_out = np.array([True, True, False])
@@ -52,12 +55,14 @@ def test_greater_equal_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_greater_equal_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_greater_equal_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op greater_equal.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([1, 2, 3]), ms.float32)
     y = ms.Tensor(np.array([1, 1, 4]), ms.float32)
     expect_out = np.array([0, 0, 0])
@@ -70,12 +75,14 @@ def test_greater_equal_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_greater_equal_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_greater_equal_vmap(mode):
     """
     Feature: test vmap function.
     Description: test greater_equal op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.array([[[1, 2, 3]]]), ms.int32)
     y = ms.Tensor(np.array([[[1, 1, 4]]]), ms.int32)

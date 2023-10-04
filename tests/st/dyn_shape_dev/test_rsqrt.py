@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def rsqrt_forward_func(x):
     return ops.auto_generate.rsqrt(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def rsqrt_backward_func(x):
     return ops.grad(rsqrt_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def rsqrt_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_rsqrt():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_rsqrt(mode):
     """
     Feature: Ops.
     Description: test op rsqrt.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([0.0370, 0.2970, 1.5420, 0.9105]).astype(np.float32))
     out = rsqrt_forward_func(x)
     expect_out = np.array([5.1987524, 1.8349396, 0.80530024, 1.047997]).astype(np.float32)
@@ -55,12 +58,14 @@ def test_rsqrt():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_rsqrt_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_rsqrt_vmap(mode):
     """
     Feature: test vmap function.
     Description: test rsqrt op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     axes = -1
     x = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(rsqrt_forward_func, in_axes=axes, out_axes=axes), in_axes=axes, out_axes=axes)

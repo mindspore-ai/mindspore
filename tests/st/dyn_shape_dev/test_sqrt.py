@@ -14,17 +14,18 @@
 # ============================================================================
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def sqrt_forward_func(x):
     return ops.auto_generate.sqrt(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def sqrt_backward_func(x):
     return ops.grad(sqrt_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def sqrt_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_sqrt_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sqrt_forward(mode):
     """
     Feature: Ops.
     Description: test op sqrt.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[0.2948122, 0.49372014]]).astype(np.float32))
     expect_out = np.array([[0.5429661, 0.7026522]]).astype(np.float32)
     out = sqrt_forward_func(x)
@@ -51,12 +54,14 @@ def test_sqrt_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_sqrt_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sqrt_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op sqrt.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[0.02595769, 0.25027096]]).astype(np.float32))
     expect_out = np.array([[3.1033945, 0.9994585]]).astype(np.float32)
     grads = sqrt_backward_func(x)
@@ -69,12 +74,14 @@ def test_sqrt_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_sqrt_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sqrt_vmap(mode):
     """
     Feature: test vmap function.
     Description: test sqrt op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.array([[[0.21901467, 1.9256916]]]).astype(np.float32))
     expect_out = np.array([[[0.46801758]], [[1.3876953]]]).astype(np.float32)

@@ -22,6 +22,8 @@ from mindspore.ops import operations as P
 
 
 context.set_context(precompile_only=True)
+
+
 class Net(nn.Cell):
     def __init__(self, _shape):
         super(Net, self).__init__()

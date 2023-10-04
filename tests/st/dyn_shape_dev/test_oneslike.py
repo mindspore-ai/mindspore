@@ -15,22 +15,23 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def oneslike_forward_func(x):
     return ops.auto_generate.ones_like_(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def oneslike_backward_func(x):
     return ops.grad(oneslike_forward_func, 0)(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def oneslike_vmap_func(x):
     return ops.vmap(oneslike_forward_func, in_axes=0, out_axes=0)(x)
 

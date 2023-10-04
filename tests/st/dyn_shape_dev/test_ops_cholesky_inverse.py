@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore.ops import auto_generate as P
 from mindspore.common import dtype as mstype
 
+
 class CholeskyInverseNet(nn.Cell):
     def __init__(self, upper):
         super(CholeskyInverseNet, self).__init__()
@@ -28,9 +29,11 @@ class CholeskyInverseNet(nn.Cell):
     def construct(self, x):
         return self.cholesky_inverse(x)
 
+
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 def test_cholesky_inverse_cpu():
     """
     Feature: Test cholesky_inverse cpu kernel.
@@ -38,24 +41,6 @@ def test_cholesky_inverse_cpu():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    x = Tensor([[1., 1.], [1., 2.]], mstype.float32)
-    net = CholeskyInverseNet(True)
-    output = net(x)
-    expect = np.array([[5., -3.], [-3., 2.]], np.float32)
-    error = 1e-3
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-def test_cholesky_inverse_gpu():
-    """
-    Feature: Test cholesky_inverse gpu kernel.
-    Description: Test cholesky_inverse gpu kernel for Graph and PyNative modes.
-    Expectation: the result match with expected result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor([[1., 1.], [1., 2.]], mstype.float32)
     net = CholeskyInverseNet(True)
     output = net(x)

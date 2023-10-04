@@ -14,23 +14,16 @@
 # ============================================================================
 import pytest
 import numpy as np
-import mindspore as ms
-import mindspore.nn as nn
 from mindspore import Tensor, context, Parameter
 from mindspore.ops import auto_generate as P
+import test_utils
 
 
-class BNGradTEST(nn.Cell):
-
-    def __init__(self, is_training=False):
-        super(BNGradTEST, self).__init__()
-        self.op = P.BatchNormGrad(is_training=is_training,
-                                  epsilon=1e-5,
-                                  data_format="NCHW")
-
-    @ms.jit
-    def construct(self, dout, x, scale, mean, variance, reserve):
-        return self.op(dout, x, scale, mean, variance, reserve)
+@test_utils.run_with_cell
+def batchnorm_grad_forward_func(dout, x, scale, mean, variance, reserve, is_training):
+    return P.BatchNormGrad(is_training=is_training,
+                           epsilon=1e-5,
+                           data_format="NCHW")(dout, x, scale, mean, variance, reserve)
 
 
 @pytest.mark.level0
@@ -45,7 +38,6 @@ def test_bn_grad_op(is_training, data_type, mode, device):
     Description: test default attr
     Expectation: match to np benchmark.
     """
-    bn = BNGradTEST(is_training)
     dout = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
     x = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
     scale = Tensor(np.random.rand(36).astype(data_type))
@@ -58,6 +50,6 @@ def test_bn_grad_op(is_training, data_type, mode, device):
         variance = Parameter(variance)
         reserve = Parameter(reserve)
     context.set_context(mode=mode, device_target=device, precompile_only=True)
-    output = bn(dout, x, scale, mean, variance, reserve)
+    output = batchnorm_grad_forward_func(dout, x, scale, mean, variance, reserve, is_training)
     print(output)
     assert output is None

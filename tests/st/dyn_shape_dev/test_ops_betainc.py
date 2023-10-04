@@ -16,20 +16,17 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import nn
 from mindspore import context
 from mindspore import Tensor
 from mindspore.ops.operations import math_ops as P
-
+import test_utils
 
 context.set_context(precompile_only=True)
-class NetBetainc(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.betainc = P.Betainc()
 
-    def construct(self, a, b, x):
-        return self.betainc(a, b, x)
+
+@test_utils.run_with_cell
+def betainc_forward_func(a, b, x):
+    return P.Betainc()(a, b, x)
 
 
 @pytest.mark.level0
@@ -51,7 +48,6 @@ def test_betainc(mode):
     a = Tensor(a_np)
     b = Tensor(b_np)
     x = Tensor(x_np)
-    net = NetBetainc()
-    _ = net(a, b, x)
+    _ = betainc_forward_func(a, b, x)
     #expect = np.array([[0.75, 0.6875], [0.45568, 0.19410435]], dtype=np.float32)
     #assert np.allclose(output_ms.asnumpy(), expect, 1e-4, 1e-4)

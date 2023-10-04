@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def relu_forward_func(x):
     return ops.auto_generate.relu(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def relu_backward_func(x):
     return ops.grad(relu_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def relu_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_relu():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_relu(mode):
     """
     Feature: Ops.
     Description: test op relu.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[[[-1, 1, 10],
                               [1, -1, 1],
                               [10, 1, -1]]]]).astype(np.float32))
@@ -61,12 +64,14 @@ def test_relu():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_relu_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_relu_vmap(mode):
     """
     Feature: test vmap function.
     Description: test relu op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     axes = -1
     x = ms.Tensor(np.random.uniform(low=-1, high=1, size=(4, 3, 2)).astype(np.float32))
     net_vmap = ops.vmap(ops.vmap(relu_forward_func, in_axes=axes, out_axes=axes), in_axes=axes, out_axes=axes)

@@ -21,6 +21,7 @@ from mindspore.common.api import jit
 from mindspore.ops import auto_generate as P
 from mindspore.ops.composite import GradOperation
 
+
 class LogNet(nn.Cell):
     def __init__(self):
         super(LogNet, self).__init__()
@@ -28,6 +29,7 @@ class LogNet(nn.Cell):
 
     def construct(self, input_x):
         return self.log(input_x)
+
 
 class Grad(nn.Cell):
     def __init__(self, network):
@@ -39,12 +41,14 @@ class Grad(nn.Cell):
     def construct(self, input_x, dout):
         return self.grad(self.network)(input_x, dout)
 
+
 def op_log_forward_testcase():
     input_x = Tensor(np.arange(1, 7, 1).reshape(2, 3), mstype.float32)
     expect = np.array([[0, 0.693147, 1.0986121], [1.3862944, 1.609438, 1.7917595]], dtype=np.float32)
     net = LogNet()
     output = net(input_x)
     assert np.allclose(output.asnumpy(), expect, 1e-04, 1e-04)
+
 
 def op_log_backward_testcase():
     input_x = Tensor(np.arange(1, 7, 1).reshape(2, 3), mstype.float32)
@@ -54,6 +58,7 @@ def op_log_backward_testcase():
     grad_net = Grad(net)
     output = grad_net(input_x, dout)
     assert np.allclose(output.asnumpy(), expect, 1e-04, 1e-04)
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
@@ -67,6 +72,7 @@ def test_op_log_cpu():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     op_log_forward_testcase()
     op_log_backward_testcase()
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard

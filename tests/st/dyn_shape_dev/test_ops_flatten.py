@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def flatten_forward_func(x):
     return ops.auto_generate.flatten_(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def flatten_backward_func(x):
     return ops.grad(flatten_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def flatten_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_flatten_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_flatten_forward(mode):
     """
     Feature: Ops.
     Description: test op flatten.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[-1, 0], [1, 2], [3, 4]]]), ms.float32)
     output = flatten_forward_func(x)
     expect = [[-1., 0., 1., 2., 3., 4.]]
@@ -51,12 +54,14 @@ def test_flatten_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_flatten_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_flatten_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op flatten.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[-1, 0], [1, 2], [3, 4]]), ms.float32)
     output = flatten_backward_func(x)
     expect = [[1., 1.], [1., 1.], [1., 1.]]
@@ -68,12 +73,14 @@ def test_flatten_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_flatten_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_flatten_vmap(mode):
     """
     Feature: test vmap function.
     Description: test flatten op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[[-1., 0.], [1., 2.]]]]))
     nest_vmap = ops.vmap(ops.vmap(flatten_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)

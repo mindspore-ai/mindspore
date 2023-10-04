@@ -23,7 +23,6 @@ class TensorCopySlicesNet(nn.Cell):
         super(TensorCopySlicesNet, self).__init__()
         self.tensor_copy_slices = ops.TensorCopySlices()
 
-    @ms.jit
     def construct(self, x, value, begin, end, strides):
         return self.tensor_copy_slices(x, value, begin, end, strides)
 
@@ -34,6 +33,7 @@ def test_tensor_copy_slices():
     Description: Test TensorCopySlices.
     Expectation: No exception.
     """
+    ms.context.set_context(mode=ms.context.GRAPH_MODE)
     ms.context.set_context(precompile_only=True)
     net = TensorCopySlicesNet()
     out = net(ms.Tensor(np.zeros((5, 5))), ms.Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))

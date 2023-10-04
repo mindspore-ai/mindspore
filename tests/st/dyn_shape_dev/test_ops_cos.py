@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def cos_forward_func(x):
     return ops.auto_generate.cos(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def cos_backward_func(x):
     return ops.grad(cos_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def cos_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cos_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cos_forward(mode):
     """
     Feature: Ops.
     Description: test op cos.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array([1.1, 2.5, -1.5]).astype(np.float32)
     input_x = ms.Tensor(x, ms.float32)
     output = cos_forward_func(input_x)
@@ -51,12 +54,14 @@ def test_cos_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cos_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cos_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op cos.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array([1.1, 2.5, -1.5]).astype(np.float32)
     input_x = ms.Tensor(x, ms.float32)
     grads = cos_backward_func(input_x)
@@ -68,12 +73,14 @@ def test_cos_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cos_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cos_vmap(mode):
     """
     Feature: test vmap function.
     Description: test cos op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = (0)
     np_x = np.array([[[1.1, 0.9], [2.2, 1.8]], [[4.6, 1.3], [2.4, 2.6]],
                      [[1.0, 1.0], [2.0, 2.7]], [[1.3, 1.7], [2.9, 2.8]],

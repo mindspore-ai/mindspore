@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gcd_forward_func(x1, x2):
     return ops.auto_generate.gcd(x1, x2)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gcd_backward_func(x1, x2):
     return ops.grad(gcd_forward_func, (0,))(x1, x2)
 
@@ -35,12 +36,14 @@ def gcd_backward_func(x1, x2):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gcd_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gcd_forward(mode):
     """
     Feature: Ops.
     Description: test op gcd.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x1 = ms.Tensor(np.array([7, 8, 9]), ms.int32)
     x2 = ms.Tensor(np.array([14, 6, 12]), ms.int32)
     expect_out = np.array([7, 2, 3])
@@ -54,12 +57,14 @@ def test_gcd_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gcd_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gcd_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op gcd when Primitive Gcd's bprop not defined.
     Expectation: expect it raises RuntimeError.
     """
+    ms.context.set_context(mode=mode)
     x1 = ms.Tensor(np.array([7, 8, 9]), ms.int32)
     x2 = ms.Tensor(np.array([14, 6, 12]), ms.int32)
     with pytest.raises(RuntimeError):
@@ -71,12 +76,14 @@ def test_gcd_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gcd_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gcd_vmap(mode):
     """
     Feature: test vmap function.
     Description: test gcd op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x1 = ms.Tensor(np.array([7, 8, 9]), ms.int32)
     x2 = ms.Tensor(np.array([14, 6, 12]), ms.int32)

@@ -15,18 +15,19 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gelu_grad_forward_func(dy, x, y):
     return ops.auto_generate.gelu_grad(dy, x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gelu_grad_backward_func(dy, x, y):
     return ops.grad(gelu_grad_forward_func, (0,))(dy, x, y)
 
@@ -35,13 +36,14 @@ def gelu_grad_backward_func(dy, x, y):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_gelu_grad_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gelu_grad_forward(mode):
     """
     Feature: Ops.
     Description: test op gelu_grad.
     Expectation: expect correct result.
     """
-
+    ms.context.set_context(mode=mode)
     dy = Tensor(np.array([1.0829641, 1.0860993, 1.0115843]).astype('float32'))
     x = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))
     y = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))

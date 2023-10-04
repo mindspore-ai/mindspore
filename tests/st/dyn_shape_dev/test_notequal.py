@@ -15,36 +15,37 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def notequal_forward_func(x, y):
     return ops.auto_generate.not_equal(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def notequal_infervalue_func1():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
     return ops.auto_generate.not_equal(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def notequal_infervalue_func2():
     x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
     y = ms.Tensor(np.array([3]).astype(np.float32))
     return ops.auto_generate.not_equal(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def notequal_backward_func(x, y):
     return ops.grad(notequal_forward_func, (0, 1))(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def notequal_vmap_func(x, y):
     return ops.vmap(notequal_forward_func, in_axes=0, out_axes=0)(x, y)
 

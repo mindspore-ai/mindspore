@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def conj_forward_func(x):
     return ops.auto_generate.conj(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def conj_backward_func(x):
     return ops.grad(conj_forward_func, (0,))(x)
 
@@ -35,12 +36,14 @@ def conj_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_conj_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_conj_forward(mode):
     """
     Feature: Ops.
     Description: test op conj.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array((1.3 + 0.4j, -1.5 - 0.2j, 0 + 0.2j), np.complex64)
     input_x = ms.Tensor(x, ms.complex64)
     output = conj_forward_func(input_x)
@@ -52,12 +55,14 @@ def test_conj_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_conj_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_conj_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op conj.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array((1.3 + 0.4j, -1.5 - 0.2j, 0 + 0.2j), np.complex64)
     input_x = ms.Tensor(x, ms.complex64)
     grads = conj_backward_func(input_x)
@@ -69,12 +74,14 @@ def test_conj_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_conj_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_conj_vmap(mode):
     """
     Feature: test vmap function.
     Description: test conj op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = (0)
     np_x = np.random.randn(1, 1, 6, 6, 3, 6).astype(np.complex64)
     x = ms.Tensor(np_x)

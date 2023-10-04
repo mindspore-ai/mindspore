@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def expand_dims_forward_func(x, axis):
     return ops.auto_generate.expand_dims(x, axis)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def expand_dims_backward_func(x, axis):
     return ops.grad(expand_dims_forward_func, (0,))(x, axis)
 
@@ -34,12 +35,14 @@ def expand_dims_backward_func(x, axis):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_expand_dims_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_expand_dims_forward(mode):
     """
     Feature: Ops.
     Description: test op expand_dims.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[2, 2], [2, 2]]), ms.float32)
     axis = 0
     output = expand_dims_forward_func(x, axis)
@@ -52,12 +55,14 @@ def test_expand_dims_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_expand_dims_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_expand_dims_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op expand_dims.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[2, 2], [2, 2]]), ms.float32)
     axis = 0
     output = expand_dims_backward_func(x, axis)
@@ -70,12 +75,14 @@ def test_expand_dims_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_expand_dims_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_expand_dims_vmap(mode):
     """
     Feature: test vmap function.
     Description: test expand_dims op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[[2, 2], [2, 2]]]]), ms.float32)
     axis = 0
     nest_vmap = ops.vmap(ops.vmap(expand_dims_forward_func, in_axes=(0, None)), in_axes=(0, None))

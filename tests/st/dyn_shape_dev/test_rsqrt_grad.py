@@ -18,9 +18,10 @@ import pytest
 import mindspore as ms
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_ops_def import _rsqrt_grad
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def rsqrt_grad_func(dy, x):
     return _rsqrt_grad(dy, x)
 
@@ -30,12 +31,14 @@ def rsqrt_grad_func(dy, x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_rsqrt_grad():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_rsqrt_grad(mode):
     """
     Feature: Ops.
     Description: test op rsqrt grad.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     dy = ms.Tensor(np.array([[[[-1, 1, 10],
                                [5.9, 6.1, 6],
                                [10, 1, -1]]]]).astype(np.float32))
@@ -54,12 +57,14 @@ def test_rsqrt_grad():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_rsqrt_grad_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_rsqrt_grad_vmap(mode):
     """
     Feature: test vmap function.
     Description: test rsqrt op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     axes = (-1, -1)
     dy = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))
     x = ms.Tensor(np.random.rand(4, 3, 2).astype(np.float32))

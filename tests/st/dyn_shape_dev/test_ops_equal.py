@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def equal_forward_func(x, y):
     return ops.auto_generate.equal(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def equal_backward_func(x, y):
     return ops.grad(equal_forward_func, (0,))(x, y)
 
@@ -34,12 +35,14 @@ def equal_backward_func(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_equal_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_equal_forward(mode):
     """
     Feature: Ops.
     Description: test op equal.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([0.0, 1.0, 2.0, -1]), ms.float32)
     y = Tensor(np.array([0.0, 1.0, 2.0, -2]), ms.float32)
     output = equal_forward_func(x, y)
@@ -52,12 +55,14 @@ def test_equal_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_equal_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_equal_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op equal.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([0.0, 1.0, 2.0, -1]), ms.float32)
     y = Tensor(np.array([0.0, 1.0, 2.0, -2]), ms.float32)
     output = equal_backward_func(x, y)

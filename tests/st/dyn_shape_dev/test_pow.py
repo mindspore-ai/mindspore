@@ -15,22 +15,23 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def pow_forward_func(x, y):
     return ops.auto_generate.pow(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def pow_backward_func(x, y):
     return ops.grad(pow_forward_func, (0, 1))(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def pow_vmap_func(x, y):
     return ops.vmap(pow_forward_func, in_axes=0, out_axes=0)(x, y)
 

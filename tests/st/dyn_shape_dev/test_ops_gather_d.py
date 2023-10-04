@@ -18,14 +18,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops
 from mindspore import Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_d_forward_func(x, dim, index):
     return ops.auto_generate.gather_d(x, dim, index)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_d_backward_func(x, dim, index):
     return ops.grad(gather_d_forward_func, (0,))(x, dim, index)
 
@@ -35,12 +36,14 @@ def gather_d_backward_func(x, dim, index):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gather_d_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_d_forward(mode):
     """
     Feature: Ops.
     Description: test op gather_d.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]), ms.float32)
     dim = 1
     index = Tensor(np.array([[0, 0], [1, 0]]), ms.int32)
@@ -54,17 +57,20 @@ def test_gather_d_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gather_d_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_d_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op gather_d.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[1, 2], [3, 4]]), ms.float32)
     dim = 1
     index = Tensor(np.array([[0, 0], [1, 0]]), ms.int32)
     grads = gather_d_backward_func(x, dim, index)
     expect = [[2., 0.], [1., 1.]]
+    print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect)
 
 
@@ -73,12 +79,14 @@ def test_gather_d_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_gather_d_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_d_vmap(mode):
     """
     Feature: test vmap function.
     Description: test gather_d op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3), ms.float32)
     dim = 1
     index = Tensor(np.zeros([2, 1, 2, 3]).astype(np.int32))

@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def ceil_forward_func(x):
     return ops.auto_generate.ceil(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def ceil_backward_func(x):
     return ops.grad(ceil_forward_func, (0,))(x)
 
@@ -35,12 +36,14 @@ def ceil_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_ceil_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_ceil_forward(mode):
     """
     Feature: Ops.
     Description: test op ceil.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array([1.1, 2.5, -1.5]).astype(np.float32)
     input_x = ms.Tensor(x, ms.float32)
     output = ceil_forward_func(input_x)
@@ -53,12 +56,14 @@ def test_ceil_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_ceil_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_ceil_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op ceil.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = np.array([1.1, 2.5, -1.5]).astype(np.float32)
     input_x = ms.Tensor(x, ms.float32)
     grads = ceil_backward_func(input_x)

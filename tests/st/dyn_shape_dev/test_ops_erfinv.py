@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def erfinv_forward_func(x):
     return ops.auto_generate.erfinv(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def erfinv_backward_func(x):
     return ops.grad(erfinv_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def erfinv_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfinv_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfinv_forward(mode):
     """
     Feature: Ops.
     Description: test op erfinv.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([0, 0.5, -0.9]), ms.float32)
     output = erfinv_forward_func(x)
     expect = [0., 0.47695306, -1.1630805]
@@ -51,12 +54,14 @@ def test_erfinv_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfinv_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfinv_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op erfinv.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([0, 0.5, -0.8]), ms.float32)
     output = erfinv_backward_func(x)
     expect = np.array([0.88622695, 1.112585, 2.0145686])
@@ -68,12 +73,14 @@ def test_erfinv_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_erfinv_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_erfinv_vmap(mode):
     """
     Feature: test vmap function.
     Description: test erfinv op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[0.5, 0], [0.5, -0.9]]]), ms.float32)
     nest_vmap = ops.vmap(ops.vmap(erfinv_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)

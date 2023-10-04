@@ -17,26 +17,29 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fft_forward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
     return ops.auto_generate.fft_with_size_(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
     return ops.grad(fft_forward_func, (0,))(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-def test_fft_with_size_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_fft_with_size_forward(mode):
     """
     Feature: auto ops.
     Description: test op fft_with_size.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.arange(2 * 3).reshape(2, 3), ms.complex64)
     output = fft_forward_func(x, 2, True, True)
     expect = np.array([[2.5, -0.5, 0., -0.5], [-1.5, 0., 0., 0.]], dtype=np.float32)
@@ -45,12 +48,14 @@ def test_fft_with_size_forward():
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-def test_fft_with_size_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_fft_with_size_backward(mode):
     """
     Feature: auto grad.
     Description: test auto grad of op fft_with_size.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.arange(2 * 3).reshape(2, 3), ms.float32)
     grads = fft_backward_func(x, 2, False, True)
     expect = np.array([[4., 1., 1.], [0., 0., 0.]], dtype=np.float32)

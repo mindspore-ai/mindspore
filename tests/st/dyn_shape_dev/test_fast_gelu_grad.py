@@ -15,16 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def fastgelugrad_forward_func(dy, x):
     return ops.auto_generate.fast_gelu_grad(dy, x)
 
-@ms.jit
+
+@test_utils.run_with_cell
 def fastgelugrad_vmap_func(dy, x):
     return ops.vmap(fastgelugrad_forward_func, in_axes=0, out_axes=0)(dy, x)
 

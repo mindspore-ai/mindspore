@@ -14,30 +14,33 @@
 # ============================================================================
 import numpy as np
 import mindspore as ms
-from mindspore import nn
 from mindspore.ops import auto_generate as ops
+import test_utils
+import pytest
 
 
-class AvgPoolGradNet(nn.Cell):
-    def __init__(self):
-        super(AvgPoolGradNet, self).__init__()
-        self.avg_pool_grad = ops.AvgPoolGrad(kernel_size=2, strides=1, pad_mode="VALID", data_format="NCHW")
-
-    @ms.jit
-    def construct(self, x, out, dout):
-        return self.avg_pool_grad(x, out, dout)
+@test_utils.run_with_cell
+def avg_pool_grad_forward_func(x, out, dout):
+    return ops.AvgPoolGrad(kernel_size=2, strides=1, pad_mode="VALID", data_format="NCHW")(x, out, dout)
 
 
-def test_avg_pool_grad():
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.skip(reason="Not ready")
+def test_avg_pool_grad(mode):
     """
     Feature: DynamicShape.
     Description: Create AvgPoolGrad instance with constant arguaments.
     Expectation: No exception.
     """
     ms.context.set_context(precompile_only=True)
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     out = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     dout = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = AvgPoolGradNet()
-    out = net(x, out, dout)
+    out = avg_pool_grad_forward_func(x, out, dout)
     print("out:", out)

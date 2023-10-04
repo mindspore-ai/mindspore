@@ -17,13 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
-@ms.jit
+
+@test_utils.run_with_cell
 def floor_mod_forward_func(x, y):
     return ops.auto_generate.floor_mod(x, y)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def floor_mod_backward_func(x, y):
     return ops.grad(floor_mod_forward_func, (0,))(x, y)
 
@@ -33,12 +35,14 @@ def floor_mod_backward_func(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_floor_mod_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_floor_mod_forward(mode):
     """
     Feature: Ops.
     Description: test op floor_mod.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(2.0, ms.float32)
     y = Tensor(2.0, ms.float32)
     output = floor_mod_forward_func(x, y)
@@ -51,12 +55,14 @@ def test_floor_mod_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_floor_mod_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_floor_mod_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op floor_mod.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([2, 4, -1]), ms.int32)
     y = Tensor(np.array([3, 3, 3]), ms.int32)
     output = floor_mod_backward_func(x, y)
@@ -69,12 +75,14 @@ def test_floor_mod_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_floor_mod_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_floor_mod_vmap(mode):
     """
     Feature: test vmap function.
     Description: test floor_mod op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[2, 4], [-1, 3]]]))
     y = Tensor(np.array([[[3, 3], [3, 3]]]))
     nest_vmap = ops.vmap(ops.vmap(floor_mod_forward_func, in_axes=(0, 0)), in_axes=(0, 0))

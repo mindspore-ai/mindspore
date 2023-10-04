@@ -17,9 +17,10 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def eig_forward_func(input_x, compute_v):
     return ops.auto_generate.eig_(input_x, compute_v)
 
@@ -29,12 +30,14 @@ def eig_forward_func(input_x, compute_v):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_eig_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_eig_forward(mode):
     """
     Feature: Ops.
     Description: test op eig.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), ms.float32)
     compute_v = True
     u, v = eig_forward_func(input_x, compute_v)

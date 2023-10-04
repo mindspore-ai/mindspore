@@ -16,12 +16,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
+import test_utils
 
-@ms.jit
+
+@test_utils.run_with_cell
 def sigmoid_forward_func(x):
     return ops.auto_generate.sigmoid(x)
 
-@ms.jit
+
+@test_utils.run_with_cell
 def sigmoid_backward_func(x):
     return ops.grad(sigmoid_forward_func, (0,))(x)
 
@@ -30,31 +33,33 @@ def sigmoid_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_sigmoid_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sigmoid_forward(mode):
     """
     Feature: Ops.
     Description: Test op Sigmoid forward.
     Expectation: Correct result.
     """
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
+    ms.context.set_context(mode=mode)
     expect_out = ms.Tensor([[0.5, 0.7310586], [0.8807971, 0.95257413]], ms.float32)
     x = ms.Tensor([[0, 1], [2, 3]], ms.float32)
     out = sigmoid_forward_func(x)
     assert np.allclose(out.numpy(), expect_out.numpy())
 
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_sigmoid_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_sigmoid_backward(mode):
     """
     Feature: Ops.
     Description: Test op Sigmoid backward.
     Expectation: Correct result.
     """
-    ms.context.set_context(mode=ms.context.GRAPH_MODE)
+    ms.context.set_context(mode=mode)
     expect_out = ms.Tensor([[0.25, 0.19661193], [0.10499357, 0.04517666]], ms.float32)
     x = ms.Tensor([[0, 1], [2, 3]], ms.float32)
     grads = sigmoid_backward_func(x)
     assert np.allclose(grads.numpy(), expect_out.numpy())
-    

@@ -15,17 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def reduce_sum_forward_func(x):
     return ops.auto_generate.reduce_sum(x, axis=0, keep_dims=True, skip_mode=False)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def reduce_sum_backward_func(x):
     return ops.grad(reduce_sum_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def reduce_sum_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_reduce_sum():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_reduce_sum(mode):
     """
     Feature: Ops.
     Description: test op reduce sum.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[0.392192, 1.484581, 1.111067],
                             [1.614102, 0.676057, 3.279313]]).astype(np.float32))
     out = reduce_sum_forward_func(x)
@@ -56,12 +59,14 @@ def test_reduce_sum():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_reduce_sum_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_reduce_sum_vmap(mode):
     """
     Feature: test vmap function.
     Description: test reduce_sum op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.random.uniform(low=-1, high=1, size=(4, 3, 2, 2)).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(reduce_sum_forward_func, in_axes=in_axes, out_axes=-1), in_axes=in_axes, out_axes=-1)

@@ -14,24 +14,17 @@
 # ============================================================================
 import pytest
 import numpy as np
-import mindspore as ms
-import mindspore.nn as nn
 from mindspore import Tensor, context, Parameter
 from mindspore.ops import auto_generate as P
+import test_utils
 
 
-class BNTEST(nn.Cell):
-
-    def __init__(self, is_training=False):
-        super(BNTEST, self).__init__()
-        self.op = P.BatchNorm(is_training=is_training,
-                              epsilon=1e-5,
-                              momentum=0.1,
-                              data_format="NCHW")
-
-    @ms.jit
-    def construct(self, x, scale, bias, mean, variance):
-        return self.op(x, scale, bias, mean, variance)
+@test_utils.run_with_cell
+def bn_forward_func(x, scale, bias, mean, variance, is_training):
+    return P.BatchNorm(is_training=is_training,
+                       epsilon=1e-5,
+                       momentum=0.1,
+                       data_format="NCHW")(x, scale, bias, mean, variance)
 
 
 @pytest.mark.level0
@@ -46,7 +39,6 @@ def test_bn_op(is_training, data_type, mode, device):
     Description: test default attr
     Expectation: match to np benchmark.
     """
-    bn = BNTEST(is_training)
     x = Tensor(np.random.rand(10, 36, 12, 12).astype(data_type))
     scale = Tensor(np.random.rand(36).astype(data_type))
     bias = Tensor(np.random.rand(36).astype(data_type))
@@ -58,6 +50,6 @@ def test_bn_op(is_training, data_type, mode, device):
         mean = Parameter(mean)
         variance = Parameter(variance)
     context.set_context(mode=mode, device_target=device, precompile_only=True)
-    output = bn(x, scale, bias, mean, variance)
+    output = bn_forward_func(x, scale, bias, mean, variance, is_training)
     print(output)
     assert output is None

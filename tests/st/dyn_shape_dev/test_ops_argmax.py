@@ -14,20 +14,15 @@
 # ============================================================================
 import pytest
 import numpy as np
-import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import auto_generate as P
 import mindspore.common.dtype as mstype
+import test_utils
 
 
-class ArgmaxTest(nn.Cell):
-
-    def __init__(self, axis, out_type):
-        super(ArgmaxTest, self).__init__()
-        self.argmax = P.Argmax(axis, out_type)
-
-    def construct(self, x):
-        return self.argmax(x)
+@test_utils.run_with_cell
+def argmax_forward_func(x, axis, out_type):
+    return P.Argmax(axis, out_type)(x)
 
 
 @pytest.mark.level0
@@ -44,7 +39,6 @@ def test_argmax(mode):
     """
     context.set_context(mode=mode)
     x = Tensor([[1, 20, 5], [67, 8, 9], [130, 24, 15]], mstype.float32)
-    net = ArgmaxTest(-1, mstype.int32)
-    output = net(x)
+    output = argmax_forward_func(x, -1, mstype.int32)
     expect_output = np.array([1, 0, 0]).astype(np.int32)
     assert np.allclose(output.asnumpy(), expect_output)

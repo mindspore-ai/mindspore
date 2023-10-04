@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def elu_forward_func(x):
     return ops.auto_generate.elu(x, alpha=1.0)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def elu_backward_func(x):
     return ops.grad(elu_forward_func, (0,))(x)
 
@@ -34,12 +35,14 @@ def elu_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_elu_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_elu_forward(mode):
     """
     Feature: Ops.
     Description: test op elu.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([-1.0, 4.0, -8.0]), ms.float32)
     output = elu_forward_func(x)
     expect = [-0.63212055, 4., -0.99966455]
@@ -51,12 +54,14 @@ def test_elu_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_elu_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_elu_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op elu.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([1.1, -1.5]), ms.float32)
     output = elu_backward_func(x)
     expect = np.array([1., 0.22313017])
@@ -68,12 +73,14 @@ def test_elu_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_elu_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_elu_vmap(mode):
     """
     Feature: test vmap function.
     Description: test elu op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[-1.0, 4.0], [2.0, -5.0]]]))
     nest_vmap = ops.vmap(ops.vmap(elu_forward_func, in_axes=0), in_axes=0)
     output = nest_vmap(x)

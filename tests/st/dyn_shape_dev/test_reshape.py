@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def reshape_forward_func(x, shape):
     return ops.auto_generate.reshape(x, shape)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def reshape_backward_func(x, shape):
     return ops.grad(reshape_forward_func, (0,))(x, shape)
 
@@ -34,12 +35,14 @@ def reshape_backward_func(x, shape):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_reshape():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_reshape(mode):
     """
     Feature: Ops.
     Description: test op reshape.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     np_array = np.random.rand(1, 3, 12, 12).astype(np.float32)
     x = ms.Tensor(np_array)
     shape = (1, 3, 144)
@@ -57,12 +60,14 @@ def test_reshape():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_reshape_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_reshape_vmap(mode):
     """
     Feature: test vmap function.
     Description: test reshape op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = (-1, None)
     np_array = np.random.rand(1, 3, 6, 6, 2, 2).astype(np.float32)
     x = ms.Tensor(np_array)

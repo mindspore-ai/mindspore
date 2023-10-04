@@ -15,9 +15,9 @@
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ops
+import test_utils
 
 
 @pytest.mark.level0
@@ -26,16 +26,18 @@ from mindspore import ops
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float64])
-def test_bias_add_grad_2d(data_type):
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_bias_add_grad_2d(data_type, mode):
     """
     Feature: CPU BiasAddGrad.
     Description: test inputs for given input dtype.
     Expectation: the result match with expected result.
     """
-    @ms.jit
+    @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
         return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
 
+    ms.context.set_context(mode=mode)
     dout = np.ones([2, 3]).astype(data_type)
     output = bias_add_grad_forward_func(Tensor(dout))
     expect_output = np.array([2., 2., 2.]).astype(data_type)
@@ -49,16 +51,18 @@ def test_bias_add_grad_2d(data_type):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type",
                          [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
-def test_bias_add_grad_4d(data_type):
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_bias_add_grad_4d(data_type, mode):
     """
     Feature: CPU BiasAddGrad.
     Description: test inputs for given input dtype.
     Expectation: the result match with expected result.
     """
-    @ms.jit
+    @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
         return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
 
+    ms.context.set_context(mode=mode)
     dout = np.ones([2, 3, 4, 4]).astype(data_type)
     output = bias_add_grad_forward_func(Tensor(dout))
     expect_output = np.array([32, 32, 32]).astype(data_type)
@@ -71,16 +75,18 @@ def test_bias_add_grad_4d(data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.complex64, np.complex128])
-def test_bias_add_grad_5d(data_type):
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_bias_add_grad_5d(data_type, mode):
     """
     Feature: CPU BiasAddGrad.
     Description: test inputs for given input dtype.
     Expectation: the result match with expected result.
     """
-    @ms.jit
+    @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
         return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
 
+    ms.context.set_context(mode=mode)
     dout = np.ones([2, 3, 4, 4, 2]).astype(data_type)
     output = bias_add_grad_forward_func(Tensor(dout))
     expect_output = np.array([64., 64., 64.]).astype(data_type)
@@ -92,17 +98,18 @@ def test_bias_add_grad_5d(data_type):
 #@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-def test_bias_add_grad_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_bias_add_grad_vmap(mode):
     """
     Feature: bias_add_grad vmap test.
     Description: test the rightness of basic bias_add_grad vmap vmap
     Expectation: use vmap rule's result equal to manually batched.
     """
-    @ms.jit
+    @test_utils.run_with_cell
     def bias_add_grad_forward_func(dout):
         return ops.auto_generate.bias_add_grad(dout, data_format="NCHW")
 
-    context.set_context(mode=ms.GRAPH_MODE)
+    ms.context.set_context(mode=mode)
     vmap_bias_add_grad = ops.vmap(bias_add_grad_forward_func, in_axes=(0))
     x = Tensor(np.array([[[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
                          [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]).astype(np.float32))

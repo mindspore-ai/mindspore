@@ -15,18 +15,18 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-
-@ms.jit
+@test_utils.run_with_cell
 def avg_pool_forward_func(x):
     return ops.auto_generate.avg_pool(x, kernel_size=2, strides=2, pad_mode="VALID", data_format="NCHW")
 
 
-@ms.jit
+@test_utils.run_with_cell
 def avg_pool_backward_func(x):
     return ops.grad(avg_pool_forward_func, (0,))(x)
 
@@ -36,12 +36,14 @@ def avg_pool_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_avg_pool_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_avg_pool_forward(mode):
     """
     Feature: Ops.
     Description: test op avg pool.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     ms.context.set_context(precompile_only=True)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     out = avg_pool_forward_func(x)
@@ -53,12 +55,14 @@ def test_avg_pool_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_avg_pool_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_avg_pool_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op avg pool.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     ms.context.set_context(precompile_only=True)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
     grads = avg_pool_backward_func(x)
@@ -70,13 +74,15 @@ def test_avg_pool_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_avg_pool_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_avg_pool_vmap(mode):
     """
     Feature: test vmap function.
     Description: test avgpool op vmap.
     Expectation: expect correct result.
     """
     in_axes = -1
+    ms.context.set_context(mode=mode)
     ms.context.set_context(precompile_only=True)
     x = ms.Tensor(np.random.randn(1, 1, 6, 6, 3, 6).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(avg_pool_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)

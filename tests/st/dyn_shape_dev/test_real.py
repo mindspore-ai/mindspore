@@ -17,14 +17,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def real_forward_func(x):
     return ops.auto_generate.real(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def real_backward_func(x):
     return ops.grad(real_forward_func, (0))(x)
 

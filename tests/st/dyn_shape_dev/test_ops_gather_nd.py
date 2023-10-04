@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_nd_forward_func(input_x, indices):
     return ops.auto_generate.gather_nd(input_x, indices)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def gather_nd_backward_func(input_x, indices):
     return ops.grad(gather_nd_forward_func, (0,))(input_x, indices)
 
@@ -33,12 +34,14 @@ def gather_nd_backward_func(input_x, indices):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_gather_nd_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_nd_forward(mode):
     """
     Feature: Ops.
     Description: test op gather_nd.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), ms.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), ms.int32)
     output = gather_nd_forward_func(input_x, indices)
@@ -49,12 +52,14 @@ def test_gather_nd_forward():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-def test_gather_nd_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_nd_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op gather_nd.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), ms.float32)
     indices = Tensor(np.array([[0, 0], [1, 1]]), ms.int32)
     output = gather_nd_backward_func(input_x, indices)
@@ -65,12 +70,14 @@ def test_gather_nd_backward():
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-def test_gather_nd_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_gather_nd_vmap(mode):
     """
     Feature: test vmap function.
     Description: test gather_nd op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     input_x = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
     indices = Tensor(np.array([[[[0, 0], [1, 1]]]]), ms.int32)
     nest_vmap = ops.vmap(ops.vmap(gather_nd_forward_func, in_axes=0), in_axes=0)

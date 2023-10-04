@@ -13,26 +13,23 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import test_utils
 
-import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import auto_generate as P
 from mindspore.common import dtype as mstype
 
 
-class CholeskyNet(nn.Cell):
-    def __init__(self, upper):
-        super(CholeskyNet, self).__init__()
-        self.cholesky = P.Cholesky(upper)
-
-    def construct(self, x):
-        return self.cholesky(x)
+@test_utils.run_with_cell
+def cholesky_forward_func(x, upper):
+    return P.Cholesky(upper)(x)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
 def test_cholesky_cpu():
     """
     Feature: Cholesky cpu kernel.
@@ -41,22 +38,5 @@ def test_cholesky_cpu():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU", precompile_only=True)
     x = Tensor([[1.0, 1.0], [1.0, 2.0]], mstype.float32)
-    net = CholeskyNet(True)
-    output = net(x)
-    assert output is None
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-def test_cholesky_gpu():
-    """
-    Feature: Cholesky gpu kernel.
-    Description: Test cholesky gpu kernel for Graph and PyNative modes.
-    Expectation: the result match with expected result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", precompile_only=True)
-    x = Tensor([[1.0, 1.0], [1.0, 2.0]], mstype.float32)
-    net = CholeskyNet(True)
-    output = net(x)
+    output = cholesky_forward_func(x, True)
     assert output is None

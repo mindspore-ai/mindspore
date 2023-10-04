@@ -15,19 +15,19 @@
 
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
 
-
-@ms.jit
+@test_utils.run_with_cell
 def cosh_forward_func(x):
     return ops.auto_generate.cosh(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def cosh_backward_func(x):
     return ops.grad(cosh_forward_func, (0,))(x)
 
@@ -36,12 +36,15 @@ def cosh_backward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cosh_forward():
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cosh_forward(mode):
     """
     Feature: Ops.
     Description: test op cosh.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
     x = Tensor(np_array)
     out = cosh_forward_func(x)
@@ -53,12 +56,15 @@ def test_cosh_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cosh_backward():
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cosh_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op cosh.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     np_array = np.array([1, 0.5, -0.5, 0.3]).astype('float32')
     x = Tensor(np_array)
     grads = cosh_backward_func(x)
@@ -70,12 +76,15 @@ def test_cosh_backward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_cosh_vmap():
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_cosh_vmap(mode):
     """
     Feature: test vmap function.
     Description: test avgpool op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     np_array = np.array([[0.5, 0.4, -0.3, -0.2]]).astype('float32')
     x = Tensor(np_array)
     nest_vmap = ops.vmap(ops.vmap(cosh_forward_func, in_axes=0), in_axes=0)

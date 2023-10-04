@@ -14,12 +14,13 @@
 # ============================================================================
 import numpy as np
 import pytest
+import test_utils
 
 from mindspore import ops
 import mindspore as ms
 
 
-@ms.jit
+@test_utils.run_with_cell
 def geqrf_forward_func(x):
     return ops.auto_generate.geqrf(x)
 
@@ -28,12 +29,14 @@ def geqrf_forward_func(x):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_geqrf_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_geqrf_forward(mode):
     """
     Feature: Ops.
     Description: test op geqrf.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
     expect_out1 = np.array([[2.236068, 1.7888544],
                             [-0.236068, 1.3416407]])
@@ -48,12 +51,14 @@ def test_geqrf_forward():
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-def test_geqrf_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_geqrf_vmap(mode):
     """
     Feature: test vmap function.
     Description: test geqrf op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.array([[[[-2.0, -1.0], [1.0, 2.0]]]]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(

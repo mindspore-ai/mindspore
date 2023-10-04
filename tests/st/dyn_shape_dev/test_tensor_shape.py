@@ -17,14 +17,15 @@ import numpy as np
 import pytest
 from mindspore import ops
 import mindspore as ms
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def tensor_shape_forward_func(x):
     return ops.auto_generate.tensor_shape(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def tensor_shape_backward_func(x):
     return ops.grad(tensor_shape_forward_func, (0,))(x)
 
@@ -34,13 +35,14 @@ def tensor_shape_backward_func(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_tensor_shape_forward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_tensor_shape_forward(mode):
     """
     Feature: Ops.
     Description: test op tensor_shape.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(mode=mode)
     x = ms.Tensor(np.ones([3, 2, 1]).astype(np.float32))
     out = tensor_shape_forward_func(x)
     expect = np.array([3, 2, 1]).astype(np.int64)
@@ -52,13 +54,14 @@ def test_tensor_shape_forward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_tensor_shape_backward():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_tensor_shape_backward(mode):
     """
     Feature: Auto grad.
     Description: test auto grad of op tensor_shape.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(mode=mode)
     x = ms.Tensor(np.ones([3, 2, 1]).astype(np.float32))
     grad = tensor_shape_backward_func(x)
     expect_grad = np.zeros((3, 2, 1)).astype(np.float32)
@@ -70,13 +73,14 @@ def test_tensor_shape_backward():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_tensor_shape_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_tensor_shape_vmap(mode):
     """
     Feature: test vmap function.
     Description: test tensor_shape op vmap.
     Expectation: expect correct result.
     """
-    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.ones([3, 2, 1, 2, 2]).astype(np.float32))
     nest_vmap = ops.vmap(ops.vmap(tensor_shape_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)

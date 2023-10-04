@@ -17,14 +17,15 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
+import test_utils
 
 
-@ms.jit
+@test_utils.run_with_cell
 def rank_forward_func(x):
     return ops.operations.manually_defined.rank(x)
 
 
-@ms.jit
+@test_utils.run_with_cell
 def rank_backward_func(x):
     return ops.grad(rank_forward_func, (0))(x)
 
