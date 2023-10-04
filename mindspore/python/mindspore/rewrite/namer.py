@@ -52,7 +52,7 @@ class Namer:
         if name == '_':
             return name, None
         pos = name.rfind("_")
-        if pos == -1:
+        if pos == -1 or pos == len(name) - 1:
             return name, None
         digit = True
         for i in range(pos + 1, len(name)):
