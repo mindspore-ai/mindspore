@@ -157,8 +157,18 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
     (void)DataIndexInit(&begin, &n, &channels, &od, &output_depth, &oh, &output_height);
 
     for (int64_t i = begin; i < end; ++i) {
-      int64_t id0(0), id1(0), ih0(0), ih1(0), iw0(0), iw1(0);
-      S d0lambda(0), d1lambda(0), h0lambda(0), h1lambda(0), w0lambda(0), w1lambda(0);
+      int64_t id0(0);
+      int64_t id1(0);
+      int64_t ih0(0);
+      int64_t ih1(0);
+      int64_t iw0(0);
+      int64_t iw1(0);
+      S d0lambda(0);
+      S d1lambda(0);
+      S h0lambda(0);
+      S h1lambda(0);
+      S w0lambda(0);
+      S w1lambda(0);
       d_helper[od](&id0, &id1, &d0lambda, &d1lambda);
       h_helper[oh](&ih0, &ih1, &h0lambda, &h1lambda);
       int64_t src_offset = n * input_slice_size;
