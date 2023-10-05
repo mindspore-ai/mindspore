@@ -15,7 +15,6 @@
  */
 
 #include "include/api/model.h"
-#include "include/api/net.h"
 #include "include/api/callback/callback.h"
 #include "include/api/dual_abi_helper.h"
 #include "src/litert/cxx_api/model/model_impl.h"

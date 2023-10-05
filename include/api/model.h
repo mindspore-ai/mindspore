@@ -33,9 +33,6 @@
 namespace mindspore {
 class ModelImpl;
 class Metrics;
-class Net;
-class Node;
-class Expr;
 
 namespace dataset {
 class Dataset;
@@ -111,17 +108,6 @@ class MS_API Model {
   /// \return Status.
   Status Build(GraphCell graph, const std::shared_ptr<Context> &model_context = nullptr,
                const std::shared_ptr<TrainCfg> &train_cfg = nullptr);
-
-  /// \brief Build train model
-  ///
-  /// \param[in] graph A forward network
-  /// \param[in] optimizer An optimizer node
-  /// \param[in] inputs Inputs expression for the trained network (ex: input, label )
-  /// \param[in] model_context A context used to store options during execution.
-  /// \param[in] train_cfg A config used by training
-  /// \return Status
-  Status Build(GraphCell graph, Node *optimizer, std::vector<Expr *> inputs,
-               const std::shared_ptr<Context> &model_context, const std::shared_ptr<TrainCfg> &train_cfg);
 
   /// \brief Build a Transfer Learning model where the backbone weights are fixed and the head weights are trainable
   ///

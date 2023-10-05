@@ -24,7 +24,6 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "tools/benchmark_train/net_runner.h"
 #include "src/common/common.h"
 #include "include/api/serialization.h"
 #include "securec/include/securec.h"

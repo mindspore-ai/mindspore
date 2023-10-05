@@ -211,12 +211,6 @@ Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_conte
   return kLiteNotSupport;
 }
 
-Status Model::Build(GraphCell graph, Node *optimizer, std::vector<Expr *> inputs,
-                    const std::shared_ptr<Context> &model_context, const std::shared_ptr<TrainCfg> &train_cfg) {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-  return kLiteNotSupport;
-}
-
 Status BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shared_ptr<Context> &context,
                              const std::shared_ptr<TrainCfg> &train_cfg = nullptr) {
   MS_LOG(ERROR) << "Unsupported Feature.";
