@@ -26,7 +26,8 @@ constexpr int32_t TIME_OUT = 300;
 bool DynamicAkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) { return true; }
 
 bool DynamicAkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args) {
-  struct timeval start_time, end_time;
+  struct timeval start_time;
+  struct timeval end_time;
   (void)gettimeofday(&start_time, nullptr);
   MS_LOG(INFO) << "AKG V2 start parallel build. kernel count: " << build_args.size();
 
