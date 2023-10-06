@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <utility>
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
 #include "ir/value.h"
@@ -59,22 +60,37 @@ class MIND_API ViewStridesCalcFactory {
     strides_calc_map_[op_name] = func;
   }
 
-  std::optional<StridesCalcFunc> GetStridesCalcFunc(const std::string &op_name) {
+  void AddTupleOutStridesCalcFunc(const std::string &op_name, const StridesCalcFunc &func) {
+    tuple_out_strides_calc_map_[op_name] = func;
+  }
+
+  std::pair<std::optional<StridesCalcFunc>, bool> GetStridesCalcFunc(const std::string &op_name) {
     const auto &iter = strides_calc_map_.find(op_name);
-    if (iter == strides_calc_map_.end()) {
-      return std::nullopt;
+    if (iter != strides_calc_map_.end()) {
+      return std::make_pair(iter->second, false);
     }
-    return iter->second;
+
+    const auto &tuple_iter = tuple_out_strides_calc_map_.find(op_name);
+    if (tuple_iter != tuple_out_strides_calc_map_.end()) {
+      return std::make_pair(tuple_iter->second, true);
+    }
+
+    return std::make_pair(std::nullopt, false);
   }
 
  private:
   mindspore::HashMap<std::string, StridesCalcFunc> strides_calc_map_;
+  mindspore::HashMap<std::string, StridesCalcFunc> tuple_out_strides_calc_map_;
 };
 
 class ViewStridesCalcRegistrar {
  public:
-  ViewStridesCalcRegistrar(const std::string &op_name, const StridesCalcFunc &func) {
-    ViewStridesCalcFactory::GetInstance().AddStridesCalcFunc(op_name, func);
+  ViewStridesCalcRegistrar(const std::string &op_name, const StridesCalcFunc &func, bool is_tuple = false) {
+    if (is_tuple) {
+      ViewStridesCalcFactory::GetInstance().AddTupleOutStridesCalcFunc(op_name, func);
+    } else {
+      ViewStridesCalcFactory::GetInstance().AddStridesCalcFunc(op_name, func);
+    }
   }
 
   ~ViewStridesCalcRegistrar() = default;
@@ -83,6 +99,8 @@ class ViewStridesCalcRegistrar {
 #define REG_VIEW_STRIDES_CALC_FUN(op_name, func) \
   static ViewStridesCalcRegistrar g_##op_name##StridesCalcReg(#op_name, func);
 
+#define REG_TUPLE_OUT_VIEW_STRIDES_CALC_FUN(op_name, func) \
+  static ViewStridesCalcRegistrar g_##op_name##StridesCalcReg(#op_name, func, true);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_VIEWSTRIDESCALCULATOR_H_

@@ -505,7 +505,7 @@ TypePtr InferTypeForViewComplex(const tensor::TensorPtr &tensor) {
 }
 
 void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info,
-                                          const TensorStorageInfoPtrList &storage_infos) {
+                                          const TensorStorageInfoPtrList &storage_infos, bool is_tuple_output) {
   if (op_run_info->op_grad_info->input_value.empty()) {
     MS_LOG(EXCEPTION) << "op_run_info->op_grad_info->input_value is empty";
   }
@@ -521,7 +521,7 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
     data_type = InferTypeForViewComplex(view_input_tensor);
   }
   // Generate output abs by storage_info.
-  if (storage_infos.size() == 1) {
+  if (storage_infos.size() == 1 && !is_tuple_output) {
     op_run_info->base_op_run_info.abstract =
       abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(storage_infos[0]->shape), data_type);
     storage_infos[0]->data_type = data_type->type_id();
@@ -543,17 +543,16 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
     CreateViewOutputTensor(op_run_info, view_input_tensor, storage_infos[i], data_type);
   }
 
-  if (op_run_info->base_op_run_info.output_tensors.size() == 1) {
+  if (op_run_info->base_op_run_info.output_tensors.size() == 1 && !is_tuple_output) {
     op_run_info->real_out = op_run_info->base_op_run_info.output_tensors[0];
   } else {
     std::vector<ValuePtr> output_values;
-    for (auto &output_tensor : op_run_info->base_op_run_info.output_tensors) {
-      MS_EXCEPTION_IF_NULL(output_tensor);
-      (void)output_values.emplace_back(output_tensor);
-    }
-    const auto &output_tensors = op_run_info->base_op_run_info.output_tensors;
-    std::transform(output_tensors.begin(), output_tensors.end(), std::back_inserter(output_values),
-                   [](const auto &t) { return t; });
+    std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
+                   op_run_info->base_op_run_info.output_tensors.end(), std::back_inserter(output_values),
+                   [](const auto &t) {
+                     MS_EXCEPTION_IF_NULL(t);
+                     return t;
+                   });
     op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
   }
 
@@ -561,7 +560,7 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
 }
 
 bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
-                                    const ops::StridesCalcFunc &strides_calc_func) {
+                                    const ops::StridesCalcFunc &strides_calc_func, bool is_tuple_output) {
   MS_LOG(DEBUG) << "Start, op:" << op_run_info->base_op_run_info.op_name;
   auto storage_infos = strides_calc_func(op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_value);
   if (storage_infos.empty()) {
@@ -575,7 +574,7 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
 
   // Create view output tensor
-  CreateViewOpOutputs(op_run_info, storage_infos);
+  CreateViewOpOutputs(op_run_info, storage_infos, is_tuple_output);
 
   KernelTaskType task_type = GetViewOpTaskType(op_run_info->base_op_run_info.op_name);
   if (op_run_info->requires_grad || task_type != KernelTaskType::kNORMAL_VIEW_TASK) {
@@ -651,10 +650,10 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
 
       auto strides_calc_info =
         ops::ViewStridesCalcFactory::GetInstance().GetStridesCalcFunc(op_run_info->base_op_run_info.op_name);
-      if (!strides_calc_info.has_value()) {
+      if (!strides_calc_info.first.has_value()) {
         MS_LOG(EXCEPTION) << "op:" << op_run_info->base_op_run_info.op_name << " is not view.";
       }
-      if (!ProcessViewOp(op_run_info, strides_calc_info.value())) {
+      if (!ProcessViewOp(op_run_info, strides_calc_info.first.value(), strides_calc_info.second)) {
         MS_EXCEPTION(ValueError) << "op:" << op_run_info->base_op_run_info.op_name << " inputs is not for view.";
       }
     }
@@ -677,7 +676,8 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   auto strides_calc_info =
     ops::ViewStridesCalcFactory::GetInstance().GetStridesCalcFunc(op_run_info->base_op_run_info.op_name);
   // Ascend Op not support, We will remove it next week;
-  if (strides_calc_info.has_value() && ProcessViewOp(op_run_info, strides_calc_info.value())) {
+  if (strides_calc_info.first.has_value() &&
+      ProcessViewOp(op_run_info, strides_calc_info.first.value(), strides_calc_info.second)) {
     return;
   }
 #endif

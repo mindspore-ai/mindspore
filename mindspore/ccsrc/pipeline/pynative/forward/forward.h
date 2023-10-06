@@ -137,7 +137,8 @@ class ForwardExecutor {
                                 bool enable_async);
   void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
 
-  bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info);
+  bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
+                     bool is_tuple_output);
   void RefreshTensorContiguous(const tensor::TensorPtr &tensor);
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
@@ -153,7 +154,8 @@ class ForwardExecutor {
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);
-  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const TensorStorageInfoPtrList &storage_infos);
+  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const TensorStorageInfoPtrList &storage_infos,
+                           bool is_tuple_output);
 
  private:
   bool init_{false};
