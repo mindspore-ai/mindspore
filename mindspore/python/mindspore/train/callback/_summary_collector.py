@@ -92,6 +92,8 @@ class SummaryCollector(Callback):
             when (current steps % freq) equals to 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
             It is not recommended to collect data too frequently, which can affect performance. Default: ``10`` .
+        num_process (int): Number of processes saving summary data. The more processes there are, the better the
+            performance, but there may be host memory overflow issues. Default: ``32`` .
         collect_specified_data (Union[None, dict]): Perform custom operations on the collected data.
             By default, if set to None, all data is collected as the default behavior.
             You can customize the collected data with a dictionary.
@@ -225,6 +227,7 @@ class SummaryCollector(Callback):
     def __init__(self,
                  summary_dir,
                  collect_freq=10,
+                 num_process=32,
                  collect_specified_data=None,
                  keep_default_action=True,
                  custom_lineage_data=None,
@@ -278,6 +281,7 @@ class SummaryCollector(Callback):
         self._is_parse_loss_success = True
         self._first_step = True
         self._dataset_sink_mode = True
+        self._num_process = num_process
 
     def __enter__(self):
         self._record = SummaryRecord(log_dir=self._summary_dir,
