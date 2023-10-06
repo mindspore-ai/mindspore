@@ -812,6 +812,7 @@ class Parameter(Tensor_):
         Tensor_.__init__(param, tensor)
         param.init = None
         param.init_mode = None
+        param.has_init = False
         param.is_default_input_init = False
         Parameter.__init__(param, tensor, *args, **kwargs)
         return param
