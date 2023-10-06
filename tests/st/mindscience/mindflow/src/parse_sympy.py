@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
 """
 parse sympy equations
 """
-from __future__ import absolute_import
-
 import sympy
 
 from mindspore import jit_class
@@ -32,6 +30,7 @@ class FormulaNode:
     Args:
          eq_name (str): the name of sympy expression.
     """
+
     def __init__(self, eq_name):
         self.name = eq_name
         self.nodes = list()
@@ -50,7 +49,8 @@ def _make_nodes(equations, in_vars, out_vars, params=None):
     graph_nodes = list()
     for name, formula in equations.items():
         formula_node = FormulaNode(name)
-        SympyTranslation(sympy.expand(formula), formula_node, in_vars, out_vars, params)
+        SympyTranslation(sympy.expand(formula), formula_node,
+                         in_vars, out_vars, params)
         graph_nodes.append(formula_node)
 
     return graph_nodes

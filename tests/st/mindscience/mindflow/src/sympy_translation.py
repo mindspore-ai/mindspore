@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 """
 translate sympy expressions into mindspore recognized attribute.
 """
-from __future__ import absolute_import
 
 import numpy as np
 import sympy
@@ -29,6 +28,7 @@ from .pde_node import MSFunctionNode, NetOutputNode, DerivativeNode, PowNode, Ad
 @jit_class
 class SympyTranslation:
     '''translate sympy expressions'''
+
     def __init__(self, formula, formula_node, in_vars, out_vars, params=None):
         self.formula = formula
         self.formula_node = formula_node
@@ -37,7 +37,8 @@ class SympyTranslation:
         self.params = params
         print(f"{self.formula_node.name}: {self.formula}")
         self._parse_node()
-        print(f"    Item numbers of current derivative formula nodes: {len(self.formula_node.nodes)}")
+        print(
+            f"    Item numbers of current derivative formula nodes: {len(self.formula_node.nodes)}")
 
     @staticmethod
     def _check_item_args(item_args):
@@ -63,7 +64,8 @@ class SympyTranslation:
             nodes = [Tensor(np.float32(np.exp(1), mstype.float32))]
             number_symbol_node = NumberNode(nodes=nodes)
         else:
-            raise ValueError("For NumberSymbol, sympy.pi and sympy.E are supported, but got {}.".format(item))
+            raise ValueError(
+                "For NumberSymbol, sympy.pi and sympy.E are supported, but got {}.".format(item))
 
         return number_symbol_node
 
@@ -102,7 +104,8 @@ class SympyTranslation:
             node = self._parse_pow(item)
 
         else:
-            raise ValueError("For parsing sympy expression: {} is not supported!".format(item))
+            raise ValueError(
+                "For parsing sympy expression: {} is not supported!".format(item))
 
         return node
 
@@ -119,7 +122,8 @@ class SympyTranslation:
         if order == 1:
             cur_var = item.args[1][0]
             if cur_var == sympy.Symbol('n'):
-                derivative_node = DerivativeNode(self.in_vars, order=order, out_var_idx=out_var_idx, is_norm=True)
+                derivative_node = DerivativeNode(
+                    self.in_vars, order=order, out_var_idx=out_var_idx, is_norm=True)
             else:
                 # index of input vars
                 in_var_idx = self.in_vars.index(cur_var)
@@ -131,7 +135,8 @@ class SympyTranslation:
                 for _ in range(it[1]):
                     in_var_idx = self.in_vars.index(it[0])
                     var_idx.append(in_var_idx)
-            derivative_node = DerivativeNode(self.in_vars, order=order, in_var_idx=var_idx, out_var_idx=out_var_idx)
+            derivative_node = DerivativeNode(
+                self.in_vars, order=order, in_var_idx=var_idx, out_var_idx=out_var_idx)
         else:
             raise ValueError("For `Derivative`, only first-order and second-order differentials are supported \
                 but got {}".format(order))
@@ -176,7 +181,8 @@ class SympyTranslation:
             para_var_idx = self.params.index(item)
             symbol_node = ParamNode(self.params, param_var_idx=para_var_idx)
         else:
-            raise ValueError("Inputs and Parameters are supported, but got {}".format(item))
+            raise ValueError(
+                "Inputs and Parameters are supported, but got {}".format(item))
         return symbol_node
 
     def _parse_mul(self, item):

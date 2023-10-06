@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,10 +35,13 @@ class Burgers1D(Burgers):
         ``Ascend`` ``GPU``
 
     """
+
     def __init__(self, model, loss_fn="mse"):
         super(Burgers1D, self).__init__(model, loss_fn=loss_fn)
-        self.ic_nodes = sympy_to_mindspore(self.ic(), self.in_vars, self.out_vars)
-        self.bc_nodes = sympy_to_mindspore(self.bc(), self.in_vars, self.out_vars)
+        self.ic_nodes = sympy_to_mindspore(
+            self.ic(), self.in_vars, self.out_vars)
+        self.bc_nodes = sympy_to_mindspore(
+            self.bc(), self.in_vars, self.out_vars)
 
     def ic(self):
         """
@@ -66,12 +69,15 @@ class Burgers1D(Burgers):
             bc_data (Tensor): the input data of boundary condition.
         """
         pde_res = self.parse_node(self.pde_nodes, inputs=pde_data)
-        pde_loss = self.loss_fn(pde_res[0], Tensor(np.array([0.0]), mstype.float32))
+        pde_loss = self.loss_fn(pde_res[0], Tensor(
+            np.array([0.0]), mstype.float32))
 
         ic_res = self.parse_node(self.ic_nodes, inputs=ic_data)
-        ic_loss = self.loss_fn(ic_res[0], Tensor(np.array([0.0]), mstype.float32))
+        ic_loss = self.loss_fn(ic_res[0], Tensor(
+            np.array([0.0]), mstype.float32))
 
         bc_res = self.parse_node(self.bc_nodes, inputs=bc_data)
-        bc_loss = self.loss_fn(bc_res[0], Tensor(np.array([0.0]), mstype.float32))
+        bc_loss = self.loss_fn(bc_res[0], Tensor(
+            np.array([0.0]), mstype.float32))
 
         return pde_loss + ic_loss + bc_loss
