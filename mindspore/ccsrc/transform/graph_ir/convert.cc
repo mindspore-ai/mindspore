@@ -1957,7 +1957,16 @@ void DfGraphConvertor::SetGraphOutputs(bool is_main_graph) {
       MS_EXCEPTION_IF_NULL(output_node);
       auto adpt = FindAdapter(output_node, training_);
       MS_EXCEPTION_IF_NULL(adpt);
-      auto handles = adpt->getOutputs(Convert(output_node));
+      auto op_ptr = Convert(output_node);
+      std::vector<OutHandler> handles;
+      if (op_ptr != nullptr) {
+        handles = adpt->getOutputs(op_ptr);
+      } else if (tuple_out_handle_cache_.count(output_node.get()) > 0) {
+        handles = *tuple_out_handle_cache_[output_node.get()];
+      } else {
+        MS_LOG(EXCEPTION) << "Can not find matched handles for node " << output_node->ToString();
+      }
+
       for (const auto &handle : handles) {
         (void)graph_outputs_.emplace_back(std::make_pair(*handle.op, handle.out));
       }
