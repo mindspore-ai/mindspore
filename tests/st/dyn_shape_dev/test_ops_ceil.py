@@ -76,12 +76,14 @@ def test_ceil_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-def test_ceil_vmap():
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+def test_ceil_vmap(mode):
     """
     Feature: test vmap function.
     Description: test ceil op vmap.
     Expectation: expect correct result.
     """
+    ms.context.set_context(mode=mode)
     in_axes = (0)
     np_x = np.array([[[1.1, 0.9], [2.2, 1.8]], [[4.6, 1.3], [2.4, 2.6]],
                      [[1.0, 1.0], [2.0, 2.7]], [[1.3, 1.7], [2.9, 2.8]],

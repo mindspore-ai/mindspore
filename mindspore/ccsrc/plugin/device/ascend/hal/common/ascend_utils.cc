@@ -257,7 +257,6 @@ const bool SelectAscendPlugin = []() -> bool {
   // set default backed to GE, and use RefMode as default, should delete when merge to master
   common::SetEnv("MS_ENABLE_GE", "1");
   common::SetEnv("MS_ENABLE_REF_MODE", "1");
-  common::SetEnv("MS_PYNATIVE_GE", "1");
   // for 1951, if is_heterogenous, return true
   int32_t is_heterogenous = 0;
   (void)rtGetIsHeterogenous(&is_heterogenous);
