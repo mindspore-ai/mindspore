@@ -544,6 +544,9 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
 
 constexpr auto kGeDevice = "GE";
 MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
+#ifdef ASCEND_910B
+MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
