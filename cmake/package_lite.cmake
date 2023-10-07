@@ -198,7 +198,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/op_name.h
             ${TOP_DIR}/mindspore/core/ops/tuple_get_item.h
         #     ${TOP_DIR}/mindspore/core/ops/add.h
-            ${TOP_DIR}/mindspore/core/ops/div.h
+        #     ${TOP_DIR}/mindspore/core/ops/div.h
         #     ${TOP_DIR}/mindspore/core/ops/mul.h
             ${TOP_DIR}/mindspore/core/ops/tuple_get_item.h
             ${TOP_DIR}/mindspore/core/ops/scale.h
@@ -1113,7 +1113,7 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
             ${TOP_DIR}/mindspore/core/ops/custom.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
-            ${TOP_DIR}/mindspore/core/ops/div.h
+        #     ${TOP_DIR}/mindspore/core/ops/div.h
             ${TOP_DIR}/mindspore/core/ops/mat_mul.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
             ${TOP_DIR}/mindspore/core/ops/pad.h

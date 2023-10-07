@@ -84,7 +84,6 @@ GVAR_DEF(PrimitivePtr, kPrimSub, std::make_shared<Primitive>(kSubOpName));
 GVAR_DEF(PrimitivePtr, kPrimHypot, std::make_shared<Primitive>("Hypot"));
 GVAR_DEF(PrimitivePtr, kPrimHeaviside, std::make_shared<Primitive>("Heaviside"));
 GVAR_DEF(PrimitivePtr, kPrimMulNoNan, std::make_shared<Primitive>(kMulNoNanOpName));
-GVAR_DEF(PrimitivePtr, kPrimDiv, std::make_shared<Primitive>("Div"));
 GVAR_DEF(PrimitivePtr, kPrimMod, std::make_shared<Primitive>("Mod"));
 GVAR_DEF(PrimitivePtr, kPrimInvert, std::make_shared<Primitive>("Invert"));
 GVAR_DEF(PrimitivePtr, kPrimDivNoNan, std::make_shared<Primitive>("DivNoNan"));

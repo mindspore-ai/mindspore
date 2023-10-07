@@ -39,7 +39,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum)
+                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -1740,94 +1740,6 @@ class Heaviside(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x', 'values'], outputs=['y'])
-
-
-class Div(_MathBinaryOp):
-    r"""
-    Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
-
-    Refer to :func:`mindspore.ops.div` for more details.
-
-    Note:
-        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-          they must be able to broadcast to a common shape.
-        - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
-        - The two inputs comply with the implicit type conversion rules to make the data types
-          consistent.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case 1 :has same data type and shape of the two inputs
-        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
-        >>> y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
-        >>> div = ops.Div()
-        >>> output = div(x, y)
-        >>> print(output)
-        [-1.3333334  2.5        2.        ]
-        >>> # case 2 : different data type and shape of the two inputs
-        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
-        >>> y = Tensor(2, mindspore.int32)
-        >>> output = div(x, y)
-        >>> print(output)
-        [-2.  2.5  3.]
-        >>> print(output.dtype)
-        Float32
-    """
-
-    @staticmethod
-    def _infer_specified_div_value(x, y):
-        """Calculate min/max value for output of Div op"""
-        if x is not None and y is not None:
-            if isinstance(x, (Tensor, Tensor_)):
-                x = x.asnumpy()
-            if isinstance(y, (Tensor, Tensor_)):
-                y = y.asnumpy()
-            x = np.array(x)
-            y = np.array(y)
-            out = x / y
-            out = tuple(out.tolist())
-            return out
-        return None
-
-    def _infer_min_value(self, x, y):
-        """Calculate min value for output for Div op"""
-        return self._infer_specified_div_value(x, y)
-
-    def _infer_max_value(self, x, y):
-        """Calculate max value for output for Div op"""
-        return self._infer_specified_div_value(x, y)
-
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.array(x / y, x.dtype)
-            return Tensor(out)
-        return None
-
-    def _infer_shape_value(self, x, y):
-        shape_value = self._infer_specified_div_value(x, y)
-        shape_value = self._convert_back_shape(shape_value, x)
-        return self._convert_back_shape(shape_value, y)
 
 
 class DivNoNan(Primitive):

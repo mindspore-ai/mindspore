@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_DIV_H_
-#define MINDSPORE_CORE_OPS_DIV_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DIV_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DIV_H_
+
 #include <memory>
-#include <string>
 #include <vector>
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDiv = "Div";
-/// \brief Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
-/// Refer to Python API @ref mindspore.ops.Div for more details.
-class MIND_API Div : public BaseOperator {
+class MIND_API DivFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Div);
-  /// \brief Constructor.
-  Div() : BaseOperator(kNameDiv) { InitIOName({"x", "y"}, {"output"}); }
-  explicit Div(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Div for the inputs.
-  void Init() const {}
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
