@@ -92,21 +92,22 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
 
 void AddWeightsToInput(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
   const auto &original_params = graph->parameters();
-  size_t params_size = original_params.size();
-  for (size_t i = op_run_info->input_size; i < params_size; ++i) {
-    // Must weight param
-    const auto &param = original_params[i]->cast<ParameterPtr>();
-    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
-    MS_EXCEPTION_IF_NULL(tensor_value);
-    (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
-    op_run_info->input_value_id.push_back(PyNativeAlgo::Common::GetIdByValue(tensor_value));
-    if (op_run_info->requires_grad) {
-      (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
-        PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
+  for (const auto &param_node : original_params) {
+    if (param_node->abstract()->isa<abstract::AbstractRefTensor>()) {
+      // Must weight param
+      const auto &param = param_node->cast<ParameterPtr>();
+      const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(param_node);
+      MS_EXCEPTION_IF_NULL(tensor_value);
+      (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
+      op_run_info->input_value_id.push_back(PyNativeAlgo::Common::GetIdByValue(tensor_value));
+      if (op_run_info->requires_grad) {
+        (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
+          PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
+      }
+      (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
+      MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
+                    << tensor_value->ToString() << ". Its name is: " << param->name();
     }
-    (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
-    MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
-                  << tensor_value->ToString() << ". Its name is: " << param->name();
   }
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
 }
