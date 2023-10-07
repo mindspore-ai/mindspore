@@ -30,7 +30,6 @@
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
 #include "src/common/thread_utils.h"
 #endif
-#include "src/litert/cxx_api/expression/net_impl.h"
 #include "src/litert/cxx_api/callback/callback_adapter.h"
 #include "src/litert/cxx_api/callback/callback_impl.h"
 #include "src/litert/cxx_api/model/model_impl.h"

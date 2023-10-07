@@ -18,35 +18,7 @@
 #include "include/train/train_cfg.h"
 #include "src/litert/cxx_api/converters.h"
 #include "src/train/transfer_session.h"
-#include "src/litert/cxx_api/expression/node_impl.h"
-#include "src/litert/cxx_api/expression/net_impl.h"
 namespace mindspore {
-std::unique_ptr<Graph> ModelImpl::BuildTrain(Node *optimizer, std::vector<Expr *> inputs) {
-  auto opt_impl = NodeImpl::GetImpl(optimizer);
-  if (opt_impl == nullptr) {
-    MS_LOG(ERROR) << "missing optimizer node implementation";
-    return nullptr;
-  }
-  auto opt = opt_impl->node();
-  auto in = Expr::convert(inputs);
-  auto net_impl = NetImpl::GetImpl(graph_->net_data_->net().get());
-  if (net_impl == nullptr) {
-    MS_LOG(ERROR) << "missing net implementation";
-    return nullptr;
-  }
-  auto trained_net = net_impl->net()->TrainNet(opt, in);
-  if (trained_net == nullptr) {
-    MS_LOG(ERROR) << "failed to train network";
-    return nullptr;
-  }
-  auto mgraph = net_impl->MakeMs();
-  if (mgraph == nullptr) {
-    MS_LOG(ERROR) << "failed to create graph";
-    return nullptr;
-  }
-  return mgraph;
-}
-
 Status ModelImpl::BuildTransferLearning(const std::shared_ptr<Graph> &backbone, const std::shared_ptr<Graph> &head) {
   const auto b_graph_data = backbone->graph_data_;
   const auto h_graph_data = head->graph_data_;

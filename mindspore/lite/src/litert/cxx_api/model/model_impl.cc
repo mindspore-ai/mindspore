@@ -79,14 +79,6 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
   return proto_;
 }
 
-ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader) {
-  static ExpressionLoader loader_ = nullptr;
-  if (loader != nullptr) {
-    loader_ = loader;
-  }
-  return loader_;
-}
-
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
 Status ModelImpl::BuildAndRun(const void *model_data, size_t data_size, ModelType model_type,
                               const std::shared_ptr<Context> &model_context) {

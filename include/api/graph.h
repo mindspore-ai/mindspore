@@ -24,38 +24,23 @@
 #include "include/api/types.h"
 
 namespace mindspore {
-class NetData;
-class Net;
-
 class MS_API Graph {
  public:
   class GraphData;
-  enum Type : uint32_t {
-    kExpressionGraph = 0,  ///< graph as expression - can auto grad
-    kExecutableGraph = 1,  ///< graph is loaded as is
-    kUnknownTypeGraph = 0xffffffff
-  };
   Graph();
   explicit Graph(const std::shared_ptr<GraphData> &graph_data);
   explicit Graph(std::shared_ptr<GraphData> &&graph_data);
   explicit Graph(std::nullptr_t);
   ~Graph();
-  explicit Graph(Type executable);
-  explicit Graph(Net *net);
 
   enum ModelType ModelType() const;
   bool operator==(std::nullptr_t) const;
   bool operator!=(std::nullptr_t) const;
-  bool IsExecutable() { return graph_type_ == kExecutableGraph; }
 
  private:
   friend class GraphCell;
   friend class ModelImpl;
-  friend class NetImpl;
-  friend class Model;
   std::shared_ptr<GraphData> graph_data_;
-  std::shared_ptr<NetData> net_data_;
-  Type graph_type_ = kExecutableGraph;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_GRAPH_H
