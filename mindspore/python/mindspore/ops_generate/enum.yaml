@@ -48,8 +48,8 @@ norm_mode:
   FORWARD: 1
   ORTHO: 2
 
-# enum GradSamplerPaddingMode
-grad_sampler_padding_mode:
+# enum GridSamplerPaddingMode
+grid_sampler_padding_mode:
   ZEROS: 0
   BORDER: 1
   REFLECTION: 2

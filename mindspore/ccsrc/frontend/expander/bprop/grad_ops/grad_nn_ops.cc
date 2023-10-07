@@ -1652,17 +1652,20 @@ REG_BPROP_BUILDER("ReluGrad").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib)
   return {dgrad, ib->OutZeros(y)};
 });
 
-REG_BPROP_BUILDER("GridSampler3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("GridSampler3D").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto grid = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto tmp = ib->Emit("GridSampler3DGrad", {dout, input_x, grid},
-                      {{"interpolation_mode", ib->GetAttr("interpolation_mode")},
-                       {"padding_mode", ib->GetAttr("padding_mode")},
-                       {"align_corners", ib->GetAttr("align_corners")}});
+  auto interpolation_mode = ib->GetInput(kIndex2);
+  auto padding_mode = ib->GetInput(kIndex3);
+  auto align_corners = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto tmp = ib->Emit("GridSampler3DGrad", {dout, input_x, grid, interpolation_mode, padding_mode, align_corners});
   auto dx = ib->TupleGetItem(tmp, 0);
   auto dgrid = ib->TupleGetItem(tmp, 1);
-  return {dx, dgrid};
+  auto grad_interpolation_mode = ib->OutZeros(interpolation_mode);
+  auto grad_padding_mode = ib->OutZeros(padding_mode);
+  auto grad_align_corners = ib->OutZeros(align_corners);
+  return {dx, dgrid, grad_interpolation_mode, grad_padding_mode, grad_align_corners};
 });
 
 REG_BPROP_BUILDER("ReLUV3").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -1672,17 +1675,20 @@ REG_BPROP_BUILDER("ReLUV3").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   return {dgrad};
 });
 
-REG_BPROP_BUILDER("GridSampler2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("GridSampler2D").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto grid = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto tmp = ib->Emit("GridSampler2DGrad", {dout, input_x, grid},
-                      {{"interpolation_mode", ib->GetAttr("interpolation_mode")},
-                       {"padding_mode", ib->GetAttr("padding_mode")},
-                       {"align_corners", ib->GetAttr("align_corners")}});
+  auto interpolation_mode = ib->GetInput(kIndex2);
+  auto padding_mode = ib->GetInput(kIndex3);
+  auto align_corners = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto tmp = ib->Emit("GridSampler2DGrad", {dout, input_x, grid, interpolation_mode, padding_mode, align_corners});
   auto dx = ib->TupleGetItem(tmp, 0);
   auto dgrid = ib->TupleGetItem(tmp, 1);
-  return {dx, dgrid};
+  auto grad_interpolation_mode = ib->OutZeros(interpolation_mode);
+  auto grad_padding_mode = ib->OutZeros(padding_mode);
+  auto grad_align_corners = ib->OutZeros(align_corners);
+  return {dx, dgrid, grad_interpolation_mode, grad_padding_mode, grad_align_corners};
 });
 
 REG_BPROP_BUILDER("ResizeLinear1D").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {

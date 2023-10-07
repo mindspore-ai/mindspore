@@ -443,9 +443,9 @@ constexpr auto kSwitchFalseBranchIndex = 3;
 constexpr auto kSwitchBranchesNum = 2;
 
 // index define of GridSampler & GridSamplerGrad
-constexpr int kGridSamplerInputNum = 2;
+constexpr int kGridSamplerInputNum = 5;
 constexpr int kGridSamplerOutputNum = 1;
-constexpr int kGridSamplerGradInputNum = 3;
+constexpr int kGridSamplerGradInputNum = 6;
 constexpr int kGridSamplerGradOutputNum = 2;
 
 // index define of switch_layer

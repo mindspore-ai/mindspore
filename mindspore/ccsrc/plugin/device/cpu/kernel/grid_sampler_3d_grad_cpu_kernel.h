@@ -18,10 +18,9 @@
 #include <map>
 #include <vector>
 #include <memory>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grad/grid_sampler_3d_grad.h"
+#include "mindspore/core/ops/ops_func_impl/grid_sampler_3d_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -43,12 +42,18 @@ class GridSampler3DGradCpuKernelMod : public NativeCpuKernelMod {
                                                            .AddInputAttr(kNumberTypeFloat32)
                                                            .AddInputAttr(kNumberTypeFloat32)
                                                            .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                            .AddOutputAttr(kNumberTypeFloat32)
                                                            .AddOutputAttr(kNumberTypeFloat32),
                                                          KernelAttr()
                                                            .AddInputAttr(kNumberTypeFloat64)
                                                            .AddInputAttr(kNumberTypeFloat64)
                                                            .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
                                                            .AddOutputAttr(kNumberTypeFloat64)
                                                            .AddOutputAttr(kNumberTypeFloat64)};
     return support_list;
@@ -65,8 +70,8 @@ class GridSampler3DGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> grid_stride_;
   std::vector<size_t> dx_stride_;
   std::vector<size_t> dgrid_stride_;
-  std::string interpolation_mode;
-  std::string padding_mode;
+  int64_t interpolation_mode;
+  int64_t padding_mode;
   bool align_corners_;
   size_t dx_size_;
   size_t grid_size_;
@@ -79,8 +84,8 @@ class GridSampler3DGradCpuKernelMod : public NativeCpuKernelMod {
   void ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr, const size_t &n) const;
 
   template <typename T>
-  T grid_sampler_compute_source_index_set_grad(T coord, int64_t size, const std::string &padding_mode,
-                                               bool align_corners, T *grad_x) const;
+  T grid_sampler_compute_source_index_set_grad(T coord, int64_t size, int64_t padding_mode, bool align_corners,
+                                               T *grad_x) const;
 
   template <typename T>
   T reflect_coordinates_set_grad(T x, int64_t twice_low, int64_t twice_high, T *grad_x) const;

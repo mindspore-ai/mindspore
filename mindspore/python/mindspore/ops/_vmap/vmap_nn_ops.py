@@ -1853,19 +1853,26 @@ def get_layernorm_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(NN.GridSampler3D)
 def get_grid_sampler_vmap_rule(prim, axis_size):
     """VmapRule for `GridSampler2D` and `GridSampler3D`."""
-    prim_name = prim.name
+    prim_name = prim.name()
     if prim_name == "GridSampler2D":
         non_batch_dim_index = -3
-    else:
+    elif prim_name == "GridSampler3D":
         non_batch_dim_index = -4
+    else:
+        _raise_value_error(
+            "The prim name must be `GridSampler2D` or `GridSampler3D`, but got {}.".format(prim_name))
 
-    def vmap_rule(input_x_bdim, grid_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, input_x_bdim, grid_bdim)
+    def vmap_rule(input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, input_x_bdim, grid_bdim, interpolation_mode_bdim, padding_mode_bdim, align_corners_bdim)
         if is_all_none:
             return result
 
         input_x, input_x_dim = input_x_bdim
         grid, grid_dim = grid_bdim
+        interpolation_mode, _ = interpolation_mode_bdim
+        padding_mode, _ = padding_mode_bdim
+        align_corners, _ = align_corners_bdim
 
         input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
         input_x_shape = F.shape(input_x)
@@ -1875,7 +1882,7 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
         grid_shape = F.shape(grid)
         grid = F.reshape(grid, (-1,) + grid_shape[non_batch_dim_index:])
 
-        out = prim(input_x, grid)
+        out = prim(input_x, grid, interpolation_mode, padding_mode, align_corners)
         out_shape = F.shape(out)
         return_shape = input_x_shape[:non_batch_dim_index] + out_shape[non_batch_dim_index:]
         out = F.reshape(out, return_shape)

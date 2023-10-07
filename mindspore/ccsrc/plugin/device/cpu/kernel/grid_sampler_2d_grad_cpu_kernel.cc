@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/grid_sampler_2d_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/gen_enum_def.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;
@@ -23,7 +24,8 @@ const size_t kOne = 1;
 const size_t kTwo = 2;
 const size_t kThree = 3;
 const size_t kFour = 4;
-const size_t kInputsNum = 3;
+const size_t kFive = 5;
+const size_t kInputsNum = 6;
 const size_t kOutputsNum = 2;
 }  // namespace
 
@@ -42,9 +44,6 @@ bool GridSampler2DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  interpolation_mode_ = GetValue<std::string>(primitive_->GetAttr("interpolation_mode"));
-  padding_mode_ = GetValue<std::string>(primitive_->GetAttr("padding_mode"));
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   return true;
 }
 
@@ -57,6 +56,9 @@ int GridSampler2DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   grad_shape_ = inputs[kZero]->GetDeviceShapeVector();
   x_shape_ = inputs[kOne]->GetDeviceShapeVector();
   grid_shape_ = inputs[kTwo]->GetDeviceShapeVector();
+  interpolation_mode_ = inputs[kThree]->GetValueWithCheck<int64_t>();
+  padding_mode_ = inputs[kFour]->GetValueWithCheck<int64_t>();
+  align_corners_ = inputs[kFive]->GetValueWithCheck<bool>();
   dx_shape_ = outputs[kZero]->GetDeviceShapeVector();
   dgrid_shape_ = outputs[kOne]->GetDeviceShapeVector();
   dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree]);
@@ -91,14 +93,14 @@ void GridSampler2DGradCpuKernelMod::ComputeTask(const std::vector<KernelTensor *
   auto grid_data_addr = static_cast<T *>(inputs[kTwo]->device_ptr());
   auto dx_data_addr = static_cast<T *>(outputs[kZero]->device_ptr());
   auto dgrid_data_addr = static_cast<T *>(outputs[kOne]->device_ptr());
-  if (interpolation_mode_ == "bilinear") {
+  if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::BILINEAR)) {
     interp = GridSamplerInterpolation::Bilinear;
-  } else if (interpolation_mode_ == "nearest") {
+  } else if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::NEAREST)) {
     interp = GridSamplerInterpolation::Nearest;
   }
-  if (padding_mode_ == "zeros") {
+  if (padding_mode_ == static_cast<int64_t>(ops::GridSamplerPaddingMode::ZEROS)) {
     padding = GridSamplerPadding::Zeros;
-  } else if (padding_mode_ == "border") {
+  } else if (padding_mode_ == static_cast<int64_t>(ops::GridSamplerPaddingMode::BORDER)) {
     padding = GridSamplerPadding::Border;
   } else {
     padding = GridSamplerPadding::Reflection;

@@ -173,19 +173,39 @@ REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->n
 
 // GridSampler2D
 INPUT_MAP(GridSampler2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
-ATTR_MAP(GridSampler2D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
-                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(GridSampler2D) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler2D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                                 {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
 
+// GridSampler2DGrad
+INPUT_MAP(GridSampler2DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler2DGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler2DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                                     {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler2DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
+REG_ADPT_DESC(GridSampler2DGrad, kNameGridSampler2DGrad, ADPT_DESC(GridSampler2DGrad))
+
 // GridSampler3D
 INPUT_MAP(GridSampler3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
-ATTR_MAP(GridSampler3D) = {{"interpolation_mode", ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                           {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
-                           {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(GridSampler3D) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler3D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                                 {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler3D, kNameGridSampler3D, ADPT_DESC(GridSampler3D))
+
+// GridSampler3DGrad
+INPUT_MAP(GridSampler3DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
+ATTR_MAP(GridSampler3DGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GridSampler3DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+                                     {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(GridSampler3DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
+REG_ADPT_DESC(GridSampler3DGrad, kNameGridSampler3DGrad, ADPT_DESC(GridSampler3DGrad))
 
 // NonMaxSuppressionV3
 INPUT_MAP(NonMaxSuppressionV3) = {{1, INPUT_DESC(boxes)},

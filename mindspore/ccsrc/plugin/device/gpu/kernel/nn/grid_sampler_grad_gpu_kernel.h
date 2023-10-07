@@ -22,8 +22,9 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include "mindspore/core/ops/grad/grid_sampler_2d_grad.h"
-#include "mindspore/core/ops/grad/grid_sampler_3d_grad.h"
+#include "mindspore/core/ops/ops_func_impl/grid_sampler_2d_grad.h"
+#include "mindspore/core/ops/ops_func_impl/grid_sampler_3d_grad.h"
+#include "mindspore/core/ops/gen_enum_def.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/grid_sampler_grad_impl.cuh"
@@ -56,18 +57,11 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler2DGrad>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[GridSampler2DGrad], cast op from BaseOperator to GridSampler2DGrad failed.";
-      return false;
-    }
-
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
-    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
-    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
-    align_corners_ = kernel_ptr->get_align_corners();
+    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
     return true;
   }
 
@@ -75,10 +69,6 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
-    }
-    if (input_size_list_.size() != kGridSamplerGradInputNum) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal " << kGridSamplerGradInputNum << ".";
-      return KRET_RESIZE_FAILED;
     }
     auto convert_int64_shape_to_sizet_shape = [=](std::vector<int64_t> int64_shape) -> std::vector<size_t> {
       std::vector<size_t> size_t_shape;
@@ -158,7 +148,6 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     size_ = 0;
     dinput_size_ = 0;
     dgrid_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
@@ -208,18 +197,11 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::GridSampler3DGrad>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[GridSampler3DGrad], cast op from BaseOperator to GridSampler3DGrad failed.";
-      return false;
-    }
-
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
-    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
-    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
-    align_corners_ = kernel_ptr->get_align_corners();
+    interpolation_mode_ = static_cast<GridSamplerInterpolationMode>(inputs[kIndex3]->GetValueWithCheck<int64_t>());
+    padding_mode_ = static_cast<GridSamplerPaddingMode>(inputs[kIndex4]->GetValueWithCheck<int64_t>());
+    align_corners_ = inputs[kIndex5]->GetValueWithCheck<bool>();
     return true;
   }
 
@@ -227,10 +209,6 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     int ret = KernelMod::Resize(inputs, outputs);
     if (ret != 0) {
       return ret;
-    }
-    if (input_size_list_.size() != kGridSamplerGradInputNum) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal " << kGridSamplerGradInputNum << ".";
-      return KRET_RESIZE_FAILED;
     }
 
     auto convert_int64_shape_to_sizet_shape = [=](std::vector<int64_t> int64_shape) -> std::vector<size_t> {

@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/grid_sampler_3d_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/gen_enum_def.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;
@@ -23,8 +24,9 @@ const size_t kOne = 1;
 const size_t kTwo = 2;
 const size_t kThree = 3;
 const size_t kFour = 4;
+const size_t kFive = 5;
 const int64_t kNumber1 = 1;
-const size_t kInputsNum = 3;
+const size_t kInputsNum = 6;
 const size_t kOutputsNum = 2;
 }  // namespace
 
@@ -43,9 +45,6 @@ bool GridSampler3DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     return false;
   }
   dtype_ = inputs[kZero]->dtype_id();
-  interpolation_mode = GetValue<std::string>(primitive_->GetAttr("interpolation_mode"));
-  padding_mode = GetValue<std::string>(primitive_->GetAttr("padding_mode"));
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   return true;
 }
 
@@ -63,6 +62,9 @@ int GridSampler3DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   grad_shape_ = inputs[kZero]->GetDeviceShapeVector();
   x_shape_ = inputs[kOne]->GetDeviceShapeVector();
   grid_shape_ = inputs[kTwo]->GetDeviceShapeVector();
+  interpolation_mode = inputs[kThree]->GetValueWithCheck<int64_t>();
+  padding_mode = inputs[kFour]->GetValueWithCheck<int64_t>();
+  align_corners_ = inputs[kFive]->GetValueWithCheck<bool>();
   dx_shape_ = outputs[kZero]->GetDeviceShapeVector();
   dgrid_shape_ = outputs[kOne]->GetDeviceShapeVector();
   dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree] * dx_shape_[kFour]);
@@ -212,7 +214,7 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
         x = grid_sampler_compute_source_index_set_grad(x, x_shape_[kFour], padding_mode, align_corners_, &gx_mult);
         y = grid_sampler_compute_source_index_set_grad(y, x_shape_[kThree], padding_mode, align_corners_, &gy_mult);
         z = grid_sampler_compute_source_index_set_grad(z, x_shape_[kTwo], padding_mode, align_corners_, &gz_mult);
-        if (interpolation_mode == "bilinear") {
+        if (interpolation_mode == static_cast<int64_t>(ops::InterpolationMode::BILINEAR)) {
           size_t grad_ptr_NCDHW =
             n * grad_stride_[kZero] + d * grad_stride_[kTwo] + h * grad_stride_[kThree] + w * grad_stride_[kFour];
           size_t dx_ptr_NC = n * dx_stride_[kZero], x_ptr_NC = n * x_stride_[kZero];
@@ -221,7 +223,7 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
           std::vector<T> mult = {gx_mult, gy_mult, gz_mult};
           std::vector<size_t> ptr = {grad_ptr_NCDHW, x_ptr_NC, dx_ptr_NC, dgrid_ptr_NDHW};
           BilinearKernel<T>(addr, location, mult, ptr);
-        } else if (interpolation_mode == "nearest") {
+        } else if (interpolation_mode == static_cast<int64_t>(ops::InterpolationMode::NEAREST)) {
           int64_t x_nearest = static_cast<int64_t>(std::round(x));
           int64_t y_nearest = static_cast<int64_t>(std::round(y));
           int64_t z_nearest = static_cast<int64_t>(std::round(z));
@@ -269,8 +271,7 @@ void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
 }
 
 template <typename T>
-T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, int64_t size,
-                                                                            const std::string &padding_mode,
+T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, int64_t size, int64_t padding_mode,
                                                                             bool align_corners, T *grad_x) const {
   T grad_clip, grad_refl;
   if (align_corners) {
@@ -280,10 +281,10 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
     *grad_x = static_cast<T>(size) / kTwo;
     coord = ((coord + kOne) * size - kOne) / kTwo;
   }
-  if (padding_mode == "border") {
+  if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::BORDER)) {
     coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_clip;
-  } else if (padding_mode == "reflection") {
+  } else if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::REFLECTION)) {
     if (align_corners) {
       coord = reflect_coordinates_set_grad(coord, 0, (size - 1) * static_cast<int64_t>(kTwo), &grad_refl);
     } else {

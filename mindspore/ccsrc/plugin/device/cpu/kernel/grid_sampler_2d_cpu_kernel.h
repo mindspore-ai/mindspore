@@ -19,10 +19,9 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grid_sampler_2d.h"
+#include "mindspore/core/ops/ops_func_impl/grid_sampler_2d.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,9 +39,20 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
   void LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat16),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
@@ -53,8 +63,8 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> x_stride_;
   std::vector<size_t> grid_stride_;
   std::vector<size_t> output_stride_;
-  std::string interpolation_mode_;
-  std::string padding_mode_;
+  int64_t interpolation_mode_;
+  int64_t padding_mode_;
   bool align_corners_{false};
   size_t output_number_{0};
   TypeId dtype_{kTypeUnknown};
@@ -65,7 +75,7 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
                    const size_t &seq);
 
   template <typename T>
-  T GridSamplerComputeSourceIndex(T coord, int64_t size, const std::string &padding_mode, bool align_corners) const;
+  T GridSamplerComputeSourceIndex(T coord, int64_t size, int64_t padding_mode, bool align_corners) const;
 
   template <typename T>
   T ReflectCoordinates(T coord, int64_t twice_low, int64_t twice_high) const;
@@ -74,8 +84,7 @@ class GridSampler2DCpuKernelMod : public NativeCpuKernelMod {
 
   void Call2Half(const float16 *x_data_addr, float16 *y_data_addr, const float16 *grid_data_addr,
                  std::vector<int64_t> x_dims, std::vector<int64_t> y_dims, int64_t *y_stride, int64_t *x_stride,
-                 const int64_t *grid_stride, std::string interpolation_mode, std::string padding_mode,
-                 bool align_corners);
+                 const int64_t *grid_stride, int64_t interpolation_mode, int64_t padding_mode, bool align_corners);
 
   void NearestHalf(float x, float y, const float16 *x_data_addr, float16 *y_data_addr, int64_t y_c,
                    std::vector<int64_t> x_dims, int64_t *y_stride, const int64_t *x_stride, int64_t x_ptr_NC,

@@ -1,0 +1,27 @@
+#operator grid_sampler_3d_grad
+grid_sampler_3d_grad:
+    args:
+        grad:
+            dtype: tensor
+        input_x:
+            dtype: tensor
+        grid:
+            dtype: tensor
+        interpolation_mode:
+            dtype: int
+            init: "'bilinear'"
+            arg_handler: interpolation_mode_to_enum
+        padding_mode:
+            dtype: int
+            init: "'zeros'"
+            arg_handler: grid_sampler_padding_mode_to_enum
+        align_corners:
+            dtype: bool
+            init: False
+    returns:
+        dx: 
+            dtype: tensor
+        dgrid: 
+            dtype: tensor
+    class:
+        name: GridSampler3DGrad

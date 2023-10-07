@@ -184,10 +184,6 @@ GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("B
 GVAR_DEF(PrimitivePtr, kPrimMish, std::make_shared<Primitive>(kMishOpName));
 GVAR_DEF(PrimitivePtr, kPrimBiasDropoutAdd, std::make_shared<Primitive>("BiasDropoutAdd"));
 GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2DOpName));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGradOpName));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3DOpName));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMROpName));
 GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffleOpName));
 GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kFlashPromptFlashAttentionOpName));
