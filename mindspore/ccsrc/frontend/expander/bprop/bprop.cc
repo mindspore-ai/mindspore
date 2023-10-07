@@ -236,7 +236,12 @@ class PynativeIRBuilder : public BpropIRBuilder {
         for (auto idx : value_depend) {
           size_t i = LongToSize(idx);
           if (i < inputs.size() && !inputs[i]->HasAbstractValue()) {
-            inputs[i]->abstract()->set_value(inputs[i]->BuildValue());
+            auto v = inputs[i]->BuildValue();
+            auto tensor = v->cast<tensor::TensorPtr>();
+            if (tensor != nullptr) {
+              tensor->data_sync();
+            }
+            inputs[i]->abstract()->set_value(v);
           }
         }
       }
