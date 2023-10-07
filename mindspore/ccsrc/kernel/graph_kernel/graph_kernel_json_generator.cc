@@ -780,7 +780,7 @@ void GraphKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::v
 }
 
 size_t GraphKernelJsonGenerator::GenHashId(const std::string &info) const {
-  if (!dump_option_.save_ptr_address) {
+  if (!dump_option_.save_ptr_address || GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion) {
     return std::hash<std::string>()(info);
   }
   // gen hash id without node address
