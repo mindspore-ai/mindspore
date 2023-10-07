@@ -1991,9 +1991,9 @@ REG_BPROP_BUILDER("Fmin").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     sum_r2 = ib->ReduceSum(rrx2);
     sum_r1 = rrx1;
   } else {
-    auto tmp = ib->Emit("DynamicBroadcastGradientArgs", {shape_of_x1, shape_of_x2});
-    auto rx = ib->TupleGetItem(tmp, 0);
-    auto ry = ib->TupleGetItem(tmp, 1);
+    auto tmp = ib->BroadcastGradientArgs(x1, x2);
+    auto rx = tmp[0];
+    auto ry = tmp[1];
     sum_r1 = ib->ReduceSum(rrx1, rx, false, true);
     sum_r2 = ib->ReduceSum(rrx2, ry, false, true);
   }
@@ -2040,9 +2040,9 @@ REG_BPROP_BUILDER("Fmax").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     sum_r2 = ib->ReduceSum(rrx2);
     sum_r1 = rrx1;
   } else {
-    auto tmp = ib->Emit("DynamicBroadcastGradientArgs", {shape_of_x1, shape_of_x2});
-    auto rx = ib->TupleGetItem(tmp, 0);
-    auto ry = ib->TupleGetItem(tmp, 1);
+    auto tmp = ib->BroadcastGradientArgs(x1, x2);
+    auto rx = tmp[0];
+    auto ry = tmp[1];
     sum_r1 = ib->ReduceSum(rrx1, rx, false, true);
     sum_r2 = ib->ReduceSum(rrx2, ry, false, true);
   }
