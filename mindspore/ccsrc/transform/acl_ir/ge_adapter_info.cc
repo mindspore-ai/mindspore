@@ -36,7 +36,7 @@ void GeAdapterInfo::InitRefMap() {
   for (const auto &[output_index, output_param_info] : info_.output_idx_ms2ge) {
     for (const auto &[input_index, input_param_info] : info_.input_idx_ms2ge) {
       if (output_param_info.name == input_param_info.name) {
-        (void)info_.ref_map_.emplace(output_index, input_index);
+        (void)info_.ref_map_.emplace(IntToSize(output_index), IntToSize(input_index));
         break;
       }
     }

@@ -69,7 +69,7 @@ struct GeTensorInfo {
   // K: MindSpore operator input index, V: GE operator input index and type info
   mindspore::HashMap<int, Ms2GeParamInfo> input_idx_ms2ge;
   mindspore::HashMap<int, Ms2GeParamInfo> output_idx_ms2ge;
-  mindspore::HashMap<int, int> ref_map_;
+  std::unordered_map<size_t, size_t> ref_map_;
   // fields for recording the mapping flags of input/output
   unsigned int input_mapping_flags = 0;
   unsigned int output_mapping_flags = 0;
@@ -145,7 +145,7 @@ class GeAdapterInfo {
 
   unsigned int GetOutputMappingFlags() const { return info_.output_mapping_flags; }
 
-  const mindspore::HashMap<int, int> &GetRefMappingInfo() const { return info_.ref_map_; }
+  const std::unordered_map<size_t, size_t> &GetRefMappingInfo() const { return info_.ref_map_; }
 
   mindspore::HashMap<int, std::vector<enum ::ge::DataType>> input_supported_dtypes() const {
     return info_.input_supported_dtypes;
