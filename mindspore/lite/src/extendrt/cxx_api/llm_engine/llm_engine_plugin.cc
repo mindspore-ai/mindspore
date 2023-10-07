@@ -19,7 +19,7 @@
 #include "mindspore/ccsrc/transform/graph_ir/transform_util.h"
 #include "mindspore/lite/src/extendrt/utils/tensor_utils.h"
 #include "mindspore/lite/src/common/common.h"
-#include "external/llm_engine.h"
+#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
 
 #define LLM_RUN_ASYNC
 
@@ -145,12 +145,12 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
     MS_LOG(INFO) << "Add option llm.OmCachePath to " << cache_path;
     options_["llm.OmCachePath"] = cache_path;
   }
-  std::map<ge::AscendString, ge::ModelBufferData> model_buffers;
+  std::vector<ge::ModelBufferData> model_buffers;
   for (auto &item : model_infos) {
     ge::ModelBufferData buff;
     buff.data = std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(item.om_data->data_c()), [](uint8_t *) {});
     buff.length = item.om_data->Size();
-    model_buffers[ge::AscendString(item.name.c_str())] = buff;
+    model_buffers.push_back(buff);
     MS_LOG(INFO) << "Model " << item.name << ", model buffer size " << item.om_data->Size();
   }
   std::map<ge::AscendString, ge::AscendString> init_options;
