@@ -178,6 +178,9 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   ParallelContext::GetInstance()->set_do_transform(true);
   ParallelContext::GetInstance()->set_global_rank(rank_id);
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution_.InferTensorRedistributionOperatorList();
+  if (redistribution_oplist_ptr == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
+  }
   if (redistribution_oplist_ptr->first.size() != redistribution_oplist_ptr->second.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The redistribution op list size cannot match redistribution output info list size.";
   }
@@ -254,6 +257,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   const RedistributionOpListPtr &redistribution_op_list, const Shape &input_shape) {
   // 1 operators_vector to transform_op_list
   // 2 allgather->split->concat to allconcat
+  MS_EXCEPTION_IF_NULL(redistribution_op_list);
   if ((redistribution_op_list->first).size() != (redistribution_op_list->second).size()) {
     return redistribution_op_list;
   }
