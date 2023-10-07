@@ -24,7 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool TrtKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+int TrtKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  output_size_list_.clear();
   size_t input_num = inputs.size();
   size_t output_num = outputs.size();
   for (size_t j = 0; j < output_num; j++) {
@@ -52,7 +53,7 @@ bool TrtKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::ve
 
   context_ = TrtPtr(engine_->createExecutionContext());
   MS_EXCEPTION_IF_NULL(context_);
-  return true;
+  return KRET_OK;
 }
 
 void TrtKernelMod::ReleaseResource() {

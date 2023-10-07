@@ -29,8 +29,8 @@ DynamicStitchKernelMod::DynamicStitchKernelMod()
 
 DynamicStitchKernelMod::~DynamicStitchKernelMod() {}
 
-bool DynamicStitchKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {
+int DynamicStitchKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   // Inputs: (indexlist, datalist)
   size_t input_num = inputs.size();
   n_ = input_num / kDivNum2;
@@ -60,9 +60,9 @@ bool DynamicStitchKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   // For max_index
   workspace_size_list_.push_back(index_type_size);
   // One output
+  output_size_list_.clear();
   output_size_list_.push_back(output_size);
-  is_need_retrieve_output_shape_ = true;
-  return true;
+  return KRET_OK;
 }
 
 ShapeVector DynamicStitchKernelMod::GetShapeAdaptively(const std::vector<KernelTensor *> &data, size_t index) {

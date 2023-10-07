@@ -57,13 +57,18 @@ class DetTriangleGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     const auto &input_shape = inputs[kIndex0]->GetShapeVector();
     const auto &output_shape = outputs[kIndex0]->GetShapeVector();
+    output_size_list_.clear();
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
       output_size_list_.push_back(output_size_);
-      return true;
+      return KRET_OK;
     }
     input_size_ *= SizeOf(input_shape);
 
@@ -83,7 +88,7 @@ class DetTriangleGpuKernelMod : public NativeGpuKernelMod {
     }
     fill_mode_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("fill_mode")));
     output_size_list_.push_back(output_size_);
-    return true;
+    return KRET_OK;
   }
 
  private:

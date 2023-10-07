@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironCreateGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                     const std::vector<KernelTensor *> &outputs) {
+int EnvironCreateGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                      const std::vector<KernelTensor *> &outputs) {
   // Check the output handle.
   auto handle_type = outputs[kIndex0]->dtype_id();
   const auto &handle_shapes = outputs[kIndex0]->GetShapeVector();
@@ -31,8 +31,9 @@ bool EnvironCreateGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   handle_size_ = sizeof(int64_t);
 
+  output_size_list_.clear();
   output_size_list_.push_back(handle_size_);
-  return true;
+  return KRET_OK;
 }
 
 bool EnvironCreateGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,

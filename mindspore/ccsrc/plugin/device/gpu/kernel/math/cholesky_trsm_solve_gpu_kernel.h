@@ -64,23 +64,29 @@ class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
     }
     return true;
   }
+
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     const auto &shape_signed = inputs[kIndex0]->GetShapeVector();
     if (IsDynamic(shape_signed)) {
-      return true;
+      return KRET_UNKNOWN_SHAPE;
     }
     auto in_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
+    output_size_list_.clear();
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     split_dim_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("split_dim")));
     if (split_dim_ == 0) {
       if (!InitDim0(in_shape)) {
-        return false;
+        return KRET_RESIZE_FAILED;
       }
     } else {
       if (in_shape.size() != 2) {
@@ -92,7 +98,7 @@ class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
       InitDimOthers(in_shape);
     }
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
  protected:

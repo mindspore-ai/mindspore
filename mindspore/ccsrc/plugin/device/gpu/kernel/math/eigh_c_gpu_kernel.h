@@ -57,6 +57,10 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
   ~EighcGpuKernelMod() = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_ = inputs[kIndex0]->dtype_id();
     const auto &A_shape = inputs[kIndex0]->GetShapeVector();
@@ -67,11 +71,12 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
     } else {
       jobz_ = CUSOLVER_EIG_MODE_NOVECTOR;
     }
+    output_size_list_.clear();
     cusolver_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     is_null_input_ = CHECK_SHAPE_NULL(A_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return KRET_OK;
     }
     if (A_shape.size() != kShape2dDims) {
       MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a should be 2D, but got ["
@@ -84,7 +89,7 @@ class EighcGpuKernelMod : public NativeGpuKernelMod {
     }
     m_ = LongToSizeClipNeg(A_shape[0]);
     InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

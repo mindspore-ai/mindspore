@@ -19,17 +19,18 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironDestroyAllGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                         const std::vector<KernelTensor *> &outputs) {
+int EnvironDestroyAllGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
   // Check the output type.
   auto output_type = outputs[kIndex0]->dtype_id();
   if (output_type != TypeId::kNumberTypeBool) {
     MS_LOG(ERROR) << "The output type is invalid: " << output_type;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
+  output_size_list_.clear();
   output_size_list_.push_back(sizeof(bool));
-  return true;
+  return KRET_OK;
 }
 
 bool EnvironDestroyAllGpuKernelMod::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,

@@ -147,7 +147,12 @@ class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
+    output_size_list_.clear();
     (void)SetProperty(primitive_, inputs, outputs);
     InitSizeLists();
     return true;

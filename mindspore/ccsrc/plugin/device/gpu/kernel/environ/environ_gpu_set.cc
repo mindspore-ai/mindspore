@@ -21,11 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironSetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {
+int EnvironSetGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (!EnvironMgr::GetInstance().CheckEnvInput(primitive_, inputs, outputs)) {
     MS_LOG(ERROR) << "The input checks invalid, kernel: " << kernel_name_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
   // Check the output handle.
@@ -33,7 +33,7 @@ bool EnvironSetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   const auto &handle_shapes = outputs[kIndex0]->GetShapeVector();
   if (!EnvironMgr::GetInstance().IsScalarTensor(handle_type, handle_shapes)) {
     MS_LOG(ERROR) << "The output handle checks invalid, kernel: " << kernel_name_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
   value_type_attr_ = TypeId(GetValue<int>(primitive_->GetAttr(kEnvValueTypeAttr)));
@@ -48,8 +48,9 @@ bool EnvironSetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     value_size_ *= static_cast<size_t>(i);
   }
 
+  output_size_list_.clear();
   output_size_list_.push_back(handle_size_);
-  return true;
+  return KRET_OK;
 }
 
 bool EnvironSetGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,

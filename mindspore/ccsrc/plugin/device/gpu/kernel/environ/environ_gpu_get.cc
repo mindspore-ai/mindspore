@@ -20,13 +20,12 @@
 
 namespace mindspore {
 namespace kernel {
-bool EnvironGetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {
+int EnvironGetGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                   const std::vector<KernelTensor *> &outputs) {
   if (!EnvironMgr::GetInstance().CheckEnvInput(primitive_, inputs, outputs)) {
     MS_LOG(ERROR) << "The input checks invalid, kernel: " << kernel_name_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
-
   value_type_attr_ = TypeId(GetValue<int>(primitive_->GetAttr(kEnvValueTypeAttr)));
   MS_LOG(INFO) << "The EnvironGet kernel " << kernel_name_ << " value type: " << value_type_attr_;
   handle_size_ = sizeof(int64_t);
@@ -38,15 +37,16 @@ bool EnvironGetGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   const auto &default_value_shapes = inputs[kIndex2]->GetShapeVector();
   if ((value_type != default_value_type) || (value_shapes != default_value_shapes)) {
     MS_LOG(ERROR) << "The env value checks invalid, kernel: " << kernel_name_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
     value_size_ *= static_cast<size_t>(i);
   }
 
+  output_size_list_.clear();
   output_size_list_.push_back(value_size_);
-  return true;
+  return KRET_OK;
 }
 
 bool EnvironGetGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
