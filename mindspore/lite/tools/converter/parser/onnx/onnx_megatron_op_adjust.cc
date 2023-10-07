@@ -57,7 +57,7 @@ bool AdjustMegatronAllReduce(const FuncGraphPtr &func_graph, const CNodePtr &cno
 }
 
 bool AdjustMegatronLinearAllGather(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr && cnode != nullptr, false);
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_RET(manager != nullptr, false);
 
@@ -155,7 +155,7 @@ bool AdjustMegatronScaledMaskedSoftmax(const FuncGraphPtr &func_graph, const CNo
 }  // namespace
 
 bool OnnxMegatronOpAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::ConverterParameters &flag) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
