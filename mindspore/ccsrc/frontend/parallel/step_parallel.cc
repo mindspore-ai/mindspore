@@ -1733,7 +1733,6 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       return layout_ptr;
     }
   }
-  MS_LOG(WARNING) << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
   return nullptr;
 }
 
@@ -1920,7 +1919,6 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool
     }
     return layout_ptr;
   }
-  MS_LOG(WARNING) << "FindPrevLayout return nullptr, if reshape is not the first primitive, there must be some error";
   return nullptr;
 }
 
@@ -1949,6 +1947,9 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (prev_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetInputLayout(*prev_layout_ptr);
+    } else {
+      MS_LOG(WARNING)
+        << "FindPrevLayout return nullptr, if reshape is not the first primitive, there must be some error";
     }
     auto attrs = prim->attrs();
     if (StrategyFound(attrs) && !is_input_param) {
@@ -1959,6 +1960,10 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
     auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
+    if (!next_layout_ptr) {
+      MS_LOG(WARNING)
+        << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
+    }
     if (next_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetOutputLayout(*next_layout_ptr);
