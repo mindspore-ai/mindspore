@@ -210,7 +210,7 @@ string KernelTensor::GetAbstractName() const {
 }
 
 bool KernelTensor::IsDynamicShape() const {
-  auto shape = this->GetShapeVector();
+  const auto &shape = this->GetShapeVector();
   return std::any_of(shape.cbegin(), shape.cend(), [](auto i) { return i < 0; });
 }
 

@@ -40,21 +40,20 @@ void DynamicAkgGpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
   kernel_mod_ptr->SetWorkspaceSizeList(kernel_json_info.workspaces);
 
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto args = kernel::AbstractArgsFromCNode(cnode);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
   bool is_dynamic_kernel =
-    std::any_of(args.inputs.begin(), args.inputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); }) ||
-    std::any_of(args.outputs.begin(), args.outputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); });
+    std::any_of(input_kernel_tensors.begin(), input_kernel_tensors.end(),
+                [](const KernelTensor *item) {
+                  MS_EXCEPTION_IF_NULL(item);
+                  return item->IsDynamicShape();
+                }) ||
+    std::any_of(output_kernel_tensors.begin(), output_kernel_tensors.end(), [](const KernelTensor *item) {
+      MS_EXCEPTION_IF_NULL(item);
+      return item->IsDynamicShape();
+    });
   kernel_mod_ptr->SetKernelDynamicStatus(is_dynamic_kernel);
-  std::vector<KernelTensor *> new_inputs;
-  (void)std::transform(std::begin(args.inputs), std::end(args.inputs), std::back_inserter(new_inputs),
-                       [](auto &v) { return v.get(); });
-
-  std::vector<KernelTensor *> new_outputs;
-  (void)std::transform(std::begin(args.outputs), std::end(args.outputs), std::back_inserter(new_outputs),
-                       [](auto &v) { return v.get(); });
-  kernel_mod_ptr->UpdateShapeList(new_inputs, new_outputs);
+  kernel_mod_ptr->UpdateShapeList(input_kernel_tensors, output_kernel_tensors);
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 
