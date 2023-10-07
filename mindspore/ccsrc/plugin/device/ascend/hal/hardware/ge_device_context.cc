@@ -99,7 +99,16 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
-RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kGraphMode; }
+RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // PyNative is only support ACL now on 910B.
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
+    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
+  }
+  return RunMode::kGraphMode;
+}
 
 void GeDeviceContext::Initialize() {
   GilReleaseWithCheck gil_release;
