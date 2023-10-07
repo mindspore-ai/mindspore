@@ -1400,6 +1400,7 @@ void GradExecutor::ClearGradRes() {
 
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
+  WaitBpropTask();
   grad_flag_ = false;
   grad_is_running_ = false;
   custom_bprop_cell_count_ = 0;
@@ -1409,6 +1410,7 @@ void GradExecutor::ClearRes() {
   bprop_cell_list_.clear();
   grad_operation_.clear();
   already_run_top_cell_.clear();
+  need_gc_top_cell_list_.clear();
   dynamic_shape()->Clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
