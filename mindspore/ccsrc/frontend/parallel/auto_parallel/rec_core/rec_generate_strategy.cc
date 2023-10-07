@@ -558,6 +558,10 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
 }
 
 Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
+  if (dyn_shape_tmp_fix) {
+    return GatherForDynamicShape(op, 0);
+  }
+
   Strategies strategies;
   Shape targeted_shape = op->outputs_shape()[0];
   Dimensions strategie = GenGatherStra(targeted_shape);
@@ -566,12 +570,28 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
   if (axis >= SizeToLong(strategy.size())) {
     MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
   }
-  strategy.clear();
 
-  if (dyn_shape_tmp_fix) {
-    return GatherForDynamicShape(op, 0);
+  int64_t batch_dims = -1;
+  auto attrs = op->attrs();
+  auto attr_iter = attrs.find("batch_dims");
+  if (attr_iter != attrs.end()) {
+    MS_EXCEPTION_IF_NULL(attr_iter->second);
+    if (!attr_iter->second->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << op->name() << ": The value of batch dims is not int";
+    }
+
+    batch_dims = attr_iter->second->cast<Int64ImmPtr>()->value();
+    MS_LOG(INFO) << op->name() << ": batch dims is " << batch_dims;
+  }
+  if (batch_dims > 1) {
+    for (size_t i = 0; i < op->inputs_shape().size(); i++) {
+      strategies.push_back(strategie);
+    }
+    strategies[0][axis] = 1;
+    return strategies;
   }
 
+  strategy.clear();
   if (axis == 0) {
     strategy.push_back(1);
     for (size_t i = 1; i < op->inputs_shape()[0].size(); i++) {
@@ -593,7 +613,7 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
     }
     strategies.push_back(strategy);
   } else {
-    MS_LOG(EXCEPTION) << "Failure: GatherV2's axis is neither 0 nor 1.";
+    MS_LOG(EXCEPTION) << "Failure: Normal Gather's axis is neither 0 nor 1.";
   }
 
   return strategies;
