@@ -121,6 +121,14 @@ def test_variable_size_batch():
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
             res.append(item["num"])
 
+    def test_batch_repeat_multiepoch(gen_num, r, epoch, drop, func, res):
+        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size=func, drop_remainder=drop).repeat(
+            r)
+        iterator = data1.create_dict_iterator(num_epochs=epoch, output_numpy=True)
+        for _ in range(epoch):
+            for item in iterator:
+                res.append(item["num"])
+
     # same as test_batch_repeat except each row is passed through via a map which makes a copy of each element
     def test_batch_repeat_with_copy_map(gen_num, r, drop, func):
         res = []
@@ -148,7 +156,7 @@ def test_variable_size_batch():
         ds.config.set_enable_shared_mem(mem_original)
         return res
 
-    tst1, tst2, tst3, tst4, tst5, tst6, tst7 = [], [], [], [], [], [], []
+    tst1, tst2, tst3, tst4, tst5, tst6, tst7, tst8, tst9 = [], [], [], [], [], [], [], [], []
 
     # no repeat, simple var size, based on batch_num
     test_repeat_batch(7, 1, True, add_one_by_batch_num, tst1)
@@ -172,18 +180,28 @@ def test_variable_size_batch():
     assert check_res(tst5, test_batch_repeat_with_copy_map(9, 3, False, add_one_by_batch_num)), "\nMAP FAILED\n"
     # batch_size based on epoch number, drop
     test_batch_repeat(4, 4, True, add_one_by_epoch, tst6)
-    assert check_res(tst6, [[[0]], [[1]], [[2]], [[3]], [[0], [1]], [[2], [3]], [[0], [1], [2]],
-                            [[0], [1], [2], [3]]]), "\nATTENTION VAR BATCH FAILED\n"
+    assert check_res(tst6, [[[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]]]), "\nATTENTION VAR BATCH FAILED\n"
     assert check_res(tst6, test_batch_repeat_with_copy_map(4, 4, True, add_one_by_epoch)), "\nMAP FAILED\n"
     # batch_size based on epoch number, no drop
     test_batch_repeat(4, 4, False, add_one_by_epoch, tst7)
-    assert check_res(tst7, [[[0]], [[1]], [[2]], [[3]], [[0], [1]], [[2], [3]], [[0], [1], [2]], [[3]],
-                            [[0], [1], [2], [3]]]), "\nATTENTION VAR BATCH FAILED\n" + str(tst7)
+    assert check_res(tst7, [[[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]],
+                            [[0]], [[1]], [[2]], [[3]]]), "\nATTENTION VAR BATCH FAILED\n" + str(tst7)
     assert check_res(tst7, test_batch_repeat_with_copy_map(4, 4, False, add_one_by_epoch)), "\nMAP FAILED\n"
     assert check_res(tst7, test_batch_repeat_with_copy_map_multiproc(
         4, 4, False, add_one_by_epoch, 4, 1)), "\nMULTIPROC1 MAP FAILED\n"
     assert check_res(tst7, test_batch_repeat_with_copy_map_multiproc(
         4, 4, False, add_one_by_epoch, 2, 2)), "\nMULTIPROC2 MAP FAILED\n"
+    test_batch_repeat_multiepoch(2, 2, 2, True, add_one_by_epoch, tst8)
+    assert check_res(tst8, [[[0]], [[1]], [[0]], [[1]],
+                            [[0], [1]], [[0], [1]]]), "\nATTENTION VAR BATCH FAILED\n" + str(tst8)
+    test_batch_repeat_multiepoch(6, 1, 2, True, add_one_by_batch_num, tst9)
+    assert check_res(tst9, [[[0]], [[1], [2]], [[3], [4], [5]],
+                            [[0]], [[1], [2]], [[3], [4], [5]]]), "\nATTENTION VAR BATCH FAILED\n" + str(tst9)
 
 
 def test_get_batchsize_on_callable_batchsize():
@@ -236,7 +254,7 @@ def test_basic_batch_map():
 
     tst1, tst2, = [], []
     batch_map_config(4, 2, 2, invert_sign_per_epoch, tst1)
-    assert check_res(tst1, [[[0], [1]], [[2], [3]], [[0], [-1]], [[-2], [-3]]]), "\nATTENTION MAP BATCH FAILED\n" + str(
+    assert check_res(tst1, [[[0], [1]], [[2], [3]], [[0], [1]], [[2], [3]]]), "\nATTENTION MAP BATCH FAILED\n" + str(
         tst1)
     # each batch, the sign of a row is changed, test map is corrected performed according to its batch_num
     batch_map_config(4, 2, 2, invert_sign_per_batch, tst2)

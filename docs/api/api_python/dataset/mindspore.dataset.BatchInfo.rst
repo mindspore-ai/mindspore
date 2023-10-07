@@ -3,12 +3,12 @@ mindspore.dataset.BatchInfo
 
 .. py:class:: mindspore.dataset.BatchInfo
 
-    此类提供了两种方法获取数据集的批处理数量（batch size）和迭代数（epoch）属性，这些属性可以用于 :func:`mindspore.dataset.Dataset.batch` 操作中的输入参数 `batch_size` 和 `per_batch_map`。
+    当 `batch` 操作中参数 `batch_size` 或 `per_batch_map` 的传入对象是回调函数时，可以通过此类提供的方法获取数据集信息。
 
     .. py:method:: get_batch_num()
 
-        返回数据集的批处理数量（batch size）。
+        返回当前epoch已经处理的batch数，数值从0开始。
 
     .. py:method:: get_epoch_num()
 
-        返回数据集的迭代数（epoch）。
+        返回当前的epoch数，数值从0开始。
