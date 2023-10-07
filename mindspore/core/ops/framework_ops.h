@@ -169,7 +169,8 @@ GVAR_DEF(PrimitivePtr, kPrimRaise,
                                                 {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 GVAR_DEF(PrimitivePtr, kPrimSwitchLayer, std::make_shared<Primitive>("switch_layer"));
-GVAR_DEF(PrimitivePtr, kPrimLower, std::make_shared<Primitive>(kLowerOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringUpper, std::make_shared<Primitive>(kStringUpperOpName));
+GVAR_DEF(PrimitivePtr, kPrimStringLower, std::make_shared<Primitive>(kStringLowerOpName));
 GVAR_DEF(PrimitivePtr, kPrimFormat, std::make_shared<Primitive>("Format"));
 
 // Pack
