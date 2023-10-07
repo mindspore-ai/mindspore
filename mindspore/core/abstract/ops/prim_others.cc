@@ -28,7 +28,7 @@
 #include "ops/ops_func_impl/add.h"
 #include "ops/mul.h"
 #include "ops/sub.h"
-#include "ops/square.h"
+#include "ops/ops_func_impl/square.h"
 #include "ops/assign.h"
 
 namespace {
@@ -536,11 +536,11 @@ AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const Primitive
   auto mul3_x = args_abs_list[8];
   auto add2_y = args_abs_list[9];
 
-  auto square0 = ops::SquareInfer(nullptr, primitive, {input0});
+  auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
   auto mul1 = ops::MulInfer(nullptr, primitive, {mul1_x, input0});
   auto mul0 = ops::MulInfer(nullptr, primitive, {mul0_x, input2});
   auto mul2 = ops::MulInfer(nullptr, primitive, {mul2_x, input1});
-  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0});
+  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0.value()});
   auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
   auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
@@ -582,10 +582,10 @@ AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const 
 
   auto mul0 = ops::MulInfer(nullptr, primitive, {mul0_x, input2});
   auto mul1 = ops::MulInfer(nullptr, primitive, {mul1_x, input0});
-  auto square0 = ops::SquareInfer(nullptr, primitive, {input0});
+  auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
   auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
   auto mul2 = ops::MulInfer(nullptr, primitive, {mul2_x, input1});
-  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0});
+  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0.value()});
   auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
   auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
