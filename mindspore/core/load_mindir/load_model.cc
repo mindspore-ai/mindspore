@@ -2361,6 +2361,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
         return nullptr;
       }
       auto partial_node = anf_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_node);
       if (!IsPrimitiveCNode(partial_node, prim::kPrimPartial)) {
         MS_LOG(INTERNAL_EXCEPTION) << "Not partial CNode, but got " << partial_node->DebugString();
       }
