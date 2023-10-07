@@ -24,7 +24,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/shape_utils.h"
-#include "ops/real_div.h"
+#include "ops/ops_func_impl/real_div.h"
 #include "ops/ops_func_impl/add.h"
 #include "ops/mul.h"
 #include "ops/sub.h"
@@ -545,7 +545,10 @@ AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const Primitive
   auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
   auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
-  auto true_div0 = ops::RealDivInfer(nullptr, primitive, {add0, add2});
+  auto infer_impl = std::make_shared<ops::RealDivFuncImpl>();
+  auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
+  auto infer_type = infer_impl->InferType(primitive, {add0, add2});
+  auto true_div0 = MakeAbstract(infer_shape, infer_type);
   auto mul4 = ops::MulInfer(nullptr, primitive, {input4, true_div0});
   auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul4});
 
@@ -587,7 +590,10 @@ AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const 
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
   auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
   auto mul4 = ops::MulInfer(nullptr, primitive, {mul4_x, input3});
-  auto real_div0 = ops::RealDivInfer(nullptr, primitive, {add0, add2});
+  auto infer_impl = std::make_shared<ops::RealDivFuncImpl>();
+  auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
+  auto infer_type = infer_impl->InferType(primitive, {add0, add2});
+  auto real_div0 = MakeAbstract(infer_shape, infer_type);
   auto add3 = ops::AddInfer(nullptr, primitive, {mul4, real_div0});
   auto mul5 = ops::MulInfer(nullptr, primitive, {input4, add3});
   auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul5});

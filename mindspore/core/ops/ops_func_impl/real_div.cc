@@ -29,9 +29,10 @@ BaseShapePtr RealDivFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr RealDivFuncImpl::InferType(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
-  auto input_type = input_args[kIndex0]->GetType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  return input_type->Clone();
+  std::map<std::string, TypePtr> types;
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("y", input_args[1]->GetType());
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, primitive->name());
 }
 }  // namespace ops
 }  // namespace mindspore
