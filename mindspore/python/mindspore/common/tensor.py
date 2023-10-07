@@ -361,7 +361,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __abs__(self):
         self._init_check()
-        return tensor_operator_registry.get('abs')()(self)
+        return tensor_operator_registry.get('abs')(self)
 
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
@@ -1369,7 +1369,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.exp`.
         """
         self._init_check()
-        return tensor_operator_registry.get('exp')()(self)
+        return tensor_operator_registry.get('exp')(self)
 
     def real(self):
         r"""
@@ -1480,7 +1480,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.abs`.
         """
         self._init_check()
-        return tensor_operator_registry.get('abs')()(self)
+        return tensor_operator_registry.get('abs')(self)
 
     def absolute(self):
         """
@@ -1551,7 +1551,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         input_x = self.copy() if self.dtype == mstype.float32 else self.astype(mstype.float16)
         input_y = other.copy() if other.dtype == mstype.float32 else other.astype(mstype.float16)
-        return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')()(
+        return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')(
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
 
