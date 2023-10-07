@@ -1073,6 +1073,23 @@ AbstractBasePtr InferImplConvertToMsTensor(const AnalysisEnginePtr &, const Prim
   return SetAdapterFlag(op_name, args_abs_list[input_index], false);
 }
 
+AbstractBasePtr InferImplDtypeToEnum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list) {
+  constexpr size_t args_num = 1;
+  constexpr size_t input_index = 0;
+  CheckArgsSize(primitive->name(), args_abs_list, args_num);
+  auto abs_type = args_abs_list[input_index]->cast<AbstractTypePtr>();
+  if (abs_type == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect a type as input, but got " << args_abs_list[input_index]->ToString();
+  }
+  auto val_type = abs_type->BuildValue();
+  MS_EXCEPTION_IF_NULL(val_type);
+  auto dtype = val_type->cast<TypePtr>();
+  MS_EXCEPTION_IF_NULL(dtype);
+  int type_id = GetTypeId(dtype->type_id());
+  return std::make_shared<AbstractScalar>(type_id);
+}
+
 #ifndef _MSC_VER
 // String
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringMul, prim::kPrimStringMul, InferImplStringMul, nullptr);
@@ -1111,6 +1128,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToAdapterTensor, prim::kPrimConvertToA
                                    InferImplConvertToAdapterTensor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToMsTensor, prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor,
                                    nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(DtypeToEnum, prim::kPrimDtypeToEnum, InferImplDtypeToEnum, nullptr);
 #else
 void RegPrimitiveFrontEval() {
   // String
@@ -1174,6 +1192,8 @@ void RegPrimitiveFrontEval() {
                                                 nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
                                                 prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimDtypeToEnum,
+                                                InferImplDtypeToEnum, nullptr);
 }  // namespace abstract
 #endif
 }  // namespace abstract

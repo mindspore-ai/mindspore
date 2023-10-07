@@ -14,7 +14,10 @@
 # ============================================================================
 """Operator argument handle function."""
 
-from mindspore._c_expression import typing
+from mindspore.ops.operations import _inner_ops as inner
+
+
+ops_dtype_to_enum = inner.DtypeToEnum()
 
 
 def to_kernel_size(kernel_size):
@@ -104,6 +107,4 @@ def to_3d_paddings(pad):
 
 
 def dtype_to_enum(dtype):
-    if not isinstance(dtype, typing.Type):
-        raise TypeError(f"For dtype_to_enum function, the input arg should be mindpsore dtype.")
-    return typing.type_to_type_id(dtype)
+    return ops_dtype_to_enum(dtype)
