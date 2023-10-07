@@ -137,6 +137,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kCoalesceOpName,
   mindspore::kDepthToSpaceOpName,
   mindspore::kDenseToDenseSetOperationOpName,
+  mindspore::kCropAndResizeOpName,
   mindspore::kCropAndResizeGradBoxesOpName,
   mindspore::kCropAndResizeGradImageOpName,
   mindspore::kDivOpName,
