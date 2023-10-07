@@ -278,7 +278,9 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     }
     // String has no shape.
     if (node_value->isa<StringImm>()) {
-      return {};
+      auto string_value = node_value->cast<StringImmPtr>();
+      MS_EXCEPTION_IF_NULL(string_value);
+      return {SizeToLong(string_value->ToString().size())};
     }
     if (node_value->isa<ValueSequence>()) {
       MS_LOG(INFO) << "GetRuntimePaddingShape does not support the value sequence for value node:"
