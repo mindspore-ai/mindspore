@@ -107,11 +107,11 @@ Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &
     ref_input_dtypes += dtype_as_string(item) + ";";
   }
   auto erase_comma = [](const std::string &str) { return str.empty() ? str : str.substr(0, str.size() - 1); };
-  options_["InputShapes"] = erase_comma(input_shapes);
-  options_["InputDtypes"] = erase_comma(input_dtypes);
-  options_["RefInputShapes"] = erase_comma(ref_input_shapes);
-  options_["RefInputDtypes"] = erase_comma(ref_input_dtypes);
-  options_["OutputNums"] = std::to_string(model_infos[0].output_count);
+  options_["llm.InputShapes"] = erase_comma(input_shapes);
+  options_["llm.InputDtypes"] = erase_comma(input_dtypes);
+  options_["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
+  options_["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
+  options_["llm.OutputNums"] = std::to_string(model_infos[0].output_count);
   return kSuccess;
 }
 
@@ -132,8 +132,8 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
   if (InitInputOptions(model_infos) != kSuccess) {
     return kLiteError;
   }
-  options_["LLM_ROLE"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
-  auto option_it = options_.find("LLM_OM_CACHE_PATH");
+  options_["llm.Role"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
+  auto option_it = options_.find("llm.OmCachePath");
   if (option_it == options_.end()) {
     std::string cache_path;
     for (size_t i = 0; i < model_infos.size(); i++) {
@@ -142,8 +142,8 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
         cache_path += ";";
       }
     }
-    MS_LOG(INFO) << "Add option LLM_OM_CACHE_PATH to " << cache_path;
-    options_["LLM_OM_CACHE_PATH"] = cache_path;
+    MS_LOG(INFO) << "Add option llm.OmCachePath to " << cache_path;
+    options_["llm.OmCachePath"] = cache_path;
   }
   std::map<ge::AscendString, ge::ModelBufferData> model_buffers;
   for (auto &item : model_infos) {
