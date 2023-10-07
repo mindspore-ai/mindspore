@@ -216,8 +216,7 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
       auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
       auto start = each_attr_input_num * cur_all_same_input_num + i;
-      MS_LOG(WARNING) << "Input dtype " << start << ", " << kernel_info->GetInputDeviceType(start) << ", attr "
-                      << dtype;
+      MS_LOG(DEBUG) << "Input dtype " << start << ", " << kernel_info->GetInputDeviceType(start) << ", attr " << dtype;
       if (kernel_info->GetInputDeviceType(start) != dtype) {
         flag = false;
         break;

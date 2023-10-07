@@ -112,11 +112,11 @@ class ArrayValue {
 
 // This interface is only used to get value for scalar data.
 template <typename T>
-std::optional<T> GetScalarValue(const ValuePtr &value);
+MS_CORE_API std::optional<T> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
-MS_API std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
+MS_CORE_API std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
 const std::set<TypePtr> common_valid_types_with_bool = {
   kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};

@@ -23,6 +23,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "ops/nn_ops.h"
+#include "ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -122,12 +123,16 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
 bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto format_attr = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
-  MS_EXCEPTION_IF_NULL(format_attr);
-  auto format = GetValue<std::string>(format_attr);
-  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
+  size_t format_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(node), "format");
+  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), format_idx);
+  auto format_v = ops::GetScalarValue<int64_t>(format_input_node->cast<ValueNodePtr>()->value());
+  if (!format_v.has_value()) {
     return false;
   }
+  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format_v.value() != Format::NHWC) {
+    return false;
+  }
+
   auto shape = AnfAlgo::GetInputDeviceShape(node, 0);
   if ((shape.back() % kBNChannelMultipleFactor) != 0) {
     return false;
@@ -158,8 +163,8 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 
 const BaseRef BatchNormAddReluGradFusion::DefinePattern() const {
   VectorRef relu_grad = VectorRef({prim::kPrimReluGrad, dy_, y_});
-  VectorRef batch_norm_grad =
-    VectorRef({prim::kPrimBatchNormGrad, relu_grad, x_, scale_, save_mean_, save_var_, reserve_});
+  VectorRef batch_norm_grad = VectorRef(
+    {prim::kPrimBatchNormGrad, relu_grad, x_, scale_, save_mean_, save_var_, reserve_, is_training_, eps_, format_});
   return batch_norm_grad;
 }
 
@@ -188,18 +193,26 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(save_var);
   auto reserve = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex5);
   MS_EXCEPTION_IF_NULL(reserve);
+  auto is_train = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex6);
+  MS_EXCEPTION_IF_NULL(is_train);
+  auto eps = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex7);
+  MS_EXCEPTION_IF_NULL(eps);
+  auto format = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex8);
+  MS_EXCEPTION_IF_NULL(format);
   auto batch_norm = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(save_mean), kIndex0);
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
   MS_EXCEPTION_IF_NULL(bias);
-  auto is_train = common::AnfAlgo::GetCNodePrimitive(batch_norm)->GetAttr("is_training");
-  MS_EXCEPTION_IF_NULL(is_train);
-  if (!GetValue<bool>(is_train)) {
+
+  auto is_train_v = ops::GetScalarValue<bool>(is_train->cast<ValueNodePtr>()->value());
+  if (!is_train_v.has_value() || !is_train_v.value()) {
     return nullptr;
   }
+
   auto prim = std::make_shared<Primitive>(kBatchNormGradWithAddAndActivationOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy, x, scale, save_mean, save_var, reserve, bias, y};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), dy,  x,     scale, save_mean, save_var, reserve, bias, y,
+                                    is_train,           eps, format};
   auto fused_batch_norm_add_relu_grad = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_add_relu_grad);
   common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_add_relu_grad);
