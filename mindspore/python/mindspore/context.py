@@ -953,7 +953,7 @@ def set_offload_context(offload_config):
 
     Examples:
         >>> from mindspore import context
-        >>> context.set_offload_context(offload_config={"offload_param"="cpu"})
+        >>> context.set_offload_context(offload_config={"offload_param":"cpu"})
     """
     _set_offload_context(offload_config)
 
