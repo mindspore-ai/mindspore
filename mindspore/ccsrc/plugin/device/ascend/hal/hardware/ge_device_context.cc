@@ -39,6 +39,7 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
+#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -63,6 +64,7 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);

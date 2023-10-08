@@ -44,6 +44,9 @@
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
+#include "plugin/device/ascend/optimizer/mindir/shape_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/maketuple_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/mindir/scalar_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
@@ -192,6 +195,34 @@ void GEUnifyMindIR(const KernelGraphPtr &kernel_graph) {
   }
 #endif
   profiler::CollectHostInfo("GE", "Graph Optimization", "BackendOptimization_UnifyMindIR", 0, 0, 1);
+}
+
+void GEDynamicUnifyMindIR(const FuncGraphPtr &func_graph) {
+  profiler::CollectHostInfo("GE", "GE Dynamic Shape Unify MindIR", "GEBackend_Dynamic_UnifyMindIR", 0, 0, 0);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_before_ge_dynamic_shape_unify_mindir_graph.ir";
+    DumpIR(file_name, func_graph);
+    DumpIRProto(func_graph, "before_ge_dynamic_shape_unify_mindir_hwopt");
+  }
+#endif
+  auto dynamic_unify_mindir_pm = std::make_shared<opt::PassManager>("ge_dynamic_unify_mindir_pm");
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ShapeUnifyMindIR>());
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::MakeTupleUnifyMindIR>());
+  dynamic_unify_mindir_pm->AddPass(std::make_shared<opt::ScalarUnifyMindIR>());
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  optimizer->AddPassManager(dynamic_unify_mindir_pm);
+  (void)optimizer->Optimize(func_graph);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_after_ge_dynamic_shape_unify_mindir_graph.ir";
+    DumpIR(file_name, func_graph);
+  }
+#endif
+  profiler::CollectHostInfo("GE", "GE Dynamic Shape Unify MindIR", "GEBackend_Dynamic_UnifyMindIR", 0, 0, 1);
 }
 
 PassManagerPtr GetGEUnifyMindIRPassManager() {
