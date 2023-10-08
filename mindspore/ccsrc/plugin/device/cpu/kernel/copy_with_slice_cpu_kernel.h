@@ -43,12 +43,11 @@ class CopyWithSliceCpuKernel : public NativeCpuKernelMod {
  private:
   using CopyWithSliceFunc =
     std::function<bool(CopyWithSliceCpuKernel *, const TensorStorageInfoPtr &, const kernel::AddressPtr &,
-                       const TensorStorageInfoPtr &, const kernel::AddressPtr &, bool)>;
+                       const TensorStorageInfoPtr &, const kernel::AddressPtr &)>;
 
   template <typename T>
   bool LaunchCopyWithSliceImpl(const TensorStorageInfoPtr &src_storage_info, const kernel::AddressPtr &src_addr,
-                               const TensorStorageInfoPtr &dst_storage_info, const kernel::AddressPtr &dst_addr,
-                               bool is_complex);
+                               const TensorStorageInfoPtr &dst_storage_info, const kernel::AddressPtr &dst_addr);
   static std::unordered_map<TypeId, CopyWithSliceFunc> func_list_;
 };
 }  // namespace kernel
