@@ -613,6 +613,7 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   const bool enable_ge = context->backend_policy() == "ge";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
+    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
     const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     context->SetCellReuseLevel(cell_reuse_level);
   }
