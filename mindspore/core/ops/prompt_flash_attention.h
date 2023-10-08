@@ -27,6 +27,19 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePromptFlashAttention = "PromptFlashAttention";
+enum PromptFlashAttentionInputIndex : size_t {
+  kPromptFlashAttentionInputQueryIndex = 0,
+  kPromptFlashAttentionInputKeyIndex,
+  kPromptFlashAttentionInputValueIndex,
+  kPromptFlashAttentionInputAttnMaskIndex,
+  kPromptFlashAttentionInputPaddingMaskIndex,
+  kPromptFlashAttentionInputActualSeqLengthsIndex,
+  kPromptFlashAttentionInputsNum,
+};
+enum PromptFlashAttentionOutputIndex : size_t {
+  kPromptFlashAttentionOutputAttentionOutIndex = 0,
+  kPromptFlashAttentionOutputsNum,
+};
 
 /// \brief PromptFlashAttention.
 /// Refer to Python API @ref mindspore.ops.PromptFlashAttention for more details.

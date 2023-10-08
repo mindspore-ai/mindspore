@@ -16,6 +16,7 @@
 
 #include <set>
 #include <string>
+#include <sstream>
 #include "ops/prompt_flash_attention.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/nn_ops.h"
@@ -30,25 +31,11 @@ namespace ops {
 namespace {
 constexpr size_t kInputQueryBSHRank = 3;
 constexpr size_t kInputQueryBNSDRank = 4;
-enum PromptFlashAttentionInputIndex : size_t {
-  kPromptFlashAttentionInputQueryIndex = 0,
-  kPromptFlashAttentionInputKeyIndex,
-  kPromptFlashAttentionInputValueIndex,
-  kPromptFlashAttentionInputAttnMaskIndex,
-  kPromptFlashAttentionInputPaddingMaskIndex,
-  kPromptFlashAttentionInputActualSeqLengthsIndex,
-  kPromptFlashAttentionInputsNum,
-};
-
-enum PromptFlashAttentionOutputIndex : size_t {
-  kPromptFlashAttentionOutputAttentionOutIndex = 0,
-  kPromptFlashAttentionOutputsNum,
-};
 
 ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, const std::string &op_name,
                              const std::string &input_name) {
   if (dimensions.empty()) {
-    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << "should not be empty";
+    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << " should not be empty";
     return abstract::Shape::kShapeDimAny;
   }
   ShapeValueDType baseValue = abstract::Shape::kShapeDimAny;
@@ -59,11 +46,21 @@ ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, con
     if (baseValue == abstract::Shape::kShapeDimAny && item > 0) {
       baseValue = item;
     } else {
-      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << "should not be equal -1 or equal"
-                        << baseValue << " but got " << item;
+      std::ostringstream buffer;
+      for (const auto &dim : dimensions) {
+        buffer << dim << ", ";
+      }
+      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << " should not be equal -1 or equal"
+                        << baseValue << " but got " << buffer.str();
     }
   }
   return baseValue;
+}
+
+// None indicates that the optional input is not passed
+bool IsOptionalInputNotPass(const AbstractBasePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  return input->BuildType()->type_id() == kMetaTypeNone;
 }
 
 abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
@@ -170,6 +167,9 @@ TuplePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vect
   (void)types.emplace("attn_mask", input_args[kPromptFlashAttentionInputAttnMaskIndex]->BuildType());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  if (!IsOptionalInputNotPass(input_args[kPromptFlashAttentionInputPaddingMaskIndex])) {
+    MS_LOG(EXCEPTION) << "For " << op_name << ": 'padding_mask' must be None currently.";
+  }
   TypePtrList output_type_ptr_list(kPromptFlashAttentionOutputsNum);
   output_type_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] = type;
   return std::make_shared<Tuple>(output_type_ptr_list);
