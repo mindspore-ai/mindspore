@@ -572,6 +572,7 @@ def test_bucket_batch_with_pull_mode():
     Description: Test bucket_batch_by_length op to support pull mode
     Expectation: Output is equal to the expected output
     """
+    original_debug_mode = ds.config.get_debug_mode()
     ds.config.set_debug_mode(True)
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
@@ -586,11 +587,18 @@ def test_bucket_batch_with_pull_mode():
     data_size = dataset.get_dataset_size()
 
     num_rows = 0
-    for _ in dataset.create_dict_iterator(num_epochs=1):
-        num_rows += 1
+    num_epochs = 2
+    ret = []
+    iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
+    for _ in range(num_epochs):
+        for item in iterator:
+            num_rows += 1
+            ret.append(item['col1'].asnumpy())
 
-    assert data_size == num_rows
-    ds.config.set_debug_mode(False)
+    assert data_size * num_epochs == num_rows
+    assert ret[0].all() == np.array([[2], [6]]).all()
+    assert ret[3].all() == np.array([[1], [5], [9]]).all()
+    ds.config.set_debug_mode(original_debug_mode)
 
 
 if __name__ == '__main__':
