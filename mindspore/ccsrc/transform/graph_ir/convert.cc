@@ -3355,7 +3355,8 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
+  auto not_cut_env = common::GetEnv("GE_NOT_CUT");
+  if (context->CellReuseLevel() != CellReuseLevel::kNoCellReuse && not_cut_env == "2") {
     MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }

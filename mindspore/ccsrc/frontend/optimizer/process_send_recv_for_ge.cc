@@ -36,15 +36,6 @@ bool IsSendRecvOps(const AnfNodePtr &node) {
   return IsOneOfPrimitiveCNode(node, kSendRecvOpsPrim);
 }
 
-bool IsCommOps(const AnfNodePtr &node) {
-  static const PrimitiveSet kCommunicationOpsPrim = {
-    prim::kPrimSend,      prim::kPrimReceive,          prim::kPrimAllReduce,          prim::kPrimReduce,
-    prim::kPrimAllGather, prim::kPrimReduceScatter,    prim::kPrimAllToAll,           prim::kPrimAllSwap,
-    prim::kPrimAllToAllv, prim::kPrimNeighborExchange, prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad,
-    prim::kPrimBarrier};
-  return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim);
-}
-
 std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, const CNodePtr &old_node, bool) {
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> params;
@@ -349,7 +340,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
       send_cnt++;
     }
 
-    if (IsCommOps(node) || IsClosure(node)) {
+    if (IsClosure(node)) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (last_need_depend != nullptr && cnode->inputs().size() > 1) {
