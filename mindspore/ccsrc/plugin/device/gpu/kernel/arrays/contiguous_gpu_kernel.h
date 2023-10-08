@@ -16,7 +16,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONTIGUOUS_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONTIGUOUS_GPU_KERNEL_H_
 
-#include <unordered_map>
+#include <map>
+#include <utility>
 #include "ir/tensor_storage_info.h"
 #include "kernel/kernel.h"
 
@@ -27,18 +28,19 @@ class ContiguousGpuKernel {
   ContiguousGpuKernel() = default;
   ~ContiguousGpuKernel() = default;
 
-  bool LaunchContiguous(TypeId type_id, const kernel::AddressPtr &inputs,
-                        const TensorStorageInfoPtr &input_storage_info, const kernel::AddressPtr &outputs,
-                        void *stream_ptr);
+  bool LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &inputs,
+                        const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
+                        const kernel::AddressPtr &outputs, void *stream_ptr);
 
  private:
-  using ContiguousFunc = std::function<bool(ContiguousGpuKernel *, const kernel::AddressPtr &,
-                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, bool, void *)>;
+  using ContiguousFunc =
+    std::function<bool(ContiguousGpuKernel *, const kernel::AddressPtr &, const TensorStorageInfoPtr &,
+                       const kernel::AddressPtr &, const int64_t &, void *)>;
 
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs, bool is_complex, void *stream_ptr);
-  static std::unordered_map<TypeId, ContiguousFunc> func_list_;
+                            const kernel::AddressPtr &outputs, const int64_t &type_size, void *stream_ptr);
+  static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

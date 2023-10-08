@@ -18,7 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CONTIGUOUS_CPU_KERNEL_H
 
 #include <vector>
-#include <unordered_map>
+#include <map>
+#include <utility>
 #include "ir/tensor_storage_info.h"
 #include "kernel/kernel.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -29,8 +30,9 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
  public:
   ContiguousCpuKernel() = default;
   ~ContiguousCpuKernel() = default;
-  bool LaunchContiguous(TypeId type_id, const kernel::AddressPtr &inputs,
-                        const TensorStorageInfoPtr &input_storage_info, const kernel::AddressPtr &outputs);
+  bool LaunchContiguous(TypeId input_type_id, const kernel::AddressPtr &inputs,
+                        const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,
+                        const kernel::AddressPtr &outputs);
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     MS_LOG(EXCEPTION) << "This api is not external";
@@ -38,14 +40,14 @@ class ContiguousCpuKernel : public NativeCpuKernelMod {
 
  private:
   using ContiguousFunc = std::function<bool(ContiguousCpuKernel *, const kernel::AddressPtr &,
-                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, bool)>;
+                                            const TensorStorageInfoPtr &, const kernel::AddressPtr &, const int64_t &)>;
 
   // const ContiguousFunc GetFunc(TypeId type_id);
 
   template <typename T>
   bool LaunchContiguousImpl(const kernel::AddressPtr &inputs, const TensorStorageInfoPtr &input_storage_info,
-                            const kernel::AddressPtr &outputs, bool is_complex);
-  static std::unordered_map<TypeId, ContiguousFunc> func_list_;
+                            const kernel::AddressPtr &outputs, const int64_t &type_size);
+  static std::map<std::pair<TypeId, TypeId>, ContiguousFunc> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
