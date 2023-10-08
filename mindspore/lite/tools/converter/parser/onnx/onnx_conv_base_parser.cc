@@ -71,7 +71,7 @@ STATUS ParseKernels(std::vector<int64_t> *kernels, bool *conv1d, const onnx::Att
 }
 
 STATUS ParseKernelShape(std::vector<int64_t> *kernels, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
-  MS_ASSERT(kernels != nullptr && conv1d != nullptr);
+  MS_CHECK_TRUE_RET(kernels != nullptr && conv1d != nullptr, RET_NULL_PTR);
   switch (onnx_node_attr.ints().size()) {
     case kNumDim1:
       *conv1d = true;
@@ -90,7 +90,7 @@ STATUS ParseKernelShape(std::vector<int64_t> *kernels, bool *conv1d, const onnx:
 }
 
 STATUS ParsePads(std::vector<int64_t> *pads, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
-  MS_ASSERT(pads != nullptr && conv1d != nullptr);
+  MS_CHECK_TRUE_RET(pads != nullptr && conv1d != nullptr, RET_NULL_PTR);
   switch (onnx_node_attr.ints().size()) {
     case kNumDim2:
       *conv1d = true;

@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace lite {
 STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, PrimitiveCPtr prim) {
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
   tensor::TensorPtr tensor_info;
   if (onnx_const_tensor.data_location() != onnx::TensorProto::EXTERNAL) {
     tensor_info = OnnxNodeParser::CopyOnnxTensorData(onnx_const_tensor);

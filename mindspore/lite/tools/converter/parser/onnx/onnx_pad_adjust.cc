@@ -30,8 +30,8 @@ constexpr uint32_t kTripleNum = 3;
 constexpr uint32_t kQuadraNum = 4;
 
 CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &shape) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(input_node != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
   auto reshape_prim = std::make_shared<ops::Reshape>();
   if (reshape_prim == nullptr) {
     MS_LOG(ERROR) << "create reshape failed.";
@@ -60,7 +60,7 @@ CNodePtr NewReshapeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 }
 
 bool AdjstVariablePadding(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node) {
-  MS_ASSERT(func_graph != nullptr && input_node != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr && input_node != nullptr, false);
   // reshape the padding of pad operator to 2 x i.
   std::vector<int> shape_pre = {2, -1};
   auto reshape_pre = NewReshapeOpNode(func_graph, input_node, shape_pre);
@@ -96,9 +96,9 @@ bool AdjstVariablePadding(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 }
 
 bool AdjstConstPadding(const CNodePtr &cnode, const AnfNodePtr &input_node) {
-  MS_ASSERT(cnode != nullptr && input_node != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr && input_node != nullptr, false);
   auto func_graph = cnode->func_graph();
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto tensor_info = opt::GetTensorInfo(input_node);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "get tensor info from parameter failed.";
@@ -125,7 +125,7 @@ bool AdjstConstPadding(const CNodePtr &cnode, const AnfNodePtr &input_node) {
 }  // namespace
 
 bool OnnxPadAdjust::Adjust(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion) ||
