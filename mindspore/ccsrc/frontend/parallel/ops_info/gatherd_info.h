@@ -39,6 +39,7 @@ class GatherDInfo : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -50,7 +51,13 @@ class GatherDInfo : public OperatorInfo {
   Status InferTensorInfo() override;  // the inputs of GatherD is [tensor, int, tensor]
 
  private:
-  size_t dim_ = 0;
+  Status InferBias();
+  Status InferGroup();
+  size_t dim_{0};
+  int64_t slice_size_{0};
+  int64_t bias_{0};
+  bool axis_shard_{false};
+  Group group_;
 };
 }  // namespace parallel
 }  // namespace mindspore

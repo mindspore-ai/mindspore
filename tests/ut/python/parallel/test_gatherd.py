@@ -19,6 +19,7 @@ from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
+from parallel.utils.utils import ParallelValidator
 
 
 def setup_function():
@@ -48,8 +49,9 @@ def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_train()
-    _cell_graph_executor.compile(train_net, _x, _b)
+    phase, _ = _cell_graph_executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
+    return phase
 
 
 def test_gathernd_dim0():
@@ -82,3 +84,21 @@ def test_gathernd_repeat_calc():
     strategy2 = ((1, 2, 4),)
     net = Net(0, _w1, strategy1, strategy2)
     compile_net(net)
+
+
+def test_gathernd_axis():
+    """
+    Feature: GatherD parallel
+    Description: Split along dim axis
+    Expectation: Success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
+    strategy1 = ((2, 4, 2), (2, 4, 1))
+    strategy2 = ((2, 4, 1),)
+    net = Net(2, _w1, strategy1, strategy2)
+    phase = compile_net(net)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('Neg-0', ['_VirtualDiv-0'], graph_id=1)
+    assert validator.check_node_inputs_has('AllReduce-0', ['Mul-0'], graph_id=1)
+    assert validator.check_node_inputs_has('Mul-0', ['GatherD-0', 'Cast-0'], graph_id=1)
+    assert validator.check_node_inputs_has('GatherD-0', ['Minimum-0'], graph_id=1)
