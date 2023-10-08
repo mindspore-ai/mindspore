@@ -127,7 +127,7 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (graph->has_flag(transform::kGraphFlagHasGetNext) || !ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
     MS_LOG(INFO) << "key: ge.exec.inputReuseMemIndexes, value: 0."
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
