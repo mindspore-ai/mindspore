@@ -141,7 +141,7 @@ mindspore.communication
         当前通信组内的rank_ID，数据类型为int。
 
     异常：
-        - **TypeError** - 在参数 `group_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
+        - **TypeError** - 在参数 `world_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
         - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后台不可用时抛出。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
 
@@ -166,7 +166,7 @@ mindspore.communication
         - **rank_ids** (list) - 设备编号列表。
 
     异常：
-        - **TypeError** - 参数 `group_rank_id` 不是数字或参数 `group` 不是字符串。
+        - **TypeError** - 参数 `group` 不是字符串或参数 `rank_ids` 不是列表。
         - **ValueError** - 列表rank_ids的长度小于1，或列表 `rank_ids` 内有重复数据，以及后台无效。
         - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
 
