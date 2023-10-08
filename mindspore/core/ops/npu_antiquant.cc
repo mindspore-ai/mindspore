@@ -45,7 +45,7 @@ BaseShapePtr NPUAntiQuantInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kNumber1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x = input_args[kInputIndex0]->BuildShape();
+  auto x = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);

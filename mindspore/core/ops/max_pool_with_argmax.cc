@@ -170,7 +170,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxInferShape(const PrimitivePtr &primitiv
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto op_name = primitive->name();
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaxPoolIdx0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaxPoolIdx0]->GetShape())[kShape];
   // ToSupport Dynamic rank
   if (IsDynamicRank(in_shape)) {
     // The input tensor of Primitive MaxPoolWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.

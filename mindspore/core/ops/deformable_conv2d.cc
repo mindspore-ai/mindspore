@@ -100,9 +100,9 @@ abstract::ShapePtr DeformableConv2dInferShape(const PrimitivePtr &primitive,
   constexpr size_t strides_num = 4;
   constexpr size_t dilations_num = 4;
 
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
-  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
+  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape());
 
   auto x_shape = x_shape_map[kShape];
   auto offsets_shape = offsets_shape_map[kShape];

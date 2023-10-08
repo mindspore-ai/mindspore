@@ -53,11 +53,11 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
+  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->GetValue()->isa<ValueAny>() &&
+      !input_args[0]->GetValue()->isa<None>()) {
     auto window_length = input_args[0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(window_length);
-    auto window_length_value_ptr = window_length->BuildValue();
+    auto window_length_value_ptr = window_length->GetValue();
     MS_EXCEPTION_IF_NULL(window_length_value_ptr);
     auto window_length_tensor = window_length_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(window_length_tensor);
@@ -67,7 +67,7 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(input_type_id);
     auto input_type_element = input_type_id->element();
     MS_EXCEPTION_IF_NULL(input_type_element);
-    auto window_length_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto window_length_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto window_length_shape = window_length_shape_map[kShape];
     if (IsDynamicRank(window_length_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -101,7 +101,7 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
                                << max_length << "], but got: " << window_length_value << ".";
     }
   } else {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
     if (IsDynamicRank(x_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     }

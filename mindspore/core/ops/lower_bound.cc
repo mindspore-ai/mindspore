@@ -41,8 +41,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(values_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -59,8 +59,8 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', the first dimension of the shape of 'sorted_x' must be equal to that of 'values', "
                                 "but got shape of 'values': "
-                             << input_args[1]->BuildShape()->ToString()
-                             << ", shape of 'sorted_x':" << input_args[0]->BuildShape()->ToString() << ".";
+                             << input_args[1]->GetShape()->ToString()
+                             << ", shape of 'sorted_x':" << input_args[0]->GetShape()->ToString() << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }

@@ -78,7 +78,7 @@ AbstractBasePtr GetNextInferInner(const PrimitivePtr &primitive) { return Getnex
 
 abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
-  auto shape = abs->BuildShape();
+  auto shape = abs->GetShape();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }

@@ -50,11 +50,11 @@ namespace {
 abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto translation_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape) || IsDynamicRank(scale_shape) ||
       IsDynamicRank(translation_shape)) {
@@ -91,7 +91,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   // check scale greater than zero
-  auto scale_v = input_args[kInputIndex2]->BuildValue();
+  auto scale_v = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(scale_v);
   if (!scale_v->isa<ValueAny>() && !scale_v->isa<None>()) {
     if (scale_v == nullptr) {
@@ -115,7 +115,7 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("scale", scale_value, prim_name);
   }
   //  infer resized_images's shape
-  auto size_v = input_args[kInputIndex1]->BuildValue();
+  auto size_v = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(size_v);
   std::vector<int64_t> size_value;
   if (!size_v->isa<ValueAny>() && !size_v->isa<None>()) {

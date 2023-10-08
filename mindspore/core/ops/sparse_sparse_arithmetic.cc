@@ -53,12 +53,12 @@ void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input
   auto x2_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 4);
   auto x2_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 5);
 
-  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_indices->BuildShape())[kShape];
-  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_values->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape->BuildShape())[kShape];
-  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices->BuildShape())[kShape];
-  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values->BuildShape())[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_indices->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_values->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape->GetShape())[kShape];
+  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices->GetShape())[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values->GetShape())[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_shape->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {x1_indices_shape, x1_values_shape, x1_shape_shape,
                                          x2_indices_shape, x2_values_shape, x2_shape_shape};
@@ -119,8 +119,8 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
                                                          const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   CheckSparseSparseArithmeticInputs(input_args, op_name);
-  auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto x1_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   ShapeVector out_indice_shape = {-1, -1};
   ShapeVector out_value_shape = {-1};
   ShapeVector max_out_indice_shape = {};

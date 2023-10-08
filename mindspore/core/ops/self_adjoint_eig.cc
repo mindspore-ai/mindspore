@@ -34,7 +34,7 @@ abstract::TupleShapePtr SelfAdjointEigInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kNumber = 2;
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x)[kShape];
   auto input_rank = SizeToLong(input_shape.size());
 

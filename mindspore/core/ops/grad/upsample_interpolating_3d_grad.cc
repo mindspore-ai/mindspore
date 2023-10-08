@@ -76,7 +76,7 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
-  auto size_value_ptr = input_arg->BuildValue();
+  auto size_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
@@ -93,7 +93,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &input_size, std::vector<int64_t> *const y_shape) {
-  auto scales_value_ptr = input_arg->BuildValue();
+  auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr)) {
     std::vector<double> scales;
@@ -157,7 +157,7 @@ void UpsampleInterpolating3DGradCheck(const PrimitivePtr &primitive, const std::
   }
   if (shape_error) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', The shape of grad, which is the same as that of output, is "
-                             << input_args[kInputIndex0]->BuildShape()->ToString() << ", but the shape of output is ("
+                             << input_args[kInputIndex0]->GetShape()->ToString() << ", but the shape of output is ("
                              << std::to_string(y_shape[kInputIndex0]) << ", " << std::to_string(y_shape[kInputIndex1])
                              << ", " << std::to_string(y_shape[kInputIndex2]) << ", "
                              << std::to_string(y_shape[kInputIndex3]) << ", " << std::to_string(y_shape[kInputIndex4])
@@ -173,8 +173,8 @@ abstract::ShapePtr UpsampleInterpolating3DGradInferShape(const PrimitivePtr &pri
   for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input_size_ptr = input_args[kInputIndex1]->BuildValue();
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto input_size_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(input_size_ptr);
   auto input_size = GetShapeValue(primitive, input_args[kInputIndex1]);
   if (IsValueKnown(input_size_ptr)) {

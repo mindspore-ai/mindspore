@@ -36,11 +36,11 @@ abstract::ShapePtr MaskedFillInferShape(const PrimitivePtr &primitive, const std
   auto op_name = primitive->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_shape = input_shape_map[kShape];
-  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto mask_shape = mask_shape_map[kShape];
-  auto value_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
+  auto value_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape());
   auto value_shape = value_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(input_shape, mask_shape, op_name, "input", "mask");
   int64_t batch_rank = 0;

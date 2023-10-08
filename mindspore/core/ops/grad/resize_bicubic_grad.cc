@@ -53,8 +53,8 @@ abstract::ShapePtr ResizeBicubicGradInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto original_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto original_image_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
 
   std::vector<std::vector<int64_t>> all_shapes = {grads_shape, original_image_shape};
   auto is_dynamic_rank = std::any_of(all_shapes.begin(), all_shapes.end(), IsDynamicRank);

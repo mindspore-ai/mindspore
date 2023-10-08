@@ -35,7 +35,7 @@ class SiLUGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t input_num = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    return input_args[0]->BuildShape();
+    return input_args[0]->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

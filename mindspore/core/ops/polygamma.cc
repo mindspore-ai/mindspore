@@ -41,11 +41,11 @@ namespace {
 abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   int64_t input_a;
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (a_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', 'a' should be a 0-dim Tensor, but got rank: " << a_shape.size() << ".";
@@ -53,7 +53,7 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
   if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
-    auto input_a_value_ptr = input_a_ptr->BuildValue();
+    auto input_a_value_ptr = input_a_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(input_a_value_ptr);
     if (input_a_value_ptr->isa<tensor::Tensor>()) {
       auto input_a_tensor = input_a_value_ptr->cast<tensor::TensorPtr>();
@@ -65,7 +65,7 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
   } else if (input_args[kInputIndex0]->isa<abstract::AbstractScalar>()) {
     auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
-    auto input_value = input_a_ptr->BuildValue();
+    auto input_value = input_a_ptr->GetValue();
     if (input_value->isa<ValueAny>()) {
       return std::make_shared<abstract::Shape>(x_shape);
     }

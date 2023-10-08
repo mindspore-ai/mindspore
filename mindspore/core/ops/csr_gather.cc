@@ -56,7 +56,7 @@ AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const Primit
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
-  auto shape_value = sparse_shape->BuildValue()->cast<ValueTuplePtr>();
+  auto shape_value = sparse_shape->GetValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto nnz_vec = indices->shape()->shape();
   int64_t csr_avg_rows = nnz_vec[0] / GetValue<int64_t>(shape_value->value()[0]);

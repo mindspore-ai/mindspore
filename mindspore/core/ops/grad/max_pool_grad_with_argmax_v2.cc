@@ -128,8 +128,8 @@ abstract::ShapePtr MaxPoolGradWithArgmaxV2InferShape(const PrimitivePtr &prim,
   }
   constexpr int64_t kInputDims = 4;
   constexpr size_t kAttrsSize = 4;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(
       std::vector<int64_t>{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,

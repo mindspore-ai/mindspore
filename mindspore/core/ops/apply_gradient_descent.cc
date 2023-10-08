@@ -45,15 +45,15 @@ namespace {
 abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamicRank(alpha_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto delta_shape = input_args[kInputIndex2]->BuildShape();
+  auto delta_shape = input_args[kInputIndex2]->GetShape();
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(delta_shape)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

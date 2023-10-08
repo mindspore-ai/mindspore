@@ -66,8 +66,8 @@ class MIND_API LayerNormGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
-    auto gamma_shape_ptr = input_args[kInputIndex4]->BuildShape()->cast<abstract::ShapePtr>();
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
+    auto gamma_shape_ptr = input_args[kInputIndex4]->GetShape()->cast<abstract::ShapePtr>();
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{x_shape_ptr, gamma_shape_ptr, gamma_shape_ptr});
   }

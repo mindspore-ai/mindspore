@@ -61,11 +61,11 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-    auto out_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto out_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(out_shape_ptr);
-    auto dout_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto dout_shape_ptr = input_args[kInputIndex2]->GetShape();
     MS_EXCEPTION_IF_NULL(dout_shape_ptr);
 
     auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];

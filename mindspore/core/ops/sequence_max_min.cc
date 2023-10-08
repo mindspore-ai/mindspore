@@ -31,10 +31,10 @@ AbstractBasePtr FindMaxOrMin(const AbstractBasePtrList &seq_elements, const bool
   std::vector<T> values;
   for (size_t i = 0; i < seq_elements.size(); ++i) {
     auto element = seq_elements[i];
-    if (element->BuildValue() == kValueAny) {
+    if (element->GetValue() == kValueAny) {
       return element->Clone();
     }
-    values.push_back(element->BuildValue()->cast<G>()->value());
+    values.push_back(element->GetValue()->cast<G>()->value());
   }
   if (is_max) {
     return std::make_shared<abstract::AbstractScalar>(*std::max_element(values.begin(), values.end()));
@@ -81,7 +81,7 @@ class SequenceMaxInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args)->BuildShape();
+    return SequenceMaxMinInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -99,7 +99,7 @@ class SequenceMinInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args, false)->BuildShape();
+    return SequenceMaxMinInferInner(primitive, input_args, false)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

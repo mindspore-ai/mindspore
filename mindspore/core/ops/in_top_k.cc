@@ -58,8 +58,8 @@ class InTopKInfer : public abstract::OpInferBase {
     const int64_t kInputx1ShapeSize = 2;
     const int64_t kInputx2ShapeSize = 1;
     auto prim_name = primitive->name();
-    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     if (IsDynamicRank(x1_shape) || IsDynamicRank(x2_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
@@ -72,7 +72,7 @@ class InTopKInfer : public abstract::OpInferBase {
                                << "', the size of x2 should be equal to x1's first diemnsion, but got x1 shape: "
                                << x1_shape << ", x2 shape: " << x2_shape;
     }
-    auto x2 = input_args[kInputIndex1]->BuildShape();
+    auto x2 = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(x2);
     auto shape_element = x2->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_element);

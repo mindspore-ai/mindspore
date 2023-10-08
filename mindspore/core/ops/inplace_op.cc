@@ -33,9 +33,9 @@ namespace {
 abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
-  auto v_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto v_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(v_shape_ptr);
   if (x_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic()) {
     return x_shape_ptr->cast<abstract::ShapePtr>();

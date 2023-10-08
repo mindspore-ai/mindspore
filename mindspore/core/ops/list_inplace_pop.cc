@@ -53,7 +53,7 @@ AbstractBasePtr ListInplacePopInfer(const abstract::AnalysisEnginePtr &, const P
   // Check index input, must satisfy:
   //   1. index input must be constant.
   //   2. index input must be int64 scalar.
-  auto index_abs_value = index_abs->BuildValue();
+  auto index_abs_value = index_abs->GetValue();
   if (index_abs_value == kValueAny) {
     MS_EXCEPTION(ValueError) << "The second input to " << prim_name << " must be constant scalar but got variable.";
   }

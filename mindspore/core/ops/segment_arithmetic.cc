@@ -75,8 +75,8 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
 
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -95,7 +95,7 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector out_shape(x_shape);
-  auto segment_ids_ptr = input_args[1]->BuildValue();
+  auto segment_ids_ptr = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(segment_ids_ptr);
   if (!segment_ids_ptr->isa<ValueAny>() && !segment_ids_ptr->isa<None>()) {
     auto segment_ids_tensor = segment_ids_ptr->cast<tensor::TensorPtr>();

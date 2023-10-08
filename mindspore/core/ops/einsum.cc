@@ -267,7 +267,7 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   }
   std::vector<std::vector<int64_t>> input_shapes;
   for (size_t idx = 0; idx < elements.size(); ++idx) {
-    auto shape = elements[idx]->BuildShape();
+    auto shape = elements[idx]->GetShape();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->IsDimZero()) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dim of inputs' shape can not be zero, but got input["

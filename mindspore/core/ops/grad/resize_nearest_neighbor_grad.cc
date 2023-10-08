@@ -70,7 +70,7 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
     ret_shape.push_back(grad_shape[kInputIndex1]);
   }
 
-  auto size_ptr = input_args[kResizeIdx]->BuildValue();
+  auto size_ptr = input_args[kResizeIdx]->GetValue();
   MS_EXCEPTION_IF_NULL(size_ptr);
   std::vector<int64_t> size_v = GetShapeValue(primitive, input_args[kResizeIdx]);
   if (!IsDynamicRank(size_v)) {

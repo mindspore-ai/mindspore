@@ -126,7 +126,7 @@ class FillInfer : public abstract::OpInferBase {
     const uint32_t kInputDims = 1;
     auto shape_arg = input_args[inputsIndex[1]];
     MS_EXCEPTION_IF_NULL(shape_arg);
-    if (!IsValueKnown(shape_arg->BuildValue()) && shape_arg->isa<abstract::AbstractTensor>()) {
+    if (!IsValueKnown(shape_arg->GetValue()) && shape_arg->isa<abstract::AbstractTensor>()) {
       auto abs_tensor = shape_arg->cast<abstract::AbstractTensorPtr>();
       auto abs_tensor_shape = abs_tensor->shape()->shape();
       if (abs_tensor_shape.size() != kInputDims) {
@@ -136,7 +136,7 @@ class FillInfer : public abstract::OpInferBase {
       }
     }
     auto input2_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[inputsIndex[kIndex2]]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[inputsIndex[kIndex2]]->GetShape())[kShape];
     if (input2_shape.size() > 1 || (input2_shape.size() == 1 && input2_shape[0] > 1)) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', the shape size of 'input2' must be 0, but got: " << input2_shape.size() << ".";
@@ -155,7 +155,7 @@ class FillInfer : public abstract::OpInferBase {
     // check
     ValuePtr dtype_value;
     TypePtr value_dtype;
-    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
     auto input2_dtype = input_args[2]->BuildType();
     MS_EXCEPTION_IF_NULL(input2_dtype);
     TypePtr input2_element_dtype;
@@ -170,7 +170,7 @@ class FillInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', the value input only takes scalar or scalar within a tensor!";
     }
-    dtype_value = input_args[0]->BuildValue();
+    dtype_value = input_args[0]->GetValue();
     MS_EXCEPTION_IF_NULL(dtype_value);
     if (!dtype_value->isa<Type>()) {
       MS_EXCEPTION(TypeError)
@@ -192,7 +192,7 @@ class FillInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, prim->name());
     auto infered_type = InferType(prim, input_args);
     MS_EXCEPTION_IF_NULL(infered_type);
-    auto input_value_ptr = input_args[2]->BuildValue();
+    auto input_value_ptr = input_args[2]->GetValue();
     auto input_value_type_id = input_args[2]->BuildType()->type_id();
     auto tmp_shape = InferShape(prim, input_args);
     MS_EXCEPTION_IF_NULL(tmp_shape);

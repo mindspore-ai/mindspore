@@ -52,7 +52,7 @@ AbstractBasePtr DictInplaceSetItemInfer(const abstract::AnalysisEnginePtr &, con
 
   auto key_abs = input_args[key_index];
   MS_EXCEPTION_IF_NULL(key_abs);
-  auto key_value = key_abs->BuildValue();
+  auto key_value = key_abs->GetValue();
   MS_EXCEPTION_IF_NULL(key_value);
   if (key_value == kValueAny) {
     MS_LOG(EXCEPTION) << prim_name << " only support constant key but got abstract of key: " << key_abs->ToString();
@@ -65,7 +65,7 @@ AbstractBasePtr DictInplaceSetItemInfer(const abstract::AnalysisEnginePtr &, con
   auto dict_elems = dict_abs->elements();
   auto it = std::find_if(
     dict_elems.cbegin(), dict_elems.cend(),
-    [&key_value](const abstract::AbstractElementPair &item) { return *key_value == *item.first->BuildValue(); });
+    [&key_value](const abstract::AbstractElementPair &item) { return *key_value == *item.first->GetValue(); });
 
   MS_EXCEPTION_IF_NULL(input_args[value_index]);
   auto new_ele = std::make_pair(input_args[key_index], input_args[value_index]);

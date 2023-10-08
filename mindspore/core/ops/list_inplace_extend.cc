@@ -68,7 +68,7 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
       (void)new_elements.emplace_back(element);
     }
   } else {
-    auto target_base_shape = target_abs->BuildShape();
+    auto target_base_shape = target_abs->GetShape();
     MS_EXCEPTION_IF_NULL(target_base_shape);
     if (target_base_shape->isa<abstract::NoShape>()) {
       MS_EXCEPTION(TypeError) << "Cannot iterate over a scalar tensor.";

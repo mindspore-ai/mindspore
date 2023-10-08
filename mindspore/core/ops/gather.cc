@@ -96,8 +96,8 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   const int64_t input_num = 3;
   const std::string &op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto params_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto params_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   // Dynamic rank.
   if (params_shape_ptr->IsDimUnknown() || indices_shape_ptr->IsDimUnknown()) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
@@ -112,7 +112,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     auto axis = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis);
-    auto axis_value_ptr = axis->BuildValue();
+    auto axis_value_ptr = axis->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     if (axis_value_ptr->isa<tensor::Tensor>()) {
       auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name);
@@ -124,7 +124,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
       is_axis_dyn = true;
     }
   } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    auto axis_value = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>()->BuildValue();
+    auto axis_value = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>()->GetValue();
     if (axis_value->isa<ValueAny>()) {
       is_axis_dyn = true;
     } else {

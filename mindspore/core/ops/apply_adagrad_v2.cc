@@ -48,10 +48,10 @@ abstract::TupleShapePtr ApplyAdagradV2InferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto accum_shape = input_args[kInputIndex1]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto grad_shape = input_args[kInputIndex3]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto accum_shape = input_args[kInputIndex1]->GetShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto grad_shape = input_args[kInputIndex3]->GetShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {

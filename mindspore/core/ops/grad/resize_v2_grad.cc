@@ -33,27 +33,27 @@ abstract::ShapePtr ResizeV2GradInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   int64_t grads_shape_0 = SizeToLong(grad_shape[LongToSize(0)]);
   int64_t grads_shape_1 = SizeToLong(grad_shape[LongToSize(1)]);
   const int64_t kDimSize = 4;
   (void)CheckAndConvertUtils::CheckInteger("dim of grads", SizeToLong(grad_shape.size()), kEqual, kDimSize, prim_name);
 
-  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   const int64_t kRoiDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of roi", SizeToLong(roi_shape.size()), kEqual, kRoiDimSize, prim_name);
 
-  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   const int64_t kScalesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of scales", SizeToLong(scales_shape.size()), kEqual, kScalesDimSize,
                                            prim_name);
 
-  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   const int64_t kSizesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of original_size", SizeToLong(sizes_shape.size()), kEqual,
                                            kSizesDimSize, prim_name);
 
-  auto sizes_input = input_args[kInputIndex3]->BuildValue();
+  auto sizes_input = input_args[kInputIndex3]->GetValue();
   auto mode_ptr = primitive->GetAttr("mode");
   std::string mode_str = GetValue<std::string>(mode_ptr);
 

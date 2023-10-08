@@ -52,14 +52,14 @@ constexpr int kLenImageSize3D = 5;
 abstract::ShapePtr AffineGridGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
 
   auto y_grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
   if (y_grad_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   auto x_size_arg = input_args[kInputIndex1];
-  auto x_size_value_ptr = x_size_arg->BuildValue();
+  auto x_size_value_ptr = x_size_arg->GetValue();
   if ((x_size_arg->isa<abstract::AbstractTuple>() && x_size_value_ptr->isa<ValueTuple>()) ||
       (x_size_arg->isa<abstract::AbstractTensor>() && x_size_value_ptr->isa<tensor::Tensor>())) {
     ShapeVector x_size_val;

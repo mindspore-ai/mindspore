@@ -60,7 +60,7 @@ abstract::ShapePtr CountNonZeroInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto output_shape = input_shape;
   auto input_rank = SizeToLong(input_shape.size());
   std::vector<int64_t> dims = CheckAttrIntOrTuple(primitive->GetAttr("dims"));

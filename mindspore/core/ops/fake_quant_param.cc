@@ -115,7 +115,7 @@ class FakeQuantParamInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t input_num = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    auto x = input_args[kInputIndex0]->BuildShape();
+    auto x = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(x);
     auto shape_element = x->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_element);

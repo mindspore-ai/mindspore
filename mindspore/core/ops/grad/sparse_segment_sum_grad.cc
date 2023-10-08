@@ -47,12 +47,12 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto output_dim0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(grad_shape) || IsDynamicRank(indices_shape) || IsDynamicRank(segment_ids_shape) ||
       IsDynamicRank(output_dim0_shape)) {
@@ -76,11 +76,10 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
                              << "but got indices [" << indices_shape[kInputIndex0] << "] "
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
-  if (!input_args[kInputIndex3]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex3]->BuildValue()->isa<None>()) {
+  if (!input_args[kInputIndex3]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex3]->GetValue()->isa<None>()) {
     auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(output_dim0_value);
-    auto output_dim0_value_ptr = output_dim0_value->BuildValue();
+    auto output_dim0_value_ptr = output_dim0_value->GetValue();
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
     auto output_dim0_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);

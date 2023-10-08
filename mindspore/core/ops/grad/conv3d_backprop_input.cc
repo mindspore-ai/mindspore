@@ -199,9 +199,9 @@ class Conv3DBackpropInputInfer : public abstract::OpInferBase {
     Conv3dBackpropInputInferCheck(primitive, input_args, true);
     auto forward_input_shape = GetShapeValue(primitive, input_args[kConv3DBackpropInputSizeIndex]);
     auto dout_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropInputDoutIndex]->BuildShape())[kShape];
-    auto filter_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kConv3DBackpropInputFilterIndex]->BuildShape())[kShape];
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropInputDoutIndex]->GetShape())[kShape];
+    auto filter_shape =
+      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv3DBackpropInputFilterIndex]->GetShape())[kShape];
     if (IsDynamicRank(forward_input_shape) || IsDynamicRank(dout_shape) || IsDynamicRank(filter_shape)) {
       forward_input_shape = {abstract::Shape::kShapeRankAny};
       return std::make_shared<abstract::Shape>(forward_input_shape);

@@ -47,7 +47,7 @@ const size_t one = 1;
 int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
   MS_EXCEPTION_IF_NULL(input_arg);
   if (input_arg->isa<abstract::AbstractTensor>()) {
-    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
+    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->GetShape())[kShape];
     auto input_size = input_shape.size();
     if (input_size != 1) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape must be 1-D, but got: " << input_size << "-D.";
@@ -206,14 +206,14 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
     }
 
     std::vector<std::vector<int64_t>> input_shapes(kInputNum);
-    auto x = input_args[0]->BuildValue();
+    auto x = input_args[0]->GetValue();
     if (x == kValueAny) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_0 is ValueAny, will backoff to cpu.";
       return nullptr;
     }
     input_shapes[0] = GetValue<std::vector<int64_t>>(x);
 
-    auto y = input_args[1]->BuildValue();
+    auto y = input_args[1]->GetValue();
     if (y == kValueAny) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_1 is ValueAny, will backoff to cpu.";
       return nullptr;

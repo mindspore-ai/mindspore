@@ -51,10 +51,10 @@ constexpr int kQuantileDefaultDim = 10000;
 abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto input = input_args[0]->BuildShape();
+  auto input = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto q_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto q_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   auto q_dim = q_shape.size();
   if (IsDynamicRank(input_shape) || IsDynamicRank(q_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -124,7 +124,7 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   (void)dict_type.insert(std::make_pair("input", input_type));
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, prim_name);
 
-  auto q_value = q->BuildValue();
+  auto q_value = q->GetValue();
   MS_EXCEPTION_IF_NULL(q_value);
   if (q->isa<abstract::AbstractTensor>()) {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);

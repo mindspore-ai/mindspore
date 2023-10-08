@@ -43,7 +43,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
   if (IsDynamicRank(element0_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -56,7 +56,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t all_shp = element0_shape[axis];
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(elementi_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }

@@ -107,9 +107,9 @@ void Col2ImShapeCheck(const ShapeVector &x_shape, const std::vector<int64_t> &ke
 
 abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto output_size_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
 
   constexpr int64_t output_size_dim0 = 2;
   constexpr int64_t x_size = 4;
@@ -169,7 +169,7 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_size, abstract::Shape::kShapeDimAny));
   }
 
-  if (!(IsDynamic(x_shape) || !(IsValueKnown(input_args[1]->BuildValue())))) {
+  if (!(IsDynamic(x_shape) || !(IsValueKnown(input_args[1]->GetValue())))) {
     Col2ImShapeCheck(x_shape, kernel_size, dilation, padding, stride, output_size_value[kInputIndex0],
                      output_size_value[kInputIndex1]);
   }

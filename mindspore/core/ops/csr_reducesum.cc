@@ -62,9 +62,9 @@ AbstractBasePtr CSRReduceSumInfer(const abstract::AnalysisEnginePtr &, const Pri
 
   ShapeVector sparse_shape = ConvertToShapeVector(shape);
   ShapeVector out_shape = sparse_shape;
-  MS_EXCEPTION_IF_NULL(axis->BuildValue());
-  if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
-    int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
+  MS_EXCEPTION_IF_NULL(axis->GetValue());
+  if (axis->GetValue()->isa<Int32Imm>() || axis->GetValue()->isa<Int64Imm>()) {
+    int64_t axis_value = GetValue<int64_t>(axis->GetValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
     if (axis_value != 1 && axis_value != 1 - dim) {
       MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be 1 or 1-dim. But got `axis`: " << axis_value

@@ -24,11 +24,11 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr RGBToHSVInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const auto &build_shape = input_args[0]->BuildShape();
+  const auto &build_shape = input_args[0]->GetShape();
   if (build_shape->IsDimZero()) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the shape of input can not be empty.";
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

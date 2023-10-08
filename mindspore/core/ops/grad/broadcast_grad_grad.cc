@@ -37,10 +37,10 @@ abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitiv
     MS_EXCEPTION_IF_NULL(item);
   }
   auto broadcast = BroadCastInferShape(prim_name, {input_args[kInputIndex0], input_args[kInputIndex1]});
-  auto x1 = input_args[kInputIndex0]->BuildShape();
-  auto x2 = input_args[kInputIndex1]->BuildShape();
-  auto dx1 = input_args[kInputIndex2]->BuildShape();
-  auto dx2 = input_args[kInputIndex3]->BuildShape();
+  auto x1 = input_args[kInputIndex0]->GetShape();
+  auto x2 = input_args[kInputIndex1]->GetShape();
+  auto dx1 = input_args[kInputIndex2]->GetShape();
+  auto dx2 = input_args[kInputIndex3]->GetShape();
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1)[kShape];
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2)[kShape];
   auto dx1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dx1)[kShape];

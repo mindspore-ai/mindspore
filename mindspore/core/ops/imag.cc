@@ -47,7 +47,7 @@ namespace {
 abstract::ShapePtr ImagInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto name = primitive->name();
   MS_LOG(DEBUG) << "Start infer shape for op: " << name;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto in_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }

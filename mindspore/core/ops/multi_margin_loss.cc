@@ -76,8 +76,8 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
 
   int64_t reduction = 0;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
@@ -106,8 +106,7 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
     if (element->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
       if (IsDynamic(weight_shape)) {
         return std::make_shared<abstract::Shape>(out_shape);
       }

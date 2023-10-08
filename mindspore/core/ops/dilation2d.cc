@@ -65,8 +65,8 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto filter_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto x_shape = x_shape_map[kShape];
   auto filter_shape = filter_shape_map[kShape];
   const uint64_t n_axis = 0;

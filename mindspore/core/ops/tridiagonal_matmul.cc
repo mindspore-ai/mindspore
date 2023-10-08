@@ -43,13 +43,13 @@ abstract::ShapePtr TridiagonalMatMulInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, primitive->name());
-  auto superdiag_shape_ptr = input_args[0]->BuildShape();
+  auto superdiag_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(superdiag_shape_ptr);
-  auto maindiag_shape_ptr = input_args[1]->BuildShape();
+  auto maindiag_shape_ptr = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(maindiag_shape_ptr);
-  auto subdiag_shape_ptr = input_args[2]->BuildShape();
+  auto subdiag_shape_ptr = input_args[2]->GetShape();
   MS_EXCEPTION_IF_NULL(subdiag_shape_ptr);
-  auto rhs_shape_ptr = input_args[3]->BuildShape();
+  auto rhs_shape_ptr = input_args[3]->GetShape();
   MS_EXCEPTION_IF_NULL(rhs_shape_ptr);
   if (superdiag_shape_ptr->IsDynamic() || maindiag_shape_ptr->IsDynamic() || subdiag_shape_ptr->IsDynamic() ||
       rhs_shape_ptr->IsDynamic()) {

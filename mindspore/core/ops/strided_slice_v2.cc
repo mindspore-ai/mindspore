@@ -356,7 +356,7 @@ bool CheckAndGetDynamicSliceV2(const AbstractBasePtr &input_arg, const std::stri
                                size_t *slice_len) {
   bool is_dynamic = false;
   MS_EXCEPTION_IF_NULL(input_arg);
-  auto input_value = input_arg->BuildValue();
+  auto input_value = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(input_value);
   if (input_arg->isa<abstract::AbstractTuple>()) {
     if (IsValueKnown(input_value)) {
@@ -406,7 +406,7 @@ abstract::ShapePtr StridedSliceV2InferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For 'StridedSliceV2', input_x must be 1D-8D, but got" << input_x_shape->shape().size()
                              << "-D.";
   }
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->GetShape());
   auto x_shape = shape_map[kShape];
   bool x_is_dyn =
     std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::kShapeDimAny; });

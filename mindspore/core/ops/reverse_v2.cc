@@ -28,14 +28,14 @@ namespace {
 abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto axis_ptr = primitive->GetAttr("axis");
   auto input_axis = GetValue<std::vector<int64_t>>(axis_ptr);
   auto axis_dims = input_axis.size();
   auto x_dims = x_shape.size();
   const int64_t input_max_dim = 8;
 
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});

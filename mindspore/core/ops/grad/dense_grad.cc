@@ -65,8 +65,8 @@ class DenseGradInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex0]->BuildShape())[kShape];
-    auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex0]->GetShape())[kShape];
+    auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDenseGradIndex1]->GetShape())[kShape];
     auto dx_shape_ptr = std::make_shared<abstract::Shape>(x_shape);
     auto dw_shape_ptr = std::make_shared<abstract::Shape>(w_shape);
     ShapeVector b_shape = {w_shape[kDenseGradIndex0]};

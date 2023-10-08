@@ -111,7 +111,7 @@ BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
   auto out_shape = GetShapeValue(primitive, input_size);
   auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
   auto dout_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->GetShape())[kShape];
 
   constexpr size_t kRank = 4;
   if (!IsDynamicRank(dout_shape) && dout_shape.size() < kRank) {

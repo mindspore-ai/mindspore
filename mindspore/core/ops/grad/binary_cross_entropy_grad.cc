@@ -78,7 +78,7 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
     const int64_t kInputNum = 3;
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
     auto input_shape = shape_map[kShape];
     return std::make_shared<abstract::Shape>(input_shape);
   }
@@ -96,8 +96,7 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
     if (SizeToLong(input_args.size()) > kInputNum &&
         input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
       if (weight_shape.size() > 0) {
         (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
       }

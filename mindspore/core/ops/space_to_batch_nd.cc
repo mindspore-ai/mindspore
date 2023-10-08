@@ -112,7 +112,7 @@ abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (x_shape.size() != 0 && (IsDynamicRank(x_shape) || x_shape[0] == -1)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

@@ -51,7 +51,7 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
   // check axis shape
   auto axis = input_args[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(axis);
-  auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(axis->BuildShape())[kShape];
+  auto axis_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(axis->GetShape())[kShape];
   auto axis_rank = axis_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("input axis shape rank", SizeToLong(axis_rank), kEqual, kAxisRank,
                                            prim_name);
@@ -63,7 +63,7 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                                            prim_name);
   auto tensor0 = tensors[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor0);
-  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensor0->BuildShape())[kShape];
+  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensor0->GetShape())[kShape];
   auto tensor0_rank = tensor0_shape.size();
   (void)CheckAndConvertUtils::CheckInteger("input x tensor0 shape rank", SizeToLong(tensor0_rank), kEqual,
                                            kXTensorRankOrElemNum, prim_name);
@@ -72,7 +72,7 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
                                            kGreaterEqual, kXTensorRankOrElemNum, prim_name);
   for (size_t i = 1; i < tensors.size(); ++i) {
     std::string tensori = "tensor" + std::to_string(i);
-    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->BuildShape())[kShape];
+    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->GetShape())[kShape];
     auto tensori_rank = tensori_shape.size();
     (void)CheckAndConvertUtils::CheckInteger("input x " + tensori + " shape rank", SizeToLong(tensori_rank), kEqual,
                                              kXTensorRankOrElemNum, prim_name);
@@ -84,7 +84,7 @@ abstract::TupleShapePtr ConcatOffsetV1InferShape(const PrimitivePtr &primitive,
     }
   }
   return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>(tensors.size(), tensor0->BuildShape()));
+    std::vector<abstract::BaseShapePtr>(tensors.size(), tensor0->GetShape()));
 }
 
 TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

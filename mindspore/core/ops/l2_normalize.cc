@@ -65,7 +65,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
     if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape])) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }

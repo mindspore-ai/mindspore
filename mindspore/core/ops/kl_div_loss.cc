@@ -51,9 +51,9 @@ std::string KLDivLoss::get_reduction() const { return GetValue<std::string>(GetA
 
 abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto input_x_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_x_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto input_x_shape = input_x_map[kShape];
-  auto input_target_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto input_target_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto input_target_shape = input_target_map[kShape];
 
   if (IsDynamicRank(input_x_shape) || IsDynamicRank(input_target_shape)) {

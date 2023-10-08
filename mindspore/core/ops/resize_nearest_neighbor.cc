@@ -53,7 +53,7 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
   }
   ValuePtr size_ptr;
   if (x_shape_ptr->IsDynamic() && input_args.size() > 1) {
-    size_ptr = input_args[1]->BuildValue();
+    size_ptr = input_args[1]->GetValue();
   } else {
     size_ptr = primitive->GetAttr(kSize);
   }

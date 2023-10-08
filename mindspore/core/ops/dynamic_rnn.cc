@@ -73,9 +73,9 @@ abstract::TupleShapePtr DynamicRNNInferDynamicShape() {
 
 void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->BuildShape())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->BuildShape())[kShape];
-  auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->GetShape())[kShape];
+  auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx2]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kEqual, kDynamicRnnShapeX, op_name);
   (void)CheckAndConvertUtils::CheckInteger("w_shape", SizeToLong(w_shape.size()), kEqual, kDynamicRnnShapeW, op_name);
   (void)CheckAndConvertUtils::CheckInteger("b_shape", SizeToLong(b_shape.size()), kEqual, kDynamicRnnShapeB, op_name);
@@ -96,7 +96,7 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
   }
 
   if (input_args.size() > kDynRnnIdx3) {
-    auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx3]->BuildShape())[kShape];
+    auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx3]->GetShape())[kShape];
     if (seq_shape.size() != 0) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', input 'seq' shape must be 0, but got " << seq_shape.size()
                                << ".";
@@ -104,8 +104,8 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
   }
   if (input_args.size() > kDynRnnIdx4) {
     int64_t batch_size = x_shape[kDynRnnIdx1];
-    auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->BuildShape())[kShape];
     const int64_t num_one = 1;
+    auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("h_shape", SizeToLong(h_shape.size()), kEqual, kDynamicRnnShapeH, op_name);
     (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, num_one, op_name);
     (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_shape[kDynRnnIdx1], kEqual,
@@ -113,8 +113,8 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
     (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_shape[kDynRnnIdx2], kEqual,
                                              static_cast<int64_t>(hidden_size), op_name);
     if (input_args.size() > kDynRnnIdx5) {
-      auto c_shape_ptr = input_args[kDynRnnIdx5]->BuildShape();
-      auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx5]->BuildShape())[kShape];
+      auto c_shape_ptr = input_args[kDynRnnIdx5]->GetShape();
+      auto c_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx5]->GetShape())[kShape];
       (void)CheckAndConvertUtils::CheckInteger("c_shape", SizeToLong(c_shape.size()), kEqual, kDynamicRnnShapeC,
                                                op_name);
       const std::map<std::string, BaseShapePtr> shapes = {{"c_shape", c_shape_ptr}};
@@ -126,8 +126,8 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
 abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kDynRnnInputNum, primitive->name());
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->BuildShape())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx0]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx1]->GetShape())[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
       std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny}),

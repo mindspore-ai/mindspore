@@ -92,13 +92,13 @@ BaseShapePtr NLLLossGradInferShape(const PrimitivePtr &primitive, const std::vec
   const size_t t_idx = 2;
   const size_t w_idx = 3;
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, x_idx);
-  auto x = input_args[x_idx]->BuildShape();
+  auto x = input_args[x_idx]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, t_idx);
-  auto t = input_args[t_idx]->BuildShape();
+  auto t = input_args[t_idx]->GetShape();
   MS_EXCEPTION_IF_NULL(t);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, w_idx);
-  auto w = input_args[w_idx]->BuildShape();
+  auto w = input_args[w_idx]->GetShape();
   MS_EXCEPTION_IF_NULL(w);
 
   auto x_shape = x->cast<abstract::ShapePtr>();

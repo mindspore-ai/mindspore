@@ -36,8 +36,8 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto logits_shape = input_args[0]->BuildShape();
-    auto label_shape = input_args[1]->BuildShape();
+    auto logits_shape = input_args[0]->GetShape();
+    auto label_shape = input_args[1]->GetShape();
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];
     auto label_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(label_shape)[kShape];
     const int64_t input_rank = 2;

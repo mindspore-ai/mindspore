@@ -56,7 +56,7 @@ class MIND_API DropoutInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     auto shape_ptr = std::make_shared<abstract::Shape>(x_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape_ptr, shape_ptr});
   }

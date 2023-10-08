@@ -64,8 +64,8 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(output_dim_ptr);
   auto output_dim = GetValue<int64_t>(output_dim_ptr);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (x_shape[0] != rois_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the batch number of input 'features' and 'rois' must be equal, but got: " << x_shape[0]

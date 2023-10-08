@@ -42,15 +42,15 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
   constexpr size_t kRankOne = 1;
   constexpr size_t kDimOne = 1;
   constexpr size_t kShapeZero = 0;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto segment_ids_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto num_segments_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (!IsDynamicRank(indices_shape) && !IsDynamicRank(segment_ids_shape) && !IsDynamicRank(num_segments_shape)) {
     if (indices_shape.size() != kRankOne) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", rank of indices should be 1.";
@@ -75,10 +75,10 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
     }
   }
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>()) {
+      input_args[kInputIndex3]->GetValue()->isa<tensor::Tensor>()) {
     auto num_segments = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_segments);
-    auto num_segments_value = num_segments->BuildValue();
+    auto num_segments_value = num_segments->GetValue();
     MS_EXCEPTION_IF_NULL(num_segments_value);
     auto num_segments_value_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name);

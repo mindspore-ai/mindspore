@@ -45,7 +45,7 @@ class IsFiniteInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, primitive->name());
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     return std::make_shared<abstract::Shape>(x_shape);
   }
 

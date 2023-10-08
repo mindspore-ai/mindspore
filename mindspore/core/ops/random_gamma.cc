@@ -62,7 +62,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(TypeError) << "For RandomGamma, input[0] only support tensor!";
   }
   const uint32_t kShapeDims = 1;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   ShapeVector shape_shape = shape_map[kShape];
   if (shape_shape.size() != kShapeDims) {
     MS_EXCEPTION(ValueError) << "For RandomGamma, the input tensor must be a 1-D tensor.";
@@ -70,7 +70,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
 
   auto input_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
+  auto input_shape_value_ptr = input_shape->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   auto shape_value_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
   //  MS_EXCEPTION_IF_NULL(shape_value_tensor); Dealing with dynamic shapes
@@ -104,7 +104,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     }
   }
   ShapeVector alpha_beta_shape;
-  auto alpha_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto alpha_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   alpha_beta_shape = alpha_shape_map[kShape];
 
   auto alpha_rank = SizeToLong(alpha_beta_shape.size());

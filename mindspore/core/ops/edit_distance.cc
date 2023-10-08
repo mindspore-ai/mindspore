@@ -89,7 +89,7 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   auto GetShape = [&input_args](size_t index) {
     auto &abs = input_args[index];
     MS_EXCEPTION_IF_NULL(abs);
-    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
+    return CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->GetShape())[kShape];
   };
 
   auto hypothesis_indices_shape = GetShape(kIndex0);
@@ -146,9 +146,9 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  auto hypothesis_shape_value_ptr = input_args[kIndex2]->BuildValue();
+  auto hypothesis_shape_value_ptr = input_args[kIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(hypothesis_shape_value_ptr);
-  auto truth_shape_value_ptr = input_args[kIndex5]->BuildValue();
+  auto truth_shape_value_ptr = input_args[kIndex5]->GetValue();
   MS_EXCEPTION_IF_NULL(truth_shape_value_ptr);
   if (!IsValueKnown(hypothesis_shape_value_ptr) || !IsValueKnown(truth_shape_value_ptr)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});

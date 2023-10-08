@@ -55,7 +55,7 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     int64_t num_sampled = GetValue<int64_t>(primitive->GetAttr(kNumSampled));
     auto sampled_candidate_shape_ptr = std::make_shared<abstract::Shape>(ShapeVector({num_sampled}));
-    auto true_expected_shape_ptr = input_args[0]->BuildShape();
+    auto true_expected_shape_ptr = input_args[0]->GetShape();
     auto true_classes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(true_expected_shape_ptr)[kShape];
     const size_t true_classes_shape_rank = 2;
     if (!IsDynamicRank(true_classes_shape) && true_classes_shape.size() != true_classes_shape_rank) {

@@ -48,9 +48,9 @@ namespace {
 abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto sequence_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto sequence_shape_ptr = input_args[kInputIndex0]->GetShape();
   ShapeVector sequence_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_shape_ptr)[kShape];
-  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
   ShapeVector values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   ShapeVector sequence_shape_c = sequence_shape;
   ShapeVector values_shape_c = values_shape;

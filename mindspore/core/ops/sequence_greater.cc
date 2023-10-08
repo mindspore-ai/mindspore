@@ -47,11 +47,11 @@ AbstractBasePtr SequenceIsGreater(const AbstractBasePtrList &seqx_elements, cons
       MS_EXCEPTION(TypeError) << "For primitive tupel_equal, the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
-    if (x_element->BuildValue() == kValueAny || y_element->BuildValue() == kValueAny) {
+    if (x_element->GetValue() == kValueAny || y_element->GetValue() == kValueAny) {
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
-    auto x = GetScalarCastValue<double>(prim_name, x_element->BuildValue());
-    auto y = GetScalarCastValue<double>(prim_name, y_element->BuildValue());
+    auto x = GetScalarCastValue<double>(prim_name, x_element->GetValue());
+    auto y = GetScalarCastValue<double>(prim_name, y_element->GetValue());
     if (x > y) {
       return std::make_shared<abstract::AbstractScalar>(true);
     } else if (x < y) {
@@ -92,7 +92,7 @@ class SequenceGreaterThanInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(primitive, input_args, false)->BuildShape();
+    return SequenceGreaterInferInner(primitive, input_args, false)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -109,7 +109,7 @@ class SequenceGreaterEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(primitive, input_args, true)->BuildShape();
+    return SequenceGreaterInferInner(primitive, input_args, true)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

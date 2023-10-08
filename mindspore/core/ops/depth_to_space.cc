@@ -76,7 +76,7 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   auto input_x = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_x);
 
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});

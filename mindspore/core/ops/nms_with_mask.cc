@@ -71,7 +71,7 @@ abstract::TupleShapePtr NMSWithMaskInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto bboxes_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x);
   auto bboxes_shape = bboxes_shape_map[kShape];

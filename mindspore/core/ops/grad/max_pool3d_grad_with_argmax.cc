@@ -133,8 +133,8 @@ TypePtr MaxPool3DGradWithArgmaxInferType(const PrimitivePtr &prim,
 abstract::ShapePtr MaxPool3DGradWithArgmaxInferShape(const PrimitivePtr &prim,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args) {
   const int64_t kInputDims = 5;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }

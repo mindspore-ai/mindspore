@@ -40,7 +40,7 @@ abstract::TupleShapePtr EllipsisToSliceInferShape(const PrimitivePtr &primitive,
                             << "', the input data type must be list or tuple of tensors.But got:"
                             << input_args[0]->ToString();
   }
-  auto data_shape = input_args[0]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+  auto data_shape = input_args[0]->GetShape()->cast<abstract::ShapePtr>()->shape();
   const size_t kSliceInfoNums = 3;
   // If any shape is dynamic rank, return a dynamic rank.
   if (IsDynamicRank(data_shape)) {

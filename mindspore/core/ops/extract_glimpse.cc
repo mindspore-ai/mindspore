@@ -57,9 +57,9 @@ inline bool CheckShapePositiveTool(const std::vector<int64_t> &input_shape) {
 abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto offsets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto offsets_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   if (IsDynamicRank(size_shape)) {
     return std::make_shared<abstract::Shape>(size_shape);
   }
@@ -95,8 +95,8 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   int32_t g_width = -1;
   int64_t batch_cnt = input_shape[0];
   int64_t channels = input_shape.back();
-  if (!input_args[1]->BuildValue()->isa<ValueAny>() && !input_args[1]->BuildValue()->isa<None>()) {
-    auto size_value = input_args[1]->BuildValue();
+  if (!input_args[1]->GetValue()->isa<ValueAny>() && !input_args[1]->GetValue()->isa<None>()) {
+    auto size_value = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(size_value);
     auto size_value_tensor = size_value->cast<tensor::TensorPtr>();
     if (size_value_tensor == nullptr) {

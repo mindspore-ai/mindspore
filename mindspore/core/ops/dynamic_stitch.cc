@@ -62,7 +62,7 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < indices_size; i++) {
     auto indices_i = indices[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(indices_i);
-    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_i->BuildShape())[kShape];
+    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_i->GetShape())[kShape];
     if (IsDynamicRank(indices_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     }
@@ -72,7 +72,7 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < data_size; i++) {
     auto data_i = data[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(data_i);
-    auto data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_i->BuildShape())[kShape];
+    auto data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_i->GetShape())[kShape];
     if (IsDynamicRank(data_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     }
@@ -83,7 +83,7 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < indices_size; i++) {
     auto indice_i = indices[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(indice_i);
-    auto value_i = indice_i->BuildValue();
+    auto value_i = indice_i->GetValue();
     MS_EXCEPTION_IF_NULL(value_i);
     if (!value_i->isa<tensor::Tensor>()) {
       first_dim_unknow = true;
@@ -96,15 +96,15 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
 
   auto indices0 = indices[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(indices0);
-  auto indices0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices0->BuildShape())[kShape];
+  auto indices0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices0->GetShape())[kShape];
 
   auto data0 = data[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(data0);
-  auto data0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data0->BuildShape())[kShape];
+  auto data0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data0->GetShape())[kShape];
 
   for (size_t i = 1; i < data.size(); ++i) {
-    auto indicesi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices[i]->BuildShape())[kShape];
-    auto datai_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data[i]->BuildShape())[kShape];
+    auto indicesi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices[i]->GetShape())[kShape];
+    auto datai_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data[i]->GetShape())[kShape];
     if (indicesi_shape.size() > datai_shape.size()) {
       MS_LOG(EXCEPTION) << "The rank of indices[i] must be <= rank of data[i]!";
     }
@@ -121,7 +121,7 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < data_size; i++) {
     auto data_i = data[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(data_i);
-    auto data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_i->BuildShape())[kShape];
+    auto data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_i->GetShape())[kShape];
     if (IsDynamic(data_shape)) {
       data_shape_is_dynamic = true;
       break;

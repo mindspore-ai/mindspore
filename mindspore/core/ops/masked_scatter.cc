@@ -42,9 +42,9 @@ abstract::ShapePtr MaskedScatterInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = x_shape_map[kShape];
-  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto mask_shape = mask_shape_map[kShape];
   if (!IsDynamicRank(x_shape) && !IsDynamicRank(mask_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dim of input_x", SizeToLong(x_shape.size()), kGreaterEqual,

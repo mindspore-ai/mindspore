@@ -52,8 +52,8 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamic(shape_shape) || IsDynamicRank(rate_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -62,7 +62,7 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
                              << shape_shape.size() << "-D";
   }
 
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (!shape_value->isa<ValueAny>() && !shape_value->isa<None>()) {
     auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);

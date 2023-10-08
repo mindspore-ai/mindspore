@@ -49,7 +49,7 @@ namespace {
 constexpr size_t num_eight = 8;
 void CheckSliceV2Type(const AbstractBasePtr &input_arg, const std::string &arg_name, const std::string &prim_name) {
   if (input_arg->isa<abstract::AbstractTuple>()) {
-    auto temp_value = input_arg->BuildValue();
+    auto temp_value = input_arg->GetValue();
     (void)CheckAndConvertUtils::CheckTupleInt(arg_name, temp_value, prim_name);
     return;
   } else if (input_arg->isa<abstract::AbstractTensor>()) {

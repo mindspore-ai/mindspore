@@ -37,23 +37,21 @@ constexpr size_t kSGDInputNum = 6;
 
 abstract::BaseShapePtr SgdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto parameters_shape_r = input_args[kParametersIndex]->Broaden()->BuildShape();
+  auto parameters_shape_r = input_args[kParametersIndex]->Broaden()->GetShape();
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return parameters_shape_r;
     }
   }
   auto parameters_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kParametersIndex]->BuildShape())[kShape];
-  auto gradient_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradientIndex]->BuildShape())[kShape];
-  auto stat_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kStatIndex]->BuildShape())[kShape];
-  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kParametersIndex]->GetShape())[kShape];
+  auto gradient_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradientIndex]->GetShape())[kShape];
+  auto stat_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kStatIndex]->GetShape())[kShape];
+  auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kAccumIndex]->GetShape())[kShape];
 
   auto learning_rate_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLearningRateIndex]->BuildShape())[kShape];
-  auto momentum_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMomentumIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kLearningRateIndex]->GetShape())[kShape];
+  auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMomentumIndex]->GetShape())[kShape];
   auto is_scalar_shape = [](const std::vector<int64_t> &shape) {
     return shape.empty() || (shape.size() == 1 && shape[0] == 1);
   };

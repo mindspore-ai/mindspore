@@ -32,7 +32,7 @@ abstract::ShapePtr FSEDecodeInferShape(const PrimitivePtr &primitive, const std:
   auto input_y = input_args[kInputIndex6];
   MS_EXCEPTION_IF_NULL(input_y);
   if (input_y->isa<abstract::AbstractTensor>()) {
-    auto y_value = input_y->BuildValue();
+    auto y_value = input_y->GetValue();
     MS_EXCEPTION_IF_NULL(y_value);
     abstract::ShapePtr y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
     auto shape_value = y_shape->shape();

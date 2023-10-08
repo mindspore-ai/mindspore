@@ -102,8 +102,8 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto axes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto axes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -126,9 +126,8 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("the rank of axes", SizeToLong(axes_shape.size()), kEqual, axes_dim,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  if (!input_args[kInputIndex1]->BuildValue()->isa<ValueAny>() &&
-      !input_args[kInputIndex1]->BuildValue()->isa<None>()) {
-    auto axes_value = input_args[kInputIndex1]->BuildValue();
+  if (!input_args[kInputIndex1]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex1]->GetValue()->isa<None>()) {
+    auto axes_value = input_args[kInputIndex1]->GetValue();
     auto axes = CheckAndConvertUtils::CheckTensorIntValue("axes", axes_value, prim_name);
     CheckAndConvertUtils::CheckInRange("axes size", axes.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
     ReduceAxes(&output_shape, &axes, input_rank, keep_dims, primitive);

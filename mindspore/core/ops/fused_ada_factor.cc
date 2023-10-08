@@ -48,7 +48,7 @@ auto constexpr kEnableWeightDecay = "enable_weight_decay";
 abstract::TupleShapePtr FusedAdaFactorInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto param_shape_r = input_args[kParamIndex]->Broaden()->BuildShape();
+  auto param_shape_r = input_args[kParamIndex]->Broaden()->GetShape();
   auto outputs = std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({param_shape_r}));
   return outputs;
 }

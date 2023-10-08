@@ -85,8 +85,8 @@ ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<Abstract
   constexpr auto kX2Index = 1;
   auto result_type = DivNoNanInferType(prim, input_args);
   auto result_shape = DivNoNanInferShape(prim, input_args)->cast<abstract::ShapePtr>();
-  auto x1 = input_args[kX1Index]->BuildValue();
-  auto x2 = input_args[kX2Index]->BuildValue();
+  auto x1 = input_args[kX1Index]->GetValue();
+  auto x2 = input_args[kX2Index]->GetValue();
   if (x1 == nullptr || x2 == nullptr) {
     return nullptr;
   }

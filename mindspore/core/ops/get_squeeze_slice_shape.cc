@@ -34,7 +34,7 @@ MIND_API_OPERATOR_IMPL(GetSqueezeSliceShape, BaseOperator);
 AbstractBasePtr GetSqueezeSliceShapeInferInner(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   const AbstractBasePtr &data_abs = input_args[kIndex0];
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape());
   auto data_shape = shape_map[kShape];
   auto tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
   AbstractBasePtr abs_any_tensor = std::make_shared<abstract::AbstractTensor>(
@@ -59,7 +59,7 @@ class MIND_API GetSqueezeSliceShapeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetSqueezeSliceShapeInferInner(primitive, input_args)->BuildShape();
+    return GetSqueezeSliceShapeInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

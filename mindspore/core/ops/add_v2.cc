@@ -39,8 +39,8 @@ abstract::ShapePtr AddV2InferShape(const PrimitivePtr &primitive, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   if (!is_gpu) {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape())[kShape];
-    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->GetShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->GetShape())[kShape];
     MS_CHECK_VALUE(x_shape == y_shape,
                    CheckAndConvertUtils::FormatCheckMsg("input_shape", x_shape, kEqual, y_shape, primitive));
   }

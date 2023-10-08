@@ -117,7 +117,7 @@ class ScalarCastInfer : public abstract::OpInferBase {
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
       auto type_abs = abstract::CheckArg<abstract::AbstractType>(op_name, input_args, 1);
-      attr = type_abs->BuildValue();
+      attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
@@ -147,7 +147,7 @@ class ScalarCastInfer : public abstract::OpInferBase {
       is_tensor = true;
     }
 
-    auto x_value = elem_x->BuildValue();
+    auto x_value = elem_x->GetValue();
     if (x_value == kValueAny) {
       return nullptr;
     }

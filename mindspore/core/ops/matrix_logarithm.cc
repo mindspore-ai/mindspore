@@ -45,8 +45,8 @@ namespace {
 abstract::ShapePtr MatrixLogarithmInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto build_shape = input_args[0]->BuildShape();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto build_shape = input_args[0]->GetShape();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   const constexpr int64_t kNumber1 = 1;
   const constexpr int64_t kNumber2 = 2;
   if (!IsDynamicRank(x_shape)) {

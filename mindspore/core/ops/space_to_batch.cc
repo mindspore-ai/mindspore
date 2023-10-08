@@ -77,7 +77,7 @@ class SpaceToBatchInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto shapeMap = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto x_shape = shapeMap[kShape];
     if (IsDynamicRank(x_shape)) {
       return std::make_shared<abstract::Shape>(x_shape);

@@ -39,22 +39,22 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
   const int64_t kNumber1 = 1;
   const int64_t kNumber2 = 2;
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
   (void)CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
-  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto padding_value_rank = SizeToLong(padding_shape.size());
   if (!IsDynamic(padding_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
   }
-  auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
+  auto k_val_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(k_val_ptr);
   if (IsDynamic(x_shape) || IsDynamic(k_shape) || !IsValueKnown(k_val_ptr)) {
     ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);

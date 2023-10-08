@@ -41,9 +41,9 @@ bool IsEmptyTensor(const std::vector<int64_t> &dims) {
 abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto segment_ids_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto indices_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto segment_ids_shape_ptr = input_args[kInputIndex2]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto segment_ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(segment_ids_shape_ptr)[kShape];
@@ -75,7 +75,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                              << indices_shape[kInputIndex0] << " vs " << segment_ids_shape[kInputIndex0] << ".";
   }
   ShapeVector out_shape = x_shape;
-  if (!input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+  if (!input_args[kInputIndex2]->GetValue()->isa<tensor::Tensor>()) {
     // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
     // The framework ensures the `else` branch will be executed, so min/max shape are not necessary to set.
     out_shape[LongToSize(batch_rank)] = abstract::Shape::kShapeDimAny;
@@ -83,7 +83,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
   } else {
     auto segment_ids = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(segment_ids);
-    auto segment_ids_value = segment_ids->BuildValue();
+    auto segment_ids_value = segment_ids->GetValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value);
     auto segment_ids_tensor = segment_ids_value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(segment_ids_tensor);

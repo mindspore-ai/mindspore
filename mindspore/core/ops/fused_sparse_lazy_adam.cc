@@ -47,21 +47,21 @@ abstract::TupleShapePtr FusedSparseLazyAdamInferShape(const PrimitivePtr &primit
   // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
   auto prim_name = primitive->name();
   // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->BuildShape();
-  auto m_shape_r = input_args[kMIndex]->Broaden()->BuildShape();
-  auto v_shape_r = input_args[kVIndex]->Broaden()->BuildShape();
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto m_shape_r = input_args[kMIndex]->Broaden()->GetShape();
+  auto v_shape_r = input_args[kVIndex]->Broaden()->GetShape();
   auto outputs =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({var_shape_r, m_shape_r, v_shape_r}));
   for (auto &input : input_args) {
-    if (input->BuildShape()->IsDynamic()) {
+    if (input->GetShape()->IsDynamic()) {
       return outputs;
     }
   }
-  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->BuildShape())[kShape];
-  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMIndex]->BuildShape())[kShape];
-  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVIndex]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVarIndex]->GetShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMIndex]->GetShape())[kShape];
+  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kVIndex]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndicesIndex]->GetShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "m_shape", m_shape, prim_name);
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "v_shape", v_shape, prim_name);

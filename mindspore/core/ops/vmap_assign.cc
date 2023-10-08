@@ -80,7 +80,7 @@ std::string GetShapeString(const ShapeVector &tensor_shape) {
 
 // The input format is: stacked parameter, param1, param2, ...(a batch of parameters), UMonad.
 abstract::ShapePtr VmapAssignInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto stacked_param_shape = dyn_cast_ptr<abstract::Shape>(input_args[0]->BuildShape());
+  auto stacked_param_shape = dyn_cast_ptr<abstract::Shape>(input_args[0]->GetShape());
   MS_EXCEPTION_IF_NULL(stacked_param_shape);
   ShapeVector stacked_param_shape_vec = stacked_param_shape->shape();
   if (stacked_param_shape_vec.empty()) {
@@ -99,7 +99,7 @@ abstract::ShapePtr VmapAssignInferShape(const PrimitivePtr &primitive, const std
                                << "] should be a Tensor, but got:" << input_args[i]->ToString();
     }
 
-    auto shape = dyn_cast_ptr<abstract::Shape>(input_args[i]->BuildShape());
+    auto shape = dyn_cast_ptr<abstract::Shape>(input_args[i]->GetShape());
     MS_EXCEPTION_IF_NULL(shape);
     const auto &shape_vec = shape->shape();
     if (!VmapAssignShapeJoin(stacked_param_shape_vec, shape_vec)) {

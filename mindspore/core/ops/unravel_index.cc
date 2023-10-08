@@ -52,8 +52,8 @@ abstract::ShapePtr UravelIndexInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(TypeError) << "Input must be a Tensor.";
   }
 
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto dims_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   // support dynamic shape
   if (IsDynamicRank(indices_shape) || IsDynamicRank(dims_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));

@@ -58,7 +58,7 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
   const int64_t expect_x_rank = 3;
   std::vector<int64_t> output_shape(expect_x_rank, abstract::Shape::kShapeDimAny);
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("images' rank", SizeToLong(x_shape.size()), kEqual, expect_x_rank,
                                              prim_name);

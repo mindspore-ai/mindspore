@@ -71,7 +71,7 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
 
   // convert shape from tuple to shapevector(shape_vec)
   auto shape_vec = GetShapeValue(primitive, shape);
-  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  auto shape_value = shape->GetValue()->cast<ValueTuplePtr>();
 
   if (IsShapeEmpty(indptr_shp) && IsShapeEmpty(indices_shp) && IsShapeEmpty(values_shp)) {
     MS_LOG(DEBUG) << "Constructing empty CSRTensor! Ignore further shape check.";

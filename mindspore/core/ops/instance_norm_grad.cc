@@ -47,18 +47,18 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr InstanceNormGradInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](auto arg) { return arg->BuildShape()->IsDynamic(); })) {
-    const auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    const auto gamma_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  if (std::any_of(input_args.begin(), input_args.end(), [](auto arg) { return arg->GetShape()->IsDynamic(); })) {
+    const auto x_shape_ptr = input_args[kInputIndex1]->GetShape();
+    const auto gamma_shape_ptr = input_args[kInputIndex2]->GetShape();
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{x_shape_ptr, gamma_shape_ptr, gamma_shape_ptr});
   }
   const auto prim_name = primitive->name();
-  const auto y_backprop_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  const auto x_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  const auto gamma_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  const auto save_mean_shape_ptr = input_args[kInputIndex3]->BuildShape();
-  const auto save_variance_shape_ptr = input_args[kInputIndex4]->BuildShape();
+  const auto y_backprop_shape_ptr = input_args[kInputIndex0]->GetShape();
+  const auto x_shape_ptr = input_args[kInputIndex1]->GetShape();
+  const auto gamma_shape_ptr = input_args[kInputIndex2]->GetShape();
+  const auto save_mean_shape_ptr = input_args[kInputIndex3]->GetShape();
+  const auto save_variance_shape_ptr = input_args[kInputIndex4]->GetShape();
 
   auto y_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_backprop_shape_ptr)[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];

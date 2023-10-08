@@ -58,7 +58,7 @@ const size_t ksecond = 2;
 tensor::TensorPtr Get_Value(const std::vector<AbstractBasePtr> &input_args, size_t index) {
   auto input = input_args[index]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input);
-  auto input_shape_value_ptr = input->BuildValue();
+  auto input_shape_value_ptr = input->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   return input_shape_value_ptr->cast<tensor::TensorPtr>();
 }
@@ -108,14 +108,13 @@ void CombinedNonMaxSuppressionCheckShapeValue(const ShapeVector &input0_shape, c
 abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitivePtr &primitive,
                                                                 const std::vector<AbstractBasePtr> &input_args,
                                                                 const bool &is_dynamic) {
-  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto pad_per_class_ptr = primitive->GetAttr("pad_per_class");
   MS_EXCEPTION_IF_NULL(pad_per_class_ptr);
   bool pad_per_class = GetValue<bool>(pad_per_class_ptr);
 
-  if (!is_dynamic && IsValue(input_args[kInputIndex2]->BuildValue()) &&
-      IsValue(input_args[kInputIndex3]->BuildValue())) {
+  if (!is_dynamic && IsValue(input_args[kInputIndex2]->GetValue()) && IsValue(input_args[kInputIndex3]->GetValue())) {
     auto input2_tensor = Get_Value(input_args, kInputIndex2);
     auto input3_tensor = Get_Value(input_args, kInputIndex3);
     auto max_output_size_per_class = *(static_cast<int32_t *>(input2_tensor->data_c()));
@@ -154,12 +153,12 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
 abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &primitive,
                                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto input3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto input4_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto input5_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto input3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto input4_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto input5_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {input0_shape, input1_shape, input2_shape,
                                          input3_shape, input4_shape, input5_shape};
@@ -176,7 +175,7 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
     }
   }
 
-  if (IsValue(input_args[kInputIndex4]->BuildValue()) && IsValue(input_args[kInputIndex5]->BuildValue())) {
+  if (IsValue(input_args[kInputIndex4]->GetValue()) && IsValue(input_args[kInputIndex5]->GetValue())) {
     auto input4_tensor = Get_Value(input_args, kInputIndex4);
     auto input5_tensor = Get_Value(input_args, kInputIndex5);
     auto iou_threshold = *(static_cast<float *>(input4_tensor->data_c()));

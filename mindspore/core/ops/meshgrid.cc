@@ -47,7 +47,7 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape());
 
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape)) {

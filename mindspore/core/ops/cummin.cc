@@ -44,7 +44,7 @@ namespace {
 abstract::TupleShapePtr CumminInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   constexpr int64_t min_dim = 0;

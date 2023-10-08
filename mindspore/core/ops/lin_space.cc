@@ -65,25 +65,25 @@ TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
 
-  auto start_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto start_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(start_shape_ptr);
-  auto stop_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto stop_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(stop_shape_ptr);
 
-  auto num_value = input_args[kInputIndex2]->BuildValue();
+  auto num_value = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(num_value);
 
   bool is_compile = IsNoneOrAnyValue(num_value);
   // Do it later
   if (start_shape_ptr->IsDynamic() || stop_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
 
   int64_t num = 0;
   if (!is_compile) {
     if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
       if (num_value->isa<tensor::Tensor>()) {
-        auto num_shape_ptr = input_args[kInputIndex2]->BuildShape();
+        auto num_shape_ptr = input_args[kInputIndex2]->GetShape();
         const auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(num_shape_ptr)[kShape];
         if (num_shape.size() != 0) {
           MS_EXCEPTION(TypeError) << "For primitive[" << prim_name

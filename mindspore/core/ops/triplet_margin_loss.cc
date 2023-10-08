@@ -50,10 +50,10 @@ namespace {
 abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto positive = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto negative = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto margin = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto positive = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto negative = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto margin = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   if (x.size() >= kDim8 || positive.size() >= kDim8 || negative.size() >= kDim8) {
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", dimensions of input x positive and negative must be smaller than 8, x_dim: "
@@ -70,7 +70,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", the dimension of input margin must be 0, margin_dim: " << margin.size() << ".";
   }
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   auto x_shape = x_shape_ptr->cast<abstract::ShapePtr>();
   if (IsDynamicShape(x_shape->shape()) || IsDynamicRank(x_shape->shape())) {

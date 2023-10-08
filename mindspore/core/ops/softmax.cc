@@ -60,7 +60,7 @@ abstract::ShapePtr SoftMaxInferShape(const PrimitivePtr &primitive, const std::v
   auto op_name = primitive->name();
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   (void)CheckAndConvertUtils::CheckValue<size_t>("length of axis", axis.size(), kGreaterEqual, 1, op_name);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   if (shape_map.empty()) {
     // Scalar input, has no shape
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());

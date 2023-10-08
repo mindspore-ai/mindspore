@@ -50,8 +50,8 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
       MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
-    auto x_value = x_element->BuildValue();
-    auto y_value = y_element->BuildValue();
+    auto x_value = x_element->GetValue();
+    auto y_value = y_element->GetValue();
     if (x_value == kValueAny || y_value == kValueAny) {
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
@@ -101,7 +101,7 @@ class SequenceLessThanInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLessInferInner(primitive, input_args, false)->BuildShape();
+    return SequenceLessInferInner(primitive, input_args, false)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -118,7 +118,7 @@ class SequenceLessEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLessInferInner(primitive, input_args)->BuildShape();
+    return SequenceLessInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

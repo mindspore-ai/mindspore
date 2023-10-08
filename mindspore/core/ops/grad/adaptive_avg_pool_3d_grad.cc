@@ -45,8 +45,8 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto orig_input_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto orig_input_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
 
   auto is_dynamic_rank = IsDynamicRank(input_grad_shape) || IsDynamicRank(orig_input_shape_shape);
   if (is_dynamic_rank) {
@@ -66,9 +66,9 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
   }
 
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
+      input_args[kInputIndex1]->GetValue()->isa<tensor::Tensor>()) {
     ShapeVector output_shape = input_grad_shape;
-    auto value_ptr = input_args[kInputIndex1]->BuildValue();
+    auto value_ptr = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto value = CheckAndConvertUtils::CheckTensorIntValue("origin input shape", value_ptr, prim_name);
     for (int64_t i = 0; i < orig_input_shape_shape[0]; ++i) {

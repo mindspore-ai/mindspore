@@ -50,7 +50,7 @@ AbstractBasePtr InferInner(const PrimitivePtr &primitive, const std::vector<Abst
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("shape infer", static_cast<int64_t>(input_args.size()), kEqual, 1, op_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto in_shape = shape_map[kShape];
   // infer type
   std::set<TypePtr> valid_params_types = {kTensorType};
@@ -76,7 +76,7 @@ class ShapeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferInner(primitive, input_args)->BuildShape();
+    return InferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -95,7 +95,7 @@ class ShapeInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(input_args[0]);
     std::set<TypePtr> valid_params_types = {kTensorType};
     (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     if (shape_map.count(kShape) == 0) {
       MS_LOG(EXCEPTION) << "For primitive " << op_name << " the input convert shape failed.";
     }

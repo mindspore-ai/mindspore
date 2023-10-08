@@ -82,8 +82,8 @@ abstract::TupleShapePtr CudnnGRUInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kCudnnGRUInputsNum, op_name);
   auto attr_map = CudnnGRUGetAttrMap(primitive);
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto h_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto input_shape = input_shape_map[kShape];  // (seq_len, batch_size, input_size)
   auto h_shape = h_shape_map[kShape];          // (real_num_layers, batch_size, hidden_size)
 

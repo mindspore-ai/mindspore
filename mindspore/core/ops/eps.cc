@@ -68,7 +68,7 @@ ValuePtr EpsInferValue(const PrimitivePtr &primitive, const std::vector<Abstract
   if (input_args.empty()) {
     return nullptr;
   }
-  auto x = input_args[0]->BuildValue();
+  auto x = input_args[0]->GetValue();
   if (x == nullptr) {
     return nullptr;
   }

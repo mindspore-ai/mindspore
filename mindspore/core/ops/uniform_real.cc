@@ -52,7 +52,7 @@ BaseShapePtr UniformRealInferShape(const PrimitivePtr &primitive,
   abstract::ShapePtr output_shape;
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->GetValue();
   if (IsValueKnown(shape_value)) {
     shape = shape_value->isa<tensor::Tensor>()
               ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, primitive->name())

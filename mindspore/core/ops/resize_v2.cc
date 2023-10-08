@@ -29,27 +29,27 @@ namespace {
 abstract::ShapePtr ResizeV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   int64_t x_shape_0 = SizeToLong(x_shape[LongToSize(0)]);
   int64_t x_shape_1 = SizeToLong(x_shape[LongToSize(1)]);
   const int64_t kXDimSize = 4;
   (void)CheckAndConvertUtils::CheckInteger("dim of x", SizeToLong(x_shape.size()), kEqual, kXDimSize, op_name);
 
-  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto roi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   const int64_t kRoiDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of roi", SizeToLong(roi_shape.size()), kEqual, kRoiDimSize, op_name);
 
-  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto scales_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   const int64_t kScalesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of scales", SizeToLong(scales_shape.size()), kEqual, kScalesDimSize,
                                            op_name);
 
-  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto sizes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   const int64_t kSizesDimSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("dim of sizes", SizeToLong(sizes_shape.size()), kEqual, kSizesDimSize,
                                            op_name);
 
-  auto sizes_input = input_args[kInputIndex3]->BuildValue();
+  auto sizes_input = input_args[kInputIndex3]->GetValue();
   MS_EXCEPTION_IF_NULL(sizes_input);
 
   auto mode_ptr = primitive->GetAttr("mode");

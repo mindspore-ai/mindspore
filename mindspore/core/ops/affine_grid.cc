@@ -57,7 +57,7 @@ constexpr int LEN_IMAGE_SIZE_5D = 5;
 
 abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto theta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto theta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto theta_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
   if (theta_shape_ptr->IsDynamic()) {
     // theta is dynamic shape, verification could not be performed.
@@ -68,7 +68,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
   auto theta_rank = SizeToLong(theta_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of 'theta'", theta_rank, kEqual, RANK_THETA, prim_name);
   auto output_size_arg = input_args[kInputIndex1];
-  auto output_size_value_ptr = output_size_arg->BuildValue();
+  auto output_size_value_ptr = output_size_arg->GetValue();
   if (IsValueKnown(output_size_value_ptr)) {
     ShapeVector output_size_val;
     if (output_size_value_ptr->isa<ValueTuple>()) {

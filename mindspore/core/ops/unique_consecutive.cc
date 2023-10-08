@@ -47,7 +47,7 @@ bool CheckNullInput(const std::vector<int64_t> &shape) {
 abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto input_shape_vec = input_shape_map[kShape];
   if (CheckNullInput(input_shape_vec)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", the shape of input cannot contain zero.";

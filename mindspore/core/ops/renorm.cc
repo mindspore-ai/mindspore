@@ -46,7 +46,7 @@ abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = input_shape[kShape];
   MS_EXCEPTION_IF_ZERO("Renorm input shape", shape.size());
   auto out_shape = shape;

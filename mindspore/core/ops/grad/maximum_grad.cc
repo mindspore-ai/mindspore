@@ -35,8 +35,8 @@ abstract::TupleShapePtr MaximumGradInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x = input_args[0]->BuildShape();
-  auto y = input_args[1]->BuildShape();
+  auto x = input_args[0]->GetShape();
+  auto y = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(y);
   auto x_element = x->cast<abstract::ShapePtr>();

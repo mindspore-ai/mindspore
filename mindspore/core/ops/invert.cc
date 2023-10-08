@@ -38,7 +38,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr InvertInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[0]->BuildShape();
+  auto x_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   auto output_shape = x_shape->cast<abstract::ShapePtr>();
   return output_shape;

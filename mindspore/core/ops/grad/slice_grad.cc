@@ -31,7 +31,7 @@ abstract::ShapePtr SliceGradInferShape(const PrimitivePtr &primitive, const std:
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto input_shape = shape_map[kShape];
   return std::make_shared<abstract::Shape>(input_shape);
 }

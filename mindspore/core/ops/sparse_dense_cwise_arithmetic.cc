@@ -46,25 +46,25 @@ namespace {
 abstract::ShapePtr SparseDenseCwiseArithmeticInferShape(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(values_shape_ptr);
-  auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto shape_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(shape_shape_ptr);
-  auto dense_shape_ptr = input_args[kInputIndex3]->BuildShape();
+  auto dense_shape_ptr = input_args[kInputIndex3]->GetShape();
   MS_EXCEPTION_IF_NULL(dense_shape_ptr);
 
-  auto output_shape = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
+  auto output_shape = input_args[kInputIndex1]->GetShape()->cast<abstract::ShapePtr>();
   if (indices_shape_ptr->IsDynamic() || values_shape_ptr->IsDynamic() || shape_shape_ptr->IsDynamic() ||
       dense_shape_ptr->IsDynamic()) {
     return output_shape;
   }
 
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto dense_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto dense_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   const size_t indices_dims = 2;
   if (indices_shape.size() != indices_dims) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "',  the dim of indices must be 2, but got "

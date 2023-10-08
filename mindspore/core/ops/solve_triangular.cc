@@ -30,9 +30,9 @@ abstract::ShapePtr SolveTriangularInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto a_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto a_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(a_shape_ptr);
-  auto b_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto b_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(b_shape_ptr);
 
   if (a_shape_ptr->IsDimUnknown() || b_shape_ptr->IsDimUnknown()) {

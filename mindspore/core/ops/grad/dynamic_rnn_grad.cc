@@ -60,10 +60,10 @@ constexpr int64_t kDynRNNGradIdx15 = 15;
 constexpr int64_t kNum4 = 4;
 
 abstract::TupleShapePtr DynamicRNNGradInferDynamicShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx0]->BuildShape())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->BuildShape())[kShape];
-  auto dh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx9]->BuildShape())[kShape];
-  auto dc_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx10]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx0]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->GetShape())[kShape];
+  auto dh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx9]->GetShape())[kShape];
+  auto dc_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx10]->GetShape())[kShape];
   ShapeVector dw_out_shape_dyn;
   ShapeVector db_out_shape_dyn;
   ShapeVector dx_out_shape_dyn;
@@ -94,9 +94,9 @@ abstract::TupleShapePtr DynamicRNNGradInferDynamicShape(const std::vector<Abstra
 
 void DynamicRNNGradShapeCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx0]->BuildShape())[kShape];
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->BuildShape())[kShape];
-  auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx0]->GetShape())[kShape];
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->GetShape())[kShape];
+  auto b_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx2]->GetShape())[kShape];
   const int64_t x_shape_size = 3;
   if (x_shape.size() != x_shape_size) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', input 'x' size must be 3, but got " << x_shape.size() << ".";
@@ -120,23 +120,23 @@ void DynamicRNNGradShapeCheck(const PrimitivePtr &primitive, const std::vector<A
 abstract::TupleShapePtr DynamicRNNGradInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape_ptr = input_args[kDynRNNGradIdx0]->BuildShape();
+  auto x_shape_ptr = input_args[kDynRNNGradIdx0]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
-  auto w_shape_ptr = input_args[kDynRNNGradIdx1]->BuildShape();
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->BuildShape())[kShape];
-  auto y_shape_ptr = input_args[kDynRNNGradIdx3]->BuildShape();
-  auto h_shape_ptr = input_args[kDynRNNGradIdx6]->BuildShape();
-  auto c_shape_ptr = input_args[kDynRNNGradIdx7]->BuildShape();
-  auto dy_shape_ptr = input_args[kDynRNNGradIdx8]->BuildShape();
-  auto dh_shape_ptr = input_args[kDynRNNGradIdx9]->BuildShape();
+  auto w_shape_ptr = input_args[kDynRNNGradIdx1]->GetShape();
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRNNGradIdx1]->GetShape())[kShape];
+  auto y_shape_ptr = input_args[kDynRNNGradIdx3]->GetShape();
+  auto h_shape_ptr = input_args[kDynRNNGradIdx6]->GetShape();
+  auto c_shape_ptr = input_args[kDynRNNGradIdx7]->GetShape();
+  auto dy_shape_ptr = input_args[kDynRNNGradIdx8]->GetShape();
+  auto dh_shape_ptr = input_args[kDynRNNGradIdx9]->GetShape();
   auto dh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dh_shape_ptr)[kShape];
-  auto dc_shape_ptr = input_args[kDynRNNGradIdx10]->BuildShape();
+  auto dc_shape_ptr = input_args[kDynRNNGradIdx10]->GetShape();
   auto dc_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dc_shape_ptr)[kShape];
-  auto i_shape_ptr = input_args[kDynRNNGradIdx11]->BuildShape();
-  auto j_shape_ptr = input_args[kDynRNNGradIdx12]->BuildShape();
-  auto f_shape_ptr = input_args[kDynRNNGradIdx13]->BuildShape();
-  auto o_shape_ptr = input_args[kDynRNNGradIdx14]->BuildShape();
-  auto tanhct_shape_ptr = input_args[kDynRNNGradIdx15]->BuildShape();
+  auto i_shape_ptr = input_args[kDynRNNGradIdx11]->GetShape();
+  auto j_shape_ptr = input_args[kDynRNNGradIdx12]->GetShape();
+  auto f_shape_ptr = input_args[kDynRNNGradIdx13]->GetShape();
+  auto o_shape_ptr = input_args[kDynRNNGradIdx14]->GetShape();
+  auto tanhct_shape_ptr = input_args[kDynRNNGradIdx15]->GetShape();
   if (IsDynamic(x_shape) || IsDynamic(w_shape) || IsDynamic(dh_shape) || IsDynamic(dc_shape)) {
     return DynamicRNNGradInferDynamicShape(input_args);
   }

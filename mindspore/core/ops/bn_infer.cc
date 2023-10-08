@@ -34,9 +34,9 @@ class ABNInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     if (!(IsDynamic(x_shape) || IsDynamic(scale_shape))) {
       auto scale_channel = scale_shape.size() == kInputIndex1 ? scale_shape[kInputIndex0] : scale_shape[kInputIndex1];
       auto x_channel = x_shape[kInputIndex1];

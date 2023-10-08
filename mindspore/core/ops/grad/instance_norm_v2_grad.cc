@@ -55,13 +55,13 @@ constexpr size_t kInstanceNomrV2GradInSaveVarianceIndex = kInputIndex6;
 
 void InstanceNormV2GradInputShapeCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto dy_shape_ptr = input_args[kInstanceNomrV2GradInDyIndex]->BuildShape();
-  auto x_shape_ptr = input_args[kInstanceNomrV2GradInXIndex]->BuildShape();
-  auto gamma_shape_ptr = input_args[kInstanceNomrV2GradInGammaIndex]->BuildShape();
-  auto mean_shape_ptr = input_args[kInstanceNomrV2GradInMeanIndex]->BuildShape();
-  auto variance_shape_ptr = input_args[kInstanceNomrV2GradInVarianceIndex]->BuildShape();
-  auto save_mean_shape_ptr = input_args[kInstanceNomrV2GradInSaveMeanIndex]->BuildShape();
-  auto save_variance_shape_ptr = input_args[kInstanceNomrV2GradInSaveVarianceIndex]->BuildShape();
+  auto dy_shape_ptr = input_args[kInstanceNomrV2GradInDyIndex]->GetShape();
+  auto x_shape_ptr = input_args[kInstanceNomrV2GradInXIndex]->GetShape();
+  auto gamma_shape_ptr = input_args[kInstanceNomrV2GradInGammaIndex]->GetShape();
+  auto mean_shape_ptr = input_args[kInstanceNomrV2GradInMeanIndex]->GetShape();
+  auto variance_shape_ptr = input_args[kInstanceNomrV2GradInVarianceIndex]->GetShape();
+  auto save_mean_shape_ptr = input_args[kInstanceNomrV2GradInSaveMeanIndex]->GetShape();
+  auto save_variance_shape_ptr = input_args[kInstanceNomrV2GradInSaveVarianceIndex]->GetShape();
   auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(dy_shape_ptr)[kShape];
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("dy", dy_shape, op_name);
   (void)CheckAndConvertUtils::CheckTensorShapeSame({{"x", x_shape_ptr}}, dy_shape, op_name);
@@ -103,8 +103,8 @@ void InstanceNormV2GradInputShapeCheck(const PrimitivePtr &primitive, const std:
 abstract::TupleShapePtr InstanceNormV2GradInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const auto dy_shape_ptr = input_args[kInstanceNomrV2GradInDyIndex]->BuildShape();
-  const auto gamma_shape_ptr = input_args[kInstanceNomrV2GradInGammaIndex]->BuildShape();
+  const auto dy_shape_ptr = input_args[kInstanceNomrV2GradInDyIndex]->GetShape();
+  const auto gamma_shape_ptr = input_args[kInstanceNomrV2GradInGammaIndex]->GetShape();
   if (dy_shape_ptr->IsDynamic() || gamma_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{dy_shape_ptr, gamma_shape_ptr, gamma_shape_ptr});

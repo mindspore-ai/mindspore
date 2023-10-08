@@ -39,7 +39,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr MapUniformInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
 }
 
 TypePtr MapUniformInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

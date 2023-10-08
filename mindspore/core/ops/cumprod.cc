@@ -28,7 +28,7 @@ namespace {
 abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
@@ -40,7 +40,7 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value_ptr = axis_ptr->BuildValue();
+    auto axis_value_ptr = axis_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     if (axis_value_ptr->isa<tensor::Tensor>()) {
       auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
@@ -60,7 +60,7 @@ abstract::ShapePtr CumProdInferShape(const PrimitivePtr &primitive, const std::v
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value = axis_ptr->BuildValue();
+    auto axis_value = axis_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value);
     if (IsValueKnown(axis_value)) {
       axis = GetValue<int64_t>(axis_value);
@@ -97,7 +97,7 @@ ValuePtr CumProdInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
   if (input_args.empty()) {
     return nullptr;
   }
-  auto axis = input_args[kInputIndex1]->BuildValue();
+  auto axis = input_args[kInputIndex1]->GetValue();
   if (axis == nullptr) {
     MS_EXCEPTION(ValueError) << "For " << prim->name() << ", the 'axis' cannot be None, but got " << axis;
   }

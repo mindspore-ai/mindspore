@@ -53,7 +53,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   const auto &nun_sample_arg = input_args[kInputIndex1];
   if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
     auto num_sample_input_type = nun_sample_arg->BuildType();
-    auto value = nun_sample_arg->BuildValue();
+    auto value = nun_sample_arg->GetValue();
     if (value->isa<ValueAny>()) {
       return num_sample;
     }
@@ -68,7 +68,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   } else if (nun_sample_arg->isa<abstract::AbstractTensor>()) {
     auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_sample_ptr);
-    auto num_sample_value_ptr = num_sample_ptr->BuildValue();
+    auto num_sample_value_ptr = num_sample_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
     auto num_sample_tensor = num_sample_value_ptr->cast<tensor::TensorPtr>();
     if (num_sample_tensor == nullptr) {
@@ -97,7 +97,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto logits_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto logits_shape_ptr = input_args[kInputIndex0]->GetShape();
   if (IsDynamicRank(CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr)[kShape])) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

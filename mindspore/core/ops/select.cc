@@ -80,9 +80,9 @@ void SelectInferShapeCheck(const std::vector<int64_t> &x_shape, const std::vecto
 }
 
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape())[kShape];
+  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->GetShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->GetShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->GetShape())[kShape];
   if (IsDynamicRank(cond_shape) || IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
@@ -95,7 +95,7 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
       << cond_shape << ", 'x' shape: " << x_shape << ", 'y' shape: " << y_shape << ".";
   }
   SelectInferShapeCheck(x_shape, y_shape, cond_shape, x_shape_size);
-  return input_args[kSelectCondIndex]->BuildShape();
+  return input_args[kSelectCondIndex]->GetShape();
 }
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -218,9 +218,9 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   auto select_shape = SelectInferShape(prim, input_args);
   MS_EXCEPTION_IF_NULL(select_shape);
   auto result_shape = select_shape->cast<abstract::ShapePtr>();
-  auto cond_value = input_args[kSelectCondIndex]->BuildValue();
-  auto x = input_args[kSelectXIndex]->BuildValue();
-  auto y = input_args[kSelectYIndex]->BuildValue();
+  auto cond_value = input_args[kSelectCondIndex]->GetValue();
+  auto x = input_args[kSelectXIndex]->GetValue();
+  auto y = input_args[kSelectYIndex]->GetValue();
   MS_EXCEPTION_IF_NULL(result_shape);
   if (x == nullptr || y == nullptr || cond_value == nullptr || result_shape->IsDynamic()) {
     return nullptr;

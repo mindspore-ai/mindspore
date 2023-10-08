@@ -33,7 +33,7 @@ class CastInfer : public abstract::OpInferBase {
     auto x = input_args[0];
     abstract::BaseShapePtr shape_ptr{nullptr};
     if (x->isa<abstract::AbstractTensor>()) {
-      auto shape = x->BuildShape();
+      auto shape = x->GetShape();
       MS_EXCEPTION_IF_NULL(shape);
       shape_ptr = shape->cast<abstract::ShapePtr>();
     } else if (x->isa<abstract::AbstractScalar>()) {
@@ -56,7 +56,7 @@ class CastInfer : public abstract::OpInferBase {
     constexpr int64_t kCastInputNumWithDtype = 2;
     ValuePtr dst_type;
     if (input_args.size() == kCastInputNumWithDtype) {
-      dst_type = input_args[1]->BuildValue();
+      dst_type = input_args[1]->GetValue();
     } else {
       dst_type = primitive->GetAttr(kDstType);
     }

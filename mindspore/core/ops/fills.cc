@@ -39,11 +39,11 @@ namespace ops {
 namespace {
 abstract::ShapePtr FillsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto value_rank = SizeToLong(value_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, 0, primitive->name());
   }
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = x_shape_map[kShape];
   return std::make_shared<abstract::Shape>(x_shape);
 }

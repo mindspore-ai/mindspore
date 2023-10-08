@@ -46,21 +46,21 @@ abstract::ShapePtr BatchToSpaceNDV2InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto out_shape = x_shape;
 
   int64_t block_shape_prod = 1;
-  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->BuildValue()->isa<tensor::Tensor>()) {
+  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->GetValue()->isa<tensor::Tensor>()) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
   constexpr auto index2 = 2;
-  if (input_args[index2]->isa<abstract::AbstractTensor>() && !input_args[index2]->BuildValue()->isa<tensor::Tensor>()) {
+  if (input_args[index2]->isa<abstract::AbstractTensor>() && !input_args[index2]->GetValue()->isa<tensor::Tensor>()) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
-  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->BuildValue(), prim_name);
-  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->BuildValue(), prim_name);
+  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->GetValue(), prim_name);
+  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->GetValue(), prim_name);
   size_t size = block_shape.size();
   size_t offset = x_shape.size() - size;
   for (size_t i = 0; i < size; i++) {

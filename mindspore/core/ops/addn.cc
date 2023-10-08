@@ -76,10 +76,10 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
-  auto shape_0 = elements[0]->BuildShape();
+  auto shape_0 = elements[0]->GetShape();
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape = elements[i]->BuildShape();
+    auto shape = elements[i]->GetShape();
     ShapeVector shape_vec;
     // If shape is no shape, it is a scalar, use empty shape vector as scalar shape.
     if (shape->isa<abstract::Shape>()) {

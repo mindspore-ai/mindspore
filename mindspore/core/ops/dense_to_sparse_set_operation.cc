@@ -51,10 +51,10 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
                                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x1_shape_ptr = input_args[0]->BuildShape();
-  auto x2_indices_shape_ptr = input_args[1]->BuildShape();
-  auto x2_values_shape_ptr = input_args[2]->BuildShape();
-  auto x2_shape_shape_ptr = input_args[3]->BuildShape();
+  auto x1_shape_ptr = input_args[0]->GetShape();
+  auto x2_indices_shape_ptr = input_args[1]->GetShape();
+  auto x2_values_shape_ptr = input_args[2]->GetShape();
+  auto x2_shape_shape_ptr = input_args[3]->GetShape();
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_shape_ptr)[kShape];
   auto x2_indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_indices_shape_ptr)[kShape];
   auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x2_values_shape_ptr)[kShape];

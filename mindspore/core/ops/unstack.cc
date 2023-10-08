@@ -80,7 +80,7 @@ AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vect
   auto type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool,
                                                    prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicOutputs(x_shape, primitive)) {
     auto unstack_axis = GetUnstackAxis(x_shape, primitive);
     auto output_num = x_shape[unstack_axis];
@@ -112,7 +112,7 @@ class UnstackInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return UnstackInferInner(primitive, input_args)->BuildShape();
+    return UnstackInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

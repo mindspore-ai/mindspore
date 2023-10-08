@@ -45,7 +45,7 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
   for (const auto &seq_element : seq_elements) {
     if (seq_element->isa<abstract::AbstractTensor>()) {
       (void)abs.emplace_back(TensorConstructUtils::CreateZerosTensor(
-                               seq_element->BuildType(), seq_element->BuildShape()->cast<abstract::ShapePtr>()->shape())
+                               seq_element->BuildType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
       (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->BuildType()));
@@ -83,7 +83,7 @@ class SequenceZerosLikeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(primitive, input_args)->BuildShape();
+    return SequenceZerosLikeInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

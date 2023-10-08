@@ -274,7 +274,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
     return false;
   }
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  auto input_value = input_args[kInputIndex1]->BuildValue();
+  auto input_value = input_args[kInputIndex1]->GetValue();
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {
@@ -525,7 +525,7 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
   }
   std::vector<int64_t> out_shape;
   for (auto element : abs_seq->elements()) {
-    auto element_val = element->BuildValue();
+    auto element_val = element->GetValue();
     if (element_val == kValueAny) {
       out_shape.push_back(abstract::Shape::kShapeDimAny);
     } else if (element_val->isa<Int64Imm>()) {
@@ -541,7 +541,7 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
 }
 
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
-  auto abs_value = arg->BuildValue();
+  auto abs_value = arg->GetValue();
   MS_EXCEPTION_IF_NULL(abs_value);
 
   if (IsValueKnown(abs_value)) {
@@ -644,7 +644,7 @@ void CheckSparseIndicesDtypeInt32(const TypePtr data_type, const std::string &ar
 }
 
 ShapeVector ConvertToShapeVector(const abstract::AbstractTuplePtr &shape) {
-  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  auto shape_value = shape->GetValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   ShapeVector shape_vec;
   (void)std::transform(std::begin(shape_value->value()), std::end(shape_value->value()), std::back_inserter(shape_vec),
@@ -753,7 +753,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
     MS_EXCEPTION(TypeError) << op_name << " evaluator index should be an int64 number, but got a "
                             << index_type->ToString() << " number.";
   }
-  ValuePtr index_value = index->BuildValue();
+  ValuePtr index_value = index->GetValue();
   MS_EXCEPTION_IF_NULL(index_value);
   auto target = args_abs_list[kIndex2];
   MS_EXCEPTION_IF_NULL(target);
@@ -887,7 +887,7 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 
 bool IsValueKnown(const ValuePtr &value) {
   // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
-  // the BuildValue returns ValueAny if any one of the elements' value is ValueAny
+  // the GetValue returns ValueAny if any one of the elements' value is ValueAny
   if (value->isa<ValueAny>() || value->isa<None>()) {
     return false;
   }

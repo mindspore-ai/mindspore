@@ -46,7 +46,7 @@ namespace {
 abstract::ShapePtr OnesInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   // check
-  auto shape_value = input_args[0]->BuildValue();
+  auto shape_value = input_args[0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (shape_value->isa<ValueList>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -61,7 +61,7 @@ abstract::ShapePtr OnesInferShape(const PrimitivePtr &primitive, const std::vect
 TypePtr OnesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   // check
-  auto dtype_value = input_args[1]->BuildValue();
+  auto dtype_value = input_args[1]->GetValue();
   if (!dtype_value->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', 'dtype' must be Type(), but got an invalid type: " << dtype_value->ToString() << ".";
@@ -84,7 +84,7 @@ ValuePtr OnesInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   MS_EXCEPTION_IF_NULL(prim);
   auto abs = OnesInfer(nullptr, prim, input_args);
   // check
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->BuildShape())[kShape];
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->GetShape())[kShape];
   if (SizeOf(out_shape) > INT_MAX) {
     MS_LOG(EXCEPTION) << "For '" << prim->name() << "', the output elements num can not larger than " << INT_MAX
                       << "(INT_MAX), but got " << SizeOf(out_shape);

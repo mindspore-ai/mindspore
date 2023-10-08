@@ -102,7 +102,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem->ToString();
     }
 
-    auto x_value = elem->BuildValue();
+    auto x_value = elem->GetValue();
     if (x_value == kValueAny) {
       return nullptr;
     }

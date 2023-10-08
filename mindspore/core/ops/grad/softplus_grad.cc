@@ -48,9 +48,9 @@ abstract::ShapePtr SoftplusGradInfershape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = input_args[0]->BuildShape();
+  auto x_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
-  auto output_shape = input_args[1]->BuildShape();
+  auto output_shape = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(output_shape);
   auto x_shape_ptr = x_shape->cast<abstract::ShapePtr>();
   auto output_shape_ptr = output_shape->cast<abstract::ShapePtr>();

@@ -53,7 +53,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAxis));
   std::vector<int64_t> ret_shape;
 
-  auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto in_shape = shape_infos[kShape];
 
   if (IsDynamicRank(in_shape)) {

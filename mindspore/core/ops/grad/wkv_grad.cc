@@ -42,8 +42,8 @@ class WKVGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                              kInuputNumber, prim_name);
-    auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexK]->BuildShape())[kShape];
-    auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexV]->BuildShape())[kShape];
+    auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexK]->GetShape())[kShape];
+    auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndexV]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("k shape size", SizeToLong(k_shape.size()), kEqual, kTotalShapeSize,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckInteger("v shape size", SizeToLong(v_shape.size()), kEqual, kTotalShapeSize,

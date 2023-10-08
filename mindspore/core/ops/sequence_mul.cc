@@ -59,7 +59,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
     return seq_abs;
   }
 
-  if (scalar_abs->BuildValue() == kValueAny) {
+  if (scalar_abs->GetValue() == kValueAny) {
     if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
       // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
       return std::make_shared<abstract::AbstractAny>();
@@ -70,7 +70,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
   }
 
   abstract::AbstractBasePtrList mul;
-  int scalar_value = GetValue<int64_t>(scalar_abs->BuildValue());
+  int scalar_value = GetValue<int64_t>(scalar_abs->GetValue());
   for (int i = 0; i < scalar_value; ++i) {
     for (size_t j = 0; j < seq_abs->size(); ++j) {
       mul.push_back(seq_abs->elements()[j]);
@@ -89,7 +89,7 @@ class SequenceMulInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMulInferInner(primitive, input_args)->BuildShape();
+    return SequenceMulInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

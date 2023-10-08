@@ -45,19 +45,19 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            primitive->name());
-  auto shape_0 = elements[0]->BuildShape();
+  auto shape_0 = elements[0]->GetShape();
   auto element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_0);
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto shape_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(shape_i)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     }
     if (IsDynamic(shape_i)) {
-      element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+      element0_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape());
     }
   }
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape = elements[i]->BuildShape();
+    auto shape = elements[i]->GetShape();
     if (shape->isa<abstract::Shape>() && shape_0->isa<abstract::Shape>()) {
       const auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
       const auto &shape_0_vec = shape_0->cast<abstract::ShapePtr>()->shape();

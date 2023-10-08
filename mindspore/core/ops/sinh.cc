@@ -41,9 +41,9 @@ namespace {
 abstract::ShapePtr SinhInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   const int64_t max_dim = 8;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("The dimension of Sinh input", SizeToLong(in_shape.size()), kLessThan,
                                            max_dim, prim_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);

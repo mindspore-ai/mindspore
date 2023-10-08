@@ -99,7 +99,7 @@ class RandpermInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
 
-    auto shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto shape_ptr = input_args[kInputIndex0]->GetShape();
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_ptr);
     auto x_shape = shape_map[kShape];
     if (IsDynamic(x_shape)) {
@@ -116,7 +116,7 @@ class RandpermInfer : public abstract::OpInferBase {
 
     auto input_x = input_args[kInputIndex0];
     MS_EXCEPTION_IF_NULL(input_x);
-    auto x_value = input_x->BuildValue();
+    auto x_value = input_x->GetValue();
     MS_EXCEPTION_IF_NULL(x_value);
     auto value_ptr = primitive->GetAttr("max_length");
     auto max_length = GetValue<int64_t>(value_ptr);

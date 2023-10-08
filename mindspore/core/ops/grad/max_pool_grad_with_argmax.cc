@@ -84,7 +84,7 @@ void MaxPoolGradWithArgmax::Init(const std::vector<int64_t> &kernel_size, const 
 namespace {
 abstract::ShapePtr MaxPoolGradWithArgmaxInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDim0]->GetShape())[kShape];
   // ToSupport Dynamic rank
   if (IsDynamicRank(x_shape)) {
     // The input tensor of Primitive MaxPoolGradWithArgmax must be a 4-D tensor and the data format is NCHW/NHWC.

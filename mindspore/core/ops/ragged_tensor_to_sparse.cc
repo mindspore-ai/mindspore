@@ -54,10 +54,10 @@ abstract::TupleShapePtr RaggedTensorToSparseInferShape(const PrimitivePtr &primi
                          ? input_args[kRttsFirstInput]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kRttsFirstInput]->cast<abstract::AbstractListPtr>()->elements();
 
-  auto rt_dense_values_shape = input_args[kRttsInputValuesStart]->BuildShape();
+  auto rt_dense_values_shape = input_args[kRttsInputValuesStart]->GetShape();
   auto in_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(rt_dense_values_shape)[kShape];
   auto inputs_splits_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_splits[0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_splits[0]->GetShape())[kShape];
   if (IsDynamic(inputs_splits_element0_shape) || IsDynamic(in_values_shape)) {
     abstract::ShapePtr out_indices =
       std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny}));

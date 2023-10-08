@@ -70,7 +70,7 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
   ShapeVector shape;
   abstract::ShapePtr output_shape;
 
-  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  auto shape_value = input_args[kInputIndex0]->GetValue();
   if (IsValueKnown(shape_value)) {
     shape = shape_value->isa<tensor::Tensor>()
               ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)

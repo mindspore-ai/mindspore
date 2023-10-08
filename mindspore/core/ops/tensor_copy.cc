@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr TensorMoveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);
   return input_shape_ptr->cast<abstract::ShapePtr>();
 }

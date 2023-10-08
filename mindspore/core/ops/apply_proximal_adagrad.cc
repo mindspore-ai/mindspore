@@ -48,12 +48,12 @@ abstract::TupleShapePtr ApplyProximalAdagradInferShape(const PrimitivePtr &primi
   auto prim_name = primitive->name();
   const int64_t kInputNum = 6;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto grad_shape_ptr = input_args[kInputIndex5]->BuildShape();
+  auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto accum_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto grad_shape_ptr = input_args[kInputIndex5]->GetShape();
 
   size_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {

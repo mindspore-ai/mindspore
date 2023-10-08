@@ -83,7 +83,7 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
 
 void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_arg, const std::string &prim_name,
                    std::vector<int64_t> *const y_shape) {
-  auto size_value_ptr = input_arg->BuildValue();
+  auto size_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(size_value_ptr);
   auto output_size = GetShapeValue(primitive, input_arg);
   if (IsValueKnown(size_value_ptr)) {
@@ -100,7 +100,7 @@ void InferFromSize(const PrimitivePtr &primitive, const AbstractBasePtr &input_a
 
 void InferFromScales(const AbstractBasePtr &input_arg, const std::string &prim_name,
                      const std::vector<int64_t> &x_shape, std::vector<int64_t> *const y_shape) {
-  auto scales_value_ptr = input_arg->BuildValue();
+  auto scales_value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(scales_value_ptr);
   if (IsValueKnown(scales_value_ptr) && !IsDynamicRank(x_shape)) {
     std::vector<double> scales;
@@ -154,7 +154,7 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
   for (auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, kVALUE_5, prim_name);
   }

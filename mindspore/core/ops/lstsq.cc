@@ -47,9 +47,9 @@ abstract::ShapePtr LstsqInferShape(const PrimitivePtr &primitive, const std::vec
   const int64_t a_dim_num_1 = 1;
   const int64_t a_dim_num_2 = 2;
 
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto x_shape = x_shape_map[kShape];
-  auto a_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto a_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto a_shape = a_shape_map[kShape];
 
   if (IsDynamicRank(x_shape) || IsDynamicRank(a_shape)) {

@@ -54,7 +54,7 @@ abstract::ShapePtr GLUInferShape(const PrimitivePtr &primitive, const std::vecto
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kEvenNum = 2;
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }

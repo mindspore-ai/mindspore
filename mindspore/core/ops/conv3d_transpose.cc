@@ -263,8 +263,8 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     std::set<TypePtr> check_list = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, check_list, prim_name);
 
-    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
     if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {

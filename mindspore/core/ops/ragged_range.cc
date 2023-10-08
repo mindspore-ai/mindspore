@@ -79,10 +79,9 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t max_dim = 2;
-  auto in_shape_starts = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto in_shape_limits = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto in_shape_deltas =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto in_shape_starts = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto in_shape_limits = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto in_shape_deltas = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(in_shape_starts) || IsDynamicRank(in_shape_limits) || IsDynamicRank(in_shape_deltas)) {
     auto unknow_rank_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -109,23 +108,23 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   const int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
+  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->GetValue()->isa<ValueAny>() &&
+      !input_args[0]->GetValue()->isa<None>()) {
     auto starts = input_args[0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(starts);
-    auto starts_value_ptr = starts->BuildValue();
+    auto starts_value_ptr = starts->GetValue();
     MS_EXCEPTION_IF_NULL(starts_value_ptr);
     auto starts_tensor = starts_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(starts_tensor);
     auto limits = input_args[1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(limits);
-    auto limits_value_ptr = limits->BuildValue();
+    auto limits_value_ptr = limits->GetValue();
     MS_EXCEPTION_IF_NULL(limits_value_ptr);
     auto limits_tensor = limits_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(limits_tensor);
     auto deltas = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(deltas);
-    auto deltas_value_ptr = deltas->BuildValue();
+    auto deltas_value_ptr = deltas->GetValue();
     MS_EXCEPTION_IF_NULL(deltas_value_ptr);
     auto deltas_tensor = deltas_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(deltas_tensor);

@@ -56,9 +56,9 @@ abstract::TupleShapePtr LuUnpackInferShape(const PrimitivePtr &primitive,
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
-  auto LU_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto LU_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto LU_data_shape = LU_data_shape_map[kShape];
-  auto LU_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto LU_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto LU_pivots_shape = LU_pivots_shape_map[kShape];
 
   if (IsDynamicRank(LU_data_shape)) {

@@ -74,15 +74,15 @@ abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitiveP
   const int64_t kBatchRank = 3;
   CheckInputShapeEmpty(primitive->name(), input_args);
   std::vector<int64_t> x_dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto prim_name = primitive->name();
   auto x_batch_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto x_row_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto x_col_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   const int64_t x_dense_shape_rank = x_dense_shape_shape.size();
   const int64_t x_batch_pointers_rank = x_batch_pointers_shape.size();
   const int64_t x_row_pointers_rank = x_row_pointers_shape.size();
@@ -138,8 +138,8 @@ AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEngin
   const int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   for (size_t i = 0; i < input_args.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(input_args[i]->BuildShape());
-    if (input_args[i]->BuildShape()->IsDimZero()) {
+    MS_EXCEPTION_IF_NULL(input_args[i]->GetShape());
+    if (input_args[i]->GetShape()->IsDimZero()) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', input " << i << "'s shape should not be empty!";
     }
   }

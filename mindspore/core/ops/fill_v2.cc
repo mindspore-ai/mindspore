@@ -57,13 +57,13 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
 
     const int64_t kDimZero = 0;
-    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     if (!IsDynamic(input2_shape)) {
       (void)CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero,
                                                prim_name);
     }
 
-    auto value_ptr = input_args[kInputIndex0]->BuildValue();
+    auto value_ptr = input_args[kInputIndex0]->GetValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto input1_type = input_args[kInputIndex0]->BuildType();
     if (!(input1_type->isa<TensorType>() || IsIdentidityOrSubclass(input1_type, kTuple))) {

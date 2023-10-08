@@ -67,7 +67,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto input_y = input_args[1];
   MS_EXCEPTION_IF_NULL(input_y);
   auto output_shape = GetShapeValue(primitive, input_y);

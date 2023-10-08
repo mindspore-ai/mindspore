@@ -70,36 +70,35 @@ class LayerNormGradGradInfer : public abstract::OpInferBase {
   }
 
   BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto d_dx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto d_dx_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-    auto dy_shape_ptr = input_args[kInputIndex5]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto d_dx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+    auto d_dx_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+    auto dy_shape_ptr = input_args[kInputIndex5]->GetShape();
     if (!x_shape_ptr->IsDynamic() && !d_dx_shape_ptr->IsDynamic() && !dy_shape_ptr->IsDynamic()) {
       if (x_shape != d_dx_shape || x_shape != dy_shape) {
         MS_EXCEPTION(ValueError) << "For LayerNormGradGrad, x, dy, d_dx should have the same shape.";
       }
-      auto gamma_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+      auto gamma_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
       if (gamma_shape.size() < 1) {
         MS_EXCEPTION(ValueError) << "For LayerNormGradGrad, normalized shape to be at least 1-dimensional.";
       }
-      auto d_dg_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
-      auto d_db_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+      auto d_dg_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
+      auto d_db_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
       if (gamma_shape != d_dg_shape || d_dg_shape != d_db_shape) {
         MS_EXCEPTION(ValueError) << "For LayerNormGradGrad, gamma, d_dg, d_db should have the same shape.";
       }
       auto variance_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-      auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+      auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
       if (mean_shape != variance_shape) {
         MS_EXCEPTION(ValueError) << "For LayerNormGradGrad, variance, mean should have the same shape.";
       }
     }
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-      input_args[kInputIndex0]->BuildShape(), input_args[kInputIndex1]->BuildShape(),
-      input_args[kInputIndex4]->BuildShape()});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{input_args[kInputIndex0]->GetShape(), input_args[kInputIndex1]->GetShape(),
+                                          input_args[kInputIndex4]->GetShape()});
   }
 };
 

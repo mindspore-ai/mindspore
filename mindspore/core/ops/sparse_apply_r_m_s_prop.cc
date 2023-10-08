@@ -38,17 +38,17 @@ abstract::TupleShapePtr SparseApplyRMSPropInferShape(const PrimitivePtr &primiti
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_shape_ptr = input_args[0]->BuildShape();
-  auto ms_shape_ptr = input_args[1]->BuildShape();
-  auto mom_shape_ptr = input_args[2]->BuildShape();
+  auto var_shape_ptr = input_args[0]->GetShape();
+  auto ms_shape_ptr = input_args[1]->GetShape();
+  auto mom_shape_ptr = input_args[2]->GetShape();
 
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto ms_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(ms_shape_ptr)[kShape];
   auto mom_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(mom_shape_ptr)[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   auto lr_shape_rank = SizeToLong(lr_shape.size());
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
 
   // Args lr must be scalar
   const int64_t input_num = 0;

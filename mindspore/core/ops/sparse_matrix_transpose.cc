@@ -56,19 +56,19 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   const int64_t kInputWithBatch = 3;
   const int64_t ktwo = 2;
   std::vector<int64_t> dense_shape_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   const int64_t rank_x = dense_shape_shape[0];
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   const int64_t max_length = GetValue<int64_t>(max_length_ptr);
   std::vector<int64_t> batch_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> row_pointers_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   std::vector<int64_t> col_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   std::vector<int64_t> values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   if (!IsDynamic(dense_shape_shape) && rank_x != kInputNoBatch && rank_x != kInputWithBatch) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ",the rank of input must be 2 or 3, but got "
                              << dense_shape_shape.size() << "!";
@@ -91,10 +91,10 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   }
   ShapeVector transpose_row_pointers_shape{abstract::Shape::kShapeDimAny};
   auto dense_shape = input_args[kInputIndex0];
-  if (dense_shape->isa<abstract::AbstractTensor>() && dense_shape->BuildValue()->isa<tensor::Tensor>()) {
+  if (dense_shape->isa<abstract::AbstractTensor>() && dense_shape->GetValue()->isa<tensor::Tensor>()) {
     auto dense_shape_ = dense_shape->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(dense_shape_);
-    auto dense_shape_value = dense_shape->BuildValue();
+    auto dense_shape_value = dense_shape->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value);
     auto dense_shape_tensor = CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name);
     if (rank_x == kInputNoBatch) {

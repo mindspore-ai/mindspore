@@ -51,9 +51,9 @@ abstract::TupleShapePtr ApplyKerasMomentumInferShape(const PrimitivePtr &primiti
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto var_shape = input_args[0]->BuildShape();
-  auto accum_shape = input_args[1]->BuildShape();
-  auto grad_shape = input_args[3]->BuildShape();
+  auto var_shape = input_args[0]->GetShape();
+  auto accum_shape = input_args[1]->GetShape();
+  auto grad_shape = input_args[3]->GetShape();
 
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];

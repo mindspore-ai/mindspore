@@ -46,11 +46,11 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
   const int64_t kInputNum = 9;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
-  auto var_shape = input_args[0]->BuildShape();
-  auto mg_shape = input_args[1]->BuildShape();
-  auto ms_shape = input_args[2]->BuildShape();
-  auto mom_shape = input_args[3]->BuildShape();
-  auto grad_shape = input_args[4]->BuildShape();
+  auto var_shape = input_args[0]->GetShape();
+  auto mg_shape = input_args[1]->GetShape();
+  auto ms_shape = input_args[2]->GetShape();
+  auto mom_shape = input_args[3]->GetShape();
+  auto grad_shape = input_args[4]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto mg_shape_ptr = mg_shape->cast<abstract::ShapePtr>();
   auto ms_shape_ptr = ms_shape->cast<abstract::ShapePtr>();

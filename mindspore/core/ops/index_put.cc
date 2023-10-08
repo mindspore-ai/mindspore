@@ -58,7 +58,7 @@ abstract::ShapePtr IndexPutInferShape(const PrimitivePtr &primitive, const std::
   int64_t maxsize = 0;
   for (size_t idx = 0; idx < idx_shape.size(); ++idx) {
     auto shape = idx_shape[idx]->cast<abstract::AbstractTensorPtr>();
-    auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape->BuildShape())[kShape];
+    auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape->GetShape())[kShape];
     if (IsDynamic(shape_shape)) {
       return x1_shape_ptr;
     }
@@ -71,7 +71,7 @@ abstract::ShapePtr IndexPutInferShape(const PrimitivePtr &primitive, const std::
   }
   for (size_t idx = 0; idx < idx_shape.size(); ++idx) {
     auto shape = idx_shape[idx]->cast<abstract::AbstractTensorPtr>();
-    auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape->BuildShape())[kShape];
+    auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape->GetShape())[kShape];
     if (maxsize != shape_shape[0] && shape_shape[0] != 1) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the tensors in indices must be broadcastable, but size of indices[" << idx

@@ -49,11 +49,11 @@ abstract::ShapePtr OrgqrInferShape(const PrimitivePtr &prim, const std::vector<A
   const size_t kTwo = 2;
   MS_EXCEPTION_IF_NULL(prim);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, prim->name());
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamic(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
-  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto tau_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }

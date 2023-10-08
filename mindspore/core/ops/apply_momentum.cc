@@ -88,26 +88,26 @@ abstract::ShapePtr ApplyMomentumInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
   // Infer shape
-  auto v_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto v_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape_ptr)[kShape];
   if (IsDynamicRank(v_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto a_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto a_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(a_shape_ptr)[kShape];
   if (IsDynamicRank(a_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto l_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto l_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(l_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto g_shape_ptr = input_args[kInputIndex3]->BuildShape();
+  auto g_shape_ptr = input_args[kInputIndex3]->GetShape();
   auto g_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(g_shape_ptr)[kShape];
   if (IsDynamicRank(g_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
-  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   if (IsDynamicRank(m_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

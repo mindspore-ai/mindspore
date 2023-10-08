@@ -79,7 +79,7 @@ class ReduceScatterInfer : public abstract::OpInferBase {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'rank_size' can not be zero, but got "
                                << rank_size;
     }
-    auto abstract_shape = input_args[kIndex0]->BuildShape();
+    auto abstract_shape = input_args[kIndex0]->GetShape();
     MS_ERROR_IF_NULL_W_RET_VAL(abstract_shape, std::make_shared<abstract::Shape>());
     if (abstract_shape->IsDynamic()) {
       return abstract_shape;

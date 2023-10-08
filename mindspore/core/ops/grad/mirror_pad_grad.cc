@@ -70,15 +70,15 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   if (input_x_shape_ptr->IsDynamic()) {  // if shape of x is dynamic, then passthrough the shape
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto paddings = input_args[kInputIndex1]->BuildValue();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto paddings = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(paddings);
   // if shape of x is determined and padding value is unknown, return a all -1 shape
   if (paddings->isa<ValueAny>() || paddings->isa<None>()) {

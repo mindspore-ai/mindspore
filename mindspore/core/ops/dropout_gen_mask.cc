@@ -130,7 +130,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
 
   ShapeVector out_shape;
   if (shape_args->isa<abstract::AbstractTensor>()) {
-    auto shape_value = shape_args->BuildValue();
+    auto shape_value = shape_args->GetValue();
     MS_EXCEPTION_IF_NULL(shape_value);
     if (shape_value->isa<tensor::Tensor>()) {
       auto mask_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
@@ -142,7 +142,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     }
     auto shape_abstract = dyn_cast<abstract::AbstractTensor>(shape_args);
     MS_EXCEPTION_IF_NULL(shape_abstract);
-    auto shape_base = shape_abstract->BuildShape();
+    auto shape_base = shape_abstract->GetShape();
     MS_EXCEPTION_IF_NULL(shape_base);
     auto shape = shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
@@ -154,7 +154,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(any_shape);
   }
 
-  auto shape_value = shape_args->BuildValue();
+  auto shape_value = shape_args->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (!IsValueKnown(shape_value)) {
     ShapeVector any_shape{abstract::Shape::kShapeDimAny};

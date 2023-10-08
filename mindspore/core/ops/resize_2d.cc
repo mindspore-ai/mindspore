@@ -128,7 +128,7 @@ abstract::ShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::
 
   const int64_t x_rank = 4;
   std::vector<int64_t> output_shape(x_rank, abstract::Shape::kShapeDimAny);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("images' rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
     output_shape[kInputIndex0] = x_shape[kInputIndex0];

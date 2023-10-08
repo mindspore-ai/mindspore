@@ -46,8 +46,8 @@ namespace {
 abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   const size_t xsizemin = 1;
   const size_t xsizemax = 2;
   if ((x.size() != xsizemin && x.size() != xsizemax) || (target.size() != xsizemin && target.size() != xsizemax)) {

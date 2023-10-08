@@ -37,9 +37,8 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
     std::vector<int64_t> output_shape;
-    auto feature_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto feature_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     if (!IsDynamicRank(feature_shape)) {
       constexpr int64_t kROIGradFeatureShapeSize = 4;
       (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,

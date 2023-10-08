@@ -59,9 +59,9 @@ class IOUInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
     (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
 
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
-    auto y_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto y_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(y_shape_ptr);
     auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
     auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(y_shape_ptr);

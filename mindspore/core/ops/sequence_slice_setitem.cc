@@ -51,8 +51,8 @@ AbstractBasePtr SequenceSliceInferInner(const PrimitivePtr &primitive, const std
   auto start_abs = input_args[start_index];
   auto stop_abs = input_args[stop_index];
   auto step_abs = input_args[step_index];
-  if (!sequence_abs->dynamic_len() && !target_abs->dynamic_len() && start_abs->BuildValue() != kValueAny &&
-      stop_abs->BuildValue() != kValueAny && step_abs->BuildValue() != kValueAny) {
+  if (!sequence_abs->dynamic_len() && !target_abs->dynamic_len() && start_abs->GetValue() != kValueAny &&
+      stop_abs->GetValue() != kValueAny && step_abs->GetValue() != kValueAny) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the origin/target sequence should be dynamic length "
                              << "or one of start/stop/step should be variable.";
   }
@@ -91,7 +91,7 @@ class SequenceSliceSetItemInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceSliceInferInner(primitive, input_args)->BuildShape();
+    return SequenceSliceInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

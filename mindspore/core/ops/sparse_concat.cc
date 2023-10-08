@@ -139,10 +139,9 @@ abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("indices' num and shapes' num", ConcatNum, kEqual,
                                            SizeToLong(inputs_shapes.size()), prim_name);
 
-  auto indices_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
-  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
-  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
+  auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->GetShape())[kShape];
+  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->GetShape())[kShape];
+  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->GetShape())[kShape];
 
   CheckSparseConcatShape(indices_element0_shape, indices_expect_rank, "indices shape", prim_name);
   CheckSparseConcatShape(values_element0_shape, values_expect_rank, "values shape", prim_name);
@@ -164,10 +163,9 @@ abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
   auto out_shape_shape = shapes_element0_shape;
   bool is_dynamic = false;
   for (int64_t i = 0; i < ConcatNum; i++) {
-    auto indices_element_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[i]->BuildShape())[kShape];
-    auto values_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[i]->BuildShape())[kShape];
-    auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[i]->BuildShape())[kShape];
+    auto indices_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[i]->GetShape())[kShape];
+    auto values_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[i]->GetShape())[kShape];
+    auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[i]->GetShape())[kShape];
     is_dynamic = is_dynamic || CheckSparseConcatShapeValue(indices_element_shape, values_element_shape,
                                                            shapes_element_shape, prim_name);
     if (is_dynamic) {

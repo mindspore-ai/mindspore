@@ -230,8 +230,8 @@ class Conv3DInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
-    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape());
-    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape());
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->GetShape());
+    auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->GetShape());
     auto x_shape = x_shape_map[kShape];
     auto w_shape = w_shape_map[kShape];
     if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {

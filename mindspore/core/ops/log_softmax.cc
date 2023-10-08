@@ -54,7 +54,7 @@ abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(primitive);
   const auto op_name = primitive->name();
   const auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   if (shape_map.empty()) {
     // Scalar input, has no shape
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());

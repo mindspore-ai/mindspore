@@ -121,17 +121,17 @@ class MirrorPadInfer : public abstract::OpInferBase {
     for (const auto &item : input_args) {
       MS_EXCEPTION_IF_NULL(item);
     }
-    auto input_x_shape_ptr = input_args[0]->BuildShape();
+    auto input_x_shape_ptr = input_args[0]->GetShape();
     MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
     auto input_x_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
     // Dynamic rank process.
     if (IsDynamicRank(input_x_shape->shape())) {
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
-    auto paddings = input_args[1]->BuildValue();
+    auto paddings = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings);
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+    auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     CheckPaddingParam(paddings_shape, x_shape, prim_name);
     // if shape of x is determined and padding value is unknown, return a all -1 shape
     if (paddings->isa<ValueAny>() || paddings->isa<None>()) {

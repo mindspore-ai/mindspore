@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr ReLUV3InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto shape_element = input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto shape_element = input_args[0]->GetShape()->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   return shape_element;
 }

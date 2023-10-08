@@ -148,8 +148,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kBatchMatmulInputNum,
                                            primitive->name());
   auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   if (x_shape_map.empty()) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
                       << "', input 'x' must be a Tensor type, but got:" << input_args[0]->ToString();

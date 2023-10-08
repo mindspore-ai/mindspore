@@ -77,7 +77,7 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     const int64_t input_num = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto x_shape = x->BuildShape();
+    auto x_shape = x->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape);
     auto shape_element = x_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape_element);

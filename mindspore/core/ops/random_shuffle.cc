@@ -25,7 +25,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr RandomShuffleInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto input_shape = input_args[0]->BuildShape();
+  auto input_shape = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape);
   auto input_shape_ptr = input_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);

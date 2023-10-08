@@ -136,8 +136,8 @@ int64_t GetInt64AlphaData(void *values, TypeId tid, const TypePtr expect_dtype, 
 }
 
 void CheckAlphaBeta(const std::vector<AbstractBasePtr> &input_args) {
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
+  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->GetShape())[kShape];
   if (!IsDynamic(alpha_shape) &&
       !((alpha_shape.size() == static_cast<size_t>(dim1Num) && alpha_shape[0] == static_cast<size_t>(dim1Num)) ||
         (alpha_shape.size() == static_cast<size_t>(dim0Num)))) {
@@ -158,17 +158,13 @@ void CheckInputTensorShapeSize(const std::vector<AbstractBasePtr> &input_args, c
   if (is_dynamic_rank) {
     return;
   }
-  auto x1_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x1_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto x2_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto x2_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
 
   if (x1_indices_shape.size() != static_cast<size_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices should be a 2-D tensor"
@@ -206,16 +202,12 @@ void CheckInputTensorShapeValue(const std::vector<AbstractBasePtr> &input_args, 
   if (is_dynamic) {
     return;
   }
-  auto x1_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x1_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto x2_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto x2_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
 
   if (x1_indices_shape[0] != static_cast<int64_t>(dim2Num)) {
     MS_EXCEPTION(ValueError) << "For Sspaddmm, x1_indices shape should be (2, n)"
@@ -248,17 +240,13 @@ void CheckInputTensorShapeValue(const std::vector<AbstractBasePtr> &input_args, 
 }
 
 void CheckInputTensor(const std::vector<AbstractBasePtr> &input_args) {
-  auto x1_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x1_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto x2_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto x2_values_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto x1_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto x2_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto x2_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto x2_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {x1_indices_shape, x1_values_shape, x1_shape_shape, x2_indices_shape,
                                          x2_values_shape,  x2_shape_shape,  x3_shape};
@@ -291,18 +279,18 @@ void IndicesBoundCheck(const T *indices_val, size_t indices_num, const T *shape_
 
 void CheckIndices(const std::vector<AbstractBasePtr> &input_args) {
   if ((input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
-       input_args[kInputIndex0]->BuildValue()->isa<tensor::Tensor>()) &&
+       input_args[kInputIndex0]->GetValue()->isa<tensor::Tensor>()) &&
       (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-       input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>())) {
+       input_args[kInputIndex2]->GetValue()->isa<tensor::Tensor>())) {
     auto x1_indices_abstract = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_indices_abstract);
-    auto x1_indices_value_ptr = x1_indices_abstract->BuildValue();
+    auto x1_indices_value_ptr = x1_indices_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(x1_indices_value_ptr);
     auto x1_indices_tensor = x1_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_indices_tensor);
     auto x1_shape_abstract = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_shape_abstract);
-    auto x1_shape_value_ptr = x1_shape_abstract->BuildValue();
+    auto x1_shape_value_ptr = x1_shape_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(x1_shape_value_ptr);
     auto x1_shape_tensor = x1_shape_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x1_shape_tensor);
@@ -317,18 +305,18 @@ void CheckIndices(const std::vector<AbstractBasePtr> &input_args) {
     }
   }
   if ((input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
-       input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>()) &&
+       input_args[kInputIndex3]->GetValue()->isa<tensor::Tensor>()) &&
       (input_args[kInputIndex5]->isa<abstract::AbstractTensor>() &&
-       input_args[kInputIndex5]->BuildValue()->isa<tensor::Tensor>())) {
+       input_args[kInputIndex5]->GetValue()->isa<tensor::Tensor>())) {
     auto x2_indices_abstract = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_abstract);
-    auto x2_indices_value_ptr = x2_indices_abstract->BuildValue();
+    auto x2_indices_value_ptr = x2_indices_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(x2_indices_value_ptr);
     auto x2_indices_tensor = x2_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_tensor);
     auto x2_shape_abstract = input_args[kInputIndex5]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_shape_abstract);
-    auto x2_shape_value_ptr = x2_shape_abstract->BuildValue();
+    auto x2_shape_value_ptr = x2_shape_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(x2_shape_value_ptr);
     auto x2_shape_tensor = x2_shape_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_shape_tensor);
@@ -395,9 +383,9 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
   CheckInputTensor(input_args);
   CheckIndices(input_args);
   if (input_args[kInputIndex7]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex7]->BuildValue()->isa<tensor::Tensor>()) {
+      input_args[kInputIndex7]->GetValue()->isa<tensor::Tensor>()) {
     auto alpha_abstract = input_args[kInputIndex7]->cast<abstract::AbstractTensorPtr>();
-    auto alpha_value_ptr = alpha_abstract->BuildValue();
+    auto alpha_value_ptr = alpha_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(alpha_value_ptr);
     auto alpha_tensor = alpha_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(alpha_tensor);
@@ -431,16 +419,15 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
       }
     }
   }
-  auto x1_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x3_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
   int64_t x2_indices_shape_right = -1;
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex3]->BuildValue()->isa<tensor::Tensor>() && !IsDynamic(x3_shape) &&
+      input_args[kInputIndex3]->GetValue()->isa<tensor::Tensor>() && !IsDynamic(x3_shape) &&
       !IsDynamic(x1_indices_shape)) {
     auto x2_indices_abstract = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_abstract);
-    auto x2_indices_value_ptr = x2_indices_abstract->BuildValue();
+    auto x2_indices_value_ptr = x2_indices_abstract->GetValue();
     MS_EXCEPTION_IF_NULL(x2_indices_value_ptr);
     auto x2_indices_tensor = x2_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_tensor);
@@ -464,7 +451,7 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
   abstract::ShapePtr output_indices_shape_list = std::make_shared<abstract::Shape>(output_indices_shape);
   std::vector<int64_t> output_values_shape = {x2_indices_shape_right};
   abstract::ShapePtr output_values_shape_list = std::make_shared<abstract::Shape>(output_values_shape);
-  auto input_shape = input_args[kInputIndex2]->BuildShape();
+  auto input_shape = input_args[kInputIndex2]->GetShape();
   abstract::ShapePtr output_shape_shape_list = input_shape->cast<abstract::ShapePtr>();
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{output_indices_shape_list, output_values_shape_list, output_shape_shape_list});

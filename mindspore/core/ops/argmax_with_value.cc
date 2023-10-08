@@ -63,7 +63,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_shape_ptr = input_args[0]->BuildShape();
+  auto x_shape_ptr = input_args[0]->GetShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];
   auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));

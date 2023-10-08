@@ -60,7 +60,7 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
   if (queue->dynamic_len()) {
     auto element_abs = queue->dynamic_len_element_abs();
     MS_EXCEPTION_IF_NULL(element_abs);
-    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->BuildShape())[kShape];
+    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->GetShape())[kShape];
     return std::make_shared<abstract::Shape>(ret_shape);
   }
   const int64_t kOneNum = 1;
@@ -83,7 +83,7 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
   size_t element_rank = 0;
   for (size_t i = 0; i < elements.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements[i]);
-    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(input_shape_tmp)) {
       continue;
     }

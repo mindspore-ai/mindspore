@@ -69,7 +69,7 @@ abstract::ShapePtr RollInferShape(const PrimitivePtr &primitive, const std::vect
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                            prim_name);
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(x_shape);
 }
 

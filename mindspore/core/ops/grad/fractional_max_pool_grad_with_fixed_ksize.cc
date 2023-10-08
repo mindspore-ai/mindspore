@@ -79,13 +79,13 @@ abstract::ShapePtr FractionalMaxPoolGradWithFixedKsizeInferShape(const Primitive
   }
 
   auto origin_input_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex0]->GetShape())[kShape];
   if (IsDynamicRank(origin_input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1});
   }
   auto out_backprop_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex1]->BuildShape())[kShape];
-  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex1]->GetShape())[kShape];
+  auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputsIndex2]->GetShape())[kShape];
   if (origin_input_shape.size() != kInputsDimSize) {
     MS_EXCEPTION(ValueError) << "For FractionalMaxPoolGradWithFixedKsize, the dimension of origin_input must be 4.";
   }

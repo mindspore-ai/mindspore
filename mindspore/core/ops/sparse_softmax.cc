@@ -49,9 +49,9 @@ inline bool CheckShapePositive(const std::vector<int64_t> &input_shape) {
 abstract::ShapePtr SparseSoftmaxInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto indices_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto shape_shape_ptr = input_args[kInputIndex2]->GetShape();
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];
   auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_shape_ptr)[kShape];

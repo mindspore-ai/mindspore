@@ -46,7 +46,7 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
   if (queue->dynamic_len()) {
     auto element_abs = queue->dynamic_len_element_abs();
     MS_EXCEPTION_IF_NULL(element_abs);
-    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->BuildShape())[kShape];
+    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->GetShape())[kShape];
     return std::make_shared<abstract::Shape>(ret_shape);
   }
 
@@ -59,7 +59,7 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
                                            op_name);
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
   if (IsDynamicRank(element0_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -71,7 +71,7 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
   int64_t all_shp = element0_shape[axis];
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(elementi_shape)) {
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }

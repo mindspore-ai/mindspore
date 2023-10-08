@@ -54,23 +54,22 @@ bool SparseCrossCheckShape(const PrimitivePtr &primitive, const std::vector<Abst
   auto inputs_indices = input_args[kSparseCrossInputIndicesStart]->isa<abstract::AbstractTuple>()
                           ? input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                           : input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto indices_element0_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
+  auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->GetShape())[kShape];
 
   auto inputs_values = input_args[kSparseCrossInputValueStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSparseCrossInputValueStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSparseCrossInputValueStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
+  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->GetShape())[kShape];
 
   auto inputs_shapes = input_args[kSparseCrossInputShapeStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
+  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->GetShape())[kShape];
 
   auto inputs_denses = input_args[kSparseCrossInputDenseStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto denses_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_denses[0]->BuildShape())[kShape];
+  auto denses_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_denses[0]->GetShape())[kShape];
   if (IsDynamic(indices_element0_shape) || IsDynamic(values_element0_shape) || IsDynamic(shapes_element0_shape) ||
       IsDynamic(denses_element0_shape)) {
     return false;
@@ -123,24 +122,24 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
   auto inputs_indices1 = input_args[kSparseCrossInputIndicesStart]->isa<abstract::AbstractTuple>()
                            ? input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractTuplePtr>()->elements()
                            : input_args[kSparseCrossInputIndicesStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto indices_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[0]->BuildShape())[kShape];
+  auto indices_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[0]->GetShape())[kShape];
   auto inputs_dense1 = input_args[kSparseCrossInputDenseStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSparseCrossInputDenseStart]->cast<abstract::AbstractListPtr>()->elements();
   auto inputs_shape1 = input_args[kSparseCrossInputShapeStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractTuplePtr>()->elements()
                          : input_args[kSparseCrossInputShapeStart]->cast<abstract::AbstractListPtr>()->elements();
-  auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape1[0]->BuildShape())[kShape];
+  auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape1[0]->GetShape())[kShape];
   int64_t rank = indices_shape1[1];
   int64_t indices_row = 0;
   std::vector<int64_t> nnz(shape_shape1[0], 1);
   for (uint32_t r = 0; r < shape_shape1[0]; r++) {
     for (unsigned int i = 0; i < inputs_indices1.size(); i++) {
-      auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[i]->BuildShape())[kShape];
+      auto indices_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices1[i]->GetShape())[kShape];
       nnz[r] = nnz[r] * indices_shape2[0];
     }
     for (uint32_t i = 0; i < inputs_dense1.size(); i++) {
-      auto denses_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_dense1[i]->BuildShape())[kShape];
+      auto denses_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_dense1[i]->GetShape())[kShape];
       nnz[r] = nnz[r] * denses_shape2[1];
     }
     indices_row = indices_row + nnz[r];

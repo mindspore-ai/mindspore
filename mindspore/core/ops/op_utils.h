@@ -176,7 +176,7 @@ inline ShapeVector ConvertBaseShapeToTensorShape(const BaseShapePtr &base) {
 }
 
 inline ShapeVector GetShapeFromTensor(const AbstractBasePtr &abs) {
-  auto base_shape = abs->BuildShape();
+  auto base_shape = abs->GetShape();
   return ConvertBaseShapeToTensorShape(base_shape);
 }
 
@@ -198,8 +198,8 @@ void CheckSparseIndicesDtypeInt32(const TypePtr data_type, const std::string &ar
 
 inline void CheckInputShapeEmpty(const std::string &prim_name, const std::vector<AbstractBasePtr> &input_args) {
   for (size_t i = 0; i < input_args.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(input_args[i]->BuildShape());
-    if (input_args[i]->BuildShape()->IsDimZero()) {
+    MS_EXCEPTION_IF_NULL(input_args[i]->GetShape());
+    if (input_args[i]->GetShape()->IsDimZero()) {
       MS_LOG(EXCEPTION) << "For '" << prim_name << "', input " << i << "'s shape should not be empty!";
     }
   }

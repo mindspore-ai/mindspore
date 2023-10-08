@@ -55,7 +55,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
 
-  auto shape_v = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto shape_v = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (shape_v.size() > kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
                              << "', the input 'orig_input_tensor_shape' tensor must be a 1-D tensor.";

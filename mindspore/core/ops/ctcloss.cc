@@ -85,10 +85,10 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
   auto labels_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   auto labels_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
   auto sequence_length = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
-  auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs->BuildShape())[kShape];
-  auto labels_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_indices->BuildShape())[kShape];
-  auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_values->BuildShape())[kShape];
-  auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->BuildShape())[kShape];
+  auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs->GetShape())[kShape];
+  auto labels_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_indices->GetShape())[kShape];
+  auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_values->GetShape())[kShape];
+  auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->GetShape())[kShape];
   if (IsDynamicRank(inputs_shape) || IsDynamicRank(labels_indices_shape) || IsDynamicRank(labels_values_shape) ||
       IsDynamicRank(sequence_length_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{

@@ -33,7 +33,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto is_dynamic_rank = IsDynamicRank(x_shape);
   if (is_dynamic_rank) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
@@ -43,7 +43,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("[x] rank", static_cast<int64_t>(x_shape.size()), kLessEqual, dim_7,
                                            op_name);
 
-  auto perm_value = input_args[1]->BuildValue();
+  auto perm_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(perm_value);
   if (!IsValueKnown(perm_value)) {
     std::vector<int64_t> output_shape(static_cast<int>(x_shape.size()), -1);

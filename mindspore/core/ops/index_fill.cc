@@ -67,9 +67,9 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   // dynamic rank
-  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(index_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -84,7 +84,7 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
 
   // Input 'dim' must be a tensor with a value or a scalar.
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto dim_rank = SizeToLong(dim_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'dim'", dim_rank, kEqual, 0, prim_name);
   } else if (!input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
@@ -97,7 +97,7 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
 
   // Input 'value' must be a tensor with a value or a scalar.
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
-    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
     auto value_rank = SizeToLong(value_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, 0, prim_name);
   }

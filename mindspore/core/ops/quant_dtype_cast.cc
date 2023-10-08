@@ -49,7 +49,7 @@ abstract::ShapePtr QuantDTypeCastInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t kInputNum = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-  auto x = input_args[0]->BuildShape();
+  auto x = input_args[0]->GetShape();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);

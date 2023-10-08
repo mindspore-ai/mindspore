@@ -48,14 +48,14 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
   const int64_t kNumber2 = 2;
   const int64_t kNumber1 = 1;
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto rank = SizeToLong(x_shape.size());
 
-  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto diagonal_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto diagonal_rank = SizeToLong(diagonal_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("diagonal rank", diagonal_rank, kGreaterEqual, kNumber1, prim_name);
 
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto k_rank = SizeToLong(k_shape.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
 
@@ -65,7 +65,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
 
   std::vector<ShapeVector> shapes = {x_shape, diagonal_shape, k_shape};
   auto is_dynamic = std::any_of(shapes.begin(), shapes.end(), IsDynamic);
-  auto value_ptr = input_args[kInputIndex2]->BuildValue();
+  auto value_ptr = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   if (is_dynamic || !IsValueKnown(value_ptr)) {
     ShapeVector out_shape(x_shape.size(), -1);

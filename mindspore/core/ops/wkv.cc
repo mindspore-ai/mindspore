@@ -41,14 +41,14 @@ class WKVInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                              kInputNumber, prim_name);
-    auto k_shape = input_args[kIndexK]->BuildShape();
+    auto k_shape = input_args[kIndexK]->GetShape();
     auto real_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(k_shape)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("k shape size", SizeToLong(real_shape.size()), kEqual, kTotalShapeSize,
                                              prim_name);
     primitive->set_attr("batch_size", MakeValue(real_shape[0]));
     primitive->set_attr("seq_length", MakeValue(real_shape[1]));
     primitive->set_attr("hidden_size", MakeValue(real_shape[kIndexK]));
-    const auto &build_shape_s = input_args[kIndexS]->BuildShape();
+    const auto &build_shape_s = input_args[kIndexS]->GetShape();
     std::vector<abstract::BaseShapePtr> output_shapes = {k_shape, build_shape_s, build_shape_s, build_shape_s};
     return std::make_shared<abstract::TupleShape>(output_shapes);
   }

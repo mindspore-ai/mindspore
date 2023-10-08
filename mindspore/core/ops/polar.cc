@@ -44,9 +44,9 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr PolarInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto abs_shape = shape_map[kShape];
-  auto angle_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto angle_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(abs_shape) && IsDynamicRank(angle_shape)) {
     return std::make_shared<abstract::Shape>(abs_shape);
   }

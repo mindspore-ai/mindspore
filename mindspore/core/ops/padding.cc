@@ -71,12 +71,12 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_x_shape_ptr = input_args[0]->BuildShape();
+  auto input_x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   if (input_x_shape_ptr->IsDynamic()) {
-    return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[0]->GetShape()->cast<abstract::ShapePtr>();
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   int64_t x_last_dim = x_shape[x_shape.size() - 1];

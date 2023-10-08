@@ -55,7 +55,7 @@ int64_t BNTrainingReduceGetAndCheckFormat(const PrimitivePtr &primitive, const V
 }
 abstract::TupleShapePtr BNTrainingReduceInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = input_shape[kShape];
 
   constexpr auto kMinInputDim = 1;

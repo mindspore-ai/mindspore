@@ -67,8 +67,8 @@ TypePtr MultiMarginLossGradInferType(const PrimitivePtr &prim, const std::vector
 abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamic(x_shape) || IsDynamic(target_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
@@ -90,8 +90,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
     if (element->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
       if (IsDynamic(weight_shape)) {
         return std::make_shared<abstract::Shape>(x_shape);
       }

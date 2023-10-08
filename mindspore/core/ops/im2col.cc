@@ -73,7 +73,7 @@ abstract::ShapePtr Im2ColInferShape(const PrimitivePtr &primitive, const std::ve
   auto op_name = primitive->name();
   constexpr size_t size_2 = 2;
   constexpr size_t size_4 = 4;
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamic(in_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(size_4, abstract::Shape::kShapeDimAny));
   }

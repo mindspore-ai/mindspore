@@ -61,7 +61,7 @@ abstract::ShapePtr MaxPoolGradV1InferShape(const PrimitivePtr &primitive,
     (void)primitive->AddAttr("padding", MakeValue("SAME"));
   }
 
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr MaxPoolGradV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

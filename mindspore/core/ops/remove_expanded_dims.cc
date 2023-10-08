@@ -118,10 +118,10 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   const AbstractBasePtr &broadcast_shape_abs = input_args[kIndex3];
   const AbstractBasePtr &idx_advanced_abs = input_args[kIndex4];
 
-  ShapeVector value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_abs->BuildShape())[kShape];
-  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape())[kShape];
-  if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->BuildValue()) ||
-      !IsValueKnown(broadcast_shape_abs->BuildValue()) || idx_advanced_abs->isa<abstract::AbstractTensor>()) {
+  ShapeVector value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_abs->GetShape())[kShape];
+  ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->GetShape())[kShape];
+  if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->GetValue()) ||
+      !IsValueKnown(broadcast_shape_abs->GetValue()) || !IsValueKnown(idx_advanced_abs->GetValue())) {
     auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
     auto new_value_shape = std::vector<int64_t>{SizeToLong(value_shape.size())};
     if (IsDynamicRank(value_shape)) {
@@ -134,10 +134,10 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
     AbstractBasePtrList abs_list{scalar_abs_tensor, abs_tensor, scalar_abs_tensor};
     return std::make_shared<abstract::AbstractTuple>(abs_list);
   }
-  auto tensor_ptr = has_false_abs->BuildValue()->cast<mindspore::tensor::TensorPtr>();
+  auto tensor_ptr = has_false_abs->GetValue()->cast<mindspore::tensor::TensorPtr>();
   bool has_false = *reinterpret_cast<int64_t *>(tensor_ptr->data_c()) > 0;
-  auto idx_advanced = GetValue<int64_t>(idx_advanced_abs->BuildValue());
-  ShapeVector broadcast_shape = GetValue<std::vector<int64_t>>(broadcast_shape_abs->BuildValue());
+  auto idx_advanced = GetValue<int64_t>(idx_advanced_abs->GetValue());
+  ShapeVector broadcast_shape = GetValue<std::vector<int64_t>>(broadcast_shape_abs->GetValue());
   auto has_true = GetValue<bool>(primitive->GetAttr(kAttrHasTrue));
   auto has_sequence = GetValue<bool>(primitive->GetAttr(kAttrHasSequence));
   auto new_tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));
@@ -170,7 +170,7 @@ class RemoveExpandedDimsInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemoveExpandedDimsInner(primitive, input_args)->BuildShape();
+    return RemoveExpandedDimsInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

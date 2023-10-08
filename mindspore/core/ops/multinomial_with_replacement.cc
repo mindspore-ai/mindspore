@@ -73,7 +73,7 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
   const int64_t x_rank_max = 2;
   const int64_t x_rank_min = 1;
   const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   std::vector<int64_t> y_shape;
   if (x_shape.size() > x_rank_max || x_shape.size() < x_rank_min) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'x' must have a rank of 1 or 2, but got rank "

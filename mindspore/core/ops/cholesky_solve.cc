@@ -51,8 +51,8 @@ abstract::ShapePtr CholeskySolveInferShape(const PrimitivePtr &primitive,
   const size_t kBatchIndex = 3;
   const size_t kRowIndex = 2;
   const size_t kColIndex = 1;
-  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
-  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto x1_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+  auto x2_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
   auto x1_shape = x1_shape_map[kShape];
   auto x2_shape = x2_shape_map[kShape];
   ShapeVector out_shape = {};

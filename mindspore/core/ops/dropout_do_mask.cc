@@ -85,7 +85,7 @@ abstract::ShapePtr DropoutDoMaskInferShape(const PrimitivePtr &primitive,
   }
   auto keep_prop = input_args[kInputIndex2];
   if (keep_prop->isa<abstract::AbstractTensor>()) {
-    auto keep_prop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(keep_prop->BuildShape())[kShape];
+    auto keep_prop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(keep_prop->GetShape())[kShape];
     if (!keep_prop_shape.empty()) {
       MS_EXCEPTION(ValueError) << "'For 'DropoutDoMask', dim of 'keep_prop' must be 0(scalar), but got: "
                                << keep_prop_shape.size() << ".";
@@ -98,7 +98,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   auto keep_prop = input_args[kInputIndex2];
   MS_EXCEPTION_IF_NULL(keep_prop);
-  auto keep_prop_value = keep_prop->BuildValue();
+  auto keep_prop_value = keep_prop->GetValue();
   MS_EXCEPTION_IF_NULL(keep_prop_value);
 
   if (keep_prop->isa<abstract::AbstractTensor>()) {

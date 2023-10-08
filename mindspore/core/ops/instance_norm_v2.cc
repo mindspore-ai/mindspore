@@ -53,11 +53,11 @@ constexpr size_t InstanceNormV2InVarianceIndex = kInputIndex4;
 
 void InstanceNormV2InputShapeCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_shape_ptr = input_args[InstanceNormV2InXIndex]->BuildShape();
-  auto gamma_shape_ptr = input_args[InstanceNormV2InGammaIndex]->BuildShape();
-  auto beta_shape_ptr = input_args[InstanceNormV2InBetaIndex]->BuildShape();
-  auto mean_shape_ptr = input_args[InstanceNormV2InMeanIndex]->BuildShape();
-  auto variance_shape_ptr = input_args[InstanceNormV2InVarianceIndex]->BuildShape();
+  auto x_shape_ptr = input_args[InstanceNormV2InXIndex]->GetShape();
+  auto gamma_shape_ptr = input_args[InstanceNormV2InGammaIndex]->GetShape();
+  auto beta_shape_ptr = input_args[InstanceNormV2InBetaIndex]->GetShape();
+  auto mean_shape_ptr = input_args[InstanceNormV2InMeanIndex]->GetShape();
+  auto variance_shape_ptr = input_args[InstanceNormV2InVarianceIndex]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("x", x_shape, op_name);
 
@@ -95,9 +95,9 @@ void InstanceNormV2InputShapeCheck(const PrimitivePtr &primitive, const std::vec
 abstract::TupleShapePtr InstanceNormV2InferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const auto input_x_shape_ptr = input_args[InstanceNormV2InXIndex]->BuildShape();
-  const auto mean_shape_ptr = input_args[InstanceNormV2InMeanIndex]->BuildShape();
-  const auto var_shape_ptr = input_args[InstanceNormV2InVarianceIndex]->BuildShape();
+  const auto input_x_shape_ptr = input_args[InstanceNormV2InXIndex]->GetShape();
+  const auto mean_shape_ptr = input_args[InstanceNormV2InMeanIndex]->GetShape();
+  const auto var_shape_ptr = input_args[InstanceNormV2InVarianceIndex]->GetShape();
   if (input_x_shape_ptr->IsDynamic() || mean_shape_ptr->IsDynamic() || var_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{input_x_shape_ptr, mean_shape_ptr, var_shape_ptr});

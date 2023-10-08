@@ -46,8 +46,8 @@ abstract::ShapePtr GerInferShape(const PrimitivePtr &primitive, const std::vecto
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto first_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto second_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto first_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto second_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(first_input_shape) || IsDynamicRank(second_input_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }

@@ -49,14 +49,14 @@ abstract::TupleShapePtr ApplyAdamWithAmsgradV2InferShape(const PrimitivePtr &pri
     MS_EXCEPTION_IF_NULL(item);
   }
   auto prim_name = primitive->name();
-  auto var_shape = input_args[0]->BuildShape();
-  auto m_shape = input_args[1]->BuildShape();
-  auto v_shape = input_args[2]->BuildShape();
-  auto vhat_shape = input_args[3]->BuildShape();
-  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
-  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
-  auto grad_shape = input_args[10]->BuildShape();
+  auto var_shape = input_args[0]->GetShape();
+  auto m_shape = input_args[1]->GetShape();
+  auto v_shape = input_args[2]->GetShape();
+  auto vhat_shape = input_args[3]->GetShape();
+  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
+  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShape())[kShape];
+  auto grad_shape = input_args[10]->GetShape();
 
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {

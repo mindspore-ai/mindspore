@@ -44,7 +44,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
                                            prim_name);
 
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());
+    auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape());
     auto shape_i = shape_map_i[kShape];
     if (IsDynamicRank(shape_i)) {
       return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -52,7 +52,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
   auto element0_rank = element0_shape.size();
   if (element0_rank < 1) {
     MS_EXCEPTION(ValueError) << "For [" << prim_name
@@ -62,7 +62,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   auto axis = 0;
   int64_t all_shp = static_cast<int64_t>(element0_shape[IntToSize(axis)]);
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_i = elements[i]->BuildShape();
+    auto shape_i = elements[i]->GetShape();
     if (shape_i->IsDynamic()) {
       auto ret_shape = element0_shape;
       ret_shape[IntToSize(axis)] = -1;
@@ -70,7 +70,7 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
     }
   }
   for (size_t i = 1; i < elements.size(); ++i) {
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("x" + std::to_string(i) + ".shape[0]", elementi_shape[0], kEqual, 1,
                                              prim_name);
     if (elementi_shape.size() != element0_shape.size()) {

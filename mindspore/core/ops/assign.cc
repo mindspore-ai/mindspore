@@ -47,8 +47,8 @@ MIND_API_OPERATOR_IMPL(Assign, BaseOperator);
 abstract::ShapePtr AssignInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto variable_shape_ptr = input_args[0]->BuildShape();
-  auto value_shape_ptr = input_args[1]->BuildShape();
+  auto variable_shape_ptr = input_args[0]->GetShape();
+  auto value_shape_ptr = input_args[1]->GetShape();
   auto variable_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variable_shape_ptr)[kShape];
   auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_shape_ptr)[kShape];
   auto shape_element = variable_shape_ptr->cast<abstract::ShapePtr>();

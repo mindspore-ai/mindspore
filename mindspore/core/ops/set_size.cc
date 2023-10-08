@@ -31,9 +31,9 @@ namespace {
 abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto set_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto set_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto set_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto set_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(set_indices_shape) || IsDynamicRank(set_values_shape) || IsDynamicRank(set_shape_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -69,7 +69,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     const std::set<TypePtr> output_size_valid_types = {kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->BuildType(),
                                                      output_size_valid_types, op_name);
-    auto set_shape_value = set_shape_tensor->BuildValue();
+    auto set_shape_value = set_shape_tensor->GetValue();
     MS_EXCEPTION_IF_NULL(set_shape_value);
     if (!set_shape_value->isa<None>() && !set_shape_value->isa<ValueAny>()) {
       auto set_shape_value_tensor = set_shape_value->cast<tensor::TensorPtr>();
@@ -82,7 +82,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
     }
   }
   if (!gen_value_succ) {
-    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
     ShapeVector dynamic_shape(dense_size[0] - 1);
     ShapeVector max_shape(dense_size[0] - 1);
     auto max_length_ptr = primitive->GetAttr("max_length");
@@ -96,7 +96,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   } else {
     ShapeVector output_shape;
     auto set_values_index = 2;
-    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+    auto dense_size = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
     if (dense_size.size() == 1 && dense_size[0] < set_values_index) {
       output_shape.push_back(1);
     } else {

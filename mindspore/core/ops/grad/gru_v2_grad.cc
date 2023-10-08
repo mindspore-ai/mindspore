@@ -103,9 +103,9 @@ class GruGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNum,
                                              prim_name);
-    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kYIdx]->BuildShape())[kShape];
-    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDyIdx]->BuildShape())[kShape];
-    auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDhyIdx]->BuildShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kYIdx]->GetShape())[kShape];
+    auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDyIdx]->GetShape())[kShape];
+    auto dhy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDhyIdx]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("dhy_shape size", SizeToLong(dhy_shape.size()), kEqual, kShapeSize,
                                              prim_name);
     (void)CheckAndConvertUtils::CheckInteger("dy_shape size", SizeToLong(dy_shape.size()), kEqual, kShapeSize,

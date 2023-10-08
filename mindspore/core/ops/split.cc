@@ -47,8 +47,8 @@ namespace {
 abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto shape = input_args[0]->BuildShape();
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+  auto shape = input_args[0]->GetShape();
   auto x_shape_ptr = shape->cast<abstract::ShapePtr>();
   auto x_shape = shape_map[kShape];
 

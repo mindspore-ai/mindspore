@@ -136,7 +136,7 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
   if (!shape_abstract->isa<abstract::AbstractTensor>()) {
     MS_LOG(EXCEPTION) << "For Resize, the inputs[1] must be a tensor, but got: " << shape_abstract->ToString() << ".";
   }
-  auto shape_value = shape_abstract->BuildValue();
+  auto shape_value = shape_abstract->GetValue();
   if (!shape_value->isa<tensor::Tensor>()) {
     *new_height = -1;
     *new_width = -1;
@@ -149,7 +149,7 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
     *new_width = -1;
     return;
   }
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_abstract->BuildShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_abstract->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("size dimension", SizeToLong(size_shape.size()), kEqual, 1,
                                            primitive->name());
   auto tensor_type = input_tensor->Dtype();
@@ -182,7 +182,7 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
 
 abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> output_shape(4, -1);
-  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(images_shape)) {
     output_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(output_shape);
@@ -203,7 +203,7 @@ abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::ve
     new_width = GetValue<int64_t>(primitive->GetAttr(kNewWidth));
   }
   if (input_args.size() == kResizeInputSize) {
-    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+    auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     if (IsDynamic(size_shape)) {
       return std::make_shared<abstract::Shape>(output_shape);
     }

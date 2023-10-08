@@ -48,8 +48,8 @@ namespace {
 abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &primitive,
                                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   int64_t long_kdim1 = static_cast<int64_t>(kDim1);
   int64_t long_kdim2 = static_cast<int64_t>(kDim2);
   int64_t long_kdim4 = static_cast<int64_t>(kDim4);
@@ -74,7 +74,7 @@ abstract::ShapePtr ResizeNearestNeighborV2GradInferShape(const PrimitivePtr &pri
     y_shape[kInputIndex1] = grads_shape[kInputIndex1];
   }
 
-  auto size_ptr = input_args[kInputIndex1]->BuildValue();
+  auto size_ptr = input_args[kInputIndex1]->GetValue();
   MS_EXCEPTION_IF_NULL(size_ptr);
   if (IsValueKnown(size_ptr)) {
     auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);

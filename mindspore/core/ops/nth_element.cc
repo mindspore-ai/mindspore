@@ -67,7 +67,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
     auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("n shape", SizeToLong(n_shape.size()), kEqual, 0, primitive->name());
     MS_EXCEPTION_IF_NULL(n);
-    auto n_value_ptr = n->BuildValue();
+    auto n_value_ptr = n->GetValue();
     if (n_value_ptr->isa<tensor::Tensor>()) {
       MS_EXCEPTION_IF_NULL(n_value_ptr);
       auto n_tensor = n_value_ptr->cast<tensor::TensorPtr>();
@@ -76,7 +76,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
     }
   } else if (input_args[1]->isa<abstract::AbstractScalar>()) {
     auto n = input_args[1]->cast<abstract::AbstractScalarPtr>();
-    auto n_value_ptr = n->BuildValue();
+    auto n_value_ptr = n->GetValue();
     if (!n_value_ptr->isa<ValueAny>()) {
       if (!n_value_ptr->isa<Int64Imm>()) {
         MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n"

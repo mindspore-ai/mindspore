@@ -43,8 +43,7 @@ class SparseSliceInfer : public abstract::OpInferBase {
         std::vector<abstract::BaseShapePtr>{y_indices_shape, y_value_shape, y_shape_shape});
     }
 
-    auto indices_shape =
-      CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     int64_t nnz = indices_shape[0];
     int64_t rank = indices_shape[1];
 
@@ -84,11 +83,11 @@ class SparseSliceInfer : public abstract::OpInferBase {
  private:
   static bool SparseSliceCheckShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
     auto op_name = primitive->name();
-    auto indices_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto values_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto shape_shape_ptr = input_args[kInputIndex2]->BuildShape();
-    auto start_shape_ptr = input_args[kInputIndex3]->BuildShape();
-    auto size_shape_ptr = input_args[kInputIndex4]->BuildShape();
+    auto indices_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto values_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto shape_shape_ptr = input_args[kInputIndex2]->GetShape();
+    auto start_shape_ptr = input_args[kInputIndex3]->GetShape();
+    auto size_shape_ptr = input_args[kInputIndex4]->GetShape();
 
     auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
     auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(values_shape_ptr)[kShape];

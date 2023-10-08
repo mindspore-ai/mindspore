@@ -45,8 +45,8 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto anchor_box = input_args[0]->BuildShape();
-  auto deltas = input_args[1]->BuildShape();
+  auto anchor_box = input_args[0]->GetShape();
+  auto deltas = input_args[1]->GetShape();
 
   MS_EXCEPTION_IF_NULL(anchor_box);
   MS_EXCEPTION_IF_NULL(deltas);
@@ -54,8 +54,8 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("arg size", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
 
-  auto anchor_box_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto deltas_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto anchor_box_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto deltas_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
 
   const int64_t kShapeSize = 2;
   (void)CheckAndConvertUtils::CheckInteger("anchor box rank", SizeToLong(anchor_box_shape.size()), kEqual, kShapeSize,

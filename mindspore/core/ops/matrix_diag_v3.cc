@@ -32,18 +32,18 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsValueUnKnown(const AbstractBasePtr &arg) {
-  if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
+  if (!arg->isa<abstract::AbstractTensor>() || !arg->GetValue()->isa<tensor::Tensor>()) {
     return true;
   }
   return false;
 }
 
 int64_t GetTensorValue(const AbstractBasePtr &arg, const std::string &prim_name, const std::string &arg_name) {
-  if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
+  if (!arg->isa<abstract::AbstractTensor>() || !arg->GetValue()->isa<tensor::Tensor>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
   constexpr int64_t number_one = 1;
-  auto value_ptr = arg->BuildValue();
+  auto value_ptr = arg->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto tensor_val = CheckAndConvertUtils::CheckTensorIntValue(arg_name, value_ptr, prim_name);
   int64_t tensor_val_size = SizeToLong(tensor_val.size());
@@ -114,11 +114,11 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto row_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto col_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto row_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto col_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
 
   auto x_rank = SizeToLong(x_shape.size());
   auto k_rank = SizeToLong(k_shape.size());
@@ -154,7 +154,7 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
     ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    auto k_val_ptr = input_args[kInputIndex1]->BuildValue();
+    auto k_val_ptr = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(k_val_ptr);
     auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
     int64_t k_val_size = SizeToLong(k_val.size());

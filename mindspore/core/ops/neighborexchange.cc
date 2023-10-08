@@ -138,7 +138,7 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
     std::vector<int64_t> send_shape = GetValue<std::vector<int64_t>>(send_shape_value);
     // get input tensor shape
     MS_EXCEPTION_IF_NULL(abstract_element[i]);
-    auto arg_base_shape = abstract_element[i]->BuildShape();
+    auto arg_base_shape = abstract_element[i]->GetShape();
     MS_EXCEPTION_IF_NULL(arg_base_shape);
     auto shape = arg_base_shape->cast<abstract::ShapePtr>();
     if (shape == nullptr) {

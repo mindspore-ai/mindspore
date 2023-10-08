@@ -51,19 +51,19 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
   auto prim_name = primitive->name();
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto m_shape = input_args[kInputIndex1]->BuildShape();
-  auto v_shape = input_args[kInputIndex2]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto m_shape = input_args[kInputIndex1]->GetShape();
+  auto v_shape = input_args[kInputIndex2]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto m_shape_ptr = m_shape->cast<abstract::ShapePtr>();
   auto v_shape_ptr = v_shape->cast<abstract::ShapePtr>();
   auto beta1_power_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto beta1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto beta2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
-  auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  auto grad_shape = input_args[kInputIndex8]->BuildShape();
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto beta1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto beta2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
+  auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
+  auto grad_shape = input_args[kInputIndex8]->GetShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
 
   int64_t batch_rank = 0;

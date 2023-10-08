@@ -300,8 +300,8 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
                               << " and y: " << elem_y->ToString();
     }
 
-    auto x_value = elem_x->BuildValue();
-    auto y_value = elem_y->BuildValue();
+    auto x_value = elem_x->GetValue();
+    auto y_value = elem_y->GetValue();
     if (x_value == kValueAny || y_value == kValueAny) {
       return nullptr;
     }

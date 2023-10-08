@@ -50,14 +50,14 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual,
                                              SizeToLong(kInputNum), prim_name);
-    auto uint_crd_f_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto uint_crd_f_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto uint_crd_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(uint_crd_f_shape_ptr)[kShape];
     if (!IsDynamic(uint_crd_f_shape)) {
       (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape", SizeToLong(uint_crd_f_shape.size()), kEqual, kTwo,
                                                prim_name);
       (void)CheckAndConvertUtils::CheckInteger("uint_crd_f_shape[1]", uint_crd_f_shape[1], kEqual, kThree, prim_name);
     }
-    auto scaler_f_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto scaler_f_shape_ptr = input_args[kInputIndex1]->GetShape();
     auto scaler_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(scaler_f_shape_ptr)[kShape];
     (void)CheckAndConvertUtils::CheckInteger("scaler_f_shape", SizeToLong(scaler_f_shape.size()), kEqual, 1, prim_name);
     if (!IsDynamic(scaler_f_shape)) {
@@ -65,7 +65,7 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
     }
     auto angle_numbers = GetValue<int64_t>(primitive->GetAttr("angle_numbers"));
     for (size_t input_index = 2; input_index < kInputNum; ++input_index) {
-      auto cur_input_shape_ptr = input_args[input_index]->BuildShape();
+      auto cur_input_shape_ptr = input_args[input_index]->GetShape();
       auto cur_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(cur_input_shape_ptr)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("input_dim", SizeToLong(cur_input_shape.size()), kEqual, 1, prim_name);
       if (!IsDynamic(cur_input_shape)) {

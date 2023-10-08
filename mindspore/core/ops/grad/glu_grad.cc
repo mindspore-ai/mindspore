@@ -43,9 +43,9 @@ namespace {
 abstract::ShapePtr GluGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto grad = input_args[0]->BuildShape();
+  auto grad = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(grad);
-  auto x = input_args[1]->BuildShape();
+  auto x = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto x_shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape_element);

@@ -44,8 +44,8 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_LOG(INFO) << "For '" << op_name << "', it's now doing infer shape.";
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, op_name);
-    auto logits_shape = input_args[0]->BuildShape();
-    auto label_shape = input_args[1]->BuildShape();
+    auto logits_shape = input_args[0]->GetShape();
+    auto label_shape = input_args[1]->GetShape();
     auto logits_shape_ptr = logits_shape->cast<abstract::ShapePtr>();
     auto label_shape_ptr = label_shape->cast<abstract::ShapePtr>();
     auto logits_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape)[kShape];

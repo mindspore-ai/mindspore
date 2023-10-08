@@ -75,7 +75,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got : " << elem->ToString();
     }
 
-    auto x_valueptr = elem->BuildValue();
+    auto x_valueptr = elem->GetValue();
     if (x_valueptr == kValueAny) {
       return nullptr;
     }

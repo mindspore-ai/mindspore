@@ -47,8 +47,8 @@ constexpr int64_t kDeformableOffsetsGradInputSize = 3;
 
 std::vector<abstract::BaseShapePtr> DeformableOffsetsGradInferShape(const PrimitivePtr &,
                                                                     const std::vector<AbstractBasePtr> &input_args) {
-  auto dx_shape = input_args[kDeformableOffsetsGradInputInputIndex]->BuildShape();
-  auto d_offset_mask_shape = input_args[kDeformableOffsetsGradInputOffsetsIndex]->BuildShape();
+  auto dx_shape = input_args[kDeformableOffsetsGradInputInputIndex]->GetShape();
+  auto d_offset_mask_shape = input_args[kDeformableOffsetsGradInputOffsetsIndex]->GetShape();
   return {dx_shape, d_offset_mask_shape};
 }
 

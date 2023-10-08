@@ -44,10 +44,10 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
 
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto accum_shape = input_args[kInputIndex1]->BuildShape();
-  auto accum_update_shape = input_args[kInputIndex2]->BuildShape();
-  auto grad_shape = input_args[kInputIndex6]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto accum_shape = input_args[kInputIndex1]->GetShape();
+  auto accum_update_shape = input_args[kInputIndex2]->GetShape();
+  auto grad_shape = input_args[kInputIndex6]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto accum_shape_ptr = accum_shape->cast<abstract::ShapePtr>();
   auto accum_update_shape_ptr = accum_update_shape->cast<abstract::ShapePtr>();

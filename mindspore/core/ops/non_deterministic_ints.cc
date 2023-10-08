@@ -47,7 +47,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   const int64_t kDimOne = 1;
   const uint32_t kMinShapeDim = 2;
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("shape's rank", SizeToLong(shape_shape.size()), kEqual, kDimOne, prim_name);
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);

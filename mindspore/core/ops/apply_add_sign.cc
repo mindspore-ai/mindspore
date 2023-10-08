@@ -51,8 +51,8 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_shape = input_args[kInputIndex0]->BuildShape();
-  auto m_shape = input_args[kInputIndex1]->BuildShape();
+  auto var_shape = input_args[kInputIndex0]->GetShape();
+  auto m_shape = input_args[kInputIndex1]->GetShape();
   auto var_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape)[kShape];
   auto m_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(m_shape)[kShape];
   if (IsDynamicRank(var_shape_map) || IsDynamicRank(m_shape_map)) {
@@ -60,12 +60,11 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
     abstract::ShapePtr m_shape_dyn = std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_dyn, m_shape_dyn});
   }
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto sign_decay_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto grad_shape = input_args[kInputIndex6]->BuildShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto sign_decay_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto grad_shape = input_args[kInputIndex6]->GetShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(var_shape_ptr);
   auto m_shape_ptr = m_shape->cast<abstract::ShapePtr>();

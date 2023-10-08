@@ -48,8 +48,8 @@ abstract::ShapePtr LeftShiftInferShape(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t max_dim = 8;
-  auto in_shape_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto in_shape_y = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto in_shape_x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto in_shape_y = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("The dimension of LeftShift input", SizeToLong(in_shape_x.size()), kLessThan,
                                            max_dim, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("The dimension of LeftShift input", SizeToLong(in_shape_y.size()), kLessThan,

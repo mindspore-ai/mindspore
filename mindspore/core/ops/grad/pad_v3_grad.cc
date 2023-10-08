@@ -37,7 +37,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   constexpr size_t paddings_pos_3 = 3;
   constexpr size_t paddings_pos_4 = 4;
   constexpr size_t paddings_pos_5 = 5;
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
   // support dynamic rank
   if (x_shape_ptr->IsDimUnknown()) {
@@ -54,21 +54,21 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> paddings_arg;
   auto padding_type = input_args[kInputIndex1]->BuildType();
   if (padding_type->isa<TensorType>()) {
-    auto paddings_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto paddings_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
     if (paddings_shape_ptr->IsDynamic()) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
     auto paddings = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(paddings);
-    auto paddings_value = paddings->BuildValue();
+    auto paddings_value = paddings->GetValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
     if (!paddings_value->isa<tensor::Tensor>()) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }
     paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name);
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
-    auto value = input_args[1]->BuildValue();
+    auto value = input_args[1]->GetValue();
     if (IsValueKnown(value)) {
       paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
     } else {

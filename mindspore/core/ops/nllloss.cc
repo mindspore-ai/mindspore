@@ -57,13 +57,13 @@ class NLLLossInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-    auto logits_shape_ptr = input_args[kInputIndex0]->BuildShape();
+    auto logits_shape_ptr = input_args[kInputIndex0]->GetShape();
     auto logits_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape_ptr)[kShape];
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-    auto target_shape_ptr = input_args[kInputIndex1]->BuildShape();
+    auto target_shape_ptr = input_args[kInputIndex1]->GetShape();
     auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(target_shape_ptr)[kShape];
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
-    auto weight_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto weight_shape_ptr = input_args[kInputIndex2]->GetShape();
     auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(weight_shape_ptr)[kShape];
 
     (void)CheckAndConvertUtils::CheckInteger("rank of target", SizeToLong(target_shape.size()), kEqual, 1, prim_name);

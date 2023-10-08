@@ -118,8 +118,8 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   for (const auto &arg : input_args) {
     MS_EXCEPTION_IF_NULL(arg);
   }
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
+  auto offsets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto x_shape = x_shape_map[kShape];
   auto offsets_shape = offsets_shape_map[kShape];
   if (IsDynamicRank(x_shape) || IsDynamicRank(offsets_shape)) {

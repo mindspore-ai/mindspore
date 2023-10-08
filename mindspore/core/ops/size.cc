@@ -54,7 +54,7 @@ class SizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', input must be a Tensor, but got: " << input_type->ToString() << ".";
     }
-    auto input_shape_ptr = input_args[0]->BuildShape();
+    auto input_shape_ptr = input_args[0]->GetShape();
     MS_EXCEPTION_IF_NULL(input_shape_ptr);
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
     auto input_shape = shape_map[kShape];

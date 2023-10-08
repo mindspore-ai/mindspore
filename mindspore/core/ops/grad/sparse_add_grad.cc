@@ -78,22 +78,22 @@ class MIND_API SparseAddGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto name = primitive->name();
 
-    auto val_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto val_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto val_grad_shape_dyn_rank = IsDynamicRank(val_grad_shape[kShape]);
     CheckSparseAddGradShape(val_grad_shape[kShape].size(), kValuesShapeSize, "backprop_val_grad", name,
                             val_grad_shape_dyn_rank);
 
-    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex1]->BuildShape());
+    auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex1]->GetShape());
     auto dx1_shape = x1_shape[kShape];
     auto dx1_shape_dyn_rank = IsDynamicRank(dx1_shape);
     CheckSparseAddGradShape(dx1_shape.size(), kIndicesShapeSize, "x1_indices", name, dx1_shape_dyn_rank);
 
-    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex2]->BuildShape());
+    auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex2]->GetShape());
     ShapeVector dx2_shape = x2_shape[kShape];
     auto dx2_shape_dyn_rank = IsDynamicRank(dx2_shape);
     CheckSparseAddGradShape(dx2_shape.size(), kIndicesShapeSize, "x2_indices", name, dx2_shape_dyn_rank);
 
-    auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->BuildShape());
+    auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->GetShape());
     auto sum_shape_dyn_rank = IsDynamicRank(sum_shape[kShape]);
     CheckSparseAddGradShape(sum_shape[kShape].size(), kIndicesShapeSize, "sum_indices", name, sum_shape_dyn_rank);
     if (!sum_shape_dyn_rank && !val_grad_shape_dyn_rank && sum_shape[kShape][0] >= 0 &&

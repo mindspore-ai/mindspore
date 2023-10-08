@@ -72,7 +72,7 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
   size_t element_rank = 0;
   for (size_t i = 0; i < elements.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements[i]);
-    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
+    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
     if (IsDynamicRank(input_shape_tmp)) {
       continue;
     }

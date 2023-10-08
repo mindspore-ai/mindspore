@@ -104,11 +104,11 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   const int64_t kDimNum = 2;
   std::ostringstream buffer;
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto x_shape = x_shape_map[kShape];
-  auto lu_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto lu_data_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto lu_data_shape = lu_data_shape_map[kShape];
-  auto lu_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
+  auto lu_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape());
   auto lu_pivots_shape = lu_pivots_shape_map[kShape];
 
   if (IsDynamicRank(x_shape) || IsDynamicRank(lu_data_shape)) {

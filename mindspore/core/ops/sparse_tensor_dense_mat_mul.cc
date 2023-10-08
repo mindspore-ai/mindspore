@@ -130,10 +130,10 @@ void SparseTensorDenseMatmulCheckShape(const std::string &prim_name, const bool 
 
 void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int64_t *shape_ptr,
                                                const ShapeVector &shape_shape, const AbstractBasePtr &x1_shape) {
-  if (x1_shape->isa<abstract::AbstractTensor>() && x1_shape->BuildValue()->isa<tensor::Tensor>()) {
+  if (x1_shape->isa<abstract::AbstractTensor>() && x1_shape->GetValue()->isa<tensor::Tensor>()) {
     auto a_shape = x1_shape->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(a_shape);
-    auto a_shape_value = a_shape->BuildValue();
+    auto a_shape_value = a_shape->GetValue();
     MS_EXCEPTION_IF_NULL(a_shape_value);
     auto a_shape_tensor = a_shape_value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(a_shape_tensor);
@@ -152,7 +152,7 @@ void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int
       }
     }
   } else if (IsIdentidityOrSubclass(x1_shape->BuildType(), kTuple)) {
-    auto value_tuple = GetValue<std::vector<int64_t>>(x1_shape->BuildValue());
+    auto value_tuple = GetValue<std::vector<int64_t>>(x1_shape->GetValue());
     for (size_t i = 0; i < kDimensionTwo; ++i) {
       shape_ptr[i] = value_tuple[i];
     }
@@ -162,12 +162,12 @@ void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int
 abstract::ShapePtr SparseTensorDenseMatmulInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
   auto x1_shape = input_args[2];
-  auto x1_shape_value = x1_shape->BuildValue();
+  auto x1_shape_value = x1_shape->GetValue();
   std::string info;
   if (!checkContainer(input_args, &info)) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << info;

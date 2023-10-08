@@ -55,7 +55,7 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
     }
-    if (!has_variable && element->BuildValue() == kValueAny) {
+    if (!has_variable && element->GetValue()->ContainsValueAny()) {
       has_variable = true;
     }
   }
@@ -122,7 +122,7 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   std::vector<int64_t> values;
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
     auto element = args_spec_list[i];
-    auto element_val = element->BuildValue();
+    auto element_val = element->GetValue();
     if (!element_val->isa<Int64Imm>() && !element_val->isa<Int32Imm>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
@@ -140,7 +140,7 @@ class MIND_API AGMakeRangeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferImplMakeRange(primitive, input_args)->BuildShape();
+    return InferImplMakeRange(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

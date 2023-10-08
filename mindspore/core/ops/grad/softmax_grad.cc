@@ -48,7 +48,7 @@ abstract::ShapePtr SoftmaxGradInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
 
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto in_shape = shape_map[kShape];
   if (!IsDynamicRank(in_shape)) {
     auto rank = SizeToLong(in_shape.size());

@@ -54,7 +54,7 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsGradInferShape(const PrimitivePt
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  auto x_ptr = x->BuildShape()->cast<abstract::ShapePtr>();
+  auto x_ptr = x->GetShape()->cast<abstract::ShapePtr>();
   abstract::CheckShapeSame(prim_name, x, y);
   abstract::CheckShapeSame(prim_name, x, dout);
   MS_EXCEPTION_IF_NULL(x_ptr);

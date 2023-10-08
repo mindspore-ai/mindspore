@@ -60,13 +60,12 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int x_indices_shape_size = 2;
-  auto x_indices_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto x_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto x_indices_shape_BaseShapePtr = input_args[kInputIndex0]->BuildShape();
-  auto x_values_shape_BaseShapePtr = input_args[kInputIndex1]->BuildShape();
-  auto x_shape_shape_BaseShapePtr = input_args[kInputIndex2]->BuildShape();
+  auto x_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto x_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto x_indices_shape_BaseShapePtr = input_args[kInputIndex0]->GetShape();
+  auto x_values_shape_BaseShapePtr = input_args[kInputIndex1]->GetShape();
+  auto x_shape_shape_BaseShapePtr = input_args[kInputIndex2]->GetShape();
   auto x_indices_shape_ptr = x_indices_shape_BaseShapePtr->cast<abstract::ShapePtr>();
   auto x_values_shape_ptr = x_values_shape_BaseShapePtr->cast<abstract::ShapePtr>();
   auto x_shape_shape_ptr = x_shape_shape_BaseShapePtr->cast<abstract::ShapePtr>();
@@ -107,7 +106,7 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
     y_indices_max_shape = {1, 1};
     y_values_max_shape = {1};
   }
-  auto y_shape = input_args[2]->BuildShape();
+  auto y_shape = input_args[2]->GetShape();
   MS_EXCEPTION_IF_NULL(y_shape);
   abstract::ShapePtr y_shape_shape_list = y_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(y_shape_shape_list);

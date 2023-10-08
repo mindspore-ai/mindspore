@@ -99,7 +99,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
       auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-      attr = type_abs->BuildValue();
+      attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
@@ -128,7 +128,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     if (!elem->isa<abstract::AbstractScalar>()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got: " << elem->ToString();
     }
-    auto elem_value = elem->BuildValue();
+    auto elem_value = elem->GetValue();
     if (elem_value == kValueAny) {
       return nullptr;
     }

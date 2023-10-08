@@ -36,7 +36,7 @@ bool TopK::get_sorted() const {
 namespace {
 abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     abstract::BaseShapePtr out_shape_ptr =
@@ -44,7 +44,7 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
   }
   int64_t k_v = 0;
-  auto input1_value = input_args[kInputIndex1]->BuildValue();
+  auto input1_value = input_args[kInputIndex1]->GetValue();
   if ((IsDynamicRank(x_shape)) || !IsValueKnown(input1_value)) {
     auto unknown_shape_p = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
     return std::make_shared<abstract::TupleShape>(

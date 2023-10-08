@@ -87,8 +87,8 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
                               << " and y: " << y_elem->ToString();
     }
 
-    auto x_value = x_elem->BuildValue();
-    auto y_value = y_elem->BuildValue();
+    auto x_value = x_elem->GetValue();
+    auto y_value = y_elem->GetValue();
     if (x_value == kValueAny || y_value == kValueAny) {
       return nullptr;
     }

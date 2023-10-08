@@ -67,9 +67,9 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 3;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto gamma_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto beta_shape_ptr = input_args[kInputIndex2]->BuildShape();
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto gamma_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto beta_shape_ptr = input_args[kInputIndex2]->GetShape();
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
     auto gamma_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(gamma_shape_ptr)[kShape];
     auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(beta_shape_ptr)[kShape];

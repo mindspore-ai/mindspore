@@ -50,7 +50,7 @@ bool CumSum::get_reverse() const {
 abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
   if (x_shape_ptr->IsDynamic()) {
     return x_shape_ptr->cast<abstract::ShapePtr>();
   }
@@ -65,7 +65,7 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value_ptr = axis_ptr->BuildValue();
+    auto axis_value_ptr = axis_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     if (axis_value_ptr->isa<tensor::Tensor>()) {
       auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
@@ -85,7 +85,7 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value = axis_ptr->BuildValue();
+    auto axis_value = axis_ptr->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value);
     if (IsValueKnown(axis_value)) {
       axis = GetValue<int64_t>(axis_value);

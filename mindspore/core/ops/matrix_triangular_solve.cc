@@ -67,8 +67,8 @@ abstract::ShapePtr MatrixTriangularSolveInferShape(const PrimitivePtr &primitive
   auto prim_name = primitive->name();
   const int64_t kTwo = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, prim_name);
-  auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto matrix_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto rhs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (IsDynamicRank(matrix_shape) || IsDynamicRank(rhs_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }

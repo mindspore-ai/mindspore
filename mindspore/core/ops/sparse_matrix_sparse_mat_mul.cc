@@ -38,25 +38,25 @@ void SparseMatrixSparseMatMulCheckInteger(const PrimitivePtr &primitive,
   const int kOne = 1;
 
   std::vector<int64_t> x1_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   std::vector<int64_t> x1_batch_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> x1_row_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   std::vector<int64_t> x1_col_indices =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
   std::vector<int64_t> x1_values =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
   std::vector<int64_t> x2_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
   std::vector<int64_t> x2_batch_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
   std::vector<int64_t> x2_row_pointer =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
   std::vector<int64_t> x2_col_indices =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->GetShape())[kShape];
   std::vector<int64_t> x2_values =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckInteger("rank of x1_dense_shape", SizeToLong(x1_dense_shape.size()), kEqual, kOne,
                                            prim_name);
@@ -81,10 +81,10 @@ void SparseMatrixSparseMatMulCheckInteger(const PrimitivePtr &primitive,
 abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &primitive,
                                                            const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> x1_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   const int64_t rank_x1 = x1_dense_shape[0];
   std::vector<int64_t> x2_dense_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
   const int64_t rank_x2 = x2_dense_shape[0];
   if (rank_x1 != rank_x2) {
     MS_EXCEPTION(ValueError)
@@ -103,9 +103,9 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
   }
 
   std::vector<int64_t> x1_batch_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   std::vector<int64_t> x2_batch_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
 
   if (x1_batch_shape[0] != x2_batch_shape[0]) {
     MS_EXCEPTION(ValueError) << "For SparseMatrixSparseMatMul, x1_batch_shape[0] and x2_batch_shape[0] must be the "
@@ -128,11 +128,11 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
   y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_max);
   y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_max);
 
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->BuildValue()->isa<ValueAny>() &&
-      !input_args[0]->BuildValue()->isa<None>()) {
+  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->GetValue()->isa<ValueAny>() &&
+      !input_args[0]->GetValue()->isa<None>()) {
     auto dense_shape_value = input_args[0]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(dense_shape_value);
-    auto dense_shape_value_ptr = dense_shape_value->BuildValue();
+    auto dense_shape_value_ptr = dense_shape_value->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value_ptr);
     auto dense_shape_value_ptr_tensor =
       CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value_ptr, primitive->name());

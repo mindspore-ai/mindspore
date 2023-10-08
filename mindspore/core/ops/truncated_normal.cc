@@ -56,7 +56,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";
   }
-  auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto shape_input = shape_input_map[kShape];
   if (IsDynamicRank(shape_input)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
@@ -68,7 +68,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
   auto input_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
+  auto input_shape_value_ptr = input_shape->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
   auto input_type = input_args[0]->BuildType();
@@ -78,12 +78,12 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   auto input_type_element = input_type_id->element();
   MS_EXCEPTION_IF_NULL(input_type_element);
   auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
-  if (!input_args[0]->BuildValue()->isa<ValueAny>() && !input_args[0]->BuildValue()->isa<None>()) {
+  if (!input_args[0]->GetValue()->isa<ValueAny>() && !input_args[0]->GetValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
     int64_t shape_m = 1;
     if (input_type_element->type_id() == kNumberTypeInt32) {

@@ -63,8 +63,7 @@ AbstractBasePtr SliceGradInferInner(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(end_abs);
   auto step_abs = input_args[step_index];
   MS_EXCEPTION_IF_NULL(step_abs);
-  if (start_abs->BuildValue() != kValueAny && end_abs->BuildValue() != kValueAny &&
-      step_abs->BuildValue() != kValueAny) {
+  if (start_abs->GetValue() != kValueAny && end_abs->GetValue() != kValueAny && step_abs->GetValue() != kValueAny) {
     return seq_abs->Clone();
   }
   auto ret = seq_abs->Clone()->cast<abstract::AbstractSequencePtr>();
@@ -78,7 +77,7 @@ class SequenceSliceGradInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceGradInferInner(primitive, input_args)->BuildShape();
+    return SliceGradInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

@@ -335,7 +335,7 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
                              size_t *slice_len, bool *dyn_tuple) {
   bool is_dynamic = false;
   MS_EXCEPTION_IF_NULL(input_arg);
-  auto input_value = input_arg->BuildValue();
+  auto input_value = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(input_value);
   if (input_arg->isa<abstract::AbstractTuple>()) {
     if (IsValueKnown(input_value)) {
@@ -391,7 +391,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const size_t x_index = 0;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->GetShape());
   auto x_shape = shape_map[kShape];
   if (x_shape.size() == 0) {
     MS_EXCEPTION(TypeError) << "For 'StridedSlice', input can not be a scalar.";

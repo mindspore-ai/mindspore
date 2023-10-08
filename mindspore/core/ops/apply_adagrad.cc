@@ -54,13 +54,13 @@ class ApplyAdagradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kInputNum = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-    auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-    auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
-    auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
-    auto grad_shape_ptr = input_args[kInputIndex3]->BuildShape();
+    auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+    auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+    auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+    auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
+    auto accum_shape_ptr = input_args[kInputIndex1]->GetShape();
+    auto grad_shape_ptr = input_args[kInputIndex3]->GetShape();
     if (IsDynamicRank(var_shape) || IsDynamicRank(accum_shape)) {
       auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(

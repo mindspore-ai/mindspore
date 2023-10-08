@@ -61,15 +61,15 @@ class CropAndResizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
 
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(),
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [x] has no abstract:Shape.");
-    auto x_shape = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>()->shape();
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(),
+    auto x_shape = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [boxes] has no abstract:Shape.");
-    auto box_shape = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>()->shape();
-    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
+    auto box_shape = input_args[kInputIndex1]->GetShape()->cast<abstract::ShapePtr>()->shape();
+    MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->GetShape()->isa<abstract::Shape>(),
                                "For primitive[" + prim_name + "], the [box_index] has no abstract:Shape.");
-    auto box_index_shape = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+    auto box_index_shape = input_args[kInputIndex2]->GetShape()->cast<abstract::ShapePtr>()->shape();
     if (IsDynamicRank(x_shape) || IsDynamicRank(box_shape) || IsDynamicRank(box_index_shape)) {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
     }
@@ -87,7 +87,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     auto crop_size_type = input_args[kInputIndex3]->BuildType();
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
                                "For primitive[" + prim_name + "], the [crop_size] typeid is a nullptr.");
-    auto value_ptr = input_args[kInputIndex3]->BuildValue();
+    auto value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
     if (!IsValueKnown(value_ptr)) {
       return std::make_shared<abstract::Shape>(

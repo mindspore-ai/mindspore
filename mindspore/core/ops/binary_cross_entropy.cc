@@ -52,10 +52,10 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     const int64_t input_num = SizeToLong(input_args.size());
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
 
-    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    auto x_shape_BaseShapePtr = input_args[kInputIndex0]->BuildShape();
-    auto y_shape_BaseShapePtr = input_args[kInputIndex1]->BuildShape();
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+    auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+    auto x_shape_BaseShapePtr = input_args[kInputIndex0]->GetShape();
+    auto y_shape_BaseShapePtr = input_args[kInputIndex1]->GetShape();
     auto x_shape_ptr = x_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     auto y_shape_ptr = y_shape_BaseShapePtr->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
@@ -65,9 +65,8 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     }
 
     if (input_num > kInputNum && input_args[kInputIndex2]->BuildType()->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-      auto weight_shape_BaseShapePtr = input_args[kInputIndex2]->BuildShape();
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+      auto weight_shape_BaseShapePtr = input_args[kInputIndex2]->GetShape();
       auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
       MS_EXCEPTION_IF_NULL(weight_shape_ptr);
       if (weight_shape.size() > 0 && !y_shape_ptr->IsDynamic() && !weight_shape_ptr->IsDynamic()) {
@@ -108,8 +107,7 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types1, valid_types, prim_name);
 
     if (input_num > kInputNum && input_args[kInputIndex2]->BuildType()->type_id() != kMetaTypeNone) {
-      auto weight_shape =
-        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
       if (weight_shape.size() > 0) {
         (void)types2.emplace("logits", input_args[kInputIndex0]->BuildType());
         (void)types2.emplace("weight", input_args[kInputIndex2]->BuildType());

@@ -57,7 +57,7 @@ class ReLUV2Infer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
 
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape)) {
       auto unknow_shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});

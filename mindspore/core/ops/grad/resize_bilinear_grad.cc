@@ -76,7 +76,7 @@ abstract::ShapePtr ResizeBilinearGradInferShape(const PrimitivePtr &primitive,
 
   const int64_t kRank = 4;
   auto x_shape_val =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kOriginalImageIndex]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kOriginalImageIndex]->GetShape())[kShape];
   if (!IsDynamicRank(x_shape_val)) {
     int64_t x_rank = SizeToLong(x_shape_val.size());
     if (x_rank != kRank) {
@@ -84,7 +84,7 @@ abstract::ShapePtr ResizeBilinearGradInferShape(const PrimitivePtr &primitive,
     }
   }
 
-  auto dy_shape_val = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->BuildShape())[kShape];
+  auto dy_shape_val = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGradIndex]->GetShape())[kShape];
   if (!IsDynamicRank(dy_shape_val)) {
     int64_t dy_rank = SizeToLong(dy_shape_val.size());
     if (dy_rank != kRank) {

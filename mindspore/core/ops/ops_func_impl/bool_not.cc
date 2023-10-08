@@ -36,7 +36,7 @@ class BoolNotFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto x_valueptr = input_args[0]->BuildValue();
+    auto x_valueptr = input_args[0]->GetValue();
     if (x_valueptr == kValueAny) {
       return nullptr;
     }

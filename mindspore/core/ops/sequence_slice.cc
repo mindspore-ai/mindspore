@@ -40,7 +40,7 @@ namespace ops {
 namespace {
 int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &attr_name, const AbstractBasePtr &abs) {
   auto build_type = abs->BuildType();
-  auto build_value = abs->BuildValue();
+  auto build_value = abs->GetValue();
   if (build_type == kInt32) {
     return GetValue<int32_t>(build_value);
   } else if (build_type == kInt64) {
@@ -73,7 +73,7 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
     for (int64_t i = start; i < end; i += step) {
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i)]->BuildValue(),
+      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i)]->GetValue(),
                                                                elems[static_cast<size_t>(i)]->BuildType()));
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
@@ -93,7 +93,7 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
     for (int64_t i = start; i > end; i += step) {
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i + len)]->BuildValue(),
+      abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i + len)]->GetValue(),
                                                                elems[static_cast<size_t>(i + len)]->BuildType()));
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
@@ -144,8 +144,7 @@ AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector
   }
 
   // all value is known
-  if (start_abs->BuildValue() != kValueAny && end_abs->BuildValue() != kValueAny &&
-      step_abs->BuildValue() != kValueAny) {
+  if (start_abs->GetValue() != kValueAny && end_abs->GetValue() != kValueAny && step_abs->GetValue() != kValueAny) {
     int64_t start_v;
     int64_t end_v;
     int64_t step_v;
@@ -168,7 +167,7 @@ class SequenceSliceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(primitive, input_args)->BuildShape();
+    return SliceInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

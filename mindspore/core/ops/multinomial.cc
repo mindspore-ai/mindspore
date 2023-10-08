@@ -52,7 +52,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
@@ -65,7 +65,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
 
   int64_t num_samples_val = 0;
   if (input_args[1]->isa<abstract::AbstractScalar>()) {
-    auto num_samples_value_ptr = input_args[1]->BuildValue();
+    auto num_samples_value_ptr = input_args[1]->GetValue();
     if (num_samples_value_ptr->isa<ValueAny>()) {
       num_samples_val = -1;
     } else {
@@ -82,7 +82,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   } else if (input_args[1]->cast<abstract::AbstractTensorPtr>()) {
     auto num_samples = input_args[1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_samples);
-    auto num_samples_value_ptr = num_samples->BuildValue();
+    auto num_samples_value_ptr = num_samples->GetValue();
     MS_EXCEPTION_IF_NULL(num_samples_value_ptr);
     if (num_samples_value_ptr->isa<tensor::Tensor>()) {
       auto num_samples_tensor = num_samples_value_ptr->cast<tensor::TensorPtr>();

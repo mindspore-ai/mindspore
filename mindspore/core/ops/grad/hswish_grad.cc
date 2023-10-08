@@ -44,7 +44,7 @@ abstract::ShapePtr HSwishGradInferShape(const PrimitivePtr &primitive, const std
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                            primitive->name());
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape());
   auto shape = input_shape[kShape];
   return std::make_shared<abstract::Shape>(shape);
 }

@@ -67,7 +67,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     return element_abs->Clone();
   }
 
-  ValuePtr index_value = index->BuildValue();
+  ValuePtr index_value = index->GetValue();
   MS_EXCEPTION_IF_NULL(index_value);
   std::size_t nelems = queue->elements().size();
   if (nelems == 0) {
@@ -111,7 +111,7 @@ class SequenceGetItemInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGetItemInnerInfer(primitive, input_args)->BuildShape();
+    return SequenceGetItemInnerInfer(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

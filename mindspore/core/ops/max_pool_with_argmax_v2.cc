@@ -127,7 +127,7 @@ abstract::TupleShapePtr MaxPoolWithArgmaxV2InferShape(const PrimitivePtr &prim,
   const size_t kAttrW = 3;
   const int64_t kInputShapeSize = 4;
   const int64_t kAttrsSize = 4;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     std::vector<abstract::BaseShapePtr> shape_list = {std::make_shared<abstract::Shape>(std::vector<int64_t>{
                                                         abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,

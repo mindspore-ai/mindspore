@@ -96,7 +96,7 @@ std::string PrintValueToString(const ValuePtr &value) {
 
 std::string PrintAbstractToString(const AbstractBasePtr &abstract) {
   if (abstract->isa<abstract::AbstractScalar>()) {
-    auto value = abstract->BuildValue();
+    auto value = abstract->GetValue();
     return PrintValueToString(value);
   }
   if (abstract->isa<abstract::AbstractTensor>()) {
@@ -104,7 +104,7 @@ std::string PrintAbstractToString(const AbstractBasePtr &abstract) {
     auto abs_tensor = abstract->cast<abstract::AbstractTensorPtr>();
     buffer << "Tensor(shape:" << abs_tensor->GetShapeTrack()->ToString()
            << ", dtype:" << abs_tensor->GetTypeTrack()->ToString()
-           << ", value:" << PrintValueToString(abs_tensor->BuildValue()) << ")";
+           << ", value:" << PrintValueToString(abs_tensor->GetValue()) << ")";
     return buffer.str();
   }
   if (abstract->isa<abstract::AbstractSequence>()) {

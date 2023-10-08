@@ -56,7 +56,7 @@ class MatrixInverseInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     auto prim_name = primitive->name();
-    auto x_shape_ptr = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    auto x_shape_ptr = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
     auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
     auto x_rank = SizeToLong(x_shape.size());
     const constexpr int64_t kNumber1 = 1;

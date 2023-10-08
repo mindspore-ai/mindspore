@@ -49,7 +49,7 @@ constexpr size_t kPenultimateDim = 2;
 abstract::TupleShapePtr LUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto x_shape = x_shape_map[kShape];
 
   auto x_output = std::make_shared<abstract::Shape>(x_shape);

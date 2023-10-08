@@ -73,13 +73,13 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   auto prim_name = primitive->name();
   // Infer shape
   MS_EXCEPTION_IF_NULL(input_args[kGrads]);
-  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGrads]->BuildShape())[kShape];
+  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kGrads]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[kImages]);
-  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kImages]->BuildShape())[kShape];
+  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kImages]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[kBoxes]);
-  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->BuildShape())[kShape];
+  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxes]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[kBoxIndex]);
-  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->BuildShape())[kShape];
+  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kBoxIndex]->GetShape())[kShape];
   if (IsDynamicRank(input_shape0) || IsDynamicRank(input_shape1) || IsDynamicRank(input_shape2) ||
       IsDynamicRank(input_shape3)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});

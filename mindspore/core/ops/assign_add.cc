@@ -39,8 +39,8 @@ namespace {
 abstract::ShapePtr AssignAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto variable_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto value_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto variable_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto value_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto variable_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(variable_shape_ptr)[kShape];
   auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_shape_ptr)[kShape];
   auto shape_element = variable_shape_ptr->cast<abstract::ShapePtr>();

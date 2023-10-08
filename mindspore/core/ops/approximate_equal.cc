@@ -47,9 +47,9 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto x1 = input_args[0]->BuildShape();
+  auto x1 = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x1);
-  auto x2 = input_args[1]->BuildShape();
+  auto x2 = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x2);
   auto shape_ptr_x1 = x1->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr_x1);

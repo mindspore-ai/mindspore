@@ -92,7 +92,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
     const std::set<TypePtr> output_size_valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->BuildType(),
                                                      output_size_valid_types, prim_name);
-    auto output_size_value = output_size->BuildValue();
+    auto output_size_value = output_size->GetValue();
     MS_EXCEPTION_IF_NULL(output_size_value);
     if (IsValueKnown(output_size_value)) {
       auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
@@ -129,14 +129,13 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[ImagekGrads]);
-  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->BuildShape())[kShape];
+  auto input_shape0 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekGrads]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxes]);
-  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->BuildShape())[kShape];
+  auto input_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxes]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekBoxIndex]);
-  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->BuildShape())[kShape];
+  auto input_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekBoxIndex]->GetShape())[kShape];
   MS_EXCEPTION_IF_NULL(input_args[ImagekImagesSize]);
-  auto input_shape3 =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->BuildShape())[kShape];
+  auto input_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[ImagekImagesSize]->GetShape())[kShape];
   if (IsDynamicRank(input_shape0) || IsDynamicRank(input_shape1) || IsDynamicRank(input_shape2) ||
       IsDynamicRank(input_shape3)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});

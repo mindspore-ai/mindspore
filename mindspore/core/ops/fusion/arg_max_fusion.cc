@@ -80,7 +80,7 @@ BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vecto
   const int64_t kArgMaxInputNum = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kArgMaxInputNum,
                                            prim_name);
-  auto x_base_shape = input_args[kInputIndex0]->BuildShape();
+  auto x_base_shape = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_base_shape);
   auto x_shape = x_base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape);

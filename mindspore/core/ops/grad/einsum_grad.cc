@@ -49,7 +49,7 @@ abstract::BaseShapePtr EinsumGradInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto shape_map = input_args[0]->BuildShape();
+  auto shape_map = input_args[0]->GetShape();
   return shape_map;
 }
 

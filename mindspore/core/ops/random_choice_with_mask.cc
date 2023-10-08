@@ -57,7 +57,7 @@ BaseShapePtr RandomChoiceWithMaskInferShape(const PrimitivePtr &primitive,
     batch_rank = GetValue<int64_t>(value_ptr);
   }
   MS_EXCEPTION_IF_NULL(input_args.front());
-  auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   if (!input_x_shape_ptr->isa<abstract::Shape>()) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()

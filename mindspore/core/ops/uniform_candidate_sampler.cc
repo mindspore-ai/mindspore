@@ -52,7 +52,7 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
   auto input_shape = input_shape_map[kShape];
 

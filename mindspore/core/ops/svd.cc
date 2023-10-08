@@ -51,7 +51,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
   auto compute_uv = GetValue<bool>(prim->GetAttr(kAttrComputeUV));
   auto full_matrices = GetValue<bool>(prim->GetAttr(kAttrFullMatrices));
 
-  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (IsDynamicRank(a_shape) || IsDynamic(a_shape)) {
     ShapeVector dyn_shape{abstract::Shape::kShapeRankAny};
     std::vector<abstract::BaseShapePtr> shape_tuple;

@@ -47,7 +47,7 @@ abstract::TupleShapePtr LinearSumAssignmentInferShape(const PrimitivePtr &primit
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   constexpr int64_t kNumber2 = 2;
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto matrix_shape = shape_map[kShape];
   auto matrix_rank = SizeToLong(matrix_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("cost_matrix rank", matrix_rank, kEqual, kNumber2, op_name);

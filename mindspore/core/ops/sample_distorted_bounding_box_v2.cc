@@ -57,15 +57,14 @@ abstract::TupleShapePtr SampleDistortedBoundingBoxV2InferShape(const PrimitivePt
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
 
-  auto image_size_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto image_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto image_size_dim = SizeToLong(image_size_shape.size());
 
-  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto bboxes_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto bboxes_dim = SizeToLong(bboxes_shape.size());
 
   auto min_object_covered_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto min_object_covered_dim = SizeToLong(min_object_covered_shape.size());
 
   std::vector<ShapeVector> check_shapes = {image_size_shape, bboxes_shape, min_object_covered_shape};

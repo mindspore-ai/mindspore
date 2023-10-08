@@ -70,7 +70,7 @@ int64_t AvgPool3DGrad::get_divisor_override() const { return GetValue<int64_t>(G
 void GetTensorIntValue(const abstract::AbstractBasePtr &base, std::vector<int64_t> *value,
                        const std::string &tensor_name) {
   MS_EXCEPTION_IF_NULL(base);
-  auto base_v = base->BuildValue();
+  auto base_v = base->GetValue();
   MS_EXCEPTION_IF_NULL(base_v);
   if (base->isa<abstract::AbstractTensor>()) {
     if (base_v->isa<tensor::Tensor>()) {

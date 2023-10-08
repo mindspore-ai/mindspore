@@ -36,41 +36,41 @@ abstract::ShapePtr BufferAppendInferShape(const PrimitivePtr &primitive,
 
   AbstractBasePtrList data_shape = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>()->elements();
   AbstractBasePtrList exp_shape = input_args[kInputIndex1]->cast<abstract::AbstractSequencePtr>()->elements();
-  auto count_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto count_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckInteger("exp elements ", SizeToLong(exp_shape.size()), kEqual,
                                            SizeToLong(data_shape.size()), op_name);
   int64_t exp_batch = 1;
-  if (data_shape[0]->BuildShape()->cast<abstract::ShapePtr>()->shape().size() ==
-      exp_shape[0]->BuildShape()->cast<abstract::ShapePtr>()->shape().size()) {
-    exp_batch = exp_shape[0]->BuildShape()->cast<abstract::ShapePtr>()->shape()[0];
+  if (data_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape().size() ==
+      exp_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape().size()) {
+    exp_batch = exp_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape()[0];
     for (size_t i = 0; i < data_shape.size(); i++) {
-      if (data_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape().size() !=
-          exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape().size()) {
+      if (data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape().size() !=
+          exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape().size()) {
         MS_LOG(EXCEPTION) << "For " << op_name << "the dimension of " << i << "th 'exp_shape' must be equal to "
                           << "the dimension of " << i << "th 'data_shape', but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()
+                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
                           << ", the " << i
-                          << "th 'data_shape': " << data_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+                          << "th 'data_shape': " << data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
       }
-      if (data_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()[0] <
-          exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()[0]) {
+      if (data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()[0] <
+          exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()[0]) {
         MS_LOG(EXCEPTION) << "For " << op_name << "the first dimension of " << i << "th 'data_shape' "
                           << "must be greater or equal to the dimension of " << i << "th 'exp_shape', "
                           << "but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()
+                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
                           << ", the " << i
-                          << "th 'data_shape': " << data_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+                          << "th 'data_shape': " << data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
       }
     }
   } else {
     for (size_t i = 0; i < data_shape.size(); i++) {
-      auto d_shape = data_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape();
+      auto d_shape = data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
       std::vector<int64_t> temp_shape(d_shape.begin() + 1, d_shape.end());
-      if (temp_shape != exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()) {
+      if (temp_shape != exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()) {
         MS_LOG(EXCEPTION) << "For " << op_name << ", the " << i << "th 'exp_shape' must be equal to the " << i
                           << "th 'data_shape' which excepts the first dimension. but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->BuildShape()->cast<abstract::ShapePtr>()->shape()
+                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
                           << ", the " << i << "th 'data_shape': " << d_shape;
       }
     }

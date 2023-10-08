@@ -166,7 +166,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
       auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-      attr = type_abs->BuildValue();
+      attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }
     if (!attr->isa<Type>()) {
@@ -194,12 +194,12 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len,
                                              prim_name);
     auto elem = abstract::CheckArg<abstract::AbstractSequence>(prim_name, input_args, 0);
-    auto elem_value = elem->BuildValue();
+    auto elem_value = elem->GetValue();
     if (elem_value == kValueAny) {
       return nullptr;
     }
     auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);
-    auto dst_type = type_abs->BuildValue()->cast<TypePtr>();
+    auto dst_type = type_abs->GetValue()->cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(dst_type);
     auto value_tuple = elem_value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);

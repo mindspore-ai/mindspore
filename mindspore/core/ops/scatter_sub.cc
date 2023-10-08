@@ -27,15 +27,15 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  BaseShapePtr input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  BaseShapePtr input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  BaseShapePtr indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  BaseShapePtr indices_shape_ptr = input_args[kInputIndex1]->GetShape();
   MS_EXCEPTION_IF_NULL(indices_shape_ptr);
-  BaseShapePtr updates_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  BaseShapePtr updates_shape_ptr = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(updates_shape_ptr);
 
   if (input_x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   }
 
   std::vector<int64_t> input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
@@ -52,7 +52,7 @@ abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std
                              << ", updates_shape: " << updates_shape_ptr->ToString() << ".";
   }
 
-  auto output_shape = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto output_shape = input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
   return output_shape;
 }
 

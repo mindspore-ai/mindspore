@@ -58,7 +58,7 @@ abstract::BaseShapePtr AdaptiveMaxPool2DInferShape(const PrimitivePtr &primitive
                              << input_args.size();
   }
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   if (shape_map.empty()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());
   }

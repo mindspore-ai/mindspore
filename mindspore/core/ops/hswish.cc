@@ -56,7 +56,7 @@ abstract::ShapePtr HSwishInferShape(const PrimitivePtr &primitive, const std::ve
   constexpr int64_t kInputSize = 1;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize,
                                            prim_name);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto shape = input_shape[kShape];
   auto out_shape = shape;
 

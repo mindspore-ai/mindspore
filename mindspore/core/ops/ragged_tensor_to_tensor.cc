@@ -31,10 +31,10 @@ namespace {
 BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   auto default_value_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   auto shape_arg = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_arg);
   auto output_shape = GetShapeValue(primitive, shape_arg);
@@ -44,7 +44,7 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                    ? input_args[kInputIndex3]->cast<abstract::AbstractTuplePtr>()->elements()
                    : input_args[kInputIndex3]->cast<abstract::AbstractListPtr>()->elements();
   auto tensors_size = tensors.size();
-  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->BuildShape())[kShape];
+  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->GetShape())[kShape];
   auto tensor0_dim = tensor0_shape.size();
   const auto &row_partition_types_ptr = primitive->GetAttr("row_partition_types");
   MS_EXCEPTION_IF_NULL(row_partition_types_ptr);
@@ -91,7 +91,7 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                              << ".";
   }
   for (size_t i = 1; i < types_size; i++) {
-    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->BuildShape())[kShape];
+    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->GetShape())[kShape];
     auto tensori_dim = tensori_shape.size();
     (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
                                              SizeToLong(tensori_dim), kEqual, 1, prim_name);

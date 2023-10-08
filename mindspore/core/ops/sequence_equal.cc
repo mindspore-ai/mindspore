@@ -40,18 +40,18 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   }
   auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
   auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
-  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->BuildValue() == kValueAny ||
-      seqy_abs->BuildValue() == kValueAny) {
+  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->GetValue() == kValueAny ||
+      seqy_abs->GetValue() == kValueAny) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
-  return std::make_shared<abstract::AbstractScalar>(*seqx_abs->BuildValue() == *seqy_abs->BuildValue());
+  return std::make_shared<abstract::AbstractScalar>(*seqx_abs->GetValue() == *seqy_abs->GetValue());
 }
 
 class SequenceEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceEqualInferInner(primitive, input_args)->BuildShape();
+    return SequenceEqualInferInner(primitive, input_args)->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {

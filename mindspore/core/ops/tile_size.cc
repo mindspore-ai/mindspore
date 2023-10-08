@@ -44,11 +44,11 @@ class TileSizeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
-    auto ndim_value = ndim_abs->BuildValue();
+    auto ndim_value = ndim_abs->GetValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
       auto abs = MakeTuple(ndim);
-      return abs->BuildShape();
+      return abs->GetShape();
     }
 
     return nullptr;
@@ -56,7 +56,7 @@ class TileSizeInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
-    auto ndim_value = ndim_abs->BuildValue();
+    auto ndim_value = ndim_abs->GetValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
       auto abs = MakeTuple(ndim);
@@ -69,7 +69,7 @@ class TileSizeInfer : public abstract::OpInferBase {
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     auto ndim_abs = input_args[kIndex2]->cast<abstract::AbstractScalarPtr>();
-    auto ndim_value = ndim_abs->BuildValue();
+    auto ndim_value = ndim_abs->GetValue();
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
       auto out_abs = MakeTuple(ndim);
@@ -84,9 +84,9 @@ class TileSizeInfer : public abstract::OpInferBase {
       return nullptr;
     }
 
-    auto shape_value = input_args[0]->BuildValue();
-    auto out_shape_value = input_args[1]->BuildValue();
-    auto ndim_value = input_args[kIndex2]->BuildValue();
+    auto shape_value = input_args[0]->GetValue();
+    auto out_shape_value = input_args[1]->GetValue();
+    auto ndim_value = input_args[kIndex2]->GetValue();
     if (!IsValueKnown(shape_value) || !IsValueKnown(out_shape_value) || !IsValueKnown(ndim_value)) {
       return nullptr;
     }
@@ -107,7 +107,7 @@ class TileSizeInfer : public abstract::OpInferBase {
       (void)elems.emplace_back(scalar);
     }
 
-    return std::make_shared<abstract::AbstractTuple>(elems)->BuildValue();
+    return std::make_shared<abstract::AbstractTuple>(elems)->GetValue();
   }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(TileSize, prim::kPrimTileSize, TileSizeInfer, true);

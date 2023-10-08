@@ -90,16 +90,16 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive->GetAttr(kMaxLen));
   // support dynamic rank
-  auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto limit_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto limit_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   if (IsDynamicRank(start_shape) || IsDynamicRank(limit_shape) || IsDynamicRank(delta_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   int64_t shape_size = abstract::Shape::kShapeDimAny;
-  auto start_value = input_args[kInputIndex0]->BuildValue();
-  auto limit_value = input_args[kInputIndex1]->BuildValue();
-  auto delta_value = input_args[kInputIndex2]->BuildValue();
+  auto start_value = input_args[kInputIndex0]->GetValue();
+  auto limit_value = input_args[kInputIndex1]->GetValue();
+  auto delta_value = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(start_value);
   MS_EXCEPTION_IF_NULL(limit_value);
   MS_EXCEPTION_IF_NULL(delta_value);

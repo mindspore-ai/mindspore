@@ -64,8 +64,8 @@ abstract::ShapePtr SoftShrinkGradInferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                            primitive->name());
-  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto input_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   auto prim_name = primitive->name();
   CheckAndConvertUtils::Check("input_grad_shape", input_grad_shape, kEqual, input_x_shape, prim_name, TypeError);
   return std::make_shared<abstract::Shape>(input_grad_shape);

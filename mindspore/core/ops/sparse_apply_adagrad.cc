@@ -53,10 +53,10 @@ abstract::TupleShapePtr SparseApplyAdagradInferShape(const PrimitivePtr &primiti
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
   // Get input shape
-  auto var_shape_ptr = input_args[0]->BuildShape();
-  auto accum_shape_ptr = input_args[1]->BuildShape();
-  auto grad_shape_ptr = input_args[2]->BuildShape();
-  auto indices_shape_ptr = input_args[3]->BuildShape();
+  auto var_shape_ptr = input_args[0]->GetShape();
+  auto accum_shape_ptr = input_args[1]->GetShape();
+  auto grad_shape_ptr = input_args[2]->GetShape();
+  auto indices_shape_ptr = input_args[3]->GetShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];

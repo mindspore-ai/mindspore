@@ -48,18 +48,18 @@ namespace {
 void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
                                      const int64_t &num_proj) {
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto init_h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
-  auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
-  auto dh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->BuildShape())[kShape];
-  auto reset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
-  auto new_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex10]->BuildShape())[kShape];
-  auto hnew_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex11]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto init_h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
+  auto dy_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->GetShape())[kShape];
+  auto dh_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->GetShape())[kShape];
+  auto update_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex8]->GetShape())[kShape];
+  auto reset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->GetShape())[kShape];
+  auto new_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex10]->GetShape())[kShape];
+  auto hnew_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex11]->GetShape())[kShape];
 
   std::vector<ShapeVector> all_shapes = {x_shape,  winput_shape, whidden_shape, y_shape,     init_h_shape, h_shape,
                                          dy_shape, dh_shape,     update_shape,  reset_shape, new_shape,    hnew_shape};
@@ -73,17 +73,17 @@ void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::v
   int64_t input_size = x_shape[2];
   int64_t hidden_size = whidden_shape[0];
 
-  auto winput_shape_ptr = input_args[kInputIndex1]->BuildShape();
-  auto whidden_shape_ptr = input_args[kInputIndex2]->BuildShape();
-  auto y_shape_ptr = input_args[kInputIndex3]->BuildShape();
-  auto init_h_shape_ptr = input_args[kInputIndex4]->BuildShape();
-  auto h_shape_ptr = input_args[kInputIndex5]->BuildShape();
-  auto dy_shape_ptr = input_args[kInputIndex6]->BuildShape();
-  auto dh_shape_ptr = input_args[kInputIndex7]->BuildShape();
-  auto update_shape_ptr = input_args[kInputIndex8]->BuildShape();
-  auto reset_shape_ptr = input_args[kInputIndex9]->BuildShape();
-  auto new_shape_ptr = input_args[kInputIndex10]->BuildShape();
-  auto hnew_shape_ptr = input_args[kInputIndex11]->BuildShape();
+  auto winput_shape_ptr = input_args[kInputIndex1]->GetShape();
+  auto whidden_shape_ptr = input_args[kInputIndex2]->GetShape();
+  auto y_shape_ptr = input_args[kInputIndex3]->GetShape();
+  auto init_h_shape_ptr = input_args[kInputIndex4]->GetShape();
+  auto h_shape_ptr = input_args[kInputIndex5]->GetShape();
+  auto dy_shape_ptr = input_args[kInputIndex6]->GetShape();
+  auto dh_shape_ptr = input_args[kInputIndex7]->GetShape();
+  auto update_shape_ptr = input_args[kInputIndex8]->GetShape();
+  auto reset_shape_ptr = input_args[kInputIndex9]->GetShape();
+  auto new_shape_ptr = input_args[kInputIndex10]->GetShape();
+  auto hnew_shape_ptr = input_args[kInputIndex11]->GetShape();
 
   (void)CheckAndConvertUtils::CheckTensorShapeSame({{"weight input shape", winput_shape_ptr}},
                                                    std::vector<int64_t>{input_size, 3 * hidden_size}, prim_name);
@@ -112,8 +112,8 @@ void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckTensorShapeSame(check_shapes, valid_shape, prim_name);
 
   if (input_args.size() >= kInputIndex13 && input_args[kInputIndex12]->BuildType()->type_id() != kMetaTypeNone) {
-    auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex12]->BuildShape())[kShape];
-    auto seq_shape_ptr = input_args[kInputIndex12]->BuildShape();
+    auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex12]->GetShape())[kShape];
+    auto seq_shape_ptr = input_args[kInputIndex12]->GetShape();
     if (!IsDynamic(seq_shape)) {
       (void)CheckAndConvertUtils::CheckTensorShapeSame({{"seq shape", seq_shape_ptr}}, std::vector<int64_t>{batch_size},
                                                        prim_name);
@@ -125,10 +125,10 @@ abstract::TupleShapePtr DynamicGRUV2GradInferShape(const PrimitivePtr &primitive
                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto winput_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto whidden_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
 
   int64_t num_proj = 0;
   if (primitive->HasAttr(kNumProj)) {

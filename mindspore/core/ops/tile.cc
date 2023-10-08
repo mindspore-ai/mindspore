@@ -59,11 +59,11 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = primitive->name();
   constexpr int64_t num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, num, prim_name);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto input_shape = shape_map[kShape];
   std::vector<int64_t> multiples_v;
-  auto multiple_value = input_args[1]->BuildValue();
-  auto multiple_shape = input_args[1]->BuildShape();
+  auto multiple_value = input_args[1]->GetValue();
+  auto multiple_shape = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(multiple_value);
   if (input_args[1]->isa<abstract::AbstractTensor>()) {
     if (!IsValueKnown(multiple_value)) {
