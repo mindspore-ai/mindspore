@@ -24,7 +24,6 @@
 #include "kernel/framework_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
-#include "plugin/device/gpu/kernel/dynamic_akg/replace_ptx_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,6 +51,8 @@ constexpr auto kThreadIdxY = "threadIdx.y";
 constexpr auto kThreadIdxZ = "threadIdx.z";
 constexpr auto kHostShapes = "hostShapes";
 constexpr auto kDeviceShapes = "deviceShapes";
+constexpr auto kRemove = -100000;
+constexpr auto kKeep = -99999;
 
 DynamicAkgGpuKernelManagerPtr DynamicAkgGpuKernelMod::kernel_manager_ = std::make_shared<DynamicAkgGpuKernelManager>();
 DynamicAkgGpuKernelManager::DynamicAkgGpuKernelManager() {}
@@ -60,41 +61,13 @@ CUresult DynamicAkgGpuKernelManager::GetCUResult(const char *kernel_content, boo
                                                  vector<uint32_t> *thread_info, CUfunction *func,
                                                  const string kernel_name, unordered_map<string, int64_t> map_info) {
   string fn = kernel_name;
-  if (!force_reload) {
-    auto iter = infotable_.find(fn);
-    if (iter != infotable_.end()) {
-      auto kernelmeta = iter->second;
-      *thread_info = kernelmeta->thread_info_;
-      *func = kernelmeta->func_addr_;
-      return CUDA_SUCCESS;
-    }
-  }
-
-  thread_info->emplace_back(map_info[kBlockIdxX]);
-  thread_info->emplace_back(map_info[kBlockIdxY]);
-  thread_info->emplace_back(map_info[kBlockIdxZ]);
-  thread_info->emplace_back(map_info[kThreadIdxX]);
-  thread_info->emplace_back(map_info[kThreadIdxY]);
-  thread_info->emplace_back(map_info[kThreadIdxZ]);
-  MS_LOG(INFO) << kernel_name << ", thread_info = " << *thread_info;
-
   CUmodule module;
-  CUjit_option options[1];
-  options[0] = CU_JIT_MAX_REGISTERS;
-  void *values[1];
-  int total_threads = thread_info->at(3) * thread_info->at(4) * thread_info->at(5);
-  int total_warps = std::ceil(static_cast<float>(total_threads) / static_cast<float>(WARP_SIZE));
-  int limit_warps = (total_warps + WARP_ALLOC_GRAN - 1) / WARP_ALLOC_GRAN * WARP_ALLOC_GRAN;
-  int total_register_unit_nums = MAX_REGISTER_PER_THREAD_BLOCK / REGISTER_UNIT_IN_WARP;
-  int register_unit_nums_per_warp = total_register_unit_nums / limit_warps;
-  int64_t register_nums = (register_unit_nums_per_warp * REGISTER_UNIT_IN_WARP) / WARP_SIZE;
-  values[0] = reinterpret_cast<void *>(register_nums);
-
-  CUresult result = cuModuleLoadDataEx(&module, kernel_content, 1, options, values);
+  CUjit_option options[] = {};
+  void *optionValues[] = {};
+  CUresult result = cuModuleLoadDataEx(&module, kernel_content, 0, options, optionValues);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
-    MS_LOG(INFO) << kernel_content;
     MS_LOG(ERROR) << "cuModuleLoadDataEx failed. Kernel name: << " << fn << ". Error message: " << msg;
     return result;
   }
@@ -120,11 +93,40 @@ CUresult DynamicAkgGpuKernelManager::GetFunction(const KernelPackPtr &kernel_pac
   return GetCUResult(&kernel_pack->GetKernel()->contents[0], force_reload, thread_info, func, kernel_name, map_info);
 }
 
-CUresult DynamicAkgGpuKernelManager::GetFunctionFromStr(const string ptx_str, bool force_reload,
-                                                        vector<uint32_t> *thread_info, CUfunction *func,
-                                                        const string kernel_name,
-                                                        unordered_map<string, int64_t> map_info) {
-  return GetCUResult(ptx_str.c_str(), force_reload, thread_info, func, kernel_name, map_info);
+void DynamicAkgGpuKernelMod::InitJsonShapeInformation() {
+  // Init device shape list, unknown use -1
+  // record map <device_loc, symbol>
+  unordered_map<std::pair<size_t, size_t>, string, PairHash> device_loc_map;
+  for (size_t i = 0; i < parsed_js_[kDeviceShapes].size(); i++) {
+    vector<int64_t> device_tensor_shape;
+    for (size_t j = 0; j < parsed_js_[kDeviceShapes][i].size(); j++) {
+      string device_shape_str = parsed_js_[kDeviceShapes][i][j];
+      if (std::all_of(device_shape_str.begin(), device_shape_str.end(), [](char c) { return std::isdigit(c); })) {
+        (void)device_tensor_shape.emplace_back(std::stoi(device_shape_str));
+      } else {
+        (void)device_tensor_shape.emplace_back(-1);
+        // symbol_loc[shape_str].second = std::make_pair(i, j);
+        auto device_loc = std::make_pair(i, j);
+        device_loc_map[device_loc] = device_shape_str;
+      }
+    }
+    (void)device_shape_list_.emplace_back(device_tensor_shape);
+  }
+
+  // record map <symbol, host_loc>
+  for (size_t i = 0; i < parsed_js_[kHostShapes].size(); i++) {
+    for (size_t j = 0; j < parsed_js_[kHostShapes][i].size(); j++) {
+      string shape_str = parsed_js_[kHostShapes][i][j];
+      if (!std::all_of(shape_str.begin(), shape_str.end(), [](char c) { return std::isdigit(c); })) {
+        host_loc_map_[shape_str] = std::make_pair(i, j);
+      }
+    }
+  }
+  // get map <device_loc, host_loc>
+  for (auto item : device_loc_map) {
+    device_host_shape_loc_[item.first] = host_loc_map_[item.second];
+  }
+  json_shape_updated_ = true;
 }
 
 void DynamicAkgGpuKernelMod::InitMappingInfo() {
@@ -150,49 +152,31 @@ void DynamicAkgGpuKernelMod::UpdateShapeList(const vector<KernelTensorPtr> &inpu
   }
 }
 
-void DynamicAkgGpuKernelMod::GetDeviceShape() {
-  // get the real number for each symbol shape
-  for (size_t i = 0; i < shape_list_.size(); i++) {
-    for (size_t j = 0; j < shape_list_[i].size(); j++) {
-      if (i >= parsed_js_[kHostShapes].size() || j >= parsed_js_[kHostShapes][i].size()) {
-        MS_EXCEPTION(RuntimeError) << "Host shapes during runtime does not match AkgV2 kernel: " << kernel_name_ << ".";
-      }
-      string shape_str = parsed_js_[kHostShapes][i][j];
-      if (!std::all_of(shape_str.begin(), shape_str.end(), [](char c) { return std::isdigit(c); })) {
-        symbol_map_[shape_str] = shape_list_[i][j];
-      }
-    }
-  }
-  // get device shape list
-  for (size_t i = 0; i < parsed_js_[kDeviceShapes].size(); i++) {
-    vector<int64_t> device_tensor_shape;
-    for (size_t j = 0; j < parsed_js_[kDeviceShapes][i].size(); j++) {
-      string device_shape_str = parsed_js_[kDeviceShapes][i][j];
-      if (std::all_of(device_shape_str.begin(), device_shape_str.end(), [](char c) { return std::isdigit(c); })) {
-        (void)device_tensor_shape.emplace_back(std::stoi(device_shape_str));
-      } else {
-        (void)device_tensor_shape.emplace_back(symbol_map_[device_shape_str]);
-      }
-    }
-    (void)device_shape_list_.emplace_back(device_tensor_shape);
-  }
-}
-
 void DynamicAkgGpuKernelMod::GetDeviceArgSizeVec() {
-  device_shape_list_.clear();
   arg_size_vec_.clear();
-  GetDeviceShape();
-  for (size_t i = 0; i < device_shape_list_.size(); i++) {
-    vector<int64_t> arg_size;
-    arg_size.push_back(0);
-    auto device_tensor_shape = device_shape_list_[i];
-    arg_size.insert(arg_size.end(), device_tensor_shape.begin(), device_tensor_shape.end());
+  std::vector<std::vector<int64_t>> device_shape(device_shape_list_);
+  for (auto item : device_host_shape_loc_) {
+    auto device_loc = item.first;
+    auto host_loc = item.second;
+    device_shape[device_loc.first][device_loc.second] = shape_list_[host_loc.first][host_loc.second];
+  }
+  tensor_num_ = device_shape.size();
+
+  for (size_t i = 0; i < tensor_num_; i++) {
+    arg_size_vec_.push_back(kRemove);  // useless in memref
+    arg_size_vec_.push_back(kKeep);    // data ptr
+    arg_size_vec_.push_back(0);        // offset
+    auto device_tensor_shape = device_shape[i];
+    for (auto item : device_tensor_shape) {
+      arg_size_vec_.push_back(item);
+    }
     vector<int64_t> strides(device_tensor_shape.size(), 1);
     for (int j = SizeToInt(device_tensor_shape.size()) - 2; j >= 0; j--) {
       strides[j] = strides[j + 1] * device_tensor_shape[j + 1];
     }
-    (void)arg_size.insert(arg_size.end(), strides.begin(), strides.end());
-    arg_size_vec_.push_back(arg_size);
+    for (auto item : strides) {
+      arg_size_vec_.push_back(item);
+    }
   }
 }
 
@@ -205,7 +189,9 @@ void DynamicAkgGpuKernelMod::UpdateMappingInfo() {
         map_info_[map_arg] = parsed_js_[map_arg];
       } else if (parsed_js_[map_arg].is_array() && parsed_js_[map_arg].size() == 2 &&
                  parsed_js_[map_arg][0].is_string() && parsed_js_[map_arg][1].is_number()) {
-        auto dim_size_float = static_cast<float>(symbol_map_[parsed_js_[map_arg][0]]);
+        auto symbol_loc = host_loc_map_[parsed_js_[map_arg][0]];
+        auto symbol_value = shape_list_[symbol_loc.first][symbol_loc.second];
+        auto dim_size_float = static_cast<float>(symbol_value);
         auto tile_size_float = static_cast<float>(parsed_js_[map_arg][1]);
         map_info_[map_arg] = static_cast<int64_t>(std::ceil(dim_size_float / tile_size_float));
       } else {
@@ -221,25 +207,26 @@ void DynamicAkgGpuKernelMod::UpdateMappingInfo() {
     map_info_[kThreadIdxY] = parsed_js_[kThreadIdxY];
     map_info_[kThreadIdxZ] = parsed_js_[kThreadIdxZ];
   }
+  thread_info_.clear();
+  thread_info_.emplace_back(map_info_[kBlockIdxX]);
+  thread_info_.emplace_back(map_info_[kBlockIdxY]);
+  thread_info_.emplace_back(map_info_[kBlockIdxZ]);
+  thread_info_.emplace_back(map_info_[kThreadIdxX]);
+  thread_info_.emplace_back(map_info_[kThreadIdxY]);
+  thread_info_.emplace_back(map_info_[kThreadIdxZ]);
   map_info_[kMappingUpdated] = 1;
 }
 
-void DynamicAkgGpuKernelMod::ReplacePTX() {
-  if (kernel_pack_->GetKernel() == nullptr || kernel_pack_->GetKernel()->contents == nullptr) {
-    MS_EXCEPTION(RuntimeError) << "Invalid kernel pack, kernel is nullptr of kernel :" << kernel_name_;
-    return;
-  }
-  auto kernel_contents = kernel_pack_->GetKernel()->contents;
-  string original_ptx(kernel_contents);
-  replaced_ptx_ = ReplacePTXFunction(original_ptx, arg_size_vec_, kernel_name_);
-}
-
 DynamicAkgGpuKernelMod::DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {
+  InitMappingInfo();
   if (kernel_pack != nullptr) {
     auto js = kernel_pack->GetJson();
     if (js != nullptr) {
       parsed_js_ = nlohmann::json::parse(js->contents, js->contents + js->len);
       kernel_name_ = parsed_js_["kernelName"];
+      if (is_dynamic_) {
+        InitJsonShapeInformation();
+      }
     }
   }
   InitMappingInfo();
@@ -262,13 +249,14 @@ void DynamicAkgGpuKernelMod::CheckJsonParsed() {
 int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const vector<KernelTensorPtr> &inputs,
                                    const vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  MS_LOG(DEBUG) << "Start resize for DynamicAkgGpuKernelMod for " << kernel_name_;
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  CheckJsonParsed();
+  if (!json_shape_updated_) {
+    CheckJsonParsed();
+    InitJsonShapeInformation();
+  }
   UpdateShapeList(inputs, outputs);
   GetDeviceArgSizeVec();
   UpdateMappingInfo();
-  ReplacePTX();
   MS_LOG(DEBUG) << "Done resize for DynamicAkgGpuKernelMod for " << kernel_name_;
   return ret;
 }
@@ -283,35 +271,12 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
     MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
-  MS_LOG(INFO) << kernel_name_ << ", Start Launch.";
   CUresult result;
-  if (is_dynamic_) {
-    // for dynamic shape, map info is updated during Resize
-    if (!map_info_[kMappingUpdated]) {
-      MS_LOG(ERROR) << "For dynamic shape " << kernel_name_ << ", gpu mapping config must be updated before launch";
-      return false;
+  if (kernel_addr_ == nullptr) {
+    if (!is_dynamic_) {
+      CheckJsonParsed();
+      UpdateMappingInfo();
     }
-    for (size_t i = 0; i < inputs.size(); i++) {
-      MS_LOG(INFO) << kernel_name_ << ", input[" << i << "], shape_list = " << shape_list_[i]
-                   << ", device_shape_list = " << device_shape_list_[i] << ", arg_size_vec = " << arg_size_vec_[i];
-    }
-    for (size_t j = 0; j < outputs.size(); j++) {
-      auto i = inputs.size() + j;
-      MS_LOG(INFO) << kernel_name_ << ", output[" << j << "], shape_list = " << shape_list_[i]
-                   << ", device_shape_list = " << device_shape_list_[i] << ", arg_size_vec = " << arg_size_vec_[i];
-    }
-    thread_info_.clear();
-    result =
-      kernel_manager_->GetFunctionFromStr(replaced_ptx_, true, &thread_info_, &kernel_addr_, kernel_name_, map_info_);
-    if (result != CUDA_SUCCESS) {
-      const char *msg = nullptr;
-      cuGetErrorName(result, &msg);
-      MS_LOG(ERROR) << "Get function " << kernel_name_ << " failed. Error message: " << msg;
-      return false;
-    }
-  } else if (kernel_addr_ == nullptr) {
-    CheckJsonParsed();
-    UpdateMappingInfo();
     if (!map_info_[kMappingUpdated]) {
       MS_LOG(ERROR) << "For " << kernel_name_ << ", gpu mapping config must be updated before launch";
       return false;
@@ -326,15 +291,38 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
   }
 
   vector<void *> runtimeargs;
-  runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
-  if (!workspace.empty()) {
-    (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
+  if (is_dynamic_) {
+    size_t inum = 0;
+    size_t onum = 0;
+    CUdeviceptr dev_ptr_fake;
+    for (size_t idx = 0; idx < arg_size_vec_.size(); idx++) {
+      if (arg_size_vec_[idx] == kRemove) {
+        runtimeargs.push_back(reinterpret_cast<void *>(&dev_ptr_fake));
+      } else if (arg_size_vec_[idx] == kKeep) {
+        if (inum < inputs.size()) {
+          runtimeargs.push_back(reinterpret_cast<void *>(&(inputs[inum]->addr)));
+          inum++;
+        } else if (onum < outputs.size()) {
+          runtimeargs.push_back(reinterpret_cast<void *>(&(outputs[onum]->addr)));
+          onum++;
+        }
+      } else {
+        size_t *value_ptr = new size_t(arg_size_vec_[idx]);
+        runtimeargs.push_back(value_ptr);
+      }
+    }
+  } else {
+    runtimeargs.reserve(inputs.size() + outputs.size() + workspace.size());
+    (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
+                         [](const AddressPtr &input) { return reinterpret_cast<void *>(&(input->addr)); });
+    (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
+                         [](const AddressPtr &output) { return reinterpret_cast<void *>(&(output->addr)); });
+    if (!workspace.empty()) {
+      (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
+                           [](const AddressPtr &addr) { return reinterpret_cast<void *>(&(addr->addr)); });
+    }
   }
+
   result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
                           thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],
                           thread_info_[AKG_KERNEL_MOD_TY_IDX], thread_info_[AKG_KERNEL_MOD_TZ_IDX], 0,

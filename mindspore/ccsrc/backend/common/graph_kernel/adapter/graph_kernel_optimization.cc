@@ -232,7 +232,8 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   // Reduce fake output memory.
-  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
+  auto only_static_shape_fusion = GetPassLevelByFlag(!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  pm->Add(std::make_shared<ReduceFakeOutMem>(), only_static_shape_fusion);
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);

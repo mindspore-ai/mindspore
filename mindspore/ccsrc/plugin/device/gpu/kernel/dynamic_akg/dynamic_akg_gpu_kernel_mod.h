@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <map>
 #include <memory>
+#include <utility>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
 #include "kernel/common_utils.h"
@@ -55,14 +56,20 @@ class DynamicAkgGpuKernelManager {
   CUresult GetFunction(const KernelPackPtr &kernel_pack, bool force_reload, std::vector<uint32_t> *thread_info,
                        CUfunction *func, const std::string kernel_name,
                        std::unordered_map<std::string, int64_t> map_info);
-  CUresult GetFunctionFromStr(const std::string ptx_str, bool force_reload, std::vector<uint32_t> *thread_info,
-                              CUfunction *func, const std::string kernel_name,
-                              std::unordered_map<std::string, int64_t> map_info);
 
  private:
   std::unordered_map<std::string, GpuKernelMetaPtr> infotable_;
 };
 using DynamicAkgGpuKernelManagerPtr = std::shared_ptr<DynamicAkgGpuKernelManager>;
+
+struct PairHash {
+  template <typename T>
+  size_t operator()(const std::pair<T, T> &p) const {
+    auto h1 = std::hash<T>{}(p.first);
+    auto h2 = std::hash<T>{}(p.second);
+    return h1 ^ h2;
+  }
+};
 
 class DynamicAkgGpuKernelMod : public GpuKernelMod {
  public:
@@ -82,12 +89,11 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
   void InitMappingInfo();
-  void GetDeviceShape();
   void CheckJsonParsed();
+  void InitJsonShapeInformation();
   void UpdateMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   void GetDeviceArgSizeVec();
-  void ReplacePTX();
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
@@ -104,10 +110,16 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<std::vector<int64_t>> device_shape_list_;
   std::unordered_map<std::string, int64_t> map_info_;
-  std::vector<std::vector<int64_t>> arg_size_vec_;
-  std::unordered_map<std::string, int64_t> symbol_map_;
   nlohmann::json parsed_js_;
-  std::string replaced_ptx_;
+  size_t tensor_num_{0};
+  std::vector<int> arg_size_vec_;
+  // std::vector<std::string> arg_size_vec_;
+  // std::unordered_map<std::string, int64_t> symbol_map_;
+  std::vector<int> pos_flags_;
+  std::vector<std::string> splited_strings_;
+  bool json_shape_updated_{false};
+  std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
+  std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
 };
 
 class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
