@@ -28,6 +28,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/ccsrc/runtime/hardware/device_context.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 namespace mindspore {
@@ -761,6 +762,16 @@ bool IsAnyTypeCut(const AnfNodePtr &node) {
   return common::GetEnv("MS_RUNTIME_COMPILE") != "1" &&
          common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute) && common::AnfAlgo::IsAnyTypeOutput(node);
 }
+
+void ProcessNodeToSegments(const std::string &cur_flag, const std::string &flag, std::vector<AnfNodePtr> *segment_nodes,
+                           std::vector<GraphSegmentPtr> *segments,
+                           std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment) {
+  if (!flag.empty() && cur_flag != flag) {
+    NodesToSegments(*segment_nodes, segments, node_to_segment);
+    segment_nodes->clear();
+  }
+}
+
 }  // namespace
 
 std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph, bool *multi_target) {
@@ -791,6 +802,7 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   std::vector<AnfNodePtr> segment_nodes;
   std::map<AnfNodePtr, GraphSegmentPtr> node_to_segment;
   std::string last_target;
+  std::string graph_group;
   mindspore::HashSet<AnfNodePtr> has_cut;
   mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> close_following;
   for (auto &node : nodes) {
@@ -826,10 +838,10 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
       segment_nodes.clear();
     } else if (node->isa<CNode>()) {
       std::string cur_target = GetCNodeTarget(node);
-      if (cur_target != last_target && !last_target.empty()) {
-        NodesToSegments(segment_nodes, &segments, &node_to_segment);
-        segment_nodes.clear();
-      }
+      std::string cur_graph_group = common::AnfAlgo::GetGraphSplitGroup(node);
+      ProcessNodeToSegments(cur_target, last_target, &segment_nodes, &segments, &node_to_segment);
+      ProcessNodeToSegments(cur_graph_group, graph_group, &segment_nodes, &segments, &node_to_segment);
+      graph_group = cur_graph_group;
       last_target = cur_target;
       segment_nodes.emplace_back(node);
       if (IsAnyTypeCut(node)) {
