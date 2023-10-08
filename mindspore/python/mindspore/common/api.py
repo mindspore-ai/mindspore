@@ -190,8 +190,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
         if isinstance(node, ast.ImportFrom):
             if node.module is not None:
                 module_name = node.module
-            if node.level == 1:
-                module_name = "." + module_name
+            module_name = "." * node.level + module_name
         elif not isinstance(node, ast.Import):
             continue
         # Do not care the files in mindspore package
