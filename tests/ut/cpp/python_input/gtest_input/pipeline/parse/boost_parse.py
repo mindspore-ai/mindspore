@@ -82,6 +82,15 @@ def test_compare(tag):
         return x + x
 
     @fns
+    def equal_tensor_with_comment(x, y):
+        z = Tensor(2)
+        if z == Tensor(2):  # @jit.cond: True
+            x = x + y
+        else:
+            x = x - y
+        return x + x
+
+    @fns
     def not_equal_num1(x, y):
         z = 2
         if z != 1:
