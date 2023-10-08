@@ -139,12 +139,6 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
   transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
   auto graph_name = GetGraphName(anf_graph);
-  if (!IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
-    if (kg != nullptr) {
-      graph_name = kg->GetFuncGraph()->ToString();
-    }
-  }
   std::string init_graph = "init_subgraph_" + graph_name;
   std::string checkpoint_name = "save_" + graph_name;
   ShapeArray shape_array;
@@ -152,23 +146,14 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
   auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  if (transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, true) !=
-      transform::Status::SUCCESS) {
-    return false;
-  }
-  if (transform::AddGraph(init_graph, transform::GetInitGraph(converter)) != transform::Status::SUCCESS) {
-    return false;
-  }
-  if (transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast")) != transform::Status::SUCCESS) {
-    return false;
-  }
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
+  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast"));
 
   if (!IsEnableRefMode()) {
     transform::Status ret = transform::AddGraph(checkpoint_name, transform::GenFakeGraph("checkpoint"));
     if (ret == transform::Status::SUCCESS) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);
-    } else {
-      return false;
     }
   }
   transform::AddOptimizeGraph(graph_name);
@@ -196,12 +181,6 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
 
   auto graph_name = GetGraphName(anf_graph);
-  if (!IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
-    if (kg != nullptr) {
-      graph_name = kg->GetFuncGraph()->ToString();
-    }
-  }
   std::string init_graph = "init_subgraph_" + graph_name;
   std::string checkpoint_name = "save_" + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
