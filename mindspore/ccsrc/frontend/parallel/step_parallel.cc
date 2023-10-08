@@ -477,6 +477,9 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+  if (redistribution_oplist_ptr == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
+  }
   redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
     redistribution_oplist_ptr, tensor_redistribution.input_shape());
   if (redistribution_oplist_ptr == nullptr) {
