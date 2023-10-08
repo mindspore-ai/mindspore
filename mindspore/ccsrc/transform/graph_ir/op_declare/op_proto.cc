@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/op_proto.h"
+#include <algorithm>
 #include <limits>
 #include <string>
 #include <utility>
@@ -133,6 +134,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &op_name, const st
     {"REALNUMBERTYPE",
      {DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8,
       DT_BF16}},
+    {"DT_BFLOAT16", {DT_BF16}},
     {"DT_FLOAT32", {DT_FLOAT}},
     {"DT_FLOAT64", {DT_DOUBLE}},
     {"ListInt", {}},
@@ -178,11 +180,51 @@ OpProto &OpProto::SetAttr(const std::string &name, bool is_optional) {
 OpProto &OpProto::DoNothing() { return *this; }
 
 OpProto &OpProto::DefineDataType(const std::string &name, const std::string &tensor_type) {
+  // process `Promote` in operator definition, see `REG_OP(Pow)`
+  // REG_OP(Pow)
+  //     .INPUT(x1, "T1").INPUT(x2, "T2").OUTPUT(y, "T3")
+  //     .DATATYPE(T1, TensorType({DT_BF16, DT_FLOAT16, DT_FLOAT, ...}))
+  //     .DATATYPE(T2, TensorType({DT_BF16, DT_FLOAT16, DT_FLOAT, ...}))
+  //     .DATATYPE(T3, Promote({"T1", "T2"}))
+  //     .OP_END_FACTORY_REG(Pow)
+  if (tensor_type.find("Promote") != std::string::npos) {
+    auto split_tensor_types = SplitString(tensor_type);
+    promote_types_[name].assign(split_tensor_types.cbegin() + 1, split_tensor_types.cend());
+    return *this;
+  }
   (void)alias_types_.emplace("\"" + name + "\"", ParseGeTypes(name_, tensor_type));
   return *this;
 }
 
+void OpProto::ProcessPromoteTypes() {
+  auto gen_promote_type = [this](const std::string &type_name, const std::vector<std::string> &alias_types) {
+    std::vector<ge::DataType> ge_types;
+    for (const auto &alias_type : alias_types) {
+      std::string real_name = "\"" + alias_type + "\"";
+      auto iter = alias_types_.find(real_name);
+      if (iter == alias_types_.end()) {
+        MS_LOG(WARNING) << "Can not find definition of " << real_name << " in promote type " << type_name
+                        << " of operator " << name_;
+        continue;
+      }
+      for (const auto ge_type : iter->second) {
+        if (std::find(ge_types.begin(), ge_types.end(), ge_type) == ge_types.end()) {
+          ge_types.emplace_back(ge_type);
+        }
+      }
+    }
+    alias_types_["\"" + type_name + "\""] = ge_types;
+  };
+
+  for (const auto &[type_name, promote_types] : promote_types_) {
+    gen_promote_type(type_name, promote_types);
+  }
+}
+
 OpProto &OpProto::FinishRegOperator() {
+  // process promote types
+  ProcessPromoteTypes();
+
   // process types of input parameters
   for (const auto &[name, type_str] : input_types_org_) {
     auto alias_iter = alias_types_.find(type_str);
@@ -207,6 +249,7 @@ OpProto &OpProto::FinishRegOperator() {
   input_types_org_.clear();
   output_types_org_.clear();
   alias_types_.clear();
+  promote_types_.clear();
 
   return *this;
 }
