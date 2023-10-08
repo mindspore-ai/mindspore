@@ -50,8 +50,8 @@ namespace {
 #define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
 TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
 
   auto start_dtype = input_args[kInputIndex0]->GetType();
   auto stop_dtype = input_args[kInputIndex1]->GetType();
@@ -62,7 +62,7 @@ TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   };
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat32, kFloat64}, prim_name);
 }
-abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
 
   auto start_shape_ptr = input_args[kInputIndex0]->GetShape();
@@ -76,12 +76,13 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   bool is_compile = IsNoneOrAnyValue(num_value);
   // Do it later
   if (start_shape_ptr->IsDynamic() || stop_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape();
   }
 
   int64_t num = 0;
+  auto num_type = input_args[kInputIndex2]->GetType()->object_type();
   if (!is_compile) {
-    if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+    if (num_type == kObjectTypeTensorType) {
       if (num_value->isa<tensor::Tensor>()) {
         auto num_shape_ptr = input_args[kInputIndex2]->GetShape();
         const auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(num_shape_ptr)[kShape];
@@ -97,7 +98,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
                                 << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
                                 << num_value->ToString() << ".";
       }
-    } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
+    } else if (num_type == kObjectTypeNumber) {
       MS_EXCEPTION_IF_NULL(num_value);
       if (!num_value->isa<Int64Imm>()) {
         MS_EXCEPTION(TypeError) << "For primitive[" << prim_name

@@ -113,6 +113,59 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
   return CheckType(type, accepts, error_message_prefix);
 }
 
+// new function
+void CheckShapeSame(const std::string &op, const AbstractBasePtr &tensor_base, const AbstractBasePtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor_base);
+  if (tensor_base->GetType()->object_type() != kObjectTypeTensorType) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the first input should be tensor type, but got "
+                            << tensor_base->GetType()->ToString() << ".";
+  }
+  auto shape_base = tensor_base->GetShape();
+  MS_EXCEPTION_IF_NULL(shape_base);
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->GetType()->object_type() != kObjectTypeTensorType) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the second input should be tensor type, but got "
+                            << tensor->GetType()->ToString() << ".";
+  }
+  auto shape = tensor->GetShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape_base->IsDimUnknown() || shape->IsDimUnknown()) {
+    return;
+  }
+
+  const auto &shape_vector = shape->GetShapeVector();
+  const auto &shape_base_vector = shape_base->GetShapeVector();
+  if (shape_vector.size() != shape_base_vector.size()) {
+    MS_EXCEPTION(ValueError) << "For '" << op << "', the shape of two args should be same, but the first arg shape "
+                             << shape_base->ToString() << " are not consistent with second arg shape "
+                             << shape->ToString();
+  }
+
+  for (size_t i = 0; i < shape_vector.size(); i++) {
+    if (shape_vector[i] == Shape::kShapeDimAny || shape_base_vector[i] == Shape::kShapeDimAny) {
+      continue;
+    }
+    if (shape_vector[i] != shape_base_vector[i]) {
+      MS_EXCEPTION(ValueError) << "For '" << op << "',  the shape of two args should be same, but the first arg shape "
+                               << shape_base->ToString() << " are not consistent with second arg shape "
+                               << shape->ToString();
+    }
+  }
+  return;
+}
+
+TypePtr CheckDtypeSame(const std::string &op, const AbstractBasePtr &tensor_base, const AbstractBasePtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor_base);
+  TypePtr type_base = tensor_base->GetType();
+  MS_EXCEPTION_IF_NULL(tensor);
+  TypePtr type = tensor->GetType();
+  MS_EXCEPTION_IF_NULL(type_base);
+  MS_EXCEPTION_IF_NULL(type);
+  CheckDtypeSame(op, type_base, type);
+  return type_base;
+}
+
+// old function
 void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor_base);
   ShapePtr shape_base = tensor_base->shape();

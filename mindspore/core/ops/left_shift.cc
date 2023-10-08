@@ -65,7 +65,7 @@ TypePtr LeftShiftInferType(const PrimitivePtr &primitive, const std::vector<Abst
   (void)abstract::CheckDtypeSame(prim_name, x, y);
   auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
-  if (!input_type->isa<TensorType>()) {
+  if (input_type->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
                             << " input must be tensor type but got " << input_type->ToString();
   }

@@ -41,15 +41,12 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr LgammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr LgammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto x = input_args[0]->GetShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  return x->Clone();
 }
 
 TypePtr LgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

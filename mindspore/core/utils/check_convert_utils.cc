@@ -1340,4 +1340,20 @@ bool CheckAndConvertUtils::HasDynamicShapeInput(const AbstractBasePtrList &abs_l
   }
   return false;
 }
+
+AbstractBasePtr CheckAndConvertUtils::CheckArgsType(const std::string &op, const AbstractBasePtrList &args_spec_list,
+                                                    size_t index, TypeId type_id) {
+  if (index >= args_spec_list.size()) {
+    MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
+                             << ", index " << index;
+  }
+  auto args_abs = args_spec_list[index];
+  MS_EXCEPTION_IF_NULL(args_abs);
+  if (args_abs->GetType()->object_type() != type_id) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
+                            << TypeIdToType(type_id)->ToString() << ", but got "
+                            << args_spec_list[index]->GetType()->ToString() << ".";
+  }
+  return args_abs;
+}
 }  // namespace mindspore

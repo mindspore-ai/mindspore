@@ -75,7 +75,7 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 
   return var_type;
 }
-abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto var_shape_ptr = input_args[kInputIndex0]->GetShape();
@@ -90,9 +90,7 @@ abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vect
       grad_shape_ptr->IsDynamic()) {
     MS_LOG(WARNING) << "var is dynamic" << var_shape_ptr->IsDynamic() << "m is dynamic" << m_shape_ptr->IsDynamic()
                     << "v is dynamic" << v_shape_ptr->IsDynamic() << "grad is dynamic" << grad_shape_ptr->IsDynamic();
-    auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(var_shape_output);
-    return var_shape_output;
+    return var_shape_ptr;
   }
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
@@ -102,9 +100,7 @@ abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vect
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
 
-  auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(var_shape_output);
-  return var_shape_output;
+  return var_shape_ptr;
 }
 }  // namespace
 

@@ -110,7 +110,9 @@ abstract::TupleShapePtr LSTMInferShape(const PrimitivePtr &primitive, const std:
 
 TuplePtr LSTMInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const int64_t output_num = 5;
-  auto type = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>()->element();
+  auto input_type = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_type);
+  auto type = input_type->element();
   return std::make_shared<Tuple>(std::vector<TypePtr>(output_num, type));
 }
 }  // namespace

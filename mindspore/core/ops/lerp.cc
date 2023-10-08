@@ -42,7 +42,7 @@ abstract::ShapePtr LerpInferShape(const PrimitivePtr &primitive, const std::vect
   auto weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape());
   auto weight_shape = weight_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
     (void)CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
     (void)CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
     broadcast_shape = CalBroadCastShape(broadcast_shape, weight_shape, op_name);
@@ -67,7 +67,7 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   std::map<std::string, TypePtr> types;
   (void)types.emplace("start", input_args[0]->GetType());
   (void)types.emplace("end", input_args[1]->GetType());
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
     (void)types.emplace("weight", input_args[kInputIndex2]->GetType());
   } else {
     (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->GetType(), {kFloat}, op_name);
