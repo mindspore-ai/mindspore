@@ -22,6 +22,7 @@
 #include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ops/op_name.h"
+#include "ops/view/view_strides_calculator.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -32,6 +33,7 @@ constexpr auto kSrcSize = "src_size";
 constexpr auto kSrcStride = "src_stride";
 constexpr auto kDstStorageOffset = "dst_storage_offset";
 constexpr auto kSrcStorageOffset = "src_storage_offset";
+constexpr size_t kAsStridedSupportMinSize = 32;
 }  // namespace
 std::vector<int64_t> GetContiguousStrides(const std::vector<int64_t> &shape) {
   if (shape.empty()) {
@@ -178,11 +180,11 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   ShapeVector strides_shape = {static_cast<int64_t>(src_addr_info->storage->strides.size())};
   ShapeVector storage_offset_shape = {1};
 
-  as_strided_kernel->PackageInput(0, "", &src_addr_info->storage->ori_shape);
-  as_strided_kernel->PackageInput(1, kOpFormat_DEFAULT, &size_shape);
-  as_strided_kernel->PackageInput(2, kOpFormat_DEFAULT, &strides_shape);
-  as_strided_kernel->PackageInput(3, kOpFormat_DEFAULT, &storage_offset_shape);
-  as_strided_kernel->PackageOutput(0, src_addr_info->storage->shape);
+  as_strided_kernel->PackageInput(kIndex0, "", &src_addr_info->storage->ori_shape);
+  as_strided_kernel->PackageInput(kIndex1, kOpFormat_DEFAULT, &size_shape);
+  as_strided_kernel->PackageInput(kIndex2, kOpFormat_DEFAULT, &strides_shape);
+  as_strided_kernel->PackageInput(kIndex3, kOpFormat_DEFAULT, &storage_offset_shape);
+  as_strided_kernel->PackageOutput(kIndex0, src_addr_info->storage->shape);
 
   MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
   auto ret = as_strided_kernel->Launch({input}, std::vector<AddressPtr>{}, {output}, stream_ptr);
@@ -385,7 +387,7 @@ bool ContiguousViewCopySrcAddr(const AddressAndStorageInfoPtr &src_addr_info,
 
     std::vector<int64_t> ret{1};
     int64_t strides = 1;
-    for (int64_t i = shape.size() - 1; i > 0; i--) {
+    for (size_t i = shape.size() - 1; i > 0; i--) {
       strides *= shape[i];
       (void)ret.emplace(ret.begin(), strides);
     }
@@ -432,7 +434,8 @@ bool CopyBaseFormatDataDeviceToDevice(const AddressAndStorageInfoPtr &src_addr_i
 
   auto ret = true;
   if (!src_addr_info->is_contiguous()) {
-    if (dst_size < 32) {
+    // AsStrided Op support size >= 32(block), smaller than this will cause accuracy issues.
+    if (dst_size < kAsStridedSupportMinSize) {
       ret = ViewCopyFunc(src_addr_info, dst_addr_info, device_context, stream_ptr);
       if (!ret) {
         MS_LOG(ERROR) << "ViewCopyFunc failed.";
@@ -513,9 +516,9 @@ bool CopyDataDeviceToDevice(const AddressAndStorageInfoPtr &src_addr_info,
 }
 
 void RefreshFormat(const DeviceAddressPtr &output_address) {
-  if (output_address->device_shape().size() == 4 && output_address->format() == kOpFormat_ND) {
+  if (output_address->device_shape().size() == kSizeFour && output_address->format() == kOpFormat_ND) {
     output_address->set_format(kOpFormat_NCHW);
-  } else if (output_address->device_shape().size() != 4 && output_address->format() == kOpFormat_NCHW) {
+  } else if (output_address->device_shape().size() != kSizeFour && output_address->format() == kOpFormat_NCHW) {
     output_address->set_format(kOpFormat_ND);
   }
 }

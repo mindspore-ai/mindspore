@@ -1519,13 +1519,6 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
     dout = ib->Reshape(dout, out_shp1);
   }
 
-  if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
-    ind_shp = ib->GetShape(indices);
-    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
-    dout = ib->Reshape(dout, out_shp1);
-  }
-
   out_shp = ib->GetShape(dout);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v, batch_dims);
   auto values_transpose = ib->Transpose(dout, perm_1);
