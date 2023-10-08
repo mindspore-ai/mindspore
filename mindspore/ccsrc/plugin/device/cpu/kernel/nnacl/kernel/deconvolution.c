@@ -295,13 +295,14 @@ ConvolutionBaseStruct *SelectDeConv(ConvParameter *conv_param) {
   bool param_winograd_fit = (conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
                             (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1);
 
-  bool size_winograd_fit = (conv_param->kernel_w_ / conv_param->stride_w_ >= C2NUM ||
-                            conv_param->kernel_h_ / conv_param->stride_h_ >= C2NUM || conv_param->output_channel_ == 1);
-
 #ifdef ENABLE_AVX
   bool in_size_winograd_fit = conv_param->input_w_ * conv_param->input_h_ >= NNACL_DECONV_WINOGRAD_HW_MAX;
+  bool size_winograd_fit = (conv_param->kernel_w_ / conv_param->stride_w_ >= C2NUM ||
+                            conv_param->kernel_h_ / conv_param->stride_h_ >= C2NUM || conv_param->output_channel_ == 1);
 #else
   bool in_size_winograd_fit = true;
+  bool size_winograd_fit =
+    (conv_param->kernel_w_ / conv_param->stride_w_ > C2NUM || conv_param->kernel_h_ / conv_param->stride_h_ > C2NUM);
 #endif
 
   if (param_winograd_fit && size_winograd_fit && in_size_winograd_fit) {
