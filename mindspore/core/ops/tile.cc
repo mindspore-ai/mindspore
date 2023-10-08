@@ -68,7 +68,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   if (input_args[1]->isa<abstract::AbstractTensor>()) {
     if (!IsValueKnown(multiple_value)) {
       auto shape = multiple_shape->cast<abstract::ShapePtr>()->shape();
-      if (IsDynamicRank(shape)) {
+      if (IsDynamic(shape)) {
         return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
       }
       return std::make_shared<abstract::Shape>(ShapeVector(shape[kIndex0], abstract::Shape::kShapeDimAny));
