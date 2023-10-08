@@ -31,6 +31,12 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
 
+  const auto &x_shape = tensor->shape();
+  (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, "Transpose");
+  if (x_shape[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
+  }
+
   auto old_tensor_info = GetOldTensorInfo(tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;

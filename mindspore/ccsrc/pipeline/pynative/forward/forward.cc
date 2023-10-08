@@ -587,6 +587,7 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   }
   if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
     if (task_type == KernelTaskType::kNORMAL_VIEW_TASK && !op_run_info->requires_grad) {
+      MS_LOG(DEBUG) << "End";
       return true;
     }
     DispatchViewKernelTask(op_run_info, task_type);
