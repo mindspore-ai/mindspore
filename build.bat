@@ -70,34 +70,27 @@ IF "%1%" == "lite" (
             -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
     )
 ) ELSE (
+    for /f "delims=" %%i in ('powershell.exe -ExecutionPolicy Bypass -Command "Get-ChildItem HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | foreach { Get-ItemProperty $_.PsPath } | where { $_.DisplayName -like '*Visual Studio*' -and $_.InstallLocation.Length -gt 0 } | sort InstallDate -Descending | foreach { Join-Path $_.InstallLocation 'VC\Auxiliary\Build'}"') do (call "%%i\vcvars64.bat")
+    SET CMAKE_ARGS=-DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE%
+    where ccache
+    IF !errorlevel! == 0 (
+        echo "use ccache to speed up compile"
+        SET CMAKE_ARGS=!CMAKE_ARGS! -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache 
+    )
     IF "%1%" == "ms_vs_gpu" (
         echo "======Start gen VS2019 Project for MS gpu ======"
-        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_GPU=ON -DGPU_BACKEND_CUDA=ON -DMS_REQUIRE_CUDA_VERSION=11.1 -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-            -G "Visual Studio 16 2019" -A x64 ../..
+        SET CMAKE_ARGS=!CMAKE_ARGS! -DCMAKE_BUILD_TYPE=Release  -DENABLE_GPU=ON -DGPU_BACKEND_CUDA=ON -DMS_REQUIRE_CUDA_VERSION=11.1 
     ) ELSE IF "%1%" == "ms_vs_cpu" (
         echo "======Start gen VS2019 Project for MS cpu ======"
-        for /f "delims=" %%i in ('powershell.exe -ExecutionPolicy Bypass -Command "Get-ChildItem HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | foreach { Get-ItemProperty $_.PsPath } | where { $_.DisplayName -like '*Visual Studio*' -and $_.InstallLocation.Length -gt 0 } | sort InstallDate -Descending | foreach { Join-Path $_.InstallLocation 'VC\Auxiliary\Build'}"') do (call "%%i\vcvars64.bat")
-        where ccache
-        IF !errorlevel! == 0 (
-            echo "use ccache to speed up compile"
-            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G Ninja ../..
-        ) ELSE (
-            echo "fail to find ccache"
-            cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G Ninja ../..
-        )
+        SET CMAKE_ARGS=!CMAKE_ARGS! -DCMAKE_BUILD_TYPE=Release
     ) ELSE IF "%1%" == "ms_vs_cpu_debug" (
         echo "======Start gen VS2019 Project for MS cpu debug======"
-        cmake -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MODE=ON -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-            -G "Visual Studio 16 2019" -A x64 ../..
+        SET CMAKE_ARGS=!CMAKE_ARGS! -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MODE=ON
         set BUILD_TYPE=Debug
-    ) ELSE (
-        echo "======Start gen MinGW64 Project for MS cpu ======"
-        cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
-                -G "CodeBlocks - MinGW Makefiles" ../..
     )
+    cmake !CMAKE_ARGS! -G Ninja ../..
 )
+
 IF NOT %errorlevel% == 0 (
     echo "cmake fail."
     call :clean
