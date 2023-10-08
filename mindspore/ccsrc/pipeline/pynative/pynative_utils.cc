@@ -733,6 +733,20 @@ void Common::ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position)
   tr.Commit();
 }
 
+void Common::FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->used_forward_nodes().empty()) {
+    return;
+  }
+  for (const auto &node : func_graph->used_forward_nodes()) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    cnode->set_forward(nullptr, "");
+  }
+  func_graph->ClearUsedForwardNodes();
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();

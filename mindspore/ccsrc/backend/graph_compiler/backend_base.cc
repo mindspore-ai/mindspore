@@ -453,25 +453,29 @@ bool AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session
     }
   }
 
-  const auto &nodes = TopoSort(kernel_graph->get_return());
-  for (const auto &node : nodes) {
-    if (node->isa<CNode>()) {
-      const auto &cnode = node->cast<CNodePtr>();
-      if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0)); prim != nullptr) {
-        // Bprop cut use prim_py
-        if (!IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
+  // Run by single op will create kernel info in single op graph, so no need do this here;
+  // But, run by Actor need kernel info, so do this here
+  bool run_by_single_op = kernel_graph->has_flag(kFlagEnableRunGraphBySingleOp);
+  if (!run_by_single_op) {
+    const auto &nodes = TopoSort(kernel_graph->get_return());
+    for (const auto &node : nodes) {
+      if (node->isa<CNode>()) {
+        const auto &cnode = node->cast<CNodePtr>();
+        // Bprop cut use prim_py, no need change
+        if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0));
+            !IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
           auto new_prim = std::make_shared<Primitive>(*prim);
           cnode->set_input(kIndex0, NewValueNode(new_prim));
         }
-      }
-      kernel_graph->PostNewCNode(cnode);
-    } else {
-      if (node->isa<ValueNode>()) {
-        session_ptr->CreateNewValueNode(node, kernel_graph.get());
-      }
-      // Kernel graph new value node will create kernel info
-      if (node->kernel_info() == nullptr) {
-        kernel_graph->SetKernelInfoForNode(node);
+        kernel_graph->PostNewCNode(cnode);
+      } else {
+        if (node->isa<ValueNode>()) {
+          session_ptr->CreateNewValueNode(node, kernel_graph.get());
+        }
+        // Kernel graph new value node will create kernel info
+        if (node->kernel_info() == nullptr) {
+          kernel_graph->SetKernelInfoForNode(node);
+        }
       }
     }
   }

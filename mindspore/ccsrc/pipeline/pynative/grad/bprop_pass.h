@@ -18,7 +18,9 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_BPROP_PASS_H_
 
 #include <string>
+#include <utility>
 #include "ir/anf.h"
+#include "include/backend/kernel_graph.h"
 
 namespace mindspore {
 namespace pynative {
@@ -30,13 +32,36 @@ class AutoGradCellImpl;
 namespace bprop_pass {
 constexpr auto kIsKNode = "is_knode";
 
-void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
-void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
-                                         autograd::AutoGradCellImpl *auto_grad_cell_ptr);
-CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target, bool is_dynamic_shape,
-                                 bool grad_by_value);
-void ProcessAttrNode(const FuncGraphPtr &tape_graph, const CNodePtr &cnode, ValuePtrList *input_value,
-                     AnfNodePtrList *cnode_inputs);
+struct PyNativePassForward {
+  explicit PyNativePassForward(autograd::AutoGradCellImpl *auto_grad_cell_ptr, std::string device_target,
+                               bool grad_by_value)
+      : auto_grad_cell_ptr_(auto_grad_cell_ptr),
+        device_target_(std::move(device_target)),
+        grad_by_value_(grad_by_value) {}
+
+  // Pass for expander outputs
+  CNodePtr PassForDin(const CNodePtr &cnode, const std::string &op_name, bool is_dynamic_shape);
+  // Plant op input which is tuple, and set kAttrDynInputSizes attr
+  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen);
+  // Reverse operation for pass in high grad
+  void ReversePassFuncGraph(const FuncGraphPtr &func_graph);
+  void ReversePassCNode(const CNodePtr &cnode, ValuePtrList *inputs_value, AnfNodePtrList *cnode_inputs);
+  static inline bool need_reverse_graph() { return need_reverse_graph_; }
+
+ private:
+  CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, bool is_dynamic_shape);
+  AnfNodePtr BatchNormGradToBNInferGrad(const AnfNodePtr &node, const std::string &op_name);
+  void ReverseConstantToAttrNode(const CNodePtr &cnode, ValuePtrList *inputs_value, AnfNodePtrList *cnode_inputs);
+  void ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrList *inputs_value, AnfNodePtrList *cnode_inputs);
+  void ReverseBNInfer(const CNodePtr &cnode);
+  void ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs, ValuePtrList *inputs_value);
+
+  autograd::AutoGradCellImpl *auto_grad_cell_ptr_{nullptr};
+  std::string device_target_;
+  bool grad_by_value_{false};
+  static bool need_reverse_graph_;
+};
+
 void ClearCache();
 }  // namespace bprop_pass
 }  // namespace pynative

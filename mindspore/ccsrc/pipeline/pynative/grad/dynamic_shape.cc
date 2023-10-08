@@ -328,12 +328,9 @@ bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const V
     top_cell->IncreaseOpIndex();
     return true;
   }
-  bool is_hook_op = false;
-  if (node->op_prim != nullptr) {
-    is_hook_op = (node->op_prim->name() == kHookBackwardName || node->op_prim->name() == kCellBackwardHookName);
-  }
+
   const size_t node_idx = top_cell->op_index();
-  bool use_dynamic_shape_process = is_hook_op || IsNodeDynamic(top_cell, inputs, node, node_idx);
+  bool use_dynamic_shape_process = IsNodeDynamic(top_cell, inputs, node, node_idx);
   top_cell->IncreaseOpIndex();
   if (use_dynamic_shape_process) {
     MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process;

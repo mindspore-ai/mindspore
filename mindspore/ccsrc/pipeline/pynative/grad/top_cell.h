@@ -150,6 +150,8 @@ class TopCellInfo {
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }
+  inline bool has_bprop_cut_op() const { return has_bprop_cut_op_; }
+  inline void set_has_bprop_cut_op(bool has_bprop_cut_op) { has_bprop_cut_op_ = has_bprop_cut_op; }
   inline void set_resume_flag(bool resume_flag) { resume_flag_ = resume_flag; }
   bool resume_flag() const { return resume_flag_; }
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
@@ -200,6 +202,7 @@ class TopCellInfo {
   mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
   InputArgsInfoPtr input_args_info_{nullptr};
   bool use_dynamic_shape_process_{false};
+  bool has_bprop_cut_op_{false};
   // Judge whether need resume param grad info.
   bool resume_flag_{false};
 };

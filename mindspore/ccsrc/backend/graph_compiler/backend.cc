@@ -811,6 +811,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     }
 
     GilReleaseWithCheck gil_release;
+    auto is_dynamic = root_graph_->has_flag(kFlagPyNativeBpropGraphIsDynamic);
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputInfo input_info;
@@ -834,7 +835,6 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
       } else {
-        auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_info);
