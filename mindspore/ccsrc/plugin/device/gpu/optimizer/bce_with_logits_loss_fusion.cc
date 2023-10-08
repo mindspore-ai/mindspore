@@ -20,6 +20,8 @@
 #include <string>
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -51,8 +53,14 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   common::AnfAlgo::SetOutputTypeAndDetailShape(new_node_dtype, new_node_shape, new_cnode.get());
 
   // Add reduce node
-  string reduction = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrReduction);
+  auto reduction_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex4);
+  auto reduction_v = ops::GetScalarValue<int64_t>(reduction_node->cast<ValueNodePtr>()->value());
+  if (!reduction_v.has_value()) {
+    return nullptr;
+  }
+  auto reduction = reduction_v.value();
   MS_LOG(INFO) << "Create reduce node for BCEWithLogitsLoss, reduction attr is: " << reduction;
+
   std::vector<AnfNodePtr> reduce_inputs;
   std::vector<int64_t> axis_shp = {0};
   auto axis_tensor = std::make_shared<tensor::Tensor>(kInt64->type_id(), axis_shp);
@@ -64,11 +72,15 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   axis_node->set_abstract(axis_tensor->ToAbstract());
   axis_node = kernel_graph->NewValueNode(axis_node);
   kernel_graph->AddValueNodeToGraph(axis_node);
-  common::AnfAlgo::SetNodeAttr(kAttrReduction, MakeValue("none"), new_cnode);
-  if (reduction == "sum") {
-    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode, axis_node};
-  } else if (reduction == "mean") {
-    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMean->name())), new_cnode, axis_node};
+  // set reduction to None.
+  new_cnode->input(kIndex4)->cast<ValueNodePtr>()->set_value(MakeValue(0));
+  if (reduction == Reduction::SUM) {
+    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode, axis_node,
+                     NewValueNode(MakeValue(false)),
+                     NewValueNode(MakeValue(false))};  // ReduceSum(input, axis, keepdims=false, skip_mode=false)
+  } else if (reduction == Reduction::MEAN) {
+    reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMean->name())), new_cnode, axis_node,
+                     NewValueNode(MakeValue(false))};  // ReduceMean(input, axis, keepdims=false)
   } else {
     MS_LOG(INFO) << "Reduction is none, no optimization on current BCEWithLogitsLoss.";
     return nullptr;
@@ -100,10 +112,6 @@ const AnfNodePtr BCEWithLogitsLossFusion::Process(const FuncGraphPtr &func_graph
   }
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   if (cnode->inputs().size() == 0) {
-    return nullptr;
-  }
-  if (!common::AnfAlgo::HasNodeAttr("reduction", cnode)) {
-    MS_LOG(INFO) << "Primitive BCEWithLogitsLoss doesn't not have reduction attr.";
     return nullptr;
   }
   return AddReduceNode(func_graph, node);

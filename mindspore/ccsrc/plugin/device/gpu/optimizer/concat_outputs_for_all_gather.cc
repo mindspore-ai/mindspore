@@ -102,6 +102,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     for (size_t j = 0, idx = i; j < LongToSize(rank_size); ++j, idx += inputs_size) {
       concat_inputs.push_back(new_tuple_getitems[idx]);
     }
+    concat_inputs.push_back(NewValueNode(MakeValue(static_cast<int64_t>(0))));  // axis
     auto concat = func_graph->NewCNode(concat_inputs);
     MS_EXCEPTION_IF_NULL(concat);
     MS_EXCEPTION_IF_NULL(new_tuple_getitems[i]);

@@ -29,7 +29,10 @@ class BiasDropoutAddFusion : public PatternProcessPass {
         x_(std::make_shared<Var>()),
         bias_(std::make_shared<Var>()),
         index_(std::make_shared<Var>()),
-        residual_(std::make_shared<Var>()) {}
+        residual_(std::make_shared<Var>()),
+        keep_prob_(std::make_shared<Var>()),
+        seed0_(std::make_shared<Var>()),
+        seed1_(std::make_shared<Var>()) {}
   ~BiasDropoutAddFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -39,6 +42,9 @@ class BiasDropoutAddFusion : public PatternProcessPass {
   VarPtr bias_;
   VarPtr index_;
   VarPtr residual_;
+  VarPtr keep_prob_;
+  VarPtr seed0_;
+  VarPtr seed1_;
 };
 }  // namespace opt
 }  // namespace mindspore
