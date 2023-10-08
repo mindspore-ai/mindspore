@@ -17,44 +17,6 @@
 #include "src/extendrt/delegate/delegate_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
 namespace mindspore::lite {
-void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
-  int hw8 = plane / C8NUM * C8NUM;
-  int batch = plane * channel;
-  for (int n = 0; n < batches; n++) {
-    auto src_batch = reinterpret_cast<const float *>(src) + n * batch;
-    float *dst_batch = reinterpret_cast<float *>(dst) + n * batch;
-    int hw = 0;
-    for (; hw < hw8; hw += C8NUM) {
-      int c = 0;
-#ifdef ENABLE_ARM64
-      for (; c <= channel - C8NUM; c += C8NUM) {
-        const float *src_ptr = src_batch + hw * channel + c;
-        float *dst_ptr = dst_batch + c * plane + hw;
-        Transpose8X8Fp32Arm64(src_ptr, dst_ptr, channel, plane);
-      }
-#endif
-      for (; c < channel; c++) {
-        const float *src_ptr = src_batch + hw * channel + c;
-        float *dst_ptr = dst_batch + c * plane + hw;
-        for (size_t i = 0; i < C8NUM; i++) {
-          dst_ptr[i] = src_ptr[i * channel];
-        }
-      }
-    }
-    for (; hw < plane; hw++) {
-      const float *src_ptr = src_batch + hw * channel;
-      float *dst_ptr = dst_batch + hw;
-      for (int i = 0; i < channel; i++) {
-        dst_ptr[i * plane] = src_ptr[i];
-      }
-    }
-  }
-}
-
-void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  return PackNHWCToNCHWFp32(src, dst, batch, channel, plane);
-}
-
 bool IsSubGraphInputTensor(const std::vector<TensorInfo> &inputs, const TensorInfo &input) {
   return std::find(inputs.begin(), inputs.end(), input) != inputs.end();
 }
