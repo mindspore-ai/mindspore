@@ -116,6 +116,9 @@ Format BatchNorm::get_format() const {
 
 namespace {
 bool MeanAndVarianceValid(const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.size() < 5) {
+    MS_LOG(EXCEPTION) << "The inputs' num of BatchNorm should be greater than 4, but got " << input_args.size();
+  }
   std::vector<int> params_ids = {3, 4};
   size_t valid_param = 0;
   for (auto idx : params_ids) {
