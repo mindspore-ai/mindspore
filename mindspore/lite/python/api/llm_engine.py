@@ -91,7 +91,7 @@ class LLMReq:
     @decoder_cluster_id.setter
     def decoder_cluster_id(self, decoder_cluster_id: int):
         """Set decoder cluster id of this inference task in LLMEngine"""
-        check_isinstance("prompt_cluster_id", decoder_cluster_id, int)
+        check_isinstance("decoder_cluster_id", decoder_cluster_id, int)
         self.llm_request_.decoder_cluster_id = decoder_cluster_id
 
 
@@ -179,12 +179,13 @@ class LLMEngine:
             TypeError: `options` is not a dict.
             RuntimeError: init LLMEngine failed.
         """
-        check_isinstance("model_paths", model_paths, (list, tuple))
-        for model_path in model_paths:
+        if not isinstance(model_paths, (list, tuple)):
+            raise TypeError(f"model_paths must be tuple/list of str, but got item {type(model_paths)}.")
+        for i, model_path in enumerate(model_paths):
             if not isinstance(model_path, str):
-                raise TypeError(f"model_paths must be tuple/list of str, but got item {format(type(model_path))}.")
+                raise TypeError(f"model_paths element must be str, but got {type(model_path)} at index {i}.")
             if not os.path.exists(model_path):
-                raise RuntimeError(f"Failed to init LLMEngine, model path {model_path} does not exist!")
+                raise RuntimeError(f"Failed to init LLMEngine, model path {model_path} at index {i} does not exist!")
         check_isinstance("options", options, dict)
         self.engine_ = LLMEngine_()
         role_inner = LLMRole_.Prompt if self.role == LLMRole.Prompt else LLMRole_.Decoder
@@ -224,15 +225,15 @@ class LLMEngine:
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(inputs, (tuple, list)):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
+            raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
         check_isinstance("llm_req", llm_req, LLMReq)
         _inputs = []
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
-                raise TypeError(f"inputs element must be Tensor, but got "
-                                f"{type(element)} at index {i}.")
+                raise TypeError(f"inputs element must be Tensor, but got {type(element)} at index {i}.")
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
+        # pylint: disable=protected-access
         outputs = self.engine_.predict(llm_req.llm_request_, _inputs)
         if not outputs:
             raise RuntimeError(f"predict failed!")
@@ -255,6 +256,7 @@ class LLMEngine:
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
+        # pylint: disable=protected-access
         self.engine_.complete_request(llm_req.llm_request_)
 
     def fetch_status(self):
