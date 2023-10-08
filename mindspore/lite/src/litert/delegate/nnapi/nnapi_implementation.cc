@@ -19,11 +19,11 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/system_properties.h>
 #include <unistd.h>
 #include <string>
 #include <algorithm>
 #include <cstdlib>
-#include <sys/system_properties.h>
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 
