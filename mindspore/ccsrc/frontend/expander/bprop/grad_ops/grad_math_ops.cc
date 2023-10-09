@@ -2066,11 +2066,14 @@ REG_BPROP_BUILDER("MatrixTriangularSolve").SetUnusedInputs({i1}).SetBody(BODYFUN
   return {grad_matrix, grad_rhs};
 });
 
-REG_BPROP_BUILDER("NanToNum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("NanToNum").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
+  auto nan = ib->GetInput(kIndex1);
+  auto posinf = ib->GetInput(kIndex2);
+  auto neginf = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto dx = ib->Mul(dout, (ib->Emit("IsFinite", {x})));
-  return {dx};
+  return {dx, ib->OutZeros(nan), ib->OutZeros(posinf), ib->OutZeros(neginf)};
 });
 
 REG_BPROP_BUILDER("Fmin").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) { return FminFmaxGrad(ib, true); });

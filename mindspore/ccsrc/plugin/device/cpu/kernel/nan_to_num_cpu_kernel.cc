@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ using std::isnan;
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kNanToNumInputsNum = 1;
+constexpr size_t kNanToNumInputsNum = 4;
 constexpr size_t kNanToNumOutputsNum = 1;
+constexpr auto kNanValueIdx = 1;
+constexpr auto kPosinfValueIdx = 2;
+constexpr auto kNeginfValueIdx = 3;
 }  // namespace
 
 bool NanToNumCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -38,6 +41,9 @@ int NanToNumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
+  nan_value_ = inputs[kNanValueIdx]->GetValueWithCheck<float>();
+  posinf_value_ = inputs[kPosinfValueIdx]->GetValueWithCheck<float>();
+  neginf_value_ = inputs[kNeginfValueIdx]->GetValueWithCheck<float>();
   return 0;
 }
 
@@ -76,9 +82,19 @@ bool NanToNumCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *
 const std::vector<std::pair<KernelAttr, NanToNumCpuKernelMod::KernelRunFunc>> &NanToNumCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, NanToNumCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
      &NanToNumCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &NanToNumCpuKernelMod::LaunchKernel<float>}};
   return func_list;
 }
