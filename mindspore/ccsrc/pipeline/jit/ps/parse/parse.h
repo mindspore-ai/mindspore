@@ -253,7 +253,10 @@ class Parser {
   bool GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const;
   py::object GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,
                                 bool *is_constant) const;
-  bool CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
+                                       bool *is_true_cond) const;
+  bool CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond,
+                              const py::object &if_node = py::none()) const;
 
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const;

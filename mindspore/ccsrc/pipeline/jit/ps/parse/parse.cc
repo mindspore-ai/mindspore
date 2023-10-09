@@ -24,6 +24,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
+#include <regex>
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -2676,15 +2677,46 @@ bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::ob
   return true;
 }
 
+bool Parser::GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
+                                             bool *is_true_cond) const {
+  auto location = GetLocation(if_node);
+  const auto &comments = location->comments();
+  if (comments.empty()) {
+    return false;
+  }
+  const auto &comment = comments.back();
+  MS_LOG(DEBUG) << "The comment of if statement: " << comment << ", block: " << block->ToString();
+  std::regex regex("^#\\s*@jit.cond:\\s*([A-Za-z]+)$");
+  std::smatch matched_results;
+  if (!std::regex_match(comment, matched_results, regex)) {
+    return false;
+  }
+  constexpr auto container_match_count = 2;
+  if (matched_results.size() != container_match_count) {
+    return false;
+  }
+  const auto &cond_str = matched_results[1].str();
+  MS_LOG(DEBUG) << "The cond string of comment is " << cond_str;
+  if (cond_str != "True" && cond_str != "False") {
+    return false;
+  }
+  *is_true_cond = (cond_str == "True");
+  return true;
+}
+
 // Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
-bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node,
-                                    bool *is_true_cond) const {
+bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond,
+                                    const py::object &if_node) const {
   static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
   if (boost_parse == "0") {
     return false;
   }
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(is_true_cond);
+  // Try to get the constant condition from the comment "@jit.cond: True/False".
+  if (if_node != py::none() && GetConstantConditionFromComment(block, if_node, is_true_cond)) {
+    return true;
+  }
   auto node_type = ast()->GetNodeType(test_node);
   const std::string &node_type_name = node_type->node_name();
   MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
@@ -2708,7 +2740,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   bool is_true_cond = false;
-  bool is_bool_const_cond = CheckConstantCondition(block, test_node, &is_true_cond);
+  bool is_bool_const_cond = CheckConstantCondition(block, test_node, &is_true_cond, node);
 
   // Make condition node.
   AnfNodePtr bool_node = nullptr;

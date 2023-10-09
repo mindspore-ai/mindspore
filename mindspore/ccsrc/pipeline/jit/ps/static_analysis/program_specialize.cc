@@ -638,7 +638,6 @@ void FuncGraphSpecializer::SecondPass() {
 }
 
 namespace {
-
 void UpdateForEmptySequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node,
                                 const AbstractSequencePtr &old_sequence_abs) {
   if (!IsValueNode<ValueTuple>(new_node) && !IsValueNode<ValueList>(new_node)) {
