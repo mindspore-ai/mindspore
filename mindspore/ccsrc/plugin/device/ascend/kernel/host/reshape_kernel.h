@@ -27,6 +27,8 @@ class ReshapeKernelMod : public HostKernelMod {
   ~ReshapeKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
   void Execute() const;
