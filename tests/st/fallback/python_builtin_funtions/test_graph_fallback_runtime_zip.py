@@ -111,3 +111,45 @@ def test_fallback_runtime_zip_tensor():
     x = Tensor(np.array([10, 20]))
     out = foo(x)
     assert out == 30
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_zip_string():
+    """
+    Feature: JIT Fallback
+    Description: Test zip() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo():
+        out = 0
+        for _ in zip("abc"):
+            out += 1
+        return out
+
+    out = foo()
+    assert out == 3
+
+
+def test_fallback_runtime_zip_dict():
+    """
+    Feature: JIT Fallback
+    Description: Test zip() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo():
+        x = {'a': 1, 'b': 2}
+        str_res = ""
+        for i in zip(x):
+            str_res += i[0]
+        return str_res
+
+    out = foo()
+    assert out == "ab"

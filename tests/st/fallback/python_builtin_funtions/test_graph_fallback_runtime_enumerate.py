@@ -28,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE)
 def test_enumerate_asnumpy():
     """
     Feature: JIT Fallback
-    Description: Test dict() in fallback runtime
+    Description: Test enumerate() in fallback runtime
     Expectation:No exception
     """
     @jit
@@ -43,3 +43,28 @@ def test_enumerate_asnumpy():
 
     ret = foo()
     assert ret == (6, 110)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_enumerate_string():
+    """
+    Feature: JIT Fallback
+    Description: Test enumerate() in fallback runtime
+    Expectation:No exception
+    """
+    @jit
+    def foo():
+        index_sum = 0
+        str_res = ""
+        str_value = "abcd"
+        for i, j in enumerate(str_value):
+            index_sum += i
+            str_res += j
+        return index_sum, str_res
+
+    ret = foo()
+    assert ret == (6, "abcd")
