@@ -1879,8 +1879,10 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
     if (global_dict.contains(module_name)) {
       py::object module_obj = global_dict[py::str(module_name)];
       std::string module_str = py::cast<std::string>(py::str(module_obj));
+      // The module of Tensor imported from MsAdapter could be:
+      // module 'msadapter' or module 'msadapter.pytorch' and so on.
       if (module_str.find("module 'mindspore'") != std::string::npos ||
-          module_str.find("module 'msadapter'") != std::string::npos) {
+          module_str.find("module 'msadapter") != std::string::npos) {
         std::string script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
         AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
         interpret_node->set_interpret(true);
