@@ -32,6 +32,9 @@ class SymbolTreeBuilder:
          network (Cell): An instance of Cell represents a network from which SymbolTree will be built.
     """
 
+    # Entry function of the forward computation process
+    entry_function = "construct"
+
     def __init__(self, network: Cell):
         if not isinstance(network, Cell):
             raise RuntimeError("Only support network with Cell type now, ", network)
@@ -51,7 +54,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        ast_root = FlattenRecursiveStmt().transform(ast_root, ["construct"])
+        ast_root = FlattenRecursiveStmt().transform(ast_root, [SymbolTreeBuilder.entry_function])
         return ast_root
 
     def build(self) -> SymbolTree:
