@@ -44,15 +44,14 @@ AbstractBasePtr MapTensorPutWithStatusInferInner(const PrimitivePtr &primitive,
   constexpr int64_t input_num = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorPutWithStatus);
   // Check argument abstracts.
-  auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorPutWithStatus, input_args, kInputIndex0);
+  auto abs_map_tensor = CheckAndConvertUtils::CheckArgsType(kNameMapTensorPutWithStatus, input_args, kInputIndex0,
+                                                            kObjectTypeMapTensorType);
 
   // Get key dtype, value dtype and value shape of the map tensor.
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
   auto key_dtype = map_tensor_type->key_dtype();
   auto value_dtype = map_tensor_type->value_dtype();
-  auto value_shape = abs_map_tensor->value_shape();
 
   // Check 'key_tensor' dtype and shape.
   auto key_tensor_dtype =
@@ -102,8 +101,8 @@ AbstractBasePtr MapTensorPutWithStatusInferInner(const PrimitivePtr &primitive,
   // Check 'value_tensor' shape.
   // Concate key shape and value shape as the required value shape.
   ShapeVector shape_vec = key_tensor_shape->shape();
-  const auto &value_shape_vec = value_shape->shape();
-  (void)shape_vec.insert(shape_vec.end(), value_shape_vec.begin(), value_shape_vec.end());
+  const ShapeVector &key_value_shape = abs_map_tensor->GetShape()->GetShapeVector();
+  (void)shape_vec.insert(shape_vec.end(), key_value_shape.begin() + 1, key_value_shape.end());
   auto required_value_shape = std::make_shared<abstract::Shape>(shape_vec);
   if (!common::IsEqual(required_value_shape, value_tensor_shape)) {
     MS_EXCEPTION(ValueError) << kNameMapTensorPutWithStatus << " - required value tensor shape "
@@ -115,19 +114,15 @@ AbstractBasePtr MapTensorPutWithStatusInferInner(const PrimitivePtr &primitive,
   return abs_map_tensor;
 }
 
-abstract::ShapePtr MapTensorPutWithStatusInferShape(const PrimitivePtr &prim,
-                                                    const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr MapTensorPutWithStatusInferShape(const PrimitivePtr &prim,
+                                              const std::vector<AbstractBasePtr> &input_args) {
   auto abs = MapTensorPutWithStatusInferInner(prim, input_args);
-  auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
-  MS_EXCEPTION_IF_NULL(map_tensor_abs);
-  return map_tensor_abs->shape();
+  return abs->GetShape();
 }
 
 TypePtr MapTensorPutWithStatusInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto abs = MapTensorPutWithStatusInferInner(prim, input_args);
-  auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
-  MS_EXCEPTION_IF_NULL(map_tensor_abs);
-  return map_tensor_abs->GetType();
+  return abs->GetType();
 }
 
 AbstractBasePtr MapTensorPutWithStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -24,6 +24,7 @@
 #include "ir/anf.h"
 #include "ir/map_tensor.h"
 #include "ir/tensor.h"
+#include "ir/dtype/tensor_type.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
@@ -69,24 +70,23 @@ AbstractBasePtr MakeMapParameterInfer(const abstract::AnalysisEnginePtr &, const
   constexpr int64_t key_arg_index = 0;
   constexpr int64_t value_arg_index = 1;
   constexpr int64_t default_value_arg_index = 2;
-  if (!input_args[key_arg_index]->isa<abstract::AbstractTensor>() ||
-      !input_args[value_arg_index]->isa<abstract::AbstractTensor>()) {
+  if (input_args[key_arg_index]->GetType()->object_type() != kObjectTypeTensorType ||
+      input_args[value_arg_index]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_LOG(EXCEPTION) << "The args of MakeMapParameter is invalid, they must be tensor. Please check:"
                       << input_args[key_arg_index]->ToString() << ", " << input_args[value_arg_index]->ToString();
   }
   // key_arg
-  auto key_arg = input_args[key_arg_index]->GetValueTrack();
+  auto key_arg = input_args[key_arg_index]->GetType();
   MS_EXCEPTION_IF_NULL(key_arg);
-  auto key_arg_tensor = key_arg->cast<tensor::TensorPtr>();
-  TypeId key_dtype_id =
-    ((key_arg_tensor != nullptr) ? static_cast<TypeId>(key_arg_tensor->data_type_c()) : TypeId::kNumberTypeInt32);
+  auto key_arg_tensor = key_arg->cast<TensorTypePtr>();
+  TypeId key_dtype_id = ((key_arg_tensor != nullptr) ? key_arg_tensor->element()->type_id() : TypeId::kNumberTypeInt32);
 
   // value_arg
-  auto value_arg = input_args[value_arg_index]->GetValueTrack();
+  auto value_arg = input_args[value_arg_index]->GetType();
   MS_EXCEPTION_IF_NULL(value_arg);
-  auto value_arg_tensor = value_arg->cast<tensor::TensorPtr>();
+  auto value_arg_tensor = value_arg->cast<TensorTypePtr>();
   TypeId value_dtype_id =
-    ((value_arg_tensor != nullptr) ? static_cast<TypeId>(value_arg_tensor->data_type_c()) : TypeId::kNumberTypeFloat32);
+    ((value_arg_tensor != nullptr) ? value_arg_tensor->element()->type_id() : TypeId::kNumberTypeFloat32);
 
   // value_shape
   auto shape = input_args[value_arg_index]->GetShapeTrack();

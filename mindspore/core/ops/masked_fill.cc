@@ -88,7 +88,7 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
     valid_types = {kBool,    kInt8,    kInt16,   kInt32, kInt64, kUInt8, kUInt16,    kUInt32,    kUInt64,
                    kFloat16, kFloat32, kFloat64, kInt,   kUInt,  kFloat, kComplex64, kComplex128};
   }
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
     std::map<std::string, TypePtr> types;
     (void)types.emplace("input", input_args[kInputIndex0]->GetType());
     (void)types.emplace("value", input_args[kInputIndex2]->GetType());

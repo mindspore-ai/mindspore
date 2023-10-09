@@ -40,6 +40,7 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -80,10 +81,10 @@ BaseShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector
   }
 
   int64_t num = 0;
-  auto num_type = input_args[kInputIndex2]->GetType()->object_type();
+  auto num_type = input_args[kInputIndex2]->GetType();
   if (!is_compile) {
-    if (num_type == kObjectTypeTensorType) {
-      if (num_value->isa<tensor::Tensor>()) {
+    if (num_type->object_type() == kObjectTypeTensorType) {
+      if (IsValueKnown(num_value)) {
         auto num_shape_ptr = input_args[kInputIndex2]->GetShape();
         const auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(num_shape_ptr)[kShape];
         if (num_shape.size() != 0) {
@@ -91,21 +92,27 @@ BaseShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector
                                   << "], the 'num' must be int or 0D int32/int64 Tensor, but got " << num_shape.size()
                                   << "D Tensor.";
         }
-        auto num_input = CheckAndConvertUtils::CheckTensorIntValue("num", num_value, prim_name);
+        auto num_input = CheckAndConvertUtils::CheckTensorIntValue("num", num_value, prim_name, num_type);
         num = num_input[0];
       } else {
         MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
                                 << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
                                 << num_value->ToString() << ".";
       }
-    } else if (num_type == kObjectTypeNumber) {
+    } else if (num_type->object_type() == kObjectTypeNumber) {
       MS_EXCEPTION_IF_NULL(num_value);
-      if (!num_value->isa<Int64Imm>()) {
+      if (num_type->type_id() != kNumberTypeInt64) {
         MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
                                 << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
                                 << num_value->ToString() << ".";
       }
-      num = num_value->cast<Int64ImmPtr>()->value();
+      auto num_opt = GetScalarValue<int64_t>(num_value);
+      if (!num_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                                << "], the 'num' must be int or 0D int32/int64 Tensor, but got "
+                                << num_value->ToString() << ".";
+      }
+      num = num_opt.value();
     } else {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
                               << "], the 'num' must be int or 0D int32/int64 Tensor, but got " << num_value->ToString()

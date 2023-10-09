@@ -66,7 +66,8 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
 
   int64_t row = x_shape[LongToSize(rank - kNumber2)];
   int64_t col = x_shape[LongToSize(rank - 1)];
-  auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
+  auto k_val =
+    CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name, input_args[kInputIndex1]->GetType());
   size_t k_val_size = LongToSize(k_val.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
                                               prim_name);
@@ -113,9 +114,9 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
 
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto padding_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto padding_value = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);
 

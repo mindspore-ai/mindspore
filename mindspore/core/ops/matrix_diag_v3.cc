@@ -32,20 +32,20 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsValueUnKnown(const AbstractBasePtr &arg) {
-  if (!arg->isa<abstract::AbstractTensor>() || !arg->GetValue()->isa<tensor::Tensor>()) {
+  if (arg->GetType()->object_type() != kObjectTypeTensorType || IsValueKnown(arg->GetValue())) {
     return true;
   }
   return false;
 }
 
 int64_t GetTensorValue(const AbstractBasePtr &arg, const std::string &prim_name, const std::string &arg_name) {
-  if (!arg->isa<abstract::AbstractTensor>() || !arg->GetValue()->isa<tensor::Tensor>()) {
+  if (IsValueUnKnown(arg)) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
   constexpr int64_t number_one = 1;
   auto value_ptr = arg->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
-  auto tensor_val = CheckAndConvertUtils::CheckTensorIntValue(arg_name, value_ptr, prim_name);
+  auto tensor_val = CheckAndConvertUtils::CheckTensorIntValue(arg_name, value_ptr, prim_name, arg->GetType());
   int64_t tensor_val_size = SizeToLong(tensor_val.size());
   MS_EXCEPTION_IF_CHECK_FAIL(tensor_val_size == number_one,
                              prim_name + " infers failed when initializing value of '" + arg_name + "'.");
@@ -156,7 +156,8 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   } else {
     auto k_val_ptr = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(k_val_ptr);
-    auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name);
+    auto k_val =
+      CheckAndConvertUtils::CheckTensorIntValue("k", k_val_ptr, prim_name, input_args[kInputIndex1]->GetType());
     int64_t k_val_size = SizeToLong(k_val.size());
     CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {number_one, number_two},
                                                 prim_name);
@@ -179,11 +180,11 @@ TypePtr MatrixDiagV3InferType(const PrimitivePtr &prim, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
 
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
-  auto padding_value = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex4);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex3, kObjectTypeTensorType);
+  auto padding_value = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex4, kObjectTypeTensorType);
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);
 

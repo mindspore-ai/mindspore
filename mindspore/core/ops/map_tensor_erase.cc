@@ -34,22 +34,22 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorErase, BaseOperator);
 
-abstract::ShapePtr MapTensorEraseInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr MapTensorEraseInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorErase, input_args, kInputIndex0, kObjectTypeMapTensorType);
   auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorErase, input_args, kInputIndex1);
   if (key_tensor_shape->shape().size() != 1) {
     MS_EXCEPTION(TypeError) << kNameMapTensorErase << " - key_tensor shape should be 1 rank"
                             << " but got " << key_tensor_shape->ToString() << ".";
   }
-  return abs_map_tensor->shape();
+  return abs_map_tensor->GetShape();
 }
 
 TypePtr MapTensorEraseInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorErase, input_args, kInputIndex0, kObjectTypeMapTensorType);
   // Get key dtype of the map tensor.
-  auto map_tensor_type = abs_map_tensor->map_tensor_type();
+  auto map_tensor_type = abs_map_tensor->GetType()->cast<MapTensorTypePtr>();
   MS_EXCEPTION_IF_NULL(map_tensor_type);
   auto key_dtype = map_tensor_type->key_dtype();
 
@@ -69,7 +69,7 @@ AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const P
   constexpr int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, kNameMapTensorErase);
   auto abs_map_tensor =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
+    CheckAndConvertUtils::CheckArgsType(kNameMapTensorErase, input_args, kInputIndex0, kObjectTypeMapTensorType);
   // check shape and type
   (void)MapTensorEraseInferShape(primitive, input_args);
   (void)MapTensorEraseInferType(primitive, input_args);

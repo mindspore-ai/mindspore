@@ -52,7 +52,7 @@ abstract::ShapePtr MatrixBandPartInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -94,14 +94,14 @@ abstract::ShapePtr MatrixBandPartInferShape(const PrimitivePtr &primitive,
   }
 
   auto broadcast_shape = x_shape;
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex1]->GetType()->object_type() == kObjectTypeTensorType) {
     auto expanded_lower_shape = GetExpandedShape<int64_t>(lower_shape, broadcast_shape.size());
     // Check whether broadcasting is possible
     (void)CalBroadCastShape(x_shape, expanded_lower_shape, prim_name, "x", "lower");
     // Get broadcast shape
     broadcast_shape = CalBroadCastShape(broadcast_shape, expanded_lower_shape, prim_name);
   }
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
     auto expanded_upper_shape = GetExpandedShape<int64_t>(upper_shape, broadcast_shape.size());
     // Check whether broadcasting is possible
     (void)CalBroadCastShape(x_shape, expanded_upper_shape, prim_name, "x", "upper");

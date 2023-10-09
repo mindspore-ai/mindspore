@@ -60,8 +60,8 @@ abstract::ShapePtr LeftShiftInferShape(const PrimitivePtr &primitive, const std:
 TypePtr LeftShiftInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x, y);
   auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
