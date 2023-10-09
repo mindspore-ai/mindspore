@@ -85,7 +85,7 @@ NodePtrList IgammaBpropExpander(BpropIRBuilder *ib) {
 
 NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
-  auto zeros = ib->ZerosLike(dout);
+  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
   NodePtr x_mask;
   if (is_minimum) {
     x_mask = ib->LessEqual(x, y);
@@ -96,7 +96,7 @@ NodePtrList MinimumMaximumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodeP
   auto grad_x = ib->Select(x_mask, dout, zeros);
   auto grad_y = ib->Select(x_mask, zeros, dout);
 
-  auto half_ratio = ib->Fill(2.0, ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
   auto half_dout = ib->Div(dout, half_ratio);
   NodePtr equal_mask = ib->Equal(x, y);
   grad_x = ib->Select(equal_mask, half_dout, grad_x);
