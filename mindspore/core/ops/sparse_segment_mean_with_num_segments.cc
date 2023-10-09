@@ -31,6 +31,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -74,14 +75,12 @@ abstract::ShapePtr SparseSegmentMeanWithNumSegmentsInferShape(const PrimitivePtr
       }
     }
   }
-  if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex3]->GetValue()->isa<tensor::Tensor>()) {
-    auto num_segments = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments);
-    auto num_segments_value = num_segments->GetValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex3]) && IsValueKnown(input_args[kInputIndex3]->GetValue())) {
+    auto num_segments_value = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(num_segments_value);
+    auto num_segments_type = input_args[kInputIndex3]->GetType();
     auto num_segments_value_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value, prim_name, num_segments_type);
     size_t dim_zero = LongToSize(num_segments_value_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name

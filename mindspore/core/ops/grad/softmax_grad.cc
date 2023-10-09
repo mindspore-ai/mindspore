@@ -62,7 +62,7 @@ TypePtr SoftmaxGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(input_args[1]);
   auto x_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  if (!x_type->isa<TensorType>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[1])) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
                             << ".";
   }

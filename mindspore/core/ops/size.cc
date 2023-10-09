@@ -50,7 +50,7 @@ class SizeInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSizeInputNum, prim_name);
     auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
-    if (!input_type->isa<TensorType>()) {
+    if (!CheckAndConvertUtils::IsTensor(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', input must be a Tensor, but got: " << input_type->ToString() << ".";
     }

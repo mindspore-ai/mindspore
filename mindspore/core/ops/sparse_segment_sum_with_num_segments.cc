@@ -64,12 +64,12 @@ abstract::ShapePtr SparseSegmentSumWithNumSegmentsInferShape(const PrimitivePtr 
                                  << num_segments_shape[kInputIndex0] << "].";
       }
     }
-    auto num_segments_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_segments_value);
-    auto num_segments_value_ptr = num_segments_value->GetValue();
+    auto num_segments_value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
-    auto num_segments_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("num_segments", num_segments_value_ptr, prim->name());
+    auto num_segments_type_ptr = input_args[kInputIndex3]->GetType();
+    MS_EXCEPTION_IF_NULL(num_segments_type_ptr);
+    auto num_segments_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+      "num_segments", num_segments_value_ptr, prim->name(), num_segments_type_ptr);
     size_t dim_zero = static_cast<size_t>(num_segments_value_ptr_tensor.back());
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For " << prim_name

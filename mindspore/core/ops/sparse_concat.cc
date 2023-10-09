@@ -59,49 +59,67 @@ inline bool CheckSparseConcatShapeValue(const ShapeVector &indices_shape, const 
   return is_dynamic;
 }
 
+TypePtrList GetSequenceTypes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+  bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
+  bool is_list = x->GetType()->object_type() == kObjectTypeList;
+  if ((!is_tuple) && (!is_list)) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << primitive->name()
+                                        << ", the input must be a list or tuple of sparse tensor. but got: "
+                                        << x->ToString() << ".";
+  }
+  auto x_types = x->GetType();
+  TypePtrList types_list;
+  if (is_tuple) {
+    types_list = x_types->cast<TuplePtr>()->elements();
+  } else {
+    types_list = x_types->cast<ListPtr>()->elements();
+  }
+  return types_list;
+}
+
+abstract::BaseShapePtrList GetSequenceShapes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+  bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
+  bool is_list = x->GetType()->object_type() == kObjectTypeList;
+  if ((!is_tuple) && (!is_list)) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << primitive->name()
+                                        << ", the input must be a list or tuple of sparse tensor. but got: "
+                                        << x->ToString() << ".";
+  }
+  auto x_shapes = x->GetShape();
+  abstract::BaseShapePtrList shapes_list;
+  if (is_tuple) {
+    auto shapes_tuple = x_shapes->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(shapes_tuple);
+    shapes_list = shapes_tuple->shape();
+  } else {
+    auto shapes_tuple = x_shapes->cast<abstract::ListShapePtr>();
+    MS_EXCEPTION_IF_NULL(shapes_tuple);
+    shapes_list = shapes_tuple->shape();
+  }
+  return shapes_list;
+}
+
 TuplePtr SparseConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  if (!input_args[kInputIndex0]->isa<abstract::AbstractTuple>() &&
-      !input_args[kInputIndex0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kInputIndex0]->ToString() << ".";
-  }
-  auto inputs_indices = input_args[kInputIndex0]->isa<abstract::AbstractTuple>()
-                          ? input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements()
-                          : input_args[kInputIndex0]->cast<abstract::AbstractListPtr>()->elements();
+  auto input_indices_types = GetSequenceTypes(primitive, input_args[kInputIndex0]);
+  auto input_indices_size = input_indices_types.size();
+  auto input_values_types = GetSequenceTypes(primitive, input_args[kInputIndex1]);
+  auto input_values_size = input_values_types.size();
+  auto input_shapes_types = GetSequenceTypes(primitive, input_args[kInputIndex2]);
+  auto input_shapes_size = input_shapes_types.size();
 
-  if (!input_args[kInputIndex1]->isa<abstract::AbstractTuple>() &&
-      !input_args[kInputIndex1]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kInputIndex1]->ToString() << ".";
-  }
-  auto inputs_values = input_args[kInputIndex1]->isa<abstract::AbstractTuple>()
-                         ? input_args[kInputIndex1]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kInputIndex1]->cast<abstract::AbstractListPtr>()->elements();
-
-  if (!input_args[kInputIndex2]->isa<abstract::AbstractTuple>() &&
-      !input_args[kInputIndex2]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
-                                        << input_args[kInputIndex2]->ToString() << ".";
-  }
-  auto inputs_shapes = input_args[kInputIndex2]->isa<abstract::AbstractTuple>()
-                         ? input_args[kInputIndex2]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kInputIndex2]->cast<abstract::AbstractListPtr>()->elements();
   std::map<std::string, TypePtr> values_types;
-  if ((inputs_indices.size() != inputs_values.size()) || (inputs_indices.size() != inputs_shapes.size())) {
+  if ((input_indices_size != input_values_size) || (input_indices_size != input_shapes_size)) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
                                         << ", the sp_input is not a COO tensor, the COO tensor indices number is "
-                                        << inputs_indices.size() << " but values number is " << inputs_values.size()
-                                        << " and shape number is " << inputs_shapes.size() << ".";
+                                        << input_indices_size << " but values number is " << input_values_size
+                                        << " and shape number is " << input_shapes_size << ".";
   }
-  for (unsigned int i = 0; i < inputs_indices.size(); i++) {
+  for (unsigned int i = 0; i < input_indices_size; i++) {
     std::string elementi = "values" + std::to_string(i);
-    auto ind_type = inputs_indices[i]->GetType();
-    auto sha_type = inputs_shapes[i]->GetType();
-    (void)values_types.emplace(elementi, inputs_values[i]->GetType());
+    auto ind_type = input_indices_types[i];
+    auto sha_type = input_shapes_types[i];
+    (void)values_types.emplace(elementi, input_values_types[i]);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64, kInt32},
                                                      prim_name);
@@ -109,39 +127,39 @@ TuplePtr SparseConcatInferType(const PrimitivePtr &primitive, const std::vector<
   (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
 
   constexpr size_t kFirstInput = 0;
-  return std::make_shared<Tuple>(std::vector<TypePtr>{inputs_indices[kFirstInput]->GetType(),
-                                                      inputs_values[kFirstInput]->GetType(),
-                                                      inputs_shapes[kFirstInput]->GetType()});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{input_indices_types[kFirstInput], input_values_types[kFirstInput],
+                                                      input_shapes_types[kFirstInput]});
 }
 
 abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto inputs_indices = input_args[kInputIndex0]->isa<abstract::AbstractTuple>()
-                          ? input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements()
-                          : input_args[kInputIndex0]->cast<abstract::AbstractListPtr>()->elements();
-  auto inputs_values = input_args[kInputIndex1]->isa<abstract::AbstractTuple>()
-                         ? input_args[kInputIndex1]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kInputIndex1]->cast<abstract::AbstractListPtr>()->elements();
-  auto inputs_shapes = input_args[kInputIndex2]->isa<abstract::AbstractTuple>()
-                         ? input_args[kInputIndex2]->cast<abstract::AbstractTuplePtr>()->elements()
-                         : input_args[kInputIndex2]->cast<abstract::AbstractListPtr>()->elements();
+  auto input_indices_types = GetSequenceTypes(primitive, input_args[kInputIndex0]);
+  auto input_indices_shapes = GetSequenceShapes(primitive, input_args[kInputIndex0]);
+  auto input_indices_size = input_indices_types.size();
+  auto input_values_types = GetSequenceTypes(primitive, input_args[kInputIndex1]);
+  auto input_values_shapes = GetSequenceShapes(primitive, input_args[kInputIndex1]);
+  auto input_values_size = input_values_types.size();
+  auto input_shapes_types = GetSequenceTypes(primitive, input_args[kInputIndex2]);
+  auto input_shapes_shapes = GetSequenceShapes(primitive, input_args[kInputIndex2]);
+  auto input_shapes_size = input_shapes_types.size();
+
   int64_t kNumOne = 1;
   size_t indices_expect_rank = 2;
   size_t values_expect_rank = 1;
   size_t shapes_expect_rank = 1;
-  int64_t ConcatNum = SizeToLong(inputs_indices.size());
+  int64_t ConcatNum = SizeToLong(input_indices_size);
 
   (void)CheckAndConvertUtils::CheckInteger("indices' num", ConcatNum, kGreaterThan, kNumOne, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("indices' num and values' num", ConcatNum, kEqual,
-                                           SizeToLong(inputs_values.size()), prim_name);
+                                           SizeToLong(input_values_size), prim_name);
   (void)CheckAndConvertUtils::CheckInteger("indices' num and shapes' num", ConcatNum, kEqual,
-                                           SizeToLong(inputs_shapes.size()), prim_name);
+                                           SizeToLong(input_shapes_size), prim_name);
 
-  auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->GetShape())[kShape];
-  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->GetShape())[kShape];
-  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->GetShape())[kShape];
+  auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_indices_shapes[0])[kShape];
+  auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_values_shapes[0])[kShape];
+  auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shapes_shapes[0])[kShape];
 
   CheckSparseConcatShape(indices_element0_shape, indices_expect_rank, "indices shape", prim_name);
   CheckSparseConcatShape(values_element0_shape, values_expect_rank, "values shape", prim_name);
@@ -163,9 +181,9 @@ abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,
   auto out_shape_shape = shapes_element0_shape;
   bool is_dynamic = false;
   for (int64_t i = 0; i < ConcatNum; i++) {
-    auto indices_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[i]->GetShape())[kShape];
-    auto values_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[i]->GetShape())[kShape];
-    auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[i]->GetShape())[kShape];
+    auto indices_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_indices_shapes[i])[kShape];
+    auto values_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_values_shapes[i])[kShape];
+    auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shapes_shapes[i])[kShape];
     is_dynamic = is_dynamic || CheckSparseConcatShapeValue(indices_element_shape, values_element_shape,
                                                            shapes_element_shape, prim_name);
     if (is_dynamic) {

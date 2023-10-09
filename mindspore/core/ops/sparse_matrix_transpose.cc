@@ -41,6 +41,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -91,12 +92,13 @@ abstract::TupleShapePtr SparseMatrixTransposeInferShape(const PrimitivePtr &prim
   }
   ShapeVector transpose_row_pointers_shape{abstract::Shape::kShapeDimAny};
   auto dense_shape = input_args[kInputIndex0];
-  if (dense_shape->isa<abstract::AbstractTensor>() && dense_shape->GetValue()->isa<tensor::Tensor>()) {
-    auto dense_shape_ = dense_shape->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(dense_shape_);
+  if (CheckAndConvertUtils::IsTensor(dense_shape) && IsValueKnown(dense_shape->GetValue())) {
     auto dense_shape_value = dense_shape->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value);
-    auto dense_shape_tensor = CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name);
+    auto dense_shape_type = dense_shape->GetType();
+    MS_EXCEPTION_IF_NULL(dense_shape_type);
+    auto dense_shape_tensor =
+      CheckAndConvertUtils::CheckTensorIntValue("dense_shape", dense_shape_value, prim_name, dense_shape_type);
     if (rank_x == kInputNoBatch) {
       transpose_row_pointers_shape[0] = dense_shape_tensor[1] + 1;
     } else {

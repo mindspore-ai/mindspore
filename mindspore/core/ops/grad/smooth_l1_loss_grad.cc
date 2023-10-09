@@ -68,11 +68,11 @@ namespace {
 abstract::ShapePtr SmoothL1LossGradInferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  auto prediction = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto target = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
   abstract::CheckShapeSame(prim_name, prediction, target);
   std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
-  auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto dloss = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
   if (reduction == kNone) {
     abstract::CheckShapeSame(prim_name, prediction, dloss);
   }

@@ -44,12 +44,12 @@ class SiLUGradInfer : public abstract::OpInferBase {
     const int64_t input_num = 2;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
-    auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+    auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+    auto out = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
     (void)abstract::CheckDtypeSame(prim_name, out, dout);
     auto x_type = dout->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
-    if (!x_type->isa<TensorType>()) {
+    if (!CheckAndConvertUtils::IsTensor(dout)) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
                               << ".";
     }

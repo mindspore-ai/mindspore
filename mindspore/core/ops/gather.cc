@@ -103,10 +103,8 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   if (params_shape_ptr->IsDimUnknown() || indices_shape_ptr->IsDimUnknown()) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
-  abstract::AbstractTensorPtr indices =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  abstract::AbstractTensorPtr params =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  auto indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
+  auto params = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
   int64_t axis_val = 0;
   bool is_axis_dyn = false;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
@@ -136,8 +134,8 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
                       << "', the third input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex2]->type_name() << ".";
   }
-  auto params_shp = params->shape()->shape();
-  auto indices_shp = indices->shape()->shape();
+  auto params_shp = params->GetShape()->GetShapeVector();
+  auto indices_shp = indices->GetShape()->GetShapeVector();
   ShapeVector out_shape = {};
   constexpr int dynamic_rank_value = -2;
   if (IsDynamicRank(params_shp) || IsDynamicRank(indices_shp) || is_axis_dyn) {
@@ -184,8 +182,7 @@ TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->GetType(), int_types, op_name);
   (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->GetType(), int_types, op_name);
 
-  abstract::AbstractTensorPtr params =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  auto params = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
   return params->GetType();
 }
 

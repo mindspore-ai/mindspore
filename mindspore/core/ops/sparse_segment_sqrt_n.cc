@@ -58,8 +58,10 @@ abstract::ShapePtr SparseSegmentSqrtNInferShape(const PrimitivePtr &prim,
   if (!input_args[kInputIndex2]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex2]->GetValue()->isa<None>()) {
     auto segment_ids_value_ptr = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value_ptr);
-    auto segment_ids_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr, prim->name());
+    auto segment_ids_type_ptr = input_args[kInputIndex2]->GetType();
+    MS_EXCEPTION_IF_NULL(segment_ids_type_ptr);
+    auto segment_ids_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue("segment_ids", segment_ids_value_ptr,
+                                                                                  prim->name(), segment_ids_type_ptr);
     size_t dim_zero = static_cast<size_t>(segment_ids_value_ptr_tensor.back()) + kInputIndex1;
     if (dim_zero < kInputIndex1) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids must be greater or equal to 0, "

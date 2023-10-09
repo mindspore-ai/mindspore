@@ -49,17 +49,21 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kSliceInputNum = 3;
-std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive, const ValuePtr &input_value) {
+std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive,
+                                                     const AbstractBasePtr &input_value) {
   std::vector<int64_t> tmp_input;
   MS_EXCEPTION_IF_NULL(input_value);
-  if (input_value->isa<tensor::Tensor>()) {
-    tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value, primitive->name());
-  } else if (input_value->isa<ValueTuple>()) {
-    tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value, primitive->name());
-  } else if (input_value->isa<ValueList>()) {
-    tmp_input = CheckAndConvertUtils::CheckListInt("slice args value", input_value, primitive->name());
+  if (CheckAndConvertUtils::IsTensor(input_value) && IsValueKnown(input_value->GetValue())) {
+    auto input_value_type = input_value->GetType();
+    tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value->GetValue(),
+                                                          primitive->name(), input_value_type);
+  } else if (CheckAndConvertUtils::IsTuple(input_value) && IsValueKnown(input_value->GetValue())) {
+    tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value->GetValue(), primitive->name());
+  } else if (CheckAndConvertUtils::IsList(input_value) && IsValueKnown(input_value->GetValue())) {
+    tmp_input = CheckAndConvertUtils::CheckListInt("slice args value", input_value->GetValue(), primitive->name());
   } else {
-    MS_EXCEPTION(TypeError) << "For Slice, the begin and size must be Tuple or List.";
+    MS_EXCEPTION(TypeError) << "For Slice, the 'begin' and 'size' must be Tuple or List. And currently, it is not "
+                               "supported when 'begin' and/or 'size' has unknown value(s).";
   }
 
   return tmp_input;
@@ -71,8 +75,12 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kSliceInputNum, "Slice inputs num error");
   auto input_x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
   auto input_x_shape = input_x_shape_map[kShape];
-  auto input_begin_value_ptr = input_args[kInputIndex1]->GetValue();
-  auto input_size_value_ptr = input_args[kInputIndex2]->GetValue();
+  auto input_begin = input_args[kInputIndex1];
+  auto input_begin_value_ptr = input_begin->GetValue();
+  MS_EXCEPTION_IF_NULL(input_begin_value_ptr);
+  auto input_size = input_args[kInputIndex2];
+  auto input_size_value_ptr = input_size->GetValue();
+  MS_EXCEPTION_IF_NULL(input_size_value_ptr);
   (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(input_x_shape.size()), kGreaterThan, 0,
                                            prim_name);
 
@@ -83,7 +91,7 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   }
 
   if (!IsValueKnown(input_begin_value_ptr) && IsValueKnown(input_size_value_ptr)) {
-    auto tmp_input = InferImplSliceFuncCalInputValue(primitive, input_size_value_ptr);
+    auto tmp_input = InferImplSliceFuncCalInputValue(primitive, input_size);
     for (size_t i = 0; i < tmp_input.size(); i++) {
       out_shape.push_back(-1);
     }
@@ -92,9 +100,8 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
 
   if (!IsValueKnown(input_size_value_ptr)) {
     auto arg = input_args[kInputIndex2];
-    if (arg->isa<abstract::AbstractTensor>()) {
-      auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
-      auto tensor_shape = abs_tensor->shape()->shape();
+    if (CheckAndConvertUtils::IsTensor(arg)) {
+      auto tensor_shape = arg->GetShape()->GetShapeVector();
       if (tensor_shape.size() != 1) {
         MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";
       }
@@ -103,8 +110,8 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
-  auto input_begin_value = InferImplSliceFuncCalInputValue(primitive, input_begin_value_ptr);
-  auto input_size_value = InferImplSliceFuncCalInputValue(primitive, input_size_value_ptr);
+  auto input_begin_value = InferImplSliceFuncCalInputValue(primitive, input_begin);
+  auto input_size_value = InferImplSliceFuncCalInputValue(primitive, input_size);
   auto rank = input_x_shape.size();
   if ((!is_inputx_dyn) && ((input_begin_value.size() != rank) || (input_size_value.size() != rank))) {
     MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";

@@ -56,17 +56,15 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("default_value dimension", static_cast<int64_t>(default_value_shape.size()),
                                            kEqual, DefaultSize, prim_name);
   size_t output_shape_numelement = LongToSize(output_shape_shape[0]);
-  auto output_shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(output_shape);
-  auto output_shape_value_ = output_shape->GetValue();
+  auto output_shape_value_ = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(output_shape_value_);
-  auto output_shape_tensor = output_shape_value_->cast<tensor::TensorPtr>();
   auto output_shape_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(output_shape_type);
-  auto output_shape_type_id = output_shape_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(output_shape_type_id);
-  auto output_shape_type_element = output_shape_type_id->element();
+  auto output_shape_tensor_type = output_shape_type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(output_shape_tensor_type);
+  auto output_shape_type_element = output_shape_tensor_type->element();
   MS_EXCEPTION_IF_NULL(output_shape_type_element);
+  auto output_shape_type_id = output_shape_type_element->type_id();
   std::vector<int64_t> y_shape;
   if (!input_args[1]->GetValue()->isa<ValueAny>() && !input_args[1]->GetValue()->isa<None>()) {
     if (indices_shape.size() == 0) {
@@ -82,8 +80,12 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
         }
       }
     }
-    if (output_shape_type_element->type_id() == kNumberTypeInt32) {
-      auto output_shape_data = static_cast<int32_t *>(output_shape_tensor->data_c());
+    if (output_shape_type_id == kNumberTypeInt32) {
+      auto output_shape_opt = GetArrayValue<int32_t>(output_shape_value_);
+      if (!output_shape_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'output_shape' must be valid.";
+      }
+      auto output_shape_data = output_shape_opt.value();
       for (size_t i = 0; i < output_shape_numelement; ++i) {
         if (output_shape_data[i] > 0) {
           y_shape.push_back(output_shape_data[i]);
@@ -92,8 +94,12 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
                                    << i << "th dimension of output " << output_shape_data[i] << ".";
         }
       }
-    } else if (output_shape_type_element->type_id() == kNumberTypeInt64) {
-      auto output_shape_data = static_cast<int64_t *>(output_shape_tensor->data_c());
+    } else if (output_shape_type_id == kNumberTypeInt64) {
+      auto output_shape_opt = GetArrayValue<int64_t>(output_shape_value_);
+      if (!output_shape_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'output_shape' must be valid.";
+      }
+      auto output_shape_data = output_shape_opt.value();
       for (size_t i = 0; i < output_shape_numelement; ++i) {
         if (output_shape_data[i] > 0) {
           y_shape.push_back(output_shape_data[i]);

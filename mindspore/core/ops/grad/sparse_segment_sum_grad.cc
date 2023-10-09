@@ -77,12 +77,12 @@ abstract::ShapePtr SparseSegmentSumGradInferShape(const PrimitivePtr &prim,
                              << "and segment_ids [" << segment_ids_shape[kInputIndex0] << "].";
   }
   if (!input_args[kInputIndex3]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex3]->GetValue()->isa<None>()) {
-    auto output_dim0_value = input_args[kInputIndex3]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(output_dim0_value);
-    auto output_dim0_value_ptr = output_dim0_value->GetValue();
+    auto output_dim0_value_ptr = input_args[kInputIndex3]->GetValue();
     MS_EXCEPTION_IF_NULL(output_dim0_value_ptr);
+    auto output_dim0_type_ptr = input_args[kInputIndex3]->GetType();
+    MS_EXCEPTION_IF_NULL(output_dim0_type_ptr);
     auto output_dim0_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("output_dim0", output_dim0_value_ptr, prim_name, output_dim0_type_ptr);
     int64_t dim_zero = static_cast<int64_t>(output_dim0_value_ptr_tensor[kInputIndex0]);
     if (dim_zero <= static_cast<int64_t>(kInputIndex0)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "' , tensor output_dim0 must > 0, "

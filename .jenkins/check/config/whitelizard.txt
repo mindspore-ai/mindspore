@@ -290,6 +290,7 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/hal/device/cpu_device_address.cc:min
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc:mindspore::kernel::Cast  
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetPyTypeFormat
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
+mindspore/mindspore/core/ops/sparse_to_dense_v2.cc:mindspore::ops::SparseToDenseV2InferShape  
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute

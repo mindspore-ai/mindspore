@@ -46,12 +46,12 @@ namespace mindspore {
 namespace ops {
 namespace {
 void CheckSparseSparseArithmeticInputs(const std::vector<AbstractBasePtr> &input_args, const std::string &op_name) {
-  auto x1_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto x1_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto x1_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
-  auto x2_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
-  auto x2_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 4);
-  auto x2_shape = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 5);
+  auto x1_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex0, kObjectTypeTensorType);
+  auto x1_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex1, kObjectTypeTensorType);
+  auto x1_shape = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex2, kObjectTypeTensorType);
+  auto x2_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex3, kObjectTypeTensorType);
+  auto x2_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex4, kObjectTypeTensorType);
+  auto x2_shape = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kIndex5, kObjectTypeTensorType);
 
   auto x1_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_indices->GetShape())[kShape];
   auto x1_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x1_values->GetShape())[kShape];

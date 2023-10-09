@@ -46,7 +46,7 @@ abstract::ShapePtr RintInferShape(const PrimitivePtr &primitive, const std::vect
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();

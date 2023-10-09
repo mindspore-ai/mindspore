@@ -50,8 +50,8 @@ abstract::TupleShapePtr SparseApplyAdagradV2InferShape(const PrimitivePtr &primi
     MS_EXCEPTION_IF_NULL(item);
   }
   // Indices and grad must be tensor
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
+  CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex3, kObjectTypeTensorType);
   // Get input shape
   auto var_shape_ptr = input_args[0]->GetShape();
   auto accum_shape_ptr = input_args[1]->GetShape();

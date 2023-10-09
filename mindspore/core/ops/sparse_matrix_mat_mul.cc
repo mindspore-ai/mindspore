@@ -136,14 +136,14 @@ abstract::ShapePtr SparseMatrixMatMulInferShape(const PrimitivePtr &primitive,
 
   // row and col of A
   const int kInputWithBatch = 3;
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->GetValue()->isa<ValueAny>() &&
+  if (CheckAndConvertUtils::IsTensor(input_args[0]) && !input_args[0]->GetValue()->isa<ValueAny>() &&
       !input_args[0]->GetValue()->isa<None>()) {
-    auto dense_shape_value = input_args[0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(dense_shape_value);
-    auto dense_shape_value_ptr = dense_shape_value->GetValue();
+    auto dense_shape_type_ptr = input_args[0]->GetType();
+    MS_EXCEPTION_IF_NULL(dense_shape_type_ptr);
+    auto dense_shape_value_ptr = input_args[0]->GetValue();
     MS_EXCEPTION_IF_NULL(dense_shape_value_ptr);
-    auto dense_shape_value_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x1_dense_shape", dense_shape_value_ptr, primitive->name());
+    auto dense_shape_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+      "x1_dense_shape", dense_shape_value_ptr, primitive->name(), dense_shape_type_ptr);
 
     const int64_t rank_x1 = static_cast<int64_t>(dense_shape_value_ptr_tensor.size());
     auto row_x1 = dense_shape_value_ptr_tensor[LongToSize(rank_x1 - 2)];

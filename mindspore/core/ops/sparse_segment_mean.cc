@@ -25,6 +25,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/sparse_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -75,30 +76,40 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                              << indices_shape[kInputIndex0] << " vs " << segment_ids_shape[kInputIndex0] << ".";
   }
   ShapeVector out_shape = x_shape;
-  if (!input_args[kInputIndex2]->GetValue()->isa<tensor::Tensor>()) {
+  if (!(CheckAndConvertUtils::IsTensor(input_args[kInputIndex2]) &&
+        IsValueKnown(input_args[kInputIndex2]->GetValue()))) {
     // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
     // The framework ensures the `else` branch will be executed, so min/max shape are not necessary to set.
     out_shape[LongToSize(batch_rank)] = abstract::Shape::kShapeDimAny;
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    auto segment_ids = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(segment_ids);
-    auto segment_ids_value = segment_ids->GetValue();
+    auto segment_ids_value = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value);
-    auto segment_ids_tensor = segment_ids_value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(segment_ids_tensor);
-    auto segment_ids_size = segment_ids_tensor->DataSize();
+    auto segment_ids_opt_temp = GetArrayValue<int64_t>(segment_ids_value);
+    if (!segment_ids_opt_temp.has_value()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
+    }
+    auto segment_ids_size = segment_ids_opt_temp.value().size();
     auto expect_size = std::accumulate(segment_ids_shape.begin(), segment_ids_shape.end(), 1, std::multiplies{});
     MS_EXCEPTION_IF_CHECK_FAIL(segment_ids_size == LongToSize(expect_size),
                                "For '" + prim_name + "', something unexpected happened.");
 
-    // Get last segment id and plus one as length of first dim of output.
-    auto segment_ids_ptr = segment_ids_tensor->data_c();
     int64_t segment_num = 0;
-    if (segment_ids_tensor->Dtype() == kInt32) {
-      segment_num = IntToLong(*(reinterpret_cast<int *>(segment_ids_ptr) + segment_ids_size - 1) + 1);
-    } else if (segment_ids_tensor->Dtype() == kInt64) {
-      segment_num = *(reinterpret_cast<int64_t *>(segment_ids_ptr) + segment_ids_size - 1) + 1;
+    auto segment_ids_type_id = input_args[kInputIndex2]->GetType()->cast<TensorTypePtr>()->element()->type_id();
+    if (segment_ids_type_id == kNumberTypeInt32) {
+      auto segment_ids_opt = GetArrayValue<int32_t>(segment_ids_value);
+      if (!segment_ids_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
+      }
+      auto segment_ids_data = segment_ids_opt.value();
+      segment_num = IntToLong(segment_ids_data[segment_ids_size - 1] + 1);
+    } else if (segment_ids_type_id == kNumberTypeInt64) {
+      auto segment_ids_opt = GetArrayValue<int64_t>(segment_ids_value);
+      if (!segment_ids_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
+      }
+      auto segment_ids_data = segment_ids_opt.value();
+      segment_num = segment_ids_data[segment_ids_size - 1] + 1;
     }
     if (segment_num <= 0) {
       MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input 'segment_ids' must be non-negative.";

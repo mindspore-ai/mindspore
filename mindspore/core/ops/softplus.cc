@@ -45,7 +45,7 @@ class SoftplusInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
     return input_args[0]->GetShape();
   }
 

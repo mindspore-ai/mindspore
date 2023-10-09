@@ -51,9 +51,9 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsGradInferShape(const PrimitivePt
   const int64_t kInputNum = 3;
   (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_shape",
                                            SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
   auto x_ptr = x->GetShape()->cast<abstract::ShapePtr>();
   abstract::CheckShapeSame(prim_name, x, y);
   abstract::CheckShapeSame(prim_name, x, dout);

@@ -109,12 +109,12 @@ abstract::TupleShapePtr SparseTensorToCSRSparseMatrixInferShape(const PrimitiveP
   abstract::ShapePtr y_batch_pointers_shape_list;
   abstract::ShapePtr y_row_pointers_shape_list;
 
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2]) &&
       !input_args[kInputIndex2]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex2]->GetValue()->isa<None>()) {
-    auto dense_shape = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-    auto dense_shape_ptr = dense_shape->GetValue();
+    auto dense_shape_ptr = input_args[kInputIndex2]->GetValue();
+    auto dense_shape_type = input_args[kInputIndex2]->GetType();
     auto dense_shape_ptr_tensor =
-      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", dense_shape_ptr, prim_name);
+      CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", dense_shape_ptr, prim_name, dense_shape_type);
 
     ShapeVector y_batch_pointers_shape;
     ShapeVector y_row_pointers_shape;

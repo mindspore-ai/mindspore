@@ -34,7 +34,7 @@ class SiLUInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                              prim_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
     return x->GetShape();
   }
 
@@ -42,7 +42,7 @@ class SiLUInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
     auto x_type = x->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, prim_name);
     return x_type;
