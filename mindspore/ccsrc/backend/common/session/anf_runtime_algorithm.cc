@@ -1642,6 +1642,10 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
     skip_mode = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrSkipMode);
   }
 
+  if (!skip_mode) {
+    return false;
+  }
+
   const size_t axes_index = 1;
   if (cnode->inputs().size() <= axes_index + 1) {
     return false;
@@ -1655,7 +1659,7 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(axes_abs);
   auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
   if (axes_abs->isa<abstract::AbstractTensor>()) {
-    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; }) && skip_mode) {
+    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; })) {
       return true;
     }
   }
