@@ -38,6 +38,8 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   int Run() override;
   int PostProcess() override;
   int PreProcess() override;
+  int InferShape() override;
+  int ReSize() override;
 
   bool IsWeightInputHanledInner() const override { return true; }
 
@@ -47,17 +49,13 @@ class AscendNativeCompositeKernel : public AscendNativeBaseKernel {
   std::shared_ptr<kernel::AscendNativeBaseKernel> CreateKernel(const AnfNodePtr &node);
   void CreateInputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *input_tensors);
   void CreateOutputKernelTensors(const CNodePtr &cnode, std::vector<kernel::InferTensor *> *output_tensors);
-  Status FindGraphInputs(const std::vector<AnfNodePtr> &node_list, const std::vector<AnfNodePtr> &graph_inputs,
-                         const std::vector<std::shared_ptr<kernel::BaseKernel>> &kernels);
-  Status FindGraphOutputs(const std::vector<AnfNodePtr> &node_list, const AnfNodePtr &graph_output,
-                          const std::vector<std::shared_ptr<kernel::BaseKernel>> &kernels);
   int GetIdxFromString(std::string str);
-  Status AllocateGraphTensors();
-  Status AllocTensors();
+  int AllocateGraphTensors();
+  int AllocTensors();
   void InitializeTensorRefrenceCnt();
   void FreeDevice();
-  Status ReAllocTensors();
-  Status AllocateGraphWorkspace(size_t size);
+  int ReAllocTensors();
+  int AllocateGraphWorkspace(size_t size);
   size_t get_workspace_size() const override { return ws_size_; }
   void set_workspace_size(size_t size) { ws_size_ = size; }
   FuncGraphPtr func_graph_;

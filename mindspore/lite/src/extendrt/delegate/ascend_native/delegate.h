@@ -59,8 +59,8 @@ class AscendNativeDelegate : public ExtendDelegate {
   std::vector<KernelWithIndexAndTensor> kernel_list_;
   std::shared_ptr<kernel::InferContext> ascend_native_ctx_ = nullptr;
   void DrawGraph(const std::string &file_name, const std::shared_ptr<FuncGraph> &graph);
+  void CopyTensors(InferTensor *t_src, InferTensor *t_dst, const void *stream) const;
   std::shared_ptr<SubGraphHelper> helper_;
-  mutable void *stream_{nullptr};  // testing
 };
 
 }  // namespace mindspore

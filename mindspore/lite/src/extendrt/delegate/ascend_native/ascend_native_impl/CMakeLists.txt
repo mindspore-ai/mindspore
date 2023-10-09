@@ -20,6 +20,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 
 set(CMAKE_CXX_LINK clang++)
+set(SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/gemm.cc)
 if(DEFINED SRC_LIST)
     add_library(ascend_native_kernels_impl SHARED ${SRC_LIST})
 endif()

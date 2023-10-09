@@ -23,25 +23,18 @@ namespace mindspore::kernel {
 using mindspore::ops::kNameMatMulFusion;
 
 int AscendNativeMatmulKernel::InferShape() {
-  if (out_tensors_[0]->shape().size() == 0) {
-    if (in_tensors_[0] != nullptr && in_tensors_[1] != nullptr) {
-      std::vector<int> shape;
-      shape.push_back(in_tensors_[0]->shape()[0]);
-      shape.push_back(in_tensors_[1]->shape()[1]);
-      out_tensors_[0]->set_shape(shape);
-    }
+  // if (out_tensors_[0]->shape().size() == 0) {
+  if (in_tensors_[0] != nullptr && in_tensors_[1] != nullptr) {
+    std::vector<int> shape;
+    shape.push_back(in_tensors_[0]->shape()[0]);
+    shape.push_back(in_tensors_[1]->shape()[1]);
+    out_tensors_[0]->set_shape(shape);
   }
+  // }
   return kSuccess;
 }
 
-int AscendNativeMatmulKernel::Prepare() {
-  auto ret = InferShape();
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
-    return kLiteError;
-  }
-  return kSuccess;
-}
+int AscendNativeMatmulKernel::Prepare() { return kSuccess; }
 
 int AscendNativeMatmulKernel::Run() {
   MS_LOG(INFO) << "AscendNativeMatmulKernel::Execute";
@@ -79,6 +72,14 @@ int AscendNativeMatmulKernel::Run() {
                            out_tensors[0]->device_data(), n, tiles, 1);
 
   return kSuccess;
+}
+
+int AscendNativeMatmulKernel::ReSize() {
+  if (in_tensors_[0]->shape()[1] != in_tensors_[1]->shape()[0]) {
+    MS_LOG(ERROR) << "matmul ReSize failed";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
 }
 REGISTER_ASCEND_NATIVE_CREATOR(kNameMatMulFusion, AscendNativeMatmulKernel)
 }  // namespace mindspore::kernel

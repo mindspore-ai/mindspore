@@ -36,6 +36,8 @@ class AscendNativeLessKernel : public AscendNativeBaseKernel {
 
   int Run() override;
 
+  int ReSize() override;
+
  private:
 };
 }  // namespace mindspore::kernel

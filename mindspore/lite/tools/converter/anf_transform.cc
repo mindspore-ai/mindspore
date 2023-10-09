@@ -325,7 +325,8 @@ std::vector<opt::PassPtr> InitFusions(const std::shared_ptr<ConverterPara> &para
                                     std::make_shared<opt::TileMatMulFusion>()};
   if (param->optimize_transformer) {
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
-    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
+    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>(true));
+    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>(false));
     fusions.push_back(std::make_shared<opt::DecoderLayerFusion>());
   }
   return fusions;

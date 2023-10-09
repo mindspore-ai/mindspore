@@ -27,6 +27,17 @@
 namespace mindspore::kernel {
 using mindspore::ops::AscendNativeComposite;
 
+int AscendNativeCompositeKernel::InferShape() {
+  for (auto &kernel : kernels_) {
+    auto ret = kernel->InferShape();
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "kernel InferShape failed for " << kernel->get_name();
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
 static inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
@@ -266,7 +277,7 @@ void AscendNativeCompositeKernel::CreateOutputKernelTensors(const CNodePtr &cnod
   }
 }
 
-Status AscendNativeCompositeKernel::AllocTensors() {
+int AscendNativeCompositeKernel::AllocTensors() {
   OptAllocator allocator;
   std::unordered_map<kernel::InferTensor *, int> ref_count;
   offset_map_.clear();
@@ -299,9 +310,9 @@ Status AscendNativeCompositeKernel::AllocTensors() {
   return ReAllocTensors();
 }
 
-Status AscendNativeCompositeKernel::ReAllocTensors() {
+int AscendNativeCompositeKernel::ReAllocTensors() {
   if (device_memory_base_addr_ != nullptr) {
-    return kSuccess;
+    return lite::RET_OK;
   }
   if (device_mem_size_ > 0) {
     device_memory_base_addr_ = ascend_native::MallocDevice(device_mem_size_, const_cast<void *>(stream_));
@@ -315,7 +326,7 @@ Status AscendNativeCompositeKernel::ReAllocTensors() {
         reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(device_memory_base_addr_) + it.second));
     }
   }
-  return kSuccess;
+  return lite::RET_OK;
 }
 
 void AscendNativeCompositeKernel::FreeDevice() {
@@ -338,7 +349,7 @@ void AscendNativeCompositeKernel::InitializeTensorRefrenceCnt() {
   }
 }
 
-Status AscendNativeCompositeKernel::AllocateGraphTensors() {
+int AscendNativeCompositeKernel::AllocateGraphTensors() {
   if (device_memory_base_addr_ == nullptr) {
     InitializeTensorRefrenceCnt();
   } else {
@@ -347,8 +358,8 @@ Status AscendNativeCompositeKernel::AllocateGraphTensors() {
   return AllocTensors();
 }
 
-Status AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
-  if (get_workspace() != nullptr) return kSuccess;
+int AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
+  if (get_workspace() != nullptr) return lite::RET_OK;
   void *ws_ptr = nullptr;
   if (ws_size > 0) {
     if (ws_size > max_ws_size_) {
@@ -367,10 +378,11 @@ Status AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
       kernel->set_workspace(ws_ptr);
     }
   }
-  return kSuccess;
+  return lite::RET_OK;
 }
 
 int AscendNativeCompositeKernel::Prepare() {
+  std::cout << "AscendNativeCompositeKernel::Prepare\n" << std::endl;
   auto nodes = TopoSort(func_graph_->get_return());
   for (auto &node : nodes) {
     if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
@@ -379,59 +391,61 @@ int AscendNativeCompositeKernel::Prepare() {
     auto kernel = CreateKernel(node);
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "composite create kernel failed.";
-      return kLiteError;
+      return lite::RET_ERROR;
     }
     kernels_.emplace_back(kernel);
   }
   if (kernels_.empty()) {
     MS_LOG(ERROR) << "composite does not support empty subgraph now.";
-    return kLiteError;
+    return lite::RET_ERROR;
   }
   // call kernel prepare
   size_t ws_size = 0;
   for (auto &kernel : kernels_) {
     auto ret = kernel->Prepare();
-    if (ret != kSuccess) {
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "composite kernel prepare failed with " << ret;
-      return kLiteError;
+      return lite::RET_ERROR;
     }
     size_t k_ws_size = kernel->get_workspace_size();
     if (k_ws_size > ws_size) ws_size = k_ws_size;
   }
-  if (AllocateGraphWorkspace(ws_size) != kSuccess) {
+  if (AllocateGraphWorkspace(ws_size) != lite::RET_OK) {
     MS_LOG(ERROR) << "kernel workspace allocation failed ";
-    return kLiteError;
+    return lite::RET_ERROR;
   }
-  if (AllocateGraphTensors() != kSuccess) {
+  if (AllocateGraphTensors() != lite::RET_OK) {
     MS_LOG(ERROR) << "kernel graph allocation failed ";
-    return kLiteError;
+    return lite::RET_ERROR;
   }
-  return kSuccess;
+  std::cout << "end AscendNativeCompositeKernel::Prepare\n" << std::endl;
+  return lite::RET_OK;
 }
 
 int AscendNativeCompositeKernel::Run() {
-  MS_LOG(INFO) << "AscendNativeCompositeKernel::Execute";
+  MS_LOG(INFO) << "AscendNativeCompositeKernel::Execute Begin";
   // call kernel run interface one by one
   for (auto &kernel : kernels_) {
     auto ret = kernel->PreProcess();
-    if (ret != kSuccess) {
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "kernel preprocess failed with " << ret << " for " << kernel->get_name();
-      return kLiteError;
+      return lite::RET_ERROR;
     }
     ret = kernel->Run();
-    if (ret != kSuccess) {
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "kernel run failed with " << ret << " for " << kernel->get_name();
-      return kLiteError;
+      return lite::RET_ERROR;
     }
+    // synchronize all tasks are finished
+    ascend_native::SyncDevice(const_cast<void *>(stream_));
     ret = kernel->PostProcess();
-    if (ret != kSuccess) {
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "kernel postprocess failed with " << ret << " for " << kernel->get_name();
-      return kLiteError;
+      return lite::RET_ERROR;
     }
   }
-  // synchronize all tasks are finished
-  ascend_native::SyncDevice(const_cast<void *>(stream_));
-  return kSuccess;
+  MS_LOG(INFO) << "AscendNativeCompositeKernel::Execute End";
+  return lite::RET_OK;
 }
 
 int AscendNativeCompositeKernel::PostProcess() {
@@ -448,7 +462,7 @@ int AscendNativeCompositeKernel::PostProcess() {
       in_tensors_[i]->set_device_data(nullptr);
     }
   }
-  return kSuccess;
+  return lite::RET_OK;
 }
 
 int AscendNativeCompositeKernel::PreProcess() {
@@ -465,12 +479,42 @@ int AscendNativeCompositeKernel::PreProcess() {
   }
   auto ws_size = get_workspace_size();
   ReAllocTensors();
-  if (AllocateGraphWorkspace(ws_size) != kSuccess) {
+  if (AllocateGraphWorkspace(ws_size) != lite::RET_OK) {
     MS_LOG(ERROR) << "kernel workspace allocation failed ";
     return kLiteError;
   }
-  return kSuccess;
+  if (InferShape() != lite::RET_OK) {
+    MS_LOG(ERROR) << "InferShape AscendNativeCompositeKernel failed ";
+    return kLiteError;
+  }
+  std::cout << "end AscendNativeCompositeKernel::PreProcess\n" << std::endl;
+  return lite::RET_OK;
 }
 
+int AscendNativeCompositeKernel::ReSize() {
+  std::cout << "AscendNativeCompositeKernel::ReSize\n" << std::endl;
+  size_t ws_size = 0;
+  for (auto &kernel : kernels_) {
+    size_t k_ws_size = kernel->get_workspace_size();
+    if (k_ws_size > ws_size) ws_size = k_ws_size;
+    auto ret = kernel->ReSize();
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "kernel" << kernel->get_name() << " ReSize failed ";
+      return lite::RET_ERROR;
+    }
+  }
+  auto ret = AllocateGraphWorkspace(ws_size);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "kernel workspace allocation failed ";
+    return lite::RET_ERROR;
+  }
+  ret = AllocateGraphTensors();
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "kernel graph allocation failed ";
+    return lite::RET_ERROR;
+  }
+  std::cout << "end AscendNativeCompositeKernel::ReSize\n" << std::endl;
+  return lite::RET_OK;
+}
 REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameAscendNativeComposite, AscendNativeCompositeKernel)
 }  // namespace mindspore::kernel
