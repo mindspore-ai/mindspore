@@ -23,14 +23,12 @@ namespace mindspore::kernel {
 using mindspore::ops::kNameMatMulFusion;
 
 int AscendNativeMatmulKernel::InferShape() {
-  // if (out_tensors_[0]->shape().size() == 0) {
   if (in_tensors_[0] != nullptr && in_tensors_[1] != nullptr) {
     std::vector<int> shape;
     shape.push_back(in_tensors_[0]->shape()[0]);
     shape.push_back(in_tensors_[1]->shape()[1]);
     out_tensors_[0]->set_shape(shape);
   }
-  // }
   return kSuccess;
 }
 
