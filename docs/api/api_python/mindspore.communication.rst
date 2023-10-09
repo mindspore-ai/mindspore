@@ -8,6 +8,8 @@ mindspore.communication
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ 。
 
+针对CPU设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html>`_ 。
+
 
 .. py:class:: mindspore.communication.GlobalComm
 
@@ -68,7 +70,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
         - **ValueError** - 在后台不可用时抛出。
-        - **RuntimeError** - 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
+        - **RuntimeError** - 在 `HCCL` 或 `NCCL` 或 `MCCL` 服务不可用时抛出。
 
     样例：
 
@@ -91,7 +93,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
         - **ValueError** - 在后台不可用时抛出。
-        - **RuntimeError** - 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
+        - **RuntimeError** - 在 `HCCL` 或 `NCCL` 或 `MCCL` 服务不可用时抛出。
 
     样例：
 
@@ -103,7 +105,7 @@ mindspore.communication
     由指定通信组中的设备序号获取通信集群中的全局设备序号。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。
 
@@ -117,7 +119,7 @@ mindspore.communication
     异常：
         - **TypeError** - 参数 `group` 不是字符串或参数 `group_rank_id` 不是数字。
         - **ValueError** - 参数 `group` 是 ``"hccl_world_group"`` 或后台不可用。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
@@ -129,7 +131,7 @@ mindspore.communication
     由通信集群中的全局设备序号获取指定用户通信组中的rank ID。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `get_group_rank_from_world_rank` 方法应该在 `init` 方法之后使用。
 
@@ -143,7 +145,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `world_rank_id` 不是数字或参数 `group` 不是字符串时抛出。
         - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后台不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
@@ -155,7 +157,7 @@ mindspore.communication
     创建用户自定义的通信组实例。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - 列表rank_ids的长度应大于1。
         - 列表rank_ids内不能有重复数据。
         - `create_group` 方法应该在 `init` 方法之后使用。
@@ -168,7 +170,7 @@ mindspore.communication
     异常：
         - **TypeError** - 参数 `group` 不是字符串或参数 `rank_ids` 不是列表。
         - **ValueError** - 列表rank_ids的长度小于1，或列表 `rank_ids` 内有重复数据，以及后台无效。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
@@ -180,7 +182,7 @@ mindspore.communication
     获取指定通信组中当前设备的本地设备序号。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - `get_local_rank` 方法应该在 `init` 方法之后使用。
 
     参数：
@@ -192,7 +194,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
         - **ValueError** - 在后台不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
@@ -204,7 +206,7 @@ mindspore.communication
     获取指定通信组的本地设备总数。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - `get_local_rank_size` 方法应该在 `init` 方法之后使用。
 
     参数：
@@ -216,7 +218,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
         - **ValueError** - 在后台不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
@@ -228,7 +230,7 @@ mindspore.communication
     注销用户通信组。
 
     .. note::
-        - GPU 版本的MindSpore不支持此方法。
+        - MindSpore的GPU和CPU版本不支持此方法。
         - 参数 `group` 不能是 ``"hccl_world_group"``。
         - `destroy_group` 方法应该在 `init` 方法之后使用。
 
@@ -238,7 +240,7 @@ mindspore.communication
     异常：
         - **TypeError** - 在参数 `group` 不是字符串时抛出。
         - **ValueError** - 在参数 `group` 是 ``"hccl_world_group"`` 或后台不可用时抛出。
-        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了GPU版本的MindSpore。
+        - **RuntimeError** - `HCCL` 服务不可用时，或者使用了MindSpore的GPU或CPU版本。
 
     样例：
 
