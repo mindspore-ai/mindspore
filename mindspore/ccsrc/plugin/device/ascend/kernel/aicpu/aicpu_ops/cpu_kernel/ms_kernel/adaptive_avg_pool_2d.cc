@@ -81,7 +81,6 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T> 
       int in_start_h = StartIndex(out_h, args.out_size_h, args.in_size_h);
       int in_end_h = EndIndex(out_h, args.out_size_h, args.in_size_h);
       int span_h = in_end_h - in_start_h;
-
       for (int64_t out_w = 0; out_w < args.out_size_w; out_w++) {
         int in_start_w = StartIndex(out_w, args.out_size_w, args.in_size_w);
         int in_end_w = EndIndex(out_w, args.out_size_w, args.in_size_w);

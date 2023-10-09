@@ -103,6 +103,25 @@ def test_lp_norm_op(data_type):
     output = lp_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_lp_norm_op_keepdims():
+    """
+    Feature: Test LpNorm with keep_dims=True.
+    Description: The input shape need match to output shape.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_x = Tensor(np.ones((1, 2, 3, 2)).astype(np.float32))
+    error = 1e-6
+    benchmark_output = 1.4142135 * np.ones((1, 1, 3, 2)).astype(np.float32)
+    axis = 1
+    p = 2
+    keep_dims = True
+    lp_norm = LpNormNet(axis, p, keep_dims)
+    output = lp_norm(input_x)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
