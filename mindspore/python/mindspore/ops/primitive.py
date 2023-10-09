@@ -748,6 +748,57 @@ def prim_attr_register(fn):
     return deco
 
 
+def prim_arg_register(fn):
+    """
+    Primitive attributes register.
+
+    Register the decorator of the built-in operator primitive '__init__'.
+    The function will add all the parameters of '__init__' as operator attributes ,
+    and init primitive name.
+
+    Args:
+        fn (function): __init__ function of primitive.
+
+    Returns:
+        function, original function.
+
+    Examples:
+        >>> from mindspore.ops import prim_arg_register, PrimitiveWithCheck
+        >>> class MatMul(PrimitiveWithCheck):
+        ...     @prim_arg_register
+        ...     def __init__(self, transpose_a=False, transpose_b=False):
+        ...         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
+        ...
+        >>> # init a Primitive obj
+        >>> matmul = MatMul()
+    """
+
+    @functools.wraps(fn)
+    def deco(self, *args, **kwargs):
+        class_name = self.__class__.__name__
+        if hasattr(self.__class__, "substitute_name"):
+            class_name = self.__class__.substitute_name
+        if isinstance(self, PrimitiveWithInfer):
+            PrimitiveWithInfer.__init__(self, class_name)
+        elif isinstance(self, PrimitiveWithCheck):
+            PrimitiveWithCheck.__init__(self, class_name)
+        else:
+            Primitive.__init__(self, self.__class__.__name__)
+        bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
+        bound_args.apply_defaults()
+        arguments = bound_args.arguments
+        del arguments['self']
+        del self.init_attrs['name']
+        for name in arguments:
+            value = arguments[name]
+            self._set_prim_arg(name, value)
+            self.init_attrs[name] = value
+        fn(self, *args, **kwargs)
+
+    deco.decorated_func = fn
+    return deco
+
+
 def _check_contains_variable(item_dtype, item_value):
     """
     Check whether the item is or contains variable.

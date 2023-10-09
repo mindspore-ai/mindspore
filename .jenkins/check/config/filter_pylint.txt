@@ -37,6 +37,7 @@
 "mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "protected-access"
 "mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "not-callable"
 "mindspore/mindspore/python/mindspore/ops/primitive.py"                                                                  "assignment-from-none"
+"mindspore/mindspore/python/mindspore/ops/primitive.py"                                                                  "protected-access"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "assignment-from-none"
 "mindspore/mindspore/python/mindspore/_extends/parse/resources.py"                                                       "bad-whitespace"
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "broad-except"

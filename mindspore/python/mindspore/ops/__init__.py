@@ -23,7 +23,8 @@ Examples:
 from __future__ import absolute_import
 
 from mindspore.common import Tensor
-from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
+from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, \
+    prim_arg_register
 from mindspore.ops.vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from mindspore.ops.op_info_register import op_info_register, custom_info_register, AkgGpuRegOp, AkgAscendRegOp, \
     AiCPURegOp, TBERegOp, CpuRegOp, CustomRegOp, DataType
@@ -36,7 +37,7 @@ from mindspore.ops.function import *
 from mindspore.ops.functional import *
 
 __primitive__ = [
-    "prim_attr_register", "Primitive", "PrimitiveWithInfer", "PrimitiveWithCheck", "signature"
+    "prim_attr_register", "prim_arg_register", "Primitive", "PrimitiveWithInfer", "PrimitiveWithCheck", "signature"
 ]
 
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
