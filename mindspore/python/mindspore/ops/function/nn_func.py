@@ -4167,6 +4167,7 @@ def leaky_relu(input, alpha=0.2):
     select_op = _get_cache_prim(P.Maximum)()
     if alpha > 1:
         select_op = _get_cache_prim(P.Minimum)()
+    alpha = _get_cache_prim(P.Cast)()(F.scalar_to_tensor(alpha), input.dtype)
     return select_op(alpha * input, input)
 
 
