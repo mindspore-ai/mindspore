@@ -164,7 +164,7 @@ class AdamNetVmap(nn.Cell):
         self.net = net
         self.var_np = np.random.randn(*shape).astype(np.float32)
         self.m_np = np.random.randn(*shape).astype(np.float32)
-        self.v_np = np.random.randn(*shape).astype(np.float32)
+        self.v_np = abs(np.random.randn(*shape).astype(np.float32))
         self.var = Parameter(Tensor(self.var_np), name="var")
         self.m = Parameter(Tensor(self.m_np), name="m")
         self.v = Parameter(Tensor(self.v_np), name="v")
