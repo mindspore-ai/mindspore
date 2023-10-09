@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "external/llm_engine.h"
+#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
 namespace llm {
-ge::Status LLMEngine::LLMEngineInitialize(const std::map<ge::AscendString, ge::ModelBufferData> &,
+LLMEngine::~LLMEngine() {}
+
+ge::Status LLMEngine::LLMEngineInitialize(const std::vector<ge::ModelBufferData> &,
                                           const std::map<ge::AscendString, ge::AscendString> &) {
   return ge::GRAPH_SUCCESS;
 }
