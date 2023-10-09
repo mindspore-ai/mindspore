@@ -332,8 +332,14 @@ bool AscendKernelRuntime::Init() {
     if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }
-    // for tiling rt2 operator to register
-    ::ge::OppSoManager::GetInstance().LoadOppPackage();
+
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    const bool is_enable_ge = context_ptr->backend_policy() == "ge";
+    if (!is_enable_ge) {
+      // for tiling rt2 operator to register
+      ::ge::OppSoManager::GetInstance().LoadOppPackage();
+    }
     uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");
     uint32_t notify_wait_timeout;
