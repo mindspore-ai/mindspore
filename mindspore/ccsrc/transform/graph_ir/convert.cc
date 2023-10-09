@@ -335,6 +335,46 @@ std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNo
   return ori_format;
 }
 
+bool IsTupleInput(const AnfNodePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  auto abs = input->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    return true;
+  }
+  return false;
+}
+
+void GetUnfoldInput(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_nodes) {
+  std::vector<AnfNodePtr> nodes;
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  for (size_t idx = 1; idx < inputs.size(); ++idx) {
+    auto input_node = inputs[idx];
+    if (IsTupleInput(input_node)) {
+      GetUnfoldInput(input_node, &nodes);
+    } else {
+      nodes.push_back(input_node);
+    }
+  }
+  unfold_nodes->insert(unfold_nodes->end(), nodes.begin(), nodes.end());
+}
+
+bool IsNestedTuple(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  for (size_t idx = 1; idx < inputs.size(); ++idx) {
+    auto input = inputs[idx];
+    if (IsTupleInput(input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::vector<int> GetGeTensorOrders(const mindspore::HashMap<int, int> &ge_input_to_ms_input,
                                    const std::vector<int64_t> &dyn_input_sizes, const int &ge_input_size,
                                    std::vector<int64_t> *new_dyn_input_sizes) {
