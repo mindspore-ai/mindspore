@@ -49,10 +49,10 @@ abstract::ShapePtr CumulativeLogsumexpInferShape(const PrimitivePtr &primitive,
 TypePtr CumulativeLogsumexpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kFloat64};
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   const std::set<TypePtr> axis_valid_types = {kInt64, kInt32, kInt16};
-  auto axis_type = input_args[kInputIndex1]->BuildType();
+  auto axis_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", axis_type, axis_valid_types, prim_name);
   return x_type;
 }

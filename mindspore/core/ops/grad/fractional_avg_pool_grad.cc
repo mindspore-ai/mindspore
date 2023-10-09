@@ -79,10 +79,10 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
 TypePtr FractionalAvgPoolGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto orig_input_shape_dtype = input_args[kInputIndex0]->BuildType();
-  auto backprop_dtype = input_args[kInputIndex1]->BuildType();
-  auto row_seq_dtype = input_args[kInputIndex2]->BuildType();
-  auto col_seq_dtype = input_args[kInputIndex3]->BuildType();
+  auto orig_input_shape_dtype = input_args[kInputIndex0]->GetType();
+  auto backprop_dtype = input_args[kInputIndex1]->GetType();
+  auto row_seq_dtype = input_args[kInputIndex2]->GetType();
+  auto col_seq_dtype = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32, kInt64};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("backprop", backprop_dtype, valid_types, op_name);
   const std::set<TypePtr> seq_valid_types = {kInt64};

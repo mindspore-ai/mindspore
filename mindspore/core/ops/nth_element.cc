@@ -62,7 +62,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   auto n_val = 0;
   if (input_args[1]->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> valid_types = {kInt32};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->BuildType(), valid_types, primitive->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->GetType(), valid_types, primitive->name());
     auto n = input_args[1]->cast<abstract::AbstractTensorPtr>();
     auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("n shape", SizeToLong(n_shape.size()), kEqual, 0, primitive->name());
@@ -104,8 +104,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
 TypePtr NthElementInferType(const PrimitivePtr &primitive, const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt64, kInt32, kInt16, kInt8, kUInt8, kUInt16, kFloat64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types,
-                                                    primitive->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), valid_types, primitive->name());
 }
 }  // namespace
 

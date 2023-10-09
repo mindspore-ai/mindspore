@@ -136,9 +136,9 @@ class BatchToSpaceInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 };
 

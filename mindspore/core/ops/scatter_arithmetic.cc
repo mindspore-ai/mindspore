@@ -63,9 +63,9 @@ abstract::ShapePtr ScatterArithmeticInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ScatterArithmeticInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_x_type_ptr = input_args[kInputIndex0]->BuildType();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
-  auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
+  auto input_x_type_ptr = input_args[kInputIndex0]->GetType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
+  auto updates_type_ptr = input_args[kInputIndex2]->GetType();
   auto prim_name = primitive->name();
   const std::set<TypePtr> indices_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, indices_types, prim_name);

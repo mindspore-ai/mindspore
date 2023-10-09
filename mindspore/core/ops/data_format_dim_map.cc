@@ -55,7 +55,7 @@ TypePtr DataFormatDimMapInferType(const PrimitivePtr &prim, const std::vector<Ab
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input type", x_type, valid_types, prim_name);
   return x_type;

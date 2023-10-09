@@ -70,8 +70,8 @@ class SigmoidCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto logits_type = input_args[kInputIndex0]->BuildType();
-    auto label_type = input_args[kInputIndex1]->BuildType();
+    auto logits_type = input_args[kInputIndex0]->GetType();
+    auto label_type = input_args[kInputIndex1]->GetType();
     const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                            kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
     std::map<std::string, TypePtr> args;

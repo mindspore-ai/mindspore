@@ -125,11 +125,11 @@ TypePtr NLLLossGradInferType(const PrimitivePtr &primitive, const std::vector<Ab
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   // check
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_dtype = input_args[kInputIndex0]->BuildType();
-  auto y_grad_dtype = input_args[kInputIndex1]->BuildType();
-  auto t_dtype = input_args[kInputIndex2]->BuildType();
-  auto w_dtype = input_args[kInputIndex3]->BuildType();
-  auto tw_dtype = input_args[kInputIndex4]->BuildType();
+  auto x_dtype = input_args[kInputIndex0]->GetType();
+  auto y_grad_dtype = input_args[kInputIndex1]->GetType();
+  auto t_dtype = input_args[kInputIndex2]->GetType();
+  auto w_dtype = input_args[kInputIndex3]->GetType();
+  auto tw_dtype = input_args[kInputIndex4]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", x_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad", y_grad_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", t_dtype, {kInt32, kInt64}, prim_name);

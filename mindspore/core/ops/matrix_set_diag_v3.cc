@@ -141,11 +141,11 @@ TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<Abs
   auto diagonal_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto k_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
   (void)abstract::CheckDtypeSame(prim_name, x_arg, diagonal_arg);
-  auto x_type = x_arg->BuildType();
+  auto x_type = x_arg->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
   const std::set<TypePtr> valid_type = {kInt32};
-  auto k_type = k_arg->BuildType();
+  auto k_type = k_arg->GetType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
   return x_type;

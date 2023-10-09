@@ -56,7 +56,7 @@ AbstractBasePtr SequenceUnstackInferInner(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto type = input_args[kInputIndex0]->BuildType();
+  auto type = input_args[kInputIndex0]->GetType();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kSequenceUnstackInputsNum, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool, op_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
@@ -104,7 +104,7 @@ class SequenceUnstackInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceUnstackInferInner(primitive, input_args)->BuildType();
+    return SequenceUnstackInferInner(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

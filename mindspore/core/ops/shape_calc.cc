@@ -116,7 +116,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferShapeAndType(nullptr, primitive, input_args)->BuildType();
+    return InferShapeAndType(nullptr, primitive, input_args)->GetType();
   }
 
  private:

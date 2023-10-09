@@ -115,12 +115,12 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     auto inputs_x_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 0);
-    auto inputs_x_dtype = input_args[kInputIndex0]->BuildType();
-    auto sequence_length_dtype = input_args[kInputIndex1]->BuildType();
+    auto inputs_x_dtype = input_args[kInputIndex0]->GetType();
+    auto sequence_length_dtype = input_args[kInputIndex1]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs type", inputs_x_dtype, {kFloat32, kFloat64}, prim_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence length dtype", sequence_length_dtype, {kInt32},
                                                      prim_name);
-    return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64, kInt64, inputs_x_ptr->element()->BuildType()});
+    return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64, kInt64, inputs_x_ptr->element()->GetType()});
   }
 };
 

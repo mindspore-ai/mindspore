@@ -86,10 +86,9 @@ abstract::TupleShapePtr SparseReshapeInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SparseReshapeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->BuildType(), {kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[kInputIndex1]->BuildType(), {kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("new_shape", input_args[kInputIndex2]->BuildType(), {kInt64},
-                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex0]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[kInputIndex1]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("new_shape", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64});
 }
 }  // namespace

@@ -111,7 +111,7 @@ void DynamicGRUV2GradCheckShapeValue(const PrimitivePtr &primitive, const std::v
   std::vector<int64_t> valid_shape = {num_step, batch_size, hidden_size};
   (void)CheckAndConvertUtils::CheckTensorShapeSame(check_shapes, valid_shape, prim_name);
 
-  if (input_args.size() >= kInputIndex13 && input_args[kInputIndex12]->BuildType()->type_id() != kMetaTypeNone) {
+  if (input_args.size() >= kInputIndex13 && input_args[kInputIndex12]->GetType()->type_id() != kMetaTypeNone) {
     auto seq_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex12]->GetShape())[kShape];
     auto seq_shape_ptr = input_args[kInputIndex12]->GetShape();
     if (!IsDynamic(seq_shape)) {
@@ -183,18 +183,18 @@ TuplePtr DynamicGRUV2GradInferType(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_dtype = input_args[kInputIndex0]->BuildType();
-  auto winput_dtype = input_args[kInputIndex1]->BuildType();
-  auto whidden_dtype = input_args[kInputIndex2]->BuildType();
-  auto y_dtype = input_args[kInputIndex3]->BuildType();
-  auto init_h_dtype = input_args[kInputIndex4]->BuildType();
-  auto h_dtype = input_args[kInputIndex5]->BuildType();
-  auto dy_dtype = input_args[kInputIndex6]->BuildType();
-  auto dh_dtype = input_args[kInputIndex7]->BuildType();
-  auto update_dtype = input_args[kInputIndex8]->BuildType();
-  auto reset_dtype = input_args[kInputIndex9]->BuildType();
-  auto new_dtype = input_args[kInputIndex10]->BuildType();
-  auto hnew_dtype = input_args[kInputIndex11]->BuildType();
+  auto x_dtype = input_args[kInputIndex0]->GetType();
+  auto winput_dtype = input_args[kInputIndex1]->GetType();
+  auto whidden_dtype = input_args[kInputIndex2]->GetType();
+  auto y_dtype = input_args[kInputIndex3]->GetType();
+  auto init_h_dtype = input_args[kInputIndex4]->GetType();
+  auto h_dtype = input_args[kInputIndex5]->GetType();
+  auto dy_dtype = input_args[kInputIndex6]->GetType();
+  auto dh_dtype = input_args[kInputIndex7]->GetType();
+  auto update_dtype = input_args[kInputIndex8]->GetType();
+  auto reset_dtype = input_args[kInputIndex9]->GetType();
+  auto new_dtype = input_args[kInputIndex10]->GetType();
+  auto hnew_dtype = input_args[kInputIndex11]->GetType();
 
   std::map<std::string, TypePtr> check_types = {
     {"y_dtype", y_dtype},           {"h_dtype", h_dtype},         {"dy_dtype", dy_dtype},   {"dh_dtype", dh_dtype},
@@ -204,12 +204,12 @@ TuplePtr DynamicGRUV2GradInferType(const PrimitivePtr &primitive, const std::vec
   (void)CheckAndConvertUtils::CheckTensorTypeValid("whidden_dtype", whidden_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("init_h_dtype", init_h_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(check_types, valid_types, prim_name);
-  if (input_args.size() >= kInputIndex13 && input_args[kInputIndex12]->BuildType()->type_id() != kMetaTypeNone) {
-    auto seq_dtype = input_args[kInputIndex12]->BuildType();
+  if (input_args.size() >= kInputIndex13 && input_args[kInputIndex12]->GetType()->type_id() != kMetaTypeNone) {
+    auto seq_dtype = input_args[kInputIndex12]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_dtype", seq_dtype, valid_types, prim_name);
   }
-  if (input_args.size() >= kInputIndex14 && input_args[kInputIndex13]->BuildType()->type_id() != kMetaTypeNone) {
-    auto mask_dtype = input_args[kInputIndex13]->BuildType();
+  if (input_args.size() >= kInputIndex14 && input_args[kInputIndex13]->GetType()->type_id() != kMetaTypeNone) {
+    auto mask_dtype = input_args[kInputIndex13]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("mask_dtype", mask_dtype, valid_types, prim_name);
   }
 

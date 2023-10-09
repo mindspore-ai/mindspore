@@ -137,10 +137,10 @@ TypePtr Dilation2DInferType(const PrimitivePtr &prim, const std::vector<Abstract
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32,
                                          kUInt64,  kInt8,    kInt16,   kInt32, kInt64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("filter", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("filter", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

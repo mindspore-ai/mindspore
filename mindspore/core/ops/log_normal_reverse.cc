@@ -47,7 +47,7 @@ abstract::ShapePtr LogNormalReverseInferShape(const PrimitivePtr &primitive,
 TypePtr LogNormalReverseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
 }

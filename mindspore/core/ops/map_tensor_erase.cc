@@ -59,7 +59,7 @@ TypePtr MapTensorEraseInferType(const PrimitivePtr &, const std::vector<Abstract
     MS_EXCEPTION(TypeError) << kNameMapTensorErase << " - required key_tensor dtype " << key_dtype->ToString()
                             << " but got " << key_tensor_dtype->ToString() << ".";
   }
-  return abs_map_tensor->BuildType();
+  return abs_map_tensor->GetType();
 }
 
 AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

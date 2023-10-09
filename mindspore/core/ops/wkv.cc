@@ -59,7 +59,7 @@ class WKVInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputNumber,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kIndexK]);
-    auto k_type = input_args[kIndexK]->BuildType();
+    auto k_type = input_args[kIndexK]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_k", k_type, common_valid_types, prim_name);
     std::vector<TypePtr> output_types = {k_type, k_type, k_type, k_type};
     return std::make_shared<Tuple>(output_types);

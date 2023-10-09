@@ -107,10 +107,10 @@ TypePtr CdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
   }
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("grad", input_args[0]->BuildType());
-  (void)types.emplace("input_x", input_args[1]->BuildType());
-  (void)types.emplace("input_y", input_args[2]->BuildType());
-  (void)types.emplace("cdist", input_args[3]->BuildType());
+  (void)types.emplace("grad", input_args[0]->GetType());
+  (void)types.emplace("input_x", input_args[1]->GetType());
+  (void)types.emplace("input_y", input_args[2]->GetType());
+  (void)types.emplace("cdist", input_args[3]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 }  // namespace

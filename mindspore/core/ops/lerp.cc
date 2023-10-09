@@ -65,12 +65,12 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("start", input_args[0]->BuildType());
-  (void)types.emplace("end", input_args[1]->BuildType());
+  (void)types.emplace("start", input_args[0]->GetType());
+  (void)types.emplace("end", input_args[1]->GetType());
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
+    (void)types.emplace("weight", input_args[kInputIndex2]->GetType());
   } else {
-    (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
+    (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->GetType(), {kFloat}, op_name);
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kFloat64}, op_name);
 }

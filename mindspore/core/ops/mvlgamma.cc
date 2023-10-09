@@ -47,7 +47,7 @@ abstract::ShapePtr MvlgammaInferShape(const PrimitivePtr &primitive, const std::
 
 TypePtr MvlgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, primitive->name());
 }

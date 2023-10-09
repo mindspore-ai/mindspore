@@ -45,14 +45,14 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
   for (const auto &seq_element : seq_elements) {
     if (seq_element->isa<abstract::AbstractTensor>()) {
       (void)abs.emplace_back(TensorConstructUtils::CreateZerosTensor(
-                               seq_element->BuildType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
+                               seq_element->GetType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
-      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->BuildType()));
+      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->GetType()));
     } else if (seq_element->isa<abstract::AbstractTuple>() || seq_element->isa<abstract::AbstractList>()) {
       (void)abs.emplace_back(MakeSequenceZeros(seq_element->cast<abstract::AbstractSequencePtr>()));
     } else {
-      MS_EXCEPTION(TypeError) << "For 'SequenceZerosLike' is not supported " << seq_abs->BuildType()->ToString() << '.';
+      MS_EXCEPTION(TypeError) << "For 'SequenceZerosLike' is not supported " << seq_abs->GetType()->ToString() << '.';
     }
   }
   if (seq_abs->isa<abstract::AbstractTuple>()) {
@@ -87,7 +87,7 @@ class SequenceZerosLikeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(prim, input_args)->BuildType();
+    return SequenceZerosLikeInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

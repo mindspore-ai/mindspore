@@ -134,9 +134,9 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
     const int64_t input_num = 3;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
 
-    auto x_type = input_args[kInputIndex0]->BuildType();
-    auto gamma_type = input_args[kInputIndex1]->BuildType();
-    auto beta_type = input_args[kInputIndex2]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
+    auto gamma_type = input_args[kInputIndex1]->GetType();
+    auto beta_type = input_args[kInputIndex2]->GetType();
     // the beta and gama shape must be x_shape[begin_params_axis:]
     auto valid_types = {kBFloat16, kFloat16, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_types, op_name);

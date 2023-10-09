@@ -77,7 +77,7 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
   auto op_name = prim->name();
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->GetType(), {kBool}, op_name);
   std::set<TypePtr> valid_types;
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -90,13 +90,13 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
   }
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("value", input_args[kInputIndex2]->BuildType());
+    (void)types.emplace("input", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("value", input_args[kInputIndex2]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
     return types["input"];
   } else {
-    (void)CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
-    auto input_type = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->GetType(), {kFloat}, op_name);
+    auto input_type = input_args[kInputIndex0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, op_name);
     return input_type;
   }

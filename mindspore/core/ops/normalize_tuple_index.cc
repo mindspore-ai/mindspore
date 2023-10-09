@@ -280,7 +280,7 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeTupleIndexInferInner(prim, input_args)->BuildType();
+    return NormalizeTupleIndexInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

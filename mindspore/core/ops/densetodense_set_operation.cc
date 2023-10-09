@@ -122,8 +122,8 @@ TuplePtr DenseToDenseSetOperationInferType(const PrimitivePtr &prim, const std::
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x1", input_args[0]->BuildType());
-  (void)types.emplace("x2", input_args[1]->BuildType());
+  (void)types.emplace("x1", input_args[0]->GetType());
+  (void)types.emplace("x2", input_args[1]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   std::vector<TypePtr> type_tuple;
   type_tuple.push_back(std::make_shared<TensorType>(kInt64));

@@ -81,7 +81,7 @@ TypePtr RollInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   }
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kInt16, kInt32,   kInt64,
                                          kUInt32,  kInt8,    kUInt8, kFloat64, kBool};
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x type", infer_type, valid_types, prim->name());
 }
 }  // namespace

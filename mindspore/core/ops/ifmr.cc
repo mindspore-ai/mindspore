@@ -106,14 +106,12 @@ TuplePtr IFMRInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     MS_EXCEPTION_IF_NULL(item);
   }
   std::set<TypePtr> valid_type = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data", input_args[kInputIndex0]->GetType(), valid_type, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->GetType(), valid_type,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_min", input_args[kInputIndex1]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->GetType(), valid_type,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("data_max", input_args[kInputIndex2]->BuildType(), valid_type,
-                                                   prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->BuildType(), {kInt32},
-                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("cumsum", input_args[kInputIndex3]->GetType(), {kInt32}, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kFloat32, kFloat32});
 }
 }  // namespace

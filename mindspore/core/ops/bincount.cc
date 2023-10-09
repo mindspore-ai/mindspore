@@ -75,12 +75,12 @@ abstract::ShapePtr BincountInferShape(const PrimitivePtr &primitive, const std::
 TypePtr BincountInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::set<TypePtr> valid_type = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("array", input_args[kInputIndex0]->GetType(), valid_type,
                                                    primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), valid_type,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->GetType(), valid_type,
                                                    primitive->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32, kInt64};
-  auto weights_type = input_args[kInputIndex2]->BuildType();
+  auto weights_type = input_args[kInputIndex2]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("weights", weights_type, valid_types, primitive->name());
 }
 }  // namespace

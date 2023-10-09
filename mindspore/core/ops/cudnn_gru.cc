@@ -136,9 +136,9 @@ TuplePtr CudnnGRUInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("h", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("w", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("input", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("h", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("w", input_args[kInputIndex2]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type, type});
 }

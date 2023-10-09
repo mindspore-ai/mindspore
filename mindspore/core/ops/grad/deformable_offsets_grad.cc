@@ -59,9 +59,9 @@ std::vector<TypePtr> DeformableOffsetsGradInferType(const PrimitivePtr &prim,
   // check inputs num.
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kDeformableOffsetsGradInputSize, prim_name);
 
-  auto dout_type = input_args[kDeformableOffsetsGradInputDoutIndex]->BuildType();
-  auto x_type = input_args[kDeformableOffsetsGradInputInputIndex]->BuildType();
-  auto offsets_type = input_args[kDeformableOffsetsGradInputOffsetsIndex]->BuildType();
+  auto dout_type = input_args[kDeformableOffsetsGradInputDoutIndex]->GetType();
+  auto x_type = input_args[kDeformableOffsetsGradInputInputIndex]->GetType();
+  auto offsets_type = input_args[kDeformableOffsetsGradInputOffsetsIndex]->GetType();
 
   std::set<TypePtr> valid_type = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTypeValid("dout", dout_type, valid_type, prim_name);

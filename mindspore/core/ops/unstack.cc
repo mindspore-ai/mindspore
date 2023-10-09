@@ -53,7 +53,7 @@ bool IsDynamicOutputs(const std::vector<int64_t> &x_shape, const PrimitivePtr &p
 }
 
 TypePtr UnstackInferType(const std::vector<AbstractBasePtr> &input_args, int64_t output_num) {
-  auto type = input_args[kInputIndex0]->BuildType();
+  auto type = input_args[kInputIndex0]->GetType();
   std::vector<TypePtr> type_tuple;
   for (int64_t i = 0; i < output_num; ++i) {
     type_tuple.push_back(type);
@@ -77,7 +77,7 @@ AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, prim_name);
-  auto type = input_args[kInputIndex0]->BuildType();
+  auto type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool,
                                                    prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
@@ -116,7 +116,7 @@ class UnstackInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return UnstackInferInner(prim, input_args)->BuildType();
+    return UnstackInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

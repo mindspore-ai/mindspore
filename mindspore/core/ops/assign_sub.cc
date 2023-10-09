@@ -73,8 +73,8 @@ abstract::ShapePtr AssignSubInferShape(const PrimitivePtr &primitive, const std:
 TypePtr AssignSubInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("val", input_args[0]->BuildType());
-  (void)types.emplace("value", input_args[1]->BuildType());
+  (void)types.emplace("val", input_args[0]->GetType());
+  (void)types.emplace("value", input_args[1]->GetType());
   // check_scalar_or_tensor_types_same
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "AssignSub");
 }

@@ -76,10 +76,10 @@ TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    (void)types.emplace(elementi, elements[i]->BuildType());
+    (void)types.emplace(elementi, elements[i]->GetType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
-  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]->BuildType()));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]->GetType()));
 }
 }  // namespace
 

@@ -123,7 +123,7 @@ abstract::ShapePtr AvgPoolV1InferShape(const PrimitivePtr &primitive, const std:
 TypePtr AvgPoolV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto name = prim->name();
   const std::set<TypePtr> avgpool_v1_valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTypeValid("value", input_type, avgpool_v1_valid_types, name);
   return inferred_type;
 }

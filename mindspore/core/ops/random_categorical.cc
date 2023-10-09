@@ -52,7 +52,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   int64_t num_sample = -1;
   const auto &nun_sample_arg = input_args[kInputIndex1];
   if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
-    auto num_sample_input_type = nun_sample_arg->BuildType();
+    auto num_sample_input_type = nun_sample_arg->GetType();
     auto value = nun_sample_arg->GetValue();
     if (value->isa<ValueAny>()) {
       return num_sample;
@@ -126,14 +126,13 @@ TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<A
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_logits_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTypeValid("logits", input_args[kInputIndex0]->BuildType(), valid_logits_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("logits", input_args[kInputIndex0]->GetType(), valid_logits_types,
                                              prim_name);
   const std::set<TypePtr> valid_num_sample_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("num_sample", input_args[kInputIndex1]->BuildType(),
-                                             valid_num_sample_types, prim_name);
-  const std::set<TypePtr> valid_seed_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("seed", input_args[kInputIndex2]->BuildType(), valid_seed_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("num_sample", input_args[kInputIndex1]->GetType(), valid_num_sample_types,
                                              prim_name);
+  const std::set<TypePtr> valid_seed_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTypeValid("seed", input_args[kInputIndex2]->GetType(), valid_seed_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

@@ -81,8 +81,8 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
 
 TypePtr PolygammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto a_type = input_args[kInputIndex0]->BuildType();
-  auto x_type = input_args[kInputIndex1]->BuildType();
+  auto a_type = input_args[kInputIndex0]->GetType();
+  auto x_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> a_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("a", a_type, a_valid_types, prim_name);

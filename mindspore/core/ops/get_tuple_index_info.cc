@@ -271,7 +271,7 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
   }
   const size_t max_tensor_dims = 8;
   const size_t output_size = 13;
-  if (fancy_position_abs->BuildType()->type_id() == kObjectTypeTensorType ||
+  if (fancy_position_abs->GetType()->type_id() == kObjectTypeTensorType ||
       std::any_of(input_args.begin() + kIndex0, input_args.end(),
                   [](const AbstractBasePtr &shape_abs) { return shape_abs->GetShape()->IsDynamic(); })) {
     auto abs = std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -334,7 +334,7 @@ class MIND_API GetTupleIndexInfoInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetTupleIndexInfoInferInner(prim, input_args, true)->BuildType();
+    return GetTupleIndexInfoInferInner(prim, input_args, true)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

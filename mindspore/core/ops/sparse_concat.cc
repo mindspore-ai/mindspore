@@ -99,9 +99,9 @@ TuplePtr SparseConcatInferType(const PrimitivePtr &primitive, const std::vector<
   }
   for (unsigned int i = 0; i < inputs_indices.size(); i++) {
     std::string elementi = "values" + std::to_string(i);
-    auto ind_type = inputs_indices[i]->BuildType();
-    auto sha_type = inputs_shapes[i]->BuildType();
-    (void)values_types.emplace(elementi, inputs_values[i]->BuildType());
+    auto ind_type = inputs_indices[i]->GetType();
+    auto sha_type = inputs_shapes[i]->GetType();
+    (void)values_types.emplace(elementi, inputs_values[i]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices" + std::to_string(i), ind_type, {kInt64}, prim_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shapes" + std::to_string(i), sha_type, {kInt64, kInt32},
                                                      prim_name);
@@ -109,9 +109,9 @@ TuplePtr SparseConcatInferType(const PrimitivePtr &primitive, const std::vector<
   (void)CheckAndConvertUtils::CheckTensorTypeSame(values_types, common_valid_types_with_complex_and_bool, prim_name);
 
   constexpr size_t kFirstInput = 0;
-  return std::make_shared<Tuple>(std::vector<TypePtr>{inputs_indices[kFirstInput]->BuildType(),
-                                                      inputs_values[kFirstInput]->BuildType(),
-                                                      inputs_shapes[kFirstInput]->BuildType()});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{inputs_indices[kFirstInput]->GetType(),
+                                                      inputs_values[kFirstInput]->GetType(),
+                                                      inputs_shapes[kFirstInput]->GetType()});
 }
 
 abstract::TupleShapePtr SparseConcatInferShape(const PrimitivePtr &primitive,

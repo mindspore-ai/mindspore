@@ -51,7 +51,7 @@ abstract::ShapePtr SincInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr SincInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types_with_complex_and_bool,
                                                    prim->name());
   auto tensor_type = x_dtype->cast<TensorTypePtr>();

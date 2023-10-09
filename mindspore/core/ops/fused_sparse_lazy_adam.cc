@@ -84,26 +84,26 @@ abstract::TupleShapePtr FusedSparseLazyAdamInferShape(const PrimitivePtr &primit
 TypePtr FusedSparseLazyAdamInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"m", input_args[kMIndex]->BuildType()},
-                                          {"v", input_args[kVIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"m", input_args[kMIndex]->GetType()},
+                                          {"v", input_args[kVIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim_name);
 
   types = {
-    {"beta1_power", input_args[kBeta1PowerIndex]->BuildType()},
-    {"beta2_power", input_args[kBeta2Powerndex]->BuildType()},
-    {"lr", input_args[kLrIndex]->BuildType()},
-    {"beta1", input_args[kBeta1Index]->BuildType()},
-    {"beta2", input_args[kBeta2Index]->BuildType()},
-    {"epsilon", input_args[kEpsilonIndex]->BuildType()},
+    {"beta1_power", input_args[kBeta1PowerIndex]->GetType()},
+    {"beta2_power", input_args[kBeta2Powerndex]->GetType()},
+    {"lr", input_args[kLrIndex]->GetType()},
+    {"beta1", input_args[kBeta1Index]->GetType()},
+    {"beta2", input_args[kBeta2Index]->GetType()},
+    {"epsilon", input_args[kEpsilonIndex]->GetType()},
   };
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, {kFloat16, kFloat32}, prim_name);
 
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, {kInt32}, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 }  // namespace fused_sparse_lazy_adam

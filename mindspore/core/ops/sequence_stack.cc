@@ -141,12 +141,12 @@ AbstractBasePtr SequenceStackInferType(const PrimitivePtr &primitive, const std:
   primitive->AddAttr("num", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
-  auto infer_type0 = element0->BuildType();
+  auto infer_type0 = element0->GetType();
   MS_EXCEPTION_IF_NULL(infer_type0);
   for (size_t i = 1; i < elements.size(); i++) {
     auto elementi = elements[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(elementi);
-    auto infer_typei = elementi->BuildType();
+    auto infer_typei = elementi->GetType();
     MS_EXCEPTION_IF_NULL(infer_typei);
     if (infer_typei == infer_type0) {
       MS_EXCEPTION(TypeError) << "All input must have the same data type!input[" << i << "] data type = " << infer_typei
@@ -166,7 +166,7 @@ AbstractBasePtr SequenceStackInfer(const abstract::AnalysisEnginePtr &, const Pr
     MS_EXCEPTION_IF_NULL(item);
   }
   auto infer_shape = SequenceStackInferShape(primitive, input_args);
-  auto infer_type = SequenceStackInferType(primitive, input_args)->BuildType();
+  auto infer_type = SequenceStackInferType(primitive, input_args)->GetType();
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
@@ -178,7 +178,7 @@ class MIND_API AGSequenceStackInfer : public abstract::OpInferBase {
     return SequenceStackInferShape(primitive, input_args);
   }
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceStackInferType(primitive, input_args)->BuildType();
+    return SequenceStackInferType(primitive, input_args)->GetType();
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {

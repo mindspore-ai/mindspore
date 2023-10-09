@@ -42,7 +42,7 @@ class MakeListInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MakeListInnerInfer(input_args)->BuildType();
+    return MakeListInnerInfer(input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,

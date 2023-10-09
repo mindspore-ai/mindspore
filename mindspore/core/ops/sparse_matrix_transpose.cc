@@ -129,11 +129,11 @@ TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vec
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_type = input_args[kInputIndex1]->BuildType();
-  auto row_type = input_args[kInputIndex2]->BuildType();
-  auto col_type = input_args[kInputIndex3]->BuildType();
-  auto value_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_type = input_args[kInputIndex1]->GetType();
+  auto row_type = input_args[kInputIndex2]->GetType();
+  auto col_type = input_args[kInputIndex3]->GetType();
+  auto value_type = input_args[kInputIndex4]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x_dense_shape", dense_shape_type);
   (void)types.emplace("x_batch_pointers", batch_type);
@@ -141,9 +141,9 @@ TuplePtr SparseMatrixTransposeInferType(const PrimitivePtr &prim, const std::vec
   (void)types.emplace("x_col_indices", col_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, index_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", value_type, values_valid_types, prim->name());
-  std::vector<TypePtr> types_list = {input_args[kInputIndex0]->BuildType(), input_args[kInputIndex1]->BuildType(),
-                                     input_args[kInputIndex2]->BuildType(), input_args[kInputIndex3]->BuildType(),
-                                     input_args[kInputIndex4]->BuildType()};
+  std::vector<TypePtr> types_list = {input_args[kInputIndex0]->GetType(), input_args[kInputIndex1]->GetType(),
+                                     input_args[kInputIndex2]->GetType(), input_args[kInputIndex3]->GetType(),
+                                     input_args[kInputIndex4]->GetType()};
   return std::make_shared<Tuple>(types_list);
 }
 }  // namespace

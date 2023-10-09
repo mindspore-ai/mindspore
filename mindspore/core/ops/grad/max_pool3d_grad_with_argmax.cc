@@ -121,13 +121,12 @@ Format MaxPool3DGradWithArgmax::get_format() const {
 namespace {
 TypePtr MaxPool3DGradWithArgmaxInferType(const PrimitivePtr &prim,
                                          const std::vector<abstract::AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->BuildType(), {kInt64, kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->GetType(), {kInt64, kInt32},
                                                    prim->name());
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types,
-                                                   prim->name());
-  return input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, prim->name());
+  return input_args[0]->GetType();
 }
 
 abstract::ShapePtr MaxPool3DGradWithArgmaxInferShape(const PrimitivePtr &prim,

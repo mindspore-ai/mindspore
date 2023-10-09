@@ -65,11 +65,11 @@ TuplePtr LinearSumAssignmentInferType(const PrimitivePtr &primitive, const std::
   const std::set<TypePtr> valid_cost_matrix_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_dimention_limit_types = {kInt64};
   const std::set<TypePtr> valid_maximize_types = {kBool};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("cost_matrix", input_args[kInputIndex0]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("cost_matrix", input_args[kInputIndex0]->GetType(),
                                                    valid_cost_matrix_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("dimension_limit", input_args[kInputIndex1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("dimension_limit", input_args[kInputIndex1]->GetType(),
                                                    valid_dimention_limit_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("maximize", input_args[kInputIndex2]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("maximize", input_args[kInputIndex2]->GetType(),
                                                    valid_maximize_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, kInt64});
 }

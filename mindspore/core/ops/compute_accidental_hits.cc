@@ -89,8 +89,8 @@ TuplePtr ComputeAccidentalHitsInferType(const PrimitivePtr &prim, const std::vec
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
-  auto true_classes_type = input_args[0]->BuildType();
-  auto sampled_candidates_type = input_args[1]->BuildType();
+  auto true_classes_type = input_args[0]->GetType();
+  auto sampled_candidates_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("true_classes", true_classes_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("sampled_candidates", sampled_candidates_type, valid_types,
                                                    prim_name);

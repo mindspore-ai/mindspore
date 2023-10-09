@@ -99,10 +99,10 @@ class ApplyAdagradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t kInputNum = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto var_type = input_args[kInputIndex0]->BuildType();
-    auto accum_type = input_args[kInputIndex1]->BuildType();
-    auto lr_type = input_args[kInputIndex2]->BuildType();
-    auto grad_type = input_args[kInputIndex3]->BuildType();
+    auto var_type = input_args[kInputIndex0]->GetType();
+    auto accum_type = input_args[kInputIndex1]->GetType();
+    auto lr_type = input_args[kInputIndex2]->GetType();
+    auto grad_type = input_args[kInputIndex3]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     // var, accum and grad must have the same type
     std::map<std::string, TypePtr> args;

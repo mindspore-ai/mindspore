@@ -66,11 +66,11 @@ abstract::ShapePtr FractionalMaxPoolGradInferShape(const PrimitivePtr &primitive
 TypePtr FractionalMaxPoolGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto orig_input_dtype = input_args[kInputIndex0]->BuildType();
-  auto orig_output_dtype = input_args[kInputIndex1]->BuildType();
-  auto out_backprop_dtype = input_args[kInputIndex2]->BuildType();
-  auto row_seq_dtype = input_args[kInputIndex3]->BuildType();
-  auto col_seq_dtype = input_args[kInputIndex4]->BuildType();
+  auto orig_input_dtype = input_args[kInputIndex0]->GetType();
+  auto orig_output_dtype = input_args[kInputIndex1]->GetType();
+  auto out_backprop_dtype = input_args[kInputIndex2]->GetType();
+  auto row_seq_dtype = input_args[kInputIndex3]->GetType();
+  auto col_seq_dtype = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> input_valid_types = {kFloat32, kFloat64, kInt32, kInt64};
   const std::set<TypePtr> seq_valid_types = {kInt64};
   std::map<std::string, TypePtr> tensor_types;

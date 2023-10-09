@@ -118,7 +118,7 @@ TypePtr VmapAssignInferType(const PrimitivePtr &primitive, const std::vector<Abs
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < input_args.size() - 1; ++i) {
     std::string element_i = "element_" + std::to_string(i);
-    (void)types.emplace(element_i, input_args[i]->BuildType());
+    (void)types.emplace(element_i, input_args[i]->GetType());
   }
   std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8, kUInt16,
                                    kUInt32, kUInt64, kFloat16, kFloat32, kBool};

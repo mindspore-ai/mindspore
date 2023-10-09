@@ -123,7 +123,7 @@ class SpaceToBatchInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto input_type = input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};

@@ -84,7 +84,7 @@ class ReluGradV2Infer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     MS_EXCEPTION_IF_NULL(input_args[kGradientIndex]);
-    auto gradient_type = input_args[kGradientIndex]->BuildType();
+    auto gradient_type = input_args[kGradientIndex]->GetType();
     MS_EXCEPTION_IF_NULL(gradient_type);
     if (!gradient_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "

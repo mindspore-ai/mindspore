@@ -126,11 +126,11 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
 TypePtr AffineGridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
-  auto theta_type = input_args[kInputIndex0]->BuildType();
+  auto theta_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(theta_type);
   const std::set<TypePtr> theta_valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("theta", theta_type, theta_valid_types, op_name);
-  auto output_size_type = input_args[kInputIndex1]->BuildType();
+  auto output_size_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(output_size_type);
   const std::set<TypePtr> output_size_valid_types = {kTensorType, kTuple};  // 2-rd infer will be a tensor.
   (void)CheckAndConvertUtils::CheckTypeValid("output_size", output_size_type, output_size_valid_types, op_name);

@@ -68,9 +68,9 @@ TypePtr MaxPoolGradV1InferType(const PrimitivePtr &prim, const std::vector<Abstr
   auto name = prim->name();
   const std::set<TypePtr> valid_types = {kInt8,    kInt16, kInt32,  kInt64,  kFloat16, kFloat32,
                                          kFloat64, kUInt8, kUInt16, kUInt32, kUInt64};
-  auto orig_input_type = input_args[0]->BuildType();
-  auto orig_output_type = input_args[0]->BuildType();
-  auto grad_type = input_args[0]->BuildType();
+  auto orig_input_type = input_args[0]->GetType();
+  auto orig_output_type = input_args[0]->GetType();
+  auto grad_type = input_args[0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("orig_input", orig_input_type, valid_types, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("orig_output", orig_output_type, valid_types, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, name);

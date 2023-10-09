@@ -130,8 +130,8 @@ abstract::ShapePtr SegmentArithmeticInferShape(const PrimitivePtr &primitive,
 
 TypePtr SegmentArithmeticInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  TypePtr x_type = input_args[0]->BuildType();
-  TypePtr segment_ids_type = input_args[1]->BuildType();
+  TypePtr x_type = input_args[0]->GetType();
+  TypePtr segment_ids_type = input_args[1]->GetType();
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,  kComplex128, kInt32,
                                            kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64, kComplex64};
   const std::set<TypePtr> segment_ids_valid_types = {kInt32, kInt64};

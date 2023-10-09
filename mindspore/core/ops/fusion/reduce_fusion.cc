@@ -143,7 +143,7 @@ class ReduceFusionInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     return x_type;
   }
 };

@@ -51,7 +51,7 @@ class ABNInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim->name());
 
     return x_type;

@@ -58,8 +58,8 @@ TypePtr TraceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   const std::set<TypePtr> valid_grad_types = {kInt8,  kInt16,  kInt32,  kInt64,  kFloat16,   kFloat32,   kFloat64,
                                               kUInt8, kUInt16, kUInt32, kUInt64, kComplex64, kComplex128};
   const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("x_shape", input_args[1]->BuildType(), valid_shape_types, prim->name());
-  return CheckAndConvertUtils::CheckTypeValid("y_grad", input_args[0]->BuildType(), valid_grad_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTypeValid("x_shape", input_args[1]->GetType(), valid_shape_types, prim->name());
+  return CheckAndConvertUtils::CheckTypeValid("y_grad", input_args[0]->GetType(), valid_grad_types, prim->name());
 }
 }  // namespace
 

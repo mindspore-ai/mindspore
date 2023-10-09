@@ -62,7 +62,7 @@ TypePtr EinsumGradInferType(const PrimitivePtr &prim, const std::vector<Abstract
     MS_EXCEPTION_IF_NULL(item);
   }
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
+  auto x_type_map = input_args[0]->GetType();
   return x_type_map;
 }
 }  // namespace

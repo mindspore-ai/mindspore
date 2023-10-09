@@ -80,8 +80,8 @@ abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std:
 TypePtr KLDivLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto input_target_type = input_args[kInputIndex1]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto input_target_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
 
   std::map<std::string, TypePtr> types;

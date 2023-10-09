@@ -71,19 +71,19 @@ TypePtr SdgInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   // "parameters", "gradient", "learning_rate", "accum", "momentum", "stat"
   auto prim_name = prim->name();
 
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("parameters", input_args[kParametersIndex]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("parameters", input_args[kParametersIndex]->GetType(),
                                                    {kFloat32, kFloat16}, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("gradient", input_args[kGradientIndex]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("gradient", input_args[kGradientIndex]->GetType(),
                                                    {kFloat32, kFloat16}, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("momentum", input_args[kMomentumIndex]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("momentum", input_args[kMomentumIndex]->GetType(),
                                                    {kFloat32, kFloat16}, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("stat", input_args[kStatIndex]->BuildType(), {kFloat32, kFloat16},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("stat", input_args[kStatIndex]->GetType(), {kFloat32, kFloat16},
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("learning_rate", input_args[kLearningRateIndex]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("learning_rate", input_args[kLearningRateIndex]->GetType(),
                                                    {kFloat32, kFloat16}, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("accum", input_args[kAccumIndex]->BuildType(), {kFloat32, kFloat16},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("accum", input_args[kAccumIndex]->GetType(), {kFloat32, kFloat16},
                                                    prim_name);
-  return input_args[kParametersIndex]->BuildType();
+  return input_args[kParametersIndex]->GetType();
 }
 }  // namespace sgd
 

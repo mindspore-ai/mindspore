@@ -75,7 +75,7 @@ class MoeFFNInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckInputsNum(primitive, input_args);
     MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
-    auto x_type = input_args[kIndex0]->BuildType();
+    auto x_type = input_args[kIndex0]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kInt8};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
     return kFloat16;

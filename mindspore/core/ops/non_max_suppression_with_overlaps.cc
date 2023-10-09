@@ -94,11 +94,11 @@ TypePtr NonMaxSuppressionWithOverlapsInferType(const PrimitivePtr &prim,
     MS_EXCEPTION_IF_NULL(i);
   }
 
-  auto overlaps_type = input_args[kInputIndex0]->BuildType();
-  auto scores_type = input_args[kInputIndex1]->BuildType();
-  auto max_output_size_type = input_args[kInputIndex2]->BuildType();
-  auto overlap_threshold_type = input_args[kInputIndex3]->BuildType();
-  auto score_threshold_type = input_args[kInputIndex4]->BuildType();
+  auto overlaps_type = input_args[kInputIndex0]->GetType();
+  auto scores_type = input_args[kInputIndex1]->GetType();
+  auto max_output_size_type = input_args[kInputIndex2]->GetType();
+  auto overlap_threshold_type = input_args[kInputIndex3]->GetType();
+  auto score_threshold_type = input_args[kInputIndex4]->GetType();
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;

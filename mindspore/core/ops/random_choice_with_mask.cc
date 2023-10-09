@@ -98,7 +98,7 @@ BaseShapePtr RandomChoiceWithMaskInferShape(const PrimitivePtr &primitive,
 TypePtr RandomChoiceWithMaskInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

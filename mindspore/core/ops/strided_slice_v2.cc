@@ -367,7 +367,7 @@ bool CheckAndGetDynamicSliceV2(const AbstractBasePtr &input_arg, const std::stri
       *slice_len = tuple_arg->size();
     }
   } else if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64, kInt32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt64, kInt32},
                                                      "StridedSliceV2");
     if (input_value->isa<tensor::Tensor>()) {
       *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSliceV2");
@@ -384,7 +384,7 @@ bool CheckAndGetDynamicSliceV2(const AbstractBasePtr &input_arg, const std::stri
     }
   } else {
     MS_EXCEPTION(TypeError) << "For 'StridedSliceV2', '" << arg_name
-                            << "' must be tuple or Tensor, but got: " << input_arg->BuildType()->ToString() << ".";
+                            << "' must be tuple or Tensor, but got: " << input_arg->GetType()->ToString() << ".";
   }
 
   if (arg_name == "strides") {

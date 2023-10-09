@@ -85,7 +85,7 @@ abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim) {
 
 TypePtr GetnextInferType(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
-  auto type = abs->BuildType();
+  auto type = abs->GetType();
   MS_EXCEPTION_IF_NULL(type);
   return type;
 }

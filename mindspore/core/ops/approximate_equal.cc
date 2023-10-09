@@ -66,8 +66,8 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x1_dtype = input_args[0]->BuildType();
-  auto x2_dtype = input_args[1]->BuildType();
+  auto x1_dtype = input_args[0]->GetType();
+  auto x2_dtype = input_args[1]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_dtype, valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_dtype, valid_types, prim->name());

@@ -111,10 +111,10 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     const int64_t kInputNum = 8;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto var_type = input_args[kInputIndex0]->BuildType();
-    auto accum_type = input_args[kInputIndex1]->BuildType();
-    auto linear_type = input_args[kInputIndex2]->BuildType();
-    auto grad_type = input_args[kInputIndex3]->BuildType();
+    auto var_type = input_args[kInputIndex0]->GetType();
+    auto accum_type = input_args[kInputIndex1]->GetType();
+    auto linear_type = input_args[kInputIndex2]->GetType();
+    auto grad_type = input_args[kInputIndex3]->GetType();
     const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                            kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> args;
@@ -125,10 +125,10 @@ class ApplyFtrlInfer : public abstract::OpInferBase {
     // var accum linear grad must have same dtypes
     (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
-    auto lr_type = input_args[kInputIndex4]->BuildType();
-    auto l1_type = input_args[kInputIndex5]->BuildType();
-    auto l2_type = input_args[kInputIndex6]->BuildType();
-    auto lr_power_type = input_args[kInputIndex7]->BuildType();
+    auto lr_type = input_args[kInputIndex4]->GetType();
+    auto l1_type = input_args[kInputIndex5]->GetType();
+    auto l2_type = input_args[kInputIndex6]->GetType();
+    auto lr_power_type = input_args[kInputIndex7]->GetType();
     std::map<std::string, TypePtr> args_lr;
     std::map<std::string, TypePtr> args_l1;
     std::map<std::string, TypePtr> args_l2;

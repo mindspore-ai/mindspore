@@ -40,9 +40,9 @@ class MIND_API KVCacheMgrInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::set<TypePtr> valid_types = {kFloat16};
     const std::set<TypePtr> indices_types = {kInt32};
-    auto past_type = input_args[kInputIndex0]->BuildType();
-    auto cur_type = input_args[kInputIndex1]->BuildType();
-    auto index_type = input_args[kInputIndex2]->BuildType();
+    auto past_type = input_args[kInputIndex0]->GetType();
+    auto cur_type = input_args[kInputIndex1]->GetType();
+    auto index_type = input_args[kInputIndex2]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("index", index_type, indices_types, primitive->name());
     (void)CheckAndConvertUtils::CheckTensorTypeValid("cur", cur_type, valid_types, primitive->name());
     return CheckAndConvertUtils::CheckTensorTypeValid("past", past_type, valid_types, primitive->name());

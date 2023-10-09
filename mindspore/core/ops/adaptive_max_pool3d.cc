@@ -105,8 +105,8 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
 
 TuplePtr AdaptiveMaxPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
-  auto output_size_dtype = input_args[1]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto output_size_dtype = input_args[1]->GetType();
   const std::set<TypePtr> x_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> output_size_valid_types = {kInt32};

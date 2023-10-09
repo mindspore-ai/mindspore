@@ -46,7 +46,7 @@ TypePtr SliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
     MS_EXCEPTION_IF_NULL(item);
   }
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto x_type_map = input_args[1]->BuildType();
+  auto x_type_map = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type_map);
   auto x_dtype = x_type_map->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(x_dtype);

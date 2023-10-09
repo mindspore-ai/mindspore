@@ -90,11 +90,11 @@ TypePtr ResizeLinear1DInferType(const PrimitivePtr &primitive, const std::vector
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid0_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", x_type, valid0_types, prim_name);
 
-  auto size_type = input_args[kInputIndex1]->BuildType();
+  auto size_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(size_type);
   if (size_type->isa<TensorType>()) {
     const std::set<TypePtr> valid1_types = {kInt32, kInt64};

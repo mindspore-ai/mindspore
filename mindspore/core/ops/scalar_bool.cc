@@ -45,7 +45,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
     (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
     return kBool;
@@ -79,7 +79,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
     if (x_valueptr == kValueAny) {
       return nullptr;
     }
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     bool res;
     switch (x_type->type_id()) {
       case kNumberTypeInt32: {

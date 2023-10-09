@@ -173,28 +173,28 @@ TypePtr EditDistanceInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> indices_valid_types = {kInt64};
   const std::set<TypePtr> values_valid_types = {kNumber};
 
-  auto hypothesis_indices_type = input_args[kIndex0]->BuildType();
+  auto hypothesis_indices_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_indices_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_indices", hypothesis_indices_type, indices_valid_types,
                                                    prim_name);
-  auto hypothesis_values_type = input_args[kIndex1]->BuildType();
+  auto hypothesis_values_type = input_args[kIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_values", hypothesis_values_type, values_valid_types,
                                                    prim_name);
 
-  auto hypothesis_shape_type = input_args[kIndex2]->BuildType();
+  auto hypothesis_shape_type = input_args[kIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(hypothesis_shape_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("hypothesis_shape", hypothesis_shape_type, indices_valid_types,
                                                    prim_name);
 
-  auto truth_indices_type = input_args[kIndex3]->BuildType();
+  auto truth_indices_type = input_args[kIndex3]->GetType();
   MS_EXCEPTION_IF_NULL(truth_indices_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_indices", truth_indices_type, indices_valid_types, prim_name);
-  auto truth_values_type = input_args[kIndex4]->BuildType();
+  auto truth_values_type = input_args[kIndex4]->GetType();
   MS_EXCEPTION_IF_NULL(truth_values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_values", truth_values_type, values_valid_types, prim_name);
 
-  auto truth_shape_type = input_args[kIndex5]->BuildType();
+  auto truth_shape_type = input_args[kIndex5]->GetType();
   MS_EXCEPTION_IF_NULL(truth_shape_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("truth_shape", truth_shape_type, indices_valid_types, prim_name);
 

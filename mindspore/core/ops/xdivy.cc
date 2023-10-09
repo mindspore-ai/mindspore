@@ -67,7 +67,7 @@ class XdivyInfer : public abstract::OpInferBase {
     auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
     auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
     (void)abstract::CheckDtypeSame(prim_name, x, y);
-    auto input_type = input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     if (!input_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name

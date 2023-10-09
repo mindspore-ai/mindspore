@@ -47,7 +47,7 @@ abstract::ShapePtr ComplexAbsInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr ComplexAbsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> all_types_with_complex = {kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, all_types_with_complex, prim->name());
   auto input_tensor = input_type->cast<TensorTypePtr>();

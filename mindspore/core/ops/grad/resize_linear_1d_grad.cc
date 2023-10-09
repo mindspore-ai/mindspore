@@ -66,7 +66,7 @@ TypePtr ResizeLinear1DGradInferType(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args.at(kInputIndex1));
-  auto x_type = input_args[kInputIndex1]->BuildType();
+  auto x_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
 }

@@ -43,16 +43,16 @@ namespace {
 TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto m_type = input_args[kInputIndex1]->BuildType();
-  auto v_type = input_args[kInputIndex2]->BuildType();
-  auto lr_type = input_args[kInputIndex3]->BuildType();
-  auto beta1_type = input_args[kInputIndex4]->BuildType();
-  auto beta2_type = input_args[kInputIndex5]->BuildType();
-  auto epsilon_type = input_args[kInputIndex6]->BuildType();
-  auto decay_type = input_args[kInputIndex7]->BuildType();
-  auto global_step_type = input_args[kInputIndex8]->BuildType();
-  auto gradient_type = input_args[kInputIndex9]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto m_type = input_args[kInputIndex1]->GetType();
+  auto v_type = input_args[kInputIndex2]->GetType();
+  auto lr_type = input_args[kInputIndex3]->GetType();
+  auto beta1_type = input_args[kInputIndex4]->GetType();
+  auto beta2_type = input_args[kInputIndex5]->GetType();
+  auto epsilon_type = input_args[kInputIndex6]->GetType();
+  auto decay_type = input_args[kInputIndex7]->GetType();
+  auto global_step_type = input_args[kInputIndex8]->GetType();
+  auto gradient_type = input_args[kInputIndex9]->GetType();
 
   std::map<std::string, TypePtr> type_dict;
   (void)type_dict.emplace("var", var_type);

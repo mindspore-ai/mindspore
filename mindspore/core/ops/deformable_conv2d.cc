@@ -174,7 +174,7 @@ abstract::ShapePtr DeformableConv2dInferShape(const PrimitivePtr &primitive,
 
 TypePtr DeformableConv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 
@@ -251,8 +251,8 @@ AbstractBasePtr DeformableConv2dInfer(const abstract::AnalysisEnginePtr &, const
                                            input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("offsets", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("offsets", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return abstract::MakeAbstract(DeformableConv2dInferShape(primitive, input_args),
                                 DeformableConv2dInferType(primitive, input_args));

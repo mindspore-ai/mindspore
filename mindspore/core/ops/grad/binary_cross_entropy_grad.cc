@@ -90,19 +90,18 @@ class BinaryCrossEntropyGradInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
     std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("logits", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("labels", input_args[kInputIndex1]->BuildType());
-    (void)types.emplace("dout", input_args[kInputIndex2]->BuildType());
+    (void)types.emplace("logits", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("labels", input_args[kInputIndex1]->GetType());
+    (void)types.emplace("dout", input_args[kInputIndex2]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-    if (SizeToLong(input_args.size()) > kInputNum &&
-        input_args[kInputIndex3]->BuildType()->type_id() != kMetaTypeNone) {
+    if (SizeToLong(input_args.size()) > kInputNum && input_args[kInputIndex3]->GetType()->type_id() != kMetaTypeNone) {
       auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
       if (weight_shape.size() > 0) {
-        (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
+        (void)types.emplace("weight", input_args[kInputIndex3]->GetType());
       }
       (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
     }
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 };
 

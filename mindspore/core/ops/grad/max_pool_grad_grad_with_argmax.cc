@@ -59,13 +59,13 @@ abstract::ShapePtr MaxPoolGradGradWithArgmaxInferShape(const PrimitivePtr &primi
 TypePtr MaxPoolGradGradWithArgmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_index_types = {kInt32, kInt64};
-  (void)types.emplace("argmax", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("argmax", input_args[kInputIndex2]->GetType());
   CheckAndConvertUtils::CheckTensorTypeSame(types, valid_index_types, prim->name());
 
   types.clear();
   const std::set<TypePtr> valid_data_types = {kFloat16, kFloat32};
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("grad", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("grad", input_args[kInputIndex1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_data_types, prim->name());
 }
 }  // namespace

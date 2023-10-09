@@ -97,7 +97,7 @@ class ConvertToDynamicRankInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     CheckConvertToDynamicRankArgs(primitive, input_args);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    return input_args[0]->BuildType();
+    return input_args[0]->GetType();
   }
 };
 

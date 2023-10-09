@@ -52,7 +52,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   auto prim_name = primitive->name();
 
   std::vector<int64_t> paddings_arg;
-  auto padding_type = input_args[kInputIndex1]->BuildType();
+  auto padding_type = input_args[kInputIndex1]->GetType();
   if (padding_type->isa<TensorType>()) {
     auto paddings_shape_ptr = input_args[kInputIndex1]->GetShape();
     MS_EXCEPTION_IF_NULL(paddings_shape_ptr);
@@ -129,7 +129,7 @@ TypePtr PadV3GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
+  std::map<std::string, TypePtr> args = {{"x", input_args[0]->GetType()}};
   auto mode = GetValue<string>(prim->GetAttr("mode"));
   if (mode == kConstant) {
     return CheckAndConvertUtils::CheckTensorTypeSame(args,

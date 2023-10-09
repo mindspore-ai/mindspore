@@ -119,7 +119,7 @@ abstract::ShapePtr CountNonZeroInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr CountNonZeroInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_x_type);
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                          kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};

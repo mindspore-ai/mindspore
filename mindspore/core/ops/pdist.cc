@@ -77,7 +77,7 @@ TypePtr PdistInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
 }
 }  // namespace

@@ -241,7 +241,7 @@ bool CheckAndGetAxisValueFromTensor(const std::vector<abstract::AbstractBasePtr>
                                     const ValuePtr &input_value, const std::string &op_name,
                                     std::vector<int64_t> *axis_value, int64_t *axis_shape_v) {
   bool is_dynamic = false;
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[kInputIndex1]->GetType(), {kInt32, kInt64},
                                                    op_name);
   if (input_value->isa<tensor::Tensor>()) {
     *axis_value = CheckAndConvertUtils::CheckTensorIntValue("axis", input_value, op_name);
@@ -348,7 +348,7 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
                             const std::set<TypePtr> &check_list) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, check_list, prim->name());
   return x_type;
 }
@@ -576,7 +576,7 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
     return shape;
   }
 
-  auto size_type = arg->BuildType();
+  auto size_type = arg->GetType();
   MS_EXCEPTION_IF_NULL(size_type);
   MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input type must be Tensor/Tuple/List , but got"
                           << size_type->ToString() << ".";
@@ -676,8 +676,8 @@ std::shared_ptr<T> InferSparseAttr(const PrimitivePtr &primitive, const Abstract
     return dyn_cast<T>(abs);
   }
   MS_EXCEPTION(TypeError) << "For \'" << primitive->name() << "\', input[" << kIndex
-                          << "] should be AbstractSparseTensor or AbstractTuple, but got "
-                          << abs->BuildType()->ToString() << ".";
+                          << "] should be AbstractSparseTensor or AbstractTuple, but got " << abs->GetType()->ToString()
+                          << ".";
 }
 template std::shared_ptr<abstract::AbstractCSRTensor> InferSparseAttr(const PrimitivePtr &primitive,
                                                                       const AbstractBasePtrList &args_abs_list);
@@ -700,7 +700,7 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
                              << x_shape << ".";
   }
 
-  auto x_type = input_args[input_0_index]->BuildType();
+  auto x_type = input_args[input_0_index]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input must be a Tensor but got "
@@ -747,7 +747,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
   auto queue = abstract::CheckArg<T>(op_name, args_abs_list, 0);
   auto index = abstract::CheckArg<abstract::AbstractScalar>(op_name, args_abs_list, 1);
 
-  auto index_type = index->BuildType();
+  auto index_type = index->GetType();
   MS_EXCEPTION_IF_NULL(index_type);
   if (index_type->type_id() != kInt64->type_id()) {
     MS_EXCEPTION(TypeError) << op_name << " evaluator index should be an int64 number, but got a "

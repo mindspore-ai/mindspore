@@ -43,7 +43,7 @@ abstract::ShapePtr BesselK0InferShape(const PrimitivePtr &, const std::vector<Ab
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr BesselK0InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return x_type;

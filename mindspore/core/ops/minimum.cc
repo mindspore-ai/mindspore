@@ -62,8 +62,8 @@ class MinimumInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                              op_name);
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[0]->BuildType());
-    (void)types.emplace("y", input_args[1]->BuildType());
+    (void)types.emplace("x", input_args[0]->GetType());
+    (void)types.emplace("y", input_args[1]->GetType());
 
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_bool, prim->name());
     return types["x"];

@@ -314,7 +314,7 @@ TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("out_type", elements[0]->BuildType());
+  (void)types.emplace("out_type", elements[0]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 AbstractBasePtr EinsumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -90,11 +90,11 @@ TypePtr TridiagonalSolveInferType(const PrimitivePtr &prim, const std::vector<Ab
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalSolveInputNums, prim->name());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  (void)types.insert({"diagonals", input_args[0]->BuildType()});
-  (void)types.insert({"rhs", input_args[1]->BuildType()});
+  (void)types.insert({"diagonals", input_args[0]->GetType()});
+  (void)types.insert({"rhs", input_args[1]->GetType()});
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(types, valid_types, prim->name());
 
-  return input_args[1]->BuildType();
+  return input_args[1]->GetType();
 }
 }  // namespace
 

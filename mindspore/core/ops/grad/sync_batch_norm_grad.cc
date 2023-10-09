@@ -45,8 +45,8 @@ TuplePtr SyncBatchNormGradInferType(const PrimitivePtr &prim, const std::vector<
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSyncBatchNormGradInputSize, prim_name);
-  auto x_dtype = input_args[1]->BuildType();
-  auto scale_dtype = input_args[2]->BuildType();
+  auto x_dtype = input_args[1]->GetType();
+  auto scale_dtype = input_args[2]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_dtype, scale_dtype, scale_dtype});
 }
 

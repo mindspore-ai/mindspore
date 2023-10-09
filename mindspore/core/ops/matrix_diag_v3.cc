@@ -187,21 +187,21 @@ TypePtr MatrixDiagV3InferType(const PrimitivePtr &prim, const std::vector<Abstra
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);
 
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_type = {kInt32};
 
-  auto k_type = input_args[kInputIndex1]->BuildType();
+  auto k_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
 
-  auto row_type = input_args[kInputIndex2]->BuildType();
+  auto row_type = input_args[kInputIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(row_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("num_rows", row_type, valid_type, prim_name);
 
-  auto col_type = input_args[kInputIndex3]->BuildType();
+  auto col_type = input_args[kInputIndex3]->GetType();
   MS_EXCEPTION_IF_NULL(col_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("num_cols", col_type, valid_type, prim_name);
 

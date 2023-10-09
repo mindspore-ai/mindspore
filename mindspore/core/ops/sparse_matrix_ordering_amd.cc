@@ -77,11 +77,11 @@ TypePtr SparseMatrixOrderingAMDInferType(const PrimitivePtr &prim, const std::ve
   const std::set<TypePtr> dense_shape_valid_types = {kInt64};
   const std::set<TypePtr> indices_pointer_valid_types = {kInt32};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_type = input_args[kInputIndex1]->BuildType();
-  auto row_type = input_args[kInputIndex2]->BuildType();
-  auto col_type = input_args[kInputIndex3]->BuildType();
-  auto value_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_type = input_args[kInputIndex1]->GetType();
+  auto row_type = input_args[kInputIndex2]->GetType();
+  auto col_type = input_args[kInputIndex3]->GetType();
+  auto value_type = input_args[kInputIndex4]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", dense_shape_type, dense_shape_valid_types,
                                                    prim->name());

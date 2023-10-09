@@ -119,12 +119,12 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
 
   (void)abstract::CheckDtypeSame(prim_name, x, padding_value);
 
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
 
   const std::set<TypePtr> valid_type = {kInt32};
-  auto k_type = input_args[kInputIndex1]->BuildType();
+  auto k_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
 

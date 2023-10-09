@@ -79,9 +79,9 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
 TuplePtr TopKInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto output0_type = input_args[kInputIndex0]->BuildType();
+  auto output0_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, common_valid_types, prim_name);
-  auto k_type = input_args[kInputIndex1]->BuildType();
+  auto k_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("k", k_type, int_types, prim_name);
   auto output1_type = kInt32;

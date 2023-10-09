@@ -57,9 +57,9 @@ abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std
 }
 
 TypePtr ScatterSubInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_x_type_ptr = input_args[kInputIndex0]->BuildType();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
-  auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
+  auto input_x_type_ptr = input_args[kInputIndex0]->GetType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
+  auto updates_type_ptr = input_args[kInputIndex2]->GetType();
   auto prim_name = primitive->name();
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indiecs_type_ptr, type_set, prim_name);

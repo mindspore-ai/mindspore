@@ -56,7 +56,7 @@ class MIND_API RemakeTupleIndexInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return RemakeTupleIndexInferInner(prim, input_args)->BuildType();
+    return RemakeTupleIndexInferInner(prim, input_args)->GetType();
   }
 };
 

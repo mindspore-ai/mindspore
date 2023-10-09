@@ -58,7 +58,7 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
     p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the type of perm must be Tuple, but got "
-                            << input_args[1]->BuildType()->ToString() << " .";
+                            << input_args[1]->GetType()->ToString() << " .";
   }
 
   for (auto p : p_value_raw) {
@@ -98,11 +98,10 @@ TypePtr ConjugateTransposeInferType(const PrimitivePtr &prim, const std::vector<
   const std::set<TypePtr> all_types_with_complex = {kBool,    kInt,     kInt8,    kInt16,     kInt32,     kInt64,
                                                     kUInt,    kUInt8,   kUInt16,  kUInt32,    kUInt64,    kFloat,
                                                     kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), all_types_with_complex,
-                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), all_types_with_complex, prim->name());
   const std::set<TypePtr> perm_valid_types = {kTuple};
-  (void)CheckAndConvertUtils::CheckTypeValid("perm", input_args[1]->BuildType(), perm_valid_types, prim->name());
-  return input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTypeValid("perm", input_args[1]->GetType(), perm_valid_types, prim->name());
+  return input_args[0]->GetType();
 }
 }  // namespace
 

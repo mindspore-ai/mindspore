@@ -83,8 +83,8 @@ TypePtr AssignInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto prim_name = prim->name();
   auto check_types = common_valid_types_with_complex;
   (void)check_types.emplace(kBool);
-  auto value_type = input_args[1]->BuildType();
-  auto variable_type = input_args[0]->BuildType();
+  auto value_type = input_args[1]->GetType();
+  auto variable_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("variable", variable_type, check_types, prim_name);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(std::map<std::string, TypePtr>{{"value", value_type}},
                                                            check_types, prim_name);
@@ -101,7 +101,7 @@ AbstractBasePtr AssignInfer(const abstract::AnalysisEnginePtr &, const Primitive
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
                                            kEqual, input_num, prim_name);
-  auto variable_type = input_args[0]->BuildType();
+  auto variable_type = input_args[0]->GetType();
   if (variable_type->isa<RefKeyType>()) {
     return input_args[1]->Broaden();
   }

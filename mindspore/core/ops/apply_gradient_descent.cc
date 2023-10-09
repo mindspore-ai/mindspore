@@ -89,9 +89,9 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
 
 TypePtr ApplyGradientDescentInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto alpha_type = input_args[kInputIndex1]->BuildType();
-  auto delta_type = input_args[kInputIndex2]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto alpha_type = input_args[kInputIndex1]->GetType();
+  auto delta_type = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt8,   kUInt8,   kInt16,     kUInt16,    kInt32,
                                          kUInt32,  kInt64,   kUInt64, kFloat64, kComplex64, kComplex128};
   // delta must have the same type as var

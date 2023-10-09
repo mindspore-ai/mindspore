@@ -61,7 +61,7 @@ TypePtr MapTensorGetGradInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto abs = MapTensorGetGradInferInner(prim, input_args);
   auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
   MS_EXCEPTION_IF_NULL(map_tensor_abs);
-  return map_tensor_abs->BuildType();
+  return map_tensor_abs->GetType();
 }
 
 AbstractBasePtr MapTensorGetGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

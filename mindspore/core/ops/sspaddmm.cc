@@ -389,11 +389,11 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(alpha_value_ptr);
     auto alpha_tensor = alpha_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(alpha_tensor);
-    auto alpha_dtype = input_args[kInputIndex7]->BuildType();
+    auto alpha_dtype = input_args[kInputIndex7]->GetType();
     MS_EXCEPTION_IF_NULL(alpha_dtype);
     auto alpha_type_id = alpha_dtype->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(alpha_type_id);
-    auto expect_dtype = input_args[kInputIndex1]->BuildType()->cast<TensorTypePtr>()->element();
+    auto expect_dtype = input_args[kInputIndex1]->GetType()->cast<TensorTypePtr>()->element();
     auto alpha_type_element = alpha_type_id->element();
     float real = 0;
     int32_t imag = 0;
@@ -431,7 +431,7 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(x2_indices_value_ptr);
     auto x2_indices_tensor = x2_indices_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_tensor);
-    auto x2_indices_type = input_args[kInputIndex3]->BuildType();
+    auto x2_indices_type = input_args[kInputIndex3]->GetType();
     MS_EXCEPTION_IF_NULL(x2_indices_type);
     auto x2_indices_type_id = x2_indices_type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(x2_indices_type_id);
@@ -459,29 +459,29 @@ abstract::TupleShapePtr SspaddmmInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SspaddmmInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
-  std::map<std::string, TypePtr> x1_args = {{"x1_indices", input_args[kInputIndex0]->BuildType()},
-                                            {"x1_shape", input_args[kInputIndex2]->BuildType()}};
+  std::map<std::string, TypePtr> x1_args = {{"x1_indices", input_args[kInputIndex0]->GetType()},
+                                            {"x1_shape", input_args[kInputIndex2]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(x1_args, {kInt32, kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", input_args[kInputIndex1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", input_args[kInputIndex1]->GetType(),
                                                    {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64},
                                                    op_name);
-  std::map<std::string, TypePtr> x2_args = {{"x2_indices", input_args[kInputIndex3]->BuildType()},
-                                            {"x2_shape", input_args[kInputIndex5]->BuildType()}};
+  std::map<std::string, TypePtr> x2_args = {{"x2_indices", input_args[kInputIndex3]->GetType()},
+                                            {"x2_shape", input_args[kInputIndex5]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(x2_args, {kInt32, kInt64}, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", input_args[kInputIndex4]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", input_args[kInputIndex4]->GetType(),
                                                    {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x3_dense", input_args[kInputIndex6]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x3_dense", input_args[kInputIndex6]->GetType(),
                                                    {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64},
                                                    op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid(
-    "alpha", input_args[kInputIndex7]->BuildType(),
+    "alpha", input_args[kInputIndex7]->GetType(),
     {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64}, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid(
-    "beta", input_args[kInputIndex8]->BuildType(),
+    "beta", input_args[kInputIndex8]->GetType(),
     {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64}, op_name);
-  auto expect_dtype = input_args[kInputIndex1]->BuildType()->cast<TensorTypePtr>()->element();
-  auto beta_dtype = input_args[kInputIndex8]->BuildType()->cast<TensorTypePtr>()->element();
+  auto expect_dtype = input_args[kInputIndex1]->GetType()->cast<TensorTypePtr>()->element();
+  auto beta_dtype = input_args[kInputIndex8]->GetType()->cast<TensorTypePtr>()->element();
   if (!(expect_dtype->type_id() == kNumberTypeFloat32 || expect_dtype->type_id() == kNumberTypeFloat64)) {
     auto beta_dtype_id = beta_dtype->type_id();
     if (beta_dtype_id == kNumberTypeFloat16 || beta_dtype_id == kNumberTypeFloat32 ||
@@ -490,9 +490,9 @@ TuplePtr SspaddmmInferType(const PrimitivePtr &prim, const std::vector<AbstractB
                               << " can't convert to the desired output type: " << expect_dtype->ToString() << ".";
     }
   }
-  std::map<std::string, TypePtr> args = {{"x1_values", input_args[kInputIndex1]->BuildType()},
-                                         {"x2_values", input_args[kInputIndex4]->BuildType()},
-                                         {"x3_dense", input_args[kInputIndex6]->BuildType()}};
+  std::map<std::string, TypePtr> args = {{"x1_values", input_args[kInputIndex1]->GetType()},
+                                         {"x2_values", input_args[kInputIndex4]->GetType()},
+                                         {"x3_dense", input_args[kInputIndex6]->GetType()}};
   auto output_values_type = CheckAndConvertUtils::CheckTensorTypeSame(
     args, {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat32, kFloat64}, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, output_values_type, kInt64});

@@ -239,7 +239,7 @@ abstract::BaseShapePtr NeighborExchangeV2InferShape(const PrimitivePtr &primitiv
 TypePtr NeighborExchangeV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // recv type
-  TypePtr recv_type = input_args[0]->BuildType();
+  TypePtr recv_type = input_args[0]->GetType();
   if (recv_type == nullptr) {
     return std::make_shared<TypeNone>();
   }

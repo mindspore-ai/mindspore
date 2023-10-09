@@ -73,9 +73,9 @@ TypePtr PdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
   const size_t y_index = 2;
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[y_grad_index]->BuildType());
-  (void)types.emplace("x", input_args[x_index]->BuildType());
-  (void)types.emplace("y", input_args[y_index]->BuildType());
+  (void)types.emplace("y_grad", input_args[y_grad_index]->GetType());
+  (void)types.emplace("x", input_args[x_index]->GetType());
+  (void)types.emplace("y", input_args[y_index]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 }  // namespace

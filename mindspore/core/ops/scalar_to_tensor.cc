@@ -142,7 +142,7 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
     } else {
       res_dtype = InferType(primitive, input_args);
     }
-    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->BuildType(),
+    return ScalarToTensorByType(elem_value->cast<ScalarPtr>(), elem->GetType(),
                                 res_dtype->cast<TensorTypePtr>()->element());
   }
 };

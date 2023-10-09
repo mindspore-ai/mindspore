@@ -159,7 +159,7 @@ abstract::TupleShapePtr DynamicRNNGradInferShape(const PrimitivePtr &primitive,
 
 TuplePtr DynamicRNNGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   if (!x_dtype->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', input must be a Tensor, but got: " << x_dtype->ToString()

@@ -127,10 +127,10 @@ TypePtr MirrorPadGradInferType(const PrimitivePtr &prim, const std::vector<Abstr
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->BuildType(), {kInt32, kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("paddings", input_args[1]->GetType(), {kInt32, kInt64},
                                                    prim->name());
   return CheckAndConvertUtils::CheckTensorTypeValid(
-    "input_x", input_args[0]->BuildType(),
+    "input_x", input_args[0]->GetType(),
     {kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},
     prim->name());
 }

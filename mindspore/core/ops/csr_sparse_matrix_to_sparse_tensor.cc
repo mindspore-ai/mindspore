@@ -47,11 +47,11 @@ namespace {
 TuplePtr CSRSparseMatrixToSparseTensorInferType(const PrimitivePtr &prim,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto x_batch_pointers_type = input_args[kInputIndex1]->BuildType();
-  auto x_row_pointers_type = input_args[kInputIndex2]->BuildType();
-  auto x_col_indices_type = input_args[kInputIndex3]->BuildType();
-  auto x_values_type = input_args[kInputIndex4]->BuildType();
+  auto x_dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto x_batch_pointers_type = input_args[kInputIndex1]->GetType();
+  auto x_row_pointers_type = input_args[kInputIndex2]->GetType();
+  auto x_col_indices_type = input_args[kInputIndex3]->GetType();
+  auto x_values_type = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> common_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", x_dense_shape_type, {kInt32, kInt64}, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_batch_pointers", x_batch_pointers_type, {kInt32, kInt64},
@@ -60,8 +60,7 @@ TuplePtr CSRSparseMatrixToSparseTensorInferType(const PrimitivePtr &prim,
                                                    prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_col_indices", x_col_indices_type, {kInt32, kInt64}, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", x_values_type, common_valid_types, prim->name());
-  std::vector<TypePtr> types_list = {input_args[0]->BuildType(), input_args[4]->BuildType(),
-                                     input_args[0]->BuildType()};
+  std::vector<TypePtr> types_list = {input_args[0]->GetType(), input_args[4]->GetType(), input_args[0]->GetType()};
   return std::make_shared<Tuple>(types_list);
 }
 

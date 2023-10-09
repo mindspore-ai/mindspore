@@ -119,10 +119,10 @@ TypePtr CholeskySolveInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("x1", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("x2", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("x1", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("x2", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, op_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

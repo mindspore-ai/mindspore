@@ -106,13 +106,13 @@ TypePtr BCEWithLogitsLossInferType(const PrimitivePtr &prim, const std::vector<A
   for (size_t index = kInputIndex1; index < input_args.size(); ++index) {
     auto input_item = input_args.at(index);
     MS_EXCEPTION_IF_NULL(input_item);
-    TypePtr input_type = input_item->BuildType();
+    TypePtr input_type = input_item->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid(input_args_name.at(index), input_type, data_type_check_list,
                                                      op_name);
   }
   auto logits_input_item = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(logits_input_item);
-  TypePtr logits_input_type = logits_input_item->BuildType();
+  TypePtr logits_input_type = logits_input_item->GetType();
   auto logits_input_name = input_args_name.at(kInputIndex0);
   return CheckAndConvertUtils::CheckTensorTypeValid(logits_input_name, logits_input_type, data_type_check_list,
                                                     op_name);

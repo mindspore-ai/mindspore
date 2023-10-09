@@ -290,7 +290,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
-  auto out_type = CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  auto out_type = CheckAndConvertUtils::CheckTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
   if (out_type->type_id() == TypeId::kNumberTypeInt8) {
     out_type = kInt32;
   }
@@ -420,8 +420,8 @@ AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const Primitive
                                            primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("w", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("w", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return abstract::MakeAbstract(Conv2dInferShape(primitive, input_args), Conv2dInferType(primitive, input_args));
 }

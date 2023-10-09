@@ -105,7 +105,7 @@ TypePtr ResizeBilinearGradInferType(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_type = input_args[kOriginalImageIndex]->BuildType();
+  auto x_type = input_args[kOriginalImageIndex]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
@@ -113,7 +113,7 @@ TypePtr ResizeBilinearGradInferType(const PrimitivePtr &primitive,
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kInputIndex0]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kInputIndex0]->GetType(), valid_types,
                                                    prim_name);
   return x_type;
 }

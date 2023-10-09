@@ -64,7 +64,7 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
       CheckAndConvertUtils::Check("logits shape", x_shape, kEqual, y_shape, prim_name, ValueError);
     }
 
-    if (input_num > kInputNum && input_args[kInputIndex2]->BuildType()->type_id() != kMetaTypeNone) {
+    if (input_num > kInputNum && input_args[kInputIndex2]->GetType()->type_id() != kMetaTypeNone) {
       auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
       auto weight_shape_BaseShapePtr = input_args[kInputIndex2]->GetShape();
       auto weight_shape_ptr = weight_shape_BaseShapePtr->cast<abstract::ShapePtr>();
@@ -102,20 +102,20 @@ class BinaryCrossEntropyInfer : public abstract::OpInferBase {
     std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     std::map<std::string, TypePtr> types1;
     std::map<std::string, TypePtr> types2;
-    (void)types1.emplace("logits", input_args[kInputIndex0]->BuildType());
-    (void)types1.emplace("labels", input_args[kInputIndex1]->BuildType());
+    (void)types1.emplace("logits", input_args[kInputIndex0]->GetType());
+    (void)types1.emplace("labels", input_args[kInputIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types1, valid_types, prim_name);
 
-    if (input_num > kInputNum && input_args[kInputIndex2]->BuildType()->type_id() != kMetaTypeNone) {
+    if (input_num > kInputNum && input_args[kInputIndex2]->GetType()->type_id() != kMetaTypeNone) {
       auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
       if (weight_shape.size() > 0) {
-        (void)types2.emplace("logits", input_args[kInputIndex0]->BuildType());
-        (void)types2.emplace("weight", input_args[kInputIndex2]->BuildType());
+        (void)types2.emplace("logits", input_args[kInputIndex0]->GetType());
+        (void)types2.emplace("weight", input_args[kInputIndex2]->GetType());
         (void)CheckAndConvertUtils::CheckTensorTypeSame(types2, valid_types, prim_name);
       }
     }
 
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 };
 

@@ -131,7 +131,7 @@ TypePtr DepthToSpaceInferType(const PrimitivePtr &prim, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   std::set<TypePtr> valid_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_type", x_type, valid_types, prim->name());
   return x_type;

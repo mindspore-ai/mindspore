@@ -125,7 +125,7 @@ TypePtr MaxPoolV1InferType(const PrimitivePtr &prim, const std::vector<AbstractB
   auto name = prim->name();
   const std::set<TypePtr> maxpoolv1_valid_types = {kInt8,   kInt16,   kInt32,   kInt64,  kUInt8,
                                                    kUInt16, kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   auto inferred_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, maxpoolv1_valid_types, name);
   return inferred_type;
 }

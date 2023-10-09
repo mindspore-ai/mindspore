@@ -36,7 +36,7 @@ abstract::ShapePtr ReLUV3InferShape(const PrimitivePtr &, const std::vector<Abst
 }
 TypePtr ReLUV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
   return x_type;
 }

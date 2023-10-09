@@ -71,7 +71,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   auto input_shape_value_ptr = input_shape->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_type_id = input_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(input_type_id);
@@ -127,7 +127,7 @@ TypePtr TruncatedNormalInferType(const PrimitivePtr &prim, const std::vector<Abs
   const uint32_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->BuildType(), valid_input_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->GetType(), valid_input_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

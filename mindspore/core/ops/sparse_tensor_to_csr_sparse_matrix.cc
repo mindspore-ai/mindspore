@@ -48,16 +48,16 @@ namespace {
 TuplePtr SparseTensorToCSRSparseMatrixInferType(const PrimitivePtr &prim,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_indices_type = input_args[kInputIndex0]->BuildType();
-  auto x_values_type = input_args[kInputIndex1]->BuildType();
-  auto x_dense_shape_type = input_args[kInputIndex2]->BuildType();
+  auto x_indices_type = input_args[kInputIndex0]->GetType();
+  auto x_values_type = input_args[kInputIndex1]->GetType();
+  auto x_dense_shape_type = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> common_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_indices", x_indices_type, {kInt32, kInt64}, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", x_values_type, common_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", x_dense_shape_type, {kInt32, kInt64}, prim->name());
-  std::vector<TypePtr> types_list = {input_args[kInputIndex2]->BuildType(), input_args[kInputIndex0]->BuildType(),
-                                     input_args[kInputIndex0]->BuildType(), input_args[kInputIndex0]->BuildType(),
-                                     input_args[kInputIndex1]->BuildType()};
+  std::vector<TypePtr> types_list = {input_args[kInputIndex2]->GetType(), input_args[kInputIndex0]->GetType(),
+                                     input_args[kInputIndex0]->GetType(), input_args[kInputIndex0]->GetType(),
+                                     input_args[kInputIndex1]->GetType()};
   return std::make_shared<Tuple>(types_list);
 }
 

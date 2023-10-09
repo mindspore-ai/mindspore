@@ -178,16 +178,14 @@ TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   constexpr int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   std::set<TypePtr> valid_params_types = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
-                                            op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->GetType(), valid_params_types, op_name);
   std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
-                                                   op_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->BuildType(), int_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->GetType(), int_types, op_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->GetType(), int_types, op_name);
 
   abstract::AbstractTensorPtr params =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  return params->BuildType();
+  return params->GetType();
 }
 
 AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

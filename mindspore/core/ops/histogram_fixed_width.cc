@@ -62,8 +62,8 @@ TypePtr HistogramFixedWidthInferType(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
   const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("range", input_args[1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("range", input_args[1]->GetType(), valid_types, prim_name);
   TypePtr y_dtype = kInt32;
   return y_dtype;
 }

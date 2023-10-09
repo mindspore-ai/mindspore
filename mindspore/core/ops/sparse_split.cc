@@ -85,10 +85,10 @@ abstract::TupleShapePtr SparseSplitInferShape(const PrimitivePtr &prim,
 
 TuplePtr SparseSplitInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto num_split = GetValue<int64_t>(prim->GetAttr("num_split"));
-  auto split_dim_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto values_type = input_args[kInputIndex2]->BuildType();
-  auto shape_type = input_args[kInputIndex3]->BuildType();
+  auto split_dim_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto values_type = input_args[kInputIndex2]->GetType();
+  auto shape_type = input_args[kInputIndex3]->GetType();
   MS_EXCEPTION_IF_NULL(split_dim_type);
   MS_EXCEPTION_IF_NULL(indices_type);
   MS_EXCEPTION_IF_NULL(values_type);

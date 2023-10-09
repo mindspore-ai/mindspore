@@ -115,10 +115,10 @@ TypePtr TridiagonalMatMulInferType(const PrimitivePtr &prim, const std::vector<A
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTridiagonalMatMulInputNums, prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  auto superdiag_infer_type = input_args[0]->BuildType();
-  auto maindiag_infer_type = input_args[1]->BuildType();
-  auto subdiag_infer_type = input_args[2]->BuildType();
-  auto rhs_infer_type = input_args[3]->BuildType();
+  auto superdiag_infer_type = input_args[0]->GetType();
+  auto maindiag_infer_type = input_args[1]->GetType();
+  auto subdiag_infer_type = input_args[2]->GetType();
+  auto rhs_infer_type = input_args[3]->GetType();
   (void)types.emplace("superdiag", superdiag_infer_type);
   (void)types.emplace("maindiag", maindiag_infer_type);
   (void)types.emplace("subdiag", subdiag_infer_type);

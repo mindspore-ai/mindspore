@@ -74,10 +74,10 @@ TypePtr DivNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kInt8,    kInt32,   kInt64,     kUInt8,     kFloat16,
                                          kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)types.emplace("x1", input_args[0]->BuildType());
-  (void)types.emplace("x2", input_args[1]->BuildType());
+  (void)types.emplace("x1", input_args[0]->GetType());
+  (void)types.emplace("x2", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 
 ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

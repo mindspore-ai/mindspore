@@ -36,7 +36,7 @@ abstract::ShapePtr TensorMoveInferShape(const PrimitivePtr &primitive, const std
 TypePtr TensorMoveInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   std::map<std::string, TypePtr> type_dict;
-  (void)type_dict.emplace("input", input_args[kInputIndex0]->BuildType());
+  (void)type_dict.emplace("input", input_args[kInputIndex0]->GetType());
   std::set<TypePtr> check_list(all_types);
   (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);

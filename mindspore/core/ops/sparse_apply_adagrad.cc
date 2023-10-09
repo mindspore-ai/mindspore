@@ -102,10 +102,10 @@ TuplePtr SparseApplyAdagradInferType(const PrimitivePtr &prim, const std::vector
     MS_EXCEPTION_IF_NULL(item);
   }
   // Get all inputs's type
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto grad_type = input_args[2]->BuildType();
-  auto indices_type = input_args[3]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto grad_type = input_args[2]->GetType();
+  auto indices_type = input_args[3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args accum and grad must have the same type as var
   std::map<std::string, TypePtr> args;

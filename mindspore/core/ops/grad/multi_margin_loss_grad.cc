@@ -45,23 +45,23 @@ namespace mindspore {
 namespace ops {
 namespace {
 TypePtr MultiMarginLossGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex2]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex2]->GetType(), {kInt64},
                                                    prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("x", input_args[kInputIndex1]->BuildType());
-  if (input_args.size() == kDim4 && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
-    auto tensor_type = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>();
+  (void)types.emplace("y_grad", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("x", input_args[kInputIndex1]->GetType());
+  if (input_args.size() == kDim4 && input_args[kInputIndex3]->GetType()->isa<TensorType>()) {
+    auto tensor_type = input_args[kInputIndex3]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
     if (element->type_id() != kMetaTypeNone) {
-      (void)types.emplace("weight", input_args[kInputIndex3]->BuildType());
+      (void)types.emplace("weight", input_args[kInputIndex3]->GetType());
     }
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[kInputIndex1]->BuildType();
+  return input_args[kInputIndex1]->GetType();
 }
 
 abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
@@ -84,8 +84,8 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
                              << " while x_shape[0] is " << x_shape[kInputIndex0] << ", target_shape[0] is "
                              << target_shape[kInputIndex0];
   }
-  if (input_args.size() == kDim4 && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
-    auto tensor_type = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>();
+  if (input_args.size() == kDim4 && input_args[kInputIndex3]->GetType()->isa<TensorType>()) {
+    auto tensor_type = input_args[kInputIndex3]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);

@@ -56,7 +56,7 @@ TypePtr NPUAntiQuantInferType(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kInt8};
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   (void)types.emplace("input_x", input_x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   auto dst_type = primitive->GetAttr(kOutputDType);

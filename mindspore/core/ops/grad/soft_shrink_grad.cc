@@ -77,8 +77,8 @@ TypePtr SoftShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abst
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input_grad", input_args[0]->BuildType());
-  (void)types.emplace("input_x", input_args[1]->BuildType());
+  (void)types.emplace("input_grad", input_args[0]->GetType());
+  (void)types.emplace("input_x", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

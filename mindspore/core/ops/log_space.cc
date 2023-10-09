@@ -65,8 +65,8 @@ TypePtr LogSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
 
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("start", input_args[0]->BuildType());
-  (void)types.emplace("end", input_args[1]->BuildType());
+  (void)types.emplace("start", input_args[0]->GetType());
+  (void)types.emplace("end", input_args[1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   auto dtype_attr = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_attr);

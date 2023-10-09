@@ -97,7 +97,7 @@ class L2NormalizeGradInfer : public abstract::OpInferBase {
     auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
     (void)abstract::CheckDtypeSame(prim_name, input_x, out);
     (void)abstract::CheckDtypeSame(prim_name, input_x, dout);
-    auto input_x_type = input_args[kInputIndex0]->BuildType();
+    auto input_x_type = input_args[kInputIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(input_x_type);
 
     return input_x_type;

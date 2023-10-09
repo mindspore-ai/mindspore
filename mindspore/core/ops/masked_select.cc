@@ -62,9 +62,9 @@ TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->GetType(), {kBool}, op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("input", input_args[kInputIndex0]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 }
 }  // namespace

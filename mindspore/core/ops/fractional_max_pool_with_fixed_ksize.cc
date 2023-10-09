@@ -167,12 +167,12 @@ TuplePtr FractionalMaxPoolWithFixedKsizeInferType(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
 
   const std::set<TypePtr> random_samples_valid_types = {kFloat16, kFloat32, kFloat64};
-  auto random_samples_dtype = input_args[1]->BuildType();
+  auto random_samples_dtype = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("random_samples dtype", random_samples_dtype,
                                                    random_samples_valid_types, prim_name);
 
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   auto y_dtype = CheckAndConvertUtils::CheckTensorTypeValid("input_x dtype", x_dtype, x_valid_types, prim_name);
   TypePtr argmax_dtype = kInt64;
   return std::make_shared<Tuple>(std::vector<TypePtr>{y_dtype, argmax_dtype});

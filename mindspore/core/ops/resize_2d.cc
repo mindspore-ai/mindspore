@@ -167,9 +167,9 @@ TypePtr Resize2DInferType(const PrimitivePtr &primitive, const std::vector<Abstr
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  auto size_type = input_args[kInputIndex1]->BuildType();
+  auto size_type = input_args[kInputIndex1]->GetType();
   if (prim_name == kNameResizeNearestNeighborV2) {
     (void)valid_types.insert(kUInt8);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("size", size_type, {kInt32, kInt64}, prim_name);

@@ -57,7 +57,7 @@ TypePtr EqualCountInferType(const PrimitivePtr &prim, const std::vector<Abstract
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
   (void)abstract::CheckDtypeSame(prim->name(), x, y);
 
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 

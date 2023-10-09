@@ -59,7 +59,7 @@ TypePtr HShrinkInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types,
+  return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->GetType(), valid_types,
                                                     primitive->name());
 }
 }  // namespace

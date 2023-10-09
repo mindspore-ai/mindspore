@@ -85,9 +85,9 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
 
 TypePtr ScatterNdArithmeticInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input_x_dtype = input_args[kInputIndex0]->BuildType();
-  auto indices_dtype = input_args[kInputIndex1]->BuildType();
-  auto updates_dtype = input_args[kInputIndex2]->BuildType();
+  auto input_x_dtype = input_args[kInputIndex0]->GetType();
+  auto indices_dtype = input_args[kInputIndex1]->GetType();
+  auto updates_dtype = input_args[kInputIndex2]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_dtype, {kInt32, kInt64}, prim_name);
   std::map<std::string, TypePtr> type_dict = {{"input_x", input_x_dtype}, {"updates", updates_dtype}};
   // Only ScatterNdUpdate supports boolean type

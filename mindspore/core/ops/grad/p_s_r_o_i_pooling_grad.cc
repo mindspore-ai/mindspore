@@ -76,9 +76,9 @@ abstract::ShapePtr PSROIPoolingGradInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr PSROIPoolingGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat32}, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->BuildType(), {kFloat32}, prim->name());
-  return input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat32}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[1]->GetType(), {kFloat32}, prim->name());
+  return input_args[0]->GetType();
 }
 }  // namespace
 

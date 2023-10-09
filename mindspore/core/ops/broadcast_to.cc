@@ -108,7 +108,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
+  auto x_dtype = input_args[0]->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(x_dtype);
   std::set<TypePtr> template_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());

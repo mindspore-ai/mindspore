@@ -88,10 +88,10 @@ TypePtr SmoothL1LossGradInferType(const PrimitivePtr &prim, const std::vector<Ab
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("prediction", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("target", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("prediction", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("target", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

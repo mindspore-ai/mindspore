@@ -67,8 +67,8 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(set_shape_tensor);
   if (set_shape_tensor->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> output_size_valid_types = {kInt64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->BuildType(),
-                                                     output_size_valid_types, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", set_shape_tensor->GetType(), output_size_valid_types,
+                                                     op_name);
     auto set_shape_value = set_shape_tensor->GetValue();
     MS_EXCEPTION_IF_NULL(set_shape_value);
     if (!set_shape_value->isa<None>() && !set_shape_value->isa<ValueAny>()) {
@@ -112,11 +112,11 @@ TypePtr SetSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kInt64};
   const std::set<TypePtr> set_values_valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_indices", input_args[kInputIndex0]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_indices", input_args[kInputIndex0]->GetType(), valid_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_values", input_args[kInputIndex1]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_values", input_args[kInputIndex1]->GetType(),
                                                    set_values_valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", input_args[kInputIndex2]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("set_shape", input_args[kInputIndex2]->GetType(), valid_types,
                                                    prim_name);
   return std::make_shared<TensorType>(kInt32);
 }

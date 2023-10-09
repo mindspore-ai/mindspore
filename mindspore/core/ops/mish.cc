@@ -42,7 +42,7 @@ TypePtr MishInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   return x_type;

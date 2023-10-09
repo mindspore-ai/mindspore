@@ -89,10 +89,10 @@ TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<Abs
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim->name());
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto accum_type = input_args[kInputIndex1]->BuildType();
-  auto lr_type = input_args[kInputIndex2]->BuildType();
-  auto grad_type = input_args[kInputIndex3]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto accum_type = input_args[kInputIndex1]->GetType();
+  auto lr_type = input_args[kInputIndex2]->GetType();
+  auto grad_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat};
   // var, accum, grad  must have the same type
   std::map<std::string, TypePtr> args;

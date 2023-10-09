@@ -146,7 +146,7 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceToIndicesInferInner(prim, input_args)->BuildType();
+    return SliceToIndicesInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

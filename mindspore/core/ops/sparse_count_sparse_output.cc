@@ -119,10 +119,10 @@ TuplePtr SparseCountSparseOutputInferType(const PrimitivePtr &primitive,
   const std::set<TypePtr> values_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> dense_shape_valid_types = {kInt64};
   const std::set<TypePtr> weights_valid_types = {kInt32, kInt64, kFloat32, kFloat64};
-  auto indices_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
-  auto dense_shape_type = input_args[kInputIndex2]->BuildType();
-  auto weights_type = input_args[kInputIndex3]->BuildType();
+  auto indices_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
+  auto dense_shape_type = input_args[kInputIndex2]->GetType();
+  auto weights_type = input_args[kInputIndex3]->GetType();
   auto weights_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 3);
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, indices_valid_types, prim_name);
@@ -130,7 +130,7 @@ TuplePtr SparseCountSparseOutputInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("dense_shape", dense_shape_type, dense_shape_valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("weights", weights_type, weights_valid_types, prim_name);
 
-  return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, weights_ptr->element()->BuildType(), kInt64});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, weights_ptr->element()->GetType(), kInt64});
 }
 
 AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

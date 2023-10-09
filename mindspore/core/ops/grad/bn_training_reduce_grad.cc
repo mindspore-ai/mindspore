@@ -53,7 +53,7 @@ abstract::ShapePtr BNTrainingReduceGradInferShape(const PrimitivePtr &primitive,
 TypePtr BNTrainingReduceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << x_type->ToString()

@@ -83,15 +83,15 @@ abstract::ShapePtr AdaptiveMaxPool2DGradInferShape(const PrimitivePtr &primitive
 TypePtr AdaptiveMaxPool2DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto y_grad_dtype = input_args[0]->BuildType();
-  auto argmax_dtype = input_args[2]->BuildType();
+  auto y_grad_dtype = input_args[0]->GetType();
+  auto argmax_dtype = input_args[2]->GetType();
 
   const std::set<TypePtr> floating_data_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> argmax_valid_types = {kInt64};
 
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("y_grad", input_args[0]->BuildType());
-  (void)args.emplace("x", input_args[1]->BuildType());
+  (void)args.emplace("y_grad", input_args[0]->GetType());
+  (void)args.emplace("x", input_args[1]->GetType());
 
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, floating_data_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax_dtype", argmax_dtype, argmax_valid_types,

@@ -111,11 +111,11 @@ abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto q = input_args[1];
   MS_EXCEPTION_IF_NULL(q);
-  auto q_type = input_args[1]->BuildType();
+  auto q_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(q_type);
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};

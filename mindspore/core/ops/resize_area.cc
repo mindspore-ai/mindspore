@@ -94,10 +94,8 @@ AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   const std::set<TypePtr> valid_types = {kInt8, kUInt8, kInt16, kUInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types_1 = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->BuildType(), valid_types,
-                                                   primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), valid_types_1,
-                                                   primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->GetType(), valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->GetType(), valid_types_1, primitive->name());
   auto infer_shape = ResizeAreaInferShape(primitive, input_args);
   auto infer_type = ResizeAreaInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

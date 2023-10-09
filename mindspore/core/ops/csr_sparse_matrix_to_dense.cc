@@ -134,12 +134,12 @@ TypePtr CSRSparseMatrixToDenseInferType(const PrimitivePtr &prim, const std::vec
   const std::set<TypePtr> valid_values_types = {kFloat64, kFloat32, kComplex128, kComplex64};
   const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> indices_args;
-  (void)indices_args.emplace("x_dense_shape", input_args[kInputIndex0]->BuildType());
-  (void)indices_args.emplace("x_batch_pointers", input_args[kInputIndex1]->BuildType());
-  (void)indices_args.emplace("x_row_pointers", input_args[kInputIndex2]->BuildType());
-  (void)indices_args.emplace("x_col_indices", input_args[kInputIndex3]->BuildType());
+  (void)indices_args.emplace("x_dense_shape", input_args[kInputIndex0]->GetType());
+  (void)indices_args.emplace("x_batch_pointers", input_args[kInputIndex1]->GetType());
+  (void)indices_args.emplace("x_row_pointers", input_args[kInputIndex2]->GetType());
+  (void)indices_args.emplace("x_col_indices", input_args[kInputIndex3]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(indices_args, valid_indices_types, op_name);
-  auto values_type = input_args[kInputIndex4]->BuildType();
+  auto values_type = input_args[kInputIndex4]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x_values", values_type, valid_values_types, op_name);
 }
 }  // namespace

@@ -99,7 +99,7 @@ TypePtr BatchToSpaceNDInferType(const std::vector<AbstractBasePtr> &input_args) 
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   // check_scalar_or_tensor_types_same
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, "BatchToSpaceND");
 }

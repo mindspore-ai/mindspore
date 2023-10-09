@@ -112,9 +112,9 @@ abstract::BaseShapePtr MultinomialWithReplacementInferShape(const PrimitivePtr &
 TypePtr MultinomialWithReplacementInferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
-  auto seed_dtype = input_args[1]->BuildType();
-  auto offset_dtype = input_args[2]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto seed_dtype = input_args[1]->GetType();
+  auto offset_dtype = input_args[2]->GetType();
   TypePtr y_type = {kInt64};
   const std::set<TypePtr> valid_types_x = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types_seed = {kInt64};

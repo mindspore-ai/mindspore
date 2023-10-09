@@ -148,8 +148,8 @@ TypeId MaxPool3DWithArgmax::get_argmax_type() const {
 TuplePtr MaxPool3DWithArgmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, prim->name());
-  auto output_dtype = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), valid_types, prim->name());
+  auto output_dtype = input_args[0]->GetType();
   auto Targmax = GetValue<std::string>(prim->GetAttr("argmax_type"));
   TypePtr argmax_dtype;
   if (Targmax == "int32") {

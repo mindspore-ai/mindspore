@@ -127,7 +127,7 @@ TypePtr ArgFusionInferType(const PrimitivePtr &primitive, const std::vector<Abst
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x_type = x->BuildType();
+  auto x_type = x->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

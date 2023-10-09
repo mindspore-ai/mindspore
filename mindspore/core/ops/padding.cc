@@ -57,7 +57,7 @@ TypePtr PaddingInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   } else {
     valid_types = common_valid_types_with_bool;
   }
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, name);
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, name);
 }
 
 abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

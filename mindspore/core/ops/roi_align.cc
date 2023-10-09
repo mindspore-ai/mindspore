@@ -99,9 +99,9 @@ class ROIAlignInfer : public abstract::OpInferBase {
     constexpr int64_t kInputNum = 2;
     auto op_name = prim->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, op_name);
-    auto feature_type = input_args[kInputIndex0]->BuildType();
+    auto feature_type = input_args[kInputIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(feature_type);
-    auto rois_type = input_args[kInputIndex1]->BuildType();
+    auto rois_type = input_args[kInputIndex1]->GetType();
     MS_EXCEPTION_IF_NULL(rois_type);
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("feature", feature_type, valid_types, op_name);

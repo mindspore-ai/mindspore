@@ -103,9 +103,9 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_type = input_args[kSelectXIndex]->BuildType();
-  auto y_type = input_args[kSelectYIndex]->BuildType();
-  auto cond_type = input_args[kSelectCondIndex]->BuildType();
+  auto x_type = input_args[kSelectXIndex]->GetType();
+  auto y_type = input_args[kSelectYIndex]->GetType();
+  auto cond_type = input_args[kSelectCondIndex]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
 

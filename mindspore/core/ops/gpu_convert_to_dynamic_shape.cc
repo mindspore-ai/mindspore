@@ -52,7 +52,7 @@ abstract::ShapePtr GpuConvertToDynamicShapeInferShape(const PrimitivePtr &,
 }
 
 TypePtr GpuConvertToDynamicShapeInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   return x_type;
 }
 }  // namespace

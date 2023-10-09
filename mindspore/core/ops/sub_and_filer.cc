@@ -56,7 +56,7 @@ TuplePtr SubAndFilterInferType(const PrimitivePtr &primitive, const std::vector<
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   auto x_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
 }
 }  // namespace

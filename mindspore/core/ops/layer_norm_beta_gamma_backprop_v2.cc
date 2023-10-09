@@ -59,7 +59,7 @@ TypePtr LayerNormBetaGammaBackpropV2InferType(const PrimitivePtr &prim,
   auto prim_name = prim->name();
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto output_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->GetType(), valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, output_type});
 }
 }  // namespace

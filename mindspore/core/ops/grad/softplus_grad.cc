@@ -77,7 +77,7 @@ TypePtr SoftplusGradInfertype(const PrimitivePtr &prim, const std::vector<Abstra
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto output = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   (void)abstract::CheckDtypeSame(prim_name, x, output);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());

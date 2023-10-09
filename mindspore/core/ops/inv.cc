@@ -54,7 +54,7 @@ abstract::ShapePtr InvInferShape(const PrimitivePtr &primitive, const std::vecto
 }
 
 TypePtr InvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);

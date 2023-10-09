@@ -62,8 +62,8 @@ abstract::ShapePtr SparseToDenseInferShape(const PrimitivePtr &primitive,
 TypePtr SparseToDenseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto indice_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
+  auto indice_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
 
   const std::set<TypePtr> valid_types = {kInt64, kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeSame({{"indices", indice_type}}, valid_types, op_name);

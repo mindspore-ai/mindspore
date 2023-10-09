@@ -114,11 +114,11 @@ abstract::TupleShapePtr InstanceNormInferShape(const PrimitivePtr &primitive,
 
 TuplePtr InstanceNormInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const auto prim_name = primitive->name();
-  const auto input_x = input_args[kInputIndex0]->BuildType();
-  const auto gamma = input_args[kInputIndex1]->BuildType();
-  const auto beta = input_args[kInputIndex2]->BuildType();
-  const auto mean = input_args[kInputIndex3]->BuildType();
-  const auto variance = input_args[kInputIndex4]->BuildType();
+  const auto input_x = input_args[kInputIndex0]->GetType();
+  const auto gamma = input_args[kInputIndex1]->GetType();
+  const auto beta = input_args[kInputIndex2]->GetType();
+  const auto mean = input_args[kInputIndex3]->GetType();
+  const auto variance = input_args[kInputIndex4]->GetType();
 
   (void)CheckAndConvertUtils::CheckTypeValid("input_x", input_x, {kFloat16, kFloat32}, prim_name);
   const std::map<std::string, TypePtr> types = {

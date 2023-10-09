@@ -90,10 +90,10 @@ TypePtr RandomPoissonInferType(const PrimitivePtr &prim, const std::vector<Abstr
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[kInputIndex0]->BuildType(), valid_shape_types,
+  (void)CheckAndConvertUtils::CheckTypeValid("shape", input_args[kInputIndex0]->GetType(), valid_shape_types,
                                              prim_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("rate", input_args[kInputIndex1]->GetType(), valid_types, prim_name);
   auto dtype_value = prim->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype_value);
   if (!dtype_value->isa<Type>()) {

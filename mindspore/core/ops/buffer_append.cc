@@ -85,13 +85,13 @@ TypePtr BufferAppendInferType(const PrimitivePtr &primitive, const std::vector<A
 
   AbstractBasePtrList data_type = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>()->elements();
   AbstractBasePtrList exp_type = input_args[kInputIndex1]->cast<abstract::AbstractSequencePtr>()->elements();
-  auto count_type = input_args[kInputIndex2]->BuildType();
-  auto head_type = input_args[kInputIndex3]->BuildType();
+  auto count_type = input_args[kInputIndex2]->GetType();
+  auto head_type = input_args[kInputIndex3]->GetType();
   for (size_t i = 0; i < data_type.size(); i++) {
-    if (data_type[i]->BuildType()->type_id() != exp_type[i]->BuildType()->type_id()) {
+    if (data_type[i]->GetType()->type_id() != exp_type[i]->GetType()->type_id()) {
       MS_LOG(EXCEPTION) << "For " << op_name << ", each tensor in 'exp' must has the same type with 'data',"
-                        << " but got 'data_type': " << data_type[i]->BuildType()->ToString()
-                        << ", 'exp_type': " << exp_type[i]->BuildType()->ToString();
+                        << " but got 'data_type': " << data_type[i]->GetType()->ToString()
+                        << ", 'exp_type': " << exp_type[i]->GetType()->ToString();
     }
   }
   const std::set<TypePtr> int_types = {kInt32};

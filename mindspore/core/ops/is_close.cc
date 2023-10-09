@@ -66,10 +66,10 @@ TypePtr IsCloseInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[0]->BuildType());
-  (void)types.emplace("other", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("other", input_args[1]->BuildType(), valid_types, op_name);
+  (void)types.emplace("input", input_args[0]->GetType());
+  (void)types.emplace("other", input_args[1]->GetType());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("other", input_args[1]->GetType(), valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<TensorType>(kBool);
 }

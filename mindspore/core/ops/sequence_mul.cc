@@ -54,7 +54,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
   auto seq_abs = first_abs->cast<abstract::AbstractSequencePtr>();
   auto scalar_abs = input_args[scalar_index];
   const std::set<TypePtr> scalar_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("scalar", scalar_abs->BuildType(), scalar_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("scalar", scalar_abs->GetType(), scalar_valid_types, prim_name);
   if (seq_abs->dynamic_len()) {
     return seq_abs;
   }
@@ -93,7 +93,7 @@ class SequenceMulInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMulInferInner(prim, input_args)->BuildType();
+    return SequenceMulInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

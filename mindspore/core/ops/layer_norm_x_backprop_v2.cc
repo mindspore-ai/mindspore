@@ -52,7 +52,7 @@ TypePtr LayerNormXBackpropV2InferType(const PrimitivePtr &prim, const std::vecto
   auto prim_name = prim->name();
   // check
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, kFloat32});
 }

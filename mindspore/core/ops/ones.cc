@@ -89,7 +89,7 @@ ValuePtr OnesInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
     MS_LOG(EXCEPTION) << "For '" << prim->name() << "', the output elements num can not larger than " << INT_MAX
                       << "(INT_MAX), but got " << SizeOf(out_shape);
   }
-  auto out_type = abs->BuildType();
+  auto out_type = abs->GetType();
   MS_EXCEPTION_IF_NULL(out_type);
   return TensorConstructUtils::CreateOnesTensor(out_type, out_shape);
 }

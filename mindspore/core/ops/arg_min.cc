@@ -109,7 +109,7 @@ TensorTypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<Abstra
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32,
                                          kUInt64,  kInt8,    kInt16,   kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
   const std::set<TypePtr> out_valid_types = {kInt32, kInt64};
   ValuePtr out_type_value = prim->GetAttr(kOutputType);
   TypePtr out_type_ptr = dyn_cast<Type>(out_type_value);

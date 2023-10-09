@@ -55,7 +55,7 @@ abstract::TupleShapePtr FusedAdaFactorInferShape(const PrimitivePtr &primitive,
 
 TypePtr FusedAdaFactorInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto type = input_args[kParamIndex]->BuildType();
+  auto type = input_args[kParamIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type});
 }
 }  // namespace

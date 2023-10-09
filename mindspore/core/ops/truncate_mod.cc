@@ -64,7 +64,7 @@ TypePtr TruncateModInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   (void)abstract::CheckDtypeSame(prim_name, x, y);
-  auto z_type = input_args[0]->BuildType();
+  auto z_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(z_type);
   if (!z_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << z_type->ToString()

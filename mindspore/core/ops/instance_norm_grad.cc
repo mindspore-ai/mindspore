@@ -103,11 +103,11 @@ abstract::TupleShapePtr InstanceNormGradInferShape(const PrimitivePtr &primitive
 
 TuplePtr InstanceNormGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const auto prim_name = primitive->name();
-  const auto y_backprop_type = input_args[kInputIndex0]->BuildType();
-  const auto x_type = input_args[kInputIndex1]->BuildType();
-  const auto gamma_type = input_args[kInputIndex2]->BuildType();
-  const auto save_mean_type = input_args[kInputIndex3]->BuildType();
-  const auto save_variance_type = input_args[kInputIndex4]->BuildType();
+  const auto y_backprop_type = input_args[kInputIndex0]->GetType();
+  const auto x_type = input_args[kInputIndex1]->GetType();
+  const auto gamma_type = input_args[kInputIndex2]->GetType();
+  const auto save_mean_type = input_args[kInputIndex3]->GetType();
+  const auto save_variance_type = input_args[kInputIndex4]->GetType();
 
   const std::map<std::string, TypePtr> types = {
     {"y_backprop", y_backprop_type},

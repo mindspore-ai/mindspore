@@ -73,7 +73,7 @@ TypePtr DynamicResizeNearestNeighborInferType(const PrimitivePtr &prim,
   auto valid_types = common_valid_types;
   (void)valid_types.insert(kComplex128);
   (void)valid_types.insert(kComplex64);
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 

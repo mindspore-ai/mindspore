@@ -74,7 +74,7 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
       num_segments_v = abstract::Shape::kShapeDimAny;
       return num_segments_v;
     }
-    auto num_segments_input_type = input_args[kInputIndex2]->BuildType();
+    auto num_segments_input_type = input_args[kInputIndex2]->GetType();
     auto num_sample_ptr = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>();
     MS_EXCEPTION_IF_NULL(num_sample_ptr);
     if (num_segments_input_type->type_id() == kNumberTypeInt64) {
@@ -184,7 +184,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
 
   /* check segment_ids */
-  auto ids_ptr = input_args[kInputIndex1]->BuildType();
+  auto ids_ptr = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(ids_ptr);
   if (!ids_ptr->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -194,7 +194,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids", ids_ptr, ids_type_set, prim_name);
 
   /* check num_segments */
-  auto num_ptr = input_args[kInputIndex2]->BuildType();
+  auto num_ptr = input_args[kInputIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(num_ptr);
   std::set<TypePtr> num_type_set = {kInt32, kInt64};
 
@@ -208,7 +208,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTypeValid("num_segments", num_ptr, num_type_set, prim_name);
 
   /* check input_x */
-  auto in_type_ptr = input_args[kInputIndex0]->BuildType();
+  auto in_type_ptr = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(in_type_ptr);
   if (!in_type_ptr->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << in_type_ptr->ToString()

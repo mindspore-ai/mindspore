@@ -172,11 +172,11 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
 TuplePtr RaggedRangeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto starts_type = input_args[0]->BuildType();
+  auto starts_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(starts_type);
-  auto limits_type = input_args[1]->BuildType();
+  auto limits_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(limits_type);
-  auto deltas_type = input_args[kInputIndex2]->BuildType();
+  auto deltas_type = input_args[kInputIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(deltas_type);
   if (!(starts_type->isa<TensorType>())) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input starts must be a Tensor, but got "

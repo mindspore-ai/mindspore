@@ -90,7 +90,7 @@ abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBa
   // Infer max shape of output
   if (output_size->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->BuildType(),
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->GetType(),
                                                      output_size_valid_types, prim_name);
     auto output_size_value = output_size->GetValue();
     MS_EXCEPTION_IF_NULL(output_size_value);
@@ -173,13 +173,13 @@ TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, ImagekInputNums, prim_name);
   const std::set<TypePtr> inputs_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[ImagekGrads]->BuildType(), inputs_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[ImagekGrads]->GetType(), inputs_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[ImagekBoxes]->BuildType(), inputs_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[ImagekBoxes]->GetType(), inputs_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[ImagekBoxIndex]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[ImagekBoxIndex]->GetType(), {kInt32},
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", input_args[ImagekImagesSize]->BuildType(), {kInt32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", input_args[ImagekImagesSize]->GetType(), {kInt32},
                                                    prim_name);
   auto out_T = prim->GetAttr("T")->cast<TypePtr>();
   (void)CheckAndConvertUtils::CheckSubClass("T", out_T, valid_types, prim_name);

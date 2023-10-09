@@ -53,7 +53,7 @@ TuplePtr MaximumGradInferType(const PrimitivePtr &primitive, const std::vector<A
   auto x2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, INPUT_GRADS_IDX);
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
   std::vector<TypePtr> type_tuple;

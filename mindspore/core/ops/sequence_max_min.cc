@@ -50,7 +50,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
   auto arg = input_args[0];
   auto seq_abs = arg->cast<abstract::AbstractSequencePtr>();
   if (seq_abs->dynamic_len()) {
-    auto seq_type = seq_abs->BuildType();
+    auto seq_type = seq_abs->GetType();
     TypePtr type = nullptr;
     if (seq_type->isa<List>()) {
       type = seq_type->cast<ListPtr>()->dynamic_element_type();
@@ -62,7 +62,7 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
     return std::make_shared<abstract::AbstractScalar>(kValueAny, type == nullptr ? kTypeAny : type);
   }
   const auto &seq_elements = seq_abs->elements();
-  auto type = seq_elements[0]->BuildType();
+  auto type = seq_elements[0]->GetType();
   if (type->type_id() == kInt64->type_id()) {
     return FindMaxOrMin<int64_t, Int64ImmPtr>(seq_elements, is_max);
   } else if (type->type_id() == kInt32->type_id()) {
@@ -85,7 +85,7 @@ class SequenceMaxInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args)->BuildType();
+    return SequenceMaxMinInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
@@ -103,7 +103,7 @@ class SequenceMinInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args, false)->BuildType();
+    return SequenceMaxMinInferInner(prim, input_args, false)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

@@ -225,7 +225,7 @@ TypePtr MaxPoolWithArgmaxInferType(const PrimitivePtr &primitive, const std::vec
   }
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt64,   kUInt8,   kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  auto input_type = input_args[kDim0]->BuildType();
+  auto input_type = input_args[kDim0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, primitive->name());
   std::vector<TypePtr> type_list = {input_type, kInt32};
   return std::make_shared<Tuple>(type_list);

@@ -113,10 +113,10 @@ TypePtr ParallelConcatInferType(const PrimitivePtr &primitive, const std::vector
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    (void)types.emplace(elementi, elements[i]->BuildType());
+    (void)types.emplace(elementi, elements[i]->GetType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim_name);
-  return elements[0]->BuildType();
+  return elements[0]->GetType();
 }
 }  // namespace
 

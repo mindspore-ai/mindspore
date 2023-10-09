@@ -98,14 +98,14 @@ TypePtr BoundingBoxDecodeInferType(const PrimitivePtr &primitive, const std::vec
   (void)valid_x_type.emplace(kFloat32);
 
   for (size_t i = 0; i < input_args.size(); i++) {
-    auto x_type = input_args[i]->BuildType();
+    auto x_type = input_args[i]->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_type, valid_x_type, prim_name);
   }
 
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("anchor_box", input_args[0]->BuildType());
-  (void)types.emplace("deltas", input_args[1]->BuildType());
+  (void)types.emplace("anchor_box", input_args[0]->GetType());
+  (void)types.emplace("deltas", input_args[1]->GetType());
 
   return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
 }

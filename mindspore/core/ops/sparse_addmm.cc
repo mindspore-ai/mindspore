@@ -89,13 +89,13 @@ TypePtr SparseAddmmInferType(const PrimitivePtr &primitive, const std::vector<Ab
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat32, kFloat64, kInt32,  kInt64,  kInt16,
                                    kInt8,    kUInt32,  kUInt64, kUInt16, kUInt8};
-  TypePtr indices_type = input_args[kInputIndex0]->BuildType();
-  TypePtr values_type = input_args[kInputIndex1]->BuildType();
-  TypePtr shape_type = input_args[kInputIndex2]->BuildType();
-  TypePtr x2_type = input_args[kInputIndex3]->BuildType();
-  TypePtr x3_type = input_args[kInputIndex4]->BuildType();
-  TypePtr alpha_type = input_args[kInputIndex5]->BuildType();
-  TypePtr beta_type = input_args[kInputIndex6]->BuildType();
+  TypePtr indices_type = input_args[kInputIndex0]->GetType();
+  TypePtr values_type = input_args[kInputIndex1]->GetType();
+  TypePtr shape_type = input_args[kInputIndex2]->GetType();
+  TypePtr x2_type = input_args[kInputIndex3]->GetType();
+  TypePtr x3_type = input_args[kInputIndex4]->GetType();
+  TypePtr alpha_type = input_args[kInputIndex5]->GetType();
+  TypePtr beta_type = input_args[kInputIndex6]->GetType();
   auto prim_name = primitive->name();
 
   (void)types.emplace("x1_values", values_type);

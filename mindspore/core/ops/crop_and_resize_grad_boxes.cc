@@ -130,12 +130,11 @@ TypePtr CropAndResizeGradBoxesInferType(const PrimitivePtr &prim, const std::vec
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNums, prim_name);
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_others = {kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kGrads]->BuildType(), valid_others, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[kImages]->BuildType(), valid_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kBoxes]->BuildType(), valid_others, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kBoxIndex]->BuildType(), {kInt32},
-                                                   prim_name);
-  return input_args[kGrads]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kGrads]->GetType(), valid_others, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[kImages]->GetType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kBoxes]->GetType(), valid_others, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kBoxIndex]->GetType(), {kInt32}, prim_name);
+  return input_args[kGrads]->GetType();
 }
 }  // namespace
 

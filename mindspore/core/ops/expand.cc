@@ -115,7 +115,7 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
   }
   const int64_t x_shape_size = SizeToLong(x_shape.size());
   const int64_t shape_size = shape_v[0];
-  auto shape_type = input_args[1]->BuildType();
+  auto shape_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(shape_type);
   auto shape_type_id = shape_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(shape_type_id);
@@ -150,8 +150,8 @@ TypePtr ExpandInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  TypePtr x_type = input_args[0]->BuildType();
-  TypePtr shape_type = input_args[1]->BuildType();
+  TypePtr x_type = input_args[0]->GetType();
+  TypePtr shape_type = input_args[1]->GetType();
   std::set<TypePtr> x_valid_types = {kFloat16, kFloat32, kInt32, kInt8, kUInt8};
   std::set<TypePtr> shape_valid_types = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, x_valid_types, primitive->name());

@@ -85,7 +85,7 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
     const std::set<TypePtr> valid_types = {kInt64};
     MS_EXCEPTION_IF_NULL(primitive);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_args[0]->BuildType(), valid_types,
+    CheckAndConvertUtils::CheckTensorTypeValid("true_classes", input_args[0]->GetType(), valid_types,
                                                primitive->name());
 
     // return outputs data type

@@ -83,8 +83,8 @@ class MIND_API LayerNormGradInfer : public abstract::OpInferBase {
     const int64_t input_num = 5;
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                              op_name);
-    auto x_type = input_args[kInputIndex0]->BuildType();
-    auto gamma_type = input_args[kInputIndex4]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
+    auto gamma_type = input_args[kInputIndex4]->GetType();
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, gamma_type, gamma_type});
   }
 };

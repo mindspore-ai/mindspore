@@ -127,8 +127,8 @@ TypePtr MatrixTriangularSolveInferType(const PrimitivePtr &primitive, const std:
   const int64_t kTwo = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kTwo, primitive->name());
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("matrix", input_args[0]->BuildType());
-  (void)types.emplace("rhs", input_args[1]->BuildType());
+  (void)types.emplace("matrix", input_args[0]->GetType());
+  (void)types.emplace("rhs", input_args[1]->GetType());
 
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());

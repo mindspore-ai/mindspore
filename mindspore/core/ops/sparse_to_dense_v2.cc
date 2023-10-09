@@ -61,7 +61,7 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
   auto output_shape_value_ = output_shape->GetValue();
   MS_EXCEPTION_IF_NULL(output_shape_value_);
   auto output_shape_tensor = output_shape_value_->cast<tensor::TensorPtr>();
-  auto output_shape_type = input_args[1]->BuildType();
+  auto output_shape_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(output_shape_type);
   auto output_shape_type_id = output_shape_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(output_shape_type_id);
@@ -114,10 +114,10 @@ abstract::ShapePtr SparseToDenseV2InferShape(const PrimitivePtr &primitive,
 
 TypePtr SparseToDenseV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto infer_type_indices = input_args[kInputIndex0]->BuildType();
-  auto infer_type_output_shape = input_args[kInputIndex1]->BuildType();
-  auto infer_type_values = input_args[kInputIndex2]->BuildType();
-  auto infer_type_default_value = input_args[kInputIndex3]->BuildType();
+  auto infer_type_indices = input_args[kInputIndex0]->GetType();
+  auto infer_type_output_shape = input_args[kInputIndex1]->GetType();
+  auto infer_type_values = input_args[kInputIndex2]->GetType();
+  auto infer_type_default_value = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kInt64, kInt32};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("indices", infer_type_indices);

@@ -174,8 +174,8 @@ TypePtr MaxUnpool3DInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto argmax_type = input_args[kInputIndex1]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto argmax_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", argmax_type, argmax_valid_types, prim->name());
   return input_x_type;

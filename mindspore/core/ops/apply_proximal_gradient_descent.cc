@@ -92,11 +92,11 @@ TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto alpha_type = input_args[kInputIndex1]->BuildType();
-  auto l1_type = input_args[kInputIndex2]->BuildType();
-  auto l2_type = input_args[kInputIndex3]->BuildType();
-  auto delta_type = input_args[kInputIndex4]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto alpha_type = input_args[kInputIndex1]->GetType();
+  auto l1_type = input_args[kInputIndex2]->GetType();
+  auto l2_type = input_args[kInputIndex3]->GetType();
+  auto delta_type = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // var, delta must have the same type as var
   std::map<std::string, TypePtr> args;

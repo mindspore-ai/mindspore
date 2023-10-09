@@ -63,7 +63,7 @@ class MIND_API GetSqueezeSliceShapeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetSqueezeSliceShapeInferInner(prim, input_args)->BuildType();
+    return GetSqueezeSliceShapeInferInner(prim, input_args)->GetType();
   }
 };
 

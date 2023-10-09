@@ -76,8 +76,8 @@ TypePtr AdjustContrastv2InferType(const PrimitivePtr &prim, const std::vector<Ab
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto input_images_type = input_args[0]->BuildType();
-  auto input_contrast_factor_type = input_args[1]->BuildType();
+  auto input_images_type = input_args[0]->GetType();
+  auto input_contrast_factor_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(input_images_type);
   MS_EXCEPTION_IF_NULL(input_contrast_factor_type);
   const std::set<TypePtr> valid_images_types = {kFloat16, kFloat32};

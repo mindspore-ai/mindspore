@@ -73,7 +73,7 @@ TypePtr LogSoftmaxInferType(const PrimitivePtr &prim, const std::vector<Abstract
   MS_EXCEPTION_IF_NULL(prim);
   const auto op_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("logits", input_args[kInputIndex0]->BuildType(), valid_types,
+  return CheckAndConvertUtils::CheckTensorTypeValid("logits", input_args[kInputIndex0]->GetType(), valid_types,
                                                     op_name);
 }
 

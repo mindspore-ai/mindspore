@@ -103,9 +103,9 @@ TypePtr RaggedTensorToTensorInferType(const PrimitivePtr &primitive, const std::
   auto prim_name = primitive->name();
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kBool, kInt8, kUInt8, kInt16, kUInt16, kInt32, kInt64, kFloat64, kFloat, kFloat16};
-  TypePtr shape_type = input_args[kInputIndex0]->BuildType();
-  TypePtr values_type = input_args[kInputIndex1]->BuildType();
-  TypePtr default_value_type = input_args[kInputIndex2]->BuildType();
+  TypePtr shape_type = input_args[kInputIndex0]->GetType();
+  TypePtr values_type = input_args[kInputIndex1]->GetType();
+  TypePtr default_value_type = input_args[kInputIndex2]->GetType();
   (void)types.emplace("values", values_type);
   (void)types.emplace("default_value", default_value_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
@@ -119,7 +119,7 @@ TypePtr RaggedTensorToTensorInferType(const PrimitivePtr &primitive, const std::
                    : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
   const std::set<TypePtr> valid_tensor_types = {kInt32, kInt64};
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->BuildType();
+    auto input_dtype = tensors[i]->GetType();
     (void)CheckAndConvertUtils::CheckTypeValid("row_partition_tensors", input_dtype, valid_tensor_types, prim_name);
   }
   return values_type;

@@ -59,7 +59,7 @@ class MIND_API DTypeInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("dtype infer", int64_t(input_args.size()), kEqual, 1, op_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto type = input_args[0]->BuildType();
+    auto type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(type);
     if (type->isa<TensorType>()) {
       const std::set<TypePtr> valid_types = {kTensorType};

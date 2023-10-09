@@ -179,7 +179,7 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
 }
 
 TypePtr Col2ImInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto size_type = input_args[kInputIndex1]->BuildType();
+  auto size_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size", size_type, {kInt32, kInt64}, primitive->name());
   return CheckAndConvertUtils::GetTensorInputType(kNameCol2Im, input_args, kInputIndex0);
 }

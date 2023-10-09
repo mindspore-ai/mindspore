@@ -115,21 +115,21 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
   }
   const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32};
   std::map<std::string, TypePtr> args = {
-    {"x", input_args[0]->BuildType()},
-    {"v", input_args[2]->BuildType()},
+    {"x", input_args[0]->GetType()},
+    {"v", input_args[2]->GetType()},
   };
 
   const auto &indices_abs = input_args[1];
   const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
   if (indices_abs->isa<abstract::AbstractTensor>() || indices_abs->isa<abstract::AbstractScalar>()) {
-    (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->BuildType(), indices_valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->GetType(), indices_valid_types, prim->name());
   } else if (indices_abs->isa<abstract::AbstractTuple>()) {
     const auto &seq_ele = indices_abs->cast<abstract::AbstractSequencePtr>()->elements();
     if (seq_ele.empty()) {
       MS_EXCEPTION(ValueError) << "Input indices should not be empty: " << indices_abs->ToString();
     }
     const auto &element0 = seq_ele[kInputIndex0];
-    (void)CheckAndConvertUtils::CheckTypeValid("indices", element0->BuildType(), indices_valid_types, prim->name());
+    (void)CheckAndConvertUtils::CheckTypeValid("indices", element0->GetType(), indices_valid_types, prim->name());
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be int scalar, tuple or Tensor, but got "
                             << indices_abs->ToString();

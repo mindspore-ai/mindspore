@@ -62,7 +62,7 @@ TypePtr PopulationCountInferType(const PrimitivePtr &prim, const std::vector<Abs
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   if (is_cpu || is_gpu) {
     std::set<TypePtr> check_list = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
     CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());

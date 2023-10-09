@@ -151,7 +151,7 @@ class RandpermInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
 
-    auto x_type = input_args[kInputIndex0]->BuildType();
+    auto x_type = input_args[kInputIndex0]->GetType();
     const std::set<TypePtr> valid_types_x = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_x, prim_name);
 

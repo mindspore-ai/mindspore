@@ -156,7 +156,7 @@ class FillInfer : public abstract::OpInferBase {
     ValuePtr dtype_value;
     TypePtr value_dtype;
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
-    auto input2_dtype = input_args[2]->BuildType();
+    auto input2_dtype = input_args[2]->GetType();
     MS_EXCEPTION_IF_NULL(input2_dtype);
     TypePtr input2_element_dtype;
     if (input2_dtype->isa<TensorType>()) {
@@ -193,7 +193,7 @@ class FillInfer : public abstract::OpInferBase {
     auto infered_type = InferType(prim, input_args);
     MS_EXCEPTION_IF_NULL(infered_type);
     auto input_value_ptr = input_args[2]->GetValue();
-    auto input_value_type_id = input_args[2]->BuildType()->type_id();
+    auto input_value_type_id = input_args[2]->GetType()->type_id();
     auto tmp_shape = InferShape(prim, input_args);
     MS_EXCEPTION_IF_NULL(tmp_shape);
     auto infered_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tmp_shape)[kShape];

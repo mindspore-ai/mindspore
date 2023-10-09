@@ -59,9 +59,9 @@ TypePtr MaxUnpool2DGradInferType(const PrimitivePtr &primitive, const std::vecto
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto grads_type = input_args[kInputIndex1]->BuildType();
-  auto argmax_type = input_args[kInputIndex2]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto grads_type = input_args[kInputIndex1]->GetType();
+  auto argmax_type = input_args[kInputIndex2]->GetType();
   auto output_type =
     CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grads", grads_type, common_valid_types, primitive->name());

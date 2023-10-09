@@ -71,7 +71,7 @@ abstract::TupleShapePtr SortInferShape(const PrimitivePtr &primitive, const std:
 
 TuplePtr SortInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64, kBool};
   auto type = CheckAndConvertUtils::CheckTensorTypeValid("inputx", infer_type, valid_types, primitive->name());
   std::vector<TypePtr> type_tuple;

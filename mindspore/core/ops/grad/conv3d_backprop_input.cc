@@ -214,8 +214,8 @@ class Conv3DBackpropInputInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     // check
     std::map<std::string, TypePtr> types;
-    auto doutput_type = input_args[kConv3DBackpropInputDoutIndex]->BuildType();
-    (void)types.emplace("filter", input_args[kConv3DBackpropInputFilterIndex]->BuildType());
+    auto doutput_type = input_args[kConv3DBackpropInputDoutIndex]->GetType();
+    (void)types.emplace("filter", input_args[kConv3DBackpropInputFilterIndex]->GetType());
     (void)types.emplace("doutput", doutput_type);
     std::set<TypePtr> valid_x_type = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_x_type, prim_name);

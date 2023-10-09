@@ -151,7 +151,7 @@ void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int
         shape_ptr[i] = *(static_cast<int64_t *>(a_shape_ptr) + i);
       }
     }
-  } else if (IsIdentidityOrSubclass(x1_shape->BuildType(), kTuple)) {
+  } else if (IsIdentidityOrSubclass(x1_shape->GetType(), kTuple)) {
     auto value_tuple = GetValue<std::vector<int64_t>>(x1_shape->GetValue());
     for (size_t i = 0; i < kDimensionTwo; ++i) {
       shape_ptr[i] = value_tuple[i];
@@ -230,10 +230,10 @@ TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64, kComplex64, kComplex128};
-  TypePtr indices_type = input_args[0]->BuildType();
-  TypePtr values_type = input_args[1]->BuildType();
-  TypePtr shape_type = input_args[2]->BuildType();
-  TypePtr x2_type = input_args[3]->BuildType();
+  TypePtr indices_type = input_args[0]->GetType();
+  TypePtr values_type = input_args[1]->GetType();
+  TypePtr shape_type = input_args[2]->GetType();
+  TypePtr x2_type = input_args[3]->GetType();
   auto x1_shape = input_args[2];
   (void)types.emplace("values", values_type);
   (void)types.emplace("x2", x2_type);

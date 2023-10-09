@@ -92,9 +92,9 @@ TypePtr ResizeNearestNeighborV2GradInferType(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   std::set<TypePtr> support_types = {kUInt8, kFloat16, kFloat32, kFloat64};
-  auto grads_type = CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kInputIndex0]->BuildType(),
-                                                               support_types, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+  auto grads_type =
+    CheckAndConvertUtils::CheckTensorTypeValid("grads", input_args[kInputIndex0]->GetType(), support_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->GetType(), {kInt32, kInt64},
                                                    prim_name);
   return grads_type;
 }

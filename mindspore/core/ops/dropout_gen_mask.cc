@@ -172,7 +172,7 @@ TypePtr DropoutGenMaskInferType(const PrimitivePtr &primitive, const std::vector
   (void)CheckAndConvertUtils::CheckInteger("infer shape", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->GetType(), valid_types, op_name);
   return kUInt8;
 }
 }  // namespace

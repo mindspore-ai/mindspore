@@ -75,11 +75,11 @@ TuplePtr SparseMatrixSoftmaxInferType(const PrimitivePtr &primitive, const std::
   const std::string op_name = primitive->name();
   constexpr size_t kInputNum = 5;
   mindspore::abstract::CheckArgsSize(op_name, input_args, kInputNum);
-  auto dense_shape_type = input_args[kInputIndex0]->BuildType();
-  auto batch_pointers_type = input_args[kInputIndex1]->BuildType();
-  auto row_pointers_type = input_args[kInputIndex2]->BuildType();
-  auto col_indices_type = input_args[kInputIndex3]->BuildType();
-  auto values_type = input_args[kInputIndex4]->BuildType();
+  auto dense_shape_type = input_args[kInputIndex0]->GetType();
+  auto batch_pointers_type = input_args[kInputIndex1]->GetType();
+  auto row_pointers_type = input_args[kInputIndex2]->GetType();
+  auto col_indices_type = input_args[kInputIndex3]->GetType();
+  auto values_type = input_args[kInputIndex4]->GetType();
 
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{dense_shape_type, batch_pointers_type, row_pointers_type, col_indices_type, values_type});

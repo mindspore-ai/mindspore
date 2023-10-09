@@ -93,7 +93,7 @@ TypePtr MedianGradInferType(const PrimitivePtr &prim, const std::vector<Abstract
     MS_LOG(EXCEPTION) << "nullptr";
   }
   const std::set<TypePtr> valid_types = {kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  auto type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[1]->BuildType(), valid_types, prim->name());
+  auto type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[1]->GetType(), valid_types, prim->name());
   auto type_id = type->type_id();
   TypePtr const base_type = kFloat64;
   if ((type_id == base_type->type_id() || type_id == base_type->generic_type_id() ||

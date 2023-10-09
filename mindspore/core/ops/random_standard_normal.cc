@@ -106,13 +106,13 @@ TypePtr RandomStandardNormalInferType(const PrimitivePtr &primitive, const std::
     auto elements = input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements();
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
     for (size_t i = 0; i < elements.size(); ++i) {
-      auto input_dtype = elements[i]->BuildType();
+      auto input_dtype = elements[i]->GetType();
       MS_EXCEPTION_IF_NULL(input_dtype);
       (void)CheckAndConvertUtils::CheckTypeValid("shape", input_dtype, valid_shape_types, prim_name);
     }
   } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-    auto input_dtype = input_args[kInputIndex0]->BuildType();
+    auto input_dtype = input_args[kInputIndex0]->GetType();
     MS_EXCEPTION_IF_NULL(input_dtype);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_dtype, valid_shape_types, prim_name);
   } else {

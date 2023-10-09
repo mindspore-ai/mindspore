@@ -131,7 +131,7 @@ TypePtr ExtractVolumePatchesInferType(const PrimitivePtr &prim, const std::vecto
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
                                          kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 

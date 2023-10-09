@@ -140,10 +140,10 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
 
 TypePtr ScaleAndTranslateInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto images_type = input_args[kInputIndex0]->BuildType();
-  auto size_type = input_args[kInputIndex1]->BuildType();
-  auto scale_type = input_args[kInputIndex2]->BuildType();
-  auto translation_type = input_args[kInputIndex3]->BuildType();
+  auto images_type = input_args[kInputIndex0]->GetType();
+  auto size_type = input_args[kInputIndex1]->GetType();
+  auto scale_type = input_args[kInputIndex2]->GetType();
+  auto translation_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> images_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> size_valid_types = {kInt32};
   const std::set<TypePtr> valid_types = {kFloat32};

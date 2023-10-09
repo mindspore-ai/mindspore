@@ -65,8 +65,8 @@ abstract::ShapePtr PolarInferShape(const PrimitivePtr &primitive, const std::vec
 TypePtr PolarInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   auto prim_name = primitive->name();
-  auto abs_input_type = input_args[0]->BuildType();
-  auto angle_input_type = input_args[1]->BuildType();
+  auto abs_input_type = input_args[0]->GetType();
+  auto angle_input_type = input_args[1]->GetType();
   (void)types.emplace("abs", abs_input_type);
   (void)types.emplace("angle", angle_input_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, std::set<TypePtr>{kFloat32, kFloat64}, prim_name);

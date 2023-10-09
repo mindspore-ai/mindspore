@@ -60,14 +60,14 @@ TypePtr TruncateDivInferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   (void)abstract::CheckDtypeSame(prim_name, x, y);
-  auto z_type = input_args[0]->BuildType();
+  auto z_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(z_type);
   if (!z_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << z_type->ToString()
                             << ".";
   }
-  auto type_x = input_args[0]->BuildType();
-  auto type_y = input_args[1]->BuildType();
+  auto type_x = input_args[0]->GetType();
+  auto type_y = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(type_x);
   MS_EXCEPTION_IF_NULL(type_y);
   if (type_x->isa<Complex>() || type_y->isa<Complex>()) {

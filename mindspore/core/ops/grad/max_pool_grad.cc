@@ -50,7 +50,7 @@ TypePtr MaxPoolGradInferType(const PrimitivePtr &primitive, const std::vector<Ab
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
 
-  return input_args[0]->BuildType();
+  return input_args[0]->GetType();
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(MaxPoolGrad, PoolGrad);

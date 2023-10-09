@@ -124,24 +124,24 @@ abstract::TupleShapePtr SparseMatrixAddInferShape(const PrimitivePtr &primitive,
 TuplePtr SparseMatrixAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto a_values_type = input_args[kAValuesIdx]->BuildType();
-  auto b_values_type = input_args[kBValuesIdx]->BuildType();
-  auto alpha_type = input_args[kAlphaIndex]->BuildType();
-  auto beta_type = input_args[kBetaIndex]->BuildType();
+  auto a_values_type = input_args[kAValuesIdx]->GetType();
+  auto b_values_type = input_args[kBValuesIdx]->GetType();
+  auto alpha_type = input_args[kAlphaIndex]->GetType();
+  auto beta_type = input_args[kBetaIndex]->GetType();
   std::map<std::string, TypePtr> value_type;
   (void)value_type.emplace("a values", a_values_type);
   (void)value_type.emplace("b values", b_values_type);
   (void)value_type.emplace("alpha", alpha_type);
   (void)value_type.emplace("beta", beta_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(value_type, valid_types, op_name);
-  auto a_indices_type = input_args[kAIndicesIdx]->BuildType();
-  auto a_dense_shape_type = input_args[kADenseShapeIdx]->BuildType();
-  auto a_batch_ptr_type = input_args[kABatchPtrIdx]->BuildType();
-  auto a_index_ptr_type = input_args[kAIndptrIdx]->BuildType();
-  auto b_indices_type = input_args[kBIndicesIdx]->BuildType();
-  auto b_dense_shape_type = input_args[kBDenseShapeIdx]->BuildType();
-  auto b_batch_ptr_type = input_args[kBBatchPtrIdx]->BuildType();
-  auto b_index_ptr_type = input_args[kBIndptrIdx]->BuildType();
+  auto a_indices_type = input_args[kAIndicesIdx]->GetType();
+  auto a_dense_shape_type = input_args[kADenseShapeIdx]->GetType();
+  auto a_batch_ptr_type = input_args[kABatchPtrIdx]->GetType();
+  auto a_index_ptr_type = input_args[kAIndptrIdx]->GetType();
+  auto b_indices_type = input_args[kBIndicesIdx]->GetType();
+  auto b_dense_shape_type = input_args[kBDenseShapeIdx]->GetType();
+  auto b_batch_ptr_type = input_args[kBBatchPtrIdx]->GetType();
+  auto b_index_ptr_type = input_args[kBIndptrIdx]->GetType();
 
   const std::set<TypePtr> int_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> types;

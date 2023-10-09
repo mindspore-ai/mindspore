@@ -140,11 +140,11 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
 
 TypePtr RangeV2CheckAndInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::set<TypePtr> support_types = {kInt32, kInt64, kFloat32, kFloat64};
-  auto start_type = CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex0]->BuildType(),
+  auto start_type = CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex0]->GetType(),
                                                                support_types, prim->name());
-  auto limit_type = CheckAndConvertUtils::CheckTensorTypeValid("limit", input_args[kInputIndex1]->BuildType(),
+  auto limit_type = CheckAndConvertUtils::CheckTensorTypeValid("limit", input_args[kInputIndex1]->GetType(),
                                                                support_types, prim->name());
-  auto delta_type = CheckAndConvertUtils::CheckTensorTypeValid("delta", input_args[kInputIndex1]->BuildType(),
+  auto delta_type = CheckAndConvertUtils::CheckTensorTypeValid("delta", input_args[kInputIndex1]->GetType(),
                                                                support_types, prim->name());
   MS_EXCEPTION_IF_NULL(start_type);
   MS_EXCEPTION_IF_NULL(limit_type);

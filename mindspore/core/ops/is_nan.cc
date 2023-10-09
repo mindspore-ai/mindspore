@@ -52,7 +52,7 @@ class IsNanInfer : public abstract::OpInferBase {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, primitive->name());
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
     (void)CheckAndConvertUtils::CheckTensorTypeValid(
-      "x", input_args[0]->BuildType(),
+      "x", input_args[0]->GetType(),
       {kBool, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32, kUInt64},
       primitive->name());
     return std::make_shared<TensorType>(kBool);

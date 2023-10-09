@@ -46,7 +46,7 @@ AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   CheckArgsSize(op_name, input_args, kCSRArgsSize);
   auto indptr = abstract::CheckArg<AbstractTensor>(op_name, input_args, 0);
   MS_EXCEPTION_IF_NULL(indptr);
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
 
   auto nnz = abstract::CheckArg<AbstractScalar>(op_name, input_args, 1);
   MS_EXCEPTION_IF_NULL(nnz);
@@ -67,7 +67,7 @@ AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   primitive->set_attr(kIsCSR, MakeValue(true));
 
   MS_EXCEPTION_IF_NULL(indptr->element());
-  auto ret = std::make_shared<AbstractTensor>(indptr->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(indptr->element()->GetType(), out_shape);
   return ret;
 }
 MIND_API_OPERATOR_IMPL(CSR2COO, BaseOperator);

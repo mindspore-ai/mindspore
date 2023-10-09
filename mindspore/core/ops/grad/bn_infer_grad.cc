@@ -76,7 +76,7 @@ class BNInferGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
-    auto grads_type_ptr = input_args[kInputIndex0]->BuildType();
+    auto grads_type_ptr = input_args[kInputIndex0]->GetType();
     return grads_type_ptr;
   }
 

@@ -196,12 +196,12 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
 TuplePtr CombinedNonMaxSuppressionInferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto input0_type = input_args[kInputIndex0]->BuildType();
-  auto input1_type = input_args[kInputIndex1]->BuildType();
-  auto input2_type = input_args[kInputIndex2]->BuildType();
-  auto input3_type = input_args[kInputIndex3]->BuildType();
-  auto input4_type = input_args[kInputIndex4]->BuildType();
-  auto input5_type = input_args[kInputIndex5]->BuildType();
+  auto input0_type = input_args[kInputIndex0]->GetType();
+  auto input1_type = input_args[kInputIndex1]->GetType();
+  auto input2_type = input_args[kInputIndex2]->GetType();
+  auto input3_type = input_args[kInputIndex3]->GetType();
+  auto input4_type = input_args[kInputIndex4]->GetType();
+  auto input5_type = input_args[kInputIndex5]->GetType();
   const std::set valid_type_float32 = {kFloat32};
   const std::set valid_type_int = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input0_type, valid_type_float32, prim_name);

@@ -55,7 +55,7 @@ abstract::ShapePtr SinhInferShape(const PrimitivePtr &primitive, const std::vect
 
 TypePtr SinhInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
   return x_dtype;
 }

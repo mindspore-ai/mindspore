@@ -69,7 +69,7 @@ abstract::ShapePtr NPUGetFloatStatusInferShape(const PrimitivePtr &, const std::
 TypePtr NPUGetFloatStatusInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  TypePtr input_x_type = input_args[0]->BuildType();
+  TypePtr input_x_type = input_args[0]->GetType();
   (void)types.emplace("input_x", input_x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return kTensorTypeFP32;

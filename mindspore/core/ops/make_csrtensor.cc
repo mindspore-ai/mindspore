@@ -51,8 +51,8 @@ AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexTwo);
   auto shape = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexThree);
 
-  auto indptr_dtype = indptr->element()->BuildType();
-  auto indices_dtype = indices->element()->BuildType();
+  auto indptr_dtype = indptr->element()->GetType();
+  auto indices_dtype = indices->element()->GetType();
   CheckSparseIndicesDtype(indptr_dtype, "indptr");
   CheckSparseIndicesDtype(indices_dtype, "indices");
 

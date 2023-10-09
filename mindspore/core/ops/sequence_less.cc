@@ -45,8 +45,8 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
 
     auto x_element = seqx_elements[i];
     auto y_element = seqy_elements[i];
-    if (x_element->BuildType()->type_id() == kObjectTypeTensorType ||
-        y_element->BuildType()->type_id() == kObjectTypeTensorType) {
+    if (x_element->GetType()->type_id() == kObjectTypeTensorType ||
+        y_element->GetType()->type_id() == kObjectTypeTensorType) {
       MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
@@ -105,7 +105,7 @@ class SequenceLessThanInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLessInferInner(prim, input_args, false)->BuildType();
+    return SequenceLessInferInner(prim, input_args, false)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -122,7 +122,7 @@ class SequenceLessEqualInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLessInferInner(prim, input_args)->BuildType();
+    return SequenceLessInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

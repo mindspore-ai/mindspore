@@ -91,10 +91,10 @@ TypePtr ResizeV2GradInferType(const PrimitivePtr &primitive, const std::vector<A
   const std::set<TypePtr> roi_valid_types = {kFloat32};
   const std::set<TypePtr> scales_valid_types = {kFloat32};
   const std::set<TypePtr> sizes_valid_types = {kInt64, kInt32};
-  TypePtr x_type = input_args[kInputIndex0]->BuildType();
-  TypePtr roi_type = input_args[kInputIndex1]->BuildType();
-  TypePtr scales_type = input_args[kInputIndex2]->BuildType();
-  TypePtr sizes_type = input_args[kInputIndex3]->BuildType();
+  TypePtr x_type = input_args[kInputIndex0]->GetType();
+  TypePtr roi_type = input_args[kInputIndex1]->GetType();
+  TypePtr scales_type = input_args[kInputIndex2]->GetType();
+  TypePtr sizes_type = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTypeValid("roi", roi_type, roi_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("scales", scales_type, scales_valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTypeValid("original_size", sizes_type, sizes_valid_types, primitive->name());

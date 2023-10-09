@@ -84,7 +84,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
     int64_t out_channel = x_shape.back();
 
     auto num_boxes = ParseNumBoxes(box_shape, box_index_shape, prim_name);
-    auto crop_size_type = input_args[kInputIndex3]->BuildType();
+    auto crop_size_type = input_args[kInputIndex3]->GetType();
     MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr,
                                "For primitive[" + prim_name + "], the [crop_size] typeid is a nullptr.");
     auto value_ptr = input_args[kInputIndex3]->GetValue();
@@ -134,11 +134,11 @@ class CropAndResizeInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
     (void)CheckAndConvertUtils::CheckTensorTypeValid(
-      "x", input_args[kInputIndex0]->BuildType(),
+      "x", input_args[kInputIndex0]->GetType(),
       {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kInputIndex1]->BuildType(), {kFloat32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kInputIndex1]->GetType(), {kFloat32},
                                                      prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kInputIndex2]->BuildType(), {kInt32},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kInputIndex2]->GetType(), {kInt32},
                                                      prim_name);
     return kFloat32;
   }

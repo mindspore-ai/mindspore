@@ -68,7 +68,7 @@ abstract::ShapePtr MatrixLogarithmInferShape(const PrimitivePtr &primitive,
 TypePtr MatrixLogarithmInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kComplex64, kComplex128};
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   return x_type;
 }

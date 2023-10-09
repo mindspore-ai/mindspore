@@ -71,7 +71,7 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(length_value_ptr);
     auto length_tensor = length_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(length_tensor);
-    auto input_type = input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     auto input_type_id = input_type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(input_type_id);
@@ -108,7 +108,7 @@ TypePtr HammingWindowInferType(const PrimitivePtr &primitive, const std::vector<
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_input_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   CheckAndConvertUtils::CheckTensorTypeValid("length", input_type, valid_input_types, primitive->name());

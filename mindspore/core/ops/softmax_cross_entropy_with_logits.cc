@@ -71,8 +71,8 @@ class SoftmaxCrossEntropyWithLogitsInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputNum = 2;
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-    auto logits_type = input_args[0]->BuildType();
-    auto label_type = input_args[1]->BuildType();
+    auto logits_type = input_args[0]->GetType();
+    auto label_type = input_args[1]->GetType();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     std::map<std::string, TypePtr> args;
     (void)args.insert(std::make_pair("logits_type", logits_type));

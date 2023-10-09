@@ -140,8 +140,8 @@ class DenseInfer : public abstract::OpInferBase {
     const std::set valid_types = {kUInt8,   kInt8,    kInt16,   kInt32,     kInt64,
                                   kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kDenseIndex0]->BuildType());
-    (void)types.emplace("w", input_args[kDenseIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kDenseIndex0]->GetType());
+    (void)types.emplace("w", input_args[kDenseIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
     bool has_bias = false;
@@ -150,12 +150,12 @@ class DenseInfer : public abstract::OpInferBase {
       auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
       has_bias = b != nullptr;
       if (has_bias) {
-        (void)types.emplace("b", input_args[kDenseIndex2]->BuildType());
+        (void)types.emplace("b", input_args[kDenseIndex2]->GetType());
         (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
       }
     }
     (void)primitive->SetAttrs({{"has_bias", MakeValue(has_bias)}});
-    return input_args[kDenseIndex0]->BuildType();
+    return input_args[kDenseIndex0]->GetType();
   }
 };
 

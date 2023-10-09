@@ -146,7 +146,7 @@ TypePtr SpaceToBatchNDInferType(const PrimitivePtr &prim, const std::vector<Abst
   }
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  auto var_type = input_args[0]->BuildType();
+  auto var_type = input_args[0]->GetType();
 
   return CheckAndConvertUtils::CheckTensorTypeValid("input type", var_type, valid_types, prim->name());
 }

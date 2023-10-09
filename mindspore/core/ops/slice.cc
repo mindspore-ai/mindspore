@@ -132,7 +132,7 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr SliceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, primitive->name());
+  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->GetType(), {kTensorType}, primitive->name());
 }
 }  // namespace
 

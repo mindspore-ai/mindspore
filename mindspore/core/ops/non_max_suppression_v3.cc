@@ -104,11 +104,11 @@ TypePtr NonMaxSuppressionV3InferType(const PrimitivePtr &prim, const std::vector
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto boxes_type = input_args[0]->BuildType();
-  auto scores_type = input_args[1]->BuildType();
-  auto max_output_size_type = input_args[2]->BuildType();
-  auto iou_threshold_type = input_args[3]->BuildType();
-  auto score_threshold_type = input_args[4]->BuildType();
+  auto boxes_type = input_args[0]->GetType();
+  auto scores_type = input_args[1]->GetType();
+  auto max_output_size_type = input_args[2]->GetType();
+  auto iou_threshold_type = input_args[3]->GetType();
+  auto score_threshold_type = input_args[4]->GetType();
   // boxes and scores must have same type
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;

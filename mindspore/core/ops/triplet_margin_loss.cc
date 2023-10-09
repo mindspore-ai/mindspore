@@ -111,13 +111,13 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
                                          kInt64,     kInt8,       kUInt16,  kUInt32,  kUInt64,  kUInt8};
   const std::set<TypePtr> valid_types2 = {kFloat32};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("positive", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("negative", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("positive", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("negative", input_args[kInputIndex2]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  auto margin = input_args[kInputIndex3]->BuildType();
+  auto margin = input_args[kInputIndex3]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("margin", margin, valid_types2, op_name);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   TypePtr output;
   if (x_type->isa<TensorType>()) {
     auto tensor_type = x_type->cast<TensorTypePtr>();

@@ -88,7 +88,7 @@ TypePtr MaxPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("input", x_dtype, valid_types, op_name);
 }

@@ -50,9 +50,9 @@ abstract::ShapePtr FillsInferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr FillsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
-  auto value_type = input_args[kInputIndex1]->BuildType();
+  auto value_type = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTypeValid("value", value_type, {kFloat32}, op_name);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   const std::set<TypePtr> x_valid_types = {kInt8, kInt16, kInt32, kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, x_valid_types, op_name);
   return x_type;

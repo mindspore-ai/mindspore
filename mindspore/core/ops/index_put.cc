@@ -110,8 +110,8 @@ TypePtr IndexPutInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16,    kUInt32,    kUInt64,
                                          kInt8,    kInt16,   kInt32,   kInt64, kComplex64, kComplex128};
   const std::set<TypePtr> idx_valid_types = {kInt32, kInt64};
-  auto x1_type = input_args[kInputIndex0]->BuildType();
-  auto x2_type = input_args[kInputIndex1]->BuildType();
+  auto x1_type = input_args[kInputIndex0]->GetType();
+  auto x2_type = input_args[kInputIndex1]->GetType();
   if (!input_args[kInputIndex2]->isa<abstract::AbstractTuple>() &&
       !input_args[kInputIndex2]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
@@ -122,7 +122,7 @@ TypePtr IndexPutInferType(const PrimitivePtr &primitive, const std::vector<Abstr
                     : input_args[kInputIndex2]->cast<abstract::AbstractListPtr>()->elements();
   std::map<std::string, TypePtr> idx_types;
   for (size_t idx = 0; idx < idx_type.size(); ++idx) {
-    (void)idx_types.emplace("indices[" + std::to_string(idx) + "]:", idx_type[idx]->BuildType());
+    (void)idx_types.emplace("indices[" + std::to_string(idx) + "]:", idx_type[idx]->GetType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(idx_types, idx_valid_types, prim_name);
   std::map<std::string, TypePtr> types;

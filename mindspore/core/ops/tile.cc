@@ -79,7 +79,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
     if (tuple_abs == nullptr) {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
                               << "], the input[multiples] must be a tuple with all Int elements, but got "
-                              << input_args[1]->BuildType()->ToString();
+                              << input_args[1]->GetType()->ToString();
     }
     if (!IsValueKnown(multiple_value)) {
       if (tuple_abs->dynamic_len()) {
@@ -112,7 +112,7 @@ TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
     MS_EXCEPTION_IF_NULL(item);
   }
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
+  auto x_type_map = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type_map);
   auto x_dtype = x_type_map->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(x_dtype);

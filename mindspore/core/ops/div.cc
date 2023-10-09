@@ -62,8 +62,8 @@ class DivInfer : public abstract::OpInferBase {
     const int64_t input_num = 2;
     (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(input_args.size()), kGreaterEqual, input_num, op_name);
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[0]->BuildType());
-    (void)types.emplace("y", input_args[1]->BuildType());
+    (void)types.emplace("x", input_args[0]->GetType());
+    (void)types.emplace("y", input_args[1]->GetType());
     return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex, op_name);
   }
 };

@@ -91,7 +91,7 @@ class AllGatherInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
-    auto x_type = input_args[0]->BuildType();
+    auto x_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

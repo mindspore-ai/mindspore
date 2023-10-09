@@ -79,7 +79,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
 TypePtr NonDeterministicIntsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const int64_t input_num = 1;
-  auto shape_type = input_args[0]->BuildType();
+  auto shape_type = input_args[0]->GetType();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   const std::set<TypePtr> valid_input_types = {kInt32, kInt64, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, valid_input_types, prim_name);

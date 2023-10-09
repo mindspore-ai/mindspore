@@ -94,9 +94,9 @@ abstract::ShapePtr MaxPool3DGradGradInferShape(const PrimitivePtr &primitive,
 TypePtr MaxPool3DGradGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)types.emplace("origin_input", input_args[0]->BuildType());
-  (void)types.emplace("origin_output", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("grad", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("origin_input", input_args[0]->GetType());
+  (void)types.emplace("origin_output", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("grad", input_args[kInputIndex2]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

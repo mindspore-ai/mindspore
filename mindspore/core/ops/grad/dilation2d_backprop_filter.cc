@@ -179,15 +179,15 @@ TypePtr Dilation2DBackpropFilterInferType(const PrimitivePtr &prim, const std::v
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("filter", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("filter", input_args[kInputIndex1]->GetType());
   std::map<std::string, TypePtr> out_backprop_types;
-  (void)out_backprop_types.emplace("out_backprop", input_args[kInputIndex2]->BuildType());
+  (void)out_backprop_types.emplace("out_backprop", input_args[kInputIndex2]->GetType());
   std::set<TypePtr> valid_type = {kUInt8, kUInt16, kUInt32,  kUInt64,  kInt8,   kInt16,
                                   kInt32, kInt64,  kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_type, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(out_backprop_types, valid_type, prim_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

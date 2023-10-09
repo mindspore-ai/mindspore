@@ -55,11 +55,11 @@ TuplePtr SparseMatrixMulInferType(const PrimitivePtr &primitive, const std::vect
 
   constexpr size_t kSMAInputsNum = 6;
   mindspore::abstract::CheckArgsSize(op_name, input_args, kSMAInputsNum);
-  auto a_shape_type = input_args[kInputIndex0]->BuildType();
-  auto a_batch_pointers_type = input_args[kInputIndex1]->BuildType();
-  auto a_indptr_type = input_args[kInputIndex2]->BuildType();
-  auto a_indices_type = input_args[kInputIndex3]->BuildType();
-  auto a_values_type = input_args[kInputIndex4]->BuildType();
+  auto a_shape_type = input_args[kInputIndex0]->GetType();
+  auto a_batch_pointers_type = input_args[kInputIndex1]->GetType();
+  auto a_indptr_type = input_args[kInputIndex2]->GetType();
+  auto a_indices_type = input_args[kInputIndex3]->GetType();
+  auto a_values_type = input_args[kInputIndex4]->GetType();
 
   return std::make_shared<Tuple>(
     std::vector<TypePtr>{a_shape_type, a_batch_pointers_type, a_indptr_type, a_indices_type, a_values_type});

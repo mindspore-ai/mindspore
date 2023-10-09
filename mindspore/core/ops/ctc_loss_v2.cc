@@ -54,11 +54,11 @@ namespace {
 void CheckInputLengthType(const std::string &arg_name, const AbstractBasePtr &input_arg,
                           const std::set<TypePtr> &valid_type, const std::string &prim_name) {
   if (input_arg->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTypeValid(arg_name, input_arg->BuildType(), valid_type, prim_name);
+    (void)CheckAndConvertUtils::CheckTypeValid(arg_name, input_arg->GetType(), valid_type, prim_name);
   } else if (input_arg->isa<abstract::AbstractTuple>()) {
     auto elements = input_arg->cast<abstract::AbstractTuplePtr>()->elements();
     for (size_t i = 0; i < elements.size(); ++i) {
-      (void)CheckAndConvertUtils::CheckSubClass(arg_name, elements[i]->BuildType(), valid_type, prim_name);
+      (void)CheckAndConvertUtils::CheckSubClass(arg_name, elements[i]->GetType(), valid_type, prim_name);
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input " << input_arg->type_name()
@@ -134,9 +134,9 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
 TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  auto type = CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->BuildType(),
-                                                   {kFloat32, kFloat64}, name);
-  (void)CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64}, name);
+  auto type =
+    CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->GetType(), {kFloat32, kFloat64}, name);
+  (void)CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->GetType(), {kInt32, kInt64}, name);
 
   CheckInputLengthType("input_lengths", input_args[kInputIndex2], {kInt32, kInt64}, name);
   CheckInputLengthType("target_lengths", input_args[kInputIndex3], {kInt32, kInt64}, name);

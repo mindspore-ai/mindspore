@@ -106,7 +106,7 @@ TypePtr AdaptiveMaxPool2DInferType(const PrimitivePtr &prim, const std::vector<A
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto input_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim->name());
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->GetType(), valid_types, prim->name());
 
   auto indices_type = kInt64;
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, indices_type});

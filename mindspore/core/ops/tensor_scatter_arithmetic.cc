@@ -97,12 +97,12 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
 TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
+  type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
   if (prim_name == prim::kPrimTensorScatterUpdate->name()) {
     return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex_and_bool, prim_name);
   }

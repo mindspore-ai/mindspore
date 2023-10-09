@@ -100,11 +100,11 @@ TypePtr NoRepeatNGramInferType(const PrimitivePtr &prim, const std::vector<Abstr
   const int64_t kInputsNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim->name());
   std::map<std::string, TypePtr> seq_types;
-  (void)seq_types.emplace("seq_type", input_args[0]->BuildType());
+  (void)seq_types.emplace("seq_type", input_args[0]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(seq_types, {kInt32}, prim->name());
   std::set<TypePtr> valid_params_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> log_types;
-  (void)log_types.emplace("log_types", input_args[1]->BuildType());
+  (void)log_types.emplace("log_types", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(log_types, valid_params_types, prim->name());
 }
 }  // namespace

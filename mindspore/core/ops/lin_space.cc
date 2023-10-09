@@ -53,8 +53,8 @@ TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
 
-  auto start_dtype = input_args[kInputIndex0]->BuildType();
-  auto stop_dtype = input_args[kInputIndex1]->BuildType();
+  auto start_dtype = input_args[kInputIndex0]->GetType();
+  auto stop_dtype = input_args[kInputIndex1]->GetType();
 
   std::map<std::string, TypePtr> type_dict = {
     {"start type", start_dtype},

@@ -53,8 +53,8 @@ AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(dense);
   MS_EXCEPTION_IF_NULL(sparse_shape);
 
-  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
-  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+  CheckSparseIndicesDtypeInt32(indptr->element()->GetType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->GetType(), "Indices");
 
   auto shape_value = sparse_shape->GetValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
@@ -71,7 +71,7 @@ AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const Primit
     out_shape.push_back(dense_shape[i]);
   }
   MS_EXCEPTION_IF_NULL(dense->element());
-  auto ret = std::make_shared<AbstractTensor>(dense->element()->BuildType(), out_shape);
+  auto ret = std::make_shared<AbstractTensor>(dense->element()->GetType(), out_shape);
   return ret;
 }
 MIND_API_OPERATOR_IMPL(CSRGather, BaseOperator);

@@ -93,15 +93,15 @@ abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr 
 
 TypePtr FusedSparseProximalAdagradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"accum", input_args[kAccumIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"accum", input_args[kAccumIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat32}, prim_name);
 
-  auto lr_dtype = input_args[kLrIndex]->BuildType();
-  auto l1_dtype = input_args[kL1Index]->BuildType();
-  auto l2_dtype = input_args[kL2Index]->BuildType();
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto lr_dtype = input_args[kLrIndex]->GetType();
+  auto l1_dtype = input_args[kL1Index]->GetType();
+  auto l2_dtype = input_args[kL2Index]->GetType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("lr", lr_dtype, {kFloat32}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("l1", l1_dtype, {kFloat32}, prim_name);
@@ -110,7 +110,7 @@ TypePtr FusedSparseProximalAdagradInferType(const PrimitivePtr &prim, const std:
   auto valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, valid_types, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace fused_sparse_proximal_adagrad

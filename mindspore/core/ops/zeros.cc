@@ -92,7 +92,7 @@ ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
   // check
   MS_EXCEPTION_IF_NULL(abs);
   auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abs->GetShape())[kShape];
-  auto out_type = abs->BuildType();
+  auto out_type = abs->GetType();
   MS_EXCEPTION_IF_NULL(out_type);
   return TensorConstructUtils::CreateZerosTensor(out_type, out_shape);
 }

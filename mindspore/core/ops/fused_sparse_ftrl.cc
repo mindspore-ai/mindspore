@@ -94,16 +94,16 @@ abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
 
 TypePtr FusedSparseFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->BuildType()},
-                                          {"accum", input_args[kAccumIndex]->BuildType()},
-                                          {"linear", input_args[kLinearIndex]->BuildType()},
-                                          {"grad", input_args[kGradIndex]->BuildType()}};
+  std::map<std::string, TypePtr> types = {{"var", input_args[kVarIndex]->GetType()},
+                                          {"accum", input_args[kAccumIndex]->GetType()},
+                                          {"linear", input_args[kLinearIndex]->GetType()},
+                                          {"grad", input_args[kGradIndex]->GetType()}};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat32}, prim_name);
 
-  auto indices_dtype = input_args[kIndicesIndex]->BuildType();
+  auto indices_dtype = input_args[kIndicesIndex]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_dtype, {kInt32}, prim_name);
 
-  auto type = input_args[kVarIndex]->BuildType();
+  auto type = input_args[kVarIndex]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type});
 }
 }  // namespace fused_sparse_ftrl

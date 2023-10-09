@@ -156,7 +156,7 @@ TypePtr DynamicStitchInferType(const PrimitivePtr &primitive, const std::vector<
   MS_EXCEPTION_IF_NULL(data0);
 
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("data0", data0->BuildType());
+  (void)types.emplace("data0", data0->GetType());
 
   std::set<TypePtr> valid_types = ops::common_valid_types;
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);

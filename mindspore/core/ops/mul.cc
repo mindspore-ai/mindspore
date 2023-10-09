@@ -48,8 +48,8 @@ TypePtr MulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
+  (void)types.emplace("x", input_args[0]->GetType());
+  (void)types.emplace("y", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, op_name);
 }
 }  // namespace

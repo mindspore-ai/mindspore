@@ -67,7 +67,7 @@ abstract::ShapePtr HSVToRGBInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr HSVToRGBInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
-  auto input_dtype = input_args[0]->BuildType();
+  auto input_dtype = input_args[0]->GetType();
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_dtype, input_valid_types, kNameHSVToRGB);
   return input_dtype;

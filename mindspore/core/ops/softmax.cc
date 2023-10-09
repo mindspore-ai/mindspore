@@ -86,7 +86,7 @@ TypePtr SoftMaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   const std::set<TypePtr> valid_types = {kBFloat16, kFloat16, kFloat32, kFloat64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
 }
 }  // namespace
 

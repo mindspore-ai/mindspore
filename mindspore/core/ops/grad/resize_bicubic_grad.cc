@@ -93,8 +93,8 @@ TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  auto grads_type = input_args[0]->BuildType();
-  auto original_image_type = input_args[1]->BuildType();
+  auto grads_type = input_args[0]->GetType();
+  auto original_image_type = input_args[1]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::map<std::string, TypePtr> types = {{"grads_type", grads_type},
                                                 {"original_image_type", original_image_type}};

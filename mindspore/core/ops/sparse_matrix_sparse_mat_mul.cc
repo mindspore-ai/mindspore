@@ -173,16 +173,16 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
 TuplePtr SparseMatrixSparseMatMulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> index_valid_types = {kInt32, kInt64};
   const std::set<TypePtr> values_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto x1_dense_type = input_args[kInputIndex0]->BuildType();
-  auto x1_batch_type = input_args[kInputIndex1]->BuildType();
-  auto x1_row_type = input_args[kInputIndex2]->BuildType();
-  auto x1_col_type = input_args[kInputIndex3]->BuildType();
-  auto x1_values_type = input_args[kInputIndex4]->BuildType();
+  auto x1_dense_type = input_args[kInputIndex0]->GetType();
+  auto x1_batch_type = input_args[kInputIndex1]->GetType();
+  auto x1_row_type = input_args[kInputIndex2]->GetType();
+  auto x1_col_type = input_args[kInputIndex3]->GetType();
+  auto x1_values_type = input_args[kInputIndex4]->GetType();
 
-  auto x2_dense_type = input_args[kInputIndex5]->BuildType();
-  auto x2_batch_type = input_args[kInputIndex6]->BuildType();
-  auto x2_row_type = input_args[kInputIndex7]->BuildType();
-  auto x2_col_type = input_args[kInputIndex8]->BuildType();
+  auto x2_dense_type = input_args[kInputIndex5]->GetType();
+  auto x2_batch_type = input_args[kInputIndex6]->GetType();
+  auto x2_row_type = input_args[kInputIndex7]->GetType();
+  auto x2_col_type = input_args[kInputIndex8]->GetType();
 
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x1_dense_shape", x1_dense_type);

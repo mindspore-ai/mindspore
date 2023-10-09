@@ -67,11 +67,11 @@ TypePtr RandomGammaGradInferType(const PrimitivePtr &prim, const std::vector<Abs
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("alpha_type", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("sample_type", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("alpha_type", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("sample_type", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
 
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

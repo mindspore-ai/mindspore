@@ -57,16 +57,15 @@ class LayerNormGradGradInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex4]);  // gamma
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
-    (void)types.emplace("gamma", input_args[kInputIndex4]->BuildType());
-    (void)types.emplace("d_dx", input_args[kInputIndex5]->BuildType());
-    (void)types.emplace("d_dg", input_args[kInputIndex6]->BuildType());
-    (void)types.emplace("d_db", input_args[kInputIndex7]->BuildType());
+    (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("dy", input_args[kInputIndex1]->GetType());
+    (void)types.emplace("gamma", input_args[kInputIndex4]->GetType());
+    (void)types.emplace("d_dx", input_args[kInputIndex5]->GetType());
+    (void)types.emplace("d_dg", input_args[kInputIndex6]->GetType());
+    (void)types.emplace("d_db", input_args[kInputIndex7]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-    return std::make_shared<Tuple>(std::vector<TypePtr>{input_args[kInputIndex0]->BuildType(),
-                                                        input_args[kInputIndex1]->BuildType(),
-                                                        input_args[kInputIndex4]->BuildType()});
+    return std::make_shared<Tuple>(std::vector<TypePtr>{
+      input_args[kInputIndex0]->GetType(), input_args[kInputIndex1]->GetType(), input_args[kInputIndex4]->GetType()});
   }
 
   BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {

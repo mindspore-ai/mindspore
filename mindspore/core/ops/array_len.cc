@@ -54,7 +54,7 @@ AbstractBasePtr ArrayLenInferInner(const PrimitivePtr &primitive, const std::vec
   auto in_shape = shape_map[kShape];
   // infer type
   std::set<TypePtr> valid_params_types = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
+  (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->GetType(), valid_params_types, op_name);
   auto seq_abs = input_args[0]->GetShape()->cast<abstract::ShapePtr>();
   if (seq_abs->shape().empty()) {
     MS_EXCEPTION(TypeError) << "Not support len of a 0-D tensor.";
@@ -73,7 +73,7 @@ class ArrayLenInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ArrayLenInferInner(prim, input_args)->BuildType();
+    return ArrayLenInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
@@ -87,7 +87,7 @@ class ArrayLenInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("shape infer", int64_t(input_args.size()), kEqual, 1, op_name);
     MS_EXCEPTION_IF_NULL(input_args[0]);
     std::set<TypePtr> valid_params_types = {kTensorType};
-    (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->BuildType(), valid_params_types, op_name);
+    (void)CheckAndConvertUtils::CheckSubClass("shape type", input_args[0]->GetType(), valid_params_types, op_name);
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     if (shape_map.count(kShape) == 0) {
       MS_LOG(EXCEPTION) << "For primitive " << op_name << " the input convert shape failed.";

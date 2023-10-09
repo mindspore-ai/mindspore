@@ -155,12 +155,12 @@ abstract::TupleShapePtr DynamicRNNInferShape(const PrimitivePtr &primitive,
 TuplePtr DynamicRNNInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kDynRnnInputNum, primitive->name());
   auto op_name = primitive->name();
-  auto x_dtype = input_args[kDynRnnIdx0]->BuildType();
-  auto w_dtype = input_args[kDynRnnIdx1]->BuildType();
-  auto b_dtype = input_args[kDynRnnIdx2]->BuildType();
-  auto h_dtype = input_args[kDynRnnIdx4]->BuildType();
-  auto c_dtype = input_args[kDynRnnIdx5]->BuildType();
-  auto seq_type = input_args[kDynRnnIdx3]->BuildType();
+  auto x_dtype = input_args[kDynRnnIdx0]->GetType();
+  auto w_dtype = input_args[kDynRnnIdx1]->GetType();
+  auto b_dtype = input_args[kDynRnnIdx2]->GetType();
+  auto h_dtype = input_args[kDynRnnIdx4]->GetType();
+  auto c_dtype = input_args[kDynRnnIdx5]->GetType();
+  auto seq_type = input_args[kDynRnnIdx3]->GetType();
   if (seq_type->type_id() != kMetaTypeNone) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "' seq is not None, please check seq's type";
   }

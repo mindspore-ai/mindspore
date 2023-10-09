@@ -39,7 +39,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &attr_name, const AbstractBasePtr &abs) {
-  auto build_type = abs->BuildType();
+  auto build_type = abs->GetType();
   auto build_value = abs->GetValue();
   if (build_type == kInt32) {
     return GetValue<int32_t>(build_value);
@@ -47,7 +47,7 @@ int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &a
     return GetValue<int64_t>(build_value);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the type of '" << attr_name
-                            << "' should be int32, int64 but got: " << abs->BuildType()->ToString();
+                            << "' should be int32, int64 but got: " << abs->GetType()->ToString();
   }
 }
 AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, int64_t start_v, int64_t end,
@@ -74,7 +74,7 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     }
     for (int64_t i = start; i < end; i += step) {
       abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i)]->GetValue(),
-                                                               elems[static_cast<size_t>(i)]->BuildType()));
+                                                               elems[static_cast<size_t>(i)]->GetType()));
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
   } else {
@@ -94,7 +94,7 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     }
     for (int64_t i = start; i > end; i += step) {
       abs.push_back(std::make_shared<abstract::AbstractScalar>(elems[static_cast<size_t>(i + len)]->GetValue(),
-                                                               elems[static_cast<size_t>(i + len)]->BuildType()));
+                                                               elems[static_cast<size_t>(i + len)]->GetType()));
     }
     return std::make_shared<abstract::AbstractTuple>(abs);
   }
@@ -171,7 +171,7 @@ class SequenceSliceInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(prim, input_args)->BuildType();
+    return SliceInferInner(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -103,10 +103,10 @@ TypePtr SparseSegmentMeanWithNumSegmentsInferType(const PrimitivePtr &prim,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
-  auto num_segments_type = input_args[kInputIndex3]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
+  auto num_segments_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> common_valid_types = {kInt32, kInt64};
   std::map<std::string, TypePtr> types;
@@ -115,7 +115,7 @@ TypePtr SparseSegmentMeanWithNumSegmentsInferType(const PrimitivePtr &prim,
   (void)types.emplace("num_segments", num_segments_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

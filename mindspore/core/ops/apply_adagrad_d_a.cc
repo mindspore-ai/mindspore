@@ -99,14 +99,14 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto gradient_accumulator_type = input_args[kInputIndex1]->BuildType();
-  auto gradient_squared_accumulator_type = input_args[kInputIndex2]->BuildType();
-  auto grad_type = input_args[kInputIndex3]->BuildType();
-  auto lr_type = input_args[kInputIndex4]->BuildType();
-  auto l1_type = input_args[kInputIndex5]->BuildType();
-  auto l2_type = input_args[kInputIndex6]->BuildType();
-  auto global_step_type = input_args[kInputIndex7]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto gradient_accumulator_type = input_args[kInputIndex1]->GetType();
+  auto gradient_squared_accumulator_type = input_args[kInputIndex2]->GetType();
+  auto grad_type = input_args[kInputIndex3]->GetType();
+  auto lr_type = input_args[kInputIndex4]->GetType();
+  auto l1_type = input_args[kInputIndex5]->GetType();
+  auto l2_type = input_args[kInputIndex6]->GetType();
+  auto global_step_type = input_args[kInputIndex7]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // gradient_accumulator、gradient_squared_accumulator、grad must have the same type as var
   std::map<std::string, TypePtr> args;

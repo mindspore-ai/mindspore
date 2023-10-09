@@ -265,8 +265,8 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    auto x_type = input_args[0]->BuildType();
-    auto y_type = input_args[kIndex1]->BuildType();
+    auto x_type = input_args[0]->GetType();
+    auto y_type = input_args[kIndex1]->GetType();
     std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
     std::set<std::string> compare_ops = {mindspore::kScalarEqOpName, mindspore::kScalarGeOpName,
                                          mindspore::kScalarGtOpName, mindspore::kScalarLtOpName,
@@ -305,8 +305,8 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     if (x_value == kValueAny || y_value == kValueAny) {
       return nullptr;
     }
-    auto x_type = input_args[x_index]->BuildType();
-    auto y_type = input_args[y_index]->BuildType();
+    auto x_type = input_args[x_index]->GetType();
+    auto y_type = input_args[y_index]->GetType();
     auto res_type = HighPriorityType(x_type, y_type, op_name);
     ValuePtr result;
     switch (res_type->type_id()) {

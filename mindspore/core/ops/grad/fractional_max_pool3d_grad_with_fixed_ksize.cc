@@ -168,11 +168,11 @@ TypePtr FractionalMaxPool3DGradWithFixedKsizeInferType(const PrimitivePtr &primi
   }
   const std::set<TypePtr> out_backprop_valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64};
   const std::set<TypePtr> argmax_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("origin_input", input_args[kInputIndex0]->BuildType(),
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("origin_input", input_args[kInputIndex0]->GetType(),
                                                    out_backprop_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->BuildType(), argmax_valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("argmax", input_args[kInputIndex2]->GetType(), argmax_valid_types,
                                                    op_name);
-  return CheckAndConvertUtils::CheckTensorTypeValid("out_backprop", input_args[kInputIndex1]->BuildType(),
+  return CheckAndConvertUtils::CheckTensorTypeValid("out_backprop", input_args[kInputIndex1]->GetType(),
                                                     out_backprop_valid_types, op_name);
 }
 }  // namespace

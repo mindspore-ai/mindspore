@@ -85,8 +85,8 @@ TypePtr CumProdInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_type = input_args[0]->BuildType();
-  auto axis_type = input_args[1]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto axis_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTypeValid("axis", axis_type, {kInt}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim_name);
   return x_type;

@@ -128,17 +128,16 @@ TuplePtr LuUnpackInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   for (const auto &i : input_args) {
     MS_EXCEPTION_IF_NULL(i);
   }
-  auto LU_data_type = input_args[0]->BuildType();
-  auto LU_pivots_type = input_args[1]->BuildType();
+  auto LU_data_type = input_args[0]->GetType();
+  auto LU_pivots_type = input_args[1]->GetType();
 
   const std::set<TypePtr> valid_types_1 = {kFloat64, kFloat32, kFloat16, kInt64, kInt32, kInt16, kInt8, kUInt8};
   const std::set<TypePtr> valid_types_2 = {kInt64, kInt32, kInt16, kInt8, kUInt8};
   std::map<std::string, TypePtr> input_types;
   (void)input_types.emplace("LU_data", LU_data_type);
   (void)input_types.emplace("LU_pivots", LU_pivots_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("LU_data", input_args[0]->BuildType(), valid_types_1, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("LU_pivots", input_args[1]->BuildType(), valid_types_2,
-                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("LU_data", input_args[0]->GetType(), valid_types_1, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("LU_pivots", input_args[1]->GetType(), valid_types_2, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{LU_data_type, LU_data_type, LU_data_type});
 }
 }  // namespace

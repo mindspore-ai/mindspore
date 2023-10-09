@@ -128,7 +128,7 @@ AbstractBasePtr SequenceConcatInfer(const abstract::AnalysisEnginePtr &, const P
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = SequenceConcatInferType(primitive, input_args)->BuildType();
+  auto infer_type = SequenceConcatInferType(primitive, input_args)->GetType();
   auto infer_shape = SequenceConcatInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
@@ -142,7 +142,7 @@ class MIND_API AGSequenceConcatInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceConcatInferType(primitive, input_args)->BuildType();
+    return SequenceConcatInferType(primitive, input_args)->GetType();
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {

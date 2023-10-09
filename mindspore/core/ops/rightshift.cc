@@ -47,8 +47,8 @@ abstract::ShapePtr RightShiftInferShape(const PrimitivePtr &primitive, const std
 TypePtr RightShiftInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto y_type = input_args[kInputIndex1]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto y_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(y_type);
   std::map<std::string, TypePtr> types;

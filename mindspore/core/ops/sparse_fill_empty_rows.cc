@@ -127,10 +127,10 @@ TypePtr SparseFillEmptyRowsInferType(const PrimitivePtr &primitive, const std::v
   const std::set<TypePtr> common_valid_types_with_bool_and_complex = {
     kInt8,   kInt16,   kInt32,   kInt64,   kUInt8, kUInt16,    kUInt32,
     kUInt64, kFloat16, kFloat32, kFloat64, kBool,  kComplex64, kComplex128};
-  auto indices_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
-  auto dense_shape_type = input_args[kInputIndex2]->BuildType();
-  auto default_value_type = input_args[kInputIndex3]->BuildType();
+  auto indices_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
+  auto dense_shape_type = input_args[kInputIndex2]->GetType();
+  auto default_value_type = input_args[kInputIndex3]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("values", values_type);
   (void)types.emplace("default_value", default_value_type);

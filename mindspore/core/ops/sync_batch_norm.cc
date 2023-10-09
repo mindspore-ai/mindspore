@@ -77,11 +77,11 @@ TuplePtr SyncBatchNormInferType(const PrimitivePtr &prim, const std::vector<Abst
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  auto x_dtype = input_args[0]->BuildType();
-  auto scale_dtype = input_args[1]->BuildType();
-  auto bias_dtype = input_args[2]->BuildType();
-  auto mean_dtype = input_args[3]->BuildType();
-  auto variance_dtype = input_args[4]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
+  auto scale_dtype = input_args[1]->GetType();
+  auto bias_dtype = input_args[2]->GetType();
+  auto mean_dtype = input_args[3]->GetType();
+  auto variance_dtype = input_args[4]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim_name);
   // scale and bias must have the same type.
   std::map<std::string, TypePtr> args1;

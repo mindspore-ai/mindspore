@@ -92,7 +92,7 @@ TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vecto
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kInt32};
   // check axis type
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[0]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("axis", input_args[0]->GetType(), valid_types, prim_name);
   // check x type and infer y type
   if (!input_args[1]->isa<abstract::AbstractTuple>() && !input_args[1]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(TypeError) << "For 'ConcatOffsetV1', the input x must be list or tuple of tensors.";
@@ -103,10 +103,10 @@ TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vecto
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < tensors.size(); ++i) {
     std::string tensori = "tensor" + std::to_string(i);
-    (void)types.emplace(tensori, tensors[i]->BuildType());
+    (void)types.emplace(tensori, tensors[i]->GetType());
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>(tensors.size(), tensors[0]->BuildType()));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(tensors.size(), tensors[0]->GetType()));
 }
 }  // namespace
 

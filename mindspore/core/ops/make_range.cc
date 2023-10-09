@@ -50,7 +50,7 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
   for (size_t i = 0; i < input_args.size(); ++i) {
     auto element = input_args[i];
     MS_EXCEPTION_IF_NULL(element);
-    auto element_type = element->BuildType();
+    auto element_type = element->GetType();
     if (element_type->type_id() != kInt64->type_id() && element_type->type_id() != kInt32->type_id()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
@@ -111,7 +111,7 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   bool has_variable = CheckMakeRangeInput(args_spec_list, prim_name);
-  auto type = args_spec_list[0]->BuildType();
+  auto type = args_spec_list[0]->GetType();
   if (has_variable) {
     // If the input to make_range has variable input, the output abs should be dynamic length sequence.
     auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, type);
@@ -144,7 +144,7 @@ class MIND_API AGMakeRangeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferImplMakeRange(primitive, input_args)->BuildType();
+    return InferImplMakeRange(primitive, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

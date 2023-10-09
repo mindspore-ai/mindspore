@@ -50,7 +50,7 @@ AbstractBasePtr MakeCOOTensorInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto values = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexOne);
   auto dense_shape = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, kIndexTwo);
 
-  auto indices_dtype = indices->element()->BuildType();
+  auto indices_dtype = indices->element()->GetType();
   CheckSparseIndicesDtype(indices_dtype, "Indices");
 
   auto indices_shp = indices->shape()->shape();

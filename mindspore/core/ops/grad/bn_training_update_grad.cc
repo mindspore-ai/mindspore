@@ -52,8 +52,8 @@ TuplePtr BNTrainingUpdateGradInferType(const PrimitivePtr &primitive, const std:
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateGradInputNum, prim_name);
-  auto batch_mean_type_ptr = input_args[kInputIndex2]->BuildType();
-  auto batch_variance_type_ptr = input_args[kInputIndex3]->BuildType();
+  auto batch_mean_type_ptr = input_args[kInputIndex2]->GetType();
+  auto batch_variance_type_ptr = input_args[kInputIndex3]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{batch_mean_type_ptr, batch_variance_type_ptr});
 }
 }  // namespace

@@ -36,7 +36,7 @@ abstract::ShapePtr IdentityInferShape(const PrimitivePtr &primitive, const std::
 TypePtr IdentityInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   auto valid_type = common_valid_types_with_complex_and_bool;
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_type, op_name);
   return infer_type;

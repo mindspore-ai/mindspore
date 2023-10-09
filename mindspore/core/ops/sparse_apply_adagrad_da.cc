@@ -99,15 +99,15 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
 TypePtr SparseApplyAdagradDAInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto var = input_args[0]->BuildType();
-  auto grad_accum = input_args[1]->BuildType();
-  auto grad_square_accum = input_args[2]->BuildType();
-  auto grad = input_args[3]->BuildType();
-  auto indices = input_args[4]->BuildType();
-  auto lr = input_args[5]->BuildType();
-  auto l1 = input_args[6]->BuildType();
-  auto l2 = input_args[7]->BuildType();
-  auto global_step = input_args[8]->BuildType();
+  auto var = input_args[0]->GetType();
+  auto grad_accum = input_args[1]->GetType();
+  auto grad_square_accum = input_args[2]->GetType();
+  auto grad = input_args[3]->GetType();
+  auto indices = input_args[4]->GetType();
+  auto lr = input_args[5]->GetType();
+  auto l1 = input_args[6]->GetType();
+  auto l2 = input_args[7]->GetType();
+  auto global_step = input_args[8]->GetType();
 
   std::map<std::string, TypePtr> args;
   (void)args.emplace("var", var);

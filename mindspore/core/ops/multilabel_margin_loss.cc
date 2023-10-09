@@ -79,12 +79,12 @@ TuplePtr MultilabelMarginLossInferType(const PrimitivePtr &primitive, const std:
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types1 = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_types2 = {kInt32};
-  auto x = input_args[kInputIndex0]->BuildType();
-  auto target = input_args[kInputIndex1]->BuildType();
+  auto x = input_args[kInputIndex0]->GetType();
+  auto target = input_args[kInputIndex1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x, valid_types1, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("target", target, valid_types2, op_name);
   return std::make_shared<Tuple>(
-    std::vector<TypePtr>{input_args[kInputIndex0]->BuildType(), input_args[kInputIndex1]->BuildType()});
+    std::vector<TypePtr>{input_args[kInputIndex0]->GetType(), input_args[kInputIndex1]->GetType()});
 }
 }  // namespace
 

@@ -59,7 +59,7 @@ class MIND_API IdentityNInfer : public abstract::OpInferBase {
     bool is_list_x = input_args[kInputIndex0]->isa<abstract::AbstractList>();
     if ((!is_tuple_x) && (!is_list_x)) {
       MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have ListTensor or TupleTensor input but get "
-                              << input_args[kInputIndex0]->BuildType()->ToString();
+                              << input_args[kInputIndex0]->GetType()->ToString();
     }
     auto x = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>();
     abstract::AbstractBasePtrList x_seq = x->elements();
@@ -73,7 +73,7 @@ class MIND_API IdentityNInfer : public abstract::OpInferBase {
                                                      kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
     for (size_t idx = 0; idx < in_size; ++idx) {
       auto name = "input x[" + std::to_string(idx) + "]";
-      (void)CheckAndConvertUtils::CheckTensorTypeValid(name, x_seq[idx]->BuildType(), identityn_valid_types, op_name);
+      (void)CheckAndConvertUtils::CheckTensorTypeValid(name, x_seq[idx]->GetType(), identityn_valid_types, op_name);
     }
     auto types = std::make_shared<Tuple>(x->ElementsType());
     return types;

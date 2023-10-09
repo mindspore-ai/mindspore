@@ -129,8 +129,8 @@ class GruGradInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto hx_type_ptr = input_args[kHxIdx]->BuildType();
-    auto dy_type_ptr = input_args[kDyIdx]->BuildType();
+    auto hx_type_ptr = input_args[kHxIdx]->GetType();
+    auto dy_type_ptr = input_args[kDyIdx]->GetType();
     std::vector<TypePtr> types = {dy_type_ptr, dy_type_ptr, hx_type_ptr};
     return std::make_shared<Tuple>(types);
   }

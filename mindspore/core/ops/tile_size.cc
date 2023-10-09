@@ -60,7 +60,7 @@ class TileSizeInfer : public abstract::OpInferBase {
     if (IsValueKnown(ndim_value)) {
       auto ndim = GetValue<int64_t>(ndim_value);
       auto abs = MakeTuple(ndim);
-      return abs->BuildType();
+      return abs->GetType();
     }
 
     return nullptr;

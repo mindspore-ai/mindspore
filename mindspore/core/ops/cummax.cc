@@ -60,7 +60,7 @@ abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
 TuplePtr CummaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = common_valid_types;
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   auto indices_type = kInt64;
   return std::make_shared<Tuple>(std::vector{x_type, indices_type});

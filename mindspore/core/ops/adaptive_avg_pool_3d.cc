@@ -85,7 +85,7 @@ abstract::ShapePtr AdaptiveAvgPool3DInferShape(const PrimitivePtr &primitive,
 
 TypePtr AdaptiveAvgPool3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> x_valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, x_valid_types, op_name);
   return x_dtype;

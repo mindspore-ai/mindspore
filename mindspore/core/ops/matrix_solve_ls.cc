@@ -104,9 +104,9 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> l2_valid_types = {kFloat64};
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto matrix_type = input_args[kIndex0]->BuildType();
-  auto rhs_type = input_args[kIndex1]->BuildType();
-  auto l2_type = input_args[kIndex2]->BuildType();
+  auto matrix_type = input_args[kIndex0]->GetType();
+  auto rhs_type = input_args[kIndex1]->GetType();
+  auto l2_type = input_args[kIndex2]->GetType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("matrix", matrix_type);
   (void)types.emplace("rhs", rhs_type);

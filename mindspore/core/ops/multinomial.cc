@@ -115,9 +115,9 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
 TypePtr MultinomialInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  auto num_samples_type = input_args[1]->BuildType();
+  auto num_samples_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(num_samples_type);
   const std::set<TypePtr> valid_types_1 = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
                                            kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};

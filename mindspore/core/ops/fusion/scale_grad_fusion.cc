@@ -30,7 +30,7 @@ abstract::BaseShapePtr ScaleGradInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ScaleGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   return infer_type;
 }
 
@@ -45,7 +45,7 @@ AbstractBasePtr ScaleGradInferShapeAndType(const abstract::AnalysisEnginePtr &, 
   }
 
   auto infer_shape = input_args[0]->GetShape();
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

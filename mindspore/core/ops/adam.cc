@@ -130,10 +130,10 @@ class AdamInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                              primitive->name());
     auto prim_name = primitive->name();
-    auto var_type = input_args[kInputIndex0]->BuildType();
-    auto m_type = input_args[kInputIndex1]->BuildType();
-    auto v_type = input_args[kInputIndex2]->BuildType();
-    auto grad_type = input_args[kInputIndex9]->BuildType();
+    auto var_type = input_args[kInputIndex0]->GetType();
+    auto m_type = input_args[kInputIndex1]->GetType();
+    auto v_type = input_args[kInputIndex2]->GetType();
+    auto grad_type = input_args[kInputIndex9]->GetType();
     std::map<std::string, TypePtr> type_dict1;
     (void)type_dict1.emplace("var", var_type);
     (void)type_dict1.emplace("grad", grad_type);

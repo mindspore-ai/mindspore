@@ -58,7 +58,7 @@ abstract::ShapePtr EpsInferShape(const PrimitivePtr &primitive, const std::vecto
 TypePtr EpsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, primitive->name());
   return infer_type;

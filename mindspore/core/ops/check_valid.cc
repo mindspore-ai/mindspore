@@ -55,8 +55,8 @@ TypePtr CheckValidInferType(const PrimitivePtr &primitive, const std::vector<Abs
   (void)CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kEqual,
                                            kCheckValidInputsNum, prim_name);
   const std::set<TypePtr> valid_types = {kInt16, kUInt8, kFloat16, kFloat32};
-  auto bboxes_dtype = input_args[0]->BuildType();
-  auto metas_dtype = input_args[1]->BuildType();
+  auto bboxes_dtype = input_args[0]->GetType();
+  auto metas_dtype = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("bboxes", bboxes_dtype, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("metas", metas_dtype, valid_types, prim_name);
   return std::make_shared<TensorType>(kBool);

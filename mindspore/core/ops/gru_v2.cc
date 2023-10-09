@@ -139,11 +139,11 @@ abstract::TupleShapePtr GRUV2InferShape(const PrimitivePtr &primitive, const std
 TuplePtr GRUV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[3]->BuildType(), {kInt32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("seq_lengths", input_args[3]->GetType(), {kInt32}, op_name);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("h", input_args[kInputIndex1]->BuildType());
-  (void)types.emplace("w", input_args[kInputIndex2]->BuildType());
+  (void)types.emplace("input", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("h", input_args[kInputIndex1]->GetType());
+  (void)types.emplace("w", input_args[kInputIndex2]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type, type, type});
 }

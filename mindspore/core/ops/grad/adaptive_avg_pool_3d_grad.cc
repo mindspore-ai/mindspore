@@ -84,8 +84,8 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
 TypePtr AdaptiveAvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto input_grad_dtype = input_args[0]->BuildType();
-  auto orig_input_shape_dtype = input_args[1]->BuildType();
+  auto input_grad_dtype = input_args[0]->GetType();
+  auto orig_input_shape_dtype = input_args[1]->GetType();
   const std::set<TypePtr> input_grad_valid = {kInt8, kInt16, kInt32, kInt64, kUInt8, kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> orig_inputs_valid = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_grad", input_grad_dtype, input_grad_valid, prim_name);

@@ -47,7 +47,7 @@ class SiLUGradInfer : public abstract::OpInferBase {
     auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
     auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
     (void)abstract::CheckDtypeSame(prim_name, out, dout);
-    auto x_type = dout->BuildType();
+    auto x_type = dout->GetType();
     MS_EXCEPTION_IF_NULL(x_type);
     if (!x_type->isa<TensorType>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()

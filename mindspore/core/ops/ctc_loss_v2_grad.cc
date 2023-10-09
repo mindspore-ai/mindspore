@@ -72,8 +72,8 @@ TypePtr CTCLossV2GradInferType(const PrimitivePtr &primitive, const std::vector<
   std::map<std::string, TypePtr> types;
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  (void)types.emplace("grad_out", input_args[0]->BuildType());
-  (void)types.emplace("log_probs", input_args[1]->BuildType());
+  (void)types.emplace("grad_out", input_args[0]->GetType());
+  (void)types.emplace("log_probs", input_args[1]->GetType());
   auto out_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, name);
   return out_type;
 }

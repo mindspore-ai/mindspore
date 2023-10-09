@@ -96,14 +96,14 @@ abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primi
 
 TuplePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto var_type = input_args[0]->BuildType();
-  auto m_type = input_args[1]->BuildType();
-  auto v_type = input_args[2]->BuildType();
-  auto vhat_type = input_args[3]->BuildType();
-  auto beta1_power_type = input_args[4]->BuildType();
-  auto beta2_power_type = input_args[5]->BuildType();
-  auto lr_type = input_args[6]->BuildType();
-  auto grad_type = input_args[7]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto m_type = input_args[1]->GetType();
+  auto v_type = input_args[2]->GetType();
+  auto vhat_type = input_args[3]->GetType();
+  auto beta1_power_type = input_args[4]->GetType();
+  auto beta2_power_type = input_args[5]->GetType();
+  auto lr_type = input_args[6]->GetType();
+  auto grad_type = input_args[7]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, m, v, vhat, grad valid and must has the same type
   std::map<std::string, TypePtr> args;

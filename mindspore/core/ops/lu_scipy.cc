@@ -79,7 +79,7 @@ abstract::TupleShapePtr LUInferShape(const PrimitivePtr &primitive, const std::v
 
 TuplePtr LUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, kInt32, kInt32});
 }
 }  // namespace

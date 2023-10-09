@@ -68,9 +68,9 @@ TypePtr SigmoidCrossEntropyWithLogitsGradInferType(const PrimitivePtr &primitive
   const int64_t kInputNum = 3;
   (void)CheckAndConvertUtils::CheckInteger("sigmoid_cross_extropy_with_logits_infer_type",
                                            SizeToLong(input_args.size()), kGreaterEqual, kInputNum, prim_name);
-  auto x_type = input_args[0]->BuildType();
-  auto y_type = input_args[1]->BuildType();
-  auto dout_type = input_args[2]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto y_type = input_args[1]->GetType();
+  auto dout_type = input_args[2]->GetType();
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;

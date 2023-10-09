@@ -60,16 +60,15 @@ class SparseSliceGradInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->BuildType(),
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", input_args[kInputIndex0]->GetType(),
                                                      {kUInt8, kUInt16, kUInt32, kUInt64, kInt8, kInt16, kInt32, kInt64,
                                                       kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
                                                      op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), {kInt64},
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->GetType(), {kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("new_indices", input_args[kInputIndex3]->GetType(), {kInt64},
                                                      op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex2]->BuildType(), {kInt64}, op_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("new_indices", input_args[kInputIndex3]->BuildType(), {kInt64},
-                                                     op_name);
-    auto output_type = input_args[kInputIndex0]->BuildType();
+    auto output_type = input_args[kInputIndex0]->GetType();
     return output_type;
   }
 

@@ -131,11 +131,11 @@ TypePtr ApplyMomentumInferType(const PrimitivePtr &primitive, const std::vector<
     MS_EXCEPTION_IF_NULL(item);
   }
   // Infer type
-  auto v_tensor_type = input_args[kInputIndex0]->BuildType();
-  auto a_tensor_type = input_args[kInputIndex1]->BuildType();
-  auto l_type = input_args[kInputIndex2]->BuildType();
-  auto g_type = input_args[kInputIndex3]->BuildType();
-  auto m_type = input_args[kInputIndex4]->BuildType();
+  auto v_tensor_type = input_args[kInputIndex0]->GetType();
+  auto a_tensor_type = input_args[kInputIndex1]->GetType();
+  auto l_type = input_args[kInputIndex2]->GetType();
+  auto g_type = input_args[kInputIndex3]->GetType();
+  auto m_type = input_args[kInputIndex4]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kInt8,   kUInt8,   kInt16,     kUInt16,    kInt32,
                                          kUInt32,  kInt64,   kUInt64, kFloat64, kComplex64, kComplex128};
 

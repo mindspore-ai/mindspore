@@ -61,7 +61,7 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(window_length_value_ptr);
     auto window_length_tensor = window_length_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(window_length_tensor);
-    auto input_type = input_args[0]->BuildType();
+    auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     auto input_type_id = input_type->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(input_type_id);
@@ -121,7 +121,7 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
 
 TypePtr BlackmanWindowInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   const std::set<TypePtr> valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("window_length", input_type, valid_types, prim->name());

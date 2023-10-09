@@ -145,27 +145,27 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
 
   // Check dtype
   // a_indices and b_indices should be int64
-  auto a_indices_type = a_indices->element()->BuildType();
-  auto b_indices_type = b_indices->element()->BuildType();
+  auto a_indices_type = a_indices->element()->GetType();
+  auto b_indices_type = b_indices->element()->GetType();
   const std::set<TypePtr> indices_valid_types = {kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->BuildType(), indices_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->BuildType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->GetType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->GetType(), indices_valid_types, op_name);
   // a_shape and b_shape should be int64
-  auto a_shape_type = a_shape->element()->BuildType();
-  auto b_shape_type = b_shape->element()->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->BuildType(), indices_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->BuildType(), indices_valid_types, op_name);
+  auto a_shape_type = a_shape->element()->GetType();
+  auto b_shape_type = b_shape->element()->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->GetType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->GetType(), indices_valid_types, op_name);
   // check a_values and b_values
-  auto a_value_type = a_values->element()->BuildType();
-  auto b_value_type = b_values->element()->BuildType();
+  auto a_value_type = a_values->element()->GetType();
+  auto b_value_type = b_values->element()->GetType();
   const std::set<TypePtr> value_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->BuildType(), value_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->BuildType(), value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->GetType(), value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->GetType(), value_valid_types, op_name);
   // Check thresh
-  auto thresh_type = thresh->element()->BuildType();
+  auto thresh_type = thresh->element()->GetType();
   const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->GetType(), thresh_valid_types, op_name);
 
   // Check same type
   // value
@@ -180,7 +180,7 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
     CheckSparseAddSameDtype(a_value_type, thresh_type, "x1_values", "thresh", op_name);
   }
 
-  return std::make_shared<Tuple>(std::vector<TypePtr>{a_indices->element()->BuildType(), a_value_type, a_shape_type});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{a_indices->element()->GetType(), a_value_type, a_shape_type});
 }
 
 AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

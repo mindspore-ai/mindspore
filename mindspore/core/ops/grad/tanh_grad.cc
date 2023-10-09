@@ -48,10 +48,10 @@ TypePtr TanhGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   auto prim_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("y", input_args[kInputIndex0]->GetType());
+  (void)types.emplace("dy", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 
 abstract::ShapePtr TanhGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

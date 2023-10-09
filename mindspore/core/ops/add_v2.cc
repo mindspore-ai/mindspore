@@ -54,10 +54,10 @@ TypePtr AddV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim->name());
   const std::set<TypePtr> valid_types = {kInt8,   kInt16, kInt32,   kInt64,   kUInt8,   kUInt16,    kUInt32,
                                          kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)types.emplace("x", input_args[kIndex0]->BuildType());
-  (void)types.emplace("y", input_args[kIndex1]->BuildType());
+  (void)types.emplace("x", input_args[kIndex0]->GetType());
+  (void)types.emplace("y", input_args[kIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
-  return input_args[kIndex0]->BuildType();
+  return input_args[kIndex0]->GetType();
 }
 }  // namespace
 

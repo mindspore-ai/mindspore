@@ -91,19 +91,19 @@ TypePtr UnsortedSegmentSumInferType(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   /* check segment_ids */
-  auto ids_ptr = input_args[kInputIndex1]->BuildType();
+  auto ids_ptr = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(ids_ptr);
   std::set<TypePtr> ids_type_set = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", ids_ptr, ids_type_set, prim_name);
   /* check num_segments */
-  auto num_ptr = input_args[kInputIndex2]->BuildType();
+  auto num_ptr = input_args[kInputIndex2]->GetType();
   MS_EXCEPTION_IF_NULL(num_ptr);
   std::map<std::string, TypePtr> args_num_segments;
   (void)args_num_segments.insert(std::make_pair("num_segments", num_ptr));
   const std::set<TypePtr> num_type_set = {kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_num_segments, num_type_set, prim_name);
   /* check input_x */
-  auto x_type_ptr = input_args[kInputIndex0]->BuildType();
+  auto x_type_ptr = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type_ptr);
   return CheckAndConvertUtils::CheckSubClass("input_x", x_type_ptr, {kTensorType}, prim_name);
 }

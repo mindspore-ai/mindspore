@@ -84,7 +84,7 @@ TypePtr EighInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, op_name);
   std::vector<TypePtr> types_list;
   auto compute_eigenvectors = GetValue<bool>(primitive->GetAttr("compute_eigenvectors"));

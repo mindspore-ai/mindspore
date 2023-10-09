@@ -54,8 +54,8 @@ abstract::ShapePtr AvgPoolGradV1InferShape(const PrimitivePtr &primitive,
 
 TypePtr AvgPoolGradV1InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto name = prim->name();
-  auto orig_input_shape_type = input_args[0]->BuildType();
-  auto input_grad_type = input_args[1]->BuildType();
+  auto orig_input_shape_type = input_args[0]->GetType();
+  auto input_grad_type = input_args[1]->GetType();
   const std::set<TypePtr> orig_input_shape_valid_type = {kInt32};
   const std::set<TypePtr> input_grad_valid_type = {kFloat16, kFloat32, kFloat64};
 

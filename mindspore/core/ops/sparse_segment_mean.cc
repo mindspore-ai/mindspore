@@ -109,9 +109,9 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
 }
 
 TypePtr SparseSegmentMeanInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_type = input_args[kInputIndex0]->BuildType();
-  auto indices_type = input_args[kInputIndex1]->BuildType();
-  auto segment_ids_type = input_args[kInputIndex2]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
+  auto indices_type = input_args[kInputIndex1]->GetType();
+  auto segment_ids_type = input_args[kInputIndex2]->GetType();
   const std::set<TypePtr> valid_data_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid_index_types = {kInt32, kInt64};
 

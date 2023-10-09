@@ -103,8 +103,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
 
   if (keep_prop->isa<abstract::AbstractTensor>()) {
     const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kFloat32, kFloat64};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->BuildType(), keep_prop_valid_types,
-                                                     op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->GetType(), keep_prop_valid_types, op_name);
     if (keep_prop_value->isa<tensor::Tensor>()) {
       auto keep_prop_tensor = keep_prop_value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(keep_prop_tensor);
@@ -134,9 +133,9 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
                             << keep_prop_value->ToString() << ".";
   }
 
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->BuildType(), {kUInt8}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[1]->GetType(), {kUInt8}, op_name);
   const std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kInt32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->BuildType(), input_valid_types, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeValid("inputs", input_args[0]->GetType(), input_valid_types, op_name);
 }
 }  // namespace
 

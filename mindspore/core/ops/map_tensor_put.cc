@@ -105,7 +105,7 @@ TypePtr MapTensorPutInferType(const PrimitivePtr &prim, const std::vector<Abstra
   auto abs = MapTensorPutInferInner(prim, input_args);
   auto map_tensor_abs = abs->cast_ptr<abstract::AbstractMapTensor>();
   MS_EXCEPTION_IF_NULL(map_tensor_abs);
-  return map_tensor_abs->BuildType();
+  return map_tensor_abs->GetType();
 }
 
 AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

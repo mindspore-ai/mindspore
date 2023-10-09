@@ -63,7 +63,7 @@ class ShapeMulGradInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return ShapeMulGradInnerInfer(prim, input_args)->BuildType();
+    return ShapeMulGradInnerInfer(prim, input_args)->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

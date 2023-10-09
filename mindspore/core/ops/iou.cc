@@ -101,8 +101,8 @@ class IOUInfer : public abstract::OpInferBase {
 
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("y", input_args[kInputIndex1]->GetType());
     return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   }
 };

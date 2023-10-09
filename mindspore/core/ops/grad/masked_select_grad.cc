@@ -65,7 +65,7 @@ TypePtr MaskedSelectGradInferType(const PrimitivePtr &prim, const std::vector<Ab
   MS_EXCEPTION_IF_NULL(input_args[0]);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   if (!x_type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', input must be a tuple or Tensor, but got: " << x_type->ToString() << ".";

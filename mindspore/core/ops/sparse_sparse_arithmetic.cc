@@ -145,16 +145,14 @@ abstract::TupleShapePtr SparseSparseArithmeticInferShape(const PrimitivePtr &pri
 TuplePtr SparseSparseArithmeticInferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", input_args[kInputIndex0]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", input_args[kInputIndex0]->GetType(), {kInt64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", input_args[kInputIndex2]->BuildType(), {kInt64},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", input_args[kInputIndex2]->GetType(), {kInt64}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", input_args[kInputIndex3]->GetType(), {kInt64},
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", input_args[kInputIndex3]->BuildType(), {kInt64},
-                                                   op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", input_args[kInputIndex5]->BuildType(), {kInt64},
-                                                   op_name);
-  auto x1_values_type = input_args[kInputIndex1]->BuildType();
-  auto x2_values_type = input_args[kInputIndex4]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", input_args[kInputIndex5]->GetType(), {kInt64}, op_name);
+  auto x1_values_type = input_args[kInputIndex1]->GetType();
+  auto x2_values_type = input_args[kInputIndex4]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeSame({{"x1_values", x1_values_type}, {"x2_values", x2_values_type}},
                                                   common_valid_types, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{kInt64, x1_values_type});

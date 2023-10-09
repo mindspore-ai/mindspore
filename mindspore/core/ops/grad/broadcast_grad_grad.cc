@@ -72,7 +72,7 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
   (void)abstract::CheckDtypeSame(prim_name, dy1, dy2);
   (void)abstract::CheckDtypeSame(prim_name, x1, dy1);
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> broadcast_grad_grad_valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, broadcast_grad_grad_valid_types, prim_name);

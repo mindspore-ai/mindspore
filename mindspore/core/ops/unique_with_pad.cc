@@ -100,7 +100,7 @@ abstract::TupleShapePtr UniqueWithPadInferShape(const PrimitivePtr &primitive,
 TuplePtr UniqueWithPadInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
 
   std::set<TypePtr> valid_types = {kInt32, kInt64, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);

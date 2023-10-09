@@ -143,15 +143,15 @@ TuplePtr ApplyAdaMaxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto m_type = input_args[kInputIndex1]->BuildType();
-  auto v_type = input_args[kInputIndex2]->BuildType();
-  auto beta1_power_type = input_args[kInputIndex3]->BuildType();
-  auto lr_type = input_args[kInputIndex4]->BuildType();
-  auto beta1_type = input_args[kInputIndex5]->BuildType();
-  auto beta2_type = input_args[kInputIndex6]->BuildType();
-  auto epsilon_type = input_args[kInputIndex7]->BuildType();
-  auto grad_type = input_args[kInputIndex8]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto m_type = input_args[kInputIndex1]->GetType();
+  auto v_type = input_args[kInputIndex2]->GetType();
+  auto beta1_power_type = input_args[kInputIndex3]->GetType();
+  auto lr_type = input_args[kInputIndex4]->GetType();
+  auto beta1_type = input_args[kInputIndex5]->GetType();
+  auto beta2_type = input_args[kInputIndex6]->GetType();
+  auto epsilon_type = input_args[kInputIndex7]->GetType();
+  auto grad_type = input_args[kInputIndex8]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // m v grad must have the same type as var
   std::map<std::string, TypePtr> args;

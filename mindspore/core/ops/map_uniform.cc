@@ -45,9 +45,9 @@ abstract::ShapePtr MapUniformInferShape(const PrimitivePtr &primitive, const std
 TypePtr MapUniformInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto input_type = input_args[kInputIndex0]->BuildType();
-  auto per_group_size_type = input_args[kInputIndex1]->BuildType();
-  auto group_num_type = input_args[kInputIndex2]->BuildType();
+  auto input_type = input_args[kInputIndex0]->GetType();
+  auto per_group_size_type = input_args[kInputIndex1]->GetType();
+  auto group_num_type = input_args[kInputIndex2]->GetType();
 
   const std::set<TypePtr> input_valid_types = {kInt64, kInt32, kInt16, kInt8};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, input_valid_types, prim_name);

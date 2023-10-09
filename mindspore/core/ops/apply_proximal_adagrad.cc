@@ -88,12 +88,12 @@ TuplePtr ApplyProximalAdagradInferType(const PrimitivePtr &primitive, const std:
   auto prim_name = primitive->name();
   const int64_t kInputNum = 6;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, primitive->name());
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto accum_type = input_args[kInputIndex1]->BuildType();
-  auto lr_type = input_args[kInputIndex2]->BuildType();
-  auto l1_type = input_args[kInputIndex3]->BuildType();
-  auto l2_type = input_args[kInputIndex4]->BuildType();
-  auto grad_type = input_args[kInputIndex5]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto accum_type = input_args[kInputIndex1]->GetType();
+  auto lr_type = input_args[kInputIndex2]->GetType();
+  auto l1_type = input_args[kInputIndex3]->GetType();
+  auto l2_type = input_args[kInputIndex4]->GetType();
+  auto grad_type = input_args[kInputIndex5]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, accum and grad must have the same type
   std::map<std::string, TypePtr> args;

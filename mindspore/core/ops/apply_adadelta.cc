@@ -86,13 +86,13 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
 
 TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto var_type = input_args[kInputIndex0]->BuildType();
-  auto accum_type = input_args[kInputIndex1]->BuildType();
-  auto accum_update_type = input_args[kInputIndex2]->BuildType();
-  auto lr_type = input_args[kInputIndex3]->BuildType();
-  auto rho_type = input_args[kInputIndex4]->BuildType();
-  auto epsilon_type = input_args[kInputIndex5]->BuildType();
-  auto grad_type = input_args[kInputIndex6]->BuildType();
+  auto var_type = input_args[kInputIndex0]->GetType();
+  auto accum_type = input_args[kInputIndex1]->GetType();
+  auto accum_update_type = input_args[kInputIndex2]->GetType();
+  auto lr_type = input_args[kInputIndex3]->GetType();
+  auto rho_type = input_args[kInputIndex4]->GetType();
+  auto epsilon_type = input_args[kInputIndex5]->GetType();
+  auto grad_type = input_args[kInputIndex6]->GetType();
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;

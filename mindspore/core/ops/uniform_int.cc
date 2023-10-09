@@ -51,7 +51,7 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   abstract::AbstractTensorPtr minval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex1);
   MS_EXCEPTION_IF_NULL(minval);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("minval", minval->BuildType(), {kInt32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("minval", minval->GetType(), {kInt32}, op_name);
   abstract::ShapePtr minval_shape = minval->shape();
   MS_EXCEPTION_IF_NULL(minval_shape);
   if (minval_shape->IsDimUnknown() || minval_shape->shape().size() != 0) {
@@ -59,7 +59,7 @@ BaseShapePtr UniformIntInferShape(const PrimitivePtr &primitive,
                              << minval_shape->ToString();
   }
   abstract::AbstractTensorPtr maxval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, kInputIndex2);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->BuildType(), {kInt32}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->GetType(), {kInt32}, op_name);
   abstract::ShapePtr maxval_shape = maxval->shape();
   MS_EXCEPTION_IF_NULL(maxval_shape);
   if (maxval_shape->IsDimUnknown() || maxval_shape->shape().size() != 0) {

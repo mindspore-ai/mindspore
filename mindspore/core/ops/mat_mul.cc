@@ -165,8 +165,8 @@ class MatMulInfer : public abstract::OpInferBase {
       valid_types = {kUInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
     }
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    (void)types.emplace("x", input_args[kInputIndex0]->GetType());
+    (void)types.emplace("y", input_args[kInputIndex1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
     return x_type;
   }

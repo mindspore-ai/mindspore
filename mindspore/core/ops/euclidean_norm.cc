@@ -145,11 +145,11 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
 TypePtr EuclideanNormInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex, prim_name);
   const std::set<TypePtr> axes_valid_types = {kInt64, kInt32};
-  auto axes_type = input_args[kInputIndex1]->BuildType();
+  auto axes_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(axes_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("axes", axes_type, axes_valid_types, prim_name);
   return x_type;

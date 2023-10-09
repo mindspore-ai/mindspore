@@ -127,11 +127,11 @@ TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector
   if (!input_args[kMagicNumber]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input offsets only support tensor!";
   }
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), {kFloat32}, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), {kInt32}, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->BuildType(), {kFloat32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->GetType(), {kInt32}, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->GetType(), {kFloat32},
                                                    primitive->name());
-  auto res = input_args[0]->BuildType();
+  auto res = input_args[0]->GetType();
   return res;
 }
 }  // namespace

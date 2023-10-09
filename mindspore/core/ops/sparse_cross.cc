@@ -164,7 +164,7 @@ TuplePtr SparseCrossInferType(const PrimitivePtr &primitive, const std::vector<A
                    ? tensors_arg->cast<abstract::AbstractTuplePtr>()->elements()
                    : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->BuildType();
+    auto input_dtype = tensors[i]->GetType();
     (void)CheckAndConvertUtils::CheckTypeValid("values", input_dtype, {kInt64}, op_name);
   }
   auto sparse_values_type = std::make_shared<TensorType>(kInt64);

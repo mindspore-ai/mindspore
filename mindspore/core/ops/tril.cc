@@ -52,7 +52,7 @@ TypePtr TrilInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 
   auto input_shape = input_args[0];
   MS_EXCEPTION_IF_NULL(input_shape);
-  auto x_type = input_shape->BuildType();
+  auto x_type = input_shape->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   std::set<TypePtr> valid_x_types(common_valid_types);
   (void)valid_x_types.emplace(kBool);

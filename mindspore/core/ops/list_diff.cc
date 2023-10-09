@@ -67,9 +67,9 @@ TuplePtr ListDiffInferType(const PrimitivePtr &primitive, const std::vector<Abst
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kInt8, kInt16, kInt32, kInt64};
   auto x_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, op_name);
   auto y_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[kInputIndex1]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[kInputIndex1]->GetType(), valid_types, op_name);
   if (!(x_type->equal(y_type))) {
     MS_EXCEPTION(TypeError) << "For ListDiff, type of 'x' and 'y' should be same. But get x[" << x_type->ToString()
                             << "], y[" << y_type->ToString() << "].";

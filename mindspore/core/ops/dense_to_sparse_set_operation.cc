@@ -116,10 +116,10 @@ abstract::TupleShapePtr DenseToSparseSetOperationInferShape(const PrimitivePtr &
 
 TuplePtr DenseToSparseSetOperationInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto x1_type = input_args[0]->BuildType();
-  auto x2_indices_type = input_args[1]->BuildType();
-  auto x2_values_type = input_args[2]->BuildType();
-  auto x2_shape_type = input_args[3]->BuildType();
+  auto x1_type = input_args[0]->GetType();
+  auto x2_indices_type = input_args[1]->GetType();
+  auto x2_values_type = input_args[2]->GetType();
+  auto x2_shape_type = input_args[3]->GetType();
 
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kString};
 

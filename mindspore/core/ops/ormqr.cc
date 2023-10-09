@@ -124,9 +124,9 @@ TypePtr OrmqrInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
-  auto x_type = input_args[0]->BuildType();
-  auto tau_type = input_args[kInputIndex1]->BuildType();
-  auto other_type = input_args[kInputIndex2]->BuildType();
+  auto x_type = input_args[0]->GetType();
+  auto tau_type = input_args[kInputIndex1]->GetType();
+  auto other_type = input_args[kInputIndex2]->GetType();
   (void)types.emplace("x", x_type);
   (void)types.emplace("tau", tau_type);
   (void)types.emplace("other", other_type);

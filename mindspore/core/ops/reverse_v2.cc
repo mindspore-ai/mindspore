@@ -69,7 +69,7 @@ abstract::ShapePtr ReverseV2InferShape(const PrimitivePtr &primitive, const std:
 }
 
 TypePtr ReverseV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = input_args[0]->BuildType();
+  auto infer_type = input_args[0]->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("type", infer_type, common_valid_types_with_complex_and_bool,
                                                     prim->name());
 }

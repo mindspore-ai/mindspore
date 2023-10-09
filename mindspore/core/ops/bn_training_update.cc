@@ -115,13 +115,13 @@ TuplePtr BNTrainingUpdateInferType(const PrimitivePtr &primitive, const std::vec
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kBNTrainingUpdateInputNum, prim_name);
-  auto input_x_type = input_args[kInputIndex0]->BuildType();
-  auto sum_type = input_args[kInputIndex1]->BuildType();
-  auto square_sum_type = input_args[kInputIndex2]->BuildType();
-  auto scale_type = input_args[kInputIndex3]->BuildType();
-  auto offset_type = input_args[kInputIndex4]->BuildType();
-  auto mean_type = input_args[kInputIndex5]->BuildType();
-  auto variance_type = input_args[kInputIndex6]->BuildType();
+  auto input_x_type = input_args[kInputIndex0]->GetType();
+  auto sum_type = input_args[kInputIndex1]->GetType();
+  auto square_sum_type = input_args[kInputIndex2]->GetType();
+  auto scale_type = input_args[kInputIndex3]->GetType();
+  auto offset_type = input_args[kInputIndex4]->GetType();
+  auto mean_type = input_args[kInputIndex5]->GetType();
+  auto variance_type = input_args[kInputIndex6]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // input_x type must be valid
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type, valid_types, prim_name);

@@ -127,7 +127,7 @@ class FakeQuantParamInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     const int64_t input_num = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 };
 

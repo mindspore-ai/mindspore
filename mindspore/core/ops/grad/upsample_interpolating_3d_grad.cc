@@ -53,10 +53,10 @@ void UpdateAttrNoneList(const PrimitivePtr &primitive, const std::vector<Abstrac
                         size_t *const scales_idx, const std::string &prim_name) {
   if (input_args.size() == kVALUE_4) {
     std::vector<int64_t> none_list{};
-    auto size_type = input_args[kInputIndex2]->BuildType();
+    auto size_type = input_args[kInputIndex2]->GetType();
     MS_EXCEPTION_IF_NULL(size_type);
     auto is_output_size_none = size_type->type_id() == kMetaTypeNone;
-    auto scale_type = input_args[kInputIndex3]->BuildType();
+    auto scale_type = input_args[kInputIndex3]->GetType();
     MS_EXCEPTION_IF_NULL(scale_type);
     auto is_scales_none = scale_type->type_id() == kMetaTypeNone;
     if (is_output_size_none && is_scales_none) {
@@ -203,7 +203,7 @@ TypePtr UpsampleInterpolating3DGradInferType(const PrimitivePtr &primitive,
   }
   auto grad_arg = input_args.at(kInputIndex0);
   MS_EXCEPTION_IF_NULL(grad_arg);
-  TypePtr grad_type = grad_arg->BuildType();
+  TypePtr grad_type = grad_arg->GetType();
   return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim_name);
 }
 }  // namespace

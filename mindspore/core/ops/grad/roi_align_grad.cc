@@ -78,11 +78,11 @@ class ROIAlignGradInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[kInputIndex0]->BuildType(), valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("ydiff", input_args[kInputIndex0]->GetType(), valid_types,
                                                      prim->name());
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[kInputIndex1]->BuildType(), valid_types,
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("rois", input_args[kInputIndex1]->GetType(), valid_types,
                                                      prim->name());
-    return input_args[kInputIndex0]->BuildType();
+    return input_args[kInputIndex0]->GetType();
   }
 
   std::set<int64_t> GetValueDependArgIndices() const override { return {2}; }

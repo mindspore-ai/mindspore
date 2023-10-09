@@ -99,14 +99,14 @@ abstract::ShapePtr SparseDenseCwiseArithmeticInferShape(const PrimitivePtr &prim
 TypePtr SparseDenseCwiseArithmeticInferType(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex0]->BuildType();
-  auto shape_type_ptr = input_args[kInputIndex2]->BuildType();
+  auto indiecs_type_ptr = input_args[kInputIndex0]->GetType();
+  auto shape_type_ptr = input_args[kInputIndex2]->GetType();
   std::set<TypePtr> type_set = {kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indiecs_type_ptr, type_set, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  (void)type_dict.emplace("values", input_args[kInputIndex1]->BuildType());
-  (void)type_dict.emplace("x2", input_args[kInputIndex3]->BuildType());
+  (void)type_dict.emplace("values", input_args[kInputIndex1]->GetType());
+  (void)type_dict.emplace("x2", input_args[kInputIndex3]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex, prim_name);
 }
 }  // namespace

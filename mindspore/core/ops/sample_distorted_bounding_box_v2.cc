@@ -138,9 +138,9 @@ TuplePtr SampleDistortedBoundingBoxV2InferType(const PrimitivePtr &prim,
 
   const std::set<TypePtr> valid_types1 = {kUInt8, kInt8, kInt16, kInt32, kInt64};
   const std::set<TypePtr> valid_types2 = {kFloat32};
-  auto image_size_type = input_args[kInputIndex0]->BuildType();
-  auto bboxes_type = input_args[kInputIndex1]->BuildType();
-  auto min_object_type = input_args[kInputIndex2]->BuildType();
+  auto image_size_type = input_args[kInputIndex0]->GetType();
+  auto bboxes_type = input_args[kInputIndex1]->GetType();
+  auto min_object_type = input_args[kInputIndex2]->GetType();
 
   (void)CheckAndConvertUtils::CheckTensorTypeValid("image_size", image_size_type, valid_types1, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("bounding_boxes", bboxes_type, valid_types2, name);

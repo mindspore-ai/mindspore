@@ -49,7 +49,7 @@ abstract::ShapePtr SinInferShape(const PrimitivePtr &primitive, const std::vecto
 }
 
 TypePtr SinInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   auto prim_attrs = prim->attrs();
   if (prim_attrs.find(kLiteQuantAttrName) != prim_attrs.end()) {
     const std::set<TypePtr> valid_types_lite = {kInt8, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};

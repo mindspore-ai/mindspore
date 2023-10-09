@@ -70,9 +70,9 @@ TypePtr ArgminV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   }
   // ascend ArgMin supports float16 and float32.
   const std::set<TypePtr> x_valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), x_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), x_valid_types, prim->name());
   const std::set<TypePtr> axis_valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[1]->BuildType(), axis_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[1]->GetType(), axis_valid_types, prim->name());
   return kInt32;
 }
 

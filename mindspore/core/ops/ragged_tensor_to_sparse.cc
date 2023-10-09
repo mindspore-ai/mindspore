@@ -89,7 +89,7 @@ TuplePtr RaggedTensorToSparseInferType(const PrimitivePtr &primitive, const std:
   const std::set<TypePtr> valid_types = {kBool,  kInt8,   kInt16,   kInt32,   kInt64,
                                          kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
   auto sparse_values_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("rt_dense_values", input_args[1]->BuildType(), valid_types, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("rt_dense_values", input_args[1]->GetType(), valid_types, op_name);
   auto t_splits_type = GetValue<TypePtr>(primitive->GetAttr("Tsplits"));
   (void)CheckAndConvertUtils::CheckTypeValid("Tsplits", t_splits_type, {kInt64, kInt32}, op_name);
   auto tensors_arg = input_args[kRttsInputSplitsStart];
@@ -100,7 +100,7 @@ TuplePtr RaggedTensorToSparseInferType(const PrimitivePtr &primitive, const std:
                    ? tensors_arg->cast<abstract::AbstractTuplePtr>()->elements()
                    : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->BuildType();
+    auto input_dtype = tensors[i]->GetType();
     (void)CheckAndConvertUtils::CheckTypeValid("rt_nested_splits", input_dtype, {t_splits_type}, op_name);
   }
   auto sparse_indices_type = kInt64;

@@ -81,13 +81,13 @@ TuplePtr SparseApplyAdadeltaInferType(const PrimitivePtr &prim, const std::vecto
     MS_EXCEPTION_IF_NULL(item);
   }
   // Get all inputs's type
-  auto var_type = input_args[0]->BuildType();
-  auto accum_type = input_args[1]->BuildType();
-  auto accum_updata_type = input_args[2]->BuildType();
-  auto lr_type = input_args[3]->BuildType();
-  auto rho_type = input_args[4]->BuildType();
-  auto grad_type = input_args[5]->BuildType();
-  auto indices_type = input_args[6]->BuildType();
+  auto var_type = input_args[0]->GetType();
+  auto accum_type = input_args[1]->GetType();
+  auto accum_updata_type = input_args[2]->GetType();
+  auto lr_type = input_args[3]->GetType();
+  auto rho_type = input_args[4]->GetType();
+  auto grad_type = input_args[5]->GetType();
+  auto indices_type = input_args[6]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args accum accum_updata and grad must have the same type as var
   std::map<std::string, TypePtr> args;

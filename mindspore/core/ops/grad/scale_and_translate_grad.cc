@@ -98,10 +98,10 @@ abstract::ShapePtr ScaleAndTranslateGradInferShape(const PrimitivePtr &primitive
 
 TypePtr ScaleAndTranslateGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
-  auto grads_type = input_args[kInputIndex0]->BuildType();
-  auto original_image_type = input_args[kInputIndex1]->BuildType();
-  auto scale_type = input_args[kInputIndex2]->BuildType();
-  auto translation_type = input_args[kInputIndex3]->BuildType();
+  auto grads_type = input_args[kInputIndex0]->GetType();
+  auto original_image_type = input_args[kInputIndex1]->GetType();
+  auto scale_type = input_args[kInputIndex2]->GetType();
+  auto translation_type = input_args[kInputIndex3]->GetType();
   const std::set<TypePtr> valid_types = {kFloat32};
   std::map<std::string, TypePtr> args;
   // origin_image have the same type as grads

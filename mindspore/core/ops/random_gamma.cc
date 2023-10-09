@@ -79,7 +79,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
-  auto shape_type_element = input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element();
+  auto shape_type_element = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(shape_type_element);
 
   ShapeVector shape_vec;
@@ -124,11 +124,11 @@ TypePtr GammaInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
   const std::set<TypePtr> shape_valid_types = {kInt32, kInt64};
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->BuildType(), shape_valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_args[0]->GetType(), shape_valid_types, prim_name);
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto alpha_type = input_args[1]->BuildType();
+  auto alpha_type = input_args[1]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("alpha", alpha_type, valid_types, prim_name);
   return alpha_type;
 }

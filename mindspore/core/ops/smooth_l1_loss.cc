@@ -93,10 +93,10 @@ TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
 
   std::map<std::string, TypePtr> args;
-  (void)args.emplace("scale", input_args[kInputIndex0]->BuildType());
-  (void)args.emplace("bias", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("scale", input_args[kInputIndex0]->GetType());
+  (void)args.emplace("bias", input_args[kInputIndex1]->GetType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
-  return input_args[kInputIndex0]->BuildType();
+  return input_args[kInputIndex0]->GetType();
 }
 }  // namespace
 

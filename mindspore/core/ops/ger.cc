@@ -94,8 +94,8 @@ TypePtr GerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x1", input_args[0]->BuildType());
-  (void)types.emplace("x2", input_args[1]->BuildType());
+  (void)types.emplace("x1", input_args[0]->GetType());
+  (void)types.emplace("x2", input_args[1]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
 }
 }  // namespace

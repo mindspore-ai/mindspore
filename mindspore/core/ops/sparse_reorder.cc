@@ -67,9 +67,9 @@ abstract::TupleShapePtr SparseReorderInferShape(const PrimitivePtr &primitive,
 TuplePtr SparseReorderInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  auto indices_type = input_args[0]->BuildType();
-  auto values_type = input_args[1]->BuildType();
-  auto shape_type = input_args[2]->BuildType();
+  auto indices_type = input_args[0]->GetType();
+  auto values_type = input_args[1]->GetType();
+  auto shape_type = input_args[2]->GetType();
   // Args values must be a scalar type
   const std::set<TypePtr> valid_types_values = {kBool,   kInt8,    kInt16,   kInt32,   kInt64,     kUInt8,
                                                 kUInt16, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};

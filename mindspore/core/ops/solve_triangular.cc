@@ -88,8 +88,8 @@ abstract::ShapePtr SolveTriangularInferShape(const PrimitivePtr &primitive,
 
 TypePtr SolveTriangularInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto a_dtype = input_args[kInputIndex0]->BuildType();
-  auto b_dtype = input_args[kInputIndex1]->BuildType();
+  auto a_dtype = input_args[kInputIndex0]->GetType();
+  auto b_dtype = input_args[kInputIndex1]->GetType();
 
   const std::map<std::string, TypePtr> type_dict = {{"a type", a_dtype}, {"b type", b_dtype}};
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat32, kFloat64}, prim_name);

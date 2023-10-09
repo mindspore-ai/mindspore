@@ -91,8 +91,8 @@ TypePtr SearchSortedInferType(const PrimitivePtr &primitive, const std::vector<A
   auto dtype = primitive->GetAttr("dtype");
   MS_EXCEPTION_IF_NULL(dtype);
   auto infer_type = dtype->cast<TypePtr>();
-  auto sequence_type = input_args[kInputIndex0]->BuildType();
-  auto values_type = input_args[kInputIndex1]->BuildType();
+  auto sequence_type = input_args[kInputIndex0]->GetType();
+  auto values_type = input_args[kInputIndex1]->GetType();
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("sorted_sequence", sequence_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("values", values_type, valid_types, prim_name);

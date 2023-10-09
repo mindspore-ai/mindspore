@@ -189,8 +189,8 @@ class LstmGradInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto hx_type_ptr = input_args[kInputIndex1]->BuildType();
-    auto dy_type_ptr = input_args[kInputIndex7]->BuildType();
+    auto hx_type_ptr = input_args[kInputIndex1]->GetType();
+    auto dy_type_ptr = input_args[kInputIndex7]->GetType();
     std::vector<TypePtr> types = {dy_type_ptr, dy_type_ptr, dy_type_ptr, hx_type_ptr};
     return std::make_shared<Tuple>(types);
   }

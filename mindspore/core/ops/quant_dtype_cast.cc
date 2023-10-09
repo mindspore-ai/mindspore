@@ -62,7 +62,7 @@ TypePtr QuantDTypeCastInferType(const PrimitivePtr &prim, const std::vector<Abst
   const int64_t kInputNum = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type = input_args[0]->BuildType();
+  auto x_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kInt8, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   auto type_ptr = mindspore::TypeIdToType(static_cast<TypeId>(GetValue<int64_t>(prim->GetAttr(kDstT))));

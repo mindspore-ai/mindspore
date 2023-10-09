@@ -108,7 +108,7 @@ TypePtr NuclearNormInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckInteger("The input number", SizeToLong(input_args.size()), kEqual, DIMSIZE1,
                                            op_name);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->GetType(), valid_types, op_name);
 }
 }  // namespace
 

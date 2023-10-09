@@ -94,13 +94,13 @@ TypeId MaxPoolWithArgmaxV2::get_argmax_type() const {
 TuplePtr MaxPoolWithArgmaxV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                          kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), valid_types, prim->name());
-  auto output_dtype = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), valid_types, prim->name());
+  auto output_dtype = input_args[0]->GetType();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   TypePtr argmax_dtype;
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(), {kFloat16}, prim->name());
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->GetType(), {kFloat16}, prim->name());
     auto number_type = GetValue<int64_t>(prim->GetAttr(kArgmaxType));
     if (number_type != kAiCoreNumTypeInt64) {
       MS_LOG(WARNING) << "While running in Ascend, the attribute `argmax_type` of " << prim->name()

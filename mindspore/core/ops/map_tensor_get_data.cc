@@ -74,7 +74,7 @@ abstract::BaseShapePtr MapTensorGetDataInferShape(const PrimitivePtr &prim,
 
 TypePtr MapTensorGetDataInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto abs = MapTensorGetDataInferInner(prim, input_args);
-  auto type = abs->BuildType();
+  auto type = abs->GetType();
   MS_EXCEPTION_IF_NULL(type);
   return type;
 }

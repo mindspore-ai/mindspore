@@ -59,12 +59,12 @@ abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive
 
 TypePtr TensorScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
+  auto indiecs_type_ptr = input_args[kInputIndex1]->GetType();
   std::set<TypePtr> type_set = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
   std::map<std::string, TypePtr> type_dict;
-  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
-  (void)type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  (void)type_dict.emplace("input_x", input_args[kInputIndex0]->GetType());
+  (void)type_dict.emplace("updates", input_args[kInputIndex2]->GetType());
   std::set<TypePtr> check_list(common_valid_types);
   (void)check_list.insert(kBool);
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, check_list, prim_name);

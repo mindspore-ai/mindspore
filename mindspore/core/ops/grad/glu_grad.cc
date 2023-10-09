@@ -89,7 +89,7 @@ TypePtr GluGradInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto dy = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   (void)abstract::CheckDtypeSame(prim_name, y, dy);
-  auto x_type = input_args[1]->BuildType();
+  auto x_type = input_args[1]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
   const std::set<TypePtr> input_types = {kFloat64, kFloat32, kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, input_types, primitive->name());

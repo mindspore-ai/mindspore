@@ -58,7 +58,7 @@ TypePtr HSigmoidInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   }
   std::map<std::string, TypePtr> types;
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
-  (void)types.emplace("input_x", input_args[0]->BuildType());
+  (void)types.emplace("input_x", input_args[0]->GetType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace

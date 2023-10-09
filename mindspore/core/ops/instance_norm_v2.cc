@@ -130,11 +130,11 @@ abstract::TupleShapePtr InstanceNormV2InferShape(const PrimitivePtr &primitive,
 
 TuplePtr InstanceNormV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const auto prim_name = primitive->name();
-  const auto input_x = input_args[InstanceNormV2InXIndex]->BuildType();
-  const auto gamma = input_args[InstanceNormV2InGammaIndex]->BuildType();
-  const auto beta = input_args[InstanceNormV2InBetaIndex]->BuildType();
-  const auto mean = input_args[InstanceNormV2InMeanIndex]->BuildType();
-  const auto variance = input_args[InstanceNormV2InVarianceIndex]->BuildType();
+  const auto input_x = input_args[InstanceNormV2InXIndex]->GetType();
+  const auto gamma = input_args[InstanceNormV2InGammaIndex]->GetType();
+  const auto beta = input_args[InstanceNormV2InBetaIndex]->GetType();
+  const auto mean = input_args[InstanceNormV2InMeanIndex]->GetType();
+  const auto variance = input_args[InstanceNormV2InVarianceIndex]->GetType();
 
   (void)CheckAndConvertUtils::CheckTypeValid("input x", input_x, {kFloat16, kFloat32}, prim_name);
   const std::map<std::string, TypePtr> types = {

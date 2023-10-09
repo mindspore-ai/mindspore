@@ -178,14 +178,14 @@ TypePtr LuSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   std::map<std::string, TypePtr> type;
-  (void)type.emplace("x", input_args[0]->BuildType());
-  (void)type.emplace("lu_data", input_args[1]->BuildType());
+  (void)type.emplace("x", input_args[0]->GetType());
+  (void)type.emplace("lu_data", input_args[1]->GetType());
   const std::set<TypePtr> valid_types = {kFloat64, kFloat32, kFloat16};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("lu_data", input_args[1]->BuildType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("lu_data", input_args[1]->GetType(), valid_types, prim->name());
   auto out_type = CheckAndConvertUtils::CheckTensorTypeSame(type, valid_types, prim->name());
   const std::set<TypePtr> valid_lu_pivots_types = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("lu_pivots", input_args[kDimNum]->BuildType(), valid_lu_pivots_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("lu_pivots", input_args[kDimNum]->GetType(), valid_lu_pivots_types,
                                                    prim->name());
   return out_type;
 }

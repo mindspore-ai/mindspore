@@ -62,11 +62,11 @@ class SparseSliceInfer : public abstract::OpInferBase {
     auto op_name = primitive->name();
     const int64_t input_num = 5;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    auto indices_type = input_args[kInputIndex0]->BuildType();
-    auto value_type = input_args[kInputIndex1]->BuildType();
-    auto shape_type = input_args[kInputIndex2]->BuildType();
-    auto start_type = input_args[kInputIndex3]->BuildType();
-    auto size_type = input_args[kInputIndex4]->BuildType();
+    auto indices_type = input_args[kInputIndex0]->GetType();
+    auto value_type = input_args[kInputIndex1]->GetType();
+    auto shape_type = input_args[kInputIndex2]->GetType();
+    auto start_type = input_args[kInputIndex3]->GetType();
+    auto size_type = input_args[kInputIndex4]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, {kInt64}, op_name);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("start", start_type, {kInt64}, op_name);

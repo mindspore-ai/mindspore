@@ -45,7 +45,7 @@ TypePtr HSwishInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
                                            prim->name());
 
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
-  auto x_dtype = input_args[0]->BuildType();
+  auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
   return x_dtype;
 }

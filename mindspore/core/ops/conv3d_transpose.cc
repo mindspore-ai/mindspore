@@ -258,8 +258,8 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
 
     std::map<std::string, TypePtr> types;
-    (void)types.emplace("x", input_args[0]->BuildType());
-    (void)types.emplace("w", input_args[1]->BuildType());
+    (void)types.emplace("x", input_args[0]->GetType());
+    (void)types.emplace("w", input_args[1]->GetType());
     std::set<TypePtr> check_list = {kFloat16, kFloat32};
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, check_list, prim_name);
 
@@ -322,7 +322,7 @@ class Conv3DTransposeInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     Conv3DTransposeInferCheck(primitive, input_args, false);
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-    auto x_dtype = input_args[0]->BuildType();
+    auto x_dtype = input_args[0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());
     return x_dtype;
   }

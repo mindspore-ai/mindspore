@@ -118,9 +118,9 @@ class NLLLossInfer : public abstract::OpInferBase {
     const int64_t input_num = 3;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
                                              prim_name);
-    auto logits_data_type = input_args[kIndex0]->BuildType();
-    auto target_type = input_args[kIndex1]->BuildType();
-    auto weight_data_type = input_args[kIndex2]->BuildType();
+    auto logits_data_type = input_args[kIndex0]->GetType();
+    auto target_type = input_args[kIndex1]->GetType();
+    auto weight_data_type = input_args[kIndex2]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("target", target_type, {kInt32, kInt64}, prim->name());
     (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", logits_data_type, valid_types, prim->name());
     (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", weight_data_type, valid_types, prim->name());

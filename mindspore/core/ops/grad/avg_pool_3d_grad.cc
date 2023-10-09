@@ -115,7 +115,7 @@ TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_dtype = input_args.back()->BuildType();
+  auto grad_dtype = input_args.back()->GetType();
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);

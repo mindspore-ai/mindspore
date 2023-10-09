@@ -68,8 +68,8 @@ abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std
 TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> input_types;
   std::set<TypePtr> input_valid_types = {kFloat16, kFloat32, kFloat64, kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16};
-  TypePtr sorted_x_type = input_args[0]->BuildType();
-  TypePtr values_type = input_args[1]->BuildType();
+  TypePtr sorted_x_type = input_args[0]->GetType();
+  TypePtr values_type = input_args[1]->GetType();
   (void)input_types.emplace("sorted_x", sorted_x_type);
   (void)input_types.emplace("values", values_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(input_types, input_valid_types, primitive->name());
