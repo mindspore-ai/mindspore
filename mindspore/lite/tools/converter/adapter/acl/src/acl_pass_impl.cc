@@ -52,6 +52,7 @@
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
@@ -859,9 +860,14 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
-  auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(false, true, true);
-  if (!redundant_op_remove_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "Run remove redundant op failed";
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  fusion_pm->AddPass(std::make_shared<opt::RemoveLoadPass>());
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
     return RET_ERROR;
   }
   auto ret = lite::quant::MarkOriginDataType(func_graph);
@@ -870,6 +876,11 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
     return ret;
   }
   if (param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL) {
+    auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(false, true, true);
+    if (!redundant_op_remove_pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run remove redundant op failed";
+      return RET_ERROR;
+    }
     auto value = func_graph->get_attr(ops::kFormat);
     if (value == nullptr) {
       auto unify_format = std::make_shared<lite::UnifyFormatToNHWC>(fmk_type_, false, param_->save_type);
@@ -889,9 +900,9 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
         return lite::RET_ERROR;
       }
     }
-    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    optimizer = std::make_shared<opt::GraphOptimizer>();
     CHECK_NULL_RETURN(optimizer);
-    auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+    fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
     CHECK_NULL_RETURN(fusion_pm);
     std::vector<opt::PassPtr> fusions{
       std::make_shared<opt::ClipConvertActivationPass>(true),
