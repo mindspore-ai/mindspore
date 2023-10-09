@@ -381,6 +381,18 @@ void ForwardExecutor::Init() {
   });
 }
 
+void ForwardExecutor::RefreshForwardCallback() {
+#if defined(_WIN32) || defined(_WIN64)
+  runtime::OpExecutor::GetInstance().RegisterForwardCallback([this]() {
+    frontend_queue_->Wait();
+    backend_queue_->Wait();
+    grad()->WaitBpropTask();
+  });
+#endif
+  // ForwardCallback has been set in ForwardExecutor::Init, no need to refresh anymore.
+  return;
+}
+
 bool ForwardExecutor::enable_async() const {
 #if defined(ENABLE_TEST) || defined(__APPLE__)
   return false;
