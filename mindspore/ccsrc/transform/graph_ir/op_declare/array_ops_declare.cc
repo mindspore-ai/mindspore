@@ -163,7 +163,6 @@ INPUT_MAP(Identity) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Identity) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Identity) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IdentityLoad, kNameLoad, ADPT_DESC(Identity))
-REG_ADPT_DESC(IdentityTupleGetItem, kNameTupleGetItem, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityListGetItem, kNameListGetItem, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityIdentity, kNameIdentity, ADPT_DESC(Identity))
 
@@ -176,6 +175,8 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+// TupleGetItem's output may be a tuple when input is a nested tuple
+REG_ADPT_DESC(IdentityNTupleGetItem, kNameTupleGetItem, ADPT_DESC(IdentityN))
 
 // SelectV2
 INPUT_MAP(SelectV2) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(then)}, {3, INPUT_DESC(else)}};

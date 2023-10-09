@@ -218,7 +218,6 @@ class DfGraphConvertor {
   mindspore::HashMap<AnfNode *, std::string> op_draw_name_;
   std::map<std::string, std::string> param_format_;
 
-  AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
   OutHandler GetHandler(const AnfNodePtr &node);
   OperatorPtr Convert(AnfNodePtr node);
   OperatorPtr ConvertCNode(CNodePtr node);

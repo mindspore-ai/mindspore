@@ -276,7 +276,6 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     if (node_value->isa<Scalar>()) {
       return {};
     }
-    // String has no shape.
     if (node_value->isa<StringImm>()) {
       auto string_value = node_value->cast<StringImmPtr>();
       MS_EXCEPTION_IF_NULL(string_value);
