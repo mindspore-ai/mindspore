@@ -39,6 +39,7 @@ OpAdapterPtr FindAdapter(AnfNodePtr node, bool train = false);
 
 bool IsPartialSuccNode(const AnfNodePtr node);
 bool IsWhileNode(const AnfNodePtr &node);
+bool IsCallNode(const AnfNodePtr &node);
 bool IsIfNode(const AnfNodePtr &node);
 bool IsCaseNode(const AnfNodePtr &node);
 std::string GetCNodeTargetFuncName(const CNodePtr cnode);

@@ -63,6 +63,7 @@ std::string GetTensorDtype(const AnfNodePtr &node) {
   std::string type_str = "dtype=";
   auto type = node->Type();
   MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(dyn_cast<TensorType>(type));
   auto type_ptr = dyn_cast<TensorType>(type)->element();
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = type_ptr->type_id();

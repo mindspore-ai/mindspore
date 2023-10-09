@@ -99,7 +99,8 @@ constexpr auto kTypeRefData = "RefData";
 
 namespace {
 const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
-
+mindspore::HashMap<std::string, size_t> branches_repeat_times = {};
+mindspore::HashMap<std::string, size_t> call_subgraphs_repeat_times = {};
 // {node name | {{input_index, dst_type}...}}
 const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputDTypeMap = {
   {kResizeNearestNeighborGradOpName, {{2, kNumberTypeInt32}}},
@@ -236,6 +237,29 @@ std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr
   };
 
   return (node == nullptr) ? TopoSort(fg->get_return(), succ_include_fv) : TopoSort(node, succ_include_fv);
+}
+
+int64_t GetDynInputNum(const OpAdapterPtr &adpt, bool is_call, std::vector<int64_t> dyn_input_sizes,
+                       size_t real_input_idx, size_t input_size, const CNodePtr &node) {
+  int64_t dyn_input_num = -1;
+  if (!dyn_input_sizes.empty()) {
+    dyn_input_num = dyn_input_sizes.at(real_input_idx - 1);
+  } else if (adpt->IsDynInputOp(real_input_idx)) {
+    if (is_call) {
+      auto &input = node->inputs().back();
+      // the first input of Call node is Primitive, the second input is kernel_graph,
+      // which should not be members of input args, so the dyn_input_num need to minus 2 in default.
+      if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
+        // For PartitionedCall, Monod should not be a member of input args, so here dyn_input_num need to minus 3.
+        dyn_input_num = input_size - 3;
+      } else {
+        dyn_input_num = input_size - 2;
+      }
+      return dyn_input_num;
+    }
+    dyn_input_num = 1;
+  }
+  return dyn_input_num;
 }
 
 bool IsBranchNode(const AnfNodePtr &node) { return IsIfNode(node) || IsCaseNode(node); }
@@ -1393,6 +1417,33 @@ std::shared_ptr<std::vector<DfGraph>> DfGraphConvertor::BuildBranchGraphs(const 
   return df_branches;
 }
 
+void DfGraphConvertor::BuildCallSubGraphs(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  ValueNodePtr graph_node = cnode->input(1)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(graph_node);
+  auto anf_graph = graph_node->value()->cast<AnfGraphPtr>();
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  DfGraphConvertor converter(anf_graph, phase_prefix_);
+  converter.graph_type_ = GraphType::kNormal;
+  converter.use_inputs_ = true;
+  converter.inputs_ = anf_graph->parameters();
+  std::string graph_name = anf_graph->ToString();
+  auto iter = call_subgraphs_repeat_times.find(graph_name);
+  if (iter == call_subgraphs_repeat_times.end()) {
+    call_subgraphs_repeat_times[graph_name] = 1;
+  } else {
+    iter->second += 1;
+    graph_name = graph_name + "_call_" + std::to_string(iter->second);
+  }
+  (void)converter.ConvertAllNode().BuildGraph(graph_name);
+
+  call_dfgraph_cache_[node] = std::make_shared<std::vector<DfGraph>>();
+  call_dfgraph_cache_[node]->push_back(*(converter.df_graph_));
+  MS_LOG(INFO) << "build call subgraph end.";
+}
+
 void DfGraphConvertor::SetSubgraph(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
@@ -1406,29 +1457,46 @@ void DfGraphConvertor::SetSubgraph(const AnfNodePtr &node) {
     return;
   }
 
-  if (!IsBranchNode(cnode)) {
-    return;
-  }
-  MS_LOG(DEBUG) << "Start to set if/case's sub graph.";
-  std::shared_ptr<std::vector<DfGraph>> df_branches = BuildBranchGraphs(cnode);
-  if (op_cache_.find(node.get()) == op_cache_.end()) {
+  if (IsBranchNode(cnode)) {
+    MS_LOG(DEBUG) << "Start to set if/case's sub graph.";
+    std::shared_ptr<std::vector<DfGraph>> df_branches = BuildBranchGraphs(cnode);
+    if (op_cache_.find(node.get()) == op_cache_.end()) {
+      return;
+    }
+
+    OpAdapterPtr adpt = FindAdapter(node, training_);
+    if (adpt == nullptr) {
+      MS_LOG(DEBUG) << "Not found adapter";
+      return;
+    }
+
+    OperatorPtr op = Convert(node);
+    bool is_case = IsCaseNode(node);
+    if (is_case) {
+      adpt->setSubgraph(op, 0, df_branches);
+    } else {
+      adpt->setSubgraph(op, df_branches);
+    }
+    MS_LOG(DEBUG) << "Set if/case's sub graph end.";
     return;
   }
 
-  OpAdapterPtr adpt = FindAdapter(node, training_);
-  if (adpt == nullptr) {
-    MS_LOG(DEBUG) << "Not found adapter";
-    return;
+  if (IsCallNode(cnode)) {
+    MS_LOG(DEBUG) << "Start to set call's sub graph.";
+    BuildCallSubGraphs(node);
+    if (op_cache_.find(node.get()) == op_cache_.end()) {
+      return;
+    }
+    OpAdapterPtr adpt = FindAdapter(node, training_);
+    if (adpt == nullptr) {
+      MS_LOG(EXCEPTION) << "Not found adapter";
+      return;
+    }
+    OperatorPtr op = Convert(node);
+    auto df_graphs = call_dfgraph_cache_[node];
+    adpt->setSubgraph(op, df_graphs);
+    MS_LOG(DEBUG) << "Set call's sub graph end.";
   }
-
-  OperatorPtr op = Convert(node);
-  bool is_case = IsCaseNode(node);
-  if (is_case) {
-    adpt->setSubgraph(op, 0, df_branches);
-  } else {
-    adpt->setSubgraph(op, df_branches);
-  }
-  MS_LOG(DEBUG) << "Set if/case's sub graph end.";
   return;
 }
 
@@ -2558,7 +2626,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     SetMergeInput(adpt, node);
     return;
   }
-
+  bool is_call = IsCallNode(node);
   std::vector<int64_t> dyn_input_sizes;
   if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node)) {
     dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrDynInputSizes);
@@ -2570,7 +2638,8 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     SetDynamicInputBeforeNormalInput(adpt, node, inputs, ge_input_size, ge_input_to_ms_input, &dyn_input_sizes);
     return;
   }
-  size_t input_idx = 1;
+  // For call node, the first input is kernel_graph, which should not be added to input args.
+  size_t input_idx = is_call ? 2 : 1;
   size_t real_input_idx = 1;
   while (input_idx < input_size) {
     AnfNodePtr pred = branch_flag ? branch_input_handle_cache_[node.get()]->at(input_idx - 1) : inputs[input_idx];
@@ -2592,12 +2661,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     }
 
     int ret;
-    int64_t dyn_input_num = -1;
-    if (!dyn_input_sizes.empty()) {
-      dyn_input_num = dyn_input_sizes.at(real_input_idx - 1);
-    } else if (adpt->IsDynInputOp(real_input_idx)) {
-      dyn_input_num = 1;
-    }
+    int64_t dyn_input_num = GetDynInputNum(adpt, is_call, dyn_input_sizes, real_input_idx, input_size, node);
     if (dyn_input_num != -1) {
       for (size_t dyn_input_idx = 1; dyn_input_idx < LongToSize(dyn_input_num); ++dyn_input_idx) {
         auto dyn_input_handle = GetInputHandles(node, inputs[input_idx + dyn_input_idx]);
@@ -2958,9 +3022,9 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   }
 
   std::string graph_name = anf_graph->ToString();
-  auto iter = branches_repeat_times_.find(graph_name);
-  if (iter == branches_repeat_times_.end()) {
-    branches_repeat_times_[graph_name] = 1;
+  auto iter = branches_repeat_times.find(graph_name);
+  if (iter == branches_repeat_times.end()) {
+    branches_repeat_times[graph_name] = 1;
   } else {
     iter->second += 1;
     graph_name = graph_name + "_" + std::to_string(iter->second);
