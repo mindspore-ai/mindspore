@@ -27,7 +27,7 @@ from mindspore.ops.operations import _csr_ops
 from .sparse_utils import get_platform, compare_res, compare_csr
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -57,7 +57,7 @@ def test_make_csr():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -85,7 +85,7 @@ def test_make_csr_empty():
     compare_csr(csr3, csr2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
