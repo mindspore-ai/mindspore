@@ -8,7 +8,7 @@ mindspore.nn.LayerNorm
     层归一化在递归神经网络中被广泛的应用。适用单个训练用例的mini-batch输入上应用归一化，详见论文 `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_ 。
 
     与批归一化（Batch Normalization）不同，层归一化在训练和测试时执行完全相同的计算。
-    应用于所有通道和像素，即使batch_size=1也适用。公式如下：
+    应用于所有通道和像素，即使batch_size=1也适用。其中 :math:`\gamma` 是通过训练学习出的scale值，:math:`\beta` 是通过训练学习出的shift值。公式如下：
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
