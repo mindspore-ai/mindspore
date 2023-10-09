@@ -70,17 +70,22 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::AREA)) {
     dst_prim = std::make_shared<acl::AdaptiveAvgPool>();
   } else if (method == static_cast<int64_t>(mindspore::ResizeMethod::CUBIC)) {
-    ops::Resize op_resize;
-    dst_prim = op_resize.GetPrim();
-    dst_prim->set_attr("coordinate_transformation_mode", MakeValue("pytorch_half_pixel"));
-    dst_prim->set_attr("mode", MakeValue("cubic"));
-    auto func_graph = cnode->func_graph();
-    auto roi_node = opt::BuildFloatValueParameterNode(func_graph, 0, cnode->fullname_with_scope() + "_roi");
-    auto scales_node = opt::BuildFloatVecParameterNode(func_graph, {0}, cnode->fullname_with_scope() + "_scales");
-    auto inputs = cnode->inputs();
-    (void)inputs.insert(inputs.begin() + kNameSizeTwo, scales_node);
-    (void)inputs.insert(inputs.begin() + kNameSizeTwo, roi_node);
-    cnode->set_inputs(inputs);
+    auto mode_ptr = src_prim->GetAttr(ops::kMode);
+    if (mode_ptr != nullptr && GetValue<std::string>(mode_ptr) == "bicubic") {
+      ops::Resize op_resize;
+      dst_prim = op_resize.GetPrim();
+      dst_prim->set_attr("coordinate_transformation_mode", MakeValue("pytorch_half_pixel"));
+      dst_prim->set_attr("mode", MakeValue("cubic"));
+      auto func_graph = cnode->func_graph();
+      auto roi_node = opt::BuildFloatValueParameterNode(func_graph, 0, cnode->fullname_with_scope() + "_roi");
+      auto scales_node = opt::BuildFloatVecParameterNode(func_graph, {0}, cnode->fullname_with_scope() + "_scales");
+      auto inputs = cnode->inputs();
+      (void)inputs.insert(inputs.begin() + kNameSizeTwo, scales_node);
+      (void)inputs.insert(inputs.begin() + kNameSizeTwo, roi_node);
+      cnode->set_inputs(inputs);
+    } else {
+      dst_prim = std::make_shared<acl::ResizeBicubic>();
+    }
   } else {
     MS_LOG(ERROR) << "Not support resize method " << method << ", cnode " << cnode->fullname_with_scope();
     return RET_ERROR;

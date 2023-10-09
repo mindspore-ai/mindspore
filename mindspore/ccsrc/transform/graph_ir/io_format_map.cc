@@ -25,6 +25,8 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"BNInfer", "NCHW"},
                                                                             {"BNInferGrad", "NCHW"},
                                                                             {"Conv2D", "NCHW"},
+                                                                            {"DepthwiseConv2D", "NCHW"},
+                                                                            {"DepthwiseConv2dNative", "NCHW"},
                                                                             {"Conv2DBackpropInput", "NCHW"},
                                                                             {"Conv2DBackpropFilter", "NCHW"},
                                                                             {"BasicLSTMCellWeightGrad", "HWCN"},
