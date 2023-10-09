@@ -1288,23 +1288,6 @@ void ReplaceReduceAxis(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
-  if (!op_run_info->base_op_run_info.use_dynamic_shape_process) {
-    return;
-  }
-
-  auto replace_tensor_mask = [](const FrontendOpRunInfoPtr &op_run_info) {
-    std::replace_if(
-      op_run_info->base_op_run_info.input_masks.begin(), op_run_info->base_op_run_info.input_masks.end(),
-      [](auto mask) { return mask == kValueNodeMask; }, kParameterDataTensorMask);
-  };
-
-  // value to parameter(onehot)
-  if (op_run_info->base_op_run_info.device_target != kAscendDevice) {
-    replace_tensor_mask(op_run_info);
-  }
-}
-
 void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
 
@@ -1326,7 +1309,6 @@ void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const 
     }
   }
   op_run_info->op_grad_info->op_prim->EndRecordAddAttr();
-  ReplaceValueNodeWithParameter(op_run_info);
   ReplaceReduceAxis(op_run_info);
   AddDynInputsSizesAttr(op_run_info);
 }

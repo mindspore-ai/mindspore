@@ -813,30 +813,6 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
   }
 }
 
-std::vector<tensor::TensorPtr> GetAllInputTensor(
-  const std::vector<device::DeviceAddressPtr> &device_address_list,
-  const std::map<device::DeviceAddressPtr, tensor::TensorPtr> &address_map_to_tensor,
-  const std::map<device::DeviceAddressPtr, tensor::TensorPtr> &value_map_to_tensor) {
-  std::vector<tensor::TensorPtr> ret;
-  for (auto &device_address : device_address_list) {
-    auto iter = address_map_to_tensor.find(device_address);
-    if (iter != address_map_to_tensor.end()) {
-      (void)ret.emplace_back(iter->second);
-      continue;
-    }
-
-    iter = value_map_to_tensor.find(device_address);
-    if (iter != value_map_to_tensor.end()) {
-      (void)ret.emplace_back(iter->second);
-      continue;
-    }
-
-    (void)ret.emplace_back(nullptr);
-  }
-
-  return ret;
-}
-
 void UpdateOutputShape(const std::vector<device::DeviceAddressPtr> &outputs_device_address) {
   for (size_t i = 0; i < outputs_device_address.size(); i++) {
     const auto &device_address = outputs_device_address[i];
@@ -893,9 +869,6 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     const CNodePtr &kernel = execute_kernel.kernel_;
     MS_EXCEPTION_IF_NULL(kernel);
 
-    std::vector<tensor::TensorPtr> tensors = GetAllInputTensor(
-      execute_kernel.inputs_device_address_, address_map_to_tensor, op_compiler_info->value_map_to_tensor_);
-
     // Fetch input kernel tensor.
     const auto &input_device_addresses = execute_kernel.inputs_device_address_;
     size_t input_size = input_device_addresses.size();
@@ -916,15 +889,15 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
       output_kernel_tensors[j] = output_device_addresses[j]->kernel_tensor().get();
     }
 
+    BaseShapePtr out_shape;
     if (is_need_infer) {
-      auto base_shape = InferNodeRealShape(kernel, input_kernel_tensors_for_infer);
-      MS_EXCEPTION_IF_NULL(base_shape);
-
-      // Update output kernel tensor.
-      opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors);
+      out_shape = InferNodeRealShape(kernel, input_kernel_tensors_for_infer);
     } else {
       kernel->set_abstract(op_run_info->base_op_run_info.abstract);
+      out_shape = op_run_info->base_op_run_info.abstract->GetShape();
     }
+    // Update output kernel tensor.
+    opt::dynamic_shape::UpdateKernelTensorShape(out_shape, output_kernel_tensors);
 
     // Resize
     ResizeKernelMod(kernel, input_kernel_tensors, output_kernel_tensors);

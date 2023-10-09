@@ -1402,6 +1402,24 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
   return input_size;
 }
 
+static bool IsNotSequenceOfTensor(const abstract::AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return false;
+  }
+
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    if (seq_abs->size() == 0) {
+      return true;
+    }
+
+    return IsNotSequenceOfTensor(seq_abs->elements()[0]);
+  }
+
+  return true;
+}
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1428,7 +1446,12 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     if (output_is_tuple && cnode_is_print) {
       (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
     } else if (output_is_tuple) {
-      auto dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      int64_t dyn_input_size;
+      if (IsNotSequenceOfTensor(input_node->abstract())) {
+        dyn_input_size = 0;
+      } else {
+        dyn_input_size = SplitTupleInputs(graph, input_node, &plant_inputs);
+      }
       if (dyn_input_size == 0) {
         dyn_input_sizes.push_back(-1);
         plant_inputs.push_back(input_node);

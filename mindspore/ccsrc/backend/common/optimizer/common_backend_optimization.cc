@@ -84,7 +84,7 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   // Disable const to tensor pass, ascend platform need to match the change in the future.
   // common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
-  if (graph->has_flag(kAttrMutableKernel) || graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
+  if (graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   }
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
