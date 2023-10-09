@@ -191,3 +191,13 @@ def bprop_scalar_not(x, out, dout):
 def bprop_tensor_move(x, out, dout):
     """Backpropagator for primitive `TensorMove`."""
     return (dout,)
+
+
+@bprops.register("DictInplaceSetItem")
+def get_bprop_dict_inplace_setitem(self):
+    """Generate bprop for dict inplace pop"""
+
+    def bprop(x, key, target, out, dout):
+        return (zeros_like(x), zeros_like(key), zeros_like(target))
+
+    return bprop
