@@ -128,7 +128,8 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   if (!input_args[kInputIndex1]->GetValue()->isa<ValueAny>() && !input_args[kInputIndex1]->GetValue()->isa<None>()) {
     auto axes_value = input_args[kInputIndex1]->GetValue();
-    auto axes = CheckAndConvertUtils::CheckTensorIntValue("axes", axes_value, prim_name);
+    auto axes_type = input_args[kInputIndex1]->GetType();
+    auto axes = CheckAndConvertUtils::CheckTensorIntValue("axes", axes_value, prim_name, axes_type);
     CheckAndConvertUtils::CheckInRange("axes size", axes.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
     ReduceAxes(&output_shape, &axes, input_rank, keep_dims, primitive);
   } else {

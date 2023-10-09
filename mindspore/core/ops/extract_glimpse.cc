@@ -114,22 +114,21 @@ abstract::ShapePtr ExtractGlimpseInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(output_shape);
 }
 TypePtr ExtractGlimpseInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int kMagicNumber = 2;
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input x only support tensor!";
   }
-  if (!input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (input_args[1]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input size only support tensor!";
   }
-  if (!input_args[kMagicNumber]->isa<abstract::AbstractTensor>()) {
+  if (input_args[kIndex2]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input offsets only support tensor!";
   }
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), {kFloat32}, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->GetType(), {kInt32}, primitive->name());
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kMagicNumber]->GetType(), {kFloat32},
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("offsets", input_args[kIndex2]->GetType(), {kFloat32},
                                                    primitive->name());
   auto res = input_args[0]->GetType();
   return res;

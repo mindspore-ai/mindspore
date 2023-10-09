@@ -36,6 +36,7 @@
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -49,34 +50,35 @@ namespace {
 template <typename T>
 std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std::vector<int64_t> x_shape,
                                          const int64_t x_shape_size, const int64_t shape_size,
-                                         const tensor::TensorPtr shape_tensor, int64_t max_length,
+                                         const ValuePtr shape_tensor_value, int64_t max_length,
                                          const string prim_name) {
-  auto input_shape_ptr = reinterpret_cast<T *>(shape_tensor->data_c());
+  auto input_shape_opt = GetArrayValue<T>(shape_tensor_value);
+  const auto &input_shape = input_shape_opt.value();
   int64_t shape_m = 1;
   if (shape_size >= x_shape_size) {
     int64_t sub = shape_size - x_shape_size;
     for (int i = 0; i < shape_size; i = i + 1) {
       if (i >= sub) {
-        if (x_shape[LongToSize(i - sub)] != input_shape_ptr[i]) {
-          if (input_shape_ptr[i] != -1) {
+        if (x_shape[LongToSize(i - sub)] != input_shape[i]) {
+          if (input_shape[i] != -1) {
             if (x_shape[LongToSize(i - sub)] != 1) {
               MS_EXCEPTION(ValueError) << "For " << prim_name << ", the expanded size of the tensor ("
-                                       << std::to_string(input_shape_ptr[i]) << ") must be equal to the existing size ("
+                                       << std::to_string(input_shape[i]) << ") must be equal to the existing size ("
                                        << std::to_string(x_shape[LongToSize(i - sub)]) << ") which is not 1 at dim ("
                                        << std::to_string(i) << ").";
             }
           } else {
             output_shape.push_back(x_shape[LongToSize(i - sub)]);
-            shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
+            shape_m *= static_cast<int64_t>(input_shape[i]);
             continue;
           }
         }
-      } else if (i < sub && input_shape_ptr[i] == -1) {
+      } else if (i < sub && input_shape[i] == -1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", the expanded size of the tensor (" << std::to_string(-1)
                                  << ") isn't allowed in a leading, non-existing dimension " << std::to_string(i) << ".";
       }
-      output_shape.push_back(input_shape_ptr[i]);
-      shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
+      output_shape.push_back(input_shape[i]);
+      shape_m *= static_cast<int64_t>(input_shape[i]);
     }
   } else {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the size of shape provided (" << std::to_string(shape_size)
@@ -101,11 +103,8 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
 
-  auto shape = input_args[1]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(shape);
-  auto shape_value_ptr = shape->GetValue();
-  MS_EXCEPTION_IF_NULL(shape_value_ptr);
-  auto shape_tensor = shape_value_ptr->cast<tensor::TensorPtr>();
+  auto shape_tensor_value = input_args[1]->GetValue();
+  MS_EXCEPTION_IF_NULL(shape_tensor_value);
   auto shape_ptr = std::make_shared<abstract::Shape>(shape_shape);
   auto shape_v = shape_ptr->shape();
 
@@ -127,13 +126,13 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
   if (!input_args[1]->GetValue()->isa<ValueAny>() && !input_args[1]->GetValue()->isa<None>()) {
     std::vector<int64_t> output_shape;
     if (shape_type_element->type_id() == kNumberTypeInt16) {
-      output_shape = ExpandInferOutShape<int16_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor,
+      output_shape = ExpandInferOutShape<int16_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
                                                   max_length, prim_name);
     } else if (shape_type_element->type_id() == kNumberTypeInt32) {
-      output_shape = ExpandInferOutShape<int32_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor,
+      output_shape = ExpandInferOutShape<int32_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
                                                   max_length, prim_name);
     } else if (shape_type_element->type_id() == kNumberTypeInt64) {
-      output_shape = ExpandInferOutShape<int64_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor,
+      output_shape = ExpandInferOutShape<int64_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
                                                   max_length, prim_name);
     }
     return std::make_shared<abstract::Shape>(output_shape);

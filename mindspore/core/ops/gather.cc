@@ -36,6 +36,7 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -109,13 +110,12 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t axis_val = 0;
   bool is_axis_dyn = false;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    auto axis = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis);
-    auto axis_value_ptr = axis->GetValue();
+  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
+    auto axis_value_ptr = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
+    auto axis_type_ptr = input_args[kInputIndex2]->GetType();
     if (axis_value_ptr->isa<tensor::Tensor>()) {
-      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name);
+      auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name, axis_type_ptr);
       if (axis_vec.size() != 1) {
         MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_vec.size();
       }
@@ -123,12 +123,13 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     } else {
       is_axis_dyn = true;
     }
-  } else if (input_args[kInputIndex2]->isa<abstract::AbstractScalar>()) {
-    auto axis_value = input_args[kInputIndex2]->cast<abstract::AbstractScalarPtr>()->GetValue();
+  } else if (input_args[kInputIndex2]->GetType()->isa<Number>()) {
+    auto axis_value = input_args[kInputIndex2]->GetValue();
     if (axis_value->isa<ValueAny>()) {
       is_axis_dyn = true;
     } else {
-      axis_val = GetValue<int64_t>(axis_value);
+      auto axis_val_opt = GetScalarValue<int64_t>(axis_value);
+      axis_val = axis_val_opt.value();
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()

@@ -356,8 +356,12 @@ class MS_CORE_API CheckAndConvertUtils {
   // Return Tensor type
   static TypePtr CheckMathBinaryOpTensorType(const std::map<std::string, TypePtr> &types,
                                              const std::set<TypePtr> &check_list, const std::string &prim_name);
-  static ShapeVector CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+  // ==========================old=========================
+  static ShapeVector CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
                                          const std::string &prim_name);
+  // ==========================new=========================
+  static ShapeVector CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
+                                         const std::string &prim_name, const TypePtr &type);
   static TypePtr CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                       const std::set<TypePtr> &check_list, const std::string &prim_name);
   static TypePtr CheckSparseTensorTypeValid(const std::string &type_name, const TypePtr &type,

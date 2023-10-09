@@ -114,21 +114,20 @@ class FillInfer : public abstract::OpInferBase {
       inputsIndex[kIndex2] = kIndex1;
     }
     auto prim_name = primitive->name();
-    if (input_args[inputsIndex[kIndex1]]->isa<abstract::AbstractTuple>()) {
+    if (input_args[inputsIndex[kIndex1]]->GetType()->object_type() == kObjectTypeTuple) {
       auto out_shape = GetShapeValue(primitive, input_args[inputsIndex[kIndex1]]);
       return std::make_shared<abstract::Shape>(out_shape);
     }
 
-    if (!input_args[inputsIndex[kIndex1]]->isa<abstract::AbstractTensor>()) {
+    if (input_args[inputsIndex[kIndex1]]->GetType()->object_type() != kObjectTypeTensorType) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input[1] must be tensor.";
     }
     MS_EXCEPTION_IF_NULL(primitive);
     const uint32_t kInputDims = 1;
     auto shape_arg = input_args[inputsIndex[1]];
     MS_EXCEPTION_IF_NULL(shape_arg);
-    if (!IsValueKnown(shape_arg->GetValue()) && shape_arg->isa<abstract::AbstractTensor>()) {
-      auto abs_tensor = shape_arg->cast<abstract::AbstractTensorPtr>();
-      auto abs_tensor_shape = abs_tensor->shape()->shape();
+    if (!IsValueKnown(shape_arg->GetValue()) && shape_arg->GetType()->object_type() == kObjectTypeTensorType) {
+      auto abs_tensor_shape = shape_arg->GetShape()->GetShapeVector();
       if (abs_tensor_shape.size() != kInputDims) {
         MS_EXCEPTION(TypeError) << "For '" << prim_name
                                 << "', the shape size of 'input1' must be 1, but got: " << abs_tensor_shape.size()

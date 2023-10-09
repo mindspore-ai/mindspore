@@ -39,6 +39,7 @@
 #include "ops/op_name.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
@@ -875,15 +876,15 @@ TypePtr CheckAndConvertUtils::CheckSparseTensorTypeValid(const std::string &type
   }
 }
 
-ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
+ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
                                                       const std::string &prim_name) {
   if (value == nullptr) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                              << "] value is nullptr.";
   }
   ShapeVector tensor_value;
   if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                              << "] must be a tensor, but got " << value->ToString();
   }
   auto input_tensor = value->cast<tensor::TensorPtr>();
@@ -910,7 +911,54 @@ ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_na
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value = {tensor_data, tensor_data + data_size};
   } else {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << type_name
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                            << "] must be a Tensor[Int64] or Tensor[Int32]"
+                            << " or Tensor[UInt64] or Tensor[UInt32] type, but got " << value->ToString();
+  }
+  return tensor_value;
+}
+
+ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &tensor_name, const ValuePtr &value,
+                                                      const std::string &prim_name, const TypePtr &type) {
+  if (value == nullptr) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] value is nullptr.";
+  }
+  if (value->isa<ValueAny>() || value->isa<None>()) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] value is unknown.";
+  }
+  if (type->object_type() != kObjectTypeTensorType) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
+                             << "] must be a tensor, but got " << type->ToString();
+  }
+  ShapeVector tensor_value;
+  auto tensor_type_ptr = type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type_ptr);
+  auto tensor_type = tensor_type_ptr->element()->type_id();
+  if (tensor_type == kNumberTypeInt32) {
+    auto data_opt = ops::GetArrayValue<int>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else if (tensor_type == kNumberTypeInt64) {
+    auto data_opt = ops::GetArrayValue<int64_t>(value);
+    tensor_value = data_opt.value().ToVector();
+  } else if (tensor_type == kNumberTypeUInt32) {
+    auto data_opt = ops::GetArrayValue<uint32_t>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else if (tensor_type == kNumberTypeUInt64) {
+    auto data_opt = ops::GetArrayValue<uint64_t>(value);
+    const auto &data = data_opt.value();
+    for (size_t i = 0; i < data.size(); i++) {
+      tensor_value.push_back(static_cast<int64_t>(data[i]));
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the input argument[" << tensor_name
                             << "] must be a Tensor[Int64] or Tensor[Int32]"
                             << " or Tensor[UInt64] or Tensor[UInt32] type, but got " << value->ToString();
   }

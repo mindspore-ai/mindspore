@@ -40,9 +40,8 @@ namespace {
 abstract::ShapePtr EqualCountInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-
-  auto input0 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto input1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+  auto input0 = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+  auto input1 = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
   abstract::CheckShapeSame(op_name, input0, input1);
 
   std::vector<int64_t> out_shape = {1};
@@ -53,8 +52,8 @@ TypePtr EqualCountInferType(const PrimitivePtr &prim, const std::vector<Abstract
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 0);
-  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
+  auto x = CheckAndConvertUtils::CheckArgsType(prim->name(), input_args, 0, kObjectTypeTensorType);
+  auto y = CheckAndConvertUtils::CheckArgsType(prim->name(), input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim->name(), x, y);
 
   return input_args[0]->GetType();
