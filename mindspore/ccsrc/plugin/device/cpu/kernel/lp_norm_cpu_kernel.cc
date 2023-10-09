@@ -22,8 +22,6 @@
 #include <memory>
 #include <functional>
 #include <set>
-#include <pmmintrin.h>
-#include <xmmintrin.h>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/lp_norm.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
@@ -150,11 +148,6 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   std::vector<std::pair<size_t, T>> reduce_buffer(thread_num, {0, template_zero});
   CTask reduce_task = [this, &input, &output, &reduce_buffer, &thread_num, &template_zero, &template_one](size_t start,
                                                                                                           size_t end) {
-#ifdef PLATFORM_86
-    // Small value should be reserved, or else the value scaling brought by 'pow' will cause precision loss
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
-#endif
     auto stride_per_thread = UP_DIV(input_elements_, thread_num);
     size_t task_id = (start / stride_per_thread);
     T acc = template_zero;
@@ -174,23 +167,11 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
         reduce_buffer[task_id] = {i, acc};
       }
     }
-#ifdef PLATFORM_86
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-#endif
   };
   CTask combine_task = [this, &output](size_t start, size_t end) {
-#ifdef PLATFORM_86
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
-#endif
     for (size_t i = start; i < end; ++i) {
       output[i] = std::max(std::pow(output[i], 1 / p_), epsilon_);
     }
-#ifdef PLATFORM_86
-    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
-#endif
   };
   if (is_parallel) {
     ParallelLaunch(reduce_task, input_elements_, 0, this, pool_);
