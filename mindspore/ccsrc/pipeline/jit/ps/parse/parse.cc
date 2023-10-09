@@ -4264,6 +4264,7 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
   bool_node = HandleCondInterpret(block, bool_node, test_node);
 
   TraceGuard guard(std::make_shared<TraceAssert>(block->func_graph()->debug_info()));
+  TraceGuard location_guard(GetLocation(node));
   FunctionBlockPtr true_block = MakeFunctionBlock();
   FunctionBlockPtr false_block = MakeFunctionBlock();
   FunctionBlockPtr after_block = MakeFunctionBlock();
