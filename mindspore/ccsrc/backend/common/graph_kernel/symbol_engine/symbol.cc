@@ -48,8 +48,7 @@ std::string IntSymbol::ToString() const {
   if (has_data_) {
     return oss.str();
   }
-  oss << "<" << (range_min() == -kINF ? "-inf" : range_min() == kINF ? "inf" : std::to_string(range_min())) << ",";
-  oss << (range_max() == -kINF ? "-inf" : range_max() == kINF ? "inf" : std::to_string(range_max())) << ">";
+  PrintMathInfo(oss);
   return oss.str();
 }
 
@@ -72,11 +71,33 @@ bool IntSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;
   }
+  auto p = s.as<IntSymbol>();
   if (!has_data_ || !s.HasData()) {
+    if (p != nullptr && !has_data_ && !s.HasData()) {
+      return MathEquals(*p);
+    }
     return false;
   }
-  auto p = s.as<IntSymbol>();
   return p != nullptr && p->value_ == value_;
+}
+
+bool IntSymbol::operator<(const IntSymbol &s) const {
+  if (this == &s) {
+    return false;
+  }
+  if (has_data_ && s.has_data_) {
+    return value_ < s.value_;
+  }
+  return MathLess(s);
+}
+bool IntSymbol::operator<=(const IntSymbol &s) const {
+  if (this == &s) {
+    return true;
+  }
+  if (has_data_ && s.has_data_) {
+    return value_ <= s.value_;
+  }
+  return MathLessEqual(s);
 }
 
 bool ListSymbol::operator==(const Symbol &s) const {

@@ -42,9 +42,18 @@ SymbolPtr ScalarAdd::Eval() {
   return GenVInt();
 }
 void ScalarAdd::UpdateMathInfo() {
-  auto a = input_as<IntSymbol>(0);
-  auto b = input_as<IntSymbol>(1);
-  output_as<IntSymbol>()->SetRange(RangeAdd(a->range_min(), b->range_min()), RangeAdd(a->range_max(), b->range_max()));
+  if (!need_eval()) {
+    return;
+  }
+  auto a = input_as_sptr<IntSymbol>(0);
+  auto b = input_as_sptr<IntSymbol>(1);
+  auto out = output_as<IntSymbol>();
+  out->SetRange(RangeAdd(a->range_min(), b->range_min()), RangeAdd(a->range_max(), b->range_max()));
+  if (a->is_const() && !b->is_const()) {
+    out->SetMathExpr(b, kFrac1, a->value());
+  } else if (b->is_const() && !a->is_const()) {
+    out->SetMathExpr(a, kFrac1, b->value());
+  }
 }
 
 SymbolPtr ScalarSub::Eval() {
@@ -61,9 +70,20 @@ SymbolPtr ScalarSub::Eval() {
   return GenVInt();
 }
 void ScalarSub::UpdateMathInfo() {
-  auto a = input_as<IntSymbol>(0);
-  auto b = input_as<IntSymbol>(1);
-  output_as<IntSymbol>()->SetRange(RangeSub(a->range_min(), b->range_max()), RangeSub(a->range_max(), b->range_min()));
+  if (!need_eval()) {
+    return;
+  }
+  auto a = input_as_sptr<IntSymbol>(0);
+  auto b = input_as_sptr<IntSymbol>(1);
+  auto out = output_as<IntSymbol>();
+  out->SetRange(RangeSub(a->range_min(), b->range_max()), RangeSub(a->range_max(), b->range_min()));
+  if (a->is_const() && !b->is_const()) {
+    // out = const_a - b
+    out->SetMathExpr(b, Frac(-1), a->value());
+  } else if (b->is_const() && !a->is_const()) {
+    // out = a - const_b
+    out->SetMathExpr(a, kFrac1, -b->value());
+  }
 }
 
 SymbolPtr ScalarMul::Eval() {
@@ -87,8 +107,12 @@ SymbolPtr ScalarMul::Eval() {
   return GenVInt();
 }
 void ScalarMul::UpdateMathInfo() {
-  auto input1 = input_as<IntSymbol>(0);
-  auto input2 = input_as<IntSymbol>(1);
+  if (!need_eval()) {
+    return;
+  }
+  auto input1 = input_as_sptr<IntSymbol>(0);
+  auto input2 = input_as_sptr<IntSymbol>(1);
+  auto out = output_as<IntSymbol>();
   int64_t min1 = input1->range_min();
   int64_t max1 = input1->range_max();
   int64_t min2 = input2->range_min();
@@ -97,7 +121,14 @@ void ScalarMul::UpdateMathInfo() {
   int64_t b = RangeMul(min1, max2);
   int64_t c = RangeMul(max1, min2);
   int64_t d = RangeMul(max1, max2);
-  output_as<IntSymbol>()->SetRange(std::min({a, b, c, d}), std::max({a, b, c, d}));
+  out->SetRange(std::min({a, b, c, d}), std::max({a, b, c, d}));
+  if (input1->is_const() && !input2->is_const()) {
+    // out = const1 * input2
+    out->SetMathExpr(input2, Frac(input1->value()), 0);
+  } else if (input2->is_const() && !input1->is_const()) {
+    // out = input1 * const2
+    out->SetMathExpr(input1, Frac(input2->value()), 0);
+  }
 }
 
 SymbolPtr ScalarDiv::Eval() {
@@ -118,8 +149,12 @@ SymbolPtr ScalarDiv::Eval() {
 }
 
 void ScalarDiv::UpdateMathInfo() {
-  auto input1 = input_as<IntSymbol>(0);
-  auto input2 = input_as<IntSymbol>(1);
+  if (!need_eval()) {
+    return;
+  }
+  auto input1 = input_as_sptr<IntSymbol>(0);
+  auto input2 = input_as_sptr<IntSymbol>(1);
+  auto out = output_as<IntSymbol>();
   int64_t min1 = input1->range_min();
   int64_t max1 = input1->range_max();
   int64_t min2 = input2->range_min();
@@ -137,27 +172,28 @@ void ScalarDiv::UpdateMathInfo() {
     v.push_back(min1);
     v.push_back(max1);
   }
-  output_as<IntSymbol>()->SetRange(*std::min_element(v.begin(), v.end()), *std::max_element(v.begin(), v.end()));
+  out->SetRange(*std::min_element(v.begin(), v.end()), *std::max_element(v.begin(), v.end()));
+  // only support "s / const", does not support "const / s".
+  if (input2->is_const() && !input1->is_const()) {
+    // out = input1 / const2
+    out->SetMathExpr(input1, Frac(1, input2->value()), 0);
+  }
 }
 
 SymbolPtr ScalarMax::Eval() {
   // only eval on Building
-  auto lhs = input_as<IntSymbol>(0);
-  auto rhs = input_as<IntSymbol>(1);
+  auto lhs = input_as_sptr<IntSymbol>(0);
+  auto rhs = input_as_sptr<IntSymbol>(1);
   if (lhs->HasData() && rhs->HasData()) {
     return GenInt(std::max(lhs->value(), rhs->value()));
   }
-  if (*lhs == *rhs) {
+  if (*lhs >= *rhs) {
     DoNotEvalOnRun();
-    return input(0);
+    return lhs;
   }
-  if (lhs->range_min() > rhs->range_max()) {
+  if (*rhs > *lhs) {
     DoNotEvalOnRun();
-    return input(0);
-  }
-  if (rhs->range_min() > lhs->range_max()) {
-    DoNotEvalOnRun();
-    return input(1);
+    return rhs;
   }
   return GenVInt();
 }
@@ -170,22 +206,18 @@ void ScalarMax::UpdateMathInfo() {
 
 SymbolPtr ScalarMin::Eval() {
   // only eval on Building
-  auto lhs = input_as<IntSymbol>(0);
-  auto rhs = input_as<IntSymbol>(1);
+  auto lhs = input_as_sptr<IntSymbol>(0);
+  auto rhs = input_as_sptr<IntSymbol>(1);
   if (lhs->HasData() && rhs->HasData()) {
     return GenInt(std::min(lhs->value(), rhs->value()));
   }
-  if (*lhs == *rhs) {
+  if (*lhs <= *rhs) {
     DoNotEvalOnRun();
-    return input(0);
+    return lhs;
   }
-  if (lhs->range_max() < rhs->range_min()) {
+  if (*rhs < *lhs) {
     DoNotEvalOnRun();
-    return input(0);
-  }
-  if (rhs->range_max() < lhs->range_min()) {
-    DoNotEvalOnRun();
-    return input(1);
+    return rhs;
   }
   return GenVInt();
 }
@@ -194,78 +226,6 @@ void ScalarMin::UpdateMathInfo() {
   auto rhs = input_as<IntSymbol>(1);
   output_as<IntSymbol>()->SetRange(std::min(lhs->range_min(), rhs->range_min()),
                                    std::min(lhs->range_max(), rhs->range_max()));
-}
-
-SymbolPtr Product::Eval() {
-  auto data = input_as<IListSymbol>(0);
-  if (is_building() && !data->AllHaveData()) {
-    return GenVInt();
-  }
-  auto shape = ToShape(data);
-  return GenInt(std::accumulate(shape.cbegin(), shape.cend(), 1LL, std::multiplies<int64_t>()));
-}
-
-SymbolPtr Find::Eval() {
-  auto inp = input_as<ListSymbol>(0);
-  auto value = input(1);
-  if (!inp->HasData()) {
-    return GenVInt();
-  }
-  auto &list = inp->symbols();
-  for (size_t i = 0; i < list.size(); i++) {
-    if (list[i]->EqualsTo(value)) {
-      return GenInt(SizeToLong(i));
-    }
-  }
-  return GenVInt();
-}
-
-SymbolPtr SetValue::Eval() {
-  auto inp = input_as<ListSymbol>(kIndex0);
-  auto index = input_as<IntSymbol>(kIndex1);
-  if (!inp->HasData()) {
-    return GenVList();
-  }
-  if (!index->HasData()) {
-    return GenVIntList(inp->size());
-  }
-  // on Building, if 'input' is static rank and 'index' is const value, unnecessary to evaluate on Run.
-  DoNotEvalOnRun();
-  auto list = inp->symbols();
-  auto idx = index->value();
-  if (LongToSize(idx) >= list.size()) {
-    MS_LOG(EXCEPTION) << "Index " << idx << " is out of range of list " << inp->ToString();
-  }
-  list[idx] = input(kIndex2);
-  if (is_building()) {
-    return GenList(std::move(list));
-  }
-  output_as<ListSymbol>()->UpdateList(std::move(list));
-  return nullptr;
-}
-
-SymbolPtr ListAppend::Eval() {
-  auto a = input(kIndex0)->as<ListSymbol>();
-  MS_EXCEPTION_IF_NULL(a);
-  auto b = input(kIndex1);
-  auto b_list = b->as<ListSymbol>();
-  if (!a->HasData() || (b_list != nullptr && !b_list->HasData())) {
-    return GenVList();
-  }
-  DoNotEvalOnRun();
-  SymbolPtrList result;
-  result.reserve(a->size() + (b_list != nullptr ? b_list->size() : 1));
-  (void)result.insert(result.end(), a->symbols().begin(), a->symbols().end());
-  if (b_list != nullptr) {
-    (void)result.insert(result.end(), b_list->symbols().begin(), b_list->symbols().end());
-  } else {
-    (void)result.emplace_back(b);
-  }
-  if (is_building()) {
-    return GenList(std::move(result));
-  }
-  output_as<ListSymbol>()->UpdateList(std::move(result));
-  return nullptr;
 }
 }  // namespace ops
 }  // namespace mindspore::graphkernel::symbol

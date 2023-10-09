@@ -371,7 +371,7 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
 
 void GraphKernelJsonGenerator::SaveSymbolicShape(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   if (symbol_engine_ != nullptr) {
-    (*kernel_json)[kJsonKeySymbolicShape] = symbol_engine_->QuerySymbolicShape(node);
+    (*kernel_json)[kJsonKeySymbolicShape] = symbol_engine_->QuerySymbolicShapeStr(node);
     (void)symbol_engine_->QuerySymbolExpr(node, &symbol_calc_exprs_);
   }
 }
