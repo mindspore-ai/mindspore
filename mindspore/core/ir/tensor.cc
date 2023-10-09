@@ -892,6 +892,8 @@ void Tensor::ExecuteLazyTask() const {
 
   if (storage_info_ != nullptr && contiguous_callback_ != nullptr) {
     device_sync_ = contiguous_callback_(nullptr, device_address(), storage_info());
+    device_sync_->set_original_ref_count(SIZE_MAX);
+    device_sync_->ResetRefCount();
     address_future_ = nullptr;
     storage_info_ = nullptr;
   }
