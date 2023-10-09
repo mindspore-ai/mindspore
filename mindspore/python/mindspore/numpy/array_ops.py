@@ -2585,8 +2585,9 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     def unique_w_ind(arr):
         array, sort_indices = arr.ravel().sort()
-        cmp_array1 = F.cat((array, Tensor([0], dtype=array.dtype)))
-        cmp_array2 = F.cat((Tensor([0], dtype=array.dtype), array))
+        array_type = array.dtype
+        cmp_array1 = F.cat((array, Tensor([0], dtype=array_type)))
+        cmp_array2 = F.cat((Tensor([0], dtype=array_type), array))
         mask = cmp_array1 != cmp_array2
         mask[0] = True
         array = F.masked_select(array, mask[:-1])
