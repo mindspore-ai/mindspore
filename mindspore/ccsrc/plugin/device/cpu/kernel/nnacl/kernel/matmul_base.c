@@ -568,11 +568,13 @@ int MatmulBasePrepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
 
   if (matmul->a_const_) {
+    MatmulBaseFreePackedMatrixA(self);
     ret = MatmulBasePackMatrixA(matmul);
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
     matmul->matrix_a_.has_packed_ = true;
   }
   if (matmul->b_const_) {
+    MatmulBaseFreePackedMatrixB(self);
     ret = MatmulBasePackMatrixB(matmul);
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
     matmul->matrix_b_.has_packed_ = true;
