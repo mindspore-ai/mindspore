@@ -125,10 +125,11 @@ def _allow_mix_precision(node, allowed_list, dtype) -> bool:
     return True
 
 
-def _insert_cast_operator_process(node, stree, dtype):
+def _insert_cast_operator_process(node, dtype):
     """insert cast for operators in white_list."""
     dtype_str = "mindspore.bfloat16" if dtype == mstype.bfloat16 else "mindspore.float16"
     new_cast_node = None
+    stree = node.get_symbol_tree()
     # insert cast fp16/bf16 before the primitive operators
     if issubclass(node.get_instance_type(), Primitive):
         for idx, arg in enumerate(node.get_args()):
@@ -187,7 +188,7 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
         node = node_list.pop()
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
             if MS_AMP_BY_REWRITE:
-                _insert_cast_for_cell_container(node, stree, dtype, allowed_list, white_list=white_list)
+                _insert_cast_for_cell_container(node, dtype, allowed_list, white_list=white_list)
             for n in node.get_handler().node_list:
                 if n.get_node_type() == ms.rewrite.NodeType.Tree:
                     _insert_cast_operator_white_list(ms.rewrite.TreeNodeHelper.get_sub_tree(ms.rewrite.Node(n)),
@@ -200,20 +201,21 @@ def _insert_cast_operator_white_list(stree, white_list, dtype):
                 nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
                 node_list.extend(nodes)
         elif node.get_instance_type() in white_list and _allow_mix_precision(node, allowed_list, dtype):
-            _insert_cast_operator_process(node, stree, dtype)
+            _insert_cast_operator_process(node, dtype)
 
 
-def _insert_cast_for_cell_container(cell_container, stree, dtype, allowed_list, *, white_list=None, black_list=None):
+def _insert_cast_for_cell_container(cell_container, dtype, allowed_list, *, white_list=None, black_list=None):
     """
     Insert cast for cell containers.
     Only one of white_list and black_list can be set.
     """
     cast_flag = False
     current_node = None
+    stree = cell_container.get_symbol_tree()
     for node in cell_container.get_handler().nodes():
         current_node = ms.rewrite.Node(node)
-        if (white_list and current_node.get_instance_type() in white_list) or \
-           (black_list and current_node.get_instance_type() not in black_list) and \
+        if (white_list is not None and current_node.get_instance_type() in white_list) or \
+           (black_list is not None and current_node.get_instance_type() not in black_list) and \
            (_allow_mix_precision(current_node, allowed_list, dtype)):
             cast_flag = True
             current_node.get_instance().to_float(dtype)
@@ -265,8 +267,9 @@ def _need_removed_cast_pair(node, dtype):
     return True
 
 
-def _removed_cast_pair_process(stree, cast_f32_node):
+def _removed_cast_pair_process(cast_f32_node):
     """remove the duplicated cast operators."""
+    stree = cast_f32_node.get_symbol_tree()
     cast_f32_users = cast_f32_node.get_users()
     # remove cast f16 nodes
     for user_node in cast_f32_users:
@@ -306,7 +309,7 @@ def _remove_duplicated_cast(stree, dtype):
                 nodes = [ms.rewrite.Node(n) for n in node.get_handler().nodes()]
                 node_list.extend(nodes)
         elif _need_removed_cast_pair(node, dtype):
-            _removed_cast_pair_process(stree, node)
+            _removed_cast_pair_process(node)
 
 
 def _auto_white_list(network, white_list, dtype):
@@ -329,12 +332,12 @@ def _insert_cast_operator_black_list(stree, black_list, dtype):
         if node.get_targets() is None:
             continue
         if node.get_node_type() == ms.rewrite.NodeType.CellContainer:
-            _insert_cast_for_cell_container(node, stree, dtype, allowed_list, black_list=black_list)
+            _insert_cast_for_cell_container(node, dtype, allowed_list, black_list=black_list)
         elif isinstance(node.get_handler().get_node_manager(), ms.rewrite.node.CellContainer):
             # nodes in CellContainer are processed by _insert_cast_for_cell_container
             continue
         elif node.get_instance_type() not in black_list and _allow_mix_precision(node, allowed_list, dtype):
-            _insert_cast_operator_process(node, stree, dtype)
+            _insert_cast_operator_process(node, dtype)
 
 
 def _remove_duplicated_cast_rewrite(stree, dtype):
