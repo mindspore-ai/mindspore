@@ -1991,6 +1991,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ConfigManager::GetInstance().iter_num() > 1 && ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
     df_graph_->SetNeedIteration(true);
+    anf_graph_->set_flag(kGraphNeedIteration, true);
   }
   if (ref_mode_) {
     std::sort(ref_datas_.begin(), ref_datas_.end(), [](const OperatorPtr &left, const OperatorPtr &right) -> bool {
