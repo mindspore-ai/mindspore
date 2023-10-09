@@ -67,12 +67,8 @@ bool AddNDynShapeJoin(ShapeVector *shape1, const ShapeVector *shape2) {
 abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name
-                              << "', the input data type must be list or tuple of tensors.But got:"
-                              << input_args[0]->ToString();
-    }
+  // If called from the backend, the input_args[0] is a KernelTensor, not AbstractSequence
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(elements.size()), kGreaterEqual, 1, prim_name);
@@ -82,8 +78,8 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
     auto shape = elements[i]->GetShape();
     ShapeVector shape_vec;
     // If shape is no shape, it is a scalar, use empty shape vector as scalar shape.
-    if (shape->isa<abstract::Shape>()) {
-      shape_vec = shape->cast<abstract::ShapePtr>()->shape();
+    if (shape->isa<abstract::TensorShape>()) {
+      shape_vec = shape->GetShapeVector();
     }
     // If any shape is dynamic rank, return a dynamic rank.
     if (IsDynamicRank(shape_vec)) {
@@ -107,10 +103,7 @@ TypePtr AddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,

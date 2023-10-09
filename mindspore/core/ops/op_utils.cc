@@ -275,6 +275,11 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
   }
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input_value = input_args[kInputIndex1]->GetValue();
+  if (input_value->isa<KernelTensorValue>()) {
+    auto value_opt = GetArrayValue<int64_t>(input_value);
+    auto value_array = value_opt.value();
+    *axis_value = value_array.ToVector();
+  }
   if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
     is_dynamic = CheckAndGetAxisValueFromScalar(input_value, op_name, axis_value, axis_shape_v);
   } else if (input_args[kInputIndex1]->isa<abstract::AbstractSequence>()) {

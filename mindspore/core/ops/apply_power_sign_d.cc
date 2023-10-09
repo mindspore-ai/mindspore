@@ -56,12 +56,10 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
   }
   auto var_shape = input_args[kInputIndex0]->GetShape();
   auto m_shape = input_args[kInputIndex1]->GetShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  auto logbase_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShapeTrack())[kShape];
-  auto sign_decay_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShapeTrack())[kShape];
-  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShapeTrack())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto logbase_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShape())[kShape];
+  auto sign_decay_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShape())[kShape];
+  auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
   auto grad_shape = input_args[kInputIndex6]->GetShape();
   int64_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {

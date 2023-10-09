@@ -32,15 +32,12 @@ namespace {
 abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const auto &prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  // If called from the backend, the input_args[0] is a KernelTensor, not AbstractSequence
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
@@ -86,10 +83,7 @@ TypePtr AccumulateNV2InferType(const PrimitivePtr &prim, const std::vector<Abstr
     MS_EXCEPTION_IF_NULL(item);
   }
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,

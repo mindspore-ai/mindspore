@@ -50,12 +50,12 @@ abstract::ShapePtr BatchToSpaceNDV2InferShape(const PrimitivePtr &primitive,
   auto out_shape = x_shape;
 
   int64_t block_shape_prod = 1;
-  if (input_args[1]->isa<abstract::AbstractTensor>() && !input_args[1]->GetValue()->isa<tensor::Tensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[1]) && !IsValueKnown(input_args[1]->GetValue())) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
   constexpr auto index2 = 2;
-  if (input_args[index2]->isa<abstract::AbstractTensor>() && !input_args[index2]->GetValue()->isa<tensor::Tensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[index2]) && !IsValueKnown(input_args[index2]->GetValue())) {
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }

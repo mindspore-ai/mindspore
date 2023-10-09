@@ -40,6 +40,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
 #include "ops/op_utils.h"
+#include "ir/kernel_tensor_value.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
@@ -1324,6 +1325,11 @@ std::vector<int64_t> CheckAndConvertUtils::CheckTupleInt(const std::string &arg_
         }
         return GetValue<int64_t>(e);
       });
+  } else if (attr->isa<KernelTensorValue>()) {
+    // to_do: check type of the KernelTensorValue is int64
+    auto data_opt = ops::GetArrayValue<int64_t>(attr);
+    const auto &data_array = data_opt.value();
+    result = data_array.ToVector();
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a tuple with all Int elements, but got " << attr->type_name() << ".";
@@ -1345,6 +1351,11 @@ std::vector<int64_t> CheckAndConvertUtils::CheckListInt(const std::string &arg_n
         }
         return GetValue<int64_t>(e);
       });
+  } else if (attr->isa<KernelTensorValue>()) {
+    // to_do: check type of the KernelTensorValue is int64
+    auto data_opt = ops::GetArrayValue<int64_t>(attr);
+    const auto &data_array = data_opt.value();
+    result = data_array.ToVector();
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be a list with all Int elements, but got " << attr->ToString() << ".";

@@ -65,12 +65,13 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
                                              kEqual, SizeToLong(input_grad_dims), prim_name);
   }
 
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex1]->GetValue()->isa<tensor::Tensor>()) {
+  if (input_args[kInputIndex1]->GetType()->object_type() == kObjectTypeTensorType &&
+      IsValueKnown(input_args[kInputIndex1]->GetValue())) {
     ShapeVector output_shape = input_grad_shape;
     auto value_ptr = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(value_ptr);
-    auto value = CheckAndConvertUtils::CheckTensorIntValue("origin input shape", value_ptr, prim_name);
+    auto value = CheckAndConvertUtils::CheckTensorIntValue("origin input shape", value_ptr, prim_name,
+                                                           input_args[kInputIndex1]->GetType());
     for (int64_t i = 0; i < orig_input_shape_shape[0]; ++i) {
       output_shape[i] = value[i] > 0 ? value[i] : static_cast<int64_t>(1);
     }

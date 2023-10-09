@@ -71,10 +71,12 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
   auto output_size_value_ptr = output_size_arg->GetValue();
   if (IsValueKnown(output_size_value_ptr)) {
     ShapeVector output_size_val;
-    if (output_size_value_ptr->isa<ValueTuple>()) {
+    auto output_size_obj_type = output_size_arg->GetType()->object_type();
+    if (output_size_obj_type == kObjectTypeTuple) {
       output_size_val = CheckAndConvertUtils::CheckTupleInt("input[output_size]", output_size_value_ptr, prim_name);
-    } else if (output_size_value_ptr->isa<tensor::Tensor>()) {  // 2-rd infer will be a tensor
-      output_size_val = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value_ptr, prim_name);
+    } else if (output_size_obj_type == kObjectTypeTensorType) {  // 2-rd infer will be a tensor
+      output_size_val = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value_ptr, prim_name,
+                                                                  output_size_arg->GetType());
     } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
                               << "the input[output_size] must be a tuple of int.";
@@ -114,7 +116,8 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
                                << "and the size of 'output_size' is " << output_size_val_size << ".";
     }
     return std::make_shared<abstract::Shape>(grid_shape);
-  } else if (output_size_arg->isa<abstract::AbstractTensor>() || output_size_arg->isa<abstract::AbstractTuple>()) {
+  } else if (output_size_arg->GetType()->object_type() == kObjectTypeTensorType ||
+             output_size_arg->GetType()->object_type() == kObjectTypeTuple) {
     ShapeVector grid_shape = {-2};
     return std::make_shared<abstract::Shape>(grid_shape);
   } else {
@@ -125,7 +128,7 @@ abstract::ShapePtr AffineGridInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr AffineGridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = prim->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
+  CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
   auto theta_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(theta_type);
   const std::set<TypePtr> theta_valid_types = {kFloat16, kFloat32};
