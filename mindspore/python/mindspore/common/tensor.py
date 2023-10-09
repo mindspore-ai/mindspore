@@ -1083,7 +1083,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Determines whether the memory of tensor is contiguous.
 
         Returns:
-            bool: True if tensor memory is contiguous, False otherwise.
+            Bool, True if tensor memory is contiguous, False otherwise.
 
         Examples:
             >>> import mindspore as ms
