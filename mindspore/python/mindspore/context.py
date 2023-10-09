@@ -1310,8 +1310,10 @@ def set_context(**kwargs):
                 When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
                 performance loss.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
+              This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
+              This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
