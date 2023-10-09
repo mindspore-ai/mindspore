@@ -588,16 +588,24 @@ def test_filter_with_pull_mode():
     Description: Test Filter op to support pull mode
     Expectation: Output is equal to the expected output
     """
+    original_debug_mode = ds.config.get_debug_mode()
     ds.config.set_debug_mode(True)
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
     data_sie = dataset.get_dataset_size()
 
     num_iter = 0
-    for _ in dataset.create_dict_iterator(num_epochs=1):
-        num_iter += 1
-    assert data_sie == num_iter
-    ds.config.set_debug_mode(False)
+    num_epochs = 2
+    ret = []
+    iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
+    for _ in range(num_epochs):
+        for item in iterator:
+            num_iter += 1
+            ret.append(item['data'].asnumpy())
+    assert data_sie * num_epochs == num_iter
+    assert ret[0] == 0
+    assert ret[20] == 20
+    ds.config.set_debug_mode(original_debug_mode)
 
 
 if __name__ == '__main__':
