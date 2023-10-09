@@ -101,7 +101,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
                 ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_layernorm_kernel.cc
                 ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_gather_kernel.cc
                 ${CMAKE_CURRENT_SOURCE_DIR}/delegate/ascend_native/ascend_native_encoder_kernel.cc
-                ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend_native/hccl_adapter.cc
                 ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/hccl_adapter.cc
                 ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/converter.cc
                 ${CCSRC_DIR}/plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.cc
