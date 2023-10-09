@@ -201,7 +201,8 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
 
 // These abstract sequence can't handled by DDE.
 bool IsInvalidAbstractSequence(const AbstractSequencePtr &abs) {
-  if (abs == nullptr || abs->sequence_nodes() == nullptr || abs->sequence_nodes()->empty()) {
+  if (abs == nullptr || abs->isa<AbstractSparseTensor>() || abs->sequence_nodes() == nullptr ||
+      abs->sequence_nodes()->empty()) {
     return true;
   }
   if (abs->dyn_len_arg() || abs->dynamic_len()) {
@@ -664,8 +665,8 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
   }
   MS_EXCEPTION_IF_NULL(old_node);
   auto old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
-  if (old_sequence_abs == nullptr) {
-    MS_LOG(DEBUG) << "The abstract is not AbstractSequence, " << old_node->DebugString() << " --> "
+  if (old_sequence_abs == nullptr || old_sequence_abs->isa<AbstractSparseTensor>()) {
+    MS_LOG(DEBUG) << "The abstract is not AbstractTuple/AbstractList, " << old_node->DebugString() << " --> "
                   << new_node->DebugString();
     return;
   }
