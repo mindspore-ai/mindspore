@@ -194,8 +194,6 @@ class AclRunner {
 
   void SetPrecisionMode(const AclPrecisionMode mode);
 
-  void SetOpPrecisionMode();
-
   void ResizeOpInputs(size_t size) {
     acl_param_.input_desc.clear();
     acl_param_.input_desc.resize(size, nullptr);
