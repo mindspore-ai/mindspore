@@ -271,6 +271,8 @@ function(__install_ascend_ascendc)
     install(DIRECTORY ${ASCEMDC_CUSTOM_OPP_DIR} DESTINATION ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${CMAKE_BINARY_DIR}/ascendc_scripts/install.sh DESTINATION
             ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${CMAKE_BINARY_DIR}/ascendc_scripts/set_env.bash DESTINATION
+            ${ASCENDC_OPP_DST_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
 endfunction()
 
 # full mode will also package the files of lite_cv mode.

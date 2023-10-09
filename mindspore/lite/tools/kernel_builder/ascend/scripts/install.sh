@@ -1,5 +1,5 @@
 #!/bin/bash
-vendor_name=mslite_tbe_and_aicpu
+vendor_name=customize
 script_dir=$(cd "$(dirname ${BASH_SOURCE[0]})"; pwd)
 sourcedir=${script_dir}/packages
 vendordir=vendors/$vendor_name
