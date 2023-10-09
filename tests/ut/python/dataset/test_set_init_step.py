@@ -83,7 +83,9 @@ def test_init_step_with_non_mappable_source(fast_recovery_mode, shuffle):
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
     expected_result = get_expected_result(dataset, num_epochs)
-    for init_step in range(dataset_size * num_epochs):
+    # test initialize from the beginning, the middle of the first epoch,
+    # the end of the first epoch and the middle of the second epoch
+    for init_step in [0, dataset_size // 2, dataset_size, dataset_size + dataset_size // 2]:
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
     ds.config.set_fast_recovery(original_mode)
@@ -118,7 +120,9 @@ def test_init_step_with_mappable_source(fast_recovery_mode, shuffle):
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
     expected_result = get_expected_result(dataset, num_epochs)
-    for init_step in range(dataset_size * num_epochs):
+    # test initialize from the beginning, the middle of the first epoch,
+    # the end of the first epoch and the middle of the second epoch
+    for init_step in [0, dataset_size // 2, dataset_size, dataset_size + dataset_size // 2]:
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
     ds.config.set_fast_recovery(original_mode)
@@ -156,7 +160,44 @@ def test_init_step_with_non_mappable_generator(fast_recovery_mode, shuffle):
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
     expected_result = get_expected_result(dataset, num_epochs)
-    for init_step in range(dataset_size * num_epochs):
+    # test initialize from the beginning, the middle of the first epoch,
+    # the end of the first epoch and the middle of the second epoch
+    for init_step in [0, dataset_size // 2, dataset_size, dataset_size + dataset_size // 2]:
+        init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
+
+    ds.config.set_fast_recovery(original_mode)
+    ds.config.set_seed(original_seed)
+
+
+def test_init_step_with_non_mappable_generator_with_len():
+    """
+    Feature: Pipeline resuming
+    Description: Initialize non-mappable GeneratorDataset with len method from intermediate step
+    Expectation: Pipeline returns data from the specified step
+    """
+    original_mode = ds.config.get_fast_recovery()
+    ds.config.set_fast_recovery(True)
+    original_seed = ds.config.get_seed()
+    ds.config.set_seed(0)
+
+    class MyDataset:
+        def __init__(self, length):
+            self.length = length
+
+        def __iter__(self):
+            return iter(range(self.length))
+
+        def __len__(self):
+            return self.length
+
+    dataset = ds.GeneratorDataset(MyDataset(5), column_names=["data"])
+
+    num_epochs = 2
+    dataset_size = dataset.get_dataset_size()
+    expected_result = get_expected_result(dataset, num_epochs)
+    # test initialize from the beginning, the middle of the first epoch,
+    # the end of the first epoch and the middle of the second epoch
+    for init_step in [0, dataset_size // 2, dataset_size, dataset_size + dataset_size // 2]:
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
     ds.config.set_fast_recovery(original_mode)
@@ -198,7 +239,9 @@ def test_init_step_with_mappable_generator(fast_recovery_mode, shuffle):
     num_epochs = 2
     dataset_size = dataset.get_dataset_size()
     expected_result = get_expected_result(dataset, num_epochs)
-    for init_step in range(dataset_size * num_epochs):
+    # test initialize from the beginning, the middle of the first epoch,
+    # the end of the first epoch and the middle of the second epoch
+    for init_step in [0, dataset_size // 2, dataset_size, dataset_size + dataset_size // 2]:
         init_dataset_from_step_and_verify_result(dataset, init_step, num_epochs, dataset_size, expected_result)
 
     ds.config.set_fast_recovery(original_mode)
