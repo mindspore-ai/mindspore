@@ -626,9 +626,11 @@ REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto gamma = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
-  auto result = ib->Emit(
-    "LayerNormGrad", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma},
-    {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")}, {"begin_params_axis", ib->GetAttr("begin_params_axis")}});
+  auto result =
+    ib->Emit("LayerNormGrad", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma},
+             {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")},
+              {"begin_params_axis", ib->GetAttr("begin_params_axis")},
+              {"epsilon", ib->GetAttr("epsilon")}});
   auto d_x = ib->TupleGetItem(result, 0);
   auto d_gamma = ib->TupleGetItem(result, 1);
   auto d_beta = ib->TupleGetItem(result, 2);
