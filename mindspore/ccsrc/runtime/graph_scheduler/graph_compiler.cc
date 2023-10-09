@@ -802,7 +802,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     // dynamic shape pass of graphmode
     if (graph->is_dynamic_shape()) {
       if (!graph->is_graph_run_mode()) {
-        opt::DynamicShapeConvertPass(graph);
+        // Temporarily disable CustomActor for asynchronous InferShape and Resize for the dynamic shape scenario,
+        // and implement the corresponding capability through direct InferShape and Resize in KernelActor.
+        // opt::DynamicShapeConvertPass(graph);
       }
       auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
       MS_EXCEPTION_IF_NULL(profiler_manage_inst);

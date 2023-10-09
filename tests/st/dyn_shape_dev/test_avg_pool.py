@@ -108,7 +108,6 @@ def test_avg_pool_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
-@pytest.mark.skip(reason="device ptr null")
 def test_avg_pool_dynamic(mode):
     """
     Feature: test dynamic tensor and dynamic scalar of avg pool.
