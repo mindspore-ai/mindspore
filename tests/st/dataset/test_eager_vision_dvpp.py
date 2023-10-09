@@ -299,15 +299,15 @@ def test_eager_resize_dvpp_exception():
     # the interpolation is invalid
     with pytest.raises(RuntimeError) as error_info:
         _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.AREA).device("Ascend")(img)
-    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+    assert "The current InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
 
     with pytest.raises(RuntimeError) as error_info:
         _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.PILCUBIC).device("Ascend")(img)
-    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+    assert "The current InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
 
     with pytest.raises(ValueError) as error_info:
         _ = vision.Resize(size=(64, 32), interpolation=vision.Inter.ANTIALIAS).device("Ascend")(img)
-    assert "The InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
+    assert "The current InterpolationMode is not supported by DVPP. It is " in str(error_info.value)
 
     # the device(device_target) is invalid
     with pytest.raises(TypeError) as error_info:
