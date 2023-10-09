@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -378,3 +378,75 @@ def test_str_format_using_cell_in_init():
         test_sub_cell = TestSubCell(123)
         assert format_str == "value is {0.x}".format(test_sub_cell)
     assert "Unsupported parameter type for python primitive, the parameter value is DeadNode" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_str_format_indentation():
+    """
+    Feature: JIT Fallback
+    Description: Test str.format() in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo(paddings):
+        if not isinstance(paddings, (tuple, list)):
+            raise TypeError(f"For 'pad', the type of 'paddings' must be a tuple of int or list of int,"
+                            f" but got {type(paddings)}.")
+        return paddings
+
+    with pytest.raises(TypeError) as err:
+        x = Tensor([1])
+        foo(x)
+    assert "For 'pad', the type of 'paddings' must be a tuple of int or list of int, " \
+           "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_str_format_indentation_2():
+    """
+    Feature: JIT Fallback
+    Description: Test str.format() in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo(paddings):
+        if not isinstance(paddings, (tuple, list)):
+            raise TypeError(f'The paddings must be a tuple of int or list of int,'
+                            f" but got {type(paddings)}.")
+        return paddings
+
+    with pytest.raises(TypeError) as err:
+        x = Tensor([1])
+        foo(x)
+    assert "The paddings must be a tuple of int or list of int, " \
+           "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_str_format_indentation_3():
+    """
+    Feature: JIT Fallback
+    Description: Test str.format() in graph mode.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo(paddings):
+        if not isinstance(paddings, (tuple, list)):
+            raise TypeError(f'The paddings must be a tuple of int or list of int,'
+                            f' but got {type(paddings)}.')
+        return paddings
+
+    with pytest.raises(TypeError) as err:
+        x = Tensor([1])
+        foo(x)
+    assert "The paddings must be a tuple of int or list of int, " \
+           "but got <class 'mindspore.common.tensor.Tensor'>." in str(err.value)
