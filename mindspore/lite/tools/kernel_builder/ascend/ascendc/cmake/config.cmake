@@ -1,7 +1,7 @@
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELEASE "")
 set(ENABLE_SOURCE_PACKAGE True)
-set(ENABLE_BINARY_PACKAGE True)
+set(ENABLE_BINARY_PACKAGE False)
 set(ASCEND_COMPUTE_UNIT "ascend910;ascend910b;ascend310p")
 set(vendor_name mslite_ascendc)
 set(ASCEND_PYTHON_EXECUTABLE python3)
