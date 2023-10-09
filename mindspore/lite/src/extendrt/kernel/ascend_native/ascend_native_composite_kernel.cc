@@ -382,7 +382,6 @@ int AscendNativeCompositeKernel::AllocateGraphWorkspace(size_t ws_size) {
 }
 
 int AscendNativeCompositeKernel::Prepare() {
-  std::cout << "AscendNativeCompositeKernel::Prepare\n" << std::endl;
   auto nodes = TopoSort(func_graph_->get_return());
   for (auto &node : nodes) {
     if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
@@ -418,7 +417,6 @@ int AscendNativeCompositeKernel::Prepare() {
     MS_LOG(ERROR) << "kernel graph allocation failed ";
     return lite::RET_ERROR;
   }
-  std::cout << "end AscendNativeCompositeKernel::Prepare\n" << std::endl;
   return lite::RET_OK;
 }
 
@@ -487,12 +485,10 @@ int AscendNativeCompositeKernel::PreProcess() {
     MS_LOG(ERROR) << "InferShape AscendNativeCompositeKernel failed ";
     return kLiteError;
   }
-  std::cout << "end AscendNativeCompositeKernel::PreProcess\n" << std::endl;
   return lite::RET_OK;
 }
 
 int AscendNativeCompositeKernel::ReSize() {
-  std::cout << "AscendNativeCompositeKernel::ReSize\n" << std::endl;
   size_t ws_size = 0;
   for (auto &kernel : kernels_) {
     size_t k_ws_size = kernel->get_workspace_size();
@@ -513,7 +509,6 @@ int AscendNativeCompositeKernel::ReSize() {
     MS_LOG(ERROR) << "kernel graph allocation failed ";
     return lite::RET_ERROR;
   }
-  std::cout << "end AscendNativeCompositeKernel::ReSize\n" << std::endl;
   return lite::RET_OK;
 }
 REGISTER_ASCEND_NATIVE_CREATOR(ops::kNameAscendNativeComposite, AscendNativeCompositeKernel)
