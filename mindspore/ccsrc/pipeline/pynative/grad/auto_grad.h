@@ -121,7 +121,7 @@ class VariableAdjoint {
   AnfNodePtr k_node_{nullptr};
 };
 using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
-using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+using expander::bprop::UserType;
 
 struct AdParam {
   AdParam() : tape_(std::make_shared<KernelGraph>()), fg_(std::make_shared<FuncGraph>()) {}
