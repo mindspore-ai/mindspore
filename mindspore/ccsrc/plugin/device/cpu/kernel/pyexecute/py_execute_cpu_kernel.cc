@@ -111,96 +111,6 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
-namespace {
-void Memcpy(void *addr, size_t addr_size, void *data, size_t data_size, size_t offset) {
-  const auto &res = memcpy_s(reinterpret_cast<char *>(addr) + offset * data_size, addr_size, data, data_size);
-  if (res != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", dest size: " << addr_size << ", src size: " << data_size;
-  }
-}
-
-void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &address, size_t offset = 0) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  MS_EXCEPTION_IF_NULL(address);
-  Memcpy(address->addr, address->size, tensor->data_c(), tensor->Size(), offset);
-}
-
-void ScalarToRawMemory(const py::object &obj, const AddressPtr &address, size_t offset = 0) {
-  if (py::isinstance<py::bool_>(obj)) {
-    bool data = py::cast<bool>(obj);
-    Memcpy(address->addr, address->size, &data, sizeof(bool), offset);
-    return;
-  }
-  if (py::isinstance<py::int_>(obj)) {
-    int64_t data = py::cast<int64_t>(obj);
-    Memcpy(address->addr, address->size, &data, sizeof(int64_t), offset);
-    return;
-  }
-  if (py::isinstance<py::float_>(obj)) {
-    float data = py::cast<float>(obj);
-    Memcpy(address->addr, address->size, &data, sizeof(float), offset);
-    return;
-  }
-  MS_LOG(INTERNAL_EXCEPTION) << "Scalar to raw memory failed!";
-}
-
-void SequenceToWholeRawMemory(const py::sequence &obj, const AddressPtr &output) {
-  size_t obj_len = py::len(obj);
-  for (size_t i = 0; i < obj_len; ++i) {
-    auto element_obj = obj[i];
-    if (py::isinstance<tensor::Tensor>(element_obj)) {
-      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), output, i);
-    } else {
-      ScalarToRawMemory(element_obj, output, i);
-    }
-  }
-}
-
-void SequenceToSeparateMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto element_obj = obj[i];
-    if (py::isinstance<tensor::Tensor>(element_obj)) {
-      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[i]);
-    } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
-      ScalarToRawMemory(element_obj, outputs[i]);
-    }
-  }
-}
-
-void SequenceToRawMemory(const py::sequence &obj, const std::vector<AddressPtr> &outputs) {
-  // The length of sequence and the length of output address have two relationship:
-  //   1. The length is same: it means the abstract of PyExecute in frontend is AbstractSequence.
-  //   2. The length of output address is 1: it means the abstract of PyExecute in frontend is AbstractAny.
-  size_t outputs_len = outputs.size();
-  static const auto allow_sequence_to_whole_memory = common::GetEnv("MS_DEV_FALLBACK_SEQUENCE_TO_WHOLE_MEMORY") == "1";
-  if (allow_sequence_to_whole_memory && outputs_len == 1 && fallback::CheckSequenceToMemory(obj)) {
-    SequenceToWholeRawMemory(obj, outputs[0]);
-    return;
-  }
-  SequenceToSeparateMemory(obj, outputs);
-}
-
-void PyExecuteOutputToRawMemory(const py::object &obj, const std::vector<AddressPtr> &outputs) {
-  // This function will be moved to runtime compile pass later.
-  if (py::isinstance<tensor::Tensor>(obj)) {
-    TensorToRawMemory(obj.cast<tensor::TensorPtr>(), outputs[0]);
-    return;
-  }
-  // Tuple object will to raw memory later.
-  if (py::isinstance<py::list>(obj)) {
-    auto output_sequence = py::sequence(obj);
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
-    if (allow_inplace_ops) {
-      SequenceToRawMemory(output_sequence, outputs);
-    }
-    return;
-  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
-    ScalarToRawMemory(obj, outputs[0]);
-    return;
-  }
-}
-}  // namespace
-
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
@@ -226,16 +136,11 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      PyExecuteOutputToRawMemory(output, outputs);
-    } else {
-      MS_EXCEPTION_IF_NULL(kernel_node_);
-      const auto &device_address = AnfAlgo::GetMutableOutputAddr(kernel_node_, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
-      device_address->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
-    }
+    MS_EXCEPTION_IF_NULL(kernel_node_);
+    const auto &device_address = AnfAlgo::GetMutableOutputAddr(kernel_node_, 0);
+    MS_EXCEPTION_IF_NULL(device_address);
+    MS_LOG(DEBUG) << "set need sync user data flag to device address:" << device_address;
+    device_address->set_sync_user_data_handler(pyexecute::UserDataToRawMemory);
     AttachPyOutputData(output);
     return true;
   }
