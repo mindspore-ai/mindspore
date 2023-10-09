@@ -66,6 +66,7 @@ class ForwardExecutor {
                                    const std::vector<SliceOpInfoPtr> &slice_op_infos, bool requires_grad,
                                    const stub::StubNodePtr &stub_output);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
+  void RefreshForwardCallback();
   void ClearNodeAbsMap() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
