@@ -2267,11 +2267,9 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
     uint64_t output_index = 0;
     std::vector<OutHandler> return_handles;
     TraceTupleGetItem(node->cast<CNodePtr>(), &output_index);
-    if (output_index >= handles.size()) {
+    if (IsPrimitiveCNode(input, prim::kPrimTupleGetItem)) {
       MS_EXCEPTION_IF_ZERO("handles_size", handles.size());
-      auto input_node = handles[0].node;
-      MS_EXCEPTION_IF_NULL(input_node);
-      auto abs = input_node->abstract();
+      auto abs = input->abstract();
       MS_EXCEPTION_IF_NULL(abs);
       if (abs->isa<abstract::AbstractSequence>()) {
         auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
@@ -2281,7 +2279,7 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
                             << "), node: " << node->fullname_with_scope()
                             << ", input node: " << input->fullname_with_scope();
         }
-        auto real_node = AnfUtils::VisitKernel(node, output_index).first;
+        auto real_node = common::AnfAlgo::VisitKernelWithReturnType(node, output_index).first;
         MS_EXCEPTION_IF_NULL(real_node);
         auto real_opt = Convert(real_node);
         MS_EXCEPTION_IF_NULL(real_opt);
@@ -2290,6 +2288,10 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
         real_handler.node = real_node;
         return std::vector<OutHandler>{real_handler};
       }
+      MS_LOG(EXCEPTION) << "Node:" << node->fullname_with_scope()
+                        << " is a nested tuplegetitem with input node: " << input->fullname_with_scope()
+                        << ", but input node's abstract is not a tuple.";
+    } else if (output_index >= handles.size()) {
       MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << handles.size()
                         << "), node: " << node->fullname_with_scope()
                         << ", input node: " << input->fullname_with_scope();
