@@ -1307,6 +1307,8 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape);
   new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
 
   if (enable_async) {
     RunViewKernelTaskAsyncImpl(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
