@@ -294,10 +294,8 @@ int MatMulInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_s
 int ReduceInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_shapes,
                      std::vector<ShapeVector> *out_shapes) {
   MS_ASSERT(cnode != nullptr);
-  if (cnode->size() < kInputSizeThree || in_shapes.size() < kInputSizeTwo) {
-    MS_LOG(ERROR) << "Reduce should have two inputs.";
-    return lite::RET_ERROR;
-  }
+  MS_CHECK_FALSE_MSG(cnode->size() < kInputSizeThree || in_shapes.size() < kInputSizeTwo, lite::RET_ERROR,
+                     "Reduce should have two inputs");
   auto prim = GetCNodePrimitive(cnode);
   MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "Reduce's primitive is a nullptr.");
   bool keep_dim = prim->GetAttr(ops::kKeepDims) != nullptr && GetValue<bool>(prim->GetAttr(ops::kKeepDims));
@@ -317,7 +315,10 @@ int ReduceInferShape(const CNodePtr &cnode, const std::vector<ShapeVector> &in_s
   std::set<int> reduce_axes;
   int rank = static_cast<int>(in_shapes.front().size());
   if (data_info.data_ptr_ == nullptr) {
-    (void)reduce_axes.insert(0);
+    MS_LOG(INFO) << "reduce op rand is: " << rank << ", cnode name: " << cnode->fullname_with_scope();
+    for (int dim = 0; dim < rank; dim++) {
+      (void)reduce_axes.insert(dim);
+    }
   } else {
     int element_num = data_info.shape_.empty() ? 1 : data_info.shape_.front();
     std::vector<int> temp;
