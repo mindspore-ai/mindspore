@@ -4036,11 +4036,74 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   return true;
 }
 
+// Remove space character, newline character, tab character, carriage character
+string ProcessRStrip(const string &str) {
+  const string &chars = " \n\r\t";
+  size_t end = str.find_last_not_of(chars);
+  if (end == std::string::npos) {
+    return "";
+  }
+  return str.substr(0, end + 1);
+}
+
+string RemoveExcessFString(const string &script_text, int64_t begin, int64_t end) {
+  string update_str = "";
+  const int64_t str_len = 2;
+  if (begin == 0 && begin < end) {
+    update_str = script_text.substr(begin + str_len, end - begin);
+  } else if (begin > 0 && begin < end) {
+    update_str = ProcessRStrip(script_text.substr(0, begin - 1)) + script_text.substr(begin + str_len, end - begin);
+  }
+  if (end + str_len < SizeToLong(script_text.size())) {
+    update_str = update_str + script_text.substr(end + str_len + 1, script_text.size() - end - str_len - 1);
+  }
+  return update_str;
+}
+
+size_t GetSubStrNum(const string &script_text, const string &sub) {
+  size_t count = 0;
+  size_t pos = script_text.find(sub);
+  while (pos != string::npos) {
+    count++;
+    pos = script_text.find(sub, pos + 1);
+  }
+  return count;
+}
+
+string ProcessIndentationInScript(const string &script_text) {
+  const size_t f_string_num = 2;
+  size_t num1 = GetSubStrNum(script_text, "f'");
+  size_t num2 = GetSubStrNum(script_text, "f\"");
+  if (num1 + num2 < f_string_num) {
+    return script_text;
+  }
+  string old_script = script_text;
+  string new_script = script_text;
+  const size_t str_len = 2;
+  while (new_script.find("f'") != string::npos) {
+    int64_t begin = new_script.find("f'");
+    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
+    int64_t end = begin + sub.find("'");
+    new_script = RemoveExcessFString(new_script, begin, end);
+  }
+  while (new_script.find("f\"") != string::npos) {
+    int64_t begin = new_script.find("f\"");
+    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
+    int64_t end = begin + sub.find("\"");
+    new_script = RemoveExcessFString(new_script, begin, end);
+  }
+  if (new_script != old_script) {
+    new_script = "f\"" + new_script + "\"";
+  }
+  return new_script;
+}
+
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                      const string &script_text) {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(value_node);
-  if (!CheckNeedConvertInterpret(block, value_node, script_text)) {
+  string new_script_text = ProcessIndentationInScript(script_text);
+  if (!CheckNeedConvertInterpret(block, value_node, new_script_text)) {
     return value_node;
   }
 
@@ -4052,7 +4115,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
   try {
-    const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(script_text));
+    const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(new_script_text));
     for (const auto &id : ids) {
       const auto &id_str = py::str(id);
       const auto &iter = values.find(id_str);
@@ -4065,11 +4128,11 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
       }
     }
   } catch (const std::exception &e) {
-    MS_LOG(INTERNAL_EXCEPTION) << "GetPythonScriptIdAttrs failed, script: " << py::str(script_text) << ".\n"
+    MS_LOG(INTERNAL_EXCEPTION) << "GetPythonScriptIdAttrs failed, script: " << py::str(new_script_text) << ".\n"
                                << e.what();
   }
   constexpr auto self_text = "self";
-  if (keys.find(self_text) == keys.end() && script_text.find(self_text) != std::string::npos) {
+  if (keys.find(self_text) == keys.end() && new_script_text.find(self_text) != std::string::npos) {
     py::object self_namespace = ast()->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast()->obj());
     auto self_value = std::make_shared<InterpretedObject>(self_namespace);
     (void)filter_keys.emplace_back(NewValueNode(MakeValue(self_text)));
@@ -4080,8 +4143,8 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
-  MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
+  AnfNodePtr interpreted_node = block->MakeInterpret(new_script_text, global_dict_node, local_dict_node, value_node);
+  MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << new_script_text
                << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
                << ",\nglobal_dict_node: " << global_dict_node->ToString()
                << ",\nlocal_dict_node: " << local_dict_node->DebugString(recursive_level)
