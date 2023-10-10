@@ -37,6 +37,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -50,7 +51,7 @@ constexpr int kQuantileDefaultDim = 10000;
 
 abstract::ShapePtr QuantileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto input = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
@@ -126,15 +127,16 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 
   auto q_value = q->GetValue();
   MS_EXCEPTION_IF_NULL(q_value);
-  if (q->isa<abstract::AbstractTensor>()) {
+  if (q->GetType()->object_type() == kObjectTypeTensorType) {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);
-  } else if (q->isa<abstract::AbstractScalar>()) {
+  } else if (q->GetType()->object_type() == kObjectTypeNumber) {
     if (q_value != nullptr) {
-      if (!q_value->isa<FloatImm>()) {
+      auto q_opt = GetScalarValue<float>(q_value);
+      if (!q_opt.has_value()) {
         MS_EXCEPTION(TypeError) << "For '" << prim_name
                                 << "', the type of 'q' must be float or tensor, but got: " << q_type->ToString() << ".";
       }
-      auto value = GetValue<float>(q_value);
+      auto value = q_opt.value();
       if (value < 0 || value > 1) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the 'q' must in the range [0, 1], but got: " << value
                                  << ".";

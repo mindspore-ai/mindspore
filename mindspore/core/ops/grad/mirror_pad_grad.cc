@@ -65,15 +65,14 @@ void verify_padding_range(const std::string &mode, int64_t out_size, const std::
   }
 }
 
-abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
   auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   if (input_x_shape_ptr->IsDynamic()) {  // if shape of x is dynamic, then passthrough the shape
-    return input_args[kInputIndex0]->GetShape()->cast<abstract::ShapePtr>();
+    return input_args[kInputIndex0]->GetShape()->Clone();
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
@@ -98,7 +97,8 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                              << paddings_shape[0];
   }
 
-  auto paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings", paddings, prim_name);
+  auto paddings_arg =
+    CheckAndConvertUtils::CheckTensorIntValue("paddings", paddings, prim_name, input_args[1]->GetType());
   std::vector<std::pair<int64_t, int64_t>> paddings_attr;
   for (size_t i = 0; i < paddings_arg.size(); i = i + kPaddingsSecondDim) {
     paddings_attr.push_back(std::make_pair(paddings_arg[i], paddings_arg[i + 1]));

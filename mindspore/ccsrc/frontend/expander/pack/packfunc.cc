@@ -125,7 +125,7 @@ void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::v
 namespace {
 bool IsAbstractDynamicShape(const std::vector<AbstractBasePtr> &input_args) {
   return std::any_of(input_args.begin(), input_args.end(),
-                     [](const AbstractBasePtr &abs) { return abs->BuildShape()->IsDynamic(); });
+                     [](const AbstractBasePtr &abs) { return abs->GetShape()->IsDynamic(); });
 }
 
 bool IsAbstractOutputTensor(const AbstractBasePtr &abs) {
@@ -446,7 +446,7 @@ FuncGraphPtr ExpandPackFuncPynative(const PrimitivePtr &prim, const abstract::Ab
   const auto abs = graph->output()->abstract();
   if (!IsAbstractOutputTensor(abs)) {
     MS_EXCEPTION(ValueError) << "The output of trace captured graph should be one or more flattened Tensor, bug get "
-                             << abs->BuildType()->ToString() << ".";
+                             << abs->GetType()->ToString() << ".";
   }
   if (dump_result) {
     DumpIR("pack_func_" + key + "_ori.ir", graph, true);
@@ -482,12 +482,12 @@ class PackFuncInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     auto abs = InferShapeAndType(nullptr, primitive, input_args);
-    return abs->BuildShape();
+    return abs->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto abs = InferShapeAndType(nullptr, primitive, input_args);
-    return abs->BuildType();
+    return abs->GetType();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

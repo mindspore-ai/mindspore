@@ -83,7 +83,8 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
     }
   } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
     if (!shape_value->isa<ValueAny>() && !shape_value->isa<None>()) {
-      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
+      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name,
+                                                                          input_args[kInputIndex0]->GetType());
       (void)CheckAndConvertUtils::CheckPositiveVector("shape", input_shape, prim_name);
       return std::make_shared<abstract::Shape>(input_shape);
     } else {

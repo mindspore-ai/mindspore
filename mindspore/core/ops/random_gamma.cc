@@ -40,6 +40,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/random_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -58,7 +59,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For RandomGamma, input[0] only support tensor!";
   }
   const uint32_t kShapeDims = 1;
@@ -68,24 +69,20 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For RandomGamma, the input tensor must be a 1-D tensor.";
   }
 
-  auto input_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->GetValue();
+  auto input_shape_value_ptr = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto shape_value_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  //  MS_EXCEPTION_IF_NULL(shape_value_tensor); Dealing with dynamic shapes
-  if ((shape_value_tensor) == nullptr) {
-    ShapeVector out_shape = {-2};
-    return std::make_shared<abstract::Shape>(out_shape);
-  }
 
   auto shape_type_element = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(shape_type_element);
-
   ShapeVector shape_vec;
 
   if (shape_type_element->type_id() == kNumberTypeInt32) {
-    auto input_shape_ptr = reinterpret_cast<int32_t *>(shape_value_tensor->data_c());
+    auto shape_value_opt = GetArrayValue<int32_t>(input_shape_value_ptr);
+    if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
+      ShapeVector out_shape = {-2};
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    auto input_shape_ptr = shape_value_opt.value();
     for (auto i = 0; i < shape_shape[0]; ++i) {
       if (input_shape_ptr[i] > 0) {
         shape_vec.push_back(input_shape_ptr[i]);
@@ -94,7 +91,12 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
       }
     }
   } else if (shape_type_element->type_id() == kNumberTypeInt64) {
-    auto input_shape_ptr = reinterpret_cast<int64_t *>(shape_value_tensor->data_c());
+    auto shape_value_opt = GetArrayValue<int64_t>(input_shape_value_ptr);
+    if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
+      ShapeVector out_shape = {-2};
+      return std::make_shared<abstract::Shape>(out_shape);
+    }
+    auto input_shape_ptr = shape_value_opt.value();
     for (auto i = 0; i < shape_shape[0]; ++i) {
       if (input_shape_ptr[i] > 0) {
         shape_vec.push_back(input_shape_ptr[i]);

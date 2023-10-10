@@ -92,16 +92,18 @@ AbstractBasePtr NormalizeIntIndex(const ShapeVector &data_shape, const AbstractB
 AbstractBasePtr NormalizeSequenceIndex(const ShapeVector &data_shape, const AbstractBasePtr &index_val_abs,
                                        size_t dim_index, const std::vector<int64_t> &tuple_index_types,
                                        size_t expand_dims_mask) {
-  auto list_index_val_abs = index_val_abs->cast<abstract::AbstractSequencePtr>();
   auto output_list_elements = std::vector<int64_t>();
-  if (list_index_val_abs->dynamic_len()) {
+  auto index_val = index_val_abs->GetValue();
+  auto index_val_opt = GetArrayValue<int64_t>(index_val);
+  if (!index_val_opt.has_value()) {
     MS_EXCEPTION(IndexError) << "The sequence element(tuple/list) in tuple index can't be dynamic len.";
   }
-  const AbstractBasePtrList &list_index_val_ele = list_index_val_abs->elements();
-  size_t seq_size = list_index_val_ele.size();
+  auto index_val_array = index_val_opt.value();
+  size_t seq_size = index_val_array.size();
+
   AbstractBasePtr output_index_val_abs = std::make_shared<abstract::AbstractTensor>(
     kInt64, std::make_shared<abstract::Shape>(ShapeVector({SizeToLong(seq_size)})));
-  if (list_index_val_abs->GetValue() == kValueAny || IsDynamicRank(data_shape)) {
+  if (index_val_array.HasUnknownValue() || IsDynamicRank(data_shape)) {
     return output_index_val_abs;
   }
   auto new_dim_index =
@@ -110,8 +112,9 @@ AbstractBasePtr NormalizeSequenceIndex(const ShapeVector &data_shape, const Abst
     return output_index_val_abs;
   }
   int64_t dim_size = data_shape[new_dim_index];
+
   for (size_t i = 0; i < seq_size; i++) {
-    int64_t int_index_val = GetValue<int64_t>(list_index_val_ele[i]->GetValue());
+    int64_t int_index_val = index_val_array[i];
     int_index_val = NormalizeTupleIndex::CheckRange(int_index_val, dim_size);
     output_list_elements.emplace_back(int_index_val);
   }

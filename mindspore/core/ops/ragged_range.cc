@@ -40,6 +40,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -50,11 +51,17 @@ namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-int64_t CalculateShape(const tensor::TensorPtr starts_ptr, const tensor::TensorPtr limits_ptr,
-                       const tensor::TensorPtr deltas_ptr, int64_t nrows) {
-  T *starts_val = reinterpret_cast<T *>(starts_ptr->data_c());
-  T *limits_val = reinterpret_cast<T *>(limits_ptr->data_c());
-  T *deltas_val = reinterpret_cast<T *>(deltas_ptr->data_c());
+int64_t CalculateShape(const ValuePtr starts_ptr, const ValuePtr limits_ptr, const ValuePtr deltas_ptr, int64_t nrows) {
+  auto starts_ptr_opt = GetArrayValue<T>(starts_ptr);
+  auto limits_ptr_opt = GetArrayValue<T>(limits_ptr);
+  auto deltas_ptr_opt = GetArrayValue<T>(deltas_ptr);
+  if (!starts_ptr_opt.has_value() || !limits_ptr_opt.has_value() || !deltas_ptr_opt.has_value()) {
+    MS_EXCEPTION(TypeError) << "the 'shape' must be a tuple with all Int elements for RaggedRange";
+  }
+
+  auto starts_val = starts_ptr_opt.value();
+  auto limits_val = limits_ptr_opt.value();
+  auto deltas_val = deltas_ptr_opt.value();
   int64_t shape_size = 0;
   for (int64_t row = 0; row < nrows; ++row) {
     auto start = starts_val[row];
@@ -108,36 +115,26 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   const int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !input_args[0]->GetValue()->isa<ValueAny>() &&
+  if (input_args[0]->GetType()->object_type() == kObjectTypeTensorType && !input_args[0]->GetValue()->isa<ValueAny>() &&
       !input_args[0]->GetValue()->isa<None>()) {
-    auto starts = input_args[0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(starts);
-    auto starts_value_ptr = starts->GetValue();
+    auto starts_value_ptr = input_args[0]->GetValue();
     MS_EXCEPTION_IF_NULL(starts_value_ptr);
-    auto starts_tensor = starts_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(starts_tensor);
-    auto limits = input_args[1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(limits);
-    auto limits_value_ptr = limits->GetValue();
+    auto limits_value_ptr = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(limits_value_ptr);
-    auto limits_tensor = limits_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(limits_tensor);
-    auto deltas = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(deltas);
-    auto deltas_value_ptr = deltas->GetValue();
+    auto deltas_value_ptr = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(deltas_value_ptr);
-    auto deltas_tensor = deltas_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(deltas_tensor);
-    auto dtype = starts_tensor->data_type();
+    auto dtype_ptr = input_args[0]->GetType()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(dtype_ptr);
+    auto dtype = dtype_ptr->element()->type_id();
     int64_t shape_size = 0;
     if (dtype == kNumberTypeInt32) {
-      shape_size = CalculateShape<int32_t>(starts_tensor, limits_tensor, deltas_tensor, nrows);
+      shape_size = CalculateShape<int32_t>(starts_value_ptr, limits_value_ptr, deltas_value_ptr, nrows);
     } else if (dtype == kNumberTypeInt64) {
-      shape_size = CalculateShape<int64_t>(starts_tensor, limits_tensor, deltas_tensor, nrows);
+      shape_size = CalculateShape<int64_t>(starts_value_ptr, limits_value_ptr, deltas_value_ptr, nrows);
     } else if (dtype == kNumberTypeFloat32) {
-      shape_size = CalculateShape<float>(starts_tensor, limits_tensor, deltas_tensor, nrows);
+      shape_size = CalculateShape<float>(starts_value_ptr, limits_value_ptr, deltas_value_ptr, nrows);
     } else if (dtype == kNumberTypeFloat64) {
-      shape_size = CalculateShape<double>(starts_tensor, limits_tensor, deltas_tensor, nrows);
+      shape_size = CalculateShape<double>(starts_value_ptr, limits_value_ptr, deltas_value_ptr, nrows);
     } else {
       MS_LOG(EXCEPTION) << "RaggedRange has unsupported dataType: " << dtype << ".";
     }

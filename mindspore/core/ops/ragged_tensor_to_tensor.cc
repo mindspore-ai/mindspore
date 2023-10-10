@@ -40,11 +40,18 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
   auto output_shape = GetShapeValue(primitive, shape_arg);
   auto values_rank = values_shape.size();
   auto output_shape_rank = output_shape.size();
-  auto tensors = input_args[kInputIndex3]->isa<abstract::AbstractTuple>()
-                   ? input_args[kInputIndex3]->cast<abstract::AbstractTuplePtr>()->elements()
-                   : input_args[kInputIndex3]->cast<abstract::AbstractListPtr>()->elements();
+
+  abstract::BaseShapePtrList tensors;
+  if (input_args[kInputIndex3]->GetType()->object_type() == kObjectTypeTuple) {
+    tensors = input_args[kInputIndex3]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
+  } else if (input_args[kInputIndex3]->GetType()->object_type() == kObjectTypeList) {
+    tensors = input_args[kInputIndex3]->GetShape()->cast<abstract::ListShapePtr>()->shape();
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the input data type must be list or tuple of tensors.";
+  }
   auto tensors_size = tensors.size();
-  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0]->GetShape())[kShape];
+  auto tensor0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[0])[kShape];
   auto tensor0_dim = tensor0_shape.size();
   const auto &row_partition_types_ptr = primitive->GetAttr("row_partition_types");
   MS_EXCEPTION_IF_NULL(row_partition_types_ptr);
@@ -91,7 +98,7 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
                              << ".";
   }
   for (size_t i = 1; i < types_size; i++) {
-    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i]->GetShape())[kShape];
+    auto tensori_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(tensors[i])[kShape];
     auto tensori_dim = tensori_shape.size();
     (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
                                              SizeToLong(tensori_dim), kEqual, 1, prim_name);
@@ -110,17 +117,18 @@ TypePtr RaggedTensorToTensorInferType(const PrimitivePtr &primitive, const std::
   (void)types.emplace("default_value", default_value_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", shape_type, {kInt64, kInt32}, primitive->name());
-  auto tensors_arg = input_args[kInputIndex3];
-  if (!tensors_arg->isa<abstract::AbstractTuple>() && !tensors_arg->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the row_partition_tensors must be list or tuple of tensors.";
+
+  TypePtrList tensors;
+  if (input_args[kInputIndex3]->GetType()->object_type() == kObjectTypeTuple) {
+    tensors = input_args[kInputIndex3]->GetType()->cast<TuplePtr>()->elements();
+  } else if (input_args[kInputIndex3]->GetType()->object_type() == kObjectTypeList) {
+    tensors = input_args[kInputIndex3]->GetType()->cast<ListPtr>()->elements();
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the rt_nested_splits must be list or tuple of tensors.";
   }
-  auto tensors = tensors_arg->isa<abstract::AbstractTuple>()
-                   ? tensors_arg->cast<abstract::AbstractTuplePtr>()->elements()
-                   : tensors_arg->cast<abstract::AbstractListPtr>()->elements();
   const std::set<TypePtr> valid_tensor_types = {kInt32, kInt64};
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto input_dtype = tensors[i]->GetType();
-    (void)CheckAndConvertUtils::CheckTypeValid("row_partition_tensors", input_dtype, valid_tensor_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTypeValid("row_partition_tensors", tensors[i], valid_tensor_types, prim_name);
   }
   return values_type;
 }

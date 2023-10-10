@@ -36,6 +36,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/nth_element.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -50,8 +51,8 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   // support dynamic rank
   if (IsDynamicRank(input_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
@@ -60,29 +61,28 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kGreaterEqual, 1,
                                            primitive->name());
   auto n_val = 0;
-  if (input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType) {
     const std::set<TypePtr> valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->GetType(), valid_types, primitive->name());
-    auto n = input_args[1]->cast<abstract::AbstractTensorPtr>();
-    auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+    auto n_value_ptr = input_args[1]->GetValue();
+    auto n_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
     (void)CheckAndConvertUtils::CheckInteger("n shape", SizeToLong(n_shape.size()), kEqual, 0, primitive->name());
-    MS_EXCEPTION_IF_NULL(n);
-    auto n_value_ptr = n->GetValue();
-    if (n_value_ptr->isa<tensor::Tensor>()) {
-      MS_EXCEPTION_IF_NULL(n_value_ptr);
-      auto n_tensor = n_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_tensor);
-      n_val = *static_cast<int64_t *>(n_tensor->data_c());
-    }
-  } else if (input_args[1]->isa<abstract::AbstractScalar>()) {
-    auto n = input_args[1]->cast<abstract::AbstractScalarPtr>();
-    auto n_value_ptr = n->GetValue();
+    MS_EXCEPTION_IF_NULL(n_value_ptr);
     if (!n_value_ptr->isa<ValueAny>()) {
-      if (!n_value_ptr->isa<Int64Imm>()) {
-        MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n"
-                                << " must be a int, but got " << n_value_ptr->ToString() << ".";
+      auto n_value_opt = GetArrayValue<int64_t>(n_value_ptr);
+      if (!n_value_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the n_value must be valid";
       }
-      n_val = GetValue<int32_t>(n_value_ptr);
+      n_val = n_value_opt.value()[0];
+    }
+  } else if (input_args[1]->GetType()->object_type() == kObjectTypeNumber) {
+    auto n_value_ptr = input_args[1]->GetValue();
+    if (!n_value_ptr->isa<ValueAny>()) {
+      auto n_value_opt = GetScalarValue<int64_t>(n_value_ptr);
+      if (!n_value_opt.has_value()) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the n_value must be valid";
+      }
+      n_val = n_value_opt.value();
     }
   } else {
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the n must be "

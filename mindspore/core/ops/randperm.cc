@@ -97,7 +97,7 @@ class RandpermInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
 
     auto shape_ptr = input_args[kInputIndex0]->GetShape();
     auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(shape_ptr);
@@ -120,9 +120,9 @@ class RandpermInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(x_value);
     auto value_ptr = primitive->GetAttr("max_length");
     auto max_length = GetValue<int64_t>(value_ptr);
-    if (input_x->isa<abstract::AbstractTensor>()) {
-      if (x_value->isa<tensor::Tensor>()) {
-        auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name());
+    if (input_x->GetType()->object_type() == kObjectTypeTensorType) {
+      if (!x_value->isa<ValueAny>()) {
+        auto x_int = CheckAndConvertUtils::CheckTensorIntValue("x", x_value, primitive->name(), input_x->GetType());
         if (x_int[0] < 0) {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The value of the input n (" << x_int[0]
                                    << ") cannot be less than 0";

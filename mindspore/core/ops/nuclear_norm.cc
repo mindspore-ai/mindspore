@@ -103,7 +103,7 @@ TypePtr NuclearNormInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
   const int64_t DIMSIZE1 = 1;
   (void)CheckAndConvertUtils::CheckInteger("The input number", SizeToLong(input_args.size()), kEqual, DIMSIZE1,
                                            op_name);

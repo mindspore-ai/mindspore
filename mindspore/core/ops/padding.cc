@@ -60,7 +60,7 @@ TypePtr PaddingInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->GetType(), valid_types, name);
 }
 
-abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kInputSize = 1;
   constexpr int64_t kNumber1 = 1;
   constexpr int64_t kNumber2 = 2;
@@ -73,10 +73,10 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   }
   auto input_x_shape_ptr = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  if (input_x_shape_ptr->IsDynamic()) {
-    return input_args[0]->GetShape()->cast<abstract::ShapePtr>();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
+  if (IsDynamic(x_shape)) {
+    return input_x_shape_ptr->Clone();
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   int64_t x_last_dim = x_shape[x_shape.size() - 1];
@@ -106,7 +106,7 @@ int64_t Padding::get_pad_dim_size() const {
 
 AbstractBasePtr PaddingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  abstract::ShapePtr output_shape = PaddingInferShape(primitive, input_args);
+  abstract::BaseShapePtr output_shape = PaddingInferShape(primitive, input_args);
   TypePtr output_type = PaddingInferType(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }

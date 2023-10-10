@@ -42,12 +42,12 @@ std::string Meshgrid::get_indexing() const {
 namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  auto elements = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape());
+    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]);
 
     auto input_shape = shape_map[kShape];
     if (IsDynamicRank(input_shape)) {
@@ -70,16 +70,16 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  auto elements = input_args[0]->GetType()->cast<TuplePtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    (void)types.emplace(elementi, elements[i]->GetType());
+    (void)types.emplace(elementi, elements[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, prim->name());
-  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]->GetType()));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(SizeToLong(elements.size()), elements[0]));
 }
 }  // namespace
 
@@ -90,10 +90,10 @@ AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const Primiti
   (void)CheckAndConvertUtils::CheckInteger("input_args tuple size", SizeToLong(input_args.size()), kEqual, 1,
                                            prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  if (!input_args[0]->isa<abstract::AbstractTuple>()) {
+  if (input_args[0]->GetType()->object_type() != kObjectTypeTuple) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be tuple of tensors.";
   }
-  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
+  auto elements = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim_name);
   auto infer_type = MeshgridInferType(primitive, input_args);

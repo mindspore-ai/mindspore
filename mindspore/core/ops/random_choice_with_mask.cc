@@ -59,11 +59,11 @@ BaseShapePtr RandomChoiceWithMaskInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args.front());
   auto input_x_shape_ptr = input_args[kInputIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
-  if (!input_x_shape_ptr->isa<abstract::Shape>()) {
+  if (input_args[kInputIndex0]->GetType()->object_type() != kObjectTypeTensorType) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', input[0] should be a Tensor, but got:" << input_x_shape_ptr->ToString();
   }
-  const auto &shape_vec = input_x_shape_ptr->cast<abstract::ShapePtr>()->shape();
+  const auto &shape_vec = input_x_shape_ptr->GetShapeVector();
 
   auto value_ptr = primitive->GetAttr("count");
   MS_EXCEPTION_IF_NULL(value_ptr);

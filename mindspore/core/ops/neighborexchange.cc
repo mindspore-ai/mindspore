@@ -120,10 +120,8 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
   const int64_t input_num_ = 1;
   (void)CheckAndConvertUtils::CheckInteger("input_numbers", SizeToLong(input_args.size()), kEqual, input_num_,
                                            prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, input_num);
-  auto abstract_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(abstract_tuple);
-  auto abstract_element = abstract_tuple->elements();
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, input_num, kObjectTypeTuple);
+  auto abstract_element = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
   auto send_shapes = GetValue<ValuePtrList>(primitive->GetAttr(kSendShapes));
   if (abstract_element.size() != send_shapes.size()) {
     MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input tuple size must be equal to attr '" << kSendShapes
@@ -138,14 +136,7 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
     std::vector<int64_t> send_shape = GetValue<std::vector<int64_t>>(send_shape_value);
     // get input tensor shape
     MS_EXCEPTION_IF_NULL(abstract_element[i]);
-    auto arg_base_shape = abstract_element[i]->GetShape();
-    MS_EXCEPTION_IF_NULL(arg_base_shape);
-    auto shape = arg_base_shape->cast<abstract::ShapePtr>();
-    if (shape == nullptr) {
-      MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input[" << i << "] must be a tensor.";
-    }
-    // comp two shape
-    auto shape_vec = shape->shape();
+    auto shape_vec = abstract_element[i]->GetShapeVector();
     if (shape_vec != send_shape) {
       MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input[" << i
                                   << "] shape must be equal to attr shape, but got input[" << i

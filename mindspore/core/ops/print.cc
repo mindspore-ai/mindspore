@@ -102,7 +102,7 @@ std::string PrintAbstractToString(const AbstractBasePtr &abstract) {
   if (abstract->isa<abstract::AbstractTensor>()) {
     std::ostringstream buffer;
     auto abs_tensor = abstract->cast<abstract::AbstractTensorPtr>();
-    buffer << "Tensor(shape:" << abs_tensor->GetShapeTrack()->ToString()
+    buffer << "Tensor(shape:" << abs_tensor->GetShape()->ToString()
            << ", dtype:" << abs_tensor->GetTypeTrack()->ToString()
            << ", value:" << PrintValueToString(abs_tensor->GetValue()) << ")";
     return buffer.str();
@@ -136,6 +136,13 @@ class PrintInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    return std::make_shared<TensorType>(kInt32);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    auto shape = InferShape(primitive, input_args);
+    auto type = InferType(primitive, input_args);
     std::ostringstream buffer;
     if (common::GetEnv("MS_DEV_COMPILE_PRINT") == "1") {
       for (const auto &input_arg : input_args) {
@@ -143,7 +150,7 @@ class PrintInfer : public abstract::OpInferBase {
       }
       std::cout << buffer.str() << std::endl;
     }
-    return std::make_shared<TensorType>(kInt32);
+    return abstract::MakeAbstract(shape, type);
   }
 };
 

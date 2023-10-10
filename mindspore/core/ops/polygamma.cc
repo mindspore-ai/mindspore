@@ -31,6 +31,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -44,32 +45,28 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
   auto x_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
   int64_t input_a;
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (a_shape.size() != 0) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', 'a' should be a 0-dim Tensor, but got rank: " << a_shape.size() << ".";
   }
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
-    auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
+  if (input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeTensorType) {
+    auto input_a_ptr = input_args[kInputIndex0]->GetValue();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
-    auto input_a_value_ptr = input_a_ptr->GetValue();
-    MS_EXCEPTION_IF_NULL(input_a_value_ptr);
-    if (input_a_value_ptr->isa<tensor::Tensor>()) {
-      auto input_a_tensor = input_a_value_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(input_a_tensor);
-      input_a = *static_cast<int64_t *>(input_a_tensor->data_c());
+    if (!input_a_ptr->isa<ValueAny>()) {
+      auto intput_a_array = GetArrayValue<int64_t>(input_a_ptr).value();
+      input_a = intput_a_array[0];
     } else {
       return std::make_shared<abstract::Shape>(x_shape);
     }
-  } else if (input_args[kInputIndex0]->isa<abstract::AbstractScalar>()) {
-    auto input_a_ptr = input_args[kInputIndex0]->cast<abstract::AbstractScalarPtr>();
+  } else if (input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeNumber) {
+    auto input_a_ptr = input_args[kInputIndex0]->GetValue();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
-    auto input_value = input_a_ptr->GetValue();
-    if (input_value->isa<ValueAny>()) {
+    if (input_a_ptr->isa<ValueAny>()) {
       return std::make_shared<abstract::Shape>(x_shape);
     }
-    input_a = GetValue<int64_t>(input_value);
+    input_a = GetScalarValue<int64_t>(input_a_ptr).value();
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the input a type should be tensor or scalar, but got invalid abstract type:"

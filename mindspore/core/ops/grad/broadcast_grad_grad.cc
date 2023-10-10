@@ -65,10 +65,10 @@ TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::ve
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  auto x1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto x2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto dy1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-  auto dy2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex3);
+  auto x1 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto x2 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  auto dy1 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex2, kObjectTypeTensorType);
+  auto dy2 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex3, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
   (void)abstract::CheckDtypeSame(prim_name, dy1, dy2);
   (void)abstract::CheckDtypeSame(prim_name, x1, dy1);

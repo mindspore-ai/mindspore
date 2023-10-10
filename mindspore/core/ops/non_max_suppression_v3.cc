@@ -48,23 +48,23 @@ abstract::ShapePtr NonMaxSuppressionV3InferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   auto boxes_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape]);
   auto scores_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape]);
   auto max_output_size_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape]);
   auto iou_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape]);
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape]);
   auto score_threshold_shape = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape]);
-  auto in_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto in_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  auto in_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
-  auto in_shape4 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShapeTrack())[kShape];
-  auto in_shape5 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape]);
+  auto in_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto in_shape2 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
+  auto in_shape3 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShape())[kShape];
+  auto in_shape4 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->GetShape())[kShape];
+  auto in_shape5 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShape())[kShape];
   if (IsDynamicRank(in_shape1) || IsDynamicRank(in_shape2) || IsDynamicRank(in_shape3) || IsDynamicRank(in_shape4) ||
       IsDynamicRank(in_shape5)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});

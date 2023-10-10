@@ -37,6 +37,7 @@
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/op_name.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -50,21 +51,22 @@ namespace {
 constexpr auto op_name = "RangeV2";
 
 template <typename T>
-int64_t RangeV2CalculateShape(const tensor::TensorPtr start_ptr, const tensor::TensorPtr limit_ptr,
-                              const tensor::TensorPtr delta_ptr) {
-  // DataSize == 1
-  if (start_ptr->DataSize() != 1) {
+int64_t RangeV2CalculateShape(const ValuePtr start_ptr, const ValuePtr limit_ptr, const ValuePtr delta_ptr) {
+  auto start_array = GetArrayValue<T>(start_ptr);
+  auto limit_array = GetArrayValue<T>(limit_ptr);
+  auto delta_array = GetArrayValue<T>(delta_ptr);
+  if (!start_array.has_value() || start_array.value().size() != 1) {
     MS_EXCEPTION(TypeError) << "For RangeV2, start must a scalar but element number more than 1.";
   }
-  if (limit_ptr->DataSize() != 1) {
+  if (!limit_array.has_value() || limit_array.value().size() != 1) {
     MS_EXCEPTION(TypeError) << "For RangeV2, limit must a scalar but element number more than 1.";
   }
-  if (delta_ptr->DataSize() != 1) {
+  if (!delta_array.has_value() || delta_array.value().size() != 1) {
     MS_EXCEPTION(TypeError) << "For RangeV2, delta must a scalar but element number more than 1.";
   }
-  T start = *(reinterpret_cast<T *>(start_ptr->data_c()));
-  T limit = *(reinterpret_cast<T *>(limit_ptr->data_c()));
-  T delta = *(reinterpret_cast<T *>(delta_ptr->data_c()));
+  T start = start_array.value()[0];
+  T limit = limit_array.value()[0];
+  T delta = delta_array.value()[0];
   bool valid_value = (delta == T(0) || (delta > 0 && start > limit) || (delta < 0 && start < limit));
   if (valid_value) {
     if (delta == T(0)) {
@@ -108,17 +110,14 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
   // not in compile, need inferShape
   if (!is_compile) {
     auto dtype = CheckAndConvertUtils::GetTensorInputType(op_name, input_args, kInputIndex0);
-    auto start_tensor = start_value->cast<tensor::TensorPtr>();
-    auto limit_tensor = limit_value->cast<tensor::TensorPtr>();
-    auto delta_tensor = delta_value->cast<tensor::TensorPtr>();
     if (IsSameType(dtype, kInt) || IsSameType(dtype, kInt32)) {
-      shape_size = RangeV2CalculateShape<int32_t>(start_tensor, limit_tensor, delta_tensor);
+      shape_size = RangeV2CalculateShape<int32_t>(start_value, limit_value, delta_value);
     } else if (IsSameType(dtype, kInt64)) {
-      shape_size = RangeV2CalculateShape<int64_t>(start_tensor, limit_tensor, delta_tensor);
+      shape_size = RangeV2CalculateShape<int64_t>(start_value, limit_value, delta_value);
     } else if (IsSameType(dtype, kFloat) || IsSameType(dtype, kFloat32)) {
-      shape_size = RangeV2CalculateShape<float>(start_tensor, limit_tensor, delta_tensor);
+      shape_size = RangeV2CalculateShape<float>(start_value, limit_value, delta_value);
     } else if (IsSameType(dtype, kFloat64)) {
-      shape_size = RangeV2CalculateShape<double>(start_tensor, limit_tensor, delta_tensor);
+      shape_size = RangeV2CalculateShape<double>(start_value, limit_value, delta_value);
     } else {
       MS_EXCEPTION(TypeError) << "For RangeV2, the dtype of input must be int32, int64, float32, float64, but got "
                               << dtype->meta_type() << ".";
@@ -164,9 +163,9 @@ AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const Primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex1);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex2);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex1, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex2, kObjectTypeTensorType);
   // infer type must in before
   auto infer_type = RangeV2CheckAndInferType(primitive, input_args);
   auto infer_shape = RangeV2CheckAndInferShape(primitive, input_args);

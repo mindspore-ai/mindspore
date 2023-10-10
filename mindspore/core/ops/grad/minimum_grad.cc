@@ -55,19 +55,15 @@ abstract::TupleShapePtr MinimumGradInferShape(const PrimitivePtr &primitive,
   auto y = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(y);
-  auto x_element = x->cast<abstract::ShapePtr>();
-  auto y_element = y->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(x_element);
-  MS_EXCEPTION_IF_NULL(y_element);
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_element, y_element});
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x, y});
 }
 TuplePtr MinimumGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t INPUT_GRADS_IDX = 2;
-  auto x1 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x2 = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, INPUT_GRADS_IDX);
+  auto x1 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto x2 = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, INPUT_GRADS_IDX, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, x1, x2);
   auto x_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);

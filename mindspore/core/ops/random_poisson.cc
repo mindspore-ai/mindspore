@@ -65,7 +65,8 @@ abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
   auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (!shape_value->isa<ValueAny>() && !shape_value->isa<None>()) {
-    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+    auto out_shape =
+      CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name, input_args[kInputIndex0]->GetType());
     (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
 
     size_t rate_rank = rate_shape.size();
