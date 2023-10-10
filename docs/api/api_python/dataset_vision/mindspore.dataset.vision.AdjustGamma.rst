@@ -5,6 +5,8 @@ mindspore.dataset.vision.AdjustGamma
 
     对输入图像应用伽马校正。输入图片shape应该为 <..., H, W, C>或<H, W>。
 
+    支持 Ascend910B 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
 

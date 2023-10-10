@@ -115,7 +115,7 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
   auto dvpp_interpolation_mode = GetDVPPInterpolationMode(mode);
   if (dvpp_interpolation_mode == kInvalidInterpolationMode) {
     std::string err_msg =
-      "The InterpolationMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(mode));
+      "The current InterpolationMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(mode));
     MS_LOG(ERROR) << err_msg;
     return APP_ERR_DVPP_RESIZE_FAIL;
   }

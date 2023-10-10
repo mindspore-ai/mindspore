@@ -466,12 +466,15 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
       int img_height = 0;
       if (t->Name() == kDvppDecodeOp) {
         for (int32_t k = 0; k < input_tensor_list.size(); k++) {
-          CHECK_FAIL_RETURN_UNEXPECTED(IsNonEmptyJPEG(input_tensor_list[k]) == true,
-                                       "Invalid image type. Currently only support JPG.");
-          CHECK_FAIL_RETURN_UNEXPECTED(input_tensor_list[k]->type() == DataType::DE_UINT8,
-                                       "Invalid data type. Currently only support uint8.");
           CHECK_FAIL_RETURN_UNEXPECTED(input_tensor_list[k]->shape().Rank() == 1,
-                                       "Invalid data shape. Currently only support 1D.");
+                                       "Invalid data shape. Currently only support 1D. Its rank is: " +
+                                         std::to_string(input_tensor_list[k]->shape().Rank()));
+          CHECK_FAIL_RETURN_UNEXPECTED(IsNonEmptyJPEG(input_tensor_list[k]) == true,
+                                       "Invalid image type. Currently only support JPG. Its shape is: " +
+                                         input_tensor_list[k]->shape().ToString());
+          CHECK_FAIL_RETURN_UNEXPECTED(
+            input_tensor_list[k]->type() == DataType::DE_UINT8,
+            "Invalid data type. Currently only support uint8. Its type is: " + input_tensor_list[k]->type().ToString());
           RETURN_IF_NOT_OK(GetJpegImageInfo(input_tensor_list[k], &img_width, &img_height));
           TensorShape shape{1, img_height, img_width, 3};
           DataType type(DataType::DE_UINT8);

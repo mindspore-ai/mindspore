@@ -4208,12 +4208,13 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         """
         self.device_target = device_target
         if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The InterpolationMode is not supported by DVPP. It is {}.".format(self.interpolation))
+            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
+                             .format(self.interpolation))
         return self
 
     def parse(self):
         if self.interpolation == Inter.ANTIALIAS:
-            raise TypeError("Current Interpolation is not supported with NumPy input.")
+            raise TypeError("The current InterpolationMode is not supported with NumPy input.")
         return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation), self.device_target)
 
     def _execute_py(self, img):

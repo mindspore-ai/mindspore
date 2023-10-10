@@ -70,9 +70,9 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
   }
 
   // verify InterpolationMode
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
-    "The InterpolationMode is not supported by DVPP. It is " + std::to_string(static_cast<int>(interpolation_)));
+  CHECK_FAIL_RETURN_UNEXPECTED(GetDVPPInterpolationMode(interpolation_) != kInvalidInterpolationMode,
+                               "The current InterpolationMode is not supported by DVPP. It is " +
+                                 std::to_string(static_cast<int>(interpolation_)));
 
   APP_ERROR ret = AclAdapter::GetInstance().DvppResize(input, output, output_h, output_w, 0, 0, interpolation_);
   if (ret != APP_ERR_OK) {
