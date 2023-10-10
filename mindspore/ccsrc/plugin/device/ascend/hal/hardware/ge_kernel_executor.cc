@@ -243,7 +243,7 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
     output_reshape_types.assign(output_num, "");
     for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
       auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-      if (!transform::AclHelper::CheckDefaultSupportFormat(input_format)) {
+      if ((!transform::AclHelper::CheckDefaultSupportFormat(input_format)) && (kernel_type != HCCL_KERNEL)) {
         MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
                           << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
       }
@@ -417,7 +417,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
                                       MS_EXCEPTION_IF_NULL(item);
                                       return item->IsSimilarityKernelBuildInfo(*build_info);
                                     });
-      if (!find_valid) {
+      if ((!find_valid) && (kernel_type != HCCL_KERNEL)) {
         MS_EXCEPTION(TypeError) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
                                 << ", node: " << kernel->fullname_with_scope()
                                 << KernelSelectDebugString(build_info, kernel_info_list);
