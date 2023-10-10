@@ -631,6 +631,70 @@ class RTTPatternTree : public PatternTree {
   }
 };
 
+// StridedSlice(A,B,C,D)=Reshape(A,E)
+class StridedSlicePatternTree : public PatternTree {
+ public:
+  explicit StridedSlicePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
+  ~StridedSlicePatternTree() = default;
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    inner::GraphBuilder gb("");
+    auto out_shape = origin_root->shape;
+    auto out_shape_tensornode = gb.Tensor(out_shape);
+    (*para_to_ref)['E'] = out_shape_tensornode;
+    (void)para_to_ref->erase('B');
+    (void)para_to_ref->erase('C');
+    (void)para_to_ref->erase('D');
+    return para_to_ref;
+  }
+
+ protected:
+  const ShapeVector GetInputVec(const inner::NodePtr &origin_root, size_t input_idx, const std::string &node_name,
+                                const std::string &input_name) const {
+    auto input_node = origin_root->input(input_idx);
+    MS_EXCEPTION_IF_NULL(input_node);
+    MS_EXCEPTION_IF_CHECK_FAIL(input_node->NodeType() == inner::NType::Tensor, "input must be a Tensor");
+    auto input_tensornode = input_node->As<inner::ConstTensorNode>();
+    auto input_vec = CheckAndConvertUtils::CheckTensorIntValue(input_name, input_tensornode->data(), node_name);
+    return input_vec;
+  }
+
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    auto input_node = origin_root->input(0);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto input_shape = input_node->shape;
+    const ShapeVector &begin_vec = GetInputVec(origin_root, 1, "StridedSlice", "begin");
+    if (std::any_of(begin_vec.begin(), begin_vec.end(), [](ShapeValueDType i) { return i != 0; })) {
+      return false;
+    }
+    const ShapeVector &end_vec = GetInputVec(origin_root, 2, "StridedSlice", "end");
+    for (size_t i = 0; i < end_vec.size(); i++) {
+      if (end_vec[i] != input_shape[i]) {
+        return false;
+      }
+    }
+    const ShapeVector &strides_vec = GetInputVec(origin_root, 3, "StridedSlice", "strideds");
+    if (std::any_of(strides_vec.begin(), strides_vec.end(), [](ShapeValueDType i) { return i != 1; })) {
+      return false;
+    }
+    auto begin_mask = GetValue<int64_t>(origin_root->attrs().find("begin_mask")->second);
+    auto end_mask = GetValue<int64_t>(origin_root->attrs().find("end_mask")->second);
+    auto ellipsis_mask = GetValue<int64_t>(origin_root->attrs().find("ellipsis_mask")->second);
+    if (begin_mask != 0 || end_mask != 0 || ellipsis_mask != 0) {
+      return false;
+    }
+    auto shrink_axis_mask = GetValue<int64_t>(origin_root->attrs().find("shrink_axis_mask")->second);
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      if ((shrink_axis_mask >> i & 1) != 0 && input_shape[i] != 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
 class FloatCheckPatternTree : public PatternTree {
  public:
   explicit FloatCheckPatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -754,11 +818,12 @@ static std::vector<Expression> expressions = {
   // lite only
   {63, "LayoutTransform(LayoutTransform(A))=A", EXPR_PATTERN(LayoutTransform1PatternTree)},
   {64, "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)", EXPR_PATTERN(LayoutTransform2PatternTree)},
-  // transpose
+  // patterns that can be transformed to reshape
   {65, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(TransposePatternTree)},
-  // reshape
   {66, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
-  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)}};
+  {67, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)},
+  {68, "StridedSlice(A,B,C,D)=Reshape(A,E)", EXPR_PATTERN(StridedSlicePatternTree)},
+};
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   const auto &flags = GraphKernelFlags::GetInstance();
