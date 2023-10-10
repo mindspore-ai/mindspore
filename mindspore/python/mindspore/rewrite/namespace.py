@@ -21,12 +21,21 @@ _ms_nn_ns = CellNamespace('mindspore.nn')
 _ms_ops_ns = CellNamespace('mindspore.ops.operations')
 _ms_functional_ns = CellNamespace('mindspore.ops.functional')
 
+# Elements in _subtree_black_list will not be converted to symbol tree.
+# Only str and types are stored in _subtree_black_list.
+_subtree_black_list = ["QuantizeWrapperCell",]
 
-def is_subtree(cls_name):
-    """Determine whether 'cls_name' is a subtree."""
-    if cls_name == "QuantizeWrapperCell":
+def is_subtree(cls_inst):
+    """Determine whether 'cls_inst' is a subtree."""
+    cls_name = type(cls_inst).__name__
+    black_list_types = tuple([elem for elem in _subtree_black_list if not isinstance(elem, str)])
+    if cls_name in _subtree_black_list or isinstance(cls_inst, black_list_types):
         return False
-    if cls_name in _ms_common_ns or cls_name in _ms_nn_ns or cls_name in _ms_ops_ns:
+    if cls_name in _ms_common_ns and isinstance(cls_inst, _ms_common_ns[cls_name]):
+        return False
+    if cls_name in _ms_nn_ns and isinstance(cls_inst, _ms_nn_ns[cls_name]):
+        return False
+    if cls_name in _ms_ops_ns and isinstance(cls_inst, _ms_ops_ns[cls_name]):
         return False
 
     return True

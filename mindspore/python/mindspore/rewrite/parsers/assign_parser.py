@@ -47,7 +47,6 @@ class AssignParser(Parser):
 
     # Types for creating Cell Container node
     types_for_cell_container = [SequentialCell,]
-    black_list_for_tree = []
 
     def target(self):
         """Parse target type."""
@@ -340,7 +339,7 @@ class AssignParser(Parser):
         first_node_inputs = AssignParser._create_inputs_for_cell_container(ast_assign)
         for i, cell in enumerate(container_obj):
             cell_name = type(cell).__name__
-            is_sub_tree = is_subtree(cell_name) and not isinstance(cell, tuple(AssignParser.black_list_for_tree))
+            is_sub_tree = is_subtree(cell)
             if is_sub_tree:
                 stb = SymbolTreeBuilder(cell)
                 new_stree = stb.build()
@@ -466,8 +465,7 @@ class AssignParser(Parser):
             return Node.create_call_buildin_op(func_inst, ast_assign, targets, func_scope_name, call_args, call_kwargs,
                                                func_name)
         if isinstance(func_inst, Cell):
-            if is_subtree(type(func_inst).__name__) and not isinstance(func_inst,
-                                                                       tuple(AssignParser.black_list_for_tree)):
+            if is_subtree(func_inst):
                 # Instance of function is user custom network, create sub-symboltree
                 stb = SymbolTreeBuilder(func_inst)
                 new_stree = stb.build()

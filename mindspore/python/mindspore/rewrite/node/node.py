@@ -328,7 +328,7 @@ class Node:
             func_name = ScopedValue.create_naming_value(node_name)
         else:
             func_name = node_name
-        if is_sub_net and is_subtree(type(op).__name__):
+        if is_sub_net and is_subtree(op):
             from ..symbol_tree_builder import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()
