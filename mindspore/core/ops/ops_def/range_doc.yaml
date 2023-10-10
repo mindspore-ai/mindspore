@@ -1,7 +1,7 @@
 range:
     description: |
         Creates a sequence of numbers that begins at `start` and extends by increments of
-        `limit` up to but not including `end`.
+        `delta` up to but not including `limit`.
 
             The types of all 3 inputs must be the same. The type of the resulting tensor is
             the same as the type of the inputs.
@@ -9,9 +9,9 @@ range:
             Args:
                 start (number): A scalar Tensor. The first number in the sequence. Must have
                   type: int32 ,int64, float32 or float64.
-                end (number): A scalar Tensor. Upper limit of the sequence, exclusive. Must
+                limit (number): A scalar Tensor. Upper limit of the sequence, exclusive. Must
                   have type: int32 ,int64, float32 or float64.
-                step (number): A scalar Tensor. Number that increments `start`. Must have
+                delta (number): A scalar Tensor. Number that increments `start`. Must have
                   type: int32 ,int64, float32 or float64.
                 maxlen (int, optional): Memory that can fit `maxlen` many elements
                   will be allocated for the output. Optional, must be positive. Default: 1000000.
@@ -21,12 +21,11 @@ range:
                 A 1-D Tensor, with the same type as the inputs.
 
             Raises:
-                TypeError: If `start`, `end` or `step` is not scalar Tensor.
-                TypeError: If datatype of `start`, `end` or `step` is not same.
-                TypeError: If datatype of `start`, `end` or `step` is not supported.
-                ValueError: If `step` = 0.
-                ValueError: If `start` >= `end` when `step` > 0.
-                ValueError: If `start` <= `end` when `step` < 0.
+                TypeError: If datatype of `start`, `limit` or `delta` is not same.
+                TypeError: If datatype of `start`, `limit` or `delta` is not supported.
+                ValueError: If `delta` = 0.
+                ValueError: If `start` >= `limit` when `delta` > 0.
+                ValueError: If `start` <= `limit` when `delta` < 0.
 
             Supported Platforms:
                 ``GPU`` ``CPU``

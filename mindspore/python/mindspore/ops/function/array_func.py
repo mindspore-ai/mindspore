@@ -98,7 +98,6 @@ masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
 diag_ = P.Diag()
-range_ = P.Range()
 zeros_like_ = P.ZerosLike()
 cast_ = P.Cast()
 tensor_select_ = P.Select()
@@ -1147,49 +1146,6 @@ def tile(input, multiples):
     """
     tile_op = _get_cache_prim(P.Tile)()
     return tile_op(input, multiples)
-
-
-def range(start, end, step):
-    r"""
-    Creates a sequence of numbers that begins at `start` and extends by increments of
-    `limit` up to but not including `end`.
-
-    The types of all 3 inputs must be the same. The type of the resulting tensor is
-    the same as the type of the inputs.
-
-    Args:
-        start (Tensor): A scalar Tensor. The first number in the sequence. Must have
-          type: int32 ,int64, float32 or float64.
-        end (Tensor): A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 ,int64, float32 or float64.
-        step (Tensor): A scalar Tensor. Number that increments `start`. Must have
-          type: int32 ,int64, float32 or float64.
-
-    Returns:
-        A 1-D Tensor, with the same type as the inputs.
-
-    Raises:
-        TypeError: If `start`, `end` or `step` is not scalar Tensor.
-        TypeError: If datatype of `start`, `end` or `step` is not same.
-        TypeError: If datatype of `start`, `end` or `step` is not supported.
-        ValueError: If `step` = 0.
-        ValueError: If `start` >= `end` when `step` > 0.
-        ValueError: If `start` <= `end` when `step` < 0.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> start = Tensor(0, mstype.int32)
-        >>> end = Tensor(10, mstype.int32)
-        >>> step = Tensor(4, mstype.int32)
-        >>> output = ops.range(start, end, step)
-        >>> print(output)
-        [0 4 8]
-    """
-    return range_(start, end, step)
 
 
 ##############################
@@ -7630,7 +7586,6 @@ __all__ = [
     'full',
     'full_like',
     'dyn_shape',
-    'range',
     'arange',
     'reshape',
     'reshape_',

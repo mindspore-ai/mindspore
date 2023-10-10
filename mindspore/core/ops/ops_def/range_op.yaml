@@ -4,10 +4,10 @@ range:
         start:
             dtype: number
             type_cast: tensor
-        end:
+        limit:
             dtype: number
             type_cast: tensor
-        step:
+        delta:
             dtype: number
             type_cast: tensor
         maxlen:
