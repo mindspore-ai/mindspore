@@ -89,7 +89,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->Add(std::make_shared<SaveOutputShape>(), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu);
+  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1);
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
