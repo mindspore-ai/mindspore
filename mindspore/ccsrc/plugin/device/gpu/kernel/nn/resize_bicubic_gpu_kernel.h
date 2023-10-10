@@ -24,7 +24,7 @@
 #include <functional>
 #include <map>
 #include "include/cuda_fp16.h"
-#include "mindspore/core/ops/resize_bicubic.h"
+#include "mindspore/core/ops/ops_func_impl/resize_bicubic.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/resizebicubic_helper.h"

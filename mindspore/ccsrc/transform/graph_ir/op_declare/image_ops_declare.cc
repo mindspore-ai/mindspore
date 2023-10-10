@@ -17,6 +17,8 @@
 #include "transform/graph_ir/op_declare/image_ops_declare.h"
 #include <string>
 #include <vector>
+#include "ops/image_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/ascend_op_name.h"
 #include "ops/image_ops.h"
 

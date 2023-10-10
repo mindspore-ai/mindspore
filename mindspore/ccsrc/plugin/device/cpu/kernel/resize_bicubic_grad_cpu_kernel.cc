@@ -18,13 +18,13 @@
 #include <limits>
 #include <utility>
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/grad/resize_bicubic_grad.h"
+#include "mindspore/core/ops/ops_func_impl/resize_bicubic_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBicubicGradInputsNum = 2;
+constexpr size_t kResizeBicubicGradInputsNum = 4;
 constexpr size_t kResizeBicubicGradOutputNum = 1;
 constexpr int64_t cached_values_hand_max = 4;
 constexpr size_t caseid3 = 3;
@@ -319,8 +319,6 @@ bool ResizeBicubicGradCPUKernelMod::Init(const std::vector<KernelTensor *> &inpu
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  align_corners = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
-  half_pixel_centers = GetValue<bool>(primitive_->GetAttr(ops::kHalfPixelCenters));
   return true;
 }
 
@@ -331,6 +329,8 @@ int ResizeBicubicGradCPUKernelMod::Resize(const std::vector<KernelTensor *> &inp
   }
   resize_shape = inputs.at(kIndex0)->GetDeviceShapeVector();
   origin_shape = inputs.at(kIndex1)->GetDeviceShapeVector();
+  align_corners = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
@@ -352,11 +352,20 @@ bool ResizeBicubicGradCPUKernelMod::LaunchKernel(const std::vector<KernelTensor 
 }
 
 std::vector<std::pair<KernelAttr, ResizeBicubicGradCPUKernelMod::ResizeBicubicGradFunc>>
-  ResizeBicubicGradCPUKernelMod::func_list_ = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &ResizeBicubicGradCPUKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &ResizeBicubicGradCPUKernelMod::LaunchKernel<double>}};
+  ResizeBicubicGradCPUKernelMod::func_list_ = {{KernelAttr()
+                                                  .AddInputAttr(kNumberTypeFloat32)
+                                                  .AddInputAttr(kNumberTypeFloat32)
+                                                  .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                  .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                  .AddOutputAttr(kNumberTypeFloat32),
+                                                &ResizeBicubicGradCPUKernelMod::LaunchKernel<float>},
+                                               {KernelAttr()
+                                                  .AddInputAttr(kNumberTypeFloat32)
+                                                  .AddInputAttr(kNumberTypeFloat64)
+                                                  .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                  .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                  .AddOutputAttr(kNumberTypeFloat64),
+                                                &ResizeBicubicGradCPUKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> ResizeBicubicGradCPUKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

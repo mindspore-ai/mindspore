@@ -16,9 +16,10 @@
 
 #include "plugin/device/gpu/kernel/nn/resize_linear_1d_gpu_kernel.h"
 #include "mindspore/core/abstract/utils.h"
+#include "ops/auto_generate/gen_enum_def.h"
 
 namespace {
-constexpr const size_t kResizeLinear1DInputsNum = 2;
+constexpr const size_t kResizeLinear1DInputsNum = 3;
 constexpr const size_t kResizeLinear1DOutputsNum = 1;
 constexpr const size_t kResizeInputDims = 3;
 }  // namespace
@@ -27,23 +28,9 @@ namespace mindspore {
 namespace kernel {
 bool ResizeLinear1DGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1D>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.size() != kResizeLinear1DInputsNum || outputs.size() != kResizeLinear1DOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DInputsNum
                   << " and " << kResizeLinear1DOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
-    return false;
-  }
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
-  if (coordinate_transformation_mode == "align_corners") {
-    mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode == "half_pixel") {
-    mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
-                  << " not support now.";
     return false;
   }
 
@@ -69,6 +56,15 @@ int ResizeLinear1DGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   in_width_ = input_shape_[kIndex2];
   output_shape_ = outputs[kIndex0]->GetDeviceShapeVector();
   out_width_ = output_shape_[kIndex2];
+
+  auto coordinate_transformation_mode = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
+  if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::ALIGN_CORNERS)) {
+    mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
+  } else if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::HALF_PIXEL)) {
+    mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
+  } else {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";
+  }
   return KRET_OK;
 }
 
@@ -87,17 +83,19 @@ bool ResizeLinear1DGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GPU_REG(MS_T, MS_S, T) \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), &ResizeLinear1DGpuKernelMod::LaunchKernel<T>
+#define RESIZE_LINEAR_1D_GPU_REG(MS_T, T)              \
+  KernelAttr()                                         \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)  \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(MS_T),                              \
+    &ResizeLinear1DGpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ResizeLinear1DGpuKernelMod::ResizeLinear1DFunc>>
   ResizeLinear1DGpuKernelMod::func_list_ = {
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, kNumberTypeInt32, half)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, half)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, float)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, double)},
 };
 
 std::vector<KernelAttr> ResizeLinear1DGpuKernelMod::GetOpSupport() {

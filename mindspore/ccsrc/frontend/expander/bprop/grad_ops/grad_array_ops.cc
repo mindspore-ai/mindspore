@@ -1692,19 +1692,17 @@ REG_BPROP_BUILDER("IdentityN").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dout};
 });
 
-REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
-  auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
-  auto half_pixel_centers = GetValue<bool>(ib->GetAttr("half_pixel_centers"));
+REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex3);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
   if (grad_in_size->isa<ValueNode>()) {
     grad_in_size = ib->Tensor(GetIntList(grad_in_size), kInt64);
   }
-  auto dx =
-    ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size},
-             {{"align_corners", MakeValue(align_corners)}, {"half_pixel_centers", MakeValue(half_pixel_centers)}});
-  return {dx, ib->OutZeros(grad_in_size)};
+  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});
+  return {dx, ib->OutZeros(grad_in_size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("Tril").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {

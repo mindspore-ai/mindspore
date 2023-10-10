@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kInputsNum = 1;
-constexpr size_t kDynamicInputsNum = 2;
+constexpr size_t kResizeBilinearV2InputsNum = 4;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kZero = 0;
 constexpr size_t kOne = 1;
@@ -37,9 +37,9 @@ using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGpuKernelMod::Re
 
 bool ResizeBilinearGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kInputsNum && inputs.size() != kDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or 2"
-                      << ", but got " << inputs.size();
+  if (inputs.size() != kInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputsNum << " or "
+                      << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
   }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -49,14 +49,6 @@ bool ResizeBilinearGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
-  MS_EXCEPTION_IF_NULL(align_corners_ptr);
-  align_corners_ = GetValue<bool>(align_corners_ptr);
-  auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
-  MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
-  half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
-
   return true;
 }
 
@@ -79,6 +71,10 @@ int ResizeBilinearGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   input_w_ = LongToInt(input_shape[kThree]);
   output_h_ = LongToInt(output_shape[kTwo]);
   output_w_ = LongToInt(output_shape[kThree]);
+
+  // for ResizeBilinear, the inputs index will be out of range.
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   return KRET_OK;
 }
 
@@ -105,17 +101,26 @@ FuncVec ResizeBilinearGpuKernelMod::func_list_ = {
    &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat16),
    &ResizeBilinearGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-   &ResizeBilinearGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    &ResizeBilinearGpuKernelMod::LaunchKernel<double>},
 };
 

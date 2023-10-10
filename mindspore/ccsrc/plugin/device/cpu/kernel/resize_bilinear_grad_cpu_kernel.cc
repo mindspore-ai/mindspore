@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearGradInputsNum = 2;
+constexpr size_t kResizeBilinearGradInputsNum = 4;
 constexpr size_t kResizeBilinearGradOutputNum = 1;
 constexpr size_t kResizeBilinearGradInputsDoutShapeSize = 4;
 constexpr size_t kResizeBilinearGradNumZero = 0;
@@ -253,8 +253,6 @@ bool ResizeBilinearGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inp
                   << inputs.size() << " and " << outputs.size();
     return false;
   }
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(kAttrAlignCorners));
-  half_pixel_centers_ = GetValue<bool>(primitive_->GetAttr(kAttrHalfPixelCenters));
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
@@ -273,6 +271,8 @@ int ResizeBilinearGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   size_t in_width = shape_[3];
   size_t out_height = size_[2];
   size_t out_width = size_[3];
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   height_scale = Scaling(out_height, in_height, align_corners_);
   width_scale = Scaling(out_width, in_width, align_corners_);
   return static_cast<int>(KRET_OK);
@@ -355,11 +355,26 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Kern
 
 FuncVec &ResizeBilinearGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeBilinearGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat16),
      &ResizeBilinearGradCpuKernelMod::LaunchFloat16Kernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &ResizeBilinearGradCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearGradCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

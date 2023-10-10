@@ -19,12 +19,12 @@
 #include <functional>
 #include <unordered_map>
 #include "kernel/ops_utils.h"
-#include "ops/grad/resize_linear_1d_grad.h"
+#include "ops/ops_func_impl/resize_linear_1d_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1DGrad = "ResizeLinear1DGrad";
-constexpr const size_t kResizeLinear1DGradInputsNum = 2;
+constexpr const size_t kResizeLinear1DGradInputsNum = 3;
 constexpr const size_t kResizeLinear1DGradOutputsNum = 1;
 
 template <typename T>
@@ -96,8 +96,12 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Kern
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)                            \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)         \
+  KernelAttr()                                         \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(MS_T),                              \
     &ResizeLinear1DGradCpuKernelMod::LaunchKernel<T>
 
 const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>>
@@ -112,9 +116,10 @@ const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRu
 template <typename T>
 ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
-  CoordinateTransformationMode coordinate_transformation_mode) {
-  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}};
+  ops::CoordinateTransformationMode coordinate_transformation_mode) {
+  const std::unordered_map<ops::CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
+    {ops::CoordinateTransformationMode::ALIGN_CORNERS, AlignCornersFunc<T>()},
+    {ops::CoordinateTransformationMode::HALF_PIXEL, HalfPixelFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -124,18 +129,6 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inp
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kResizeLinear1DGradInputsNum
                   << " and " << kResizeLinear1DGradOutputsNum << ", but got " << inputs.size() << " and "
                   << outputs.size();
-    return false;
-  }
-
-  std::string coordinate_transformation_mode =
-    GetValue<std::string>(primitive_->GetAttr("coordinate_transformation_mode"));
-  if (coordinate_transformation_mode == "align_corners") {
-    coordinate_transformation_mode_ = ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode == "half_pixel") {
-    coordinate_transformation_mode_ = HALF_PIXEL;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
-                  << " not support now.";
     return false;
   }
   MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
@@ -169,6 +162,13 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   batch_ = LongToSize(shape_[kIndex0]);
   channel_ = LongToSize(shape_[kIndex1]);
   input_width_ = LongToSize(shape_[kIndex2]);
+
+  coordinate_transformation_mode_ =
+    static_cast<ops::CoordinateTransformationMode>(inputs.at(kIndex2)->GetValueWithCheck<int64_t>());
+  if (coordinate_transformation_mode_ != ops::CoordinateTransformationMode::ALIGN_CORNERS &&
+      coordinate_transformation_mode_ != ops::CoordinateTransformationMode::HALF_PIXEL) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";
+  }
   SetWorkSpaceSize(inputs);
   return KRET_OK;
 }

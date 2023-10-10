@@ -18,16 +18,16 @@
 #include <functional>
 #include <map>
 #include "kernel/ops_utils.h"
-#include "mindspore/core/ops/image_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/resize_bilinear.h"
-#include "ops/resize_bilinear_v2.h"
+#include "ops/ops_func_impl/resize_bilinear_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kResizeBilinearInputsNum = 1;
-constexpr size_t kResizeBilinearV2InputsNum = 2;
+constexpr size_t kResizeBilinearV2InputsNum = 4;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 }  // namespace
 
@@ -45,15 +45,6 @@ bool ResizeBilinearCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                   << ", but got " << outputs.size();
     return false;
   }
-
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
-  half_pixel_centers_ = GetValue<bool>(primitive_->GetAttr(ops::kHalfPixelCenters));
-
-  if (half_pixel_centers_ == true && align_corners_ == true) {
-    MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
-    return false;
-  }
-
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
@@ -61,6 +52,13 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
+  }
+  // for ResizeBilinear, the inputs index will be out of range.
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  if (half_pixel_centers_ == true && align_corners_ == true) {
+    MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
+    return false;
   }
   shape_ = Convert2SizeTClipNeg(inputs.at(kIndex0)->GetShapeVector());
   output_shape_ = Convert2SizeTClipNeg(outputs.at(kIndex0)->GetShapeVector());
@@ -229,17 +227,26 @@ FuncVec &ResizeBilinearCpuKernelMod::GetFuncList() const {
      &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat16),
      &ResizeBilinearCpuKernelMod::LaunchFloat16Kernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-     &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-     &ResizeBilinearCpuKernelMod::LaunchFloat16Kernel},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-     &ResizeBilinearCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &ResizeBilinearCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

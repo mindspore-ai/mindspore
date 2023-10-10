@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputNumTwo = 2;
+constexpr size_t kResizeNearestNeighborV2InputNum = 4;
 constexpr size_t kSecondInputSize = 2;
 
 template <typename T>
@@ -58,14 +58,12 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     input_num_ = inputs.size();
-    if (input_num_ != 1 && input_num_ != kInputNumTwo) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kInputNumTwo
-                    << ", but got " << input_num_;
+    if (input_num_ != 1 && input_num_ != kResizeNearestNeighborV2InputNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1 or "
+                    << kResizeNearestNeighborV2InputNum << ", but got " << input_num_;
       return false;
     }
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
-
-    align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
     return true;
   }
 
@@ -88,6 +86,8 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < output_shape.size(); ++i) {
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
+    // for ResizeNearestNeighbor, the inputs index will be out of range.
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
     return KRET_OK;
   }
 

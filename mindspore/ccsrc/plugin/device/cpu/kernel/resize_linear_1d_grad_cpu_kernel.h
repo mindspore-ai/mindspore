@@ -24,6 +24,7 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore::kernel {
 constexpr auto kUnknown = "Unknown";
@@ -55,8 +56,6 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<kernel::KernelTensor *> &outputs);
 
-  enum CoordinateTransformationMode { ALIGN_CORNERS = 0, HALF_PIXEL = 1, INVALID_MODE = 255 };
-
   template <typename T>
   using CoordinateTransformationFunc = std::function<T(const T &new_x, const int &old_length, const int &new_length)>;
 
@@ -67,7 +66,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    CoordinateTransformationMode coordinate_transformation_mode);
+    ops::CoordinateTransformationMode coordinate_transformation_mode);
 
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};
@@ -77,7 +76,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   size_t channel_{0};
   size_t input_width_{0};
   size_t output_width_{0};
-  CoordinateTransformationMode coordinate_transformation_mode_{ALIGN_CORNERS};
+  ops::CoordinateTransformationMode coordinate_transformation_mode_ = ops::CoordinateTransformationMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 

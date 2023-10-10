@@ -16,10 +16,11 @@
 
 #include "plugin/device/gpu/kernel/nn/resize_linear_1d_grad_gpu_kernel.h"
 #include "mindspore/core/abstract/utils.h"
-#include "ops/grad/resize_linear_1d_grad.h"
+#include "ops/ops_func_impl/resize_linear_1d_grad.h"
+#include "ops/auto_generate/gen_enum_def.h"
 
 namespace {
-constexpr const size_t kResizeLinear1DGradInputsNum = 2;
+constexpr const size_t kResizeLinear1DGradInputsNum = 3;
 constexpr const size_t kResizeLinear1DGradOutputsNum = 1;
 constexpr const size_t kResizeInputDims = 3;
 }  // namespace
@@ -28,24 +29,10 @@ namespace mindspore {
 namespace kernel {
 bool ResizeLinear1DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeLinear1DGrad>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.size() != kResizeLinear1DGradInputsNum || outputs.size() != kResizeLinear1DGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', grad_output and grad_input size must be "
                   << kResizeLinear1DGradInputsNum << " and " << kResizeLinear1DGradOutputsNum << ", but got "
                   << inputs.size() << " and " << outputs.size();
-    return false;
-  }
-
-  std::string coordinate_transformation_mode = kernel_ptr->get_coordinate_transformation_mode();
-  if (coordinate_transformation_mode == "align_corners") {
-    mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode == "half_pixel") {
-    mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', coordinate_transformation_mode: " << coordinate_transformation_mode
-                  << " not support now.";
     return false;
   }
 
@@ -76,6 +63,14 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   size_t work_space_size = SizeOf(grad_input_shape_);
   workspace_size_list_.push_back(work_space_size * sizeof(float));
 
+  auto coordinate_transformation_mode = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
+  if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::ALIGN_CORNERS)) {
+    mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
+  } else if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::HALF_PIXEL)) {
+    mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
+  } else {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";
+  }
   return KRET_OK;
 }
 
@@ -103,8 +98,12 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GRAD_GPU_REG(MS_T, T)                            \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+#define RESIZE_LINEAR_1D_GRAD_GPU_REG(MS_T, T)         \
+  KernelAttr()                                         \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(MS_T)                                \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+    .AddOutputAttr(MS_T),                              \
     &ResizeLinear1DGradGpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ResizeLinear1DGradGpuKernelMod::ResizeLinear1DGradFunc>>

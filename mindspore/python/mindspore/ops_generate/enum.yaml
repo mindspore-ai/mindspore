@@ -61,3 +61,8 @@ pad_filling_mode:
   EDGE: 2
   CIRCULAR: 3
   SYMMETRIC: 4
+
+# enum CoordinateTransformationMode
+coordinate_transformation_mode:
+  ALIGN_CORNERS: 0
+  HALF_PIXEL: 1

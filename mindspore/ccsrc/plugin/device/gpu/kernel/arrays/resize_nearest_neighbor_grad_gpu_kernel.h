@@ -62,7 +62,6 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    align_corners_ = GetValue<bool>(primitive_->GetAttr("align_corners"));
     auto out = outputs.at(kIndex0);
     MS_EXCEPTION_IF_NULL(out);
     auto o_type = out->dtype_id();
@@ -107,7 +106,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       work_size_ = o_num * sizeof(float);
     }
     workspace_size_list_.push_back(work_size_);
-
+    // for ResizeNearestNeighborGrad, the inputs index will be out of range.
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
     return KRET_OK;
   }
 

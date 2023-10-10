@@ -19,7 +19,7 @@
 #include <functional>
 #include <map>
 #include <utility>
-#include "mindspore/core/ops/grad/resize_bilinear_grad.h"
+#include "mindspore/core/ops/ops_func_impl/resize_bilinear_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bilinear_impl.cuh"
 
 namespace mindspore {
@@ -37,12 +37,6 @@ using FuncVec = std::vector<std::pair<KernelAttr, ResizeBilinearGradGpuKernelMod
 
 bool ResizeBilinearGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ResizeBilinearGrad>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ResizeBilinearGrad ops failed!";
-    return false;
-  }
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -50,14 +44,6 @@ bool ResizeBilinearGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto align_corners = primitive_->GetAttr(kAttrAlignCorners);
-  MS_EXCEPTION_IF_NULL(align_corners);
-  align_corners_ = GetValue<bool>(align_corners);
-  auto half_pixel_centers = primitive_->GetAttr(kAttrHalfPixelCenters);
-  MS_EXCEPTION_IF_NULL(half_pixel_centers);
-  half_pixel_centers_ = GetValue<bool>(half_pixel_centers);
-
   return true;
 }
 
@@ -86,6 +72,9 @@ int ResizeBilinearGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
     workspace_size_ = dx_size_;
   }
   InitSizeLists();
+
+  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
   return static_cast<int>(KRET_OK);
 }
 
@@ -135,13 +124,27 @@ bool ResizeBilinearGradGpuKernelMod::LaunchHalfKernel(const std::vector<KernelTe
   return true;
 }
 
-FuncVec ResizeBilinearGradGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &ResizeBilinearGradGpuKernelMod::LaunchHalfKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &ResizeBilinearGradGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &ResizeBilinearGradGpuKernelMod::LaunchKernel<double>}};
+FuncVec ResizeBilinearGradGpuKernelMod::func_list_ = {{KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat16)
+                                                         .AddInputAttr(kNumberTypeFloat16)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddOutputAttr(kNumberTypeFloat16),
+                                                       &ResizeBilinearGradGpuKernelMod::LaunchHalfKernel<half>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat32)
+                                                         .AddInputAttr(kNumberTypeFloat32)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddOutputAttr(kNumberTypeFloat32),
+                                                       &ResizeBilinearGradGpuKernelMod::LaunchKernel<float>},
+                                                      {KernelAttr()
+                                                         .AddInputAttr(kNumberTypeFloat64)
+                                                         .AddInputAttr(kNumberTypeFloat64)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                         .AddOutputAttr(kNumberTypeFloat64),
+                                                       &ResizeBilinearGradGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> ResizeBilinearGradGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

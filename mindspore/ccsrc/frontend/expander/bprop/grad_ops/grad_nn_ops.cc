@@ -1693,13 +1693,13 @@ REG_BPROP_BUILDER("GridSampler2D").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
   return {dx, dgrid, grad_interpolation_mode, grad_padding_mode, grad_align_corners};
 });
 
-REG_BPROP_BUILDER("ResizeLinear1D").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeLinear1D").SetUnusedInputs({i1, i3}).SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("ResizeLinear1DGrad", {dout, input_x},
-                     {{"coordinate_transformation_mode", ib->GetAttr("coordinate_transformation_mode")}});
-  return {dx, ib->OutZeros(size)};
+  auto coordinate_transformation_mode = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("ResizeLinear1DGrad", {dout, input_x, coordinate_transformation_mode});
+  return {dx, ib->OutZeros(size), ib->OutZeros(coordinate_transformation_mode)};
 });
 
 REG_BPROP_BUILDER("MaxPool3DWithArgmax").SetBody(BODYFUNC(ib) {

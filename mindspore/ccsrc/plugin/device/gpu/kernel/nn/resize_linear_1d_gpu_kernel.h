@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_linear_1d.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/resize_linear_1d.h"
+#include "mindspore/core/ops/ops_func_impl/resize_linear_1d.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
