@@ -62,7 +62,8 @@ enum OperatorType {
   kRecCum,
   kRecStandAlone,
   kRecBatchParallel,
-  kRecPadV3
+  kRecPadV3,
+  kRecVirtual
 };
 
 enum InfoType { kApplication, kConstant };
