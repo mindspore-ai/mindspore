@@ -23,6 +23,7 @@
 
 namespace aicpu {
 namespace random {
+uint64_t GetRNG(int64_t *seed, int64_t *seed2);
 // Get random generator seed for random ops
 uint64_t GetSeed(const uint64_t &global_seed, const uint64_t &ops_seed);
 
