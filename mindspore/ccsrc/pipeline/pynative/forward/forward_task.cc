@@ -79,7 +79,7 @@ void AllocViewMemBackendTask::Run() {
 }
 
 void AllocViewMemBackendTask::SetException(const std::exception_ptr &e) {
-  if (op_run_info_ == nullptr) {
+  if (op_run_info_ == nullptr || op_run_info_->stub_output == nullptr) {
     return;
   }
   op_run_info_->stub_output->SetException(e);
