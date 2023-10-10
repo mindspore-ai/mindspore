@@ -612,3 +612,50 @@ def test_control_flow_for_in_while_return_in_for_param():
     expect_grad = 1
     assert expect_out == ms_fwd
     assert expect_grad == ms_grad
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jit_pyexecute():
+    """
+    Feature: PyNative jit.
+    Description: PyNative jit pyexecute.
+    Expectation: Success.
+    """
+    class Out1():
+        def __init__(self):
+            self.a = -2
+
+    out_obj1 = Out1()
+    out_obj1.a = [2, 3]
+
+    class Out2():
+        def __init__(self):
+            self.b = Out1()
+
+    out_obj2 = Out2()
+    out_obj2.b.a = (2, 3)
+
+    class Out3():
+        def __init__(self):
+            self.c = Out2()
+
+    out_obj3 = Out3()
+    out_obj3.c.b.a = Tensor(np.array([1, 2, 3, 4, 5, 6]))
+
+    class Net(nn.Cell):
+        @jit
+        def construct(self):
+            out_obj3.c.b.a = out_obj3.c.b.a.reshape((3, 2))
+            return out_obj3.c.b.a
+
+    net = Net()
+    out = net()
+    exp = ((np.array([[1, 2], [3, 4], [5, 6]])), (3, 2))
+    assert np.allclose(out.asnumpy(), exp[0], 0.001, 0.001)
+    assert out.shape == exp[1]
+
+    grad = P.GradOperation(get_all=False, get_by_list=False, sens_param=False)
+    out_grad = grad(net)()
+    assert out_grad == ()
