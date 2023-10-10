@@ -1775,10 +1775,15 @@ py::object TensorIndex::GetItemIndexSimpleIndex(const py::object &py_index, cons
   return py::none();
 }
 
-bool EnableView(bool is_pack_node) {
+bool EnableView(bool is_pack_node, const TypeId &type_id, const py::bool_ &is_ascend) {
   if (is_pack_node || pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
     // 1. pack node will slice failed with view.
     // 2. SelectView and CopyWithSlice has no kernel, can not enable view in high order cell.
+    return false;
+  }
+
+  if (is_ascend && (type_id == kNumberTypeComplex128 || type_id == kNumberTypeFloat64)) {
+    // AsStrided and ViewCopy is not support Complex128 and Float64, disable view
     return false;
   }
 
@@ -1791,17 +1796,18 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {
     auto value_info = GetStubTensorValue(py_data);
-    if (EnableView(value_info.second)) {
-      data_value = value_info.first;
-    }
     MS_EXCEPTION_IF_NULL(value_info.first);
     auto abs = value_info.first->ToAbstract();
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
+    MS_EXCEPTION_IF_NULL(abs->BuildType());
+    if (EnableView(value_info.second, abs->BuildType()->type_id(), is_ascend)) {
+      data_value = value_info.first;
+    }
   } else if (py::isinstance<Tensor>(py_data)) {
     auto tensor = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    if (EnableView(false)) {
+    if (EnableView(false, tensor->data_type(), is_ascend)) {
       data_value = tensor;
     }
     data_shape = tensor->shape();
@@ -2117,19 +2123,20 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
   ValuePtr data_value;
   if (IsStubTensor(py_data)) {  // PackTensor have not real Tensor.
     auto value_info = GetStubTensorValue(py_data);
-    if (EnableView(value_info.second)) {
-      data_value = value_info.first;
-    }
     MS_EXCEPTION_IF_NULL(value_info.first);
     auto abs = value_info.first->ToAbstract();
     MS_EXCEPTION_IF_NULL(abs);
-
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
     data_type = abs->BuildType();
+    MS_EXCEPTION_IF_NULL(data_type);
+
+    if (EnableView(value_info.second, data_type->type_id(), is_ascend)) {
+      data_value = value_info.first;
+    }
   } else {
     TensorPtr data = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(data);
-    if (EnableView(false)) {
+    if (EnableView(false, data->data_type(), is_ascend)) {
       data_value = data;
     }
     data_shape = data->shape();
