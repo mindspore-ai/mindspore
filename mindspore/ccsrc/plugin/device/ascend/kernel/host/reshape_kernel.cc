@@ -27,6 +27,10 @@
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 
+#ifdef ASCEND_910
+using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
+#endif
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -198,6 +202,25 @@ bool ReshapeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     return false;
   }
   return true;
+}
+
+std::vector<TaskInfoPtr> ReshapeKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+#ifdef ASCEND_910
+  if (inputs.size() != kInputNum) {
+    MS_LOG(EXCEPTION) << "Inputs size should be 2, but got " << inputs.size();
+  }
+  stream_id_ = stream_id;
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
+    std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
+                                          inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, false);
+  MS_EXCEPTION_IF_NULL(task_info_ptr);
+  return {task_info_ptr};
+#endif
+  return {};
 }
 }  // namespace kernel
 }  // namespace mindspore
