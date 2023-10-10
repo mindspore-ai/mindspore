@@ -63,7 +63,6 @@ Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(callback_manager_.Init(this));
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
-  int64_t epoch_num = op_current_epochs_;  // in failover reset this can be greater than zero
   int64_t ep_step = 0;
   int64_t total_step = 0;
   int64_t batch_num = 0;
@@ -92,26 +91,24 @@ Status BatchOp::operator()() {
       // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
         RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
-          std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
-        cnt++;
+          std::make_pair(std::move(table), CBatchInfo(op_current_epochs_, batch_num++, cnt++))));
         table = std::make_unique<TensorQTable>();
-        RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
+        RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(op_current_epochs_, batch_num, cnt)));
       }
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     // Reminder logic, execute only when there is a remainder (table is non empty) and don't drop
     if (!drop_ && !table->empty()) {
       RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
-        std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
-      cnt++;
+        std::make_pair(std::move(table), CBatchInfo(op_current_epochs_, batch_num++, cnt++))));
     }
     table = std::make_unique<TensorQTable>();  // this drops when drop == true
     // end of the current epoch, batch_num should start from 0 again
     batch_num = 0;
-    epoch_num++;
     RETURN_IF_NOT_OK(
       worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kEOE))));
-    RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
+    UpdateRepeatAndEpochCounter();
+    RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(op_current_epochs_, batch_num, cnt)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && ENABLE_PYTHON
@@ -122,7 +119,6 @@ Status BatchOp::operator()() {
                       << "reduce memory usage.";
     }
 #endif
-    UpdateRepeatAndEpochCounter();
   }  // end of EofHandled() == false
   RETURN_IF_NOT_OK(
     worker_in_queues_[NextWorkerID()]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(BatchCtrl::kEOF))));

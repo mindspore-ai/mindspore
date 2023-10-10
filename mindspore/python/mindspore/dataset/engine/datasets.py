@@ -2700,13 +2700,13 @@ class BatchDataset(UnionBaseDataset):
 
 class BatchInfo(cde.CBatchInfo):
     """
-    Only the batch size function and per_batch_map of the batch operation can dynamically adjust parameters
-    based on the number of batches and epochs during training.
+    This class helps to get dataset information dynamically when the input of `batch_size` or `per_batch_map`
+    in `batch` operation is a callable object.
     """
 
     def get_batch_num(self):
         """
-        Return the batch number of the current batch.
+        Return the batch number being processed in current epoch, start from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -2725,7 +2725,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_epoch_num(self):
         """
-        Return the epoch number of the current batch.
+        Return the epoch number, start from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
