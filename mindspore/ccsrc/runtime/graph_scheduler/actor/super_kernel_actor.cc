@@ -367,6 +367,12 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
       node_device_tensor->set_from_mem_pool(false);
     } else {
+      // When multi-graphs share the inputs, node_device_tensor would not malloc device memory.
+      if (node_device_tensor->GetPtr() == nullptr) {
+        MS_LOG(INFO)
+          << "The node device tensor, which shared with another graph, has no device memory and will skip copy.";
+        continue;
+      }
       copy_device_tensor = node_device_tensor;
     }
     MS_EXCEPTION_IF_NULL(copy_device_tensor);
