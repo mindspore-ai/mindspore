@@ -171,11 +171,13 @@ OUTPUT_MAP(CombinedNonMaxSuppression) = {{0, OUTPUT_DESC(nmsed_boxes)},
 REG_ADPT_DESC(CombinedNonMaxSuppression, prim::kPrimCombinedNonMaxSuppression->name(),
               ADPT_DESC(CombinedNonMaxSuppression))
 
+std::vector<std::string> interpolation_modes = {"bilinear", "nearest"};
+std::vector<std::string> padding_modes = {"zeros", "border", "reflection"};
 // GridSampler2D
 INPUT_MAP(GridSampler2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
 ATTR_MAP(GridSampler2D) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(GridSampler2D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                                 {4, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+INPUT_ATTR_MAP(GridSampler2D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
                                  {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
@@ -183,8 +185,8 @@ REG_ADPT_DESC(GridSampler2D, kNameGridSampler2D, ADPT_DESC(GridSampler2D))
 // GridSampler2DGrad
 INPUT_MAP(GridSampler2DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
 ATTR_MAP(GridSampler2DGrad) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(GridSampler2DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                                     {5, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+INPUT_ATTR_MAP(GridSampler2DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
                                      {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler2DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
 REG_ADPT_DESC(GridSampler2DGrad, kNameGridSampler2DGrad, ADPT_DESC(GridSampler2DGrad))
@@ -192,8 +194,8 @@ REG_ADPT_DESC(GridSampler2DGrad, kNameGridSampler2DGrad, ADPT_DESC(GridSampler2D
 // GridSampler3D
 INPUT_MAP(GridSampler3D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grid)}};
 ATTR_MAP(GridSampler3D) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(GridSampler3D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                                 {4, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+INPUT_ATTR_MAP(GridSampler3D) = {{3, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                 {4, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
                                  {5, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler3D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GridSampler3D, kNameGridSampler3D, ADPT_DESC(GridSampler3D))
@@ -201,8 +203,8 @@ REG_ADPT_DESC(GridSampler3D, kNameGridSampler3D, ADPT_DESC(GridSampler3D))
 // GridSampler3DGrad
 INPUT_MAP(GridSampler3DGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(grid)}};
 ATTR_MAP(GridSampler3DGrad) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(GridSampler3DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<std::string>())},
-                                     {5, ATTR_DESC(padding_mode, AnyTraits<std::string>())},
+INPUT_ATTR_MAP(GridSampler3DGrad) = {{4, ATTR_DESC(interpolation_mode, AnyTraits<GEEnumToStr>(), interpolation_modes)},
+                                     {5, ATTR_DESC(padding_mode, AnyTraits<GEEnumToStr>(), padding_modes)},
                                      {6, ATTR_DESC(align_corners, AnyTraits<bool>())}};
 OUTPUT_MAP(GridSampler3DGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgrid)}};
 REG_ADPT_DESC(GridSampler3DGrad, kNameGridSampler3DGrad, ADPT_DESC(GridSampler3DGrad))
