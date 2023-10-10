@@ -18,7 +18,6 @@ import mindspore._checkparam as validator
 from mindspore.common import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 
-
 class ListAppend(Primitive):
     r"""
     Append element to the end of list.
@@ -513,10 +512,12 @@ class TensorToScalar(PrimitiveWithCheck):
 
     def infer_value(self, x):
         """infer_value TensorToScalar"""
-        value = None
-        if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
-            value = x.asnumpy().tolist()
-        return value
+        if isinstance(x, Tensor_):
+            if x.shape == (1,):
+                return int(x.asnumpy()[0])
+            if not x.shape:
+                return int(x.asnumpy())
+        return None
 
 
 class SequenceCount(Primitive):

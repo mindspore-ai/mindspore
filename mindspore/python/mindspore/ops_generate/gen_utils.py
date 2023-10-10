@@ -59,19 +59,19 @@ def get_type_str(type_str):
     """
     # add more type here
     type_kind_dict = {
-        'int': 'int',
-        'tuple[int]': 'tuple',
-        'list[int]': 'list',
-        'float': 'float',
-        'tuple[float]': 'tuple',
-        'list[float]': 'list',
-        'bool': 'bool',
-        'tuple[bool]': 'tuple',
-        'list[bool]': 'list',
-        'number': 'Number',
-        'tensor': 'Tensor',
-        'tuple[tensor]': 'tuple',
-        'list[tensor]': 'list',
+        'int': 'OpDtype.DT_INT',
+        'float': 'OpDtype.DT_FLOAT',
+        'bool': 'OpDtype.DT_BOOL',
+        'number': 'OpDtype.DT_NUMBER',
+        'tuple[int]': 'OpDtype.DT_TUPLE_ANY',
+        'tuple[float]': 'OpDtype.DT_TUPLE_ANY',
+        'tuple[bool]': 'OpDtype.DT_TUPLE_ANY',
+        'tuple[tensor]': 'OpDtype.DT_TUPLE_ANY',
+        'list[int]': 'OpDtype.DT_LIST_ANY',
+        'list[float]': 'OpDtype.DT_LIST_ANY',
+        'list[bool]': 'OpDtype.DT_LIST_ANY',
+        'list[tensor]': 'OpDtype.DT_LIST_ANY',
+        'tensor': 'OpDtype.DT_TENSOR',
     }
     if type_str in type_kind_dict:
         return type_kind_dict[type_str]
@@ -142,3 +142,22 @@ def safe_load_yaml(yaml_file_path):
     with open(yaml_file_path, 'r') as yaml_file:
         yaml_str.update(yaml.safe_load(yaml_file))
     return yaml_str
+
+
+def get_assign_str_by_type_it(arg_info, arg_name, dtype):
+    """
+    Make type_it(arg, src_types, dst_type) python sentences.
+    """
+    assign_str = ""
+    type_cast = arg_info.get('type_cast')
+    if type_cast is not None:
+        type_cast_tuple = tuple(ct.strip() for ct in type_cast.split(","))
+        assign_str += f'type_it({arg_name}, '
+        if len(type_cast_tuple) == 1:
+            assign_str += get_type_str(type_cast_tuple[0]) + '.value, '
+        else:
+            assign_str += '(' + ', '.join(get_type_str(ct) + '.value' for ct in type_cast_tuple) + '), '
+        assign_str += get_type_str(dtype) + '.value)'
+    else:
+        assign_str = arg_name
+    return assign_str

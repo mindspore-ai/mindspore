@@ -95,52 +95,31 @@ mindspore::HashMap<ops::OP_DTYPE, std::string> op_def_dtype_map{
   {ops::OP_DTYPE::DT_LIST_TENSOR, "list"},   {ops::OP_DTYPE::DT_LIST_STR, "list"},
 };
 
+inline int64_t OpDtypeToInt(ops::OP_DTYPE dtype) { return static_cast<int64_t>(dtype); }
+
 AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpArg &op_arg, const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
   // If src_cast_dtype is empty, do no need to do type conversion.
   std::vector<ops::OP_DTYPE> src_cast_dtype = op_arg.cast_dtype_;
+  ops::OP_DTYPE dst_cast_dtype = op_arg.arg_dtype_;
   if (src_cast_dtype.empty()) {
     return node;
   }
-  // Get src dtype for type conversion.
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  ValuePtr src_dtype = nullptr;
-  py::tuple src_dtype_obj(src_cast_dtype.size());
-  for (size_t i = 0; i < src_cast_dtype.size(); i++) {
-    auto src_iter = op_def_dtype_map.find(src_cast_dtype[i]);
-    if (src_iter == op_def_dtype_map.end()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "ops::OP_DTYPE " << src_cast_dtype[i]
-                                 << " is not supported as cast_dtype of primitive.";
-    }
-    std::string src_dtype_name = src_iter->second;
-    src_dtype_obj[i] = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_CLASS_TYPE_BY_NAME, src_dtype_name);
-  }
-  bool src_converted = parse::ConvertData(src_dtype_obj, &src_dtype);
-  if (!src_converted) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Convert src_cast_dtype of " << op_arg.arg_name_
-                               << " failed: " << py::str(src_dtype_obj);
-  }
-  // Get dst dtype for type conversion.
-  ops::OP_DTYPE dst_cast_dtype = op_arg.arg_dtype_;
-  auto dst_iter = op_def_dtype_map.find(dst_cast_dtype);
-  if (dst_iter == op_def_dtype_map.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "ops::OP_DTYPE " << dst_cast_dtype
-                               << " is not supported as dst_cast_dtype in type convertsion.";
-  }
-  std::string dst_dtype_name = dst_iter->second;
-  ValuePtr dst_dtype = nullptr;
-  py::object dst_dtype_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_CLASS_TYPE_BY_NAME, dst_dtype_name);
-  bool dst_converted = parse::ConvertData(dst_dtype_obj, &dst_dtype);
-  if (!dst_converted) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Convert dst_cast_dtype of " << op_arg.arg_name_
-                               << " failed: " << py::str(dst_dtype_obj);
-  }
-  // Get type conversion function.
   const auto convert_func =
     prim::GetPythonOps(parse::PYTHON_MOD_PRIMITIVE_OP_TYPE_IT, parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE);
   auto convert_fg = dyn_cast<FuncGraph>(convert_func);
   MS_EXCEPTION_IF_NULL(convert_fg);
   convert_fg->set_manager(fg->manager());
-  return fg->NewCNode({NewValueNode(convert_fg), node, NewValueNode(src_dtype), NewValueNode(dst_dtype)});
+  if (src_cast_dtype.size() == 1) {
+    return fg->NewCNode({NewValueNode(convert_fg), node, NewValueNode(OpDtypeToInt(src_cast_dtype[0])),
+                         NewValueNode(OpDtypeToInt(dst_cast_dtype))});
+  } else {
+    std::vector<ValuePtr> item_values;
+    std::transform(src_cast_dtype.cbegin(), src_cast_dtype.cend(), std::back_inserter(item_values),
+                   [](ops::OP_DTYPE dtype) -> ValuePtr { return MakeValue(OpDtypeToInt(dtype)); });
+    return fg->NewCNode({NewValueNode(convert_fg), node, NewValueNode(std::make_shared<ValueTuple>(item_values)),
+                         NewValueNode(OpDtypeToInt(dst_cast_dtype))});
+  }
 }
 
 AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpArg &op_arg, const FuncGraphPtr &fg) {

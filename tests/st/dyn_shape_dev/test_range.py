@@ -33,6 +33,27 @@ def range_backward_func(start, limit, delta):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+def test_range_forward_tensor_input(mode):
+    """
+    Feature: range ops.
+    Description: test ops range for Tensor input.
+    Expectation: output a sequence of numbers that begins at "start" and extlimits by increments of "delta" up to but
+    not including "limit".
+    """
+    context.set_context(mode=mode)
+    start = ms.Tensor([0])
+    limit = ms.Tensor([10])
+    delta = ms.Tensor([2])
+    output = range_forward_func(start, limit, delta)
+    print("output:", output)
+    expect_output = np.array([0, 2, 4, 6, 8]).astype(np.int64)
+    np.testing.assert_array_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])

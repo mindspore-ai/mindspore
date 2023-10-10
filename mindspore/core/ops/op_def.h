@@ -24,7 +24,7 @@
 #include "ops_func_impl/op_func_impl.h"
 namespace mindspore::ops {
 
-enum OP_DTYPE {
+enum OP_DTYPE : int64_t {
   DT_BEGIN = 0,
   DT_BOOL,
   DT_INT,
