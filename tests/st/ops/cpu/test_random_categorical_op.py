@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import platform
 import numpy as np
 import pytest
 
@@ -50,10 +51,18 @@ def test_rc_graph_fp16_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
+
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -74,10 +83,17 @@ def test_rc_graph_fp32_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -98,10 +114,17 @@ def test_rc_graph_fp64_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -122,10 +145,17 @@ def test_rc_graph_fp16_int16():
     seed = 5
     dtype = ms.int16
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int16)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int16)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int16)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -146,10 +176,17 @@ def test_rc_graph_fp16_int32():
     seed = 5
     dtype = ms.int32
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int32)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int32)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -170,10 +207,17 @@ def test_rc_pynative_fp16_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -194,10 +238,17 @@ def test_rc_pynative_fp32_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -218,10 +269,17 @@ def test_rc_pynative_fp64_int64():
     seed = 5
     dtype = ms.int64
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int64)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -242,10 +300,17 @@ def test_rc_pynative_fp16_int16():
     seed = 5
     dtype = ms.int16
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int16)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int16)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int16)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -266,10 +331,17 @@ def test_rc_pynative_fp16_int32():
     seed = 5
     dtype = ms.int32
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int32)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int32)
 
     random_cateogoric = RCnet(dtype)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
 
@@ -338,10 +410,17 @@ def test_rc_pynative_fp16_int32_dynamic_shape():
     seed = 5
     dtype = ms.int32
     expect = np.array([[4, 4, 2, 4, 4, 3, 4, 4, 4, 4], [4, 4, 2, 4, 4, 3, 4, 4, 4, 4]], dtype=np.int32)
+    expect_mac = np.array([[4, 4, 1, 4, 4, 0, 4, 3, 4, 3], [4, 4, 1, 4, 4, 0, 4, 3, 4, 3]], dtype=np.int64)
+    expect_windows = np.array([[3, 3, 4, 4, 3, 4, 4, 4, 3, 3], [3, 3, 4, 4, 3, 4, 4, 4, 3, 3]], dtype=np.int64)
     x_dyn = Tensor(shape=[None for _ in x.shape], dtype=x.dtype)
     random_cateogoric = RCnet(dtype)
     random_cateogoric.set_inputs(x_dyn, num_sample, seed)
     output = random_cateogoric(x, num_sample, seed)
-    diff = output.asnumpy() - expect
+    if platform.system().lower() == "darwin":
+        diff = output.asnumpy() - expect_mac
+    elif platform.system().lower() == "windows":
+        diff = output.asnumpy() - expect_windows
+    else:
+        diff = output.asnumpy() - expect
     assert expect.dtype == output.asnumpy().dtype
     assert np.all(diff == 0)
