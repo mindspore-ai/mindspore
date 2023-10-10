@@ -95,7 +95,7 @@ mindspore::HashMap<ops::OP_DTYPE, std::string> op_def_dtype_map{
   {ops::OP_DTYPE::DT_LIST_TENSOR, "list"},   {ops::OP_DTYPE::DT_LIST_STR, "list"},
 };
 
-AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpArg &op_arg) {
+AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpArg &op_arg, const FuncGraphPtr &fg) {
   // If src_cast_dtype is empty, do no need to do type conversion.
   std::vector<ops::OP_DTYPE> src_cast_dtype = op_arg.cast_dtype_;
   if (src_cast_dtype.empty()) {
@@ -139,21 +139,17 @@ AnfNodePtr GetNodeAfterTypeConversion(const AnfNodePtr &node, const ops::OpArg &
     prim::GetPythonOps(parse::PYTHON_MOD_PRIMITIVE_OP_TYPE_IT, parse::PYTHON_MOD_PRIMITIVE_ARG_DTYPE_CAST_MODULE);
   auto convert_fg = dyn_cast<FuncGraph>(convert_func);
   MS_EXCEPTION_IF_NULL(convert_fg);
-  auto fg = node->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
   convert_fg->set_manager(fg->manager());
   return fg->NewCNode({NewValueNode(convert_fg), node, NewValueNode(src_dtype), NewValueNode(dst_dtype)});
 }
 
-AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpArg &op_arg) {
+AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpArg &op_arg, const FuncGraphPtr &fg) {
   if (op_arg.arg_handler_.empty()) {
     return node;
   }
   const auto arg_handler_func = prim::GetPythonOps(op_arg.arg_handler_, parse::PYTHON_MOD_PRIMITIVE_ARG_HANDLER_MODULE);
   auto arg_handler_fg = dyn_cast<FuncGraph>(arg_handler_func);
   MS_EXCEPTION_IF_NULL(arg_handler_fg);
-  auto fg = node->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
   arg_handler_fg->set_manager(fg->manager());
   return fg->NewCNode({NewValueNode(arg_handler_fg), node});
 }
@@ -181,7 +177,7 @@ void DoTypeConversionWithOpDef(AnalysisEnginePtr engine, const PrimitivePtr &pri
       MS_LOG(INTERNAL_EXCEPTION) << "Expect an arg whose as_init_arg_ is 0, but got " << op_arg.arg_name_ << " in "
                                  << prim->name();
     }
-    auto new_input = GetNodeAfterTypeConversion(input, op_arg);
+    auto new_input = GetNodeAfterTypeConversion(input, op_arg, out_conf->node()->func_graph());
     if (new_input != input) {
       AnfNodeConfigPtr input_conf = engine->MakeConfig(new_input, out_conf->context(), out_conf->func_graph());
       MS_EXCEPTION_IF_NULL(input_conf);
@@ -2482,8 +2478,8 @@ CNodePtr ConvertArgsForPrimitiveClassType(const PrimitiveFunctionPtr &prim_func,
     auto op_arg = op_def->args_[i];
     auto input = cnode->input(i + 1);
     // Handle the implicit conversion of inputs.
-    auto new_input = GetNodeAfterTypeConversion(input, op_arg);
-    new_input = GetNodeAfterArgHandler(new_input, op_arg);
+    auto new_input = GetNodeAfterTypeConversion(input, op_arg, fg);
+    new_input = GetNodeAfterArgHandler(new_input, op_arg, fg);
     if (op_arg.as_init_arg_) {
       (void)prim_init_arg_nodes.emplace_back(new_input);
     } else {
@@ -2543,7 +2539,7 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
       if (index_input >= cnode->size()) {
         MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args in OpArg exceeds the size of cnode inputs.";
       }
-      auto new_input = GetNodeAfterArgHandler(cnode->input(index_input), op_arg);
+      auto new_input = GetNodeAfterArgHandler(cnode->input(index_input), op_arg, fg);
       (void)prim_input_nodes.emplace_back(new_input);
       index_input++;
     }
