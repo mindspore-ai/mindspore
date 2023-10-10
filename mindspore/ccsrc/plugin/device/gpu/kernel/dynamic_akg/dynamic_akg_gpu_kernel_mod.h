@@ -52,10 +52,9 @@ class DynamicAkgGpuKernelManager {
     }
   }
   CUresult GetCUResult(const char *kernel_content, bool force_reload, std::vector<uint32_t> *thread_info,
-                       CUfunction *func, const std::string kernel_name, std::unordered_map<string, int64_t> map_info);
+                       CUfunction *func, const std::string kernel_name);
   CUresult GetFunction(const KernelPackPtr &kernel_pack, bool force_reload, std::vector<uint32_t> *thread_info,
-                       CUfunction *func, const std::string kernel_name,
-                       std::unordered_map<std::string, int64_t> map_info);
+                       CUfunction *func, const std::string kernel_name);
 
  private:
   std::unordered_map<std::string, GpuKernelMetaPtr> infotable_;
@@ -88,12 +87,12 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  void InitMappingInfo();
   void CheckJsonParsed();
   void InitJsonShapeInformation();
-  void UpdateMappingInfo();
+  void UpdateDynamicShapeMappingInfo();
+  void UpdateStaticShapeMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  void GetDeviceArgSizeVec();
+  void GetDeviceArgSizeVec(const size_t inputs_num);
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
@@ -105,20 +104,15 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
  private:
   KernelPackPtr kernel_pack_;
   std::vector<uint32_t> thread_info_;
+  std::vector<uint32_t> init_mapping_;
   CUfunction kernel_addr_{nullptr};
   bool is_dynamic_{false};
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<std::vector<int64_t>> device_shape_list_;
-  std::unordered_map<std::string, int64_t> map_info_;
   nlohmann::json parsed_js_;
-  size_t tensor_num_{0};
   std::vector<int> arg_size_vec_;
-  // std::vector<std::string> arg_size_vec_;
-  // std::unordered_map<std::string, int64_t> symbol_map_;
-  std::vector<int> pos_flags_;
-  std::vector<std::string> splited_strings_;
+  std::unordered_map<size_t, std::pair<size_t, size_t>> unknown_map_loc_;
   bool json_shape_updated_{false};
-  std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
   std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
 };
 

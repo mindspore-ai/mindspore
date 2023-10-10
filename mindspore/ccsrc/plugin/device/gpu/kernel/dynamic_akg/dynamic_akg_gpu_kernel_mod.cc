@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_mod.h"
-
 #include <fstream>
 #include <algorithm>
 #include <map>
@@ -42,7 +41,6 @@ const int AKG_KERNEL_MOD_BZ_IDX = 2;
 const int AKG_KERNEL_MOD_TX_IDX = 3;
 const int AKG_KERNEL_MOD_TY_IDX = 4;
 const int AKG_KERNEL_MOD_TZ_IDX = 5;
-constexpr auto kMappingUpdated = "updated";
 constexpr auto kBlockIdxX = "blockIdx.x";
 constexpr auto kBlockIdxY = "blockIdx.y";
 constexpr auto kBlockIdxZ = "blockIdx.z";
@@ -59,7 +57,7 @@ DynamicAkgGpuKernelManager::DynamicAkgGpuKernelManager() {}
 
 CUresult DynamicAkgGpuKernelManager::GetCUResult(const char *kernel_content, bool force_reload,
                                                  vector<uint32_t> *thread_info, CUfunction *func,
-                                                 const string kernel_name, unordered_map<string, int64_t> map_info) {
+                                                 const string kernel_name) {
   string fn = kernel_name;
   CUmodule module;
   CUjit_option options[] = {};
@@ -84,18 +82,18 @@ CUresult DynamicAkgGpuKernelManager::GetCUResult(const char *kernel_content, boo
 
 CUresult DynamicAkgGpuKernelManager::GetFunction(const KernelPackPtr &kernel_pack, bool force_reload,
                                                  vector<uint32_t> *thread_info, CUfunction *func,
-                                                 const string kernel_name, unordered_map<string, int64_t> map_info) {
+                                                 const string kernel_name) {
   if (kernel_pack->GetJson() == nullptr || kernel_pack->GetJson()->contents == nullptr ||
       kernel_pack->GetKernel() == nullptr || kernel_pack->GetKernel()->contents == nullptr) {
     MS_LOG(ERROR) << "Invalid kernel pack, json or kernel is nullptr of kernel : " << kernel_name << ".\n";
     return CUDA_ERROR_INVALID_IMAGE;
   }
-  return GetCUResult(&kernel_pack->GetKernel()->contents[0], force_reload, thread_info, func, kernel_name, map_info);
+  return GetCUResult(&kernel_pack->GetKernel()->contents[0], force_reload, thread_info, func, kernel_name);
 }
 
 void DynamicAkgGpuKernelMod::InitJsonShapeInformation() {
-  // Init device shape list, unknown use -1
-  // record map <device_loc, symbol>
+  // Initialize device shape list using -1 for unknown dims
+  // Record map <device_loc, symbol>
   unordered_map<std::pair<size_t, size_t>, string, PairHash> device_loc_map;
   for (size_t i = 0; i < parsed_js_[kDeviceShapes].size(); i++) {
     vector<int64_t> device_tensor_shape;
@@ -105,38 +103,48 @@ void DynamicAkgGpuKernelMod::InitJsonShapeInformation() {
         (void)device_tensor_shape.emplace_back(std::stoi(device_shape_str));
       } else {
         (void)device_tensor_shape.emplace_back(-1);
-        // symbol_loc[shape_str].second = std::make_pair(i, j);
         auto device_loc = std::make_pair(i, j);
         device_loc_map[device_loc] = device_shape_str;
       }
     }
     (void)device_shape_list_.emplace_back(device_tensor_shape);
   }
-
-  // record map <symbol, host_loc>
+  // Record map <symbol, host_loc>
+  std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map;
   for (size_t i = 0; i < parsed_js_[kHostShapes].size(); i++) {
     for (size_t j = 0; j < parsed_js_[kHostShapes][i].size(); j++) {
       string shape_str = parsed_js_[kHostShapes][i][j];
-      if (!std::all_of(shape_str.begin(), shape_str.end(), [](char c) { return std::isdigit(c); })) {
-        host_loc_map_[shape_str] = std::make_pair(i, j);
+      if ((!std::all_of(shape_str.begin(), shape_str.end(), [](char c) { return std::isdigit(c); })) &&
+          (host_loc_map.find(shape_str) == host_loc_map.end())) {
+        host_loc_map[shape_str] = std::make_pair(i, j);
       }
     }
   }
-  // get map <device_loc, host_loc>
+  // Get map <device_loc, host_loc>
   for (auto item : device_loc_map) {
-    device_host_shape_loc_[item.first] = host_loc_map_[item.second];
+    device_host_shape_loc_[item.first] = host_loc_map[item.second];
+  }
+  // Initialize mapping info as a vector. Only store dividend number for unknown mapping args
+  // Record map <unknown map ard id, host_loc>
+  init_mapping_.clear();
+  vector<string> map_arg_list = {kBlockIdxX, kBlockIdxY, kBlockIdxZ, kThreadIdxX, kThreadIdxY, kThreadIdxZ};
+  for (size_t i = 0; i < map_arg_list.size(); i++) {
+    auto map_arg = map_arg_list[i];
+    if (parsed_js_[map_arg].is_number()) {
+      (void)init_mapping_.emplace_back(parsed_js_[map_arg]);
+    } else if (parsed_js_[map_arg].is_array() && parsed_js_[map_arg].size() == 2 &&
+               parsed_js_[map_arg][0].is_string() && parsed_js_[map_arg][1].is_number()) {
+      string divisor_symbol = parsed_js_[map_arg][0];
+      auto dividend = parsed_js_[map_arg][1];
+      (void)init_mapping_.emplace_back(static_cast<uint32_t>(dividend));
+      unknown_map_loc_[i] = host_loc_map[divisor_symbol];
+    } else {
+      MS_EXCEPTION(RuntimeError) << "Mapping info format error.";
+      return;
+    }
   }
   json_shape_updated_ = true;
-}
-
-void DynamicAkgGpuKernelMod::InitMappingInfo() {
-  map_info_[kBlockIdxX] = -1;
-  map_info_[kBlockIdxY] = -1;
-  map_info_[kBlockIdxZ] = -1;
-  map_info_[kThreadIdxX] = -1;
-  map_info_[kThreadIdxY] = -1;
-  map_info_[kThreadIdxZ] = -1;
-  map_info_[kMappingUpdated] = 0;
+  MS_LOG(INFO) << "Done InitJsonShapeInformation for " << kernel_name_;
 }
 
 void DynamicAkgGpuKernelMod::UpdateShapeList(const vector<KernelTensorPtr> &inputs,
@@ -150,24 +158,37 @@ void DynamicAkgGpuKernelMod::UpdateShapeList(const vector<KernelTensorPtr> &inpu
     auto out_shape = outputs[i]->GetShapeVector();
     (void)shape_list_.emplace_back(out_shape);
   }
+  MS_LOG(INFO) << "Done UpdateShapeList for " << kernel_name_;
 }
 
-void DynamicAkgGpuKernelMod::GetDeviceArgSizeVec() {
+void DynamicAkgGpuKernelMod::GetDeviceArgSizeVec(const size_t inputs_num) {
   arg_size_vec_.clear();
   std::vector<std::vector<int64_t>> device_shape(device_shape_list_);
+  // Update each unknown value in device_shape_list to get real device shape
   for (auto item : device_host_shape_loc_) {
     auto device_loc = item.first;
     auto host_loc = item.second;
     device_shape[device_loc.first][device_loc.second] = shape_list_[host_loc.first][host_loc.second];
   }
-  tensor_num_ = device_shape.size();
 
-  for (size_t i = 0; i < tensor_num_; i++) {
+  for (size_t i = 0; i < device_shape.size(); i++) {
+    if (i < inputs_num) {
+      MS_LOG(DEBUG) << "For " << kernel_name_ << ", input[" << i << "]: host_shape = " << shape_list_[i]
+                    << ", device_shape = " << device_shape[i];
+    } else {
+      MS_LOG(DEBUG) << "For " << kernel_name_ << ", output[" << i - inputs_num << "]: host_shape = " << shape_list_[i]
+                    << ", device_shape = " << device_shape[i];
+    }
     arg_size_vec_.push_back(kRemove);  // useless in memref
     arg_size_vec_.push_back(kKeep);    // data ptr
     arg_size_vec_.push_back(0);        // offset
     auto device_tensor_shape = device_shape[i];
     for (auto item : device_tensor_shape) {
+      if (item <= 0) {
+        MS_EXCEPTION(RuntimeError) << "Shape still have negative value for kernel: " << kernel_name_
+                                   << "with host shape[" << i << "] = " << shape_list_[i] << ", device_tensor_shape["
+                                   << i << "] = " << device_tensor_shape;
+      }
       arg_size_vec_.push_back(item);
     }
     vector<int64_t> strides(device_tensor_shape.size(), 1);
@@ -178,58 +199,49 @@ void DynamicAkgGpuKernelMod::GetDeviceArgSizeVec() {
       arg_size_vec_.push_back(item);
     }
   }
+  MS_LOG(DEBUG) << "For " << kernel_name_ << ", arg_size_vec = " << arg_size_vec_;
+  MS_LOG(INFO) << "Done GetDeviceArgSizeVec for " << kernel_name_;
 }
 
-void DynamicAkgGpuKernelMod::UpdateMappingInfo() {
-  if (is_dynamic_) {
-    // compute map arg substituting symbol shape value
-    vector<string> map_arg_list = {kBlockIdxX, kBlockIdxY, kBlockIdxZ, kThreadIdxX, kThreadIdxY, kThreadIdxZ};
-    for (auto map_arg : map_arg_list) {
-      if (parsed_js_[map_arg].is_number()) {
-        map_info_[map_arg] = parsed_js_[map_arg];
-      } else if (parsed_js_[map_arg].is_array() && parsed_js_[map_arg].size() == 2 &&
-                 parsed_js_[map_arg][0].is_string() && parsed_js_[map_arg][1].is_number()) {
-        auto symbol_loc = host_loc_map_[parsed_js_[map_arg][0]];
-        auto symbol_value = shape_list_[symbol_loc.first][symbol_loc.second];
-        auto dim_size_float = static_cast<float>(symbol_value);
-        auto tile_size_float = static_cast<float>(parsed_js_[map_arg][1]);
-        map_info_[map_arg] = static_cast<int64_t>(std::ceil(dim_size_float / tile_size_float));
-      } else {
-        MS_LOG(ERROR) << "Mapping info format error.";
-        return;
-      }
+void DynamicAkgGpuKernelMod::UpdateDynamicShapeMappingInfo() {
+  thread_info_ = init_mapping_;
+  for (auto item : unknown_map_loc_) {
+    auto thread_info_id = item.first;
+    if (thread_info_id >= thread_info_.size()) {
+      MS_EXCEPTION(RuntimeError) << "Unknown thread arg index should not exceed thread_info length, "
+                                 << "which is 6 (Grid.X/Y/Z, Block.X/Y/Z).";
     }
-  } else {
-    map_info_[kBlockIdxX] = parsed_js_[kBlockIdxX];
-    map_info_[kBlockIdxY] = parsed_js_[kBlockIdxY];
-    map_info_[kBlockIdxZ] = parsed_js_[kBlockIdxZ];
-    map_info_[kThreadIdxX] = parsed_js_[kThreadIdxX];
-    map_info_[kThreadIdxY] = parsed_js_[kThreadIdxY];
-    map_info_[kThreadIdxZ] = parsed_js_[kThreadIdxZ];
+    auto host_loc = item.second;
+    auto dim_size = shape_list_[host_loc.first][host_loc.second];
+    auto tile_size = thread_info_[thread_info_id];
+    auto dim_size_float = static_cast<float>(dim_size);
+    auto tile_size_float = static_cast<float>(tile_size);
+    thread_info_[thread_info_id] = static_cast<uint32_t>(std::ceil(dim_size_float / tile_size_float));
   }
+
+  MS_LOG(DEBUG) << "For " << kernel_name_ << ",  thread_info = " << thread_info_;
+  MS_LOG(INFO) << "Done UpdateDynamicShapeMappingInfo for " << kernel_name_;
+}
+
+void DynamicAkgGpuKernelMod::UpdateStaticShapeMappingInfo() {
   thread_info_.clear();
-  thread_info_.emplace_back(map_info_[kBlockIdxX]);
-  thread_info_.emplace_back(map_info_[kBlockIdxY]);
-  thread_info_.emplace_back(map_info_[kBlockIdxZ]);
-  thread_info_.emplace_back(map_info_[kThreadIdxX]);
-  thread_info_.emplace_back(map_info_[kThreadIdxY]);
-  thread_info_.emplace_back(map_info_[kThreadIdxZ]);
-  map_info_[kMappingUpdated] = 1;
+  thread_info_.emplace_back(parsed_js_[kBlockIdxX]);
+  thread_info_.emplace_back(parsed_js_[kBlockIdxY]);
+  thread_info_.emplace_back(parsed_js_[kBlockIdxZ]);
+  thread_info_.emplace_back(parsed_js_[kThreadIdxX]);
+  thread_info_.emplace_back(parsed_js_[kThreadIdxY]);
+  thread_info_.emplace_back(parsed_js_[kThreadIdxZ]);
+  MS_LOG(INFO) << "Done UpdateStaticShapeMappingInfo for " << kernel_name_;
 }
 
 DynamicAkgGpuKernelMod::DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack) : kernel_pack_(kernel_pack) {
-  InitMappingInfo();
   if (kernel_pack != nullptr) {
     auto js = kernel_pack->GetJson();
     if (js != nullptr) {
       parsed_js_ = nlohmann::json::parse(js->contents, js->contents + js->len);
       kernel_name_ = parsed_js_["kernelName"];
-      if (is_dynamic_) {
-        InitJsonShapeInformation();
-      }
     }
   }
-  InitMappingInfo();
 }
 
 void DynamicAkgGpuKernelMod::CheckJsonParsed() {
@@ -250,14 +262,14 @@ int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const v
                                    const vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  CheckJsonParsed();
   if (!json_shape_updated_) {
-    CheckJsonParsed();
     InitJsonShapeInformation();
   }
   UpdateShapeList(inputs, outputs);
-  GetDeviceArgSizeVec();
-  UpdateMappingInfo();
-  MS_LOG(DEBUG) << "Done resize for DynamicAkgGpuKernelMod for " << kernel_name_;
+  GetDeviceArgSizeVec(inputs.size());
+  UpdateDynamicShapeMappingInfo();
+  MS_LOG(INFO) << "Done resize for DynamicAkgGpuKernelMod for " << kernel_name_;
   return ret;
 }
 
@@ -271,17 +283,20 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
     MS_LOG(ERROR) << "kernel pack should not be nullptr. Kernel name: " << kernel_name_;
     return false;
   }
+  MS_LOG(INFO) << "Start Launch for " << kernel_name_;
   CUresult result;
   if (kernel_addr_ == nullptr) {
     if (!is_dynamic_) {
       CheckJsonParsed();
-      UpdateMappingInfo();
+      UpdateStaticShapeMappingInfo();
     }
-    if (!map_info_[kMappingUpdated]) {
-      MS_LOG(ERROR) << "For " << kernel_name_ << ", gpu mapping config must be updated before launch";
+    if (thread_info_.size() != 6 ||
+        (std::any_of(thread_info_.begin(), thread_info_.end(), [](uint32_t t) { return t <= 0; }))) {
+      MS_LOG(ERROR) << "For " << kernel_name_ << ", gpu mapping config must be updated to 6 positive numbers before "
+                    << "launch, but got thread_info = " << thread_info_;
       return false;
     }
-    result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info_, &kernel_addr_, kernel_name_, map_info_);
+    result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info_, &kernel_addr_, kernel_name_);
     if (result != CUDA_SUCCESS) {
       const char *msg = nullptr;
       cuGetErrorName(result, &msg);
@@ -333,7 +348,7 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
     MS_LOG(ERROR) << "Launch kernel failed. Kernel name: " << kernel_name_ << ". cuLaunchKernel error message: " << msg;
     return false;
   }
-  MS_LOG(INFO) << kernel_name_ << ", End Launch.";
+  MS_LOG(INFO) << "End Launch for " << kernel_name_;
   return true;
 }
 }  // namespace kernel

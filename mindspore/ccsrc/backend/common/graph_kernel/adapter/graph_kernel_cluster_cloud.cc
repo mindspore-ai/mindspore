@@ -169,11 +169,8 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
 
 std::vector<PrimitivePtr> DynamicShapeCluster::GetClusterableOpList() {
   std::vector<PrimitivePtr> clusterable_ops_with_level = {
-    prim::kPrimAbs,       prim::kPrimAdd,       prim::kPrimCast,    prim::kPrimExp,     prim::kPrimLog,
-    prim::kPrimMaximum,   prim::kPrimMinimum,   prim::kPrimMul,     prim::kPrimNeg,     prim::kPrimPow,
-    prim::kPrimRealDiv,   prim::kPrimSqrt,      prim::kPrimSub,     prim::kPrimReshape, prim::kPrimReduceSum,
-    prim::kPrimReduceMin, prim::kPrimReduceMax, prim::kPrimBiasAdd, prim::kPrimMatMul,  prim::kPrimBatchMatMul,
-    prim::kPrimTranspose};
+    prim::kPrimAdd, prim::kPrimCast, prim::kPrimMul, prim::kPrimRealDiv, prim::kPrimSub, prim::kPrimAbs,
+  };
   return clusterable_ops_with_level;
 }
 
