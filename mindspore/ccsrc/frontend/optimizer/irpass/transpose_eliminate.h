@@ -22,7 +22,7 @@
 
 #include "frontend/optimizer/irpass.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/gen_ops_primitive.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

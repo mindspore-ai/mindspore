@@ -27,4 +27,3 @@ reciprocal:
         >>> output = ops.reciprocal(input)
         >>> print(output)
         [1.   0.5  0.25]
-        

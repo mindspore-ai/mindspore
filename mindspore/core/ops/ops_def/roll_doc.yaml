@@ -4,8 +4,8 @@ roll:
 
             Args:
                 input (Tensor): Input tensor.
-                shifts (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
-                    positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
+                shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
+                    positively (towards larger indices) along the specified dimension. Negative shift will roll the elements
                     in the opposite direction.
                 axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
 
@@ -13,7 +13,7 @@ roll:
                 Tensor, has the same shape and type as `input`.
 
             Raises:
-                TypeError: If `shifts` is not an int, a tuple or a list.
+                TypeError: If `shift` is not an int, a tuple or a list.
                 TypeError: If `axis` is not an int, a tuple or a list.
 
             Supported Platforms:
@@ -25,6 +25,6 @@ roll:
                 >>> import mindspore.ops as ops
                 >>> from mindspore import Tensor
                 >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-                >>> output = ops.roll(input_x, shifts=2, axis=0)
+                >>> output = ops.roll(input_x, shift=2, axis=0)
                 >>> print(output)
                 [3. 4. 0. 1. 2.]

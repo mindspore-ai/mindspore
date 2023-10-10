@@ -29,7 +29,7 @@
 #include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "ops/gen_ops_primitive.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"

@@ -21,6 +21,9 @@ ops_dtype_to_enum = inner.DtypeToEnum()
 
 
 def to_kernel_size(kernel_size):
+    """
+    convert kernel_size: int/tuple[int*4] -> tuple[int*2].
+    """
     if isinstance(kernel_size, int):
         return (kernel_size, kernel_size)
     if isinstance(kernel_size, (tuple, list)):
@@ -31,6 +34,9 @@ def to_kernel_size(kernel_size):
 
 
 def to_strides(stride):
+    """
+    convert strides: int/tuple[int*4] -> tuple[int*2].
+    """
     if isinstance(stride, int):
         return (stride, stride)
     if isinstance(stride, (tuple, list)):
@@ -41,6 +47,9 @@ def to_strides(stride):
 
 
 def to_rates(rates):
+    """
+    convert rates: int/tuple[int*4] -> tuple[int*2].
+    """
     if isinstance(rates, int):
         return (rates, rates)
     if isinstance(rates, (tuple, list)):
@@ -51,6 +60,9 @@ def to_rates(rates):
 
 
 def to_dilations(dilation):
+    """
+    convert dilations: int/tuple[int*4] -> tuple[int*2].
+    """
     if isinstance(dilation, int):
         return (dilation, dilation)
     if isinstance(dilation, (tuple, list)):
@@ -61,6 +73,9 @@ def to_dilations(dilation):
 
 
 def to_paddings(pad):
+    """
+    convert paddings: int -> tuple[int*4].
+    """
     if isinstance(pad, int):
         return (pad,) * 4
     if isinstance(pad, (tuple, list)):
@@ -69,6 +84,9 @@ def to_paddings(pad):
 
 
 def to_3d_kernel_size(kernel_size):
+    """
+    convert 3d kernel_size: int/tuple[int*6] -> tuple[int*3].
+    """
     if isinstance(kernel_size, int):
         return (kernel_size, kernel_size, kernel_size)
     if isinstance(kernel_size, (tuple, list)):
@@ -79,6 +97,9 @@ def to_3d_kernel_size(kernel_size):
 
 
 def to_3d_strides(stride):
+    """
+    convert 3d stride: int/tuple[int*6] -> tuple[int*3].
+    """
     if isinstance(stride, int):
         return (stride, stride, stride)
     if isinstance(stride, (tuple, list)):
@@ -89,6 +110,9 @@ def to_3d_strides(stride):
 
 
 def to_3d_dilations(dilation):
+    """
+    convert 3d dilation: int/tuple[int*6] -> tuple[int*3].
+    """
     if isinstance(dilation, int):
         return (dilation, dilation, dilation)
     if isinstance(dilation, (tuple, list)):
@@ -99,6 +123,9 @@ def to_3d_dilations(dilation):
 
 
 def to_3d_paddings(pad):
+    """
+    convert 3d paddings: int -> tuple[int*6].
+    """
     if isinstance(pad, int):
         return (pad,) * 6
     if isinstance(pad, (tuple, list)):
@@ -107,4 +134,7 @@ def to_3d_paddings(pad):
 
 
 def dtype_to_enum(dtype):
+    """
+    convert mindspore.dtype to enum.
+    """
     return ops_dtype_to_enum(dtype)

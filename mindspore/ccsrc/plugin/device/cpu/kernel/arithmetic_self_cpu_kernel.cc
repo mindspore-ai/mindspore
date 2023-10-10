@@ -34,7 +34,7 @@
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "ops/op_utils.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {

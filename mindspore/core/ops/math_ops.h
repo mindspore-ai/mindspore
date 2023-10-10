@@ -21,7 +21,7 @@
 #include "ir/anf.h"
 #include "ops/math_op_name.h"
 #include "ir/primitive.h"
-#include "ops/gen_ops_primitive.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace prim {

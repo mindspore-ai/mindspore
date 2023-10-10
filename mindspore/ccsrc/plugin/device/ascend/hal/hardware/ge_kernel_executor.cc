@@ -21,7 +21,7 @@
 #include "acl/acl_op_compiler.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
-#include "ops/gen_ops_primitive.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"

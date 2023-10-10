@@ -17,7 +17,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ops/ops_func_impl/roll.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/op_name.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"

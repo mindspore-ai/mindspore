@@ -16,6 +16,7 @@
 Generate operator definition from ops.yaml
 """
 import os
+import pathlib
 from gen_utils import py_licence_str, cc_license_str, \
     get_type_str, check_change_and_replace_file, merge_files, safe_load_yaml
 
@@ -205,7 +206,7 @@ def generate_py_op_func(yaml_data, doc_data):
 
         function_code = f"""\n
 def {func_name}({', '.join(arg for arg in func_args)}):
-    \"\"\"
+    r\"\"\"
     {description}
     \"\"\"
     {operator_name}_op = _get_cache_prim({class_name})({', '.join(arg_name for arg_name in init_args)})
@@ -293,11 +294,17 @@ class {class_name}(Primitive):\n"""
         if deprecated_code != "":
             primitive_code += deprecated_code
         primitive_code += f"""    @prim_arg_register
-    def __init__(self, {', '.join(init_args_with_default) if init_args_with_default else ''}):
+    def __init__(self,"""
+        if init_args_with_default:
+            primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
+        primitive_code += f"""):
 {init_code}
 
     def __call__(self, *args):
-        return super().__call__(*args, {', '.join([f'self.{arg}' for arg in init_args])})
+        return super().__call__(*args,"""
+        if init_args:
+            primitive_code += " " + f"""{', '.join([f'self.{arg}' for arg in init_args])}"""
+        primitive_code += """)
 """
 
         gen_py += primitive_code
@@ -342,7 +349,7 @@ def generate_op_prim_opdef(yaml_data):
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "mindapi/base/macros.h"
 
 namespace mindspore::prim {{
@@ -370,8 +377,9 @@ def generate_lite_ops(yaml_data):
 #ifndef MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 #define MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 
+#include <vector>
 #include "ops/base_operator.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore::ops {{
@@ -399,12 +407,8 @@ namespace mindspore::ops {{
                 dtype = "std::string"
             if dtype == "tuple[int]":
                 dtype = "std::vector<int64_t>"
-            lite_ops_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name}) {{
-    (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name}));
-  }}\n"""
-            lite_ops_gen += f"""  {dtype} get_{arg_name}() const {{
-    return GetValue<{dtype}>(GetAttr("{arg_name}"));
-  }}\n"""
+            lite_ops_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n"""
+            lite_ops_gen += f"""  {dtype} get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n"""
 
         lite_ops_gen += f"""}};\n\n"""
     lite_ops_gen += lite_ops_end
@@ -428,15 +432,16 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         class_name = get_op_name(operator_name, operator_data.get('class'))
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-                   f"""\nOpDef g{class_name} = {{
-    .name_ = "{class_name}",""" + \
-                   f"""\n    .args_ = {{"""
-        cc_index_str = f"""\n    .indexes_ = {{"""
-        gen_opdef_map += f"""\n    {{"{class_name}", &g{class_name}}},"""
+                   f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
+                   f"""\n  .args_ =
+    {{"""
+        cc_index_str = f"""\n  .indexes_ =
+    {{"""
+        gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
 
         for i, (arg_name, arg_info) in enumerate(args.items()):
             cc_index_str += f"""
-                {{"{arg_name}", {i}}},"""
+      {{"{arg_name}", {i}}},"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
@@ -451,29 +456,30 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                           (ct.strip() for ct in type_cast.split(",")))
 
             opdef_cc += f"""
-                {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{type_cast_str}}}}},"""
+      {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{type_cast_str}}}}},"""
         opdef_cc += f"""\n    }},"""
-        opdef_cc += f"""\n    .returns_ = {{"""
+        opdef_cc += f"""\n  .returns_ =
+    {{"""
 
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
             opdef_cc += f"""
-                {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}}},"""
+      {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}}},"""
         opdef_cc += f"""\n    }},"""
 
         cc_index_str += f"""\n    }},"""
         opdef_cc += cc_index_str
 
-        cc_func_impl_str = f"""\n    .func_impl_ = &g{class_name}FuncImpl,"""
+        cc_func_impl_str = f"""\n  .func_impl_ = &g{class_name}FuncImpl,"""
         opdef_cc += cc_func_impl_str
-        opdef_cc += f"""\n}};"""
+        opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
 
     gen_opdef_map += f"""\n}};"""
     gen_cc_code += gen_opdef_map
 
-    cc_opdef_end = f"""\n}}  // namespace mindspore::ops"""
+    cc_opdef_end = f"""\n}}  // namespace mindspore::ops\n"""
     return gen_include + gen_cc_code + cc_opdef_end
 
 
@@ -510,32 +516,32 @@ def generate_ops_cc_files(work_path, yaml_str):
     Generate ops c++ file from yaml.
     """
     # ops_def
-    op_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_def.cc')
-    tmp_op_cc_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_def.cc')
+    op_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_def.cc')
+    tmp_op_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_def.cc')
     cc_def_code = generate_cc_opdef(yaml_str)
     with open(tmp_op_cc_path, 'w') as cc_file:
         cc_file.write(cc_license_str + cc_def_code)
     check_change_and_replace_file(op_cc_path, tmp_op_cc_path)
 
     # ops_primitive
-    op_prim_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_primitive.h')
-    tmp_op_prim_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_primitive.h')
+    op_prim_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_primitive.h')
+    tmp_op_prim_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_primitive.h')
     op_prim_code = generate_op_prim_opdef(yaml_str)
     with open(tmp_op_prim_path, 'w') as op_prim_file:
         op_prim_file.write(cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
     # lite_ops
-    lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/gen_lite_ops.h')
-    tmp_lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_lite_ops.h')
+    lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
+    tmp_lite_ops_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
     lite_ops_code = generate_lite_ops(yaml_str)
     with open(tmp_lite_ops_path, 'w') as lite_ops_file:
         lite_ops_file.write(cc_license_str + lite_ops_code)
     check_change_and_replace_file(lite_ops_path, tmp_lite_ops_path)
 
     # ops_names
-    op_name_path = os.path.join(work_path, 'mindspore/core/ops/gen_ops_name.h')
-    tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_ops_name.h')
+    op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_name.h')
+    tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_name.h')
     op_name_code = generate_op_name_opdef(yaml_str)
     with open(tmp_op_name_path, 'w') as op_name_file:
         op_name_file.write(cc_license_str + op_name_code)
@@ -546,7 +552,8 @@ def generate_py_labels(yaml_data):
     """
     Generate python labels
     """
-    gen_label_py = f"""op_labels = {{"""
+    label_py_header = f"""\"\"\"Operator labels dict.\"\"\"\n\n"""
+    gen_label_py = label_py_header + f"""op_labels = {{"""
     for operator_name, operator_data in yaml_data.items():
         labels = operator_data.get('labels')
         if labels is not None:
@@ -554,7 +561,7 @@ def generate_py_labels(yaml_data):
             gen_label_py += f"""
     "{class_name}": {{"""
             gen_label_py += f""", """.join([f""""{key}": {value}""" for key, value in labels.items()])
-            gen_label_py += f"""}}, """
+            gen_label_py += f"""}},"""
     gen_label_py += f"""
 }}"""
     return gen_label_py
@@ -601,8 +608,11 @@ def generate_enum_code(yaml_data):
     gen_eum_cc_def = eum_cc_header
     for enum_name, enum_data in yaml_data.items():
         class_name = ''.join(word.capitalize() for word in enum_name.split('_'))
-        gen_eum_py_func += f"""
+        gen_eum_py_func += f"""\n
 def {enum_name}_to_enum({enum_name}_str):
+    \"""
+    convert {enum_name} string to enum.
+    \"""
     if not isinstance({enum_name}_str, str):
         raise TypeError(f"The {enum_name} should be string, but got {{{enum_name}_str}}")
     {enum_name}_str = {enum_name}_str.upper()\n"""
@@ -613,9 +623,9 @@ def {enum_name}_to_enum({enum_name}_str):
             gen_eum_py_func += f"""    if {enum_name}_str == "{enum_key}":
         return {enum_value}\n"""
             gen_eum_py_def += f"""    {enum_key} = {enum_value}\n"""
-            gen_eum_cc_def += f"""    {enum_key} = {enum_value},\n"""
+            gen_eum_cc_def += f"""  {enum_key} = {enum_value},\n"""
 
-        gen_eum_py_func += f"""    raise ValueError(f"Invalid {class_name}: {{{enum_name}_str}}")\n\n"""
+        gen_eum_py_func += f"""    raise ValueError(f"Invalid {class_name}: {{{enum_name}_str}}")\n"""
         gen_eum_cc_def += f"""}};\n\n"""
     gen_eum_cc_def += eum_cc_end
 
@@ -645,8 +655,8 @@ def generate_enum_files(work_path):
         cc_file.write(py_licence_str + py_enum_def)
     check_change_and_replace_file(enum_def_py_path, tmp_enum_def_py_path)
 
-    enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/gen_enum_def.h')
-    tmp_enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/tmp_gen_enum_def.h')
+    enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_enum_def.h')
+    tmp_enum_def_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_enum_def.h')
     with open(tmp_enum_def_cc_path, 'w') as cc_file:
         cc_file.write(cc_license_str + cc_enum_def)
     check_change_and_replace_file(enum_def_cc_path, tmp_enum_def_cc_path)
@@ -674,6 +684,9 @@ def main():
     generate_ops_py_files(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path), "gen")
     generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
                           "gen_inner")
+
+    cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/')
+    pathlib.Path(cc_path).mkdir(parents=True, exist_ok=True)
 
     all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
     # generate ops c++ files

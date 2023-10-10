@@ -23,7 +23,7 @@
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {

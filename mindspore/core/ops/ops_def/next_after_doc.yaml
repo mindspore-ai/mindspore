@@ -8,7 +8,7 @@ next_after:
             the next representable of :math:`b` towards :math:`a` is :math:`b-eps`.
         
             .. math::
-            
+
             out_{i} =  nextafter({input_{i}, other_{i}})
         
             Args:

@@ -16,7 +16,7 @@
 #include <memory>
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/ops_func_impl/transpose.h"
 #include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"

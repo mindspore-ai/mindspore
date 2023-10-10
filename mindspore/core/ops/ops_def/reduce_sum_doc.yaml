@@ -10,8 +10,8 @@ reduce_sum:
                 dimensions when skip_mode is ``False`` . Must be in the range [-rank(`x`), rank(`x`)).
             keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
                 If ``False`` , don't keep these dimensions. Default: ``False`` .
-            skip_mode (bool): If ``True`` and axis is empty tuple or empty list, the ReduceSum operation isn't 
-                performed, skip it. If ``True`` and axis is other values, the ReduceSum calculation is performed 
+            skip_mode (bool): If ``True`` and axis is empty tuple or empty list, the ReduceSum operation isn't
+                performed, skip it. If ``True`` and axis is other values, the ReduceSum calculation is performed
                 normally. If ``False``, do reduce. Default: ``False`` .
     
         Returns:

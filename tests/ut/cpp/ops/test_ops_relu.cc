@@ -17,7 +17,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ops/ops_func_impl/relu.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
 #include "ops/test_ops_dyn_cases.h"

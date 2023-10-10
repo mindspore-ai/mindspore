@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include "abstract/dshape.h"
-#include "ops/gen_enum_def.h"
+#include "ops/auto_generate/gen_enum_def.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"

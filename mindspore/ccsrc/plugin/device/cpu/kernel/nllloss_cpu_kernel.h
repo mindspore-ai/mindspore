@@ -23,7 +23,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/kernel/nllloss.h"
-#include "mindspore/core/ops/gen_enum_def.h"
+#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 
 namespace mindspore {
 namespace kernel {

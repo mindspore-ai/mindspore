@@ -15,8 +15,8 @@
  */
 
 #include "ops/test_value_utils.h"
-#include "ops/gen_ops_name.h"
-#include "ops/gen_enum_def.h"
+#include "ops/auto_generate/gen_ops_name.h"
+#include "ops/auto_generate/gen_enum_def.h"
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/fft_with_size.h"
 

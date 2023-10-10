@@ -33,7 +33,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/gen_ops_primitive.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 #include "proto/onnx.pb.h"
 #include "utils/check_convert_utils.h"
 #include "utils/hash_map.h"

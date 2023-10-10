@@ -18,7 +18,7 @@
 #include <memory>
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace kernel {

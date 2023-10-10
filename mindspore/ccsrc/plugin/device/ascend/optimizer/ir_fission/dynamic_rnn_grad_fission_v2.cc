@@ -23,7 +23,7 @@
 #include "ops/math_ops.h"
 #include "ops/lite_ops.h"
 #include "ops/array_ops.h"
-#include "ops/gen_ops_primitive.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

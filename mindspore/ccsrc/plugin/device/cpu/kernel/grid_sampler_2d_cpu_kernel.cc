@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/grid_sampler_2d_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/gen_enum_def.h"
+#include "mindspore/core/ops/auto_generate/gen_enum_def.h"
 
 namespace {
 const size_t kDataSizeThreshold = 64 * 1024;

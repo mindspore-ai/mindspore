@@ -17,7 +17,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "ops/ops_func_impl/reduce_sum.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ir/dtype/type.h"
 #include "abstract/dshape.h"
 #include "utils/tensor_construct_utils.h"

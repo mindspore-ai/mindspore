@@ -19,7 +19,7 @@
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32/reduce_fp32.h"
-#include "mindspore/core/ops/gen_ops_primitive.h"
+#include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore {
 namespace kernel {

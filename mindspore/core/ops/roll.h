@@ -21,7 +21,7 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
-#include "ops/gen_ops_name.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
