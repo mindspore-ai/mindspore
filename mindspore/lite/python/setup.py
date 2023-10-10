@@ -16,11 +16,13 @@
 # ============================================================================
 """setup package."""
 import os
+import sys
 import re
 
 from setuptools import setup, find_packages
 
-TOP_DIR = os.getenv('TOP_DIR').replace("\n", "")
+TOP_DIR = sys.argv[-1]
+sys.argv = sys.argv[: -1]
 
 
 def _read_file(filename):

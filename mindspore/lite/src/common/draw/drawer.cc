@@ -25,24 +25,20 @@
 #endif
 
 namespace mindspore::lite {
-constexpr char kDrawDIREnvKey[] = "DRAW_DIR";
+constexpr char kDefaultDrawDIR[] = "./graphs";
 #ifdef ENABLE_DRAW
 inline void Drawer::Reset() { count_ = 0; }
 
 void Drawer::Init() {
-  auto draw_dir = getenv(kDrawDIREnvKey);
-  enabled_ = draw_dir != nullptr;
-  if (enabled_) {
-    auto ret = CreateDir(draw_dir);
-    if (ret != RET_OK) {
-      MS_LOG(WARNING) << "Create draw directory failed, disable draw.";
-      enabled_ = false;
-    }
+  auto ret = CreateDir(kDefaultDrawDIR);
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "Create draw directory failed, disable draw.";
+    enabled_ = false;
   }
   if (enabled_) {
-    base_dir_ = RealPath(draw_dir);
+    base_dir_ = RealPath(kDefaultDrawDIR);
     if (base_dir_.empty()) {
-      MS_LOG(WARNING) << kDrawDIREnvKey << " is invalid: " << base_dir_ << ", disable draw.";
+      MS_LOG(WARNING) << kDefaultDrawDIR << " is invalid: " << base_dir_ << ", disable draw.";
       enabled_ = false;
     }
   }
