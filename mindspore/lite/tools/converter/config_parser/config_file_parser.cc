@@ -270,6 +270,20 @@ int ConfigFileParser::CheckVariableParm(const std::vector<int64_t> &variable_ind
   return RET_OK;
 }
 
+bool ConfigFileParser::CheckPluginCustomOps(const std::vector<std::string> &plugin_custom_ops) {
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() &&
+      plugin_custom_ops.size() != 1) {
+    MS_LOG(ERROR) << "plugin_custom_ops include All, can not include other param.";
+    return false;
+  }
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "None") != plugin_custom_ops.end() &&
+      plugin_custom_ops.size() != 1) {
+    MS_LOG(ERROR) << "plugin_custom_ops include None, can not include other param.";
+    return false;
+  }
+  return true;
+}
+
 STATUS ConfigFileParser::ParseCustomPattern(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             std::string custom_pattern_str) {
   std::vector<std::string> custom_pattern_strs = mindspore::lite::SplitStringToVector(custom_pattern_str, ";");
@@ -323,23 +337,23 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   set_option(kDumpModelNameKey, &param->aclModelOptionCfgParam.dump_model_name);
   set_option("provider", &param->provider);
 
-  if (!(ascend_string = FindInAscendMap(kPluginCustomOps, ascend_map)).empty()) {
-    if (ascend_string != "All" && ascend_string != "None") {
-      MS_LOG(ERROR) << kPluginCustomOps << " must be All or None.";
+  auto plugin_custom_ops_str = FindInAscendMap(kPluginCustomOps, ascend_map);
+  std::vector<std::string> plugin_custom_ops_vec = {};
+  if (!plugin_custom_ops_str.empty()) {
+    MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops_str;
+    plugin_custom_ops_vec = mindspore::lite::SplitStringToVector(plugin_custom_ops_str, ",");
+    if (!CheckPluginCustomOps(plugin_custom_ops_vec)) {
       return false;
     }
-    param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
+  }
+  if (!plugin_custom_ops_vec.empty()) {
+    param->ascendGeOptionCfg.plugin_custom_ops = plugin_custom_ops_vec;
   } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
-    param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
+    param->ascendGeOptionCfg.plugin_custom_ops = {"All"};
   }
   // parse for ascend custom fusion op
-  auto acl_plugin_custom_ops_string = FindInAscendMap(kPluginCustomOps, ascend_map);
-  if (!acl_plugin_custom_ops_string.empty()) {
-    if (ascend_string != "All" && ascend_string != "None") {
-      MS_LOG(ERROR) << kPluginCustomOps << " must be All or None.";
-      return false;
-    }
-    param->aclModelOptionCfgParam.plugin_custom_ops = acl_plugin_custom_ops_string;
+  if (!plugin_custom_ops_vec.empty()) {
+    param->aclModelOptionCfgParam.plugin_custom_ops = plugin_custom_ops_vec;
   }
   auto custom_fusion_pattern_str = FindInAscendMap("custom_fusion_pattern", ascend_map);
   if (!custom_fusion_pattern_str.empty()) {

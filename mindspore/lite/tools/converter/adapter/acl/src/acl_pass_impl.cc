@@ -96,6 +96,7 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -584,23 +585,24 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
   if (param_->provider != "ge") {
     // if provider is ge, it will fusion in anf_transform_for_ge.cc
     auto plugin_custom_ops = user_options_cfg_.plugin_custom_ops;
-    if (plugin_custom_ops != "All") {
-      MS_LOG(INFO) << plugin_custom_ops << " is not All";
-      return RET_OK;
-    }
-    auto soc_version = AclModelOptions::GetSocName();
-    MS_LOG(INFO) << "soc_version: " << soc_version;
-    MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
-    if (soc_version == "Ascend910B1" || soc_version == "Ascend910B2") {
-      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
-        MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
-        return lite::RET_ERROR;
-      }
-    } else {
-      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
-      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
-        MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
-        return lite::RET_ERROR;
+    MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using FlashAttention";
+      auto soc_version = AclModelOptions::GetSocName();
+      MS_LOG(INFO) << "soc_version: " << soc_version;
+      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
+      if (kSocVersionForAscendCFA.find(soc_version) != kSocVersionForAscendCFA.end()) {
+        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
+          MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
+          return lite::RET_ERROR;
+        }
+      } else {
+        MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
+        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
+          MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
+          return lite::RET_ERROR;
+        }
       }
     }
   }
