@@ -40,9 +40,12 @@ Status PadV3Info::GetAttrs() {
   }
 
   paddings_flag_ = Shape(inputs_shape_[0].size(), 0);
+
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    if (inputs_shape_[0][i] != outputs_shape_[0][i]) {
-      paddings_flag_[i] = 1;  // means this dimension can not be split
+    if ((inputs_shape_[0][i] != -1) && (outputs_shape_[0][i] != -1) && (inputs_shape_[0][i] != outputs_shape_[0][i])) {
+      paddings_flag_[i] = 1;  // means this dimension can not be split, now only for this dimension is static shape
+    } else {
+      paddings_flag_[i] = 0;
     }
   }
 
