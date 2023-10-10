@@ -315,6 +315,31 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
 }
+
+bool EnableView(const FrontendOpRunInfoPtr &op_run_info) {
+  if (op_run_info->base_op_run_info.device_target != kAscendDevice) {
+    return true;
+  }
+
+  if (op_run_info->op_grad_info->input_value.empty()) {
+    MS_LOG(EXCEPTION) << "input_value is empty.";
+  }
+
+  auto view_value = op_run_info->op_grad_info->input_value[0];
+  MS_EXCEPTION_IF_NULL(view_value);
+  auto tensor = view_value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  const auto &type_id = tensor->data_type();
+  if (type_id == kNumberTypeComplex128 || type_id == kNumberTypeFloat64) {
+    // AsStrided and ViewCopy is not support Complex128 and Float64, disable view
+    MS_LOG(DEBUG) << "Disable view, op:" << op_run_info->base_op_run_info.op_name
+                  << " device_target:" << op_run_info->base_op_run_info.device_target
+                  << " type:" << TypeIdToString(type_id);
+    return false;
+  }
+
+  return true;
+}
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
@@ -573,6 +598,9 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
 
 bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
                                     const ops::StridesCalcFunc &strides_calc_func, bool is_tuple_output) {
+  if (!EnableView(op_run_info)) {
+    return false;
+  }
   MS_LOG(DEBUG) << "Start, op:" << op_run_info->base_op_run_info.op_name;
   auto storage_infos = strides_calc_func(op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_value);
   if (storage_infos.empty()) {
