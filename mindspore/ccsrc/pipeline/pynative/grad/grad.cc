@@ -502,6 +502,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
   } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
     MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
+    SaveInputTensorGradInfo(input_args_info);
     MakeNewTopGraph(input_args_info);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
   } else if (input_args_info->is_high_order_top_cell) {
