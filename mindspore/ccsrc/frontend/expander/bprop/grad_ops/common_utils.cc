@@ -104,11 +104,11 @@ NodePtrList DynBinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodeP
     }
     if (!need_shapecalc[i] && !IsDynamicRank(ib->GetShape(reduce[i]))) {
       if (!reduce_axis[i].empty()) {
-        auto d_rank = dout_shape.size() - shape[i].size();
-        reduce[i] = ib->ReduceSum(reduce[i], ib->Value<ShapeVector>(reduce_axis[i]), d_rank == 0, true);
-        if (reduce_axis[i].size() > d_rank) {
-          reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
-        }
+        reduce[i] = ib->ReduceSum(reduce[i], ib->Value<ShapeVector>(reduce_axis[i]),
+                                  ib->GetRank(reduce[i]) == shape[i].size(), true);
+      }
+      if (ib->GetRank(reduce[i]) != shape[i].size()) {
+        reduce[i] = ib->Reshape(reduce[i], ib->Shape(inputs[i]));
       }
     } else {
       reduce[i] = ib->ReduceSum(reduce[i], broadcast_axes[i], false, true);
@@ -203,10 +203,7 @@ std::vector<std::vector<int64_t>> BroadcastGradientArgs(const std::vector<int64_
     auto y_i = y_size < i ? 1 : y_shape[y_size - i];
     const int64_t reduce_idx = SizeToLong(n - i);
     if (x_i == y_i) {
-      if (x_i == 1) {
-        grad_x_reduce_idx.push_back(reduce_idx);
-        grad_y_reduce_idy.push_back(reduce_idx);
-      }
+      continue;
     } else if (x_i == 1) {
       grad_x_reduce_idx.push_back(reduce_idx);
     } else if (y_i == 1) {
@@ -332,9 +329,9 @@ NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr 
     for (size_t i = 0; i < kDim2; i++) {
       if (!bc_axis[i].empty()) {
         reduce[i] = ib->ReduceSum(reduce[i], bc_axis[i], ib->GetRank(reduce[i]) == shape[i].size());
-        if (ib->GetRank(reduce[i]) != shape[i].size()) {
-          reduce[i] = ib->Reshape(reduce[i], shape[i]);
-        }
+      }
+      if (ib->GetRank(reduce[i]) != shape[i].size()) {
+        reduce[i] = ib->Reshape(reduce[i], shape[i]);
       }
     }
   } else {
