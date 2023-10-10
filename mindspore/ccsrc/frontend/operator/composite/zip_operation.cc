@@ -35,10 +35,42 @@ namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
 using mindspore::abstract::AbstractBase;
+using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractSequence;
 using mindspore::abstract::AbstractSequencePtr;
 using mindspore::abstract::AbstractTuple;
+
+void CheckValidityOfZipInput(const AbstractBasePtrList &args_abs_list) {
+  const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+  for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
+    auto abs = args_abs_list[idx];
+    if (!abs->isa<AbstractSequence>()) {
+      std::string error_index;
+      if (idx == 0) {
+        error_index = "first";
+      } else if (idx == 1) {
+        error_index = "second";
+      } else if (idx == 2) {
+        error_index = "third";
+      } else {
+        error_index = std::to_string(idx) + "th";
+      }
+      if (allow_fallback_runtime) {
+        MS_EXCEPTION(TypeError) << "For 'zip', the all inputs must be iterable objects. For example:"
+                                << "list, tuple, dict, string or multi dimensional Tensor, but the " << error_index
+                                << " argument is:" << args_abs_list[idx]->ToString() << ".";
+      } else {
+        MS_EXCEPTION(TypeError) << "In JIT strict mode, for 'zip', the all inputs must be list or tuple, but the "
+                                << error_index << " argument is:" << args_abs_list[idx]->ToString() << ".";
+      }
+    }
+    if (abs->cast<AbstractSequencePtr>()->dynamic_len()) {
+      MS_LOG(EXCEPTION) << "For 'zip', the dynamic length input is unsupported in graph mode.";
+    }
+  }
+}
 
 FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   // zip operation:
@@ -63,11 +95,29 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
   bool has_any = std::any_of(args_abs_list.begin(), args_abs_list.end(),
                              [](const AbstractBasePtr &abs) { return fallback::ContainsSequenceAnyType(abs); });
-  if (allow_fallback_runtime && (has_any || has_tensor)) {
+  bool has_scalar_string = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &abs) {
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<AbstractScalar>()) {
+      auto type = abs->BuildType();
+      MS_EXCEPTION_IF_NULL(type);
+      if (type->type_id() == kObjectTypeString) {
+        return true;
+      }
+    }
+    return false;
+  });
+  bool has_dict = std::any_of(args_abs_list.begin(), args_abs_list.end(),
+                              [](const AbstractBasePtr &abs) { return abs->isa<AbstractDictionary>(); });
+  if (allow_fallback_runtime && (has_any || has_tensor || has_scalar_string || has_dict)) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
-      (void)make_tuple_inputs.emplace_back(ret_graph->add_parameter());
+      if (args_abs_list[idx]->isa<AbstractDictionary>()) {
+        auto key_node = ret_graph->NewCNodeInOrder({NewValueNode(prim::kPrimDictGetKeys), ret_graph->add_parameter()});
+        (void)make_tuple_inputs.emplace_back(key_node);
+      } else {
+        (void)make_tuple_inputs.emplace_back(ret_graph->add_parameter());
+      }
     }
     auto make_tuple = ret_graph->NewCNode(make_tuple_inputs);
     auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(make_tuple, "zip");
@@ -85,26 +135,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_abs
     return ret_graph;
   }
 
-  for (size_t idx = 0; idx < args_abs_list.size(); idx++) {
-    auto abs = args_abs_list[idx];
-    if (!abs->isa<AbstractSequence>()) {
-      std::string error_index;
-      if (idx == 0) {
-        error_index = "first";
-      } else if (idx == 1) {
-        error_index = "second";
-      } else if (idx == 2) {
-        error_index = "third";
-      } else {
-        error_index = std::to_string(idx) + "th";
-      }
-      MS_LOG(EXCEPTION) << "For 'zip', the all inputs must be list, tuple or multi dimensional Tensor, but the "
-                        << error_index << " argument is:" << args_abs_list[idx]->ToString() << ".";
-    }
-    if (abs->cast<AbstractSequencePtr>()->dynamic_len()) {
-      MS_LOG(EXCEPTION) << "For 'zip', the dynamic length input is unsupported in graph mode";
-    }
-  }
+  CheckValidityOfZipInput(args_abs_list);
 
   auto min_abs = std::min_element(
     args_abs_list.begin(), args_abs_list.end(), [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
