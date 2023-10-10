@@ -57,6 +57,5 @@ bool MaskedSelectAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs,
   outputs_[0]->SetShapeVector(transform::UpdateOutputShape(tensor_param.get<2>()));
   return true;
 }
-MS_ACLLNN_KERNEL_FACTORY_REG(MaskedSelect, MaskedSelectAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
