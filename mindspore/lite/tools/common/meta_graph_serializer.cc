@@ -105,6 +105,7 @@ bool MetaGraphSerializer::Init(const schema::MetaGraphT &graph, bool save_togeth
   }
   if (memset_s(head_data, kExternalDataHeadSize, 0, kExternalDataHeadSize) != 0) {
     MS_LOG(ERROR) << "memset_s in MetaGraphSerializer init failed.";
+    free(head_data);
     return false;
   }
   // magic number of weight_s file: 0x12345678

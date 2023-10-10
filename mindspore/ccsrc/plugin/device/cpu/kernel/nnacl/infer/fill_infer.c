@@ -32,6 +32,9 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
 
   const TensorC *dst_shape_tensor = inputs[1];
+  if (dst_shape_tensor->data_type_ != kNumberTypeInt && dst_shape_tensor->data_type_ != kNumberTypeInt32) {
+    return NNACL_ERR;
+  }
   const int32_t *dst_shape = (int32_t *)(dst_shape_tensor->data_);
   int num_dims = 1;
   if (dst_shape_tensor->shape_size_ != DIMENSION_1D) {
