@@ -828,6 +828,8 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(device_tensor);
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   if (device_tensor->GetPtr() != nullptr) {
+    // Copy other device memories to host.
+    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
     return;
   }
   MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString();
