@@ -42,7 +42,7 @@ abstract::ShapePtr SeLUInferShape(const PrimitivePtr &primitive, const std::vect
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kIndex0, kObjectTypeTensorType);
   auto x = input_args[0]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
@@ -59,7 +59,7 @@ TypePtr SeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   auto x_type = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
-  return x_type;
+  return x_type->Clone();
 }
 }  // namespace
 

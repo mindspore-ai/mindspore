@@ -83,11 +83,11 @@ class SequenceZerosLikeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(primitive, input_args)->GetShape();
+    return input_args[kIndex0]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceZerosLikeInferInner(prim, input_args)->GetType();
+    return input_args[kIndex0]->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

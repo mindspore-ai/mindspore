@@ -37,7 +37,7 @@ TypePtr RenormInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_dtype = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, name);
-  return x_dtype;
+  return x_dtype->Clone();
 }
 
 abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {

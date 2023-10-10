@@ -78,8 +78,8 @@ abstract::ShapePtr SearchSortedInferShape(const PrimitivePtr &primitive,
                              << "', the shape of input sequence_shape contains 0, is not permitted. "
                              << "The shape is: " << sequence_shape;
   }
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
   MS_EXCEPTION_IF_NULL(values_shape_ptr);
   auto shape_element = values_shape_ptr->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);

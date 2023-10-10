@@ -35,10 +35,52 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+BaseShapePtr SequenceMulInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto queue_shape = input_args[kIndex0]->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  abstract::BaseShapePtrList shape_elements = queue_shape->shape();
+  abstract::BaseShapePtrList output_shape_list;
+  auto scalar_value = GetScalarValue<int64_t>(input_args[kIndex1]->GetValue()).value();
+  for (int i = 0; i < scalar_value; i++) {
+    output_shape_list.insert(output_shape_list.end(), shape_elements.begin(), shape_elements.end());
+  }
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex0])) {
+    return std::make_shared<abstract::TupleShape>(output_shape_list);
+  } else {
+    return std::make_shared<abstract::ListShape>(output_shape_list);
+  }
+}
+
+TypePtr SequenceMulInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  TypePtrList type_elements;
+  bool isTuple = CheckAndConvertUtils::IsTuple(input_args[kIndex0]);
+
+  if (isTuple) {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    type_elements = queue_type->elements();
+  } else {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    type_elements = queue_type->elements();
+  }
+  TypePtrList output_type_list;
+  auto scalar_value = GetScalarValue<int64_t>(input_args[kIndex1]->GetValue()).value();
+  for (int i = 0; i < scalar_value; i++) {
+    output_type_list.insert(output_type_list.end(), type_elements.begin(), type_elements.end());
+  }
+  if (isTuple) {
+    return std::make_shared<Tuple>(output_type_list);
+  } else {
+    return std::make_shared<List>(output_type_list);
+  }
+}
+
 AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -89,11 +131,11 @@ class SequenceMulInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMulInferInner(primitive, input_args)->GetShape();
+    return SequenceMulInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMulInferInner(prim, input_args)->GetType();
+    return SequenceMulInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

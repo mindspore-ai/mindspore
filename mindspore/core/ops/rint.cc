@@ -64,7 +64,7 @@ TypePtr RintInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   auto infer_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
-  return infer_type;
+  return infer_type->Clone();
 }
 }  // namespace
 

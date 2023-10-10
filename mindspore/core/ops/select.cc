@@ -84,7 +84,7 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->GetShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->GetShape())[kShape];
   if (IsDynamicRank(cond_shape) || IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
   auto cond_shape_size = cond_shape.size();
   auto x_shape_size = x_shape.size();
@@ -95,7 +95,7 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &, const std::vector<
       << cond_shape << ", 'x' shape: " << x_shape << ", 'y' shape: " << y_shape << ".";
   }
   SelectInferShapeCheck(x_shape, y_shape, cond_shape, x_shape_size);
-  return input_args[kSelectCondIndex]->GetShape();
+  return input_args[kSelectCondIndex]->GetShape()->Clone();
 }
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -119,7 +119,7 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
                             << "', the x_type and y_type must be the same, but got x_type: " << x_type->ToString()
                             << " and y_type: " << y_type->ToString() << ".";
   }
-  return x_type;
+  return x_type->Clone();
 }
 
 AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

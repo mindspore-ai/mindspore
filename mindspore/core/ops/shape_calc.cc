@@ -50,28 +50,23 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(input_args[i]);
       auto value_ptr = input_args[i]->GetValue();
       MS_EXCEPTION_IF_NULL(value_ptr);
-      if (input_args[i]->isa<abstract::AbstractSequence>() || input_args[i]->isa<abstract::AbstractScalar>()) {
+      if (CheckAndConvertUtils::IsSequence(input_args[i]) || CheckAndConvertUtils::IsScalar(input_args[i])) {
         if (IsValueKnown(value_ptr)) {
           args[i] = CheckAndConvertUtils::CheckIntOrTupleInt(std::to_string(i), value_ptr, prim_name);
         } else {
           (void)unknown_inputs.insert(i);
         }
-      } else if (input_args[i]->isa<abstract::AbstractTensor>()) {
+      } else if (CheckAndConvertUtils::IsTensor(input_args[i])) {
         if (std::find(value_depend.begin(), value_depend.end(), SizeToLong(i)) != value_depend.end()) {
           // value tensor
-          if (value_ptr->isa<tensor::Tensor>()) {
+          if (IsValueKnown(value_ptr)) {
             args[i] = CheckAndConvertUtils::CheckTensorIntValue(std::to_string(i), value_ptr, prim_name);
           } else {
             (void)unknown_inputs.insert(i);
           }
           continue;
         }
-        // shape tensor
-        auto input = input_args[i]->cast<abstract::AbstractTensorPtr>();
-        MS_EXCEPTION_IF_NULL(input);
-        auto shape_ptr = input->shape();
-        MS_EXCEPTION_IF_NULL(shape_ptr);
-        const auto &shape = shape_ptr->shape();
+        const auto &shape = input_args[i]->GetShape()->GetShapeVector();
         // input is a tensor that saves the shape, and tensor itself should be 0D or 1D
         MS_EXCEPTION_IF_CHECK_FAIL(shape.size() <= 1, "Input tensor's rank must be <= 1");
         if (!shape.empty()) {

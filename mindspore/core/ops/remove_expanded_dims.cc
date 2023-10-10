@@ -134,10 +134,10 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
     AbstractBasePtrList abs_list{scalar_abs_tensor, abs_tensor, scalar_abs_tensor};
     return std::make_shared<abstract::AbstractTuple>(abs_list);
   }
-  auto tensor_ptr = has_false_abs->GetValue()->cast<mindspore::tensor::TensorPtr>();
-  bool has_false = *reinterpret_cast<int64_t *>(tensor_ptr->data_c()) > 0;
-  auto idx_advanced = GetValue<int64_t>(idx_advanced_abs->GetValue());
-  ShapeVector broadcast_shape = GetValue<std::vector<int64_t>>(broadcast_shape_abs->GetValue());
+  auto has_false_value = GetArrayValue<int64_t>(has_false_abs->GetValue()).value().ToVector();
+  bool has_false = has_false_value.front() > 0;
+  auto idx_advanced = GetScalarValue<int64_t>(idx_advanced_abs->GetValue()).value();
+  ShapeVector broadcast_shape = GetArrayValue<int64_t>(broadcast_shape_abs->GetValue()).value().ToVector();
   auto has_true = GetValue<bool>(primitive->GetAttr(kAttrHasTrue));
   auto has_sequence = GetValue<bool>(primitive->GetAttr(kAttrHasSequence));
   auto new_tuple_index_types = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrTupleIndexTypes));

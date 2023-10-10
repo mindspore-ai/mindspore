@@ -58,7 +58,7 @@ class ScalarBoolInfer : public abstract::OpInferBase {
     const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem = input_args[0];
-    if (!elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got : " << elem->ToString();
     }
     return abstract::kNoShape;

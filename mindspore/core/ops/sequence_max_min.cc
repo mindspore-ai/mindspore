@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
 template <typename T, typename G>
 AbstractBasePtr FindMaxOrMin(const AbstractBasePtrList &seq_elements, const bool is_max) {
   std::vector<T> values;
@@ -76,16 +77,35 @@ AbstractBasePtr SequenceMaxMinInferInner(const PrimitivePtr &primitive, const st
   }
 }
 
+BaseShapePtr SequenceMaxMinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto queue_shape = input_args[kIndex0]->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  return queue_shape->shape()[kIndex0]->Clone();
+}
+
+TypePtr SequenceMaxMinInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (CheckAndConvertUtils::IsTuple(input_args[kIndex0])) {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  } else {
+    auto queue_type = input_args[kIndex0]->GetType()->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(queue_type);
+    return queue_type->elements()[kIndex0]->Clone();
+  }
+}
+}  // namespace
+
 MIND_API_OPERATOR_IMPL(SequenceMax, BaseOperator);
 class SequenceMaxInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args)->GetShape();
+    return SequenceMaxMinInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args)->GetType();
+    return SequenceMaxMinInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
@@ -99,11 +119,11 @@ class SequenceMinInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(primitive, input_args, false)->GetShape();
+    return SequenceMaxMinInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceMaxMinInferInner(prim, input_args, false)->GetType();
+    return SequenceMaxMinInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

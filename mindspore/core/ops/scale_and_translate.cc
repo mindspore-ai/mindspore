@@ -43,6 +43,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -58,14 +59,14 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   // support dynamic rank
   if (IsDynamicRank(images_shape) || IsDynamicRank(size_shape) || IsDynamicRank(scale_shape) ||
       IsDynamicRank(translation_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
   }
   // support dynamic shape
   if (IsDynamicShape(images_shape) || IsDynamicShape(size_shape) || IsDynamicShape(scale_shape) ||
       IsDynamicShape(translation_shape)) {
-    return std::make_shared<abstract::Shape>(
-      ShapeVector({abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
-                   abstract::Shape::kShapeDimAny}));
+    return std::make_shared<abstract::TensorShape>(
+      ShapeVector({abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny,
+                   abstract::TensorShape::kShapeDimAny, abstract::TensorShape::kShapeDimAny}));
   }
 
   const int64_t kShapeSize = 1;
@@ -91,27 +92,19 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   // check scale greater than zero
-  auto scale_v = input_args[kInputIndex2]->GetValue();
+  auto scale_abs = input_args[kInputIndex2];
+  auto scale_v = scale_abs->GetValue();
   MS_EXCEPTION_IF_NULL(scale_v);
   if (!scale_v->isa<ValueAny>() && !scale_v->isa<None>()) {
     if (scale_v == nullptr) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
                                << " value is nullptr.";
     }
-    std::vector<float> scale_value;
-    if (!scale_v->isa<tensor::Tensor>()) {
+    if (!CheckAndConvertUtils::IsTensor(scale_abs)) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
                                << " must be a tensor, but got " << scale_v->ToString();
     }
-    auto scale_tensor = scale_v->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(scale_tensor);
-    size_t data_size = scale_tensor->DataSize();
-    auto data_c = static_cast<float *>(scale_tensor->data_c());
-    MS_EXCEPTION_IF_NULL(data_c);
-    for (size_t i = 0; i < data_size; i++) {
-      scale_value.push_back(static_cast<float>(*data_c));
-      ++data_c;
-    }
+    std::vector<float> scale_value = GetArrayValue<float>(scale_v).value().ToVector();
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("scale", scale_value, prim_name);
   }
   //  infer resized_images's shape
@@ -127,14 +120,14 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
     (void)out_shape.emplace_back(size_value[kInputIndex0]);
     (void)out_shape.emplace_back(size_value[kInputIndex1]);
     (void)out_shape.emplace_back(images_shape[kInputIndex3]);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TensorShape>(out_shape);
   } else {
     std::vector<int64_t> out_shape;
     (void)out_shape.emplace_back(images_shape[kInputIndex0]);
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(-1);
     (void)out_shape.emplace_back(images_shape[kInputIndex3]);
-    return std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TensorShape>(out_shape);
   }
 }
 

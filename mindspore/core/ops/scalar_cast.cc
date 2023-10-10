@@ -62,12 +62,13 @@ T GetTensorValue(const std::string &op_name, const tensor::TensorPtr &elem) {
 }
 
 void CheckInputValid(const AbstractBasePtr &elem_x, const std::string &op_name) {
-  if (!elem_x->isa<abstract::AbstractScalar>() && !elem_x->isa<abstract::AbstractTensor>()) {
+  const auto elem_x_objtype = elem_x->GetType()->object_type();
+  if (elem_x_objtype != kObjectTypeNumber && elem_x_objtype != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For '" << op_name
                             << "', the input should be scalar or tensor but got x: " << elem_x->ToString();
   }
 
-  if (elem_x->isa<abstract::AbstractTensor>()) {
+  if (elem_x_objtype == kObjectTypeTensorType) {
     std::vector<AbstractBasePtr> input_args;
     input_args.push_back(elem_x);
     auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(op_name, input_args, 0);
@@ -110,13 +111,19 @@ class ScalarCastInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
                                              op_name);
     auto elem_x = input_args[0];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_x->isa<abstract::AbstractTensor>()) {
+    const auto elem_x_objtype = elem_x->GetType()->object_type();
+    if (elem_x_objtype != kObjectTypeNumber && elem_x_objtype != kObjectTypeTensorType) {
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', the input should be scalar or tensor but got x: " << elem_x->ToString();
     }
     auto attr = primitive->GetAttr("dtype");
     if (attr == nullptr) {
-      auto type_abs = abstract::CheckArg<abstract::AbstractType>(op_name, input_args, 1);
+      auto type_abs = input_args[kIndex1];
+      if (type_abs->GetType()->type_id() != kMetaTypeTypeType) {
+        MS_EXCEPTION(TypeError) << "For primitive[" << op_name << "], the input[" << kIndex1 << "] should be a "
+                                << TypeIdToType(kMetaTypeTypeType)->ToString() << ", but got "
+                                << type_abs->GetType()->ToString() << ".";
+      }
       attr = type_abs->GetValue();
       MS_EXCEPTION_IF_NULL(attr);
     }

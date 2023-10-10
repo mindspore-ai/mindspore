@@ -51,6 +51,45 @@ AbstractBasePtr CheckAndGetElementType(const abstract::AbstractSequencePtr input
   return elements[0];
 }
 
+template <typename T>
+std::shared_ptr<T> GetOutputType(const AbstractBasePtr &input_1, const AbstractBasePtr &input_2) {
+  auto input_1_type = input_1->GetShape()->cast<std::shared_ptr<T>>();
+  auto input_2_type = input_2->GetShape()->cast<std::shared_ptr<T>>();
+  MS_EXCEPTION_IF_NULL(input_1_type);
+  MS_EXCEPTION_IF_NULL(input_2_type);
+  auto input_1_type_elemnts = input_1_type->elements();
+  auto input_2_type_elemnts = input_2_type->elements();
+  input_1_type_elemnts.insert(input_1_type_elemnts.end(), input_2_type_elemnts.begin(), input_2_type_elemnts.end());
+  return std::make_shared<T>(input_1_type_elemnts);
+}
+
+BaseShapePtr SequenceAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  const auto &input0 = input_args[kIndex0];
+  const auto &input1 = input_args[kIndex1];
+  auto input0_shape = input0->GetShape()->cast<abstract::SequenceShapePtr>();
+  auto input1_shape = input1->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(input0_shape);
+  MS_EXCEPTION_IF_NULL(input1_shape);
+  auto input0_shape_elemnts = input0_shape->shape();
+  auto input1_shape_elemnts = input1_shape->shape();
+  input0_shape_elemnts.insert(input0_shape_elemnts.end(), input1_shape_elemnts.begin(), input1_shape_elemnts.end());
+  if (CheckAndConvertUtils::IsTuple(input0)) {
+    return std::make_shared<abstract::TupleShape>(input0_shape_elemnts);
+  } else {
+    return std::make_shared<abstract::ListShape>(input0_shape_elemnts);
+  }
+}
+
+TypePtr SequenceAddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  const auto &input_1 = input_args[kIndex0];
+  const auto &input_2 = input_args[kIndex1];
+  if (CheckAndConvertUtils::IsTuple(input_1)) {
+    return GetOutputType<Tuple>(input_1, input_2);
+  } else {
+    return GetOutputType<List>(input_1, input_2);
+  }
+}
+
 AbstractBasePtr SequenceAddInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -121,11 +160,11 @@ class SequenceAddInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceAddInferInner(primitive, input_args)->GetShape();
+    return SequenceAddInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceAddInferInner(prim, input_args)->GetType();
+    return SequenceAddInferType(prim, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

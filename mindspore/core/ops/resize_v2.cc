@@ -73,10 +73,11 @@ abstract::ShapePtr ResizeV2InferShape(const PrimitivePtr &primitive, const std::
                                << "shape[0] and shape[1] of x.";
     }
     std::vector<int64_t> output_shape{x_shape[0], x_shape[1], sizes[2], sizes[3]};
-    return std::make_shared<abstract::Shape>(output_shape);
+    return std::make_shared<abstract::TensorShape>(output_shape);
   } else {
-    ShapeVector output_shape{x_shape[0], x_shape[1], abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
-    return std::make_shared<abstract::Shape>(output_shape);
+    ShapeVector output_shape{x_shape[0], x_shape[1], abstract::TensorShape::kShapeDimAny,
+                             abstract::TensorShape::kShapeDimAny};
+    return std::make_shared<abstract::TensorShape>(output_shape);
   }
 }
 
@@ -102,7 +103,7 @@ TypePtr ResizeV2InferType(const PrimitivePtr &primitive, const std::vector<Abstr
   } else {
     (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, x_linear_cubic_valid_types, primitive->name());
   }
-  return x_type;
+  return x_type->Clone();
 }
 }  // namespace
 

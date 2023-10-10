@@ -64,7 +64,7 @@ abstract::BaseShapePtr SgdInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the [momentum] should be a scalar. but got shape ["
                              << momentum_shape << "]";
   }
-  return parameters_shape_r;
+  return parameters_shape_r->Clone();
 }
 
 TypePtr SdgInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -83,7 +83,7 @@ TypePtr SdgInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
                                                    {kFloat32, kFloat16}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("accum", input_args[kAccumIndex]->GetType(), {kFloat32, kFloat16},
                                                    prim_name);
-  return input_args[kParametersIndex]->GetType();
+  return input_args[kParametersIndex]->GetType()->Clone();
 }
 }  // namespace sgd
 

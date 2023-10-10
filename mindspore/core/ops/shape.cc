@@ -76,11 +76,13 @@ class ShapeInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferInner(primitive, input_args)->GetShape();
+    auto shape = input_args[kIndex0]->GetShape()->GetShapeVector();
+    return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList(shape.size(), abstract::kNoShape));
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferInner(prim, input_args)->GetType();
+    auto shape = input_args[kIndex0]->GetShape()->GetShapeVector();
+    return std::make_shared<Tuple>(TypePtrList(shape.size(), kInt64));
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

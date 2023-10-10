@@ -71,7 +71,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
     const int64_t input_len = 1;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem = input_args[0];
-    if (!elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem->ToString();
     }
     return abstract::kNoShape;
@@ -86,7 +86,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
     if (prim_name == mindspore::kScalarLogOpName) {
       return kFloat32;
     }
-    return x_type;
+    return x_type->Clone();
   }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
@@ -98,7 +98,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
     auto elem = input_args[0];
-    if (!elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem->ToString();
     }
 

@@ -52,19 +52,23 @@ int64_t SequenceStack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis
 
 void SequenceStack::Init(const int64_t axis) { this->set_axis(axis); }
 namespace {
-abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr SequenceStackInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
-  if (queue->dynamic_len()) {
-    auto element_abs = queue->dynamic_len_element_abs();
-    MS_EXCEPTION_IF_NULL(element_abs);
-    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->GetShape())[kShape];
-    return std::make_shared<abstract::Shape>(ret_shape);
+  auto queue = input_args[kIndex0];
+  if (!CheckAndConvertUtils::IsSequence(queue)) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", input[0] must be sequence, but got " << queue->ToString();
+  }
+
+  if (CheckAndConvertUtils::IsDynamicSequence(queue)) {
+    auto queue_shape = queue->GetShape()->cast<abstract::DynamicSequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(queue_shape);
+    return queue_shape->element_shape()->Clone();
   }
   const int64_t kOneNum = 1;
-  auto elements = queue->elements();
+  auto queue_shape = queue->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  auto elements = queue_shape->shape();
   if (input_args.size() < 1) {
     MS_LOG(ERROR) << "Invalid input size " << input_args.size();
   }
@@ -82,8 +86,7 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
   ShapeVector input_shape;
   size_t element_rank = 0;
   for (size_t i = 0; i < elements.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(elements[i]);
-    auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
+    auto input_shape_tmp = elements[i]->GetShapeVector();
     if (IsDynamicRank(input_shape_tmp)) {
       continue;
     }
@@ -98,7 +101,8 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "All input shape size must be the same!";
     }
     for (size_t j = 0; j < input_shape.size(); ++j) {
-      if (input_shape.at(j) == kUnDim && input_shape_tmp.at(j) != kUnDim) {
+      if (input_shape.at(j) == abstract::TensorShape::kShapeDimAny &&
+          input_shape_tmp.at(j) != abstract::TensorShape::kShapeDimAny) {
         input_shape[j] = input_shape_tmp.at(j);
         continue;
       }
@@ -109,7 +113,7 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
   }
 
   if (!has_rank_valid_shape) {
-    return std::make_shared<abstract::Shape>(ShapeVector{kUnRank});
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
   std::vector<int64_t> infer_shape = input_shape;
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
@@ -118,42 +122,46 @@ abstract::ShapePtr SequenceStackInferShape(const PrimitivePtr &primitive,
                                               primitive->name());
   auto axis = axis_temp < 0 ? static_cast<size_t>(axis_temp) + element_rank + 1 : LongToSize(axis_temp);
   (void)infer_shape.insert(infer_shape.begin() + axis, elements.size());
-  return std::make_shared<abstract::Shape>(infer_shape);
+  return std::make_shared<abstract::TensorShape>(infer_shape);
 }
 
-AbstractBasePtr SequenceStackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
-  auto elements = queue->elements();
-
-  // The value of dynamic_len_element_abs is kValueAny, do not need to Broaden.
-  if (queue->dynamic_len()) {
-    auto element_abs = queue->dynamic_len_element_abs();
-    MS_EXCEPTION_IF_NULL(element_abs);
-    return element_abs->Clone();
+template <typename T>
+TypePtr GetOutputType(const PrimitivePtr &primitive, const AbstractBasePtr &queue) {
+  auto queue_type = queue->GetType()->cast<T>();
+  MS_EXCEPTION_IF_NULL(queue_type);
+  if (queue_type->dynamic_len()) {
+    return queue_type->dynamic_element_type()->Clone();
   }
-
-  if (queue->elements().empty()) {
+  if (queue_type->elements().empty()) {
     MS_LOG(EXCEPTION) << "Sequence length should not be 0.";
   }
 
+  auto elements = queue_type->elements();
   primitive->AddAttr("num", MakeValue(SizeToLong(elements.size())));
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
-  auto infer_type0 = element0->GetType();
-  MS_EXCEPTION_IF_NULL(infer_type0);
+  auto infer_type0 = elements[0];
   for (size_t i = 1; i < elements.size(); i++) {
-    auto elementi = elements[i]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(elementi);
-    auto infer_typei = elementi->GetType();
-    MS_EXCEPTION_IF_NULL(infer_typei);
+    auto infer_typei = elements[i];
     if (infer_typei == infer_type0) {
       MS_EXCEPTION(TypeError) << "All input must have the same data type!input[" << i << "] data type = " << infer_typei
                               << "infer_type0= " << infer_type0;
     }
   }
-  return elements[0];
+  return elements[kIndex0]->Clone();
+}
+
+TypePtr SequenceStackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  auto queue = input_args[kIndex0];
+  if (!CheckAndConvertUtils::IsTuple(queue) && !CheckAndConvertUtils::IsList(queue)) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", input[0] must be sequence, but got " << queue->ToString();
+  }
+
+  if (CheckAndConvertUtils::IsTuple(queue)) {
+    return GetOutputType<TuplePtr>(primitive, queue);
+  } else {
+    return GetOutputType<ListPtr>(primitive, queue);
+  }
 }
 }  // namespace
 
@@ -166,7 +174,7 @@ AbstractBasePtr SequenceStackInfer(const abstract::AnalysisEnginePtr &, const Pr
     MS_EXCEPTION_IF_NULL(item);
   }
   auto infer_shape = SequenceStackInferShape(primitive, input_args);
-  auto infer_type = SequenceStackInferType(primitive, input_args)->GetType();
+  auto infer_type = SequenceStackInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
@@ -178,7 +186,7 @@ class MIND_API AGSequenceStackInfer : public abstract::OpInferBase {
     return SequenceStackInferShape(primitive, input_args);
   }
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceStackInferType(primitive, input_args)->GetType();
+    return SequenceStackInferType(primitive, input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {

@@ -37,31 +37,35 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
+  auto queue = input_args[kIndex0];
   // The value of dynamic_len_element_abs is kValueAny, do not need to Broaden.
-  if (queue->dynamic_len()) {
-    auto element_abs = queue->dynamic_len_element_abs();
-    MS_EXCEPTION_IF_NULL(element_abs);
-    auto ret_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_abs->GetShape())[kShape];
-    return std::make_shared<abstract::Shape>(ret_shape);
+  if (!CheckAndConvertUtils::IsSequence(queue)) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", input[0] must be sequence, but got " << queue->ToString();
   }
 
-  if (queue->elements().empty()) {
+  if (CheckAndConvertUtils::IsDynamicSequence(queue)) {
+    auto queue_shape = queue->GetShape()->cast<abstract::DynamicSequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(queue_shape);
+    return queue_shape->element_shape()->Clone();
+  }
+
+  auto queue_shape = queue->GetShape()->cast<abstract::SequenceShapePtr>();
+  MS_EXCEPTION_IF_NULL(queue_shape);
+  if (queue_shape->shape().empty()) {
     MS_LOG(EXCEPTION) << "For " << op_name << " length should not be 0.";
   }
   const int64_t kOneNum = 1;
-  auto elements = queue->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
-                                           op_name);
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
+  auto shape_elements = queue_shape->shape();
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(shape_elements.size()), kGreaterEqual,
+                                           kOneNum, op_name);
+  auto element0 = shape_elements[0]->cast<abstract::TensorShapePtr>();
   MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
+  auto element0_shape = element0->GetShapeVector();
   if (IsDynamicRank(element0_shape)) {
-    return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
   }
   auto element0_rank = element0_shape.size();
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
@@ -69,11 +73,11 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
     "Concat axis", axis_temp, kIncludeBoth, {-SizeToLong(element0_rank), SizeToLong(element0_rank) - kOneNum}, op_name);
   auto axis = axis_temp < 0 ? LongToSize(axis_temp + SizeToLong(element0_rank)) : LongToSize(axis_temp);
   int64_t all_shp = element0_shape[axis];
-  for (size_t i = 1; i < elements.size(); ++i) {
+  for (size_t i = 1; i < shape_elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
-    auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->GetShape())[kShape];
+    auto elementi_shape = shape_elements[i]->GetShapeVector();
     if (IsDynamicRank(elementi_shape)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
     }
     (void)CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
                                              SizeToLong(element0_shape.size()), op_name);
@@ -91,25 +95,36 @@ abstract::ShapePtr SequenceConcatInferShape(const PrimitivePtr &primitive,
   }
   auto ret_shape = element0_shape;
   ret_shape[axis] = all_shp;
-  return std::make_shared<abstract::Shape>(ret_shape);
+  return std::make_shared<abstract::TensorShape>(ret_shape);
 }
 
-AbstractBasePtr SequenceConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
-
+template <typename T>
+TypePtr GetOutputType(const AbstractBasePtr &queue) {
+  auto queue_type = queue->GetType()->cast<T>();
+  MS_EXCEPTION_IF_NULL(queue_type);
   // The value of dynamic_len_element_abs is kValueAny, do not need to Broaden.
-  if (queue->dynamic_len()) {
-    auto element_abs = queue->dynamic_len_element_abs();
-    MS_EXCEPTION_IF_NULL(element_abs);
-    return element_abs->Clone();
+  if (queue_type->dynamic_len()) {
+    return queue_type->dynamic_element_type()->Clone();
   }
-
-  if (queue->elements().empty()) {
+  if (queue_type->elements().empty()) {
     MS_LOG(EXCEPTION) << "Sequence length should not be 0.";
   }
-  return queue->elements()[0];
+  return queue_type->elements()[kIndex0]->Clone();
+}
+
+TypePtr SequenceConcatInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  auto queue = input_args[kIndex0];
+  if (!CheckAndConvertUtils::IsTuple(queue) && !CheckAndConvertUtils::IsList(queue)) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", input[0] must be sequence, but got " << queue->ToString();
+  }
+
+  if (CheckAndConvertUtils::IsTuple(queue)) {
+    return GetOutputType<TuplePtr>(queue);
+  } else {
+    return GetOutputType<ListPtr>(queue);
+  }
 }
 }  // namespace
 
@@ -128,7 +143,7 @@ AbstractBasePtr SequenceConcatInfer(const abstract::AnalysisEnginePtr &, const P
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = SequenceConcatInferType(primitive, input_args)->GetType();
+  auto infer_type = SequenceConcatInferType(primitive, input_args);
   auto infer_shape = SequenceConcatInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
@@ -142,7 +157,7 @@ class MIND_API AGSequenceConcatInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceConcatInferType(primitive, input_args)->GetType();
+    return SequenceConcatInferType(primitive, input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
