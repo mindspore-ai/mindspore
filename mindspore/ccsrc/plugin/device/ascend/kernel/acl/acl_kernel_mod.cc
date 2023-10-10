@@ -40,29 +40,12 @@ std::string MsTensorDescString(const TensorParams &param) {
   ss << ", Device Shape = " << VectorToString(param.dev_shape);
   return ss.str();
 }
-
-tensor::TensorPtr GetDependValueTensor(const AddressPtr &address, const TypeId type, const ShapeVector &shape,
-                                       void *stream_ptr) {
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-  if (address != nullptr && address->addr != nullptr) {
-    auto tensor = std::make_shared<tensor::Tensor>(type, shape);
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto status = aclrtMemcpyAsync(tensor->data_c(), tensor->Size(), address->addr, address->size,
-                                   ACL_MEMCPY_DEVICE_TO_HOST, stream_ptr);
-    if (status != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtMemcpyAsync depend tensor failed! tensor size is " << tensor->Size()
-                        << " and address size is " << address->size;
-    }
-    auto sync_status = aclrtSynchronizeStreamWithTimeout(stream_ptr, -1);
-    if (sync_status != ACL_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "aclrtSynchronizeStreamWithTimeout depend tensor failed! tensor size is " << tensor->Size()
-                        << " and address size is " << address->size;
-    }
-    return tensor;
-  }
-  return nullptr;
-}
 }  // namespace
+
+bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  converter_ = std::make_shared<transform::AclConverter>();
+  return true;
+}
 
 void AclKernelMod::PackageInput(const size_t idx, const std::string &format, ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
@@ -75,7 +58,7 @@ void AclKernelMod::PackageInput(const size_t idx, const std::string &format, Sha
 
   params.ori_shape = *shape;
   if (!params.is_default) {
-    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_ptr_);
+    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_);
     params.dev_shape = trans::TransShapeToDevice(*shape, params.dev_format, params.data_type, groups);
   } else {
     params.dev_shape = *shape;
@@ -89,7 +72,7 @@ void AclKernelMod::PackageOutput(const size_t idx, const ShapeVector &shape) {
   params.ori_format = shape.size() == kDim4 ? kOpFormat_NCHW : kOpFormat_DEFAULT;
   ShapeVector dev_shape;
   if (!params.is_default) {
-    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_ptr_);
+    auto groups = transform::AclHelper::GetFracZGroupFromAttr(primitive_);
     dev_shape = trans::TransShapeToDevice(shape, params.dev_format, params.data_type, groups);
   } else {
     dev_shape = shape;
@@ -103,19 +86,13 @@ void AclKernelMod::PackageOutput(const size_t idx, const ShapeVector &shape) {
   output_size_list_[idx] = tensor_size;
 }
 
-void AclKernelMod::SetPrimitive(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  primitive_ptr_ = primitive;
-  kernel_name_ = primitive_ptr_->name();
-}
-
-void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
+void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
   if (input_params_.size() != inputs.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's input size is not equal with acl param's size:" << input_params_.size()
                                << " - input's size:" << inputs.size();
   }
 
-  std::string format = transform::AclHelper::GetFormatFromAttr(primitive_ptr_);
+  std::string format = transform::AclHelper::GetFormatFromAttr(primitive_);
 
   for (size_t i = 0; i < input_params_.size(); i++) {
     auto &input = inputs[i];
@@ -129,7 +106,7 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
   }
 }
 
-int AclKernelMod::GetOutputInfo(const std::vector<KernelTensorPtr> &outputs) {
+int AclKernelMod::GetOutputInfo(const std::vector<KernelTensor *> &outputs) {
   int ret = KRET_OK;
   if (output_params_.size() != outputs.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's output size is not equal with output param's size:"
@@ -143,7 +120,8 @@ int AclKernelMod::GetOutputInfo(const std::vector<KernelTensorPtr> &outputs) {
     if (!IsValidShape(shape)) {
       shape = output->GetMaxShape();
       if (shape.empty()) {
-        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the max_shape should not be empty when input shape is known.";
+        MS_LOG(EXCEPTION) << "For " << kernel_name_
+                          << ", the max_shape should not be empty when input shape is unknown.";
       }
       ret = KRET_UNKNOWN_OUT_SHAPE;
     }
@@ -156,33 +134,26 @@ void AclKernelMod::CreateAclConverter() {
   MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
   converter_->ConvertToAclOpType(kernel_name_);
-  converter_->ResizeAclOpInputs(primitive_ptr_);
-  converter_->ConvertAttrToAclInput(primitive_ptr_->attrs(), kernel_name_, &input_to_host_array_);
-  if (!input_to_host_array_.empty()) {
-    converter_->ConvertInputToAclAttr(input_to_host_array_, kernel_name_);
+  converter_->ResizeAclOpInputs(primitive_);
+  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_, &input_to_host_array_);
+  if (inputs_ != nullptr) {
+    converter_->ConvertInputToAclAttr(*inputs_, kernel_name_);
   }
   if (transform::AclHelper::IsPrintDebugString()) {
     ms_attr_str_.clear();
-    converter_->ConvertToAclAttr(primitive_ptr_->attrs(), kernel_name_, &ms_attr_str_);
+    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, &ms_attr_str_);
   } else {
-    converter_->ConvertToAclAttr(primitive_ptr_->attrs(), kernel_name_, nullptr);
+    converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, nullptr);
   }
   converter_->ProcessRunnerSpecialInfo(kernel_name_, output_params_);
 }
 
-int AclKernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                         const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
-  int ret = KRET_OK;
-  primitive_ptr_ = op_->GetPrim();
-  MS_ERROR_IF_NULL(primitive_ptr_);
-  kernel_name_ = primitive_ptr_->name();
-
-  this->inputs_ = inputs;
-  this->outputs_ = outputs;
-
+int AclKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  std::map<uint32_t, tensor::TensorPtr> inputs_on_host;
   GetInputInfo(inputs);
-  ret = GetOutputInfo(outputs);
+  int ret = GetOutputInfo(outputs);
   input_to_host_array_.build(inputs_on_host);
+  inputs_ = &inputs;
   CreateAclConverter();
 
   return ret;
@@ -210,37 +181,17 @@ std::string AclKernelMod::DebugString() const {
   return ss.str();
 }
 
-bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                          const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
 
-  if (need_convert_host_tensor_) {
-    auto anf_node = anf_node_.lock();
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto cnode = anf_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
-    input_to_host_array_.clear();
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      if (depend_list.find(i) != depend_list.end()) {
-        auto input_param = input_params_.at(i);
-        auto depended_value = GetDependValueTensor(inputs[i], input_param.data_type, input_param.ori_shape, stream_ptr);
-        if (depended_value == nullptr) {
-          continue;
-        }
-        input_to_host_array_.emplace(i, depended_value);
-      }
-    }
-    need_convert_host_tensor_ = false;
-    // need recreate converter when first launch in static shape.
-    CreateAclConverter();
-  }
+  inputs_ = &inputs;
 
   MS_EXCEPTION_IF_NULL(converter_);
-  converter_->ConvertToAclInput(primitive_ptr_, input_to_host_array_, inputs, input_params_);
+  converter_->ConvertToAclInput(primitive_, input_to_host_array_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);
   converter_->SetRunnerSpecialInfo();
   // cppcheck-suppress unreadVariable
@@ -271,11 +222,11 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
                                << output_device_formats.size() << " and type's size:" << output_device_types.size();
   }
 
-  if (primitive_ptr_ == nullptr && op_ != nullptr) {
-    primitive_ptr_ = op_->GetPrim();
+  if (primitive_ == nullptr && op_ != nullptr) {
+    primitive_ = op_->GetPrim();
   }
   auto in_def_flag =
-    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, true);
+    primitive_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_, true);
   input_params_.resize(input_device_formats.size());
   for (size_t i = 0; i < input_device_formats.size(); i++) {
     input_params_[i].data_type = input_device_types[i];
@@ -287,7 +238,7 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
   input_size_list_.resize(input_device_formats.size(), 0);
 
   auto out_def_flag =
-    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, false);
+    primitive_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_, false);
   output_params_.resize(output_device_formats.size());
   for (size_t i = 0; i < output_device_formats.size(); i++) {
     output_params_[i].data_type = output_device_types[i];
@@ -297,12 +248,6 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
     output_params_[i].type_size = GetTypeByte(TypeIdToType(output_params_[i].data_type));
   }
   output_size_list_.resize(output_device_formats.size(), 0);
-}
-
-std::vector<TaskInfoPtr> AclKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                               const std::vector<AddressPtr> &, uint32_t) {
-  MS_LOG(EXCEPTION) << "Acl kernels do not support task sink mode.";
-  return {};
 }
 
 void AclKernelMod::SyncOutputShape() {

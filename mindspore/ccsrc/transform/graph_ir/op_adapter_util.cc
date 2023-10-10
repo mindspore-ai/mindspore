@@ -24,6 +24,8 @@
 #include "utils/check_convert_utils.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "transform/graph_ir/io_format_map.h"
+#include "ir/kernel_tensor_value.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 GeDataTypeImm::GeDataTypeImm() : IntegerImm(kInt32), v_(::ge::DataType::DT_FLOAT) {}
@@ -183,6 +185,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEDataFormat>)
     format_id = static_cast<int64_t>(GetValue<int64_t>(value));
   } else if (value->isa<UInt64Imm>()) {
     format_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  } else if (value->isa<KernelTensorValue>()) {
+    format_id = ops::GetValueWithCheck<int64_t>(value);
   }
   return GEDataFormat::ConvertEnumToString(format_id);
 }
@@ -200,6 +204,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEPadMod>) {
     pad_id = static_cast<int64_t>(GetValue<int64_t>(value));
   } else if (value->isa<UInt64Imm>()) {
     pad_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  } else if (value->isa<KernelTensorValue>()) {
+    pad_id = ops::GetValueWithCheck<int64_t>(value);
   }
   return GEPadMod::ConvertEnumToString(pad_id);
 }

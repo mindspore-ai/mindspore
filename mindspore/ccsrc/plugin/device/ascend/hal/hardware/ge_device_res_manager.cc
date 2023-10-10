@@ -130,12 +130,14 @@ DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr,
                                                                 device_context_->device_context_key_.device_name_,
                                                                 device_context_->device_context_key_.device_id_);
     device_address->set_host_shape(shape);
+    device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
     return device_address;
   } else {
     auto device_address = std::make_shared<cpu::CPUDeviceAddress>(device_ptr, device_size, format, type_id,
                                                                   device_context_->device_context_key_.device_name_,
                                                                   device_context_->device_context_key_.device_id_);
     device_address->set_host_shape(shape);
+    device_address->set_device_synchronizer(std::make_shared<cpu::CPUDeviceSynchronizer>());
     return device_address;
   }
 }

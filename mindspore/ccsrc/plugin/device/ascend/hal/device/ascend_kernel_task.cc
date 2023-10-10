@@ -133,7 +133,8 @@ bool IdentityFunc(const DeviceAddressPtr &input_address, const TensorStorageInfo
     groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
   }
   prim->set_attr(kAttrFracZGroup, MakeValue(static_cast<int64_t>(groups)));
-  identity_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(identity_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   identity_kernel->CreateAclConverter();
   identity_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
   identity_kernel->PackageInput(0, "", &input_storage_info->ori_shape);
@@ -172,7 +173,8 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   auto input_device_types = {src_addr_info->addr->type_id(), kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64};
   auto output_device_types = {dst_addr_info->addr->type_id()};
   kernel::AclKernelModPtr as_strided_kernel = std::make_shared<kernel::AclKernelMod>();
-  as_strided_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(as_strided_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   as_strided_kernel->CreateAclConverter();
   as_strided_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types,
                                    output_device_types);
@@ -247,7 +249,8 @@ bool ViewCopyFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressAn
   auto input_device_types = {dst_addr_info->addr->type_id(), src_addr_info->addr->type_id()};
   auto output_device_types = {dst_addr_info->addr->type_id()};
   kernel::AclKernelModPtr view_copy_kernel = std::make_shared<kernel::AclKernelMod>();
-  view_copy_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(view_copy_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   view_copy_kernel->CreateAclConverter();
   view_copy_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
   auto dst_shape = (dst_addr_info->storage == nullptr ? src_storage->shape : dst_addr_info->storage->ori_shape);
@@ -338,7 +341,8 @@ bool LaunchTransData(const DeviceAddressPtr &input_address, const TensorStorageI
   auto input_device_types = {input_address->type_id()};
   auto output_device_types = {output_address->type_id()};
   kernel::AclKernelModPtr transdata_kernel = std::make_shared<kernel::AclKernelMod>();
-  transdata_kernel->SetPrimitive(prim);
+  std::static_pointer_cast<KernelMod>(transdata_kernel)
+    ->Init(prim, std::vector<KernelTensor *>{}, std::vector<KernelTensor *>{});
   transdata_kernel->CreateAclConverter();
   transdata_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
 

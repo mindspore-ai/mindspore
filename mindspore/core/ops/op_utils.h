@@ -133,6 +133,37 @@ MS_CORE_API std::optional<T> GetScalarValue(const ValuePtr &value);
 template <typename T>
 MS_CORE_API std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
+// Get the scalar/std::string value with check
+template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value ||
+                                              std::is_same_v<std::decay_t<T>, std::string>>::type * = nullptr>
+T GetValueWithCheck(const ValuePtr &value) {
+  auto opt = GetScalarValue<T>(value);
+  if (!opt.has_value()) {
+    MS_LOG(EXCEPTION) << "Get scalar or string value from " << value->ToString() << " with check failed.";
+  }
+  return opt.value();
+}
+
+// Template classes used to detect whether a type is a vector.
+template <typename T>
+struct IsVectorImpl : std::false_type {};
+template <typename T>
+struct IsVectorImpl<std::vector<T>> : std::true_type {};
+template <typename T>
+struct IsVector {
+  static constexpr bool value = IsVectorImpl<std::decay_t<T>>::value;
+};
+
+// Get the std::vector value with check
+template <typename T, typename std::enable_if<IsVector<T>::value>::type * = nullptr>
+T GetValueWithCheck(const ValuePtr &value) {
+  auto opt = GetArrayValue<typename T::value_type>(value);
+  if (!opt.has_value()) {
+    MS_LOG(EXCEPTION) << "Get array value from " << value->ToString() << " with check failed.";
+  }
+  return opt.value().ToVector();
+}
+
 const std::set<TypePtr> common_valid_types_with_bool = {
   kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};
 

@@ -290,6 +290,24 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     return kernel_tensor_value_->GetDataPtr();
   }
 
+  // Get the value of the KernelTensor.
+  ValuePtr GetValue() const override {
+    // There is a origin value in KernelTensor(maybe come from a ValueNode).
+    if (value_ && !value_->isa<ValueAny>()) {
+      if (kernel_tensor_value_ == nullptr) {
+        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
+        return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
+      }
+      return kernel_tensor_value_;
+    }
+
+    // Sync value data from device.
+    if (!SyncDataFromDevieToHost()) {
+      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
+    }
+    return kernel_tensor_value_;
+  }
+
   // Get the scalar value store in KernelTensor if exists.
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
   template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
@@ -507,26 +525,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetDeviceId(int32_t device_id) { device_id_ = device_id; }
 
  private:
-  // Get the value of the KernelTensor.
-  // Note: To avoid calling the interface by mistake in KernelMod, declare the interface private in the subclass and
-  // public in the parent class.
-  ValuePtr GetValue() const override {
-    // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (value_ && !value_->isa<ValueAny>()) {
-      if (kernel_tensor_value_ == nullptr) {
-        kernel_tensor_value_ = ConvertValueToKernelTensorValue(value_);
-        return kernel_tensor_value_ ? kernel_tensor_value_ : value_;
-      }
-      return kernel_tensor_value_;
-    }
-
-    // Sync value data from device.
-    if (!SyncDataFromDevieToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
-    }
-    return kernel_tensor_value_;
-  }
-
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
 

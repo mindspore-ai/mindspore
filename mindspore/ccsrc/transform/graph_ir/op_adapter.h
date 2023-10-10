@@ -25,10 +25,14 @@
 #include "transform/graph_ir/op_adapter_util.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "include/common/utils/utils.h"
+<<<<<<< HEAD
 #include "include/common/utils/anfalgo.h"
 #include "ops/other_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
+=======
+#include "ops/op_utils.h"
+>>>>>>> Adapt new KernelMod for ACL
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {
@@ -417,13 +421,13 @@ class OpAdapter : public BaseOpAdapter {
  private:
   template <typename S>
   static S ConvertAny(const ValuePtr &value, const AnyTraits<S> &) {
-    return GetValue<S>(value);
+    return ops::GetValueWithCheck<S>(value);
   }
 
   template <typename S>
   static std::vector<S> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<S>> &, size_t size,
                                    S default_val) {
-    auto v = GetValue<std::vector<S>>(value);
+    auto v = ops::GetValueWithCheck<std::vector<S>>(value);
     if (v.size() < size) {
       v.insert(v.begin(), size - v.size(), default_val);
     }

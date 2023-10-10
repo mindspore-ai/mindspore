@@ -28,6 +28,7 @@
 namespace mindspore {
 namespace transform {
 using AddressPtr = kernel::AddressPtr;
+using KernelTensor = mindspore::kernel::KernelTensor;
 
 typedef enum { SET_ACL_ATTR, SET_ACL_ATTR_TO_INPUT } AttrConvertMode;
 template <typename T>
@@ -65,12 +66,13 @@ class AclConverter {
   void ConvertToAclOpType(const std::string &prim_name);
   void ResizeAclOpInputs(const PrimitivePtr &prim);
   void ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
-                         const std::vector<AddressPtr> &inputs, const std::vector<TensorParams> &input_params);
-  void ConvertToAclOutput(const std::string &kernel_name, const std::vector<AddressPtr> &outputs,
+                         const std::vector<KernelTensor *> &inputs, const std::vector<TensorParams> &input_params);
+  void ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                           const std::vector<TensorParams> &output_params);
 
   void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name,
                              AclInputToHost *inputs_on_host);
+  void ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
   void ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name);
   void ConvertToAclAttr(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &prim_name,
                         std::vector<std::string> *ms_attr_str);

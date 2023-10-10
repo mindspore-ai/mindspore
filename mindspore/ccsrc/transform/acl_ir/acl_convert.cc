@@ -138,6 +138,11 @@ void DumpAclString(const aclDataType data_type, const ShapeVector &ori_shape, co
     dump->tensor_type = AclDumpString::TensorType::kHostTensor;
   }
 }
+
+AddressPtr GetAddrPtr(KernelTensor *ptr) {
+  MS_EXCEPTION_IF_NULL(ptr);
+  return std::make_shared<mindspore::kernel::Address>(ptr->device_ptr(), ptr->size());
+}
 }  // namespace
 
 template <typename ConvertType>
@@ -245,7 +250,7 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
 }
 
 void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToHost &host_inputs,
-                                     const std::vector<AddressPtr> &inputs,
+                                     const std::vector<KernelTensor *> &inputs,
                                      const std::vector<TensorParams> &input_params) {
   auto &prim_name = prim->name();
   auto info = GeAdapterManager::GetInstance().GetInfo(prim_name, true);
@@ -272,7 +277,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
     if (ms_real_idx >= inputs.size()) {
       MS_LOG(EXCEPTION) << "Failed to find input " << ms_proto_idx << " for " << prim->name();
     }
-    return {inputs[ms_real_idx], nullptr};
+    return {GetAddrPtr(inputs[ms_real_idx]), nullptr};
   };
 
   // NOTE: num of real inputs params may less than `info->GetNumInputsOfMsOpProto()`, e.g. Conv2D without bias
@@ -326,7 +331,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const AclInputToH
   }
 }
 
-void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std::vector<AddressPtr> &outputs,
+void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std::vector<KernelTensor *> &outputs,
                                       const std::vector<TensorParams> &output_params) {
   // Get output real index
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
@@ -377,8 +382,8 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
 
       size_t acl_real_output_idx = ge_start_idx + i;
       MS_LOG(DEBUG) << "Fill acl real output " << acl_real_output_idx << " use ms real output " << ms_real_idx;
-      auto [acl_desc, acl_data] =
-        ConvertTensorToAclDesc(outputs[ms_real_idx], output_params[ms_real_idx], arg_name, dump_str_pointer);
+      auto [acl_desc, acl_data] = ConvertTensorToAclDesc(GetAddrPtr(outputs[ms_real_idx]), output_params[ms_real_idx],
+                                                         arg_name, dump_str_pointer);
       runner_.SetOutput(acl_real_output_idx, acl_desc, acl_data);
       if (transform::AclHelper::IsPrintDebugString()) {
         output_str_[acl_real_output_idx] = dump_str;
@@ -444,6 +449,26 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
                   << " of primitive " << kernel_name;
   }
   MS_LOG(DEBUG) << "Convert attr to acl input over";
+}
+
+void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name) {
+  MS_LOG(DEBUG) << "Start convert input to acl attr";
+  auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
+  for (const auto &[input_idx, attr_name] : info->input_attr_map()) {
+    MS_LOG(DEBUG) << "Operator " << kernel_name << " converts input " << input_idx << " to attribute " << attr_name;
+    if (input_idx > inputs.size()) {
+      MS_LOG(EXCEPTION) << "Operator " << kernel_name << " index " << input_idx << " must be less than size of inputs "
+                        << inputs.size();
+    }
+    MS_EXCEPTION_IF_NULL(inputs[input_idx]);
+    ValuePtr ge_attr_value;
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, inputs[input_idx]->GetValue(), &ge_attr_value);
+
+    AttrConverter attr_coverter;
+    attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
+  }
+  MS_LOG(DEBUG) << "Convert input to acl attr over";
 }
 
 void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std::string &kernel_name) {
