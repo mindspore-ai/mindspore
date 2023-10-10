@@ -297,8 +297,6 @@ from .math_func import (
     sign,
     signbit,
     sgn,
-    sin,
-    sinc,
     cos,
     t,
     tan,
@@ -310,7 +308,6 @@ from .math_func import (
     arccosh,
     arctan,
     arctan2,
-    sinh,
     cosh,
     tanh,
     tanhshrink,
@@ -720,8 +717,14 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
+from ..auto_generate import (sin, sinc, sinh)
 
-__all__ = ['rank']
+__all__ = [
+    'rank',
+    'sin',
+    'sinc',
+    'sinh',
+]
 __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)

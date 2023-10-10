@@ -63,7 +63,6 @@ from mindspore.ops.operations.math_ops import (
     Heaviside,
     Lcm,
     Gcd,
-    Sinc,
     Quantile,
     NanToNum,
     SparseSegmentMean,
@@ -136,8 +135,6 @@ floor_ = P.Floor()
 logical_not_ = P.LogicalNot()
 logical_or_ = P.LogicalOr()
 logical_and_ = P.LogicalAnd()
-sin_ = P.Sin()
-sinc_ = Sinc()
 cos_ = P.Cos()
 tan_ = P.Tan()
 asin_ = P.Asin()
@@ -145,7 +142,6 @@ polar_ = Polar()
 acos_ = P.ACos()
 atan_ = P.Atan()
 atan2_ = P.Atan2()
-sinh_ = P.Sinh()
 cosh_ = P.Cosh()
 tanh_ = P.Tanh()
 asinh_ = P.Asinh()
@@ -2004,74 +2000,6 @@ def sgn(input):
     return res
 
 
-def sin(input):
-    r"""
-    Computes sine of the input element-wise.
-
-    .. math::
-
-        out_i = \sin(input_i)
-
-    Args:
-        input (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Returns:
-        Tensor, has the same shape and dtype as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sin(input)
-        >>> print(output)
-        [0.5810352 0.27635565 0.41687083 0.5810352]
-    """
-    return sin_(input)
-
-
-def sinc(input):
-    r"""
-    Computes the normalized sinc of input.
-
-    .. math::
-
-        out_i = \begin{cases} \frac{sin(\pi input_i)}{\pi input_i} & input_i\neq 0\\
-        1 & input_i=0 \end{cases}
-
-    Args:
-        input (Tensor): The input Tensor.
-
-    Returns:
-        Tensor, has the same shape as the `input`. The dtype of output is float32 when dtype of `input` is in
-        [int, bool]. Otherwise output has the same dtype as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sinc(input)
-        >>> print(output)
-        [0.47735003 0.8759357  0.7224278  0.47735003]
-    """
-    return sinc_(input)
-
-
 def cos(input):
     r"""
     Computes cosine of input element-wise.
@@ -2645,38 +2573,6 @@ def atan(input):
         [0.7853982 0.       ]
     """
     return atan_(input)
-
-
-def sinh(input):
-    r"""
-    Computes hyperbolic sine of the input element-wise.
-
-    .. math::
-
-        out_i = \sinh(input_i)
-
-    Args:
-        input (Tensor): The input tensor of hyperbolic sine function.
-
-    Returns:
-        Tensor, has the same shape as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = ops.sinh(input)
-        >>> print(output)
-        [0.6604918  0.28367308 0.44337422 0.6604918 ]
-    """
-    return sinh_(input)
 
 
 def cosh(input):
@@ -13594,15 +13490,12 @@ __all__ = [
     'sqrt',
     'square',
     't',
-    'sin',
     'cos',
     'tan',
     'asin',
     'acos',
     'arccos',
     'atan',
-    'sinc',
-    'sinh',
     'cosh',
     'tanh',
     'tanhshrink',

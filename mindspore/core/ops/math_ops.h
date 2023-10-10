@@ -40,8 +40,6 @@ GVAR_DEF(PrimitivePtr, kPrimBesselY0, std::make_shared<Primitive>("BesselY0"));
 GVAR_DEF(PrimitivePtr, kPrimBesselY1, std::make_shared<Primitive>("BesselY1"));
 GVAR_DEF(PrimitivePtr, kPrimTanhGrad, std::make_shared<Primitive>("TanhGrad"));
 GVAR_DEF(PrimitivePtr, kPrimTan, std::make_shared<Primitive>("Tan"));
-GVAR_DEF(PrimitivePtr, kPrimSinc, std::make_shared<Primitive>("Sinc"));
-GVAR_DEF(PrimitivePtr, kPrimSinh, std::make_shared<Primitive>("Sinh"));
 GVAR_DEF(PrimitivePtr, kPrimTanh, std::make_shared<Primitive>(kTanhOpName));
 GVAR_DEF(PrimitivePtr, kPrimImag, std::make_shared<Primitive>(kImagOpName));
 GVAR_DEF(PrimitivePtr, kPrimCauchy, std::make_shared<Primitive>(kCauchyOpName));
@@ -85,7 +83,6 @@ GVAR_DEF(PrimitivePtr, kPrimReduceProdD, std::make_shared<Primitive>(kReduceProd
 GVAR_DEF(PrimitivePtr, kPrimCentralization, std::make_shared<Primitive>("Centralization"));
 GVAR_DEF(PrimitivePtr, kPrimNegGrad, std::make_shared<Primitive>(kNegOpName));
 GVAR_DEF(PrimitivePtr, kPrimLcm, std::make_shared<Primitive>("Lcm"));
-GVAR_DEF(PrimitivePtr, kPrimSin, std::make_shared<Primitive>("Sin"));
 GVAR_DEF(PrimitivePtr, kPrimSub, std::make_shared<Primitive>(kSubOpName));
 GVAR_DEF(PrimitivePtr, kPrimHypot, std::make_shared<Primitive>("Hypot"));
 GVAR_DEF(PrimitivePtr, kPrimHeaviside, std::make_shared<Primitive>("Heaviside"));

@@ -78,8 +78,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        NPUAllocFloatStatus, NPUClearFloatStatus, LinSpace, Einsum, Renorm,
                        NPUGetFloatStatus, Pow, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
-                       Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
-                       Addcmul, Square, Sub, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps,
+                       Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
+                       Addcmul, Square, Sub, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Eps,
                        Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag, Complex, Trunc, IsClose, LuSolve,
                        CholeskyInverse, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselK1, BesselK1e, BesselY0,
                        BesselY1, Bucketize, Cauchy, Cholesky, CholeskySolve, Betainc,
@@ -87,7 +87,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        MatrixLogarithm, MatrixPower, MatrixSolve, MatrixTriangularSolve, ReduceStd, STFT,
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
                        CumulativeLogsumexp, Gcd, Polygamma, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
-                       Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin, Quantile, Sinc, Angle, Bernoulli,
+                       Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin, Quantile, Angle, Bernoulli,
                        NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac, Ormqr)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
@@ -137,9 +137,8 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
-from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye,
-                             Floor, FloorDiv, FloorMod, Flatten,
-                             Gather, GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv)
+from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
+                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh)
 
 __all__ = [
     'HSVToRGB',

@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "mindspore/core/ops/sinc.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"

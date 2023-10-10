@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/gpu/kernel/math/sinc_gpu_kernel.h"
-#include "mindspore/core/ops/sinc.h"
 #include <functional>
 #include <utility>
 #include <map>

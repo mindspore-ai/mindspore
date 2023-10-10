@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
-from mindspore.ops.function.math_func import sinc
+from mindspore.ops.function import sinc
 from mindspore.ops.function.math_func import quantile
 from mindspore.ops.function.math_func import nanquantile
 from mindspore.ops.function.math_func import nan_to_num
@@ -41,7 +41,7 @@ from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, Bess
                                               BesselI0, BesselI1, BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
-from mindspore.ops.operations.math_ops import Sinc
+from mindspore.ops.operations import Sinc
 from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import Bernoulli
 from mindspore.ops.operations.array_ops import ConjugateTranspose

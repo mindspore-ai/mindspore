@@ -16,7 +16,6 @@
 
 #include <complex>
 #include "plugin/device/cpu/kernel/sinc_cpu_kernel.h"
-#include "mindspore/core/ops/sinc.h"
 
 namespace mindspore {
 namespace kernel {

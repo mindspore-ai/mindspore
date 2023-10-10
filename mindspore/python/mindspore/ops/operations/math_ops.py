@@ -4123,60 +4123,6 @@ class Asinh(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class Sinc(Primitive):
-    r"""
-    Computes the normalized sinc of input.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.sinc` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> import mindspore.ops.operations.math_ops as ops
-        >>> from mindspore import Tensor, dtype
-        >>> sinc = ops.Sinc()
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = sinc(x)
-        >>> print(output)
-        [0.47735003 0.8759357  0.7224278  0.47735003]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Sinc"""
-
-
-class Sinh(Primitive):
-    r"""
-    Computes hyperbolic sine of the input element-wise.
-
-    Refer to :func:`mindspore.ops.sinh` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> sinh = ops.Sinh()
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = sinh(x)
-        >>> print(output)
-        [0.6604918  0.28367308 0.44337422 0.6604918 ]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Sinh"""
-
-
 class _LogicBinaryOp(_BinaryOp):
     """
     Define logic binary operators.
@@ -5406,31 +5352,6 @@ class ACos(Primitive):
     def __init__(self):
         """Initialize ACos"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
-class Sin(Primitive):
-    r"""
-    Computes sine of the input element-wise.
-
-    Refer to :func:`mindspore.ops.sin` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> sin = ops.Sin()
-        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
-        >>> output = sin(x)
-        >>> print(output)
-        [0.5810352 0.27635565 0.41687083 0.5810352]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Sin."""
 
 
 class Asin(Primitive):

@@ -162,6 +162,7 @@ cust_op_lists = [
     "select",
     "sign",
     "sin",
+    "sinc",
     "sinh",
     "slice",
     "smoothl1loss",

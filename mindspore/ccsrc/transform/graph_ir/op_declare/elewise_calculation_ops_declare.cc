@@ -179,6 +179,12 @@ ATTR_MAP(Sin) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Sin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sin, kNameSin, ADPT_DESC(Sin))
 
+// Sinc
+CUST_INPUT_MAP(Sinc) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Sinc) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Sinc) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Sinc, prim::kPrimSinc->name(), CUST_ADPT_DESC(Sinc));
+
 // Sinh
 INPUT_MAP(Sinh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Sinh) = EMPTY_ATTR_MAP;
