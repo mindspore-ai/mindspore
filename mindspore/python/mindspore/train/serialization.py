@@ -850,17 +850,20 @@ def obfuscate_model(obf_config, **kwargs):
             - model_inputs (list(Tensor)): The inputs of the original model, the values of Tensor can be random, which
               is the same as using :func:`mindspore.export`.
             - obf_ratio (Union(float, str)): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
-              should be in range of (0, 1] or in ["small", "medium", "large"].
+              should be in range of (0, 1] or in ["small", "medium", "large"]. "small", "medium" and "large" are
+              correspond to 0.1, 0.3, and 0.6 respectively.
             - customized_func (function): A python function used for customized function mode, which used for control
-              the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
-              function needs to ensure that its result is constant for any input. Users can refer to opaque
+              the switch branch of obfuscation structure. The outputs of customized_func should be boolean and const (
+              Reference to 'my_func()' in
+              `tutorials <https://www.mindspore.cn/mindarmour/docs/en/master/dynamic_obfuscation_protection.html>`_).
+              This function needs to ensure that its result is constant for any input. Users can refer to opaque
               predicates. If customized_func is set, then it should be passed to :func:`mindspore.load` interface
               when loading obfuscated model.
-            - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
-              weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
-              then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should be
-              noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
-              would be applied if both of them are set.
+            - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
+              structure of obfuscated models corresponding to different random seeds is different. If
+              `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+              obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
+              be set, and the latter mode would be applied if both of them are set.
 
         kwargs (dict): Configuration options dictionary.
 
@@ -1531,17 +1534,20 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
               - type (str): The type of obfuscation, only 'dynamic' is supported until now.
               - obf_ratio (float, str): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
-                should be in range of (0, 1] or in ["small", "medium", "large"].
+                should be in range of (0, 1] or in ["small", "medium", "large"]. "small", "medium" and "large" are
+                correspond to 0.1, 0.3, and 0.6 respectively.
               - customized_func (function): A python function used for customized function mode, which used for control
-                the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
-                function needs to ensure that its result is constant for any input. Users can refer to opaque
+                the switch branch of obfuscation structure. The outputs of customized_func should be boolean and const (
+                Reference to 'my_func()' in
+                `tutorials <https://www.mindspore.cn/mindarmour/docs/en/master/dynamic_obfuscation_protection.html>`_).
+                This function needs to ensure that its result is constant for any input. Users can refer to opaque
                 predicates. If customized_func is set, then it should be passed to `load()` interface when loading
                 obfuscated model.
-              - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
-                weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
-                then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should
-                be noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
-                would be applied if both of them are set.
+              - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
+                structure of obfuscated models corresponding to different random seeds is different. If
+                `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+                obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
+                be set, and the latter mode would be applied if both of them are set.
 
             - incremental (bool): export MindIR incrementally.
 

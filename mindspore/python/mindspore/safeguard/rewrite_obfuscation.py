@@ -34,28 +34,34 @@ OBF_RATIOS_INSERT_INDEX = 0
 
 def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     """
-    obfuscate the original checkpoint files.
+    obfuscate the plaintext checkpoint files. Usually used in conjunction with
+    :func:`mindspore.load_obf_params_into_net`.
+    interface.
 
     Args:
         network (nn.Cell): The original network that need to be obfuscated.
         ckpt_files (str): The directory path of original ckpt files.
-        target_modules ([str, str]): The target module of network that need to be obfuscated. The first string
-            represents the network path of target module in original network, which should be in form of 'A/B/C'.
-            The second string represents the obfuscation target module, which should be in form of 'D|E|F'. For
-            example, thr target_modules of GPT2 can be ['backbone/blocks/attention', 'dense1|dense2|dense3'].
-            If target_modules is None, the function would search target modules by itself. If found, the searched
+        target_modules (list[str, str]): The target module of network that need to be obfuscated. The first string
+            represents the network path of target module in original network, which should be in form of ``'A/B/C'``.
+            The second string represents the obfuscation target module, which should be in form of ``'D|E|F'``. For
+            example, thr target_modules of GPT2 can be ``['backbone/blocks/attention', 'dense1|dense2|dense3']``.
+            If target_modules is ``None``, the function would search target modules by itself. If found, the searched
             target module would be used, otherwise suggested target modules would be given with warning log.
-        saved_path (str): The directory path for saving obfuscated ckpt files and obf_ratios.
+            Default: ``None``.
+        saved_path (str): The directory path for saving obfuscated ckpt files and obf_ratios (a numpy file). obf_ratios
+            is the necessary data that needs to be load when running obfuscated network. Default: ``'./'``.
 
     Raises:
-        TypeError: If 'network' is not nn.Cell or 'ckpt_files' is not string or 'saved_path' is not string or
-            target_modules is not list.
-        ValueError: If 'ckpt_files' is not exist or 'saved_path' is not exist or 'target_modules' does not contain
-            two string.
-        ValueError: If the first string of 'target_modules' contains characters other than uppercase and lowercase
-            letters, numbers, '_' and '/'.
-        ValueError: If the second string of 'target_modules' is empty or contains characters other than uppercase and
-            lowercase letters, numbers, '_' and '|'.
+        TypeError: If `network` is not nn.Cell.
+        TypeError: If `ckpt_files` is not string or `saved_path` is not string.
+        TypeError: If `target_modules` is not list.
+        TypeError: If target_modules's elements are not string.
+        ValueError: If `ckpt_files` is not exist or `saved_path` is not exist.
+        ValueError: If the number of elements of `target_modules` is not ``2``.
+        ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
+            letters, numbers, ``'_'`` and ``'/'``.
+        ValueError: If the second string of `target_modules` is empty or contains characters other than uppercase and
+            lowercase letters, numbers, ``'_'`` and ``'|'``.
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint
@@ -116,30 +122,35 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
 
 def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
     """
-    load obfuscate ratios and obfuscate original network.
+    load obfuscate ratios into obfuscated network. Usually used in conjunction with :func:`mindspore.obfuscate_ckpt`
+    interface.
 
     Args:
         network (nn.Cell): The original network that need to be obfuscated.
-        obf_ratios (Tensor): The obf ratios generated when execute `obfuscate_ckpt()`.
-        target_modules ([str, str]): The target module of network that need to be obfuscated. The first string
-            represents the network path of target module in original network, which should be in form of 'A/B/C'.
-            The second string represents the obfuscation target module, which should be in form of 'D|E|F'. For
-            example, thr target_modules of GPT2 can be ['backbone/blocks/attention', 'dense1|dense2|dense3'].
+        target_modules (list[str, str]): The target module of network that need to be obfuscated. The first string
+            represents the network path of target module in original network, which should be in form of ``'A/B/C'``.
+            The second string represents the obfuscation target module, which should be in form of ``'D|E|F'``. For
+            example, thr target_modules of GPT2 can be ``['backbone/blocks/attention', 'dense1|dense2|dense3']``.
             If target_modules is None, the function would search target modules by itself. If found, the searched
             target module would be used, otherwise suggested target modules would be given with warning log.
-       kwargs (dict): Configuration options dictionary.
+        obf_ratios (Tensor): The obf ratios generated when execute :func:`mindspore.obfuscate_ckpt`.
+        kwargs (dict): Configuration options dictionary.
 
-            - ignored_func_decorators (list[str]): Function decorators of network's python code.
-            - ignored_class_decorators (list[str]): Class decorators of network's python code.
+            - ignored_func_decorators (list[str]): The name list of function decorators in network's python code.
+            - ignored_class_decorators (list[str]): The name list of class decorators in network's python code.
 
     Raises:
-        TypeError: If 'network' is not nn.Cell or 'obf_ratios' is not Tensor or target_modules is not list.
-        ValueError: If 'target_modules' does not contain two string.
-        ValueError: If the first string of 'target_modules' contains characters other than uppercase and lowercase
-            letters, numbers, '_' and '/'.
-        ValueError: If the second string of 'target_modules' is empty or contains characters other than uppercase and
-            lowercase letters, numbers, '_' and '|'.
-        TypeError: If 'ignored_func_decorators' is not [str] or 'ignored_class_decorators' is not [str].
+        TypeError: If `network` is not nn.Cell.
+        TypeError: If `obf_ratios` is not Tensor.
+        TypeError: If `target_modules` is not list.
+        TypeError: If target_modules's elements are not string.
+        ValueError: If the number of elements of `target_modules` is not ``2``.
+        ValueError: If `obf_ratios` is empty Tensor.
+        ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
+            letters, numbers, ``'_'`` and ``'/'``.
+        ValueError: If the second string of `target_modules` is empty or contains characters other than uppercase and
+            lowercase letters, numbers, ``'_'`` and ``'|'``.
+        TypeError: If `ignored_func_decorators` is not list[str] or `ignored_class_decorators` is not list[str].
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint, load_checkpoint, Tensor
