@@ -59,6 +59,7 @@ enum class RefModeFlag {
   kRefModeEnv        // depend on REF_MODE, default value is on, ref mode type will be kRefModeAll
 };
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
+constexpr char kGraphNeedIteration[] = "graph_need_iteration";
 
 struct InputDataList {
   std::vector<OperatorPtr> input_datas;
