@@ -26,6 +26,23 @@
 #endif
 #include "include/common/utils/compile_cache_context.h"
 
+namespace {
+// normalize name for ge regex check
+std::string NormalizeString(const std::string &name) {
+  std::string norm_str;
+  std::for_each(name.begin(), name.end(), [&norm_str](const auto &a) {
+    if (isalpha(a) || isalnum(a) || a == '_' || a == '-') {
+      norm_str += a;
+    }
+  });
+  const size_t limit_len = 128;
+  if (norm_str.size() > limit_len) {
+    norm_str = norm_str.substr(norm_str.size() - limit_len);
+  }
+  return norm_str;
+}
+};  // namespace
+
 namespace mindspore {
 namespace transform {
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
@@ -99,7 +116,9 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
   if (CompileCacheEnable() && !compile_cache_dep_files_hash.empty()) {
-    auto ge_graph_key = compile_cache_dep_files_hash + "_" + std::to_string(id);
+    auto suffix = IsEnableRefMode() ? name : std::to_string(id);
+    auto ge_graph_key = compile_cache_dep_files_hash + "_" + suffix;
+    ge_graph_key = NormalizeString(ge_graph_key);
     new_options.insert_or_assign(kGeGraphKey, ge_graph_key);
   }
 
