@@ -630,6 +630,7 @@ void DumpJsonParser::ParseKernels(const nlohmann::json &content) {
       if (backend == "ge") {
         MS_LOG(WARNING) << "It is not supported to specify operator types on 1980B backend. " << kernel_str
                         << " maybe not take effect.";
+        dump_layer_ += kernel_str + " ";
       }
       ret = kernel_types_.try_emplace({kernel_str, 0}).second;
     } else {
