@@ -68,46 +68,54 @@ Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
   if (device_type == MapTargetDevice::kAscend310) {
     MS_LOG(INFO) << "InitResource for Ascend310";
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL)
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      std::string err_msg = "Initialize Ascend310 resource fail";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_UNEXPECTED(err_msg);
+    if (device_resource_ == nullptr) {
+      device_resource_ = std::make_shared<AscendResource>();
+      Status rc = device_resource_->InitResource(device_id);
+      if (!rc.IsOk()) {
+        device_resource_ = nullptr;
+        std::string err_msg = "Initialize Ascend310 resource fail";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+    } else {
+      MS_LOG(INFO) << "Ascend310 context resource had been initialized.";
     }
 #endif
     device_type_ = device_type;
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   } else if (device_type == MapTargetDevice::kAscend910B) {
     MS_LOG(INFO) << "InitResource for Ascend910B";
-    auto ms_context = MsContext::GetInstance();
-    RETURN_UNEXPECTED_IF_NULL(ms_context);
-    device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    RETURN_UNEXPECTED_IF_NULL(device_context_);
-    device_context_->Initialize();
-    RETURN_UNEXPECTED_IF_NULL(device_context_->device_res_manager_);
+    if (device_context_ == nullptr) {
+      auto ms_context = MsContext::GetInstance();
+      RETURN_UNEXPECTED_IF_NULL(ms_context);
+      device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+      RETURN_UNEXPECTED_IF_NULL(device_context_);
+      device_context_->Initialize();
+      RETURN_UNEXPECTED_IF_NULL(device_context_->device_res_manager_);
 
-    std::string soc_version;
-    auto ret = AclAdapter::GetInstance().GetSocName(&soc_version);
-    if (ret != APP_ERR_OK) {
-      std::string error = "Get Soc Version failed.";
-      RETURN_STATUS_UNEXPECTED(error);
-    }
-    if (soc_version.find("Ascend910B") == std::string::npos) {
-      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
+      std::string soc_version;
+      auto ret = AclAdapter::GetInstance().GetSocName(&soc_version);
+      if (ret != APP_ERR_OK) {
+        std::string error = "Get Soc Version failed.";
+        RETURN_STATUS_UNEXPECTED(error);
+      }
+      if (soc_version.find("Ascend910B") == std::string::npos) {
+        std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
 
-    if (device_context_->device_res_manager_->CreateStream(&stream_id_) != true) {
-      std::string err_msg = "Create new stream failed on Ascend910B platform.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_UNEXPECTED(err_msg);
+      if (!device_context_->device_res_manager_->CreateStream(&stream_id_)) {
+        std::string err_msg = "Create new stream failed on Ascend910B platform.";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+      MS_LOG(INFO) << "Create new stream id: " << std::to_string(stream_id_);
+      device_type_ = device_type;
+    } else {
+      MS_LOG(INFO) << "Ascend910B context resource had been initialized.";
     }
-    MS_LOG(INFO) << "Create new stream id: " << std::to_string(stream_id_);
-    device_type_ = device_type;
 #endif
   }
   return Status::OK();
@@ -117,6 +125,9 @@ Execute::Execute(const std::shared_ptr<TensorOperation> &op, MapTargetDevice dev
   (void)ops_.emplace_back(op);
   device_type_ = device_type;
   info_ = std::make_shared<ExtraInfo>();
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  device_context_ = nullptr;
+#endif
 
   // Ascend910B
   if (op->Type() == MapTargetDevice::kAscend910B) {
@@ -221,7 +232,17 @@ Execute::~Execute() {
   }
 }
 
+Status Execute::UpdateOperation(const std::shared_ptr<TensorOperation> &op) {
+  // clear the ops_ first
+  ops_.clear();
+  (void)ops_.emplace_back(op);
+  return Status::OK();
+}
+
 Status Execute::BuildTransforms() {
+  // clear the transforms_rt_ first
+  transforms_rt_.clear();
+
   // Parse TensorTransform transforms_ into TensorOperation ops_
   if (info_->init_with_shared_ptr_) {
     RETURN_IF_NOT_OK(ParseTransforms());
@@ -251,11 +272,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   RETURN_UNEXPECTED_IF_NULL(output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
-
-  if (!ops_created) {
-    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
-    ops_created = true;
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
 
   if (device_type_ == MapTargetDevice::kCpu) {
     // Convert mindspore::Tensor to dataset::Tensor
@@ -330,11 +347,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data.");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
-
-  if (!ops_created) {
-    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
-    ops_created = true;
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
 
   if (device_type_ == MapTargetDevice::kCpu) {  // Case CPU
     TensorRow de_tensor_list;
@@ -416,13 +429,10 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     CHECK_FAIL_RETURN_UNEXPECTED(tensor->Size() > 0, "Input Tensor has no data.");
   }
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'CPU'.");
+  CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+  CHECK_FAIL_RETURN_UNEXPECTED(transforms_rt_.size() == 1, "PyExecute: only a single op operation is supported.");
 
-  if (!ops_created) {
-    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
-    ops_created = true;
-  }
-
-  if (device_type_ == MapTargetDevice::kCpu) {
+  if (transforms_rt_[0]->IsDvppOp() == false) {
     TensorRow de_tensor_list(input_tensor_list);
 
     // Apply transforms on tensor
@@ -435,7 +445,9 @@ Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_t
     *out = std::move(de_tensor_list.getRow());
     CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-  } else if (device_type_ == MapTargetDevice::kAscend910B) {
+  } else if (transforms_rt_[0]->IsDvppOp() == true) {
+    (void)InitResource(MapTargetDevice::kAscend910B);
+
     // construct the device tensor list by host tensor
     std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_tensor_list;
     for (auto &item : input_tensor_list) {

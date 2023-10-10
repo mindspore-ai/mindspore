@@ -340,6 +340,18 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
   }
   RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess",
                                     {{"TensorRowFlags", TensorRow(TensorRow::kFlagQuit).FlagName()}}));
+
+#ifdef ENABLE_PYTHON
+  // batch operation with per_batch_map use global executor in Python Layer to run transform in eager mode
+  // release the executor in the current thread when the thread is done
+  if (python_mp_ == nullptr) {
+    if (batch_map_func_) {
+      py::gil_scoped_acquire gil_acquire;
+      (void)batch_map_func_.attr("release_resource")();
+    }
+  }
+#endif
+
   return Status::OK();
 }
 

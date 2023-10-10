@@ -144,6 +144,14 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     // call DVPP step3
     ret = acldvppResize(workspace_addr, workspace_size, executor,
                         (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_RESIZE_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppResize(nullptr, workspace_size, executor,
@@ -198,6 +206,14 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
     ret =
       acldvppDecodeJpeg(workspace_addr, workspace_size, executor,
                         (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_JPEG_DECODE_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret =
@@ -307,6 +323,14 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     ret =
       acldvppNormalize(workspace_addr, workspace_size, executor,
                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_NORMALIZE_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret =
@@ -391,6 +415,14 @@ APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &in
     ret = acldvppAdjustBrightness(
       workspace_addr, workspace_size, executor,
       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustBrightness(
@@ -475,6 +507,14 @@ APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &inpu
     ret = acldvppAdjustContrast(
       workspace_addr, workspace_size, executor,
       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_ADJUST_CONTRAST_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustContrast(
@@ -559,6 +599,14 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
     ret =
       acldvppAdjustHue(workspace_addr, workspace_size, executor,
                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_ADJUST_HUE_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret =
@@ -643,6 +691,14 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
     ret = acldvppAdjustSaturation(
       workspace_addr, workspace_size, executor,
       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+
+    if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
+      MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
+      return APP_ERR_DVPP_ADJUST_SATURATION_FAIL;
+    }
+
+    // release workspace_addr
+    (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
     ret = acldvppAdjustSaturation(
