@@ -297,6 +297,9 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::GetKernelMod(kernel)) {
+      continue;
+    }
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);

@@ -88,7 +88,8 @@ void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOr
 BACKEND_EXPORT void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT int ErrCode(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT bool ConvertCheck(const AnfNodePtr &node);
-
+BACKEND_EXPORT bool DynamicShapeSupportCheck(const AnfNodePtr &node, bool train = true);
+BACKEND_EXPORT bool SinkGraphCheck(const AnfNodePtr &node, bool train = true);
 BACKEND_EXPORT void GenFakeComputeGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                                         const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps);
 BACKEND_EXPORT DfGraphPtr GenFakeGraph(const std::string &name);

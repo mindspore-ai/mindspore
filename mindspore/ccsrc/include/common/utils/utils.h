@@ -526,6 +526,11 @@ constexpr auto kSliceStep = "step";
 constexpr auto kFuncGraphTypeName = "FuncGraph";
 constexpr auto kKernelGraphTypeName = "KernelGraph";
 
+// graph group
+constexpr auto kDefaultGroup = "DefaultGroup";
+constexpr auto kKernelGroup = "KernelGroup";
+constexpr auto kGraphGroup = "GraphGroup";
+
 // compile cache
 constexpr auto kUniqueCacheName = "UniqueCacheName";
 constexpr auto kDistributedSplit = "distribtued_split";

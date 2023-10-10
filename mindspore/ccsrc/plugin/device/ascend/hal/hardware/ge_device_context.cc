@@ -73,22 +73,29 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       }
       auto nodes = TopoSort(sub_graph->get_return());
       for (const auto &node : nodes) {
-        if (!node->isa<CNode>()) {
+        if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
           continue;
         }
         if (GetCNodeTarget(node) != kAscendDevice) {
           all_support = false;
           continue;
         }
-        auto prim = GetCNodePrimitive(node);
-        if (prim == nullptr) {
+        if (GetCNodePrimitive(node) == nullptr) {
           continue;
         }
         if (!transform::ConvertCheck(node)) {
           all_support = false;
-          auto cnode = node->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(cnode);
-          cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(kCPUDevice));
+          common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          continue;
+        }
+        if (!transform::DynamicShapeSupportCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          continue;
+        }
+        if (!transform::SinkGraphCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
         }
       }
     }
