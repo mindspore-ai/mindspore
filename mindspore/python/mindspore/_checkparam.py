@@ -959,11 +959,6 @@ def is_stub_tensor(tensor):
     return hasattr(tensor, "stub")
 
 
-def is_pack_tensor(tensor):
-    """Whether it is a PackTensor."""
-    return hasattr(tensor, "__pack__")
-
-
 def expanded_shape(ndim, axis_size, axis):
     """
     Returns a shape with size = 1 for all dimensions
