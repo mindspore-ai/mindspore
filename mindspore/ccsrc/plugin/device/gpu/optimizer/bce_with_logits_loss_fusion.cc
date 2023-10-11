@@ -74,11 +74,11 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
   kernel_graph->AddValueNodeToGraph(axis_node);
   // set reduction to None.
   new_cnode->input(kIndex4)->cast<ValueNodePtr>()->set_value(MakeValue(0));
-  if (reduction == Reduction::SUM) {
+  if (reduction == static_cast<int64_t>(mindspore::ops::Reduction::SUM)) {
     reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())), new_cnode, axis_node,
                      NewValueNode(MakeValue(false)),
                      NewValueNode(MakeValue(false))};  // ReduceSum(input, axis, keepdims=false, skip_mode=false)
-  } else if (reduction == Reduction::MEAN) {
+  } else if (reduction == static_cast<int64_t>(mindspore::ops::Reduction::MEAN)) {
     reduce_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceMean->name())), new_cnode, axis_node,
                      NewValueNode(MakeValue(false))};  // ReduceMean(input, axis, keepdims=false)
   } else {
