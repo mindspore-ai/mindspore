@@ -491,7 +491,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   const auto &outputs = io_nodes.second;
-  if (common::GetEnv("MS_RUNTIME_COMPILE") != "1" && common::AnfAlgo::IsAnyTypeInput(io_nodes.first)) {
+  if (common::AnfAlgo::IsAnyTypeInput(io_nodes.first)) {
     return CompileAnyTypeInputGraph(kernel_graph, outputs, device_context);
   }
   kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
