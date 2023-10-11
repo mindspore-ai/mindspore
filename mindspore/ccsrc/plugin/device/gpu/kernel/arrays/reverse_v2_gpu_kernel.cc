@@ -15,7 +15,6 @@
  */
 #include "plugin/device/gpu/kernel/arrays/reverse_v2_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "mindspore/core/ops/reverse_v2.h"
 
 namespace mindspore {
 namespace kernel {
