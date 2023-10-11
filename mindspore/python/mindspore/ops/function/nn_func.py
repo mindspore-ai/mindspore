@@ -4254,6 +4254,10 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     r"""
     Local Response Normalization.
 
+    .. warning::
+        lrn is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
+
     .. math::
 
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
@@ -4282,7 +4286,7 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

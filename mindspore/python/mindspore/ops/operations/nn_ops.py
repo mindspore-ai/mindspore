@@ -7813,6 +7813,10 @@ class LRN(Primitive):
     r"""
     Local Response Normalization.
 
+    .. warning::
+        LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.ops.BatchNorm`.
+
     .. math::
 
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
@@ -7843,7 +7847,7 @@ class LRN(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
