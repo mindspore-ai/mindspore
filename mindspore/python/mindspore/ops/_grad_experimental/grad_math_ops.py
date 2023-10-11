@@ -21,6 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore.ops.operations.math_ops import Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import Polar
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
@@ -368,6 +369,27 @@ def get_bprop_nan_to_num(self):
     def bprop(x, out, dout):
         dx = dout * isfinite(x)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Angle)
+def get_bprop_angle(self):
+    """Grad definition for `Angle` operation."""
+    real_op = P.Real()
+    imag_op = Imag()
+    reciprocal_op = P.Reciprocal()
+    complex_op = Complex()
+    neg_op = P.Neg()
+
+    def bprop(x, out, dout):
+        re = real_op(x)
+        im = imag_op(x)
+        re = complex_op(im, re)
+        z = reciprocal_op(re)
+        zero = zeros_like(dout)
+        complex_dout = complex_op(dout, zero)
+        return (neg_op(complex_dout * z),)
 
     return bprop
 

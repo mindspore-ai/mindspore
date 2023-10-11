@@ -1741,27 +1741,6 @@ class DynamicGRUV2Grad(Primitive):
                                 ])
 
 
-class PReLUGrad(Primitive):
-    r"""
-    Gradients of PReLU operation.
-
-    Note:
-        1-dimensional input_x is not supported.
-
-    Inputs:
-        - **y_backprop** (Tensor) - Representing the backprop of the next layer.
-        - **input_x** (Tensor) - Must be the input `input_x` of forward operator PRelu.
-        - **weight** (Tensor) - Float Tensor, w > 0, must be the input `weight` of forward operator PRelu.
-
-    Outputs:
-        Tensor, with the same type as `input_x`.
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-
 class RandomGammaGrad(Primitive):
     r"""
     Computes the derivative of a random sample of Gamma with respect to alpha.:

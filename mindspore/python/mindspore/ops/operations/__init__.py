@@ -80,7 +80,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
                        Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
                        Addcmul, Square, Sub, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Eps,
-                       Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag, Complex, Trunc, IsClose, LuSolve,
+                       Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Imag, Complex, Trunc, IsClose, LuSolve,
                        CholeskyInverse, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselK1, BesselK1e, BesselY0,
                        BesselY1, Bucketize, Cauchy, Cholesky, CholeskySolve, Betainc,
                        FFTWithSize, Heaviside, Histogram, Hypot, Lcm, LuUnpack, MatrixExp,
@@ -99,7 +99,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      LogSoftmax, MaxPool3D, AvgPool3D,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
-                     MaxPoolWithArgmaxV2, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2,
+                     MaxPoolWithArgmaxV2, OneHot, Pad, MirrorPad, Mish, ReLU, ReLU6, ReLUV2,
                      HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid, SeLU, HShrink, ApplyKerasMomentum,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
@@ -126,8 +126,7 @@ from .other_ops import (IOU, BoundingBoxDecode, BoundingBoxEncode,
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler, TruncatedNormal, LogNormalReverse, NonDeterministicInts,
-                         ParameterizedTruncatedNormal, RandomPoisson, MultinomialWithReplacement, RandomShuffle,
-                         RandpermV2)
+                         ParameterizedTruncatedNormal, RandomPoisson, MultinomialWithReplacement, RandomShuffle,)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from .sparse_ops import (
     SparseToDense, SparseTensorDenseMatmul, SparseTensorDenseAdd, SparseSlice)
@@ -138,7 +137,8 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
-                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh, Assign,)
+                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh, Assign, PReLU,
+                             RandpermV2, Real,)
 
 __all__ = [
     'HSVToRGB',

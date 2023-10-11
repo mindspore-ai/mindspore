@@ -4189,55 +4189,6 @@ class GetNext(Primitive):
         validator.check_value_type("output_num", output_num, [int], self.name)
 
 
-class PReLU(PrimitiveWithInfer):
-    r"""
-    Parametric Rectified Linear Unit activation function.
-
-    Refer to :func:`mindspore.ops.prelu` for more details.
-
-    Inputs:
-        - **x** (Tensor) - The input Tensor of the activation function. The data type is float16 or float32.
-          The shape is :math:`(N, C, *)` where :math:`*` means, any number of additional dimensions.
-        - **weight** (Tensor) -  Weight Tensor. The data type is float16 or float32.
-          The weight can only be a vector, and the length is the same as the number of channels C of the `input_x`.
-          On GPU devices, when the input is a scalar, the shape is 1.
-
-    Outputs:
-        Tensor, with the same type as `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, nn, ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.prelu = ops.PReLU()
-        ...     def construct(self, x, weight):
-        ...         result = self.prelu(x, weight)
-        ...         return result
-        ...
-        >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
-        >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
-        >>> net = Net()
-        >>> output = net(x, weight)
-        >>> print(output)
-        [[[-0.60 -0.50]
-          [-2.40 -1.80]
-          [ 0.60  0.30]]
-         [[ 0.00  1.00]
-          [ 2.00  3.00]
-          [ 4.0   5.00]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'weight'], outputs=['output'])
-
-
 class LSTM(Primitive):
     r"""
     Performs the Long Short-Term Memory (LSTM) on the input.

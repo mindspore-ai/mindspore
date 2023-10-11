@@ -202,7 +202,6 @@ from .math_func import (
     tensor_sub,
     rsqrt,
     reciprocal,
-    real,
     sub,
     subtract,
     sqrt,
@@ -500,7 +499,6 @@ from .nn_func import (
     softplus,
     pdist,
     pad,
-    prelu,
     mirror_pad,
     nll_loss,
     smooth_l1_loss,
@@ -605,7 +603,6 @@ from .random_func import (
     randint,
     randint_like,
     multinomial_with_replacement,
-    randperm,
 )
 from .grad import (
     grad_func,
@@ -715,11 +712,14 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, sin, sinc, sinh)
+from ..auto_generate import (assign, prelu, randperm, real, sin, sinc, sinh)
 
 __all__ = [
     'assign',
+    'prelu',
     'rank',
+    'randperm',
+    'real',
     'sin',
     'sinc',
     'sinh',

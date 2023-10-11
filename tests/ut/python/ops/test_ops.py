@@ -63,7 +63,7 @@ from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Orgqr
 from mindspore.ops.operations.math_ops import CompareAndBitpack
-from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
+from mindspore.ops.operations.math_ops import Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Qr
 from mindspore.ops.operations.math_ops import Cauchy
@@ -476,7 +476,7 @@ class NanToNumFunc(nn.Cell):
 class RandpermFunc(nn.Cell):
     def __init__(self):
         super(RandpermFunc, self).__init__()
-        self.randperm = ops.function.random_func.randperm
+        self.randperm = ops.function.randperm
 
     def construct(self, n, seed, offset, dtype):
         y = self.randperm(n, seed, offset, dtype)
@@ -1929,7 +1929,7 @@ test_case_math_ops = [
         'desc_inputs': [[512, 1024], [512, 1024]],
         'desc_bprop': [[512, 1024]]}),
     ('Real', {
-        'block': Real(),
+        'block': P.Real(),
         'desc_inputs': [Tensor(np.ones(4).astype(np.complex64))],
         'desc_bprop': [Tensor(np.ones(4).astype(np.float32))]}),
     ('Imag', {

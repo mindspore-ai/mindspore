@@ -6924,40 +6924,6 @@ class ComplexAbs(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
-class Real(Primitive):
-    """
-    Returns a Tensor that is the real part of the input.
-    If input is real, it is returned unchanged.
-
-    Inputs:
-        - **input** (Tensor) - The input tensor to compute with.
-
-    Outputs:
-        Tensor, the shape is the same as the input.
-
-    Raises:
-       TypeError: If the input is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
-        >>> real = ops.Real()
-        >>> output = real(x)
-        >>> print(output)
-        1.3
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Real"""
-        self.init_prim_io_names(inputs=['input'], outputs=['output'])
-
-
 class Complex(Primitive):
     """
     Returns a complex Tensor from the real part and the imag part.

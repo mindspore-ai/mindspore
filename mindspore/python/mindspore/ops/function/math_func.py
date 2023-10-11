@@ -197,7 +197,6 @@ matrix_inverse_ = P.MatrixInverse()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
 trace_ = P.Trace()
-real_ = P.Real()
 rsqrt_ = P.Rsqrt()
 reciprocal_ = P.Reciprocal()
 tile_ = P.Tile()
@@ -5843,35 +5842,6 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
         return _get_cache_prim(P.ReduceStd)(axis=axis, unbiased=bool(ddof), keep_dims=keepdims)(input)
     output = var_mean(input, axis, ddof, keepdims)
     return tensor_pow(output[0], 0.5), output[1]
-
-
-def real(input):
-    r"""
-    Returns a Tensor that is the real part of the input.
-    If input is real, it is returned unchanged.
-
-    Args:
-        input (Tensor): The input tensor to compute to.
-
-    Returns:
-        Tensor, the shape is the same as the `input`.
-
-    Raises:
-       TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> import numpy as np
-        >>> input = ms.Tensor(np.asarray(np.complex(1.3+0.4j)), ms.complex64)
-        >>> output = ops.real(input)
-        >>> print(output)
-        1.3
-    """
-    return real_(input)
 
 
 def reciprocal(input):
@@ -13486,7 +13456,6 @@ __all__ = [
     'ldexp',
     'rsqrt',
     'reciprocal',
-    'real',
     'sqrt',
     'square',
     't',
