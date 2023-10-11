@@ -169,7 +169,7 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
     ScopedLongRunning release;
     Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
     if (ret != Status::SUCCESS) {
-      MS_LOG(ERROR) << "Exec graph:" << run_options.name << " failed";
+      MS_LOG(WARNING) << "Exec graph:" << run_options.name << " failed";
       return;
     }
   }
