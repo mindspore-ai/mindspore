@@ -48,6 +48,11 @@ bool LayerNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
+  if (kernel_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
+  }
+  eps_ = kernel_ptr->get_epsilon();
   return true;
 }
 
