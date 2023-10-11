@@ -44,6 +44,10 @@
 #include "debug/rdr/stream_exec_order_recorder.h"
 #endif
 
+#ifndef ENABLE_SECURITY
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#endif
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -76,6 +80,16 @@ constexpr size_t kLastGradAndStatusNum = 2;
 
 const std::unordered_set<std::string> kDropoutGenMaskOps = {kDropoutGenMaskOpName, kDropoutGenMaskV3OpName,
                                                             kStatelessDropOutGenMaskOpName};
+
+bool EnableAsyncDump() {
+  bool ret = false;
+#ifndef ENABLE_SECURITY
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  dump_json_parser.Parse();
+  ret = dump_json_parser.async_dump_enabled();
+#endif
+  return ret;
+}
 
 bool IsContinuousGroup(const std::vector<uint32_t> &rank_ids) {
   if (rank_ids.empty()) {
@@ -2605,7 +2619,7 @@ bool AscendStreamAssign::IsHcom(const CNodePtr &cur_cnode_ptr) const {
   if (cur_cnode_ptr->HasAttr(parallel::FIRST_RECEIVE)) {
     return true;
   }
-  if ((node_name == kSendOpName || node_name == kReceiveOpName) && !send_recv_parallel) {
+  if ((node_name == kSendOpName || node_name == kReceiveOpName) && !send_recv_parallel && !EnableAsyncDump()) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
