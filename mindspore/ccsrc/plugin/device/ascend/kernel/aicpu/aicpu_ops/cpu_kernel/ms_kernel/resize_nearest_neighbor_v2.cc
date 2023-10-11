@@ -18,13 +18,13 @@
 
 #include <securec.h>
 #include <stdint.h>
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 #include "common/cpu_kernel_utils.h"
-#include "inc/cpu_types.h"
 #include "common/kernel_log.h"
 #include "common/status.h"
+#include "inc/cpu_types.h"
 #include "utils/kernel_util.h"
 
 namespace {
@@ -59,11 +59,20 @@ inline float CalculateResizeScale(int64_t in_size, int64_t out_size, bool align_
 uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kResizeNearestNeighborV2);
   Tensor *x_ptr = ctx.Input(0);
-
   Tensor *size_ptr = ctx.Input(1);
+  auto format = x_ptr->GetTensorShape()->GetFormat();
+  is_nchw = (format == Format::FORMAT_NCHW);
+  if (is_nchw) {
+    c_idx = 1;
+    h_idx = 2;
+    w_idx = 3;
+  } else {
+    c_idx = 3;
+    h_idx = 1;
+    w_idx = 2;
+  }
 
   AttrValue *align_corners_ptr = ctx.GetAttr("align_corners");
-
   AttrValue *half_pixel_centers_ptr = ctx.GetAttr("half_pixel_centers");
 
   auto align_corners = false;
@@ -86,18 +95,19 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
                      half_pixel_centers == true ? "True" : "False", align_corners == true ? "True" : "False");
   KERNEL_CHECK_FALSE(x_dims == kDim4, KERNEL_STATUS_PARAM_INVALID, "x must be 4-dimensional but got %d-dimensional.",
                      x_dims);
-  auto channels = x_shape[kIndex1];
+  auto channels = x_shape[c_idx];
   KERNEL_CHECK_FALSE(channels > kValue0, KERNEL_STATUS_PARAM_INVALID,
                      "image must have at least one channel but got %d channel.", channels);
-  KERNEL_CHECK_FALSE(x_shape[kIndex2] > kValue0 && x_shape[kIndex3] > kValue0, KERNEL_STATUS_PARAM_INVALID,
-                     "x image must be of non-zero size but got height %d, width %d.", x_shape[kIndex2],
-                     x_shape[kIndex3]);
-  KERNEL_CHECK_FALSE(x_shape[kIndex2] < INT32_MAX && x_shape[kIndex3] < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
+  auto height = x_shape[h_idx];
+  auto width = x_shape[w_idx];
+  KERNEL_CHECK_FALSE(height > kValue0 && width > kValue0, KERNEL_STATUS_PARAM_INVALID,
+                     "x image must be of non-zero size but got height %d, width %d.", height, width);
+  KERNEL_CHECK_FALSE(height < INT32_MAX && width < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
                      "x sizes must be between 0 and max int32 but got but "
                      "got height %d, width %d.",
-                     x_shape[kIndex2], x_shape[kIndex3]);
-  auto in_height = static_cast<int32_t>(x_shape[kIndex2]);
-  auto in_width = static_cast<int32_t>(x_shape[kIndex3]);
+                     height, width);
+  auto in_height = static_cast<int32_t>(height);
+  auto in_width = static_cast<int32_t>(width);
   KERNEL_CHECK_FALSE(size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID, "size_shape must be 1-dimensional but got %d.",
                      size_dims);
   KERNEL_CHECK_FALSE(size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
@@ -117,6 +127,13 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
   KERNEL_CHECK_FALSE(in_height < (1 << kMaxValue) && in_width < (1 << kMaxValue), KERNEL_STATUS_PARAM_INVALID,
                      "nearest neighbor requires max height "
                      "& width of 2^24.");
+
+  // Set Output Shape
+  std::vector<int64_t> y_shape(x_shape);
+  y_shape[h_idx] = out_height;
+  y_shape[w_idx] = out_width;
+  ctx.Output(0)->GetTensorShape()->SetDimSizes(y_shape);
+
   return KERNEL_STATUS_OK;
 }
 
@@ -166,8 +183,15 @@ void ResizeNearestNeighborV2CpuKernel::InnerCompute(
     if (half_pixel_centers) {
       in_x = std::max(static_cast<Eigen::Index>(0), in_x);
     }
-    for (Eigen::Index c = 0; c < channels; ++c) {
-      y_4d(b, c, y, x) = x_4d(b, c, in_y, in_x);
+    if (is_nchw) {
+      // data_format = NCHW
+      for (Eigen::Index c = 0; c < channels; ++c) {
+        y_4d(b, c, y, x) = x_4d(b, c, in_y, in_x);
+      }
+    } else {
+      for (Eigen::Index c = 0; c < channels; ++c) {
+        y_4d(b, y, x, c) = x_4d(b, in_y, in_x, c);
+      }
     }
   }
 }
@@ -188,13 +212,14 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(const 
   if (half_pixel_centers_ptr != nullptr) {
     half_pixel_centers = half_pixel_centers_ptr->GetBool();
   }
-  batch_size = x_shape[kIndex0];
-  channels = x_shape[kIndex1];
-  in_height = x_shape[kIndex2];
-  in_width = x_shape[kIndex3];
 
-  out_height = y_shape[kIndex2];
-  out_width = y_shape[kIndex3];
+  batch_size = x_shape[n_idx];
+  channels = x_shape[c_idx];
+  in_height = x_shape[h_idx];
+  in_width = x_shape[w_idx];
+
+  out_height = y_shape[h_idx];
+  out_width = y_shape[w_idx];
 
   height_scale = CalculateResizeScale(in_height, out_height, align_corners);
   width_scale = CalculateResizeScale(in_width, out_width, align_corners);
