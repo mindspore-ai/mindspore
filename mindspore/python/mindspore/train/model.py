@@ -834,7 +834,7 @@ class Model:
                 os.remove(cb_params.latest_ckpt_file)
                 raise RuntimeError(e.__str__() + ", load ckpt failed and remove the ckpt: "\
                                    + cb_params.latest_ckpt_file) from e
-            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             self.need_load_ckpt = False
 
     def _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
@@ -863,9 +863,9 @@ class Model:
                 self.epoch_iter = recovery_epoch_num
                 cb_params.cur_epoch_num = self.epoch_iter + 1
                 cb_params.last_save_ckpt_step = cb_params.cur_step_num
-                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             else:
-                _reset_training_dataset(0, dataset_helper.sink_size())
+                _reset_training_dataset(0, dataset_helper.iter.dataset.get_dataset_size())
 
             _set_recovery_context(need_reset=False)
 
