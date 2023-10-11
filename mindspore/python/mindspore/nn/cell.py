@@ -419,8 +419,8 @@ class Cell(Cell_):
                 res.append(self._cast_mixed_precision_inputs(item, dst_type))
             elif isinstance(item, float):
                 res.append(self.cast(item, dst_type))
-            elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64} and \
-                    item.dtype != dst_type:
+            elif hasattr(item, "dtype") and item.dtype in \
+                {mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16} and item.dtype != dst_type:
                 res.append(self.cast(item, dst_type))
             else:
                 res.append(item)
@@ -2535,7 +2535,12 @@ class Cell(Cell_):
         mixed_type = self.get_mixed_precision_type()
         if mixed_type == MixedPrecisionType.NOTSET:
             return inputs
-        cast_type = mstype.float16 if mixed_type == MixedPrecisionType.FP16 else mstype.float32
+        if mixed_type == MixedPrecisionType.FP16:
+            cast_type = mstype.float16
+        elif mixed_type == MixedPrecisionType.BF16:
+            cast_type = mstype.bfloat16
+        else:
+            cast_type = mstype.float32
         cast_inputs = self._cast_mixed_precision_inputs(inputs, cast_type)
         return cast_inputs
 
