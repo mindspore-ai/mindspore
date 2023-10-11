@@ -1482,6 +1482,39 @@ def test_generator_single_input_6():
     assert_generator_single_input_6(SequentialAccessDatasetInner())
 
 
+def test_generator_one_dimensional_numpy_input():
+    """
+    Feature: Test one-dimensional numpy.int32 input
+    Description: The input source data is a one-dimensional numpy array of type numpy.int32
+    Expectation: No error was reported, and the iteration succeeded
+    """
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = np.array([i for i in range(64)], dtype=np.int32)
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    data1 = ds.GeneratorDataset(SequentialAccessDataset(), ["data"], shuffle=False)
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        golden = np.array(i, dtype=np.int32)
+        np.testing.assert_equal(item["data"], golden)
+        i = i + 1
+
+
 def test_generator_with_seed_5489_when_dist():
     """
     Feature: With default seed (5489) when distributed
