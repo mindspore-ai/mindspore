@@ -18,45 +18,6 @@
 from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
 
-assign_ = P.Assign()
-
-
-def assign(variable, value):
-    """
-    Assigns `Parameter` with a value.
-
-    Args of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Args:
-        variable (Parameter): The `Parameter`. :math:`(N,*)` where :math:`*` means,
-            any number of additional dimensions.
-        value (Tensor): The value to be assigned, has the same shape with `variable`.
-
-    Returns:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `variable` is not a Parameter.
-        TypeError: If `value` is not a Tensor.
-        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> value = Tensor([2.0], mindspore.float32)
-        >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
-        >>> ops.assign(variable, value)
-        >>> print(variable.asnumpy())
-        [2.]
-    """
-    return assign_(variable, value)
-
 
 assign_sub_ = P.AssignSub()
 
@@ -212,7 +173,6 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
 
 
 __all__ = [
-    'assign',
     'assign_sub',
     'assign_add',
     'index_add'

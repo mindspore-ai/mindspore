@@ -29,7 +29,6 @@
 #include "ops/mul.h"
 #include "ops/sub.h"
 #include "ops/ops_func_impl/square.h"
-#include "ops/assign.h"
 
 namespace {
 constexpr auto kRankSize = "rank_size";

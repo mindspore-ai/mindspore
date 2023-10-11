@@ -163,7 +163,6 @@ from .array_func import (
     deepcopy
 )
 from .parameter_func import (
-    assign,
     assign_add,
     assign_sub,
     index_add,
@@ -716,9 +715,10 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (sin, sinc, sinh)
+from ..auto_generate import (assign, sin, sinc, sinh)
 
 __all__ = [
+    'assign',
     'rank',
     'sin',
     'sinc',

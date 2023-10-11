@@ -82,12 +82,10 @@ bool AssignGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
 }
 
 bool AssignGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Assign>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_ptr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type.";
     return false;
   }
 

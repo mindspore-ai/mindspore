@@ -1,0 +1,10 @@
+#operator assign
+assign:
+    args:
+        variable:
+            dtype: tensor
+        value:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor

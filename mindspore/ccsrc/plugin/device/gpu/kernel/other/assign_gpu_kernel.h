@@ -25,7 +25,6 @@
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/assign.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/assign_helper.h"
 
 namespace mindspore {

@@ -119,7 +119,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      FractionalMaxPool, FractionalMaxPool3DWithFixedKsize, FractionalMaxPoolWithFixedKsize,
                      GridSampler2D, TripletMarginLoss, UpsampleNearest3D, UpsampleTrilinear3D, PadV3, ChannelShuffle,
                      GLU, MaxUnpool3D, Pdist)
-from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
+from .other_ops import (IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, UpdateState, Load, StopGradient,
                         CheckValid, Partial, Depend, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
                         SampleDistortedBoundingBoxV2)
@@ -138,7 +138,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
-                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh)
+                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh, Assign,)
 
 __all__ = [
     'HSVToRGB',
