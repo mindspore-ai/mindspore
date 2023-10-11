@@ -53,7 +53,7 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
   auto pooling_ratio = GetValue<std::vector<float>>(primitive->GetAttr(kPoolingRatio));

@@ -77,7 +77,7 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
                              << std::to_string(pooling_ratio[kInputIndex3]) << ".";
   }
 
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   const int64_t x_rank = 4;
   if (IsDynamicRank(x_shape)) {
     abstract::ShapePtr output_shape =

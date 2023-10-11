@@ -45,7 +45,7 @@ abstract::ShapePtr HSigmoidInferShape(const PrimitivePtr &primitive, const std::
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 

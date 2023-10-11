@@ -56,8 +56,8 @@ TypePtr InvGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
-  auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
+  auto dout = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto out = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 1, kObjectTypeTensorType);
   (void)abstract::CheckDtypeSame(prim_name, out, dout);
   auto x_type = input_args[kInputIndex0]->GetType();
   auto grad_type = input_args[kInputIndex1]->GetType();

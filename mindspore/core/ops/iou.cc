@@ -56,8 +56,8 @@ class IOUInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
 
     auto x_shape_ptr = input_args[kInputIndex0]->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape_ptr);
@@ -96,8 +96,8 @@ class IOUInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kIOUInputNums,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex1, kObjectTypeTensorType);
 
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
     std::map<std::string, TypePtr> types;

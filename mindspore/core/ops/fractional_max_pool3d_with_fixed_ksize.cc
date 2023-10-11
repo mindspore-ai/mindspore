@@ -95,8 +95,8 @@ void CheckInputParameter(const PrimitivePtr &primitive, const std::vector<Abstra
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
+  auto random_samples_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
   if (!IsDynamicRank(input_shape) && input_shape.size() != kDimSize4 && input_shape.size() != kDimSize5) {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'x' must be equal to 4 or 5, but got "
                             << std::to_string(input_shape.size()) << ".";
@@ -142,7 +142,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto data_format = GetValue<std::string>(primitive->GetAttr(kFormat));
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   if (data_format != "NCDHW" && data_format != "NDHWC") {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', data_format is neither NCDHW nor NDHWC." << data_format
                              << ".";

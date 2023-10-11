@@ -100,11 +100,11 @@ AbstractBasePtr KLDivLossInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto input_x = input_args[kInputIndex0];
   auto input_target = input_args[kInputIndex1];
   auto op_name = primitive->name();
-  if (!input_x->isa<abstract::AbstractTensor>()) {
+  if (input_x->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << op_name << ", logits should be a Tensor.";
   }
 
-  if (!input_target->isa<abstract::AbstractTensor>()) {
+  if (input_target->GetType()->object_type() != kObjectTypeTensorType) {
     MS_EXCEPTION(TypeError) << "For " << op_name << ", labels should be a Tensor.";
   }
 

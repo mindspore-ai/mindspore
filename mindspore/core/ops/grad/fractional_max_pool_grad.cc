@@ -52,10 +52,9 @@ abstract::ShapePtr FractionalMaxPoolGradInferShape(const PrimitivePtr &primitive
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
-  auto backprop_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  auto out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
+  auto backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("orig_input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
   (void)CheckAndConvertUtils::CheckInteger("orig_output_rank", SizeToLong(out_shape.size()), kEqual, x_rank, op_name);
   (void)CheckAndConvertUtils::CheckInteger("backprop_rank", SizeToLong(backprop_shape.size()), kEqual, x_rank, op_name);

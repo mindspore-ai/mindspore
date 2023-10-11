@@ -51,7 +51,7 @@ namespace {
 abstract::ShapePtr HShrinkInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, primitive->name());
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 

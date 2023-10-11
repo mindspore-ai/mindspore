@@ -38,6 +38,7 @@
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -46,10 +47,12 @@
 namespace mindspore {
 namespace ops {
 namespace {
-#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                    \
-  case (DTYPE): {                                                                       \
-    LENGTH_VALUE = static_cast<int64_t>(*static_cast<TYPE *>(LENGTH_TENSOR->data_c())); \
-    break;                                                                              \
+#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                        \
+  case (DTYPE): {                                                                           \
+    const auto &tensor_value = GetArrayValue<TYPE>(LENGTH_TENSOR).value().ToVector();       \
+    MS_EXCEPTION_IF_CHECK_FAIL(!tensor_value.empty(), "Tensor of window length is empty."); \
+    LENGTH_VALUE = static_cast<int64_t>(tensor_value.front());                              \
+    break;                                                                                  \
   }
 
 abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
@@ -64,13 +67,8 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInteger("length dim", length_size, kEqual, length_dim, primitive->name());
   auto value = input_args[0]->GetValue();
   MS_EXCEPTION_IF_NULL(value);
-  if (input_args[0]->isa<abstract::AbstractTensor>() && !value->isa<ValueAny>() && !value->isa<None>()) {
-    auto length = input_args[0]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(length);
-    auto length_value_ptr = length->GetValue();
-    MS_EXCEPTION_IF_NULL(length_value_ptr);
-    auto length_tensor = length_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(length_tensor);
+  if (input_args[0]->GetType()->object_type() == kObjectTypeTensorType && !value->isa<ValueAny>() &&
+      !value->isa<None>()) {
     auto input_type = input_args[0]->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     auto input_type_id = input_type->cast<TensorTypePtr>();
@@ -81,14 +79,14 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> out_shape;
     int64_t length_value = 0;
     switch (input_type_value) {
-      WINDOW_LENGTH_CASE(kNumberTypeInt8, int8_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeInt16, int16_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeInt32, int32_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeInt64, int64_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt8, uint8_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt16, uint16_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt32, uint32_t, length_value, length_tensor)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt64, uint64_t, length_value, length_tensor)
+      WINDOW_LENGTH_CASE(kNumberTypeInt8, int8_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeInt16, int16_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeInt32, int32_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeInt64, int64_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeUInt8, uint8_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeUInt16, uint16_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeUInt32, uint32_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeUInt64, uint64_t, length_value, value)
       default: {
         MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                                 << "', the dtype of 'length' should be integer data type, but got "
