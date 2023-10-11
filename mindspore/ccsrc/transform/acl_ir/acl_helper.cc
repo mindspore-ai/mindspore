@@ -165,14 +165,19 @@ bool NeedNDInput(const CNodePtr &cnode, const AnfNodePtr &input_node, const std:
   return false;
 }
 
-bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num) {
+bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num,
+                  const std::vector<std::string> &input_formats) {
   auto name = GetCNodeFuncName(cnode);
   if (kDefaultOutputNode.count(name) != 0) {
     return true;
   }
 
   if (input_num != output_num) {
-    return true;
+    if (output_num != 1 || input_formats.empty() ||
+        !std::all_of(input_formats.begin(), input_formats.end(),
+                     [&input_formats](const std::string &format) { return format == input_formats[0]; })) {
+      return true;
+    }
   }
 
   for (size_t i = 0; i < output_num; ++i) {
@@ -264,6 +269,23 @@ void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string
                     [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); })) {
       common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
     }
+  }
+}
+
+void RefreshRefFormat(const std::unordered_map<size_t, size_t> &ref_map, const std::vector<std::string> &input_formats,
+                      std::vector<std::string> *output_formats) {
+  if (ref_map.empty()) {
+    return;
+  }
+
+  for (auto [out_idx, in_idx] : ref_map) {
+    if (out_idx >= output_formats->size()) {
+      MS_LOG(EXCEPTION) << "Error output index:" << out_idx << " for refresh!";
+    }
+    if (in_idx >= input_formats.size()) {
+      MS_LOG(EXCEPTION) << "Error input index:" << in_idx << " for refresh!";
+    }
+    output_formats->at(out_idx) = input_formats[in_idx];
   }
 }
 }  // namespace
@@ -486,19 +508,24 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
       }
     }
     // Input and output number same's op forward.
-    if (NeedNDOutput(cnode, input_num, output_num)) {
+    if (NeedNDOutput(cnode, input_num, output_num, *input_formats)) {
       for (size_t i = 0; i < output_num; ++i) {
         auto shape = common::AnfAlgo::GetOutputInferShape(node, i);
         (void)output_formats->emplace_back(GET_DEFAULT_FORMAT(shape));
       }
     } else {
-      output_formats->assign(input_formats->begin(), input_formats->end());
+      if (output_num == 1) {
+        output_formats->emplace_back(input_formats->at(0));
+      } else {
+        output_formats->assign(input_formats->begin(), input_formats->end());
+      }
       SetOutputIdentityFlag(node, *output_formats);
     }
 
     if (!special_inputs.empty()) {
       common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
     }
+    RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
     return;
   }
 
@@ -506,6 +533,7 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
   GetOutputBuildInfo(node, output_num, acl_info, *input_formats, output_formats);
   SetOutputIdentityFlag(node, *output_formats);
+  RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
 }
 
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,
