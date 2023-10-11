@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,22 @@
 #ifndef AICPU_OPS_DROP_GEN_MASK_KERNELS_H_
 #define AICPU_OPS_DROP_GEN_MASK_KERNELS_H_
 
-#include <random>
-
 #include "common/kernel_base.h"
 
 namespace aicpu {
 class DropOutGenMaskKernel : public KernelBase {
  public:
   DropOutGenMaskKernel()
-      : KernelBase("DropOutGenMask"),
-        seed_(0),
-        seed2_(0),
-        keep_prob_(0),
-        count_(0),
-        g_key{0, 0},
-        g_offset{0, 0},
-        out_(nullptr) {}
+      : KernelBase("DropOutGenMask"), seed0_(0), seed1_(0), keep_prob_(0), count_(0), out_(nullptr) {}
 
   ~DropOutGenMaskKernel() = default;
 
-  uint64_t seed_;
-  uint64_t seed2_;
+  uint64_t seed0_;
+  uint64_t seed1_;
   float keep_prob_;
   uint64_t count_;
   uint64_t g_key[2];
   uint64_t g_offset[2];
-  std::default_random_engine rng_;
 
  protected:
   uint32_t DoCompute() override;
@@ -52,4 +42,3 @@ class DropOutGenMaskKernel : public KernelBase {
 };
 }  // namespace aicpu
 #endif
-// #endif  // AICPU_OPS_DROP_GEN_MASK_KERNELS_H_

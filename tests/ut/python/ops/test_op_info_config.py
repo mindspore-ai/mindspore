@@ -53,7 +53,7 @@ def test_op_info_config():
 
     hash_object = hashlib.md5(hash_list.encode('utf-8'))
     hash_value = hash_object.hexdigest()
-    expect_value = "35554b9fe7326abffaa10ae5dfa3428f"
+    expect_value = "6af67e6cb097d5206c761d20a8d94353"
     if hash_value != expect_value:
         log.error(
             "Hash value check failed! You have modified the registration file of TEB and AICPU, please check whether "
