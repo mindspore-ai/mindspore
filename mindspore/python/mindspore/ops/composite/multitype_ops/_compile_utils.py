@@ -756,10 +756,27 @@ def judge_tuple_index_dim(data, tuple_index):
     judge_tuple_index_dim_check_error(index_dim, data_dim)
 
 
+def judge_simple_tuple_index(data, tuple_index):
+    """Judge whether tuple_index is simple index, which not rollback to cpu ops."""
+    op_name = const_utils.TENSOR_GETITEM
+    indexes_types = hyper_map(toptypeof, tuple_index)
+    contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
+    return F.isconstant(tuple_index) and contain_type == const_utils.ALL_BASIC \
+        and F.is_sequence_value_unknown(F.shape(data)) and F.isconstant(F.rank(data))
+
+
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
     if not tuple_index:
         return data
+    if judge_simple_tuple_index(data, tuple_index):
+        tuple_index = convert_tupleslice_to_tensor(tuple_index)
+        op_name = const_utils.TENSOR_GETITEM
+        tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
+        min_data_dim, max_data_dim = 1, 8
+        const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+        return _tensor_getitem_by_tuple_slice(data, tuple_index)
+
     if not F.is_sequence_value_unknown(F.shape(data)):
         judge_tuple_index_dim(data, tuple_index)
     tuple_index, zero_index, non_zero_shapes = _handle_bool_tensor(tuple_index)
