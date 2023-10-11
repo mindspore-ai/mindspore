@@ -61,7 +61,13 @@ bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Te
   if (outputs.front() == nullptr) {
     return false;
   }
-  return outputs.front()->get_shape_changed() ||
+  return std::all_of(outputs.begin(), outputs.end(),
+                     [](const lite::Tensor *output) {
+                       if (output == nullptr) {
+                         return false;
+                       }
+                       return output->get_shape_changed();
+                     }) ||
          std::all_of(inputs.begin(), inputs.end(), [](const lite::Tensor *input) {
            if (input == nullptr) {
              return false;
