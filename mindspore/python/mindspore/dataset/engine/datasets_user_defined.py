@@ -150,7 +150,7 @@ def _convert_row(row):
     """
 
     # convert single item to np.array
-    prim_type = (int, float, str, bytes, np.ndarray, Tensor)
+    prim_type = (int, float, str, bytes, np.ndarray, Tensor, np.number, np.bool_)
     if isinstance(row, prim_type):
         if isinstance(row, Tensor):  # mindspore.Tensor
             item = row.asnumpy()
