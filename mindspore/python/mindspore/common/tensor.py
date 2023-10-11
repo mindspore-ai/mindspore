@@ -2100,20 +2100,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.argmin`.
         """
-        if self.shape == ():
-            return Tensor(0)
-        # P.Argmin only supports float
-        is_axis_none = False
-        a = self.astype(mstype.float32)
-        if axis is None:
-            a = a.ravel()
-            axis = 0
-        else:
-            axis = validator.check_axis_in_range(axis, a.ndim)
-        # P.Argmin is currently not supported
-        out = tensor_operator_registry.get('argmin')(axis)(a)
-        if keepdims and not is_axis_none:
-            out = out.expand_dims(axis)
+        self._init_check()
+        out = tensor_operator_registry.get('argmin')(self, axis, keepdims)
         return out
 
     def argmax_with_value(self, axis=0, keep_dims=False):
@@ -2880,55 +2868,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.diagonal`.
         """
-        ndim = self.ndim
-        if ndim < 2:
-            raise ValueError("For 'Tensor.diagonal', the original tensor requires at least two dimensions, "
-                             "but got {}.".format(ndim))
-        dtype = self.dtype
-
-        axes = validator.check_axis_valid((axis1, axis2), ndim)
-        perm = ()
-        for i in range(ndim):
-            if i not in axes:
-                perm += (i,)
-        perm += axes
-        a = self.transpose(perm)
-
-        shape = a.shape
-        n, m = shape[-2:]
-
-        e = tensor_operator_registry.get('eye')(n, m, dtype)
-        if offset >= m or offset <= -n:
-            zero_shape = shape[:-2] + (0,)
-            return tensor_operator_registry.get("zeros")(zero_shape, dtype)
-        if offset != 0:
-            e = e.astype(mstype.float32)
-            if offset > 0:
-                e_left = tensor_operator_registry.get('fill')(mstype.float32, (n, offset), 0)
-                e_right = e[..., 0:m - offset:1]
-                e = tensor_operator_registry.get('concatenate')(1)((e_left, e_right)).astype(dtype)
-            elif offset < 0:
-                e_upper = tensor_operator_registry.get('fill')(mstype.float32, (-offset, m), 0)
-                e_lower = e[0:n + offset:1, ...]
-                e = tensor_operator_registry.get('concatenate')(0)((e_upper, e_lower)).astype(dtype)
-        e = tensor_operator_registry.get('broadcast_to')(shape)(e)
-
-        prod = tensor_operator_registry.get('__mul__')(a, e)
-        res = tensor_operator_registry.get('reduce_sum')(prod.astype(mstype.float32), -1)
-
-        begin = ()
-        for _ in range(ndim - 2):
-            begin += (0,)
-        last_dim_begin = max(0, -offset)
-        begin += (last_dim_begin,)
-        size = res.shape[:-1]
-        last_dim_end = min(
-            shape[-2], max(0, shape[-1] - offset)) - last_dim_begin
-        if last_dim_end <= 0:
-            return Tensor([])
-        size += (last_dim_end,)
-        res = tensor_operator_registry.get('tensor_slice')(res, begin, size)
-        return res.astype(dtype)
+        self._init_check()
+        return tensor_operator_registry.get('diagonal')(self, offset, axis1, axis2)
 
     def diagonal_scatter(self, src, offset=0, dim1=0, dim2=1):
         r"""
