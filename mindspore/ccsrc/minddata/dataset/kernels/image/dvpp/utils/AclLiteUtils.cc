@@ -438,7 +438,9 @@ void Trim(std::string &str) {
   if (str.empty()) {
     return;
   }
-  int32_t i, start_pos, end_pos;
+  int32_t i;
+  int32_t start_pos;
+  int32_t end_pos;
   for (i = 0; i < str.size(); ++i) {
     if (!IsSpace(str[i])) {
       break;
@@ -498,7 +500,9 @@ bool ReadConfig(std::map<std::string, std::string> &config, const char *configFi
   if (!infile) {
     return false;
   }
-  std::string line, key, value;
+  std::string line;
+  std::string key;
+  std::string value;
   while (getline(infile, line)) {
     if (AnalyseLine(line, key, value)) {
       config[key] = value;

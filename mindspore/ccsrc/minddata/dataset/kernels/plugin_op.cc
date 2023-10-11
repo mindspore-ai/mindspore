@@ -68,7 +68,8 @@ Status PluginOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   // Compute should quit if init fails. Error code has already been logged, no need to repeat
   RETURN_IF_NOT_OK(init_code_);
-  std::vector<plugin::Tensor> in_row, out_row;
+  std::vector<plugin::Tensor> in_row;
+  std::vector<plugin::Tensor> out_row;
   RETURN_IF_NOT_OK(TensorRowToPlugin(input, &in_row));
   plugin::Status rc = plugin_op_->Compute(&in_row, &out_row);
   CHECK_FAIL_RETURN_UNEXPECTED(rc.IsOk(), rc.ToString());

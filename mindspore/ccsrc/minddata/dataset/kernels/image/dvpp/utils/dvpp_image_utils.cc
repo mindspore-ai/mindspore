@@ -52,6 +52,10 @@
 
 namespace mindspore {
 namespace dataset {
+const auto kChannelIndexNHWC = 3;
+const auto kNHWCImageRank = 4;
+const auto kWidthIndexNHWC = 2;
+
 APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
                      std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
                      double fx, double fy, InterpolationMode mode) {
@@ -62,11 +66,12 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be HWC
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_RESIZE_FAIL;
   }
-  if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != 1) {
     MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";  // C == 3 or 1
     return APP_ERR_DVPP_RESIZE_FAIL;
   }
@@ -77,18 +82,18 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     MS_LOG(ERROR) << "DvppResize: in_image rows out of bounds.";
     return APP_ERR_DVPP_RESIZE_FAIL;
   }
-  if ((std::numeric_limits<int>::max() / kResizeShapeLimits) <= input->GetShape().AsVector()[2]) {
+  if ((std::numeric_limits<int>::max() / kResizeShapeLimits) <= input->GetShape().AsVector()[kWidthIndexNHWC]) {
     MS_LOG(ERROR) << "DvppResize: in_image cols out of bounds.";
     return APP_ERR_DVPP_RESIZE_FAIL;
   }
   if (output_height > input->GetShape().AsVector()[1] * kResizeShapeLimits ||
-      output_width > input->GetShape().AsVector()[2] * kResizeShapeLimits) {
+      output_width > input->GetShape().AsVector()[kWidthIndexNHWC] * kResizeShapeLimits) {
     std::string err_msg =
       "DvppResize: the resizing width or height is too big, it's 1000 times bigger than the original image, got output "
       "height: " +
       std::to_string(output_height) + ", width: " + std::to_string(output_width) +
       ", and original image size:" + std::to_string(input->GetShape().AsVector()[1]) + ", " +
-      std::to_string(input->GetShape().AsVector()[2]);
+      std::to_string(input->GetShape().AsVector()[kWidthIndexNHWC]);
     MS_LOG(ERROR) << err_msg;
     return APP_ERR_DVPP_RESIZE_FAIL;
   }
@@ -142,8 +147,9 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     }
 
     // call DVPP step3
-    ret = acldvppResize(workspace_addr, workspace_size, executor,
-                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppResize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -154,8 +160,9 @@ APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
-    ret = acldvppResize(nullptr, workspace_size, executor,
-                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppResize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -203,9 +210,9 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
     }
 
     // call DVPP step3
-    ret =
-      acldvppDecodeJpeg(workspace_addr, workspace_size, executor,
-                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppDecodeJpeg(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -216,9 +223,9 @@ APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
     (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
-    ret =
-      acldvppDecodeJpeg(nullptr, workspace_size, executor,
-                        (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppDecodeJpeg(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -240,13 +247,13 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_NORMALIZE_FAIL;
   }
 
   if (!is_hwc) {
-    if (input->GetShape().AsVector()[1] != 3 && input->GetShape().AsVector()[1] != 1) {
+    if (input->GetShape().AsVector()[1] != kDefaultImageChannel && input->GetShape().AsVector()[1] != 1) {
       MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";  // C == 3 or 1
       return APP_ERR_DVPP_NORMALIZE_FAIL;
     }
@@ -257,13 +264,14 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
       return APP_ERR_DVPP_NORMALIZE_FAIL;
     }
   } else {
-    if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+    if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+        input->GetShape().AsVector()[kChannelIndexNHWC] != 1) {
       MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";  // C == 3 or 1
       return APP_ERR_DVPP_NORMALIZE_FAIL;
     }
 
     // the channel should be equal to the size of mean
-    if (mean.size() != std.size() || std.size() != input->GetShape().AsVector()[3]) {
+    if (mean.size() != std.size() || std.size() != input->GetShape().AsVector()[kChannelIndexNHWC]) {
       MS_LOG(ERROR) << "The channel is not equal to the size of mean or std.";
       return APP_ERR_DVPP_NORMALIZE_FAIL;
     }
@@ -320,9 +328,9 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     }
 
     // call DVPP step3
-    ret =
-      acldvppNormalize(workspace_addr, workspace_size, executor,
-                       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppNormalize(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -333,9 +341,9 @@ APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
     (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
-    ret =
-      acldvppNormalize(nullptr, workspace_size, executor,
-                       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppNormalize(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -356,13 +364,14 @@ APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &in
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL;
   }
 
   // the channel should be equal to 3 or 1
-  if (input->GetShape().AsVector()[3] != 3 && input->GetShape().AsVector()[3] != 1) {
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel &&
+      input->GetShape().AsVector()[kChannelIndexNHWC] != 1) {
     MS_LOG(ERROR) << "The input data's channel is not 3 or 1.";
     return APP_ERR_DVPP_ADJUST_BRIGHTNESS_FAIL;
   }
@@ -414,7 +423,7 @@ APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &in
     // call DVPP step3
     ret = acldvppAdjustBrightness(
       workspace_addr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -427,7 +436,7 @@ APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &in
     // call DVPP step3
     ret = acldvppAdjustBrightness(
       nullptr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -448,13 +457,13 @@ APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &inpu
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_ADJUST_CONTRAST_FAIL;
   }
 
   // the channel should be equal to 3
-  if (input->GetShape().AsVector()[3] != 3) {
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != kDefaultImageChannel) {
     MS_LOG(ERROR) << "The input data's channel is not 3.";
     return APP_ERR_DVPP_ADJUST_CONTRAST_FAIL;
   }
@@ -506,7 +515,7 @@ APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &inpu
     // call DVPP step3
     ret = acldvppAdjustContrast(
       workspace_addr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -519,7 +528,7 @@ APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &inpu
     // call DVPP step3
     ret = acldvppAdjustContrast(
       nullptr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -540,7 +549,7 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_ADJUST_HUE_FAIL;
   }
@@ -596,9 +605,9 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
     }
 
     // call DVPP step3
-    ret =
-      acldvppAdjustHue(workspace_addr, workspace_size, executor,
-                       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppAdjustHue(
+      workspace_addr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -609,9 +618,9 @@ APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
     (void)input->GetDeviceContext()->device_res_manager_->FreeMemory(workspace_addr);
   } else {
     // call DVPP step3
-    ret =
-      acldvppAdjustHue(nullptr, workspace_size, executor,
-                       (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+    ret = acldvppAdjustHue(
+      nullptr, workspace_size, executor,
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {
@@ -632,7 +641,7 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
   }
 
   // the input should be 1HWC or 1CHW
-  if (input->GetShape().Rank() != 4) {
+  if (input->GetShape().Rank() != kNHWCImageRank) {
     MS_LOG(ERROR) << "The input data's dims is not 4.";  // NHWC
     return APP_ERR_DVPP_ADJUST_SATURATION_FAIL;
   }
@@ -690,7 +699,7 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
     // call DVPP step3
     ret = acldvppAdjustSaturation(
       workspace_addr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
 
     if (!input->GetDeviceContext()->device_res_manager_->SyncStream(input->GetStreamID())) {
       MS_LOG(ERROR) << "SyncStream stream id: " << std::to_string(input->GetStreamID()) << " failed.";
@@ -703,7 +712,7 @@ APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &in
     // call DVPP step3
     ret = acldvppAdjustSaturation(
       nullptr, workspace_size, executor,
-      (aclrtStream)input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID()));
+      static_cast<aclrtStream>(input->GetDeviceContext()->device_res_manager_->GetStream(input->GetStreamID())));
   }
 
   if (ret != ACL_SUCCESS) {

@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_IMAGE_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_UTILS_DVPP_IMAGE_UTILS_H_
 
-#include <setjmp.h>
+#include <csetjmp>
 
 #include <memory>
 #include <random>

@@ -672,10 +672,11 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_convert;
     std::shared_ptr<Tensor> output_tensor;
-    TensorShape new_shape = TensorShape({input_height, input_width, 3});
+    constexpr auto kInputChannel = 3;
+    TensorShape new_shape = TensorShape({input_height, input_width, kInputChannel});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    lite_mat_convert.Init(input_width, input_height, 3, reinterpret_cast<void *>(buffer),
+    lite_mat_convert.Init(input_width, input_height, kInputChannel, reinterpret_cast<void *>(buffer),
                           GetLiteCVDataType(input->type()));
     CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_convert.IsEmpty(),
                                  "RgbToBgr: Init image tensor failed, return empty tensor.");
@@ -799,6 +800,8 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
+    // The 2D affine transformation matrix consists of 6 parameters (a, b, c, d, e, f)
+    // 0, 1, 2, 3, 4, 5 is the 6 parameters
     if (orientation == 3) {
       height = lite_mat_rgb.height_;
       width = lite_mat_rgb.width_;
@@ -864,6 +867,8 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
+    // The 2D affine transformation matrix consists of 6 parameters (a, b, c, d, e, f)
+    // 0, 1, 2, 3, 4, 5 is the 6 parameters
     if (orientation == 2) {
       height = lite_mat_rgb.height_;
       width = lite_mat_rgb.width_;

@@ -46,21 +46,26 @@ Status ValidShape(TensorShape *input_shape, bool is_hwc) {
     return Status::OK();
   }
 
+  const auto kChannelIndexHWC = 2;
+  const auto kChannelIndexNHWC = 3;
+  const auto kDefaultImageChannel = 3;
   if (is_hwc) {
     // change the shape from HWC to 1HWC
     if (input_shape->Rank() == kMinImageRank) {  // expand HW to 1HW1
       *input_shape = input_shape->AppendDim(1);
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank) {  // expand HWC to 1HWC
-      if (input_shape->AsVector()[2] != 1 && input_shape->AsVector()[2] != 3) {
+      if (input_shape->AsVector()[kChannelIndexHWC] != 1 &&
+          input_shape->AsVector()[kChannelIndexHWC] != kDefaultImageChannel) {
         RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [H,W,C] is not 1 or 3, but got: " +
-                                 std::to_string(input_shape->AsVector()[2]));
+                                 std::to_string(input_shape->AsVector()[kChannelIndexHWC]));
       }
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank + 1) {  // NHWC
-      if (input_shape->AsVector()[3] != 1 && input_shape->AsVector()[3] != 3) {
+      if (input_shape->AsVector()[kChannelIndexNHWC] != 1 &&
+          input_shape->AsVector()[kChannelIndexNHWC] != kDefaultImageChannel) {
         RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [N,H,W,C] is not 1 or 3, but got: " +
-                                 std::to_string(input_shape->AsVector()[3]));
+                                 std::to_string(input_shape->AsVector()[kChannelIndexNHWC]));
       }
       if (input_shape->AsVector()[0] != 1) {
         RETURN_STATUS_UNEXPECTED("The input tensor NHWC should be 1HWC or HWC.");
@@ -74,13 +79,13 @@ Status ValidShape(TensorShape *input_shape, bool is_hwc) {
       *input_shape = input_shape->PrependDim(1);
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank) {  // expand CHW to 1CHW
-      if (input_shape->AsVector()[0] != 1 && input_shape->AsVector()[0] != 3) {
+      if (input_shape->AsVector()[0] != 1 && input_shape->AsVector()[0] != kDefaultImageChannel) {
         RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [C,H,W] is not 1 or 3, but got: " +
                                  std::to_string(input_shape->AsVector()[0]));
       }
       *input_shape = input_shape->PrependDim(1);
     } else if (input_shape->Rank() == kDefaultImageRank + 1) {  // NCHW
-      if (input_shape->AsVector()[1] != 1 && input_shape->AsVector()[1] != 3) {
+      if (input_shape->AsVector()[1] != 1 && input_shape->AsVector()[1] != kDefaultImageChannel) {
         RETURN_STATUS_UNEXPECTED("The channel of the input tensor of shape [N,C,H,W] is not 1 or 3, but got: " +
                                  std::to_string(input_shape->AsVector()[1]));
       }

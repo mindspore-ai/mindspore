@@ -43,10 +43,6 @@ class DvppResizeOp : public TensorOp {
   explicit DvppResizeOp(int32_t size1, int32_t size2 = kDefWidth, InterpolationMode interpolation = kDefInterpolation)
       : size1_(size1), size2_(size2), interpolation_(interpolation) {}
 
-  DvppResizeOp(const DvppResizeOp &rhs) = default;
-
-  DvppResizeOp(DvppResizeOp &&rhs) = default;
-
   ~DvppResizeOp() override = default;
 
   void Print(std::ostream &out) const override { out << Name() << ": " << size1_ << " " << size2_; }

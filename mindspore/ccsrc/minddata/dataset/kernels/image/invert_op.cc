@@ -46,7 +46,8 @@ Status InvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
     RETURN_UNEXPECTED_IF_NULL(output_cv);
 
-    output_cv->mat() = cv::Scalar::all(255.0) - input_img;
+    constexpr auto kMaxPixel = 255.0;
+    output_cv->mat() = cv::Scalar::all(kMaxPixel) - input_img;
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Invert: " + std::string(e.what()));

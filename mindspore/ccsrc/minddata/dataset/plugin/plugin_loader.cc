@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ Status PluginLoader::LoadPlugin(const std::string &filename, plugin::PluginManag
   *singleton_plugin = get_instance(nullptr);  // call function ptr to get instance
   RETURN_UNEXPECTED_IF_NULL(*singleton_plugin);
 
-  std::string v1 = (*singleton_plugin)->GetPluginVersion(), v2(plugin::kSharedIncludeVersion);
+  std::string v1 = (*singleton_plugin)->GetPluginVersion();
+  std::string v2(plugin::kSharedIncludeVersion);
   if (v1 != v2) {
     std::string err_msg = "[Internal ERROR] expected:" + v2 + ", received:" + v1 + " please recompile.";
     if (SharedLibUtil::Close(handle) != 0) {

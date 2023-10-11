@@ -28,8 +28,9 @@ RandomColorOp::RandomColorOp(float t_lb, float t_ub) : rnd_(GetSeed()), dist_(t_
 Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (input->Rank() != kDefaultImageRank || input->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
-    RETURN_STATUS_UNEXPECTED("RandomColor: image shape is not <H,W,C> or channel is not 3, got rank: " +
-                             std::to_string(input->Rank()) + ", and channel: " + std::to_string(input->shape()[2]));
+    RETURN_STATUS_UNEXPECTED(
+      "RandomColor: image shape is not <H,W,C> or channel is not 3, got rank: " + std::to_string(input->Rank()) +
+      ", and channel: " + std::to_string(input->shape()[kChannelIndexHWC]));
   }
   // 0.5 pixel precision assuming an 8 bit image
   const auto eps = 0.00195;

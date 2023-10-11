@@ -37,23 +37,29 @@ Status DvppNormalizeV2Op::Compute(const std::shared_ptr<DeviceTensorAscend910B> 
   IO_CHECK(input, output);
 
   // the input should be 1HWC
-  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == 4,
+  const auto kNHWCImageRank = 4;
+  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == kNHWCImageRank,
                                "DvppNormalize: The input data's dims is not 4.");  // NHWC
 
+  const auto kDefaultImageChannel = 3;
+  const auto kChannelIndexNHWC = 3;
   if (!is_hwc_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[1] == 3 || input->GetShape().AsVector()[1] == 1,
-                                 "DvppNormalize: The input data's channel is not 3 or 1.");  // C == 3 or 1
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input->GetShape().AsVector()[1] == kDefaultImageChannel || input->GetShape().AsVector()[1] == 1,
+      "DvppNormalize: The input data's channel is not 3 or 1.");  // C == 3 or 1
 
     // the channel should be equal to the size of mean
     CHECK_FAIL_RETURN_UNEXPECTED(mean_.size() == std_.size() && std_.size() == input->GetShape().AsVector()[1],
                                  "DvppNormalize: The channel is not equal to the size of mean or std.");
   } else {
-    CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[3] == 3 || input->GetShape().AsVector()[3] == 1,
+    CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel ||
+                                   input->GetShape().AsVector()[kChannelIndexNHWC] == 1,
                                  "DvppNormalize: The input data's channel is not 3 or 1.");  // C == 3 or 1
 
     // the channel should be equal to the size of mean
-    CHECK_FAIL_RETURN_UNEXPECTED(mean_.size() == std_.size() && std_.size() == input->GetShape().AsVector()[3],
-                                 "DvppNormalize: The channel is not equal to the size of mean or std.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      mean_.size() == std_.size() && std_.size() == input->GetShape().AsVector()[kChannelIndexNHWC],
+      "DvppNormalize: The channel is not equal to the size of mean or std.");
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[0] == 1,
