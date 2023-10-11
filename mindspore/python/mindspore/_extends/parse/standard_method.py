@@ -843,17 +843,7 @@ def argmax(x, axis=None, keepdims=False):
         >>> print(a.argmax())
         5
     """
-    is_axis_none = False
-    if axis is None:
-        x = ravel(x)
-        axis = 0
-        is_axis_none = True
-    if x.dtype == mstype.bool_:
-        x = x.astype(mstype.int32)
-    out = P.Argmax(axis, mstype.int64)(x)
-    if keepdims and not is_axis_none:
-        out = expand_dims(out, axis)
-    return out
+    return F.argmax(x, axis, keepdims)
 
 
 def argmin(x, axis=None, keepdims=False):
