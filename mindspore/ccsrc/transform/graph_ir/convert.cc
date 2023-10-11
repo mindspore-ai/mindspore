@@ -3392,6 +3392,28 @@ void DfGraphConvertor::ConvertPrint(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertLoad(const CNodePtr &node) {
+  auto nodes = node->inputs();
+  bool need_constant = false;
+  for (size_t i = 1; i < nodes.size(); ++i) {
+    if (IsPrimitiveCNode(nodes[i], prim::kPrimAllGather) || IsPrimitiveCNode(nodes[i], prim::kPrimDepend)) {
+      need_constant = true;
+    }
+  }
+  if (!need_constant) {
+    return;
+  }
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  (void)op->SetAttr("no_need_constant_folding", need_constant);
+  (void)op->SetAttr("_cannot_be_deleted", need_constant);
+  op_cache_[node.get()] = op;
+}
+
 void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   MS_LOG(INFO) << "Add Hcom fusion_id";
   OpAdapterPtr adpt = FindAdapter(node, training_);
@@ -3427,7 +3449,11 @@ void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   } else if (fusion < 0) {
     fusion = kHcclFusionDefault;
   }
-
+  // For now, fusion of allgather may cause OOM, so do not fusion them.
+  if (IsPrimitiveCNode(node, prim::kPrimAllGather)) {
+    fusion = 0;
+    fusion_id = 0;
+  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto not_cut_env = common::GetEnv("GE_NOT_CUT");
@@ -3627,6 +3653,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       // Convert hccl op for comm handle
       {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertHcomFusionId},
       {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcomFusionId},
+      {prim::kPrimLoad->name(), &DfGraphConvertor::ConvertLoad},
       {prim::kPrimBroadcast->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
