@@ -1930,6 +1930,7 @@ class Normalize(ImageTensorOperation):
             ...                                                 input_columns=["image"])
             >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]).device("Ascend")
             >>> image_folder_dataset = image_folder_dataset.map(operations=normalize_op, input_columns=["image"])
+
         Tutorial Examples:
             - `Illustration of vision transforms
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
