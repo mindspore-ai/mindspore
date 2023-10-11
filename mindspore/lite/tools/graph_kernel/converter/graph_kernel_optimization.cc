@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <map>
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "ir/func_graph.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -43,6 +44,7 @@
 #include "tools/graph_kernel/converter/kernel_builder.h"
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
+#include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -52,6 +54,7 @@ constexpr size_t kStageCluster = 1;
 constexpr size_t kStageHLO1 = 2;
 constexpr size_t kStageSplit = 3;
 constexpr size_t kStageBuildKernel = 4;
+constexpr size_t kStagePostProcess = 5;
 
 class EmptyPass : public opt::Pass {
  public:
@@ -131,6 +134,12 @@ GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
   return pm;
 }
 
+GkPassManagerPtr GraphKernelOptimizer::PostProcess() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePostProcess, "postprocess");
+  pm->Add(std::make_shared<RenameFullnameWithScope>(), OptLevel_1);
+  return pm;
+}
+
 std::unordered_set<std::string> CheckSupport() {
   std::unordered_set<std::string> support_backend;
 #ifdef AKG_USE_LLVM
@@ -191,6 +200,7 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   optimizer->AddPassManager(HighLevelOpt1());
   optimizer->AddPassManager(Split());
   optimizer->AddPassManager(BuildKernel());
+  optimizer->AddPassManager(PostProcess());
 
   auto mng = func_graph->manager();
   if (mng == nullptr) {
