@@ -153,6 +153,5 @@ REG_BPROP_BUILDER("tuple_greater_than").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("list_greater_than").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("tuple_greater_equal").SetBody(ReturnZeros);
 REG_BPROP_BUILDER("list_greater_equal").SetBody(ReturnZeros);
-REG_BPROP_BUILDER("DictInplaceSetItem").SetBody(ReturnZeros);
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
