@@ -18,15 +18,15 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_IM2COL_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/im2col.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 
 namespace mindspore {
 namespace lite {
-using mindspore::ops::kNameIm2Col;
+using mindspore::lite::acl::kNameIm2col;
 
 class Im2ColMapper : public PrimitiveMapper {
  public:
-  Im2ColMapper() : PrimitiveMapper(kNameIm2Col) {}
+  Im2ColMapper() : PrimitiveMapper(kNameIm2col) {}
   ~Im2ColMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
