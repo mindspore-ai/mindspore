@@ -404,8 +404,10 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
     // Resize of workspaces, because of the dynamic size of workspace.
     if (workspace_size < workspace_sizes.size()) {
       for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
-        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_sizes[i], "",
-                                                                                       kTypeUnknown, ShapeVector());
+        auto kernel_tensor = std::make_shared<KernelTensor>(
+          nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
+          device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                       << " addr:" << device_address;
         AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());  // set to kernel_info
@@ -462,8 +464,10 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensorsDynamic(
   std::vector<kernel::KernelTensor *> workspaces;
   workspaces.reserve(workspace_sizes.size());
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
-    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_sizes[i], "",
-                                                                                   kTypeUnknown, ShapeVector());
+    auto kernel_tensor = std::make_shared<KernelTensor>(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector(),
+                                                        device_context->device_context_key().device_name_,
+                                                        device_context->device_context_key().device_id_);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -550,11 +554,13 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   auto format = cached_device_address->format();
   auto dtype = cached_device_address->type_id();
-  auto shape = tensor->shape();
+  const auto &shape = tensor->shape();
   size_t tensor_size = GetTensorDeviceSize(device_context, node, shape, format, dtype, 0);
 
-  auto new_device_address =
-    device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, format, dtype, tensor->shape());
+  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size, format, dtype, shape,
+                                                                  device_context->device_context_key().device_name_,
+                                                                  device_context->device_context_key().device_id_);
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
   MS_EXCEPTION_IF_NULL(new_device_address);
   new_device_address->set_from_persistent_mem(tensor->is_parameter());
   if (!skip_sync) {
@@ -571,6 +577,7 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
 
   cached_device_address->set_ptr(new_device_address->GetMutablePtr());
   cached_device_address->set_host_shape(new_device_address->host_shape());
+  cached_device_address->kernel_tensor()->SetShapeVector(new_device_address->host_shape());
   cached_device_address->SetSize(new_device_address->GetSize());
   return new_device_address;
 }
@@ -585,6 +592,7 @@ void UpdateTensorCache(const DeviceContext *device_context, const device::Device
   auto size = GetTensorDeviceSize(device_context, node, tensor->shape(), format, cached_device_address->type_id(), 0);
   cached_device_address->SetSize(size);
   cached_device_address->set_host_shape(tensor->shape());
+  cached_device_address->kernel_tensor()->SetShapeVector(tensor->shape());
   cached_device_address->set_ptr(input_device_address->GetMutablePtr());
 }
 
@@ -790,6 +798,8 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
     output_address->set_from_mem_pool(input_address->from_mem_pool());
     output_address->set_from_persistent_mem(input_address->from_persistent_mem());
     output_address->set_host_shape(input_address->host_shape());
+    output_address->kernel_tensor()->SetShapeVector(input_address->host_shape());
+
     for (size_t index = 0; index < op_compiler_info->outputs_.size(); ++index) {
       if (output_address == op_compiler_info->outputs_[index]) {
         if ((*device_address_list)[index] == nullptr) {

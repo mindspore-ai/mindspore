@@ -888,11 +888,36 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
   return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
 }
 
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  // Get output kernel tensor in device address if exists.
+  if (kernel_info->OutputAddrExist(output_idx)) {
+    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+  }
+
+  // Get output kernel tensor if exists.
+  if (kernel_info->OutputKernelTensorExist(output_idx)) {
+    return kernel_info->GetOutputKernelTensor(output_idx);
+  }
+
+  MS_LOG(EXCEPTION) << "Can not find kernel tensor for node : " << node->DebugString()
+                    << ", output index: " << output_idx;
+}
+
 const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
 
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
+
+  // Get output kernel tensor in device address if exists.
+  if (kernel_info->OutputAddrExist(output_idx)) {
+    return kernel_info->GetOutputAddr(output_idx)->kernel_tensor();
+  }
+
   // Get output kernel tensor if exists.
   if (kernel_info->OutputKernelTensorExist(output_idx)) {
     return kernel_info->GetOutputKernelTensor(output_idx);
@@ -948,6 +973,24 @@ std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllOutputKernelTenso
     output_kernel_tensors[output_idx] = GetOrCreateOutputKernelTensor(node, output_idx).get();
   }
   return output_kernel_tensors;
+}
+
+KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
+  const AnfWithOutIndex &node_with_index, void *const device_ptr, size_t size, const string &format, TypeId dtype_id,
+  const ShapeVector &host_shape, const std::string &device_name, uint32_t device_id, const UserDataPtr &user_data) {
+  auto kernel_tensor = GetOrCreateOutputKernelTensor(node_with_index.first, node_with_index.second);
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+
+  kernel_tensor->set_device_ptr(device_ptr);
+  kernel_tensor->set_size(size);
+  kernel_tensor->SetStringFormat(format);
+  kernel_tensor->set_dtype_id(dtype_id);
+  kernel_tensor->set_host_shape(host_shape);
+  kernel_tensor->set_device_name(device_name);
+  kernel_tensor->set_device_id(device_id);
+  kernel_tensor->set_user_data(user_data);
+
+  return kernel_tensor;
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetNodeInputSizeList(const AnfNodePtr &node) {

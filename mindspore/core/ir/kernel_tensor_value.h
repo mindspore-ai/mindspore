@@ -55,9 +55,6 @@ class MS_CORE_API KernelTensorValue : public Value {
 
   ~KernelTensorValue() = default;
 
-  KernelTensorValue(const KernelTensorValue &other) = delete;
-  KernelTensorValue &operator=(const KernelTensorValue &other) = delete;
-
   MS_DECLARE_PARENT(KernelTensorValue, Value)
 
   bool operator==(const Value &other) const override;

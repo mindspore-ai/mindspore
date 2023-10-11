@@ -42,6 +42,8 @@ class CPUDeviceResManager : public DeviceResManager {
                                        const ShapeVector &shape = ShapeVector(),
                                        const UserDataPtr &user_data = nullptr) const override;
 
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
+
   bool LoadCollectiveCommLib() override;
 
   // Relevant function to allocate and free device memory of raw ptr.

@@ -49,15 +49,7 @@ bool KernelInfo::SetOutputKernelTensor(const KernelTensorPtr &kernel_tensor, siz
     return false;
   }
 
-  // Update kernel tensor in KernelInfo if device address exists.
-  if (OutputAddrExist(index) && kernel_tensor != nullptr) {
-    const auto &kernel_tensor_in_device_address = GetMutableOutputAddr(index)->kernel_tensor();
-    MS_EXCEPTION_IF_NULL(kernel_tensor_in_device_address);
-    kernel_tensor_in_device_address->CopyAbstractInfo(std::move(*kernel_tensor));
-    output_kernel_tensor_list_[index] = kernel_tensor_in_device_address;
-  } else {
-    output_kernel_tensor_list_[index] = kernel_tensor;
-  }
+  output_kernel_tensor_list_[index] = kernel_tensor;
   return true;
 }
 
@@ -110,15 +102,6 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
   }
   output_address_list_[index] = output_address;
 
-  // Update kernel tensor in device address if exist kernel tensor in KernelInfo.
-  if (OutputKernelTensorExist(index) && output_address != nullptr) {
-    const auto &kernel_tensor_in_kernel_info = GetOutputKernelTensor(index);
-    const auto &kernel_tensor_in_device_address = output_address->kernel_tensor();
-    MS_EXCEPTION_IF_NULL(kernel_tensor_in_kernel_info);
-    MS_EXCEPTION_IF_NULL(kernel_tensor_in_device_address);
-    kernel_tensor_in_device_address->CopyAbstractInfo(std::move(*kernel_tensor_in_kernel_info));
-    output_kernel_tensor_list_[index] = kernel_tensor_in_device_address;
-  }
   return true;
 }
 

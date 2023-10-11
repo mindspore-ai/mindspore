@@ -189,8 +189,10 @@ void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device:
     auto size = pre_node_out_device_address->GetSize();
     std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);
-    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
-      const_cast<void *>(ptr), size, output_format, output_type, trans::GetRuntimePaddingShape(output, 0));
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {output, 0}, const_cast<void *>(ptr), size, output_format, output_type, trans::GetRuntimePaddingShape(output, 0),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     // If graph has the flag kFlagEnableZeroCopyInGraph, it means the graph should run in graph mode, the device
     // address of graph output should not be persisted, and its output addr will be replaced after RunGraph.
     // As we fetch the output device address of a nopnode, we can only get the input device address of it, so we

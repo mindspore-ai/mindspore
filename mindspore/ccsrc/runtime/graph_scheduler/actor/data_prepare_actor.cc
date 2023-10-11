@@ -398,9 +398,8 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   // Update kernel tensor shape and type by abstract.
   const auto &abstract = input_node->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
-  const auto &output_kernel_tensor = AnfAlgo::GetOrCreateOutputKernelTensor(input_node, 0);
+  const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(input_node, 0);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
-  output_kernel_tensor->SetType(abstract->GetType());
   output_kernel_tensor->SetShape(abstract->GetShape());
 }
 

@@ -157,6 +157,14 @@ DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(void *const device_
   return device_address;
 }
 
+DeviceAddressPtr AscendDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto device_address = std::make_shared<AscendDeviceAddress>(kernel_tensor);
+
+  device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
+  return device_address;
+}
+
 bool AscendDeviceResManager::CreateStream(size_t *stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";

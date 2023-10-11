@@ -21,6 +21,8 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
+#include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
 
 namespace mindspore {
@@ -134,6 +136,19 @@ DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(void *const device_ptr,
                                                                   device_context_->device_context_key_.device_name_,
                                                                   device_context_->device_context_key_.device_id_);
     device_address->set_host_shape(shape);
+    return device_address;
+  }
+}
+
+DeviceAddressPtr GeDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (common::IsEnableRefMode()) {
+    auto device_address = std::make_shared<AscendDeviceAddress>(kernel_tensor);
+    device_address->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
+    return device_address;
+  } else {
+    auto device_address = std::make_shared<cpu::CPUDeviceAddress>(kernel_tensor);
+    device_address->set_device_synchronizer(std::make_shared<cpu::CPUDeviceSynchronizer>());
     return device_address;
   }
 }

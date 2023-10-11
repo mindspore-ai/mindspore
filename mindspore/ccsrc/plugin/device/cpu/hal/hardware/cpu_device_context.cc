@@ -203,6 +203,18 @@ DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   return device_address;
 }
 
+DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto device_address = std::make_shared<CPUDeviceAddress>(kernel_tensor);
+
+  const auto &user_data = kernel_tensor->user_data();
+  if (user_data != nullptr) {
+    FillUserData(user_data, device_address.get());
+  }
+  device_address->set_device_synchronizer(std::make_shared<CPUDeviceSynchronizer>());
+  return device_address;
+}
+
 void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();

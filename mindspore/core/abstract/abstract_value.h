@@ -1015,12 +1015,6 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   size_t space_num_{0};
   AbstractBasePtr dynamic_len_element_abs_ = nullptr;
   bool dyn_len_arg_ = false;
-  // For Tuple/List (all elements must be Tensor and Scalar) type, the shape_vector_ is a list
-  // consists of the shape of all elements in Typle/List. For example, if a Tuple of the structure ((8,16), (8,16))
-  // contains two Tensors of shape (8, 16), then shape_vector_ is std::vector<ShapeVector>{{8, 16}, {8, 16}}. A Tuple
-  // with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this Tuple is
-  // std::vector<ShapeVector>{{}, {}}.
-  std::vector<ShapeVector> shape_vector_{};
 };
 using AbstractSequencePtr = std::shared_ptr<AbstractSequence>;
 

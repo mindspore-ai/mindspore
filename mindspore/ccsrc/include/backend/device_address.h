@@ -66,6 +66,8 @@ class RuntimeUtils;
 namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+using kernel::KernelTensor;
+using kernel::KernelTensorPtr;
 
 struct StorageInfo {
   void *host_ptr_{nullptr};
@@ -97,13 +99,15 @@ constexpr size_t kDeviceAddressFlagIgnoreDevicePtr = 4;
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
+  explicit DeviceAddress(const KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
+
   explicit DeviceAddress(void *ptr, size_t size) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
   }
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
     kernel_tensor_->SetStringFormat(format);
@@ -112,7 +116,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index)
       : node_index_(node_index) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
     kernel_tensor_->SetStringFormat(format);
@@ -120,7 +124,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 
   explicit DeviceAddress(void *ptr, size_t size, const std::string &device_name, uint32_t device_id) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
     kernel_tensor_->set_device_name(device_name);
@@ -128,7 +132,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
   explicit DeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id, const std::string &device_name,
                          uint32_t device_id) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
     kernel_tensor_->SetStringFormat(format);
@@ -139,7 +143,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index, const std::string &device_name, uint32_t device_id)
       : node_index_(node_index) {
-    kernel_tensor_ = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor_ = std::make_shared<KernelTensor>();
     kernel_tensor_->set_device_ptr(ptr);
     kernel_tensor_->set_size(size);
     kernel_tensor_->SetStringFormat(format);
@@ -148,7 +152,7 @@ class DeviceAddress : public mindspore::DeviceSync {
     kernel_tensor_->set_device_id(device_id);
   }
 
-  explicit DeviceAddress(kernel::KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
+  explicit DeviceAddress(KernelTensorPtr &kernel_tensor) : kernel_tensor_(kernel_tensor) {}
   virtual ~DeviceAddress() {
     if (!from_mem_pool_ && deleter_ && GetDevicePtr() != nullptr) {
       deleter_(static_cast<uint8_t *>(GetDevicePtr()));
@@ -171,9 +175,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   }
 
   // Get kernel tensor pointer.
-  const kernel::KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
+  const KernelTensorPtr &kernel_tensor() const { return kernel_tensor_; }
   // Set kernel tensor pointer.
-  void set_kernel_tensor(const kernel::KernelTensorPtr &kernel_tensor) { kernel_tensor_ = kernel_tensor; }
+  void set_kernel_tensor(const KernelTensorPtr &kernel_tensor) { kernel_tensor_ = kernel_tensor; }
 
   void set_device_synchronizer(const DeviceSynchronizerPtr &device_synchronizer) {
     kernel_tensor_->set_device_synchronizer(device_synchronizer);
@@ -201,13 +205,13 @@ class DeviceAddress : public mindspore::DeviceSync {
   const std::string &padding_type() const { return kernel_tensor_->padding_type(); }
   void set_padding_type(const std::string &padding_type) { kernel_tensor_->set_padding_type(padding_type); }
   TypeId type_id() const { return kernel_tensor_->dtype_id(); }
+  void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
-  void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
-  void set_type_id(TypeId type_id) { kernel_tensor_->set_dtype_id(type_id); }
-  ShapeVector host_shape() const { return host_shape_; }
+  void set_host_shape(const ShapeVector &shape) { kernel_tensor_->set_host_shape(shape); }
+  const ShapeVector &host_shape() const { return kernel_tensor_->host_shape(); }
   void set_device_shape(const ShapeVector &shape) { device_shape_ = shape; }
   const ShapeVector &device_shape() const { return device_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
@@ -357,7 +361,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_sync_user_data_handler(SyncUserDataHandler handler) { sync_user_data_handler_ = handler; }
 
  protected:
-  kernel::KernelTensorPtr kernel_tensor_;
+  KernelTensorPtr kernel_tensor_;
   size_t size() const { return kernel_tensor_->size(); }
 
   void *GetDevicePtr() const { return kernel_tensor_->device_ptr(); }
@@ -367,7 +371,6 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
-  ShapeVector host_shape_{};
   ShapeVector device_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};

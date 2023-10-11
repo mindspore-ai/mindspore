@@ -163,19 +163,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     CalculateMemSize();
   }
 
-  // Constructor of KernelTensor by AbstractBase and device info.
-  KernelTensor(const abstract::AbstractBasePtr abs, mindspore::Format format, void *device_ptr, size_t size,
-               const string &device_name, uint32_t device_id) {
-    if (abs) {
-      KernelTensor(abs->GetShape(), abs->GetType(), abs->GetValue(), format, device_ptr, size, device_name, device_id);
-    } else {
-      format_ = format;
-      device_ptr_ = device_ptr;
-      size_ = size;
-      device_name_ = device_name;
-      device_id_ = device_id;
-    }
-  }
+  // Constructor of KernelTensor by device info.
+  KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
+               const string &device_name, uint32_t device_id, const UserDataPtr &user_data = nullptr);
 
   // Constructor of KernelTensor by shape, type, value and device info.
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
@@ -192,6 +182,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       SetValue(value);
     }
   }
+
+  KernelTensor(const KernelTensor &other);
 
   // Move constructor.
   KernelTensor(KernelTensor &&other) {
@@ -235,19 +227,6 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   MS_DECLARE_PARENT(KernelTensor, AbstractBase);
 
-  // Copy shape, type and value info from other kernel tensor.
-  void CopyAbstractInfo(KernelTensor &&other) {
-    shape_ = other.shape_;
-    shape_vector_ = std::move(other.shape_vector_);
-
-    type_ = other.type_;
-    type_id_ = other.type_id_;
-    dtype_ = other.dtype_;
-    dtype_id_ = other.dtype_id_;
-
-    value_ = other.value_;
-  }
-
   // Get the base shape for Tensor/Sequence/Scalar.
   abstract::BaseShapePtr GetShape() const override { return shape_; }
 
@@ -265,6 +244,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Get the device shape vector for Tensor/Sequence/Scalar.
   const ShapeVector &GetDeviceShapeVector() const { return shape_vector_; }
+
+  // Get host shape for KernelTensor.
+  const ShapeVector &host_shape() const { return host_shape_; }
+
+  // Set host shape for KernelTensor.
+  void set_host_shape(const ShapeVector &host_shape) { host_shape_ = host_shape; }
 
   // Get the object type of the KernelTensor.
   TypePtr GetType() const override { return type_; }
@@ -447,14 +432,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     device_synchronizer_ = device_synchronizer;
   }
 
+  std::shared_ptr<KernelTensor> Clone() { return std::make_shared<KernelTensor>(*this); }
+
   // The following member methods are required by the old KernelTensor.
-  KernelTensor(const KernelTensor &copy_tensor) {
-    meta_type_ = copy_tensor.meta_type_;
-    meta_ = copy_tensor.meta_;
-    data_ = copy_tensor.data_;
-    host_data_ = copy_tensor.host_data_;
-    device_id_ = copy_tensor.device_id_;
-  }
   KernelTensor &operator=(const KernelTensor &copy_tensor) {
     if (&copy_tensor == this) {
       return *this;
@@ -564,7 +544,11 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements number
   // in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this
   // Tuple is {2}.
-  ShapeVector shape_vector_;
+  ShapeVector shape_vector_{};
+
+  // The flatten shape(maybe after padding) vector.
+  // Note: the 'host_shape_' will be repalced by 'shape_vector_' in the future.
+  ShapeVector host_shape_{};
 
   // The object enum type id of the KernelTensor.
   TypeId type_id_{kTypeUnknown};

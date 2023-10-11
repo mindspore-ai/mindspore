@@ -18,11 +18,12 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_DEVICE_CPU_DEVICE_SYNCHRONIZER_H
 
 #include "include/backend/device_synchronizer.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
-class CPUDeviceSynchronizer : public DeviceSynchronizer {
+class BACKEND_EXPORT CPUDeviceSynchronizer : public DeviceSynchronizer {
  public:
   CPUDeviceSynchronizer() = default;
   ~CPUDeviceSynchronizer() override = default;

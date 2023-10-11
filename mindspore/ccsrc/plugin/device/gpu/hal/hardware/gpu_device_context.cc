@@ -355,6 +355,19 @@ DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr
   return device_address;
 }
 
+DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const {
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto device_address = std::make_shared<GPUDeviceAddress>(kernel_tensor);
+
+  const auto &user_data = kernel_tensor->user_data();
+  if (user_data != nullptr) {
+    SetUserData(device_address.get(), user_data);
+  }
+
+  device_address->set_device_synchronizer(std::make_shared<GPUDeviceSynchronizer>());
+  return device_address;
+}
+
 void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();

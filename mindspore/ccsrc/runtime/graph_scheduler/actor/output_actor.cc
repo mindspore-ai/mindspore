@@ -224,7 +224,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                 << ", output index: " << output_index << ", output position: " << output_position;
 
-  const auto &output_kernel_tensor = AnfAlgo::GetOrCreateOutputKernelTensor(output_node, output_index);
+  const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
@@ -276,9 +276,12 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
-    auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(), device_tensor->host_shape(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(output_kernel_tensor->GetType());
+    kernel_tensor->SetShape(output_kernel_tensor->GetShape());
+    auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << " type:" << tensor_device_address->type_id()
                   << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index

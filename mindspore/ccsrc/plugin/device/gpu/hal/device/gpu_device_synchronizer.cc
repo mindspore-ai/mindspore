@@ -27,7 +27,10 @@ bool GPUDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr, s
                                              const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   MS_EXCEPTION_IF_NULL(device_ptr);
-  const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = GPUDeviceManager::GetInstance().default_stream();
+  }
   MS_ERROR_IF_NULL(stream);
   CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, device_ptr, size, stream),
                               "CopyHostMemToDeviceAsync failed");
@@ -42,7 +45,10 @@ bool GPUDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr, s
                                              const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(device_ptr);
   MS_EXCEPTION_IF_NULL(host_ptr);
-  const auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  auto stream = GPUDeviceManager::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = GPUDeviceManager::GetInstance().default_stream();
+  }
   MS_ERROR_IF_NULL(stream);
   CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(device_ptr, host_ptr, size, stream),
                               "CopyHostMemToDeviceAsync failed");

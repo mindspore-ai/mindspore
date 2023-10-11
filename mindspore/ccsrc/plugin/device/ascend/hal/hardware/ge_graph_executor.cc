@@ -42,6 +42,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "ge/ge_graph_compile_summary.h"
 #include "kernel/kernel_build_info.h"
@@ -761,8 +762,11 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
                       << ", graph: " << kernel_graph->ToString() << ", node: " << output_node->fullname_with_scope()
                       << ", device address addr: " << mem;
     }
-    auto output_device_addr = std::make_shared<AscendDeviceAddress>(mem, tensor_size, kOpFormat_DEFAULT, output_type_id,
-                                                                    kAscendDevice, device_id);
+
+    const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {output_node, index}, mem, tensor_size, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
+    auto output_device_addr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
+    output_device_addr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
     output_device_addr->set_is_ptr_persisted(true);
     if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
       MS_LOG(INFO) << "Set Memory Pool Recycle, graph: " << kernel_graph->ToString()
@@ -1025,7 +1029,6 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     if (is_dynamic_shape) {
       auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
       auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, real_index, false);
-      auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
       output_addr->SetSize(ge_outputs[i].GetSize());
       auto actual_shapes = ge_outputs[i].GetTensorDesc().GetShape().GetDims();
       auto &&ge_data_uni = ge_outputs[i].ResetData();
@@ -1036,7 +1039,11 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       output_addr->set_from_mem_pool(false);
       output_addr->set_deleter(deleter);
       output_addr->set_ptr(ge_data);
-      UpdateOutputNodeShape(output_node, idx, host_type, actual_shapes);
+
+      // Update shape in kernel tensor.
+      const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx);
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      kernel_tensor->SetShapeVector(actual_shapes);
     }
   }
   if (real_output_size != ge_outputs.size()) {

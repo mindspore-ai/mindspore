@@ -26,6 +26,41 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
+KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
+                           const ShapeVector &host_shape, const string &device_name, uint32_t device_id,
+                           const UserDataPtr &user_data)
+    : host_shape_(host_shape),
+      dtype_id_(dtype_id),
+      format_(GetFormatFromStrToEnum(format)),
+      device_ptr_(device_ptr),
+      size_(size),
+      device_name_(device_name),
+      device_id_(device_id),
+      user_data_(user_data) {}
+
+KernelTensor::KernelTensor(const KernelTensor &other) {
+  shape_ = other.shape_ != nullptr ? other.shape_->Clone() : abstract::kNoShape;
+  type_ = other.shape_ != nullptr ? other.type_->Clone() : kTypeAny;
+  value_ = other.value_;
+  shape_vector_ = other.shape_vector_;
+  host_shape_ = other.host_shape_;
+  type_id_ = other.type_id_;
+  dtype_ = other.dtype_ != nullptr ? other.dtype_->Clone() : kTypeAny;
+  dtype_id_ = other.dtype_id_;
+  element_size_in_bytes_ = other.element_size_in_bytes_;
+  kernel_tensor_value_ =
+    other.kernel_tensor_value_ != nullptr ? std::make_shared<KernelTensorValue>(*other.kernel_tensor_value_) : nullptr;
+  format_ = other.format_;
+  padding_type_ = other.padding_type_;
+  device_ptr_ = other.device_ptr_;
+  size_ = other.size_;
+  device_name_ = other.device_name_;
+  device_id_ = other.device_id_;
+  stream_id_ = other.stream_id_;
+  user_data_ = other.user_data_;
+  device_synchronizer_ = other.device_synchronizer_;
+}
+
 void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;

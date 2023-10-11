@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "include/common/utils/utils.h"
 #include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
 
@@ -27,7 +28,10 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
                                                 const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
   MS_EXCEPTION_IF_NULL(device_ptr);
-  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  }
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
@@ -36,7 +40,7 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
     return false;
   }
 
-  if (!AscendStreamMng::GetInstance().SyncStream(stream_id)) {
+  if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
     MS_LOG(ERROR) << "Sync default failed.";
     return false;
   }
@@ -48,7 +52,10 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
                                                 const UserDataPtr &user_data) const {
   MS_EXCEPTION_IF_NULL(device_ptr);
   MS_EXCEPTION_IF_NULL(host_ptr);
-  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (stream == nullptr) {
+    stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
+  }
   MS_ERROR_IF_NULL(stream);
 
   auto ret = aclrtMemcpyAsync(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
@@ -57,7 +64,7 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
     return false;
   }
 
-  if (!AscendStreamMng::GetInstance().SyncStream(stream_id)) {
+  if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
     MS_LOG(ERROR) << "Sync default failed.";
     return false;
   }

@@ -52,6 +52,8 @@ class GPUDeviceResManager : public DeviceResManager {
                                        const ShapeVector &shape = ShapeVector(),
                                        const UserDataPtr &user_data = nullptr) const override;
 
+  DeviceAddressPtr CreateDeviceAddress(const KernelTensorPtr &kernel_tensor) const override;
+
   bool CreateStream(size_t *stream_id) const override;
   bool DestroyStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id) const override;

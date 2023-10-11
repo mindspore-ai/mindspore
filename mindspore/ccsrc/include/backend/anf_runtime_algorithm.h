@@ -125,6 +125,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
 
+  // Get output kernel tensor if exists, otherwise throw a exception.
+  static const KernelTensorPtr &GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
   // Get output kernel tensor if exists, otherwise create a new one and set into node.
   static const KernelTensorPtr &GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
   // Get input kernel tensor if exists, otherwise create a new one and set into node.
@@ -133,6 +135,15 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<KernelTensor *> GetOrCreateAllInputKernelTensors(const AnfNodePtr &node);
   // Get all output kernel tensor if exists, otherwise create new KernelTensor and set into node.
   static std::vector<KernelTensor *> GetOrCreateAllOutputKernelTensors(const AnfNodePtr &node);
+
+  // Create output kernel tensor for node using node's shape, type and value,
+  // and set device information to kernel tensor.
+  static KernelTensorPtr CreateOutputKernelTensorWithDeviceInfo(const AnfWithOutIndex &node_with_index,
+                                                                void *const device_ptr, size_t size,
+                                                                const string &format, TypeId dtype_id,
+                                                                const ShapeVector &host_shape,
+                                                                const std::string &device_name, uint32_t device_id,
+                                                                const UserDataPtr &user_data = nullptr);
 
   // Get all input memory size list for node.
   static std::vector<size_t> GetNodeInputSizeList(const AnfNodePtr &node);

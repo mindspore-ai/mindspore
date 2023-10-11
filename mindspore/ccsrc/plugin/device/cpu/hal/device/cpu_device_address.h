@@ -27,6 +27,8 @@ namespace device {
 namespace cpu {
 class BACKEND_EXPORT CPUDeviceAddress : public DeviceAddress {
  public:
+  explicit CPUDeviceAddress(const KernelTensorPtr &kernel_tensor) : DeviceAddress(kernel_tensor) {}
+
   CPUDeviceAddress(void *ptr, size_t size) : DeviceAddress(ptr, size) {}
 
   CPUDeviceAddress(void *ptr, size_t size, const string &format, TypeId type_id)
