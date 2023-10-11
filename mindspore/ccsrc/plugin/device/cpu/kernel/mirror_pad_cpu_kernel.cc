@@ -24,6 +24,8 @@ namespace {
 // preset size of paddings
 constexpr int64_t MAX_PADDINGS = 5;
 constexpr int64_t PADDING_SIZE = 2;
+constexpr int64_t MODE_REFLECT = 1;
+constexpr int64_t MODE_SYMMETRIC = 0;
 constexpr size_t kTwo = 2;
 constexpr size_t kInputNum = 2;
 }  // namespace
@@ -56,6 +58,26 @@ void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracte
   for (int64_t i = 0; i < padd_dim; i++) {
     extracted_paddings[i * PADDING_SIZE] = int64_t(paddings_arg[i * PADDING_SIZE]);
     extracted_paddings[i * PADDING_SIZE + 1] = int64_t(paddings_arg[i * PADDING_SIZE + 1]);
+  }
+}
+
+void CheckPaddingValue(int64_t *paddings, const std::vector<int64_t> &input_shape, const int64_t mode) {
+  int64_t input_shape_size = static_cast<int64_t>(input_shape.size());
+  for (int64_t i = 0; i < input_shape_size * 2; i++) {
+    if (paddings[i] < 0) {
+      MS_LOG(EXCEPTION) << "For 'MirrorPad', all elements of paddings must be >= 0.";
+    }
+    if (mode == MODE_SYMMETRIC) {
+      if (paddings[i] > static_cast<int64_t>(input_shape[i / 2])) {
+        MS_LOG(EXCEPTION) << "For 'MirrorPad', paddings must be no greater than the dimension size: " << paddings[i]
+                          << " greater than " << static_cast<int64_t>(input_shape[i / 2]);
+      }
+    } else if (mode == MODE_REFLECT) {
+      if (paddings[i] >= static_cast<int64_t>(input_shape[i / 2])) {
+        MS_LOG(EXCEPTION) << "For 'MirrorPad', paddings must be no greater than the dimension size: " << paddings[i]
+                          << " not less than " << static_cast<int64_t>(input_shape[i / 2]);
+      }
+    }
   }
 }
 
@@ -138,6 +160,7 @@ bool MirrorPadCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   if (dims_ == 1) {
     return process_dim_one<T1>(outputs_addr, inputs_addr, paddings, input_elements_, mode);
   }
+  CheckPaddingValue(paddings, input_shape_, mode);
   // solve other situations
   std::vector<int64_t> output_strides_(dims_, 0);
   output_strides_[dims_ - 1] = 1;
