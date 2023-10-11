@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <queue>
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -1061,7 +1062,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 0);
     ConstructOutputs(actor_set, outputs, root_graph_);
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 1);
-
+    FreeSummary(graph_compiler_info.graphs_);
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   }
   // Close abstract_lock for dynamic_shape
@@ -1131,6 +1132,33 @@ BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBas
     outputs.emplace_back(ConstructOutputByAbstract(sub_abstract, output_tensors, output_position, tuple_tensors));
   }
   return outputs;
+}
+
+void MindRTBackendBase::FreeSummary(const std::vector<KernelGraphPtr> &graphs) {
+  for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!graph->summary_node_exist()) {
+      continue;
+    }
+    const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes = graph->summary_nodes();
+    if (summary_nodes.empty()) {
+      continue;
+    }
+
+    for (const auto &item : summary_nodes) {
+      const AnfNodePtr &node = item.second.first;
+      if (!common::AnfAlgo::IsDynamicShape(node) && !common::AnfAlgo::IsDynamicSequence(node)) {
+        continue;
+      }
+      size_t index = IntToSize(item.second.second);
+      auto device_address = AnfAlgo::GetMutableOutputAddr(node, index, false);
+      MS_EXCEPTION_IF_NULL(device_address);
+      if (device_address->GetPtr() == nullptr) {
+        continue;
+      }
+      runtime::FreeMemoryByDeviceContext(device_address.get(), nullptr);
+    }
+  }
 }
 
 void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor,
