@@ -336,7 +336,8 @@ void PipelineTransformer::LabelMicroBatch() {
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
   if (!LabelParameterStart(graph)) {
-    MS_LOG(EXCEPTION) << "Stage 0 should has at least 1 parameter. but got none.";
+    MS_LOG(EXCEPTION) << "Stage 0 should has at least 1 parameter. but got none. "
+                      << "One possible cause is that the @lazy_inline decorator is misplaced.";
   }
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
@@ -785,7 +786,7 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
     } else {
       auto graph = user_cnode->func_graph();
       MS_EXCEPTION_IF_NULL(graph);
-      if (graph != root_ && graph != main_graph_ && graph->stage() != -1) {
+      if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
         (void)((*parameter_stage).insert(graph->stage()));
       }
     }
@@ -815,7 +816,7 @@ void PipelineTransformer::ParameterColoring() {
         } else {
           auto graph = user_cnode->func_graph();
           MS_EXCEPTION_IF_NULL(graph);
-          if (graph != root_ && graph != main_graph_ && graph->stage() != -1) {
+          if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
             (void)parameter_stage.insert(graph->stage());
             continue;
           }
