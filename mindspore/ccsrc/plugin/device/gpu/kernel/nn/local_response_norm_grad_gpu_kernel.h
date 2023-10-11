@@ -95,9 +95,6 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::LRNGrad>(primitive_);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
     size_t input_num = inputs.size();
     if (input_num != k3DSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
@@ -106,10 +103,10 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
-    depth_radius_ = kernel_ptr->get_depth_radius();
-    bias_ = kernel_ptr->get_bias();
-    alpha_ = kernel_ptr->get_alpha();
-    beta_ = kernel_ptr->get_beta();
+    depth_radius_ = GetValue<int64_t>(primitive_->GetAttr("depth_radius"));
+    bias_ = GetValue<double_t>(primitive_->GetAttr("bias"));
+    alpha_ = GetValue<double_t>(primitive_->GetAttr("alpha"));
+    beta_ = GetValue<double_t>(primitive_->GetAttr("beta"));
     use_native_ = false;
     int lrnN = kCoef * depth_radius_ + 1;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {

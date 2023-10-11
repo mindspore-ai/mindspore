@@ -36,11 +36,6 @@ constexpr size_t kLayerNormGradOutputDbIndex = 2;
 
 bool LayerNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "LayerNormGradGpuKernelMod Cast ops::LayerNormGrad failed!";
-  }
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -58,15 +53,12 @@ int LayerNormGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
-  }
+
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid LayerNormGradGpuKernelMod input size!";
   }
-  auto begin_norm_axis = kernel_ptr->get_begin_norm_axis();
-  auto begin_params_axis = kernel_ptr->get_begin_params_axis();
+  auto begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
+  auto begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
   auto input_shape = inputs[kLayerNormGradInputXIndex]->GetShapeVector();
   if (begin_norm_axis < 0) {
     begin_norm_axis += input_shape.size();

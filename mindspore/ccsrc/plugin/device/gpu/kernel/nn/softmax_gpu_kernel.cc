@@ -57,8 +57,7 @@ int SoftmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     // axis.push_back(log_soft_axis);
   } else {
     is_log_softmax_ = false;
-    auto soft_max_ptr = std::dynamic_pointer_cast<ops::Softmax>(primitive_);
-    auto axis_me = soft_max_ptr->get_axis();
+    auto axis_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kAxis));
     (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                          [](const int64_t &value) { return LongToInt(value); });
   }

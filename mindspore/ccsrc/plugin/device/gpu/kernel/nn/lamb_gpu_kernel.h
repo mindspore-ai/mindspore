@@ -103,8 +103,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Lamb>(primitive_);
-
     InitResource();
     return true;
   }

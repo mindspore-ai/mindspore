@@ -38,9 +38,6 @@ bool LogNormalReverseGpuKernelMod::Launch(const std::vector<kernel::KernelTensor
 
 bool LogNormalReverseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LogNormalReverse>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the inputs and outputs should not be empty, but got empty. ";
     return false;
@@ -73,8 +70,8 @@ bool LogNormalReverseGpuKernelMod::Init(const std::vector<KernelTensor *> &input
                       << "but got input type: " << input_dtype_ << " and output type: " << output_dtype_ << ".";
   }
 
-  input_mean_ = GetValue<float>(primitive_->GetAttr("mean"));
-  input_std_ = GetValue<float>(primitive_->GetAttr("std"));
+  input_mean_ = GetValue<double_t>(primitive_->GetAttr("mean"));
+  input_std_ = GetValue<double_t>(primitive_->GetAttr("std"));
 
   kernel_func_ = func_list_[pair.second].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);

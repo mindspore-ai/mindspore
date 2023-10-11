@@ -58,7 +58,7 @@ template <typename T>
 void L2NormalizeGradCpuFunc<T>::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
   kernel_name_ = primitive->name();
-  epsilon_ = static_cast<T>(GetValue<float>(primitive->GetAttr(ops::kEpsilon)));
+  epsilon_ = static_cast<T>(GetValue<double_t>(primitive->GetAttr(ops::kEpsilon)));
   axis_origin_ = LongToInt(GetValue<int64_t>(primitive->GetAttr(ops::kAxis)));
 }
 

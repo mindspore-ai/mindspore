@@ -31,9 +31,9 @@ bool LrnGradCpuKernelMod::GetLrnGradAttr() {
     return false;
   }
   depth_radius_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
-  bias_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBias));
-  alpha_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kAlpha));
-  beta_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBeta));
+  bias_ = GetValue<double_t>(KernelMod::primitive_->GetAttr(ops::kBias));
+  alpha_ = GetValue<double_t>(KernelMod::primitive_->GetAttr(ops::kAlpha));
+  beta_ = GetValue<double_t>(KernelMod::primitive_->GetAttr(ops::kBeta));
   dnnl_algorithm_ = dnnl::algorithm::lrn_across_channels;
   return true;
 }

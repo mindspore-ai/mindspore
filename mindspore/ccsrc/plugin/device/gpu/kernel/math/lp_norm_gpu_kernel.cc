@@ -35,11 +35,10 @@ bool LpNormGpuKernelMod::GetLpNormAttr() {
                   << kernel_name_;
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LpNorm>(primitive_);
 
-  axis_ = kernel_ptr->get_axis();
-  p_ = kernel_ptr->get_p();
-  epsilon_ = kernel_ptr->get_epsilon();
+  axis_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kAxis));
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  epsilon_ = GetValue<double_t>(primitive_->GetAttr(ops::kEpsilon));
   return true;
 }
 

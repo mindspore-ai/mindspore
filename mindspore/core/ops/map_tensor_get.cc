@@ -44,8 +44,9 @@ abstract::ShapePtr MapTensorGetInferShape(const PrimitivePtr &prim, const std::v
   }
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgsType(kNameMapTensorGet, input_args, kInputIndex0, kObjectTypeMapTensorType);
-  auto key_value_shape = abs_map_tensor->GetShape();
-  const auto &shape_vec = key_value_shape->GetShapeVector();
+  const auto &key_value_shape = abs_map_tensor->GetShape()->GetShapeVector();
+  auto shape_vec = key_tensor_shape->shape();
+  (void)shape_vec.insert(shape_vec.end(), key_value_shape.begin() + 1, key_value_shape.end());
   auto infer_shape = std::make_shared<abstract::Shape>(shape_vec);
   return infer_shape;
 }

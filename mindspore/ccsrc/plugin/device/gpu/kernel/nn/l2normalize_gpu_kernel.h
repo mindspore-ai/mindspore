@@ -109,8 +109,6 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
 
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(primitive_);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
     auto inputA_shape = inputs[0]->GetShapeVector();
 
     int input_dim_length = SizeToInt(inputA_shape.size());
@@ -158,12 +156,10 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::L2Normalize>(primitive_);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     (void)CheckIONumber(inputs, outputs);
-    epsilon_ = kernel_ptr->get_epsilon();
+    epsilon_ = GetValue<double_t>(primitive_->GetAttr("epsilon"));
     return true;
   }
 

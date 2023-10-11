@@ -39,13 +39,8 @@ bool L2NormalizeGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
   }
   kernel_func_ = func_list_[index].second;
 
-  auto l2_normalize_grad_ptr = std::dynamic_pointer_cast<ops::L2NormalizeGrad>(primitive_);
-  if (l2_normalize_grad_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', cast 'L2NormalizeGrad' ops failed!";
-    return false;
-  }
-  epsilon_ = l2_normalize_grad_ptr->get_epsilon();
-  axis_origin_ = LongToInt(l2_normalize_grad_ptr->get_axis());
+  epsilon_ = GetValue<double_t>(primitive_->GetAttr("epsilon"));
+  axis_origin_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("axis")));
   return true;
 }
 

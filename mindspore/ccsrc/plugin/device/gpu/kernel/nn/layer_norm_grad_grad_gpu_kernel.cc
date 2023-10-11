@@ -81,16 +81,14 @@ bool LayerNormGradGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
 
 bool LayerNormGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGradGrad>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_ptr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type.";
     return false;
   }
-  attr_ptr_->begin_norm_axis = kernel_ptr->get_begin_norm_axis();
-  attr_ptr_->begin_params_axis = kernel_ptr->get_begin_params_axis();
+  attr_ptr_->begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
+  attr_ptr_->begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
