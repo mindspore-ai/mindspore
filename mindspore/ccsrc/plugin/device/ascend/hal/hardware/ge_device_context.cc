@@ -456,7 +456,10 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
                                      std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(inst_context);
   MS_EXCEPTION_IF_NULL(ge_options);
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto env_table_file = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
+  if (env_table_file.empty()) {
+    env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  }
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
