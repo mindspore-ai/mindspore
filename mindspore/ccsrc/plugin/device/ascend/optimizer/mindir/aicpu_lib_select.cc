@@ -60,7 +60,6 @@ static const std::unordered_set<std::string> kAICpuOpNames = {kDropoutGenMaskOpN
                                                               kSequenceConcatOpName,
                                                               kSequenceStackOpName,
                                                               kRandomCategoricalOpName,
-                                                              kRandomChoiceWithMaskOpName,
                                                               kRandomShuffleOpName,
                                                               kRangeOpName,
                                                               kStandardNormalOpName,
