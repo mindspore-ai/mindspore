@@ -1399,8 +1399,23 @@ AbstractBasePtr CheckAndConvertUtils::CheckArgsType(const std::string &op, const
   MS_EXCEPTION_IF_NULL(args_abs);
   if (args_abs->GetType()->object_type() != type_id) {
     MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
-                            << TypeIdToType(type_id)->ToString() << ", but got "
-                            << args_spec_list[index]->GetType()->ToString() << ".";
+                            << TypeIdToType(type_id)->ToString() << ", but got " << args_abs->GetType()->ToString()
+                            << ".";
+  }
+  return args_abs;
+}
+
+AbstractBasePtr CheckAndConvertUtils::CheckArgsSequenceType(const std::string &op,
+                                                            const AbstractBasePtrList &args_spec_list, size_t index) {
+  if (index >= args_spec_list.size()) {
+    MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
+                             << ", index " << index;
+  }
+  auto args_abs = args_spec_list[index];
+  MS_EXCEPTION_IF_NULL(args_abs);
+  if (!IsSequence(args_abs)) {
+    MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
+                            << "tuple or list, but got " << args_abs->GetType()->ToString() << ".";
   }
   return args_abs;
 }

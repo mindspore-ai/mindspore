@@ -346,8 +346,22 @@ class MS_CORE_API CheckAndConvertUtils {
     return arg;
   }
 
+  static inline bool IsScalar(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeNumber; }
+  static inline bool IsTuple(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeTuple; }
+  static inline bool IsList(const AbstractBasePtr &abs) { return abs->GetType()->object_type() == kObjectTypeList; }
+  static inline bool IsTensor(const AbstractBasePtr &abs) {
+    return abs->GetType()->object_type() == kObjectTypeTensorType;
+  }
+  static inline bool IsSequence(const AbstractBasePtr &abs) {
+    return abs->GetType()->object_type() == kObjectTypeTuple || abs->GetType()->object_type() == kObjectTypeList;
+  }
+  static inline bool IsDynamicSequence(const AbstractBasePtr &abs) {
+    return abs->GetShape()->isa<abstract::DynamicSequenceShape>();
+  }
   static AbstractBasePtr CheckArgsType(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index,
                                        TypeId type_id);
+  static AbstractBasePtr CheckArgsSequenceType(const std::string &op, const AbstractBasePtrList &args_spec_list,
+                                               size_t index);
 
   static ShapeVector CheckTensorShapeSame(const std::map<std::string, BaseShapePtr> &shapes,
                                           const std::vector<int64_t> &check_shape, const std::string &prim_name);
