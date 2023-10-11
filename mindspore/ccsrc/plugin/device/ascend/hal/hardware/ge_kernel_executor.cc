@@ -501,8 +501,6 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
   // load aicpu so
   LaunchDeviceLibrary();
-  // build kernel mod
-  CreateKernel(nodes);
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 
