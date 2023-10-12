@@ -961,13 +961,28 @@ lite::LiteSession *ModelImpl::CreateLiteSession(const std::shared_ptr<lite::Inne
   return session;
 }
 
+bool ModelImpl::IsValidDoubleNum(const std::string &num_str) {
+  if (num_str.empty()) {
+    return false;
+  }
+  std::istringstream iss(num_str);
+  double d;
+  iss >> std::noskipws >> d;
+  return iss.eof() && !iss.fail();
+}
+
 void ModelImpl::ModelDeObfuscate() {
   float obf_ratio = 0.0;
   auto iter = config_info_.find(kBuildSection);
   if (iter != config_info_.end()) {
     auto item_runner = iter->second.find(kObfRatioKey);
     if (item_runner != iter->second.end()) {
-      obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+      if (IsValidDoubleNum(iter->second.at(kObfRatioKey))) {
+        obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+      } else {
+        MS_LOG(ERROR) << "Obfuscate ratio should be float but got " << iter->second.at(kObfRatioKey);
+        return;
+      }
     }
   } else {
     MS_LOG(INFO) << "No obfuscate key find in config file";
