@@ -322,8 +322,8 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_train) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, options, is_train);
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
+  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
 }
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
