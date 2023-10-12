@@ -139,6 +139,8 @@ class BACKEND_EXPORT MindRTBackendBase : public Backend {
   // Construct the GraphCompilerInfo by the compilation results of graph, used in Graph mode.
   std::shared_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph);
 
+  void FreeSummary(const std::vector<KernelGraphPtr> &graphs);
+
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
   void UpdateGraphCompilerInfo(const ActorInfo &actor_info);
