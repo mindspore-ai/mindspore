@@ -87,25 +87,12 @@ abstract::ShapePtr IndexPutInferShape(const PrimitivePtr &primitive, const std::
   auto x1_shape = x1_shape_ptr->shape();
   auto x2_rank = SizeToLong(x2_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("rank of x2", x2_rank, kEqual, 1, prim_name);
-  bool is_tuple_x = input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTuple;
-  bool is_list_x = input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeList;
-  if ((!is_tuple_x) && (!is_list_x)) {
+  if (!CheckAndConvertUtils::IsSequence(input_args[kInputIndex2])) {
     MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
                             << input_args[kInputIndex2]->GetType()->ToString();
   }
-  auto idx_shape_ptr = input_args[kInputIndex2]->GetShape();
-  MS_EXCEPTION_IF_NULL(idx_shape_ptr);
-  size_t idx_size;
-  abstract::BaseShapePtrList idx_shapes{};
-  if (is_tuple_x) {
-    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
-    idx_shapes = shape_tuple->shape();
-    idx_size = shape_tuple->size();
-  } else {
-    auto shape_list = idx_shape_ptr->cast<abstract::ListShapePtr>();
-    idx_shapes = shape_list->shape();
-    idx_size = shape_list->size();
-  }
+  const auto &idx_shapes = CheckAndConvertUtils::GetSequenceElementShapes(input_args[kInputIndex2]);
+  size_t idx_size = idx_shapes.size();
 
   int64_t maxsize = 0;
   for (size_t idx = 0; idx < idx_size; ++idx) {
@@ -132,22 +119,12 @@ TypePtr IndexPutInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   const std::set<TypePtr> idx_valid_types = {kInt32, kInt64};
   auto x1_type = input_args[kInputIndex0]->GetType();
   auto x2_type = input_args[kInputIndex1]->GetType();
-  bool is_tuple_x = input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTuple;
-  bool is_list_x = input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeList;
-  if ((!is_tuple_x) && (!is_list_x)) {
+  if (!CheckAndConvertUtils::IsSequence(input_args[kInputIndex2])) {
     MS_EXCEPTION(TypeError) << "For [" << prim_name << "] should have ListTensor or TupleTensor input but get "
                             << input_args[kInputIndex2]->GetType()->ToString();
   }
-  auto idx_type = input_args[kInputIndex2]->GetType();
-  TypePtrList types_list;
-  size_t idx_size;
-  if (is_tuple_x) {
-    types_list = idx_type->cast<TuplePtr>()->elements();
-    idx_size = types_list.size();
-  } else {
-    types_list = idx_type->cast<ListPtr>()->elements();
-    idx_size = types_list.size();
-  }
+  const auto &types_list = CheckAndConvertUtils::GetSequenceElementTypes(input_args[kInputIndex2]);
+  size_t idx_size = types_list.size();
   std::map<std::string, TypePtr> idx_types;
   for (size_t idx = 0; idx < idx_size; ++idx) {
     (void)idx_types.emplace("indices[" + std::to_string(idx) + "]:", types_list[idx]);

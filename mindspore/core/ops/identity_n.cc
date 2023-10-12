@@ -54,23 +54,13 @@ class MIND_API IdentityNInfer : public abstract::OpInferBase {
     constexpr int64_t input_num = 1;
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                              op_name);
-    bool is_tuple_x = input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeTuple;
-    bool is_list_x = input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeList;
-    if ((!is_tuple_x) && (!is_list_x)) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[kInputIndex0])) {
       MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have ListTensor or TupleTensor input but get "
                               << input_args[kInputIndex0]->GetType()->ToString();
     }
 
-    auto input_type = input_args[kInputIndex0]->GetType();
-    TypePtrList types_list;
-    size_t in_size;
-    if (is_tuple_x) {
-      types_list = input_type->cast<TuplePtr>()->elements();
-      in_size = types_list.size();
-    } else {
-      types_list = input_type->cast<ListPtr>()->elements();
-      in_size = types_list.size();
-    }
+    const auto &types_list = CheckAndConvertUtils::GetSequenceElementTypes(input_args[kInputIndex0]);
+    size_t in_size = types_list.size();
     if (in_size < 1) {
       MS_EXCEPTION(ValueError) << "For [" << op_name
                                << "] input list of length should be equal or greater than 1 but get " << in_size
@@ -82,7 +72,7 @@ class MIND_API IdentityNInfer : public abstract::OpInferBase {
       auto name = "input x[" + std::to_string(idx) + "]";
       (void)CheckAndConvertUtils::CheckTensorTypeValid(name, types_list[idx], identityn_valid_types, op_name);
     }
-    return input_type->Clone();
+    return input_args[kInputIndex0]->GetType()->Clone();
   }
 };
 

@@ -55,11 +55,11 @@ class SequenceLenInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLenInferInner(primitive, input_args)->GetShape();
+    return abstract::kNoShape;
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceLenInferInner(prim, input_args)->GetType();
+    return kInt64;
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

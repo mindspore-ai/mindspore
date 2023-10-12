@@ -358,6 +358,34 @@ class MS_CORE_API CheckAndConvertUtils {
   static inline bool IsDynamicSequence(const AbstractBasePtr &abs) {
     return abs->GetShape()->isa<abstract::DynamicSequenceShape>();
   }
+  static inline TypePtrList GetSequenceElementTypes(const AbstractBasePtr &abs) {
+    auto const &input_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(input_type);
+    TypePtrList types_list{};
+    if (input_type->object_type() == kObjectTypeTuple) {
+      types_list = input_type->cast<TuplePtr>()->elements();
+    } else if (input_type->object_type() == kObjectTypeList) {
+      types_list = input_type->cast<ListPtr>()->elements();
+    } else {
+      MS_EXCEPTION(TypeError) << "The input must be a tuple or a list, but got " << input_type->ToString() << ".";
+    }
+    return types_list;
+  }
+  static inline abstract::BaseShapePtrList GetSequenceElementShapes(const AbstractBasePtr &abs) {
+    auto const &input_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(input_type);
+    auto const &input_shape = abs->GetShape();
+    MS_EXCEPTION_IF_NULL(input_shape);
+    abstract::BaseShapePtrList shapes_list{};
+    if (input_type->object_type() == kObjectTypeTuple) {
+      shapes_list = input_shape->cast<abstract::TupleShapePtr>()->shape();
+    } else if (input_type->object_type() == kObjectTypeList) {
+      shapes_list = input_shape->cast<abstract::ListShapePtr>()->shape();
+    } else {
+      MS_EXCEPTION(TypeError) << "The input must be a tuple or a list, but got " << input_type->ToString() << ".";
+    }
+    return shapes_list;
+  }
   static AbstractBasePtr CheckArgsType(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index,
                                        TypeId type_id);
   static AbstractBasePtr CheckArgsSequenceType(const std::string &op, const AbstractBasePtrList &args_spec_list,
