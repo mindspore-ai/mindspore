@@ -223,6 +223,13 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto format = GetValue<std::string>(ib->GetAttr("format"));
   auto dilation = GetValue<ShapeVector>(ib->GetAttr("dilation"));
   auto stride = GetValue<ShapeVector>(ib->GetAttr("stride"));
+  auto input_shape = ib->GetShape(x);
+  auto device_target = ib->GetTargetFromContext();
+  auto is_ascend = device_target == "Ascend";
+  if (IsDynamicShape(input_shape) && is_ascend) {
+    x_shape = ib->Shape(x, true);
+    x_shape = ib->Cast(x_shape, kInt32);
+  }
   auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, x_shape},
                      {{"mode", ib->GetAttr("mode")},
                       {"dilation", MakeValue(format == "NHWC" ? ConvToNHWC(dilation) : dilation)},

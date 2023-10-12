@@ -557,6 +557,10 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_EXCEPTION_IF_NULL(stream);
+  bool is_dynamic_shape_skip_execute = AnfAlgo::IsDynamicShapeSkipExecute(kernel);
+  if (is_dynamic_shape_skip_execute) {
+    nop_op_to_memcpy_.insert(kernel);
+  }
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
     auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
