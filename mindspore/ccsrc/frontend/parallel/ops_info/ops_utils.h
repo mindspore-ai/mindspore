@@ -584,6 +584,7 @@ constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
 constexpr char MOE_FFN[] = "MoeFFN";
+constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

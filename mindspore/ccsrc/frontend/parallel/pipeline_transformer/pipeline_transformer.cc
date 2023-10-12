@@ -516,7 +516,7 @@ bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) const {
   if (IsInWhiteList(cnode)) {
     return false;
   }
-  if (IsInParallelBlackList(prim)) {
+  if (!IsParallelConsiderCNode(cnode)) {
     MS_LOG(INFO) << "PipelineSplit don't care node:" << prim->name();
     return false;
   }

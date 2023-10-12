@@ -243,7 +243,7 @@ bool IsParallelCareNode(const CNodePtr &cnode) {
   if (prim == nullptr) {
     return false;
   }
-  if (IsInParallelBlackList(prim)) {
+  if (!IsParallelConsiderCNode(cnode)) {
     MS_LOG(DEBUG) << "Parallel don't care node: " << prim->name();
     return false;
   }
@@ -926,7 +926,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA, IGAMMAC,
      LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D, MAXPOOL_3D,
      AVGPOOL_3D, FILLV2, FAKE_QUANT_PER_LAYER, FAKE_QUANT_PER_CHANNEL, MIN_MAX_UPDATE_PER_LAYER,
-     MIN_MAX_UPDATE_PER_CHANNEL, MOE_FFN};
+     MIN_MAX_UPDATE_PER_CHANNEL, MOE_FFN, FLASH_ATTENTION_SCORE};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);

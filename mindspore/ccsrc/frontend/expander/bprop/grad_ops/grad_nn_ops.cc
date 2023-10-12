@@ -1945,5 +1945,42 @@ REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto gv = ib->TupleGetItem(grad, kIndex3);
   return {gw, gu, gk, gv, ib->ZerosLike(sp), ib->ZerosLike(sq), ib->ZerosLike(sm)};
 });
+
+REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
+  auto query = ib->GetInput(kIndex0);
+  auto key = ib->GetInput(kIndex1);
+  auto value = ib->GetInput(kIndex2);
+  auto attn_mask = ib->GetInput(kIndex3);
+  auto drop_mask = ib->GetInput(kIndex4);
+  auto pse_shift = ib->GetInput(kIndex5);
+  auto padding_mask = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto attention_out = ib->TupleGetItem(out, kIndex0);
+  auto softmax_max = ib->TupleGetItem(out, kIndex1);
+  auto softmax_sum = ib->TupleGetItem(out, kIndex2);
+  auto softmax_out = ib->EmitValue(kNone);
+  auto dout = ib->GetInput(kIndex8);
+  auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
+  auto grad = ib->Emit("FlashAttentionScoreGrad",
+                       {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
+                        drop_mask, pse_shift, padding_mask, softmax_out},
+                       {
+                         {"head_num", ib->GetAttr("head_num")},
+                         {"keep_prob", ib->GetAttr("keep_prob")},
+                         {"scale_value", ib->GetAttr("scale_value")},
+                         {"pre_tokens", ib->GetAttr("pre_tokens")},
+                         {"next_tokens", ib->GetAttr("next_tokens")},
+                         {"inner_precise", ib->GetAttr("inner_precise")},
+                         {"input_layout", ib->GetAttr("input_layout")},
+                       });
+  auto g_query = ib->TupleGetItem(grad, kIndex0);
+  auto g_key = ib->TupleGetItem(grad, kIndex1);
+  auto g_value = ib->TupleGetItem(grad, kIndex2);
+  auto g_attn_mask = ib->ZerosLike(attn_mask);
+  auto g_drop_mask = ib->ZerosLike(drop_mask);
+  auto g_pse_shift = ib->ZerosLike(pse_shift);
+  auto g_padding_mask = ib->ZerosLike(padding_mask);
+  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask};
+}));
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

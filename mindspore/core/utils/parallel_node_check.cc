@@ -16,10 +16,12 @@
 
 #include <set>
 #include <string>
+#include "ir/func_graph.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 #include "utils/parallel_node_check.h"
 
@@ -78,6 +80,24 @@ bool IsInTrivialNodeList(const CNodePtr &cnode) {
   return false;
 }
 
+// Return true if cnode is ReShape and match pattern DropoutGenMask -> ReShape -> FlashAttentionScore
+bool IsReshapeBetweenDropoutGenMaskAndFlashAttentionScore(const CNodePtr &cnode) {
+  if (!IsPrimitiveCNode(cnode, prim::kPrimReshape)) {
+    return false;
+  }
+  auto input1 = cnode->input(kIndex1);
+  if (!IsPrimitiveCNode(input1, prim::kPrimDropoutGenMask)) {
+    return false;
+  }
+  auto func_graph = cnode->func_graph();
+  auto manager = func_graph->manager();
+  auto node_users = manager->node_users()[cnode];
+  if (node_users.size() != 1 || !IsPrimitiveCNode(node_users.begin()->first, prim::kPrimFlashAttentionScore)) {
+    return false;
+  }
+  return true;
+}
+
 bool IsParallelConsiderCNode(const CNodePtr &cnode) {
   if (cnode == nullptr || cnode->size() == 0) {
     return false;
@@ -88,6 +108,10 @@ bool IsParallelConsiderCNode(const CNodePtr &cnode) {
   }
   const auto &prim = prim_node->value()->cast<PrimitivePtr>();
   if (prim == nullptr) {
+    return false;
+  }
+  // If match pattern DropoutGenMask -> ReShape -> FlashAttentionScore, skip ReShape
+  if (IsReshapeBetweenDropoutGenMaskAndFlashAttentionScore(cnode)) {
     return false;
   }
   return !IsInParallelBlackList(prim);

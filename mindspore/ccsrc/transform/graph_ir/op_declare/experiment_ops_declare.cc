@@ -54,4 +54,41 @@ INPUT_MAP(BlendFaceBgPartOne) = {{1, INPUT_DESC(face_img)}, {2, INPUT_DESC(face_
 ATTR_MAP(BlendFaceBgPartOne) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BlendFaceBgPartOne) = {{0, OUTPUT_DESC(acc_face)}, {1, OUTPUT_DESC(acc_mask)}, {2, OUTPUT_DESC(max_mask)}};
 REG_ADPT_DESC(BlendFaceBgPartOne, kNameBlendFaceBgPartOne, ADPT_DESC(BlendFaceBgPartOne))
+
+// FlashAttentionScore
+INPUT_MAP(FlashAttentionScore) = {
+  {1, INPUT_DESC(query)},     {2, INPUT_DESC(key)},        {3, INPUT_DESC(value)},        {4, INPUT_DESC(atten_mask)},
+  {5, INPUT_DESC(drop_mask)}, {6, INPUT_DESC(real_shift)}, {7, INPUT_DESC(padding_mask)},
+};
+ATTR_MAP(FlashAttentionScore) = {
+  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
+  {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+  {"pre_tokens", ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
+  {"next_tokens", ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
+  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
+  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
+  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
+};
+OUTPUT_MAP(FlashAttentionScore) = {
+  {0, OUTPUT_DESC(attention_out)}, {1, OUTPUT_DESC(softmax_max)}, {2, OUTPUT_DESC(softmax_sum)}};
+REG_ADPT_DESC(FlashAttentionScore, kNameFlashAttentionScore, ADPT_DESC(FlashAttentionScore))
+
+// FlashAttentionScoreGrad
+INPUT_MAP(FlashAttentionScoreGrad) = {{1, INPUT_DESC(query)},         {2, INPUT_DESC(key)},
+                                      {3, INPUT_DESC(value)},         {4, INPUT_DESC(atten_mask)},
+                                      {5, INPUT_DESC(attention_in)},  {6, INPUT_DESC(softmax_max)},
+                                      {7, INPUT_DESC(softmax_sum)},   {8, INPUT_DESC(dy)},
+                                      {9, INPUT_DESC(drop_mask)},     {10, INPUT_DESC(pse_shift)},
+                                      {11, INPUT_DESC(padding_mask)}, {12, INPUT_DESC(softmax_in)}};
+ATTR_MAP(FlashAttentionScoreGrad) = {
+  {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
+  {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+  {"pre_tokens", ATTR_DESC(pre_tockens, AnyTraits<int64_t>())},
+  {"next_tokens", ATTR_DESC(next_tockens, AnyTraits<int64_t>())},
+  {"head_num", ATTR_DESC(head_num, AnyTraits<int64_t>())},
+  {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())},
+  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
+};
+OUTPUT_MAP(FlashAttentionScoreGrad) = {{0, OUTPUT_DESC(dq)}, {1, OUTPUT_DESC(dk)}, {2, OUTPUT_DESC(dv)}};
+REG_ADPT_DESC(FlashAttentionScoreGrad, kNameFlashAttentionScoreGrad, ADPT_DESC(FlashAttentionScoreGrad))
 }  // namespace mindspore::transform
