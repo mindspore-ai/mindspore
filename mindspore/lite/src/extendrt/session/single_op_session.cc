@@ -483,10 +483,13 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
   for (size_t i = 0; i < inputs_.size(); i++) {
     auto input_tensor = std::dynamic_pointer_cast<TensorDefaultImpl>(inputs_[i]);
     MS_CHECK_TRUE_MSG(input_tensor != nullptr, kLiteNullptr, "cast to TensorDefaultImpl failed");
+    auto origin_data_size = input_tensor->DataSize();
     input_tensor->SetShape(kernel_args_.inputs[i]->GetShapeVector());
-    void *data_buf = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(input_tensor->DataSize());
-    MS_CHECK_TRUE_MSG(data_buf != nullptr, kLiteNullptr, "malloc on host failed");
-    input_tensor->SetAclHostData(data_buf);
+    if (input_tensor->DataSize() > origin_data_size) {
+      void *data_buf = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(input_tensor->DataSize());
+      MS_CHECK_TRUE_MSG(data_buf != nullptr, kLiteNullptr, "malloc on host failed");
+      input_tensor->SetAclHostData(data_buf);
+    }
   }
   for (size_t i = 0; i < outputs_.size(); i++) {
     outputs_[i]->SetShape(kernel_args_.outputs[i]->GetShapeVector());
