@@ -175,6 +175,8 @@ class COMMON_EXPORT Emitter {
     return input;
   }
   NodePtr Complex(const NodePtr &real, const NodePtr &imag) { return Emit("Complex", {real, imag}); }
+  NodePtr Real(const NodePtr &x) { return Emit(kRealOpName, {x}); }
+  NodePtr Imag(const NodePtr &x) { return Emit(kImagOpName, {x}); }
 
   NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
     return Emit("CumProd", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});

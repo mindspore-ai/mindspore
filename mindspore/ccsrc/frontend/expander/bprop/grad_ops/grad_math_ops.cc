@@ -1409,8 +1409,8 @@ REG_BPROP_BUILDER("MatrixExp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Complex").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("Real", {dout});
-  auto dy = ib->Emit("Imag", {dout});
+  auto dx = ib->Real(dout);
+  auto dy = ib->Imag(dout);
   return {dx, dy};
 });
 
@@ -1932,10 +1932,8 @@ REG_BPROP_BUILDER("MatrixTriangularSolve").SetUnusedInputs({i1}).SetBody(BODYFUN
   }
   auto BandPart = [&ib](const NodePtr &matrix, int lower, int upper) -> NodePtr {
     if (((ib->GetDtype(matrix)) == kComplex64) || ((ib->GetDtype(matrix)) == kComplex128)) {
-      auto grad_matrix_real =
-        ib->Emit("MatrixBandPart", {ib->Emit("Real", {matrix}), ib->Value(lower), ib->Value(upper)});
-      auto grad_matrix_imag =
-        ib->Emit("MatrixBandPart", {ib->Emit("Imag", {matrix}), ib->Value(lower), ib->Value(upper)});
+      auto grad_matrix_real = ib->Emit("MatrixBandPart", {ib->Real(matrix), ib->Value(lower), ib->Value(upper)});
+      auto grad_matrix_imag = ib->Emit("MatrixBandPart", {ib->Imag(matrix), ib->Value(lower), ib->Value(upper)});
       return ib->Emit("Complex", {grad_matrix_real, grad_matrix_imag});
     } else {
       return ib->Emit("MatrixBandPart", {matrix, ib->Value(lower), ib->Value(upper)});
@@ -2051,6 +2049,70 @@ REG_BPROP_BUILDER("Fmax").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   brrx1 = ib->Cast(brrx1, x1_dtype);
   brrx2 = ib->Cast(brrx2, x2_dtype);
   return {brrx1, brrx2};
+});
+
+REG_BPROP_BUILDER("Angle").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto re = ib->Real(x);
+  auto im = ib->Imag(x);
+  re = ib->Complex(im, re);
+  auto z = ib->Reciprocal(re);
+  auto zero = ib->ZerosLike(dout);
+  auto complex_dout = ib->Complex(dout, zero);
+  return {ib->Neg(ib->Mul(complex_dout, z))};
+});
+
+REG_BPROP_BUILDER("Lgamma").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Mul(dout, ib->Emit(kDigammaOpName, {x}));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Digamma").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto a = ib->Tensor(1, kInt64);
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Polygamma").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto a = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto one = ib->Tensor(1);
+  a = ib->Add(a, one);
+  auto dx = ib->Mul(dout, ib->Emit(kPolygammaOpName, {a, x}));
+  return {ib->OutZeros(a), dx};
+});
+
+REG_BPROP_BUILDER("Cholesky").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto upper = ib->GetAttr<bool>("upper");
+  auto out = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex2);
+  if (upper) {
+    out = MatrixTranspose(ib, out);
+    dout = MatrixTranspose(ib, dout);
+  }
+  auto dx = ib->Emit("CholeskyGrad", {out, dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("InplaceIndexAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto indices = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex4);
+  return {dout, ib->OutZeros(indices), ib->Gather(dout, indices, ib->EmitValue(ib->GetAttr("axis")))};
+});
+
+REG_BPROP_BUILDER("Zeta").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto q = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto dq =
+    ib->Mul((ib->Mul((ib->Neg(x)), (ib->Emit("Zeta", {ib->Add(x, (ib->Tensor(1, ib->GetDtype(x)))), q})))), dout);
+  return {ib->OutZeros(x), dq};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
