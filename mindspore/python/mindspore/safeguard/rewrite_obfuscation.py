@@ -28,7 +28,6 @@ from mindspore.rewrite import SymbolTree, Node, NodeType, TreeNodeHelper, Scoped
 OBF_RATIOS_LENGTH = 1
 MAX_OBF_RATIOS_NUM = 50
 OBF_RATIOS_WIDTH = 0
-OBF_RATIOS_INDEX = 0
 OBF_RATIOS_INSERT_INDEX = 0
 
 
@@ -88,35 +87,65 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     # generate and save obf_ratios to saved_path
     path_list = to_split_modules[0].split('/')
     target_list = to_split_modules[1].split('|')
-    module_has_been_obfuscated = set()
+    global OBF_RATIOS_WIDTH, OBF_RATIOS_LENGTH
     number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
-    number_of_ratios = number_of_ratios if number_of_ratios < MAX_OBF_RATIOS_NUM else MAX_OBF_RATIOS_NUM
+    if number_of_ratios > MAX_OBF_RATIOS_NUM:
+        OBF_RATIOS_LENGTH = MAX_OBF_RATIOS_NUM // OBF_RATIOS_WIDTH
+        number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
     obf_ratios = []
     secrets_generator = secrets.SystemRandom()
     for _ in range(number_of_ratios):
         secure_float = secrets_generator.uniform(0.01, 100)
         obf_ratios.append(secure_float)
     np.save(os.path.abspath(saved_path) + '/' + 'obf_ratios.npy', np.array(obf_ratios))
+    # start obfuscate ckpt
     ckpt_dir_files = os.listdir(ckpt_files)
     for ckpt_name in ckpt_dir_files:
-        if not ckpt_name.endswith('.ckpt'):
-            continue
-        ckpt_param = load_checkpoint(os.path.abspath(ckpt_files) + '/' + ckpt_name)
-        for item in ckpt_param:
-            global OBF_RATIOS_INDEX
-            module = _get_valid_module(item, path_list, target_list)
-            if module:
-                if module not in module_has_been_obfuscated:
-                    module_has_been_obfuscated.add(module)
-                    OBF_RATIOS_INDEX += 1
-                if OBF_RATIOS_INDEX - 1 < MAX_OBF_RATIOS_NUM:
-                    ckpt_param[item].set_data(ckpt_param[item].value() / obf_ratios[OBF_RATIOS_INDEX - 1])
-        # save the obfuscated model to saved_path
-        obf_param_list = []
-        for item in ckpt_param:
-            obf_param_list.append({'name': item, 'data': ckpt_param[item]})
-        ckpt_file_name = ckpt_name.split('/')[-1]
-        obf_ckpt_file_name = ckpt_file_name.split('.')[0] + '_obf' + '.ckpt'
+        if Path(ckpt_files + ckpt_name).is_dir():
+            sub_path = ckpt_files + ckpt_name
+            sub_ckpt_file_list = os.listdir(sub_path)
+            for sub_ckpt_name in sub_ckpt_file_list:
+                if not sub_ckpt_name.endswith('.ckpt'):
+                    continue
+                _obfuscate_single_ckpt(os.path.abspath(sub_path) + '/' + sub_ckpt_name, obf_ratios, path_list,
+                                       target_list, saved_path)
+        else:
+            if not ckpt_name.endswith('.ckpt'):
+                continue
+            _obfuscate_single_ckpt(os.path.abspath(ckpt_files) + '/' + ckpt_name, obf_ratios, path_list,
+                                   target_list, saved_path)
+
+
+def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_path):
+    """Obfuscate single ckpt file"""
+    module_has_been_obfuscated = set()
+    ckpt_param = load_checkpoint(ckpt_name)
+    obf_ratios_index = -1
+    global OBF_RATIOS_LENGTH, OBF_RATIOS_WIDTH
+    for item in ckpt_param:
+        module = _get_valid_module(item, path_list, target_list)
+        if module:
+            layer_index = _judge_layer_index(item)
+            if layer_index >= OBF_RATIOS_LENGTH:
+                break
+            if module not in module_has_been_obfuscated:
+                module_has_been_obfuscated.add(module)
+                obf_ratios_index += 1
+            ratio_total_index = layer_index * OBF_RATIOS_WIDTH + obf_ratios_index % OBF_RATIOS_WIDTH
+            ckpt_param[item].set_data(ckpt_param[item].value() / obf_ratios[ratio_total_index])
+    # save the obfuscated model to saved_path
+    obf_param_list = []
+    for item in ckpt_param:
+        obf_param_list.append({'name': item, 'data': ckpt_param[item]})
+    ckpt_file_name = ckpt_name.split('/')[-1]
+    obf_ckpt_file_name = ckpt_file_name.split('.')[0] + '_obf' + '.ckpt'
+    # for this condition: ckpt_name is 'parent_dir/sub_dir/net.ckpt', saved_path is 'parent_dir/',
+    # then save net_obf.ckpt at 'parent_dir/sub_dir/net_obf.ckpt'
+    if saved_path in ckpt_name:
+        slash_index_list = [item.start() for item in re.finditer('/', ckpt_name)]
+        original_saved_path = ckpt_name[:slash_index_list[-1]]
+        save_checkpoint(obf_param_list, os.path.abspath(original_saved_path) + '/' + obf_ckpt_file_name)
+    else:
         save_checkpoint(obf_param_list, os.path.abspath(saved_path) + '/' + obf_ckpt_file_name)
 
 
@@ -184,6 +213,12 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
     for _ in range(path_len):
         target_list.append([])
     target_list.append(target_modules[1].split('|'))
+    global MAX_OBF_RATIOS_NUM, OBF_RATIOS_WIDTH, OBF_RATIOS_LENGTH
+    number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
+    if number_of_ratios > MAX_OBF_RATIOS_NUM:
+        OBF_RATIOS_LENGTH = MAX_OBF_RATIOS_NUM // OBF_RATIOS_WIDTH
+        number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
+    MAX_OBF_RATIOS_NUM = number_of_ratios
     rewrite_network = _obfuscate_network(network, path_list, target_list, **kwargs)
     setattr(rewrite_network, 'obf_ratios', obf_ratios)
     return rewrite_network
@@ -197,6 +232,15 @@ def _check_dir_path(name, dir_path):
         raise ValueError("{} is not exist, please check the input {}.".format(dir_path, name))
     if not Path(dir_path).is_dir():
         raise TypeError("{} must be a directory path, but got {}.".format(name, dir_path))
+
+
+def _judge_layer_index(layer_name):
+    """Judge the layer index of target layers"""
+    split_name = layer_name.split('.')
+    for split_str in split_name[:]:
+        if split_str.isdigit():
+            return int(split_str)
+    return 0
 
 
 def _check_valid_target(network, target_modules):
@@ -226,13 +270,14 @@ def _check_valid_target(network, target_modules):
     # DFS check whether path_list is valid
     stk = [net]
     i = 0
+    global OBF_RATIOS_LENGTH
+    OBF_RATIOS_LENGTH = 1
     while stk and i < len(path_list):
         net = stk.pop()
         if hasattr(net, path_list[i]):
             net = getattr(net, path_list[i])
             i += 1
             if isinstance(net, nn.CellList):
-                global OBF_RATIOS_LENGTH
                 OBF_RATIOS_LENGTH *= len(net)
                 for n in net:
                     stk.append(n)
@@ -245,6 +290,7 @@ def _check_valid_target(network, target_modules):
         raise ValueError("the path {} does not exist.".format(target_modules[0]))
     # check whether target_list is valid
     global OBF_RATIOS_WIDTH
+    OBF_RATIOS_WIDTH = 0
     for j in range(len(target_list)):
         if not hasattr(net, target_list[j]):
             logger.warning("{} does not exist in the path {}".format(target_list[j], target_modules[0]))
@@ -401,7 +447,8 @@ def _obfuscate_network(model, path_list, target_list, **kwargs):
         if len(path_list) == i:
             return
         for node in stree.nodes():
-            if node.get_node_type() == NodeType.Tree and path_list[i] in node.get_name():
+            node_name = node.get_name()
+            if node.get_node_type() == NodeType.Tree and node_name.startswith(path_list[i]):
                 sub_stree = TreeNodeHelper.get_sub_tree(node)
                 _traverse(sub_stree, i + 1)
                 _insert_input(sub_stree, arg_name='y_obf')
