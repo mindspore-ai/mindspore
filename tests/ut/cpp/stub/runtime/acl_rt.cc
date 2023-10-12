@@ -190,3 +190,5 @@ ACL_FUNC_VISIBILITY aclError aclrtCreateStream(aclrtStream *stream) { return ACL
 ACL_FUNC_VISIBILITY aclError aclrtSynchronizeStreamWithTimeout(aclrtStream stream, int32_t timeout) {
   return ACL_SUCCESS;
 }
+ACL_FUNC_VISIBILITY aclError aclrtDestroyContext(aclrtContext context) { return ACL_SUCCESS; }
+ACL_FUNC_VISIBILITY aclError aclrtCreateContext(aclrtContext *context, int32_t deviceId) { return ACL_SUCCESS; }

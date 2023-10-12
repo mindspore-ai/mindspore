@@ -246,7 +246,12 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(DEBUG) << this->DebugString();
   MS_LOG(DEBUG) << converter_->DebugString();
-  converter_->Run(stream_ptr);
+  try {
+    converter_->Run(stream_ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Kernel launch failed, msg: " << e.what();
+    return false;
+  }
   return true;
 }
 
