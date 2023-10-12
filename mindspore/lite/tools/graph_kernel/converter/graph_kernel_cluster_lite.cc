@@ -81,6 +81,26 @@ std::vector<PrimitivePtr> GraphKernelClusterLite::GetClusterableOpList() {
                               flags.enable_cluster_ops, flags.disable_cluster_ops);
 }
 
+bool IsByteAlign(const CNodePtr &cnode, const std::string &node_name) {
+  constexpr int64_t byte_align = 32;
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  static std::string target = cb->GetTargetFromContext(true);
+  if (target.find("Ascend910B") == std::string::npos) {
+    return true;
+  }
+  if (node_name == "Mul" || node_name == "Add") {
+    for (size_t i = 0; i < cnode->size() - 1; i++) {
+      auto shape = cb->GetInputShape(cnode, i);
+      auto shape_size = shape.size();
+      if (!shape.empty() && shape[shape_size - 1] > byte_align && shape[shape_size - 1] % byte_align != 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
     return true;
@@ -115,6 +135,9 @@ bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
     auto node_name = AnfUtils::GetCNodeName(node);
     if (node_name.find("MatMul") != std::string::npos && type_id != kNumberTypeFloat16 &&
         type_id != kNumberTypeFloat32) {
+      return false;
+    }
+    if (IsByteAlign(cnode, node_name) == false) {
       return false;
     }
   }
