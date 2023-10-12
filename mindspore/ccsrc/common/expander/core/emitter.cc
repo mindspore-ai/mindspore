@@ -227,6 +227,14 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
   return Emit(kTileOpName, {node, multiples});
 }
 
+NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
+  if (IsDynamic(x->shape()) || IsDynamic(y->shape())) {
+    return Emit("DynamicBroadcastTo", {x, Shape(y)});
+  }
+
+  return x->shape() == y->shape() ? x : Emit("BroadcastTo", {x}, {{"shape", MakeValue(y->shape())}});
+}
+
 NodePtr Emitter::ZerosLike(const NodePtr &node) {
   if (node->isa<ValueNode>()) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
