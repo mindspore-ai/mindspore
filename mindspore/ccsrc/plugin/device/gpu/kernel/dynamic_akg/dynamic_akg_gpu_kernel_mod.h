@@ -19,6 +19,7 @@
 #include <cuda.h>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include <map>
 #include <memory>
@@ -70,6 +71,66 @@ struct PairHash {
   }
 };
 
+struct MappingInfo {
+  uint32_t total_alloc_grid{1};
+  uint32_t total_alloc_block{1};
+  uint32_t curr_grid[3]{1, 1, 1};
+  uint32_t curr_block[3]{1, 1, 1};
+  uint32_t max_grid[3]{2147483647, 65535, 65535};
+  uint32_t max_block[3]{1024, 1024, 64};
+  uint32_t max_total_block{1024};
+  std::vector<size_t> solve_order_id;
+  uint32_t GetMapLimit(size_t id);
+  void UpdateCurrMapSize(size_t id, uint32_t map_size);
+  std::string ToString() {
+    std::string res;
+    res += "total_alloc_grid: [";
+    for (auto g : curr_grid) {
+      res += std::to_string(g) + ", ";
+    }
+    res += "] = " + std::to_string(total_alloc_grid) + "; ";
+    res += "total_alloc_block: [";
+    for (auto b : curr_block) {
+      res += std::to_string(b) + ", ";
+    }
+    res += "] = " + std::to_string(total_alloc_block) + "\n";
+    return res;
+  }
+};
+
+struct RuntimeVar {
+ public:
+  // Init from json
+  int64_t prime;                   // prime is like a unique id for this var to speedup lower in pipeline
+  int argIndex{-1};                // index in the func argument
+  std::string mapping{"Default"};  // used for GPU mapping, can be chosen from [Grid, Block, Seq]
+  std::string mapDim{""};          // used for GPU mapping, can be chosen from [x, y, z]
+  std::string expr{""};            // used to solve dynamic tiling
+
+  // Init in resize
+  int64_t upper_bound{-1};
+  int outer_map_id{-1};
+  int curr_map_id{-1};
+  int64_t runtime_size{-1};
+
+  std::string ArgIndexKey() { return "argIndex"; }
+  std::string ExprKey() { return "expr"; }
+  std::string MapDimKey() { return "mapDim"; }
+  std::string MappingKey() { return "mapping"; }
+  std::string PrimeKey() { return "prime"; }
+  std::string ToString() {
+    std::string res = "[RuntimeVar " + std::to_string(prime) + "]";
+    res += "  -> " + mapping + "." + mapDim + " at " + std::to_string(argIndex) + " input\n";
+    res += "  -> expr: " + expr + "\n";
+    res += "  -> upper bound " + std::to_string(upper_bound) + "; curr_map_id " + std::to_string(curr_map_id) +
+           "; outer_map_id " + std::to_string(outer_map_id) + "\n";
+    res += "  -> runtime_size " + std::to_string(runtime_size) + "\n";
+    return res;
+  }
+};
+using RuntimeVarPtr = std::shared_ptr<RuntimeVar>;
+using RuntimeVarsMap = std::map<uint32_t, RuntimeVarPtr>;
+
 class DynamicAkgGpuKernelMod : public GpuKernelMod {
  public:
   explicit DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack);
@@ -89,6 +150,9 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
 
   void CheckJsonParsed();
   void InitJsonShapeInformation();
+  void InitJsonMappingInformation();
+  void InitBeforeMapping();
+  void UpdateDynamicShapeTilingInfo();
   void UpdateDynamicShapeMappingInfo();
   void UpdateStaticShapeMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
@@ -111,9 +175,21 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   std::vector<std::vector<int64_t>> device_shape_list_;
   nlohmann::json parsed_js_;
   std::vector<int> arg_size_vec_;
+  std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
   std::unordered_map<size_t, std::pair<size_t, size_t>> unknown_map_loc_;
   bool json_shape_updated_{false};
   std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
+
+  // Used to solve dynamic tiling size during resize
+  void UpdateRuntimeVarUpperBound();
+  void SolveDynamicTiling(size_t curr_id);
+  size_t max_shape_rank_ = 0;
+  std::unordered_set<size_t> solved_map_loc_;
+  RuntimeVarsMap runtime_vars_;
+  std::vector<std::pair<uint32_t, RuntimeVarPtr>> sorted_runtime_vars_;
+  std::unordered_map<uint32_t, std::pair<size_t, size_t>> local_upper_bound_;
+  MappingInfo init_mapping_info_;
+  MappingInfo curr_mapping_info_;
 };
 
 class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
