@@ -45,6 +45,17 @@ std::string NormalizeString(const std::string &name) {
 
 namespace mindspore {
 namespace transform {
+namespace {
+bool IsTrain() {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  bool enable_training = false;
+  if (!phase.empty()) {
+    enable_training = pipeline::GetPhasePrefix(phase) == "train";
+  }
+  return enable_training;
+}
+}  // namespace
+
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
                                const OptionMap &options)
     : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
@@ -79,8 +90,7 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options,
-                                const bool &is_train) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
@@ -96,12 +106,13 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   OptionMap new_options = options;
   auto ms_context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  bool is_train = IsTrain();
+  auto soc_version = ms_context_ptr->ascend_soc_version();
   if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
     (new_options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
     MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE)
                  << " by user.";
   } else if (is_train) {
-    auto soc_version = ms_context_ptr->ascend_soc_version();
     if (soc_version == "ascend910b") {
       (new_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
       MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
@@ -110,8 +121,13 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
       MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
     }
   } else {
-    (new_options)["ge.exec.precision_mode"] = "force_fp16";
-    MS_LOG(INFO) << "Set precision_mode force_fp16.";
+    if (soc_version == "ascend910b") {
+      (new_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
+    } else {
+      (new_options)["ge.exec.precision_mode"] = "force_fp16";
+      MS_LOG(INFO) << "Set precision_mode force_fp16, soc_version is " << soc_version << ".";
+    }
   }
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
