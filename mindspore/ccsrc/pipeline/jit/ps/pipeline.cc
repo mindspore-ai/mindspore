@@ -1513,7 +1513,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
          MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
       MS_EXCEPTION_IF_NULL(device_context);
       MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-      device_context->GetDeprecatedInterface()->DoExecNonInputGraph("save_" + func_graph->ToString());
+      device_context->GetDeprecatedInterface()->DoExecNonInputGraph("save." + func_graph->ToString());
       ConfigManager::GetInstance().ResetConfig();
       return py::none();
     }
