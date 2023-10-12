@@ -27,7 +27,7 @@ __all__ = ["GroupLossScaleManager"]
 
 
 class GroupLossScaleManager(Cell):
-    """
+    r"""
     Enhanced hybrid precision algorithm supports multi-layer application of different loss scales and
     dynamic updating of loss scales.
 
@@ -41,7 +41,8 @@ class GroupLossScaleManager(Cell):
         - **layer2** (Int) - Last network layer value.
 
     Outputs:
-        - **x** (Tensor) - The output of `_DynamicLossScale` operator.
+        - **out** (Tensor) - A tensor with a group of loss scale tags that marks
+          the loss scale group number of the current tensor.
 
     Supported Platforms:
         ``Ascend``
