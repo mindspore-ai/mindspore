@@ -15,6 +15,7 @@
 
 import pytest
 import numpy as np
+import mindspore as ms
 from mindspore import Tensor, jit, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -68,3 +69,35 @@ def test_enumerate_string():
 
     ret = foo()
     assert ret == (6, "abcd")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_enumerate_check_start():
+    """
+    Feature: JIT Fallback
+    Description: Test enumerate() in fallback runtime
+    Expectation:No exception
+    """
+    class Net(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = ms.nn.ReLU()
+            self.start = [1, 2, 3]
+
+        def construct(self, x):
+            l = []
+            l.append(x)
+            l.append(x)
+            for index, value in enumerate(l, start=self.start):
+                if index == 1:
+                    x = self.relu(value)
+            return x
+
+    with pytest.raises(TypeError) as error_info:
+        net = Net()
+        x = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
+        out = net(x)
+        print("out:", out)
+    assert "'For 'enumerate', the 'start' should be a const int number, but got [1, 2, 3].'" in str(error_info.value)

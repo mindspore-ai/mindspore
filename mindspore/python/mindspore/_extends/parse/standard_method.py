@@ -2818,11 +2818,13 @@ def enumerate_(x, start=0):
     """Enumerate list or tuple or tensor."""
     x_type = F.typeof(x)
     ret = ()
-    if check_is_tensor(x_type):
-        for i in range(x.shape[0]):
-            ret += ((start + i, x[i]),)
-    else:
-        ret = zip(range(start, start + len(x)), x)
+    op_name = "enumerate"
+    if check_is_const_int(start, op_name, "start"):
+        if check_is_tensor(x_type):
+            for i in range(x.shape[0]):
+                ret += ((start + i, x[i]),)
+        else:
+            ret = zip(range(start, start + len(x)), x)
     return ret
 
 
@@ -3261,7 +3263,6 @@ def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
         f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 
 
-@constexpr
 def check_is_const_int(x, op_name, arg_name):
     """check whether x is const int."""
     if x is None:
