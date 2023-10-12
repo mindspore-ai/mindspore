@@ -1775,6 +1775,21 @@ py::object TensorIndex::GetItemIndexSimpleIndex(const py::object &py_index, cons
   return py::none();
 }
 
+TypeId GetStubAbsTypeId(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+
+  if (abs->isa<abstract::AbstractTensor>()) {
+    auto tensor_abs = abs->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_abs);
+    MS_EXCEPTION_IF_NULL(tensor_abs->element());
+    MS_EXCEPTION_IF_NULL(tensor_abs->element()->BuildType());
+    return tensor_abs->element()->BuildType()->type_id();
+  } else {
+    MS_EXCEPTION_IF_NULL(abs->BuildType());
+    return abs->BuildType()->type_id();
+  }
+}
+
 bool EnableView(bool is_pack_node, const TypeId &type_id, const py::bool_ &is_ascend) {
   if (is_pack_node || pynative::PyNativeExecutor::GetInstance()->grad_executor()->is_high_order_top_cell()) {
     // 1. pack node will slice failed with view.
@@ -1800,8 +1815,9 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
     auto abs = value_info.first->ToAbstract();
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
-    MS_EXCEPTION_IF_NULL(abs->BuildType());
-    if (EnableView(value_info.second, abs->BuildType()->type_id(), is_ascend)) {
+
+    const auto &type_id = GetStubAbsTypeId(abs);
+    if (EnableView(value_info.second, type_id, is_ascend)) {
       data_value = value_info.first;
     }
   } else if (py::isinstance<Tensor>(py_data)) {
@@ -2130,7 +2146,8 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
     data_type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(data_type);
 
-    if (EnableView(value_info.second, data_type->type_id(), is_ascend)) {
+    const auto &type_id = GetStubAbsTypeId(abs);
+    if (EnableView(value_info.second, type_id, is_ascend)) {
       data_value = value_info.first;
     }
   } else {
