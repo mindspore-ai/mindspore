@@ -4039,48 +4039,55 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   return true;
 }
 
-// Remove space character, newline character, tab character, carriage character
-string ProcessRStrip(const string &str) {
-  const string &chars = " \n\r\t";
+// Remove space character, newline character, tab character, carriage character, so on.
+string ProcessStrip(const string &str) {
+  const string &chars = " \n\r\t\\+";
+  constexpr int64_t str_len = 2;
   size_t end = str.find_last_not_of(chars);
   if (end == std::string::npos) {
     return "";
   }
-  return str.substr(0, end + 1);
+  auto remove_str = str.substr(0, end + 1);
+  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
+      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
+    remove_str = remove_str.substr(1, remove_str.size() - str_len);
+  }
+
+  end = remove_str.find_first_not_of(chars);
+  if (end == std::string::npos) {
+    return "";
+  }
+  remove_str = remove_str.substr(end);
+  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
+      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
+    remove_str = remove_str.substr(1, remove_str.size() - str_len);
+  }
+  return remove_str;
 }
 
 string RemoveExcessFString(const string &script_text, int64_t begin, int64_t end) {
   string update_str = "";
-  const int64_t str_len = 2;
+  constexpr int64_t str_len = 2;
   if (begin == 0 && begin < end) {
     update_str = script_text.substr(begin + str_len, end - begin);
   } else if (begin > 0 && begin < end) {
-    update_str = ProcessRStrip(script_text.substr(0, begin - 1)) + script_text.substr(begin + str_len, end - begin);
+    auto temp_str = script_text.substr(0, begin);
+    auto remove_str = ProcessStrip(temp_str);
+    update_str = remove_str + script_text.substr(begin + str_len, end - begin);
   }
   if (end + str_len < SizeToLong(script_text.size())) {
-    update_str = update_str + script_text.substr(end + str_len + 1, script_text.size() - end - str_len - 1);
+    auto temp_str = script_text.substr(end + str_len + 1, script_text.size() - end - str_len - 1);
+    auto remove_str = ProcessStrip(temp_str);
+    update_str = update_str + remove_str;
   }
   return update_str;
 }
 
-size_t GetSubStrNum(const string &script_text, const string &sub) {
-  size_t count = 0;
-  size_t pos = script_text.find(sub);
-  while (pos != string::npos) {
-    count++;
-    pos = script_text.find(sub, pos + 1);
-  }
-  return count;
-}
-
 string ProcessIndentationInScript(const string &script_text) {
-  const size_t f_string_num = 2;
-  size_t num1 = GetSubStrNum(script_text, "f'");
-  size_t num2 = GetSubStrNum(script_text, "f\"");
-  if (num1 + num2 < f_string_num) {
+  if (script_text.find("\n") == string::npos) {
     return script_text;
   }
-  string old_script = script_text;
+  const string &old_script = script_text;
   string new_script = script_text;
   const size_t str_len = 2;
   while (new_script.find("f'") != string::npos) {
@@ -4105,10 +4112,10 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
                                      const string &script_text) {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(value_node);
-  string new_script_text = ProcessIndentationInScript(script_text);
-  if (!CheckNeedConvertInterpret(block, value_node, new_script_text)) {
+  if (!CheckNeedConvertInterpret(block, value_node, script_text)) {
     return value_node;
   }
+  string new_script_text = ProcessIndentationInScript(script_text);
 
   // Prepare global parameters.
   PyObjectWrapperPtr interpreted_global_dict = std::make_shared<InterpretedObject>(block->global_py_params());
