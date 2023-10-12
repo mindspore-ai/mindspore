@@ -515,14 +515,14 @@ FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_gr
     }
     pynative::PyNativeAlgo::GradCommon::GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);
   }
-  // Make sure forward graph does not change
-  auto clone_graph = BasicClone(jit_forward_graph);
   if (node_list.empty()) {
     MS_LOG(DEBUG) << "No need do replace";
-    return clone_graph;
+    // Make sure forward graph does not change
+    return BasicClone(jit_forward_graph);
   }
   pynative::PyNativeAlgo::GradCommon::SetForward(node_list);
   // jit_forward_graph will be changed output
+  auto clone_graph = BasicClone(jit_forward_graph);
   jit_forward_graph->set_used_forward_nodes(node_list);
   ModifyOutputNode(jit_forward_graph);
   PyNativeAlgo::Common::DumpGraphIR("jit_modify_after_forward_graph.ir", jit_forward_graph);
