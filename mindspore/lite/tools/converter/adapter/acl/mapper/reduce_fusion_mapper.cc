@@ -116,12 +116,22 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
 
 STATUS ReduceFusionMapper::AdjustInput(const CNodePtr &cnode, const PrimitivePtr &prim) {
   MS_ASSERT(cnode != nullptr && prim != nullptr);
+  auto attr_val = prim->GetAttr(ops::kMode);
+  CHECK_NULL_RETURN(attr_val);
+  int64_t mode = GetValue<int64_t>(attr_val);
+  if (cnode->size() == kNameReduceInputNum && mode == static_cast<int64_t>(ReduceMode::Reduce_Prod)) {
+    auto axes_ptr = prim->GetAttr(ops::kAxes);
+    if (axes_ptr != nullptr) {
+      auto axes = GetValue<std::vector<int32_t>>(axes_ptr);
+      if (axes.empty()) {
+        auto new_inputs = {cnode->input(0), cnode->input(1)};
+        cnode->set_inputs(new_inputs);
+      }
+    }
+  }
   if (cnode->size() == kNameReduceMinInputNum) {
     auto func_graph = cnode->func_graph();
     CHECK_NULL_RETURN(func_graph);
-    auto attr_val = prim->GetAttr(ops::kMode);
-    CHECK_NULL_RETURN(attr_val);
-    int64_t mode = GetValue<int64_t>(attr_val);
     auto attr_name = mode != static_cast<int64_t>(ReduceMode::Reduce_Prod) ? ops::kAxes : ops::kKeepDims;
     auto ret = mode != static_cast<int64_t>(ReduceMode::Reduce_Prod)
                  ? AddIntVecAttrToInput(func_graph, cnode, prim, attr_name)
