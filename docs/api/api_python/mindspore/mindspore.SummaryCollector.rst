@@ -1,7 +1,7 @@
 mindspore.SummaryCollector
 ================================
 
-.. py:class:: mindspore.SummaryCollector(summary_dir, collect_freq=10, collect_specified_data=None, keep_default_action=True, custom_lineage_data=None, collect_tensor_freq=None, max_file_size=None, export_options=None)
+.. py:class:: mindspore.SummaryCollector(summary_dir, collect_freq=10, num_process=32, collect_specified_data=None, keep_default_action=True, custom_lineage_data=None, collect_tensor_freq=None, max_file_size=None, export_options=None)
 
     SummaryCollector可以帮助收集收集一些常用信息，比如loss、学习率、计算图等。
 
@@ -18,6 +18,7 @@ mindspore.SummaryCollector
     参数：
         - **summary_dir** (str) - 收集的数据将存储到此目录。如果目录不存在，将自动创建。
         - **collect_freq** (int) - 设置数据收集的频率，频率应大于零，单位为 `step` 。如果设置了频率，将在(current steps % freq)=0时收集数据，并且将总是收集第一个step。需要注意的是，如果使用数据下沉模式，单位将变成 `epoch` 。不建议过于频繁地收集数据，因为这可能会影响性能。默认值： ``10`` 。
+        - **num_process** (int) - 设置保存Summary数据的进程数，进程越多性能越好，设置进程多可能会出现Host内存不足的问题。默认值： ``32`` 。
         - **collect_specified_data** (Union[None, dict]) - 对收集的数据进行自定义操作。您可以使用字典自定义需要收集的数据类型。例如，您可以设置{'collect_metric':False}不去收集metrics。支持控制的数据如下。默认值： ``None`` ，收集所有数据。
 
           - **collect_metric** (bool) - 表示是否收集训练metrics，目前只收集loss。把第一个输出视为loss，并且算出其平均数。默认值： ``True`` 。
