@@ -2027,6 +2027,13 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
     MS_LOG(ERROR) << "Import nodes for graph failed! " << import_proto.has_name();
     return false;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+    const bool enable_ge = context->backend_policy() == "ge";
+    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    context->SetCellReuseLevel(cell_reuse_level);
+  }
   return true;
 }
 
