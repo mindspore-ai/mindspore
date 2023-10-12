@@ -279,8 +279,9 @@ const bool SelectAscendPlugin = []() -> bool {
   if (iter->second == k910BAscendVersion) {
     common::SetEnv("MS_ENABLE_GE", "1");
     auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+    auto disable_ref = common::GetEnv("MS_DISABLE_REF_MODE");
     // MS_DEV_FORCE_ACL 1: ACL with special format, 2: ACL with default format.
-    if (force_acl.empty()) {
+    if (force_acl.empty() && disable_ref != "1") {
       common::SetEnv("MS_DEV_FORCE_ACL", "1");
     }
   }
