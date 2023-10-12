@@ -36,10 +36,10 @@ mindspore.train.HausdorffDistance
 
     .. py:method:: update(*inputs)
 
-        使用 `y_pred`、`y` 和 `label_idx` 更新内部评估结果。
+        使用 `y_pred`、 `y` 和 `label_idx` 更新内部评估结果。
 
         参数：
-            - **inputs** - `y_pred`、`y`  和 `label_idx`。`y_pred` 和 `y` 为Tensor， list或numpy.ndarray，`y_pred` 是预测的二值图像，`y` 是实际的二值图像。`label_idx` 的数据类型为int或float，表示像素点的类别值。
+            - **inputs** - `y_pred`、 `y`  和 `label_idx`。 `y_pred` 和 `y` 为Tensor， list或numpy.ndarray， `y_pred` 是预测的二值图像， `y` 是实际的二值图像。 `label_idx` 的数据类型为int或float，表示像素点的类别值。
 
         异常：
             - **ValueError** - 输入的数量不等于3。
