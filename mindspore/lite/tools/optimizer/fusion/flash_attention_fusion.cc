@@ -481,18 +481,12 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForLLAMAPattern
   // ===== attention mask =====
   // sub
   auto sub_mask_input_1 = std::make_shared<Var>();  // input attention mask
-  MS_CHECK_TRUE_RET(sub_mask_input_1 != nullptr, {});
-  auto sub_mask_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(sub_mask_input_2 != nullptr, {});
-  auto is_mask_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSub>);
-  MS_CHECK_TRUE_RET(is_mask_sub != nullptr, {});
-  auto mask_sub = VectorRef({is_mask_sub, sub_mask_input_1, sub_mask_input_2});
   // mul
   auto is_mask_mul_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_mask_mul_param != nullptr, {});
   auto is_mask_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
   MS_CHECK_TRUE_RET(is_mask_mul != nullptr, {});
-  auto mask_mul = VectorRef({is_mask_mul, mask_sub, is_mask_mul_param});
+  auto mask_mul = VectorRef({is_mask_mul, sub_mask_input_1, is_mask_mul_param});
   // ===== end attention mask =====
   // add
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);

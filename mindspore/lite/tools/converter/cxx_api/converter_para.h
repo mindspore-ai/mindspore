@@ -46,7 +46,7 @@ struct GraphKernelCfg {
 };
 
 struct AscendGeOptionCfg {
-  std::string plugin_custom_ops;
+  std::vector<std::string> plugin_custom_ops;
   std::vector<int64_t> inputs_to_variable;
   std::vector<int64_t> outputs_to_variable;
 };

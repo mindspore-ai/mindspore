@@ -42,7 +42,7 @@ namespace opt {
 class FlashAttentionFusionForCustom : public MultiplePatternProcessPass {
  public:
   explicit FlashAttentionFusionForCustom(
-    const std::string &plugin_custom_ops = "",
+    const std::vector<std::string> &plugin_custom_ops = {},
     const std::map<std::string, std::vector<std::string>> &enable_pattern_names = {},
     const std::map<std::string, std::vector<std::string>> &disable_pattern_names = {},
     const std::string &name = "FlashAttentionFusionForCustom", bool multigraph = true)
@@ -79,7 +79,7 @@ class FlashAttentionFusionForCustom : public MultiplePatternProcessPass {
   mutable VarPtr input_1_batchmm_sv_ = nullptr;
   mutable VarPtr input_0_mul_ = nullptr;
   mutable bool has_add_cast_ = false;
-  std::string plugin_custom_ops_;
+  std::vector<std::string> plugin_custom_ops_;
   std::map<std::string, std::vector<std::string>> enable_pattern_names_;
   std::map<std::string, std::vector<std::string>> disable_pattern_names_;
 };
