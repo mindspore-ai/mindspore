@@ -1246,7 +1246,24 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
 
   auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kOutputActorNameSuffix;
-  auto output_actor = std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_);
+  // get summary node form graph_compiler_info and build a output actor
+  std::vector<KernelWithIndex> summary_nodes;
+  auto graphs = graph_compiler_info.graphs_;
+  for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!graph->summary_node_exist()) {
+      continue;
+    }
+    const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes = graph->summary_nodes();
+    if (nodes.empty()) {
+      continue;
+    }
+    (void)std::transform(nodes.cbegin(), nodes.cend(), std::back_inserter(summary_nodes), [](const auto &out) {
+      return std::make_pair(out.second.first, IntToSize(out.second.second));
+    });
+  }
+  auto output_actor =
+    std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_, summary_nodes);
   MS_LOG(INFO) << "Create output actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(output_actor);
   InsertActor(output_actor.get());

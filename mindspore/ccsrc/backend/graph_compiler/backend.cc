@@ -752,7 +752,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     root_graph_->set_output(output_node_);
   }
   ConstructOutputs(actor_set, outputs, root_graph_);
-  FreeSummary(graph_compiler_info.graphs_);
+  actor_set->output_actor_->FreeSummaryNodeMem();
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();
