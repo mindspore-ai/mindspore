@@ -720,9 +720,9 @@ def check_value_type(arg_name, arg_value, valid_types, prim_name=None):
         type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
         num_types = len(valid_types)
         msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-        raise TypeError(f'{msg_prefix} type of \'{arg_name}\' should be {"one of " if num_types > 1 else ""}' \
-                        f'\'{type_names if num_types > 1 else type_names[0]}\', ' \
-                        f'but got type \'{type(arg_value).__name__}\'.')
+        type_name_msg = f'{type_names if num_types > 1 else type_names[0]}'
+        msg = f'type of \'{arg_name}\' should be{"one of " if num_types > 1 else ""} \'{type_name_msg}\''
+        raise TypeError(f'{msg_prefix} {msg}, but got type \'{type(arg_value).__name__}\'.')
 
     # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
     #         `check_value_type('x', True, [bool, int])` will check pass
