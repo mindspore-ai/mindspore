@@ -131,7 +131,7 @@ _modules_from_mindspore = (
     "mindspore_rl", "mindformers", "mindpet", "mindpose", "mindface", "mindsearch", "mindinsight", "mindelec",
     "mindflow", "mindsponge", "mindearth", "sciai", "mindquantum", "mindarmour", "mindpandas", "mindvision",
     "mindspore_gl", "mindspore_federated", "mindspore_gs", "mindspore_serving", "mindspore_xai", "mindspore_hub",
-    "ringmo_framework", "troubleshooter",
+    "ringmo_framework", "troubleshooter", "mindtorch",
 )
 
 _global_params = {}
