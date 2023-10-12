@@ -74,7 +74,7 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
     }
 
     AnfNodePtr next_node = GetRefInfo(op_name, cnode, cur_out_index);
-    if (!next_node) {
+    if (next_node) {
       return FindRefOriginNode(next_node);
     }
   }
