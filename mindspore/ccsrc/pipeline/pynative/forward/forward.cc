@@ -322,7 +322,7 @@ bool EnableView(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   if (op_run_info->op_grad_info->input_value.empty()) {
-    MS_LOG(EXCEPTION) << "input_value is empty.";
+    MS_LOG(EXCEPTION) << "View, op:" << op_run_info->base_op_run_info.op_name << " input_value is empty.";
   }
 
   auto view_value = op_run_info->op_grad_info->input_value[0];
