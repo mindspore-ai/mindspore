@@ -36,6 +36,9 @@ def lazy_inline(fn=None, attrs=None):
     Returns:
         function, original function.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
