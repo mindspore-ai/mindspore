@@ -138,8 +138,8 @@ class ModelImpl {
   Status RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after);
   bool IsEnableModelSharing(const std::string &model_path);
   bool IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff);
-  void ModelDeObfuscate();
   bool IsValidDoubleNum(const std::string &num_str);
+  int ModelDeObfuscate();
   std::map<std::string, TypeId> execution_plan_;
   std::map<std::string, std::map<std::string, std::string>> config_info_;
 };
