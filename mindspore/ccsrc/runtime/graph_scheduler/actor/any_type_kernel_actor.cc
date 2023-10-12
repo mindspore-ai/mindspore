@@ -598,6 +598,20 @@ void AnyTypeKernelActor::Init() {
   fallback_device_tensors_.resize(graph_ouput_device_tensors_.size());
 }
 
+namespace {
+void FreeMemory(DeviceTensor *device_tensor) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_tensor->device_name(), device_tensor->device_id()});
+  if (device_context == nullptr || device_context->device_res_manager_ == nullptr) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Device tensor:" << device_tensor << " release memory:" << device_tensor->GetMutablePtr();
+  device_context->device_res_manager_->FreeMemory(device_tensor->GetMutablePtr());
+  device_tensor->set_ptr(nullptr);
+}
+}  // namespace
+
 void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
@@ -658,6 +672,11 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
             graph_ouput_device_tensors_[index]->dynamic_ref_count());
         }
         graph_ouput_device_tensors_[index] = fallback_device_tensors_[index].get();
+      }
+      if (graph_ouput_device_tensors_[index]->GetPtr() != nullptr) {
+        // As the from memory pool flag of any type kernel graph is false, the memory cannot be released automatically,
+        // and the memory needs to be released before overwriting.
+        FreeMemory(graph_ouput_device_tensors_[index]);
       }
       graph_ouput_device_tensors_[index]->set_ptr(graph_output_data->data_->GetMutablePtr());
       graph_ouput_device_tensors_[index]->set_sync_user_data_handler(
