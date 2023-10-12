@@ -191,7 +191,7 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
 
   FetchOutputDeviceTensor(context);
-  if (is_dynamic_shape_) {
+  if (is_dynamic_shape_ || is_dynamic_value_) {
     FetchWorkspaceDeviceTensor();
   }
   // Set the memory address for the tensors which use the somas.

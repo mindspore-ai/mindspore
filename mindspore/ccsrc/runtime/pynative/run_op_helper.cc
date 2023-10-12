@@ -389,7 +389,8 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<
 
 std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
                                                               const device::DeviceContext *device_context,
-                                                              const CNodePtr &kernel, bool is_dynamic_shape) {
+                                                              const CNodePtr &kernel, bool is_dynamic_shape,
+                                                              bool is_dynamic_value) {
   MS_EXCEPTION_IF_NULL(runtime_info);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
@@ -399,7 +400,7 @@ std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_
   auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
 
   std::vector<device::DeviceAddressPtr> add_workspaces;
-  if (is_dynamic_shape) {
+  if (is_dynamic_shape || is_dynamic_value) {
     // Resize of workspaces, because of the dynamic size of workspace.
     if (workspace_size < workspace_sizes.size()) {
       for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
@@ -977,15 +978,15 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     }
     auto inputs = GetInputKernelTensors(runtime_info, node);
     auto outputs = GetOutputKernelTensors(runtime_info);
-
-    if (common::AnfAlgo::IsDynamicValue(node)) {
+    bool is_dynamic_value = common::AnfAlgo::IsDynamicValue(node);
+    if (is_dynamic_value) {
       auto kernel_mod = runtime_info->GetKernelMod();
       MS_EXCEPTION_IF_NULL(kernel_mod);
       if (kernel_mod->Resize(inputs, outputs) != static_cast<int>(kernel::KRET_OK)) {
         MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " resize failed";
       }
     }
-    auto workspaces = GetWorkspaceKernelTensors(runtime_info, device_context, node, is_dynamic_shape);
+    auto workspaces = GetWorkspaceKernelTensors(runtime_info, device_context, node, is_dynamic_shape, is_dynamic_value);
 
     if (!MallocForKernelOutput(runtime_info, node, device_context)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
