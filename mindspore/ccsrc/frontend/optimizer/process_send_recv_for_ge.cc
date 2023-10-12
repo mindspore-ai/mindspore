@@ -36,6 +36,20 @@ bool IsSendRecvOps(const AnfNodePtr &node) {
   return IsOneOfPrimitiveCNode(node, kSendRecvOpsPrim);
 }
 
+std::string GetNotCutEnv() {
+  static const auto not_cut_env = common::GetEnv("GE_NOT_CUT");
+  return not_cut_env;
+}
+
+bool IsCommOps(const AnfNodePtr &node) {
+  static const PrimitiveSet kCommunicationOpsPrim = {
+    prim::kPrimSend,      prim::kPrimReceive,          prim::kPrimAllReduce,          prim::kPrimReduce,
+    prim::kPrimAllGather, prim::kPrimReduceScatter,    prim::kPrimAllToAll,           prim::kPrimAllSwap,
+    prim::kPrimAllToAllv, prim::kPrimNeighborExchange, prim::kPrimNeighborExchangeV2, prim::kPrimNeighborExchangeV2Grad,
+    prim::kPrimBarrier};
+  return IsOneOfPrimitiveCNode(node, kCommunicationOpsPrim) && GetNotCutEnv() != "2";
+}
+
 std::tuple<FuncGraphPtr, CNodePtr> CreateNewCNode(const FuncGraphManagerPtr &, const CNodePtr &old_node, bool) {
   FuncGraphPtr fg = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> params;
@@ -281,7 +295,7 @@ void ProcessSpecialNodes(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
       ProcessNodeWithoutOutput(graph, node->cast<CNodePtr>());
     }
 
-    auto not_cut_env = common::GetEnv("GE_NOT_CUT");
+    auto not_cut_env = GetNotCutEnv();
     if (IsOneOfPrimitiveCNode(node, {prim::kPrimPartial, prim::kPrimSwitch}) && !not_cut_env.empty()) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -340,7 +354,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
       send_cnt++;
     }
 
-    if (IsClosure(node)) {
+    if (IsCommOps(node) || IsClosure(node)) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       if (last_need_depend != nullptr && cnode->inputs().size() > 1) {
