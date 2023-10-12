@@ -935,6 +935,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(backend_node);
   MS_EXCEPTION_IF_NULL(front_node);
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(context);
   if (tensor == nullptr) {
     return;
@@ -976,7 +977,12 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     } else if (host_tensor_address != device_tensor) {
       // In the scenario of training + inference , the device address of the weight node can not be changed when
       // multi-graphs sink mode is set.
-      if (device_tensor->is_ptr_persisted()) {
+      if (device_tensor->is_ptr_persisted() || host_tensor_address->format() != device_tensor->format()) {
+        if ((device_tensor->GetPtr() == nullptr) &&
+            (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
+          SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
+                                                      backend_node->fullname_with_scope(), device_tensor->GetSize());
+        }
         if (!Copy(device_tensor.get(), host_tensor_address.get())) {
           std::string error_info = "Sync data error.";
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
