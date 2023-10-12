@@ -740,6 +740,11 @@ class LayerNorm(Cell):
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
                             f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
+        if not normalized_shape:
+            raise ValueError(
+                f"Expected normalized_shape to be at least 1-dimensional, i.e., containing at "
+                f"least one element, but got normalized_shape = {normalized_shape}"
+            )
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis

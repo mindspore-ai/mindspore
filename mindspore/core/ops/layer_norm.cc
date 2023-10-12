@@ -78,7 +78,9 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
       MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << x_rank << ".";
     }
     if (gamma_shape.empty() || beta_shape.empty()) {
-      MS_EXCEPTION(ValueError) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
+      MS_EXCEPTION(ValueError) << "For 'LayerNorm', the gamma and beta should be at least 1-dimensional, i.e., "
+                                  "containing at least one element, but got gamma shape: "
+                               << gamma_shape << ", beta shape: " << beta_shape << ".";
     }
 
     if (IsDynamicRank(x_shape) || IsDynamicRank(gamma_shape) || IsDynamicRank(beta_shape)) {
