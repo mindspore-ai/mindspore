@@ -126,8 +126,9 @@ std::string GetGroupCkptSavePath() {
   return GetGraphCacheDir() + "/" + kGroupCkptFileName;
 }
 
-std::string GetDataQueueNameCachePath() {
-  std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kDataQueueNameCacheFileName;
+std::string GetDataQueueNameCachePath(const std::string &data_queue_num) {
+  std::string queue_name_cache_path =
+    GetGraphCacheDir() + "/" + GetRole() + "_" + data_queue_num + kDataQueueNameCacheFileName;
   return queue_name_cache_path;
 }
 
@@ -250,7 +251,8 @@ bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_n
   MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
   auto &context = CompileCacheContext::GetInstance();
   context.set_has_cached_queue_name(true);
-  const auto &filename = GetDataQueueNameCachePath();
+  const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
+  MS_LOG(INFO) << "Export data queue name in file " << filename;
   nlohmann::json name_json;
   if (!Common::FileExists(filename)) {
     name_json[dataset_phase] = queue_name;
@@ -310,11 +312,13 @@ std::string GetDataQueueName(const FuncGraphPtr &fg) {
 }
 }  // namespace
 
+size_t CompileCacheManager::data_queue_num_ = 0;
 std::string CompileCacheManager::GetCachedDataQueueName(const std::string &dataset_phase) {
   std::string queue_name;
   if (!CompileCacheEnable()) {
     return queue_name;
   }
+  data_queue_num_++;
   // if queue name has cached, we should not get it again from cache file in the same process.
   auto &context = CompileCacheContext::GetInstance();
   if (context.has_cached_queue_name()) {
@@ -324,7 +328,8 @@ std::string CompileCacheManager::GetCachedDataQueueName(const std::string &datas
   if (config_mng.dataset_phase().empty()) {
     config_mng.set_dataset_phase(dataset_phase);
   }
-  const auto &filename = GetDataQueueNameCachePath();
+  const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
+  MS_LOG(INFO) << "Get data queue name from file " << filename;
   std::ifstream json_fs(filename);
   if (!json_fs.good()) {
     return queue_name;
