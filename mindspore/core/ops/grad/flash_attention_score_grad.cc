@@ -119,7 +119,8 @@ TuplePtr FlashAttentionScoreGradInferType(const PrimitivePtr &prim, const std::v
   (void)types1.emplace("query", input_args[kFlashAttentionScoreGradInputQueryIndex]->BuildType());
   (void)types1.emplace("key", input_args[kFlashAttentionScoreGradInputKeyIndex]->BuildType());
   (void)types1.emplace("value", input_args[kFlashAttentionScoreGradInputValueIndex]->BuildType());
-  (void)types1.emplace("attn_mask", input_args[kFlashAttentionScoreGradInputAttnMaskIndex]->BuildType());
+  auto attn_mask_type = input_args[kFlashAttentionScoreGradInputAttnMaskIndex]->BuildType();
+  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kFloat16, kUInt8}, op_name);
   if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreGradInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
   }
@@ -133,7 +134,7 @@ TuplePtr FlashAttentionScoreGradInferType(const PrimitivePtr &prim, const std::v
     MS_LOG(EXCEPTION) << op_name << ": 'softmax_out' must be None currently.";
   }
   (void)types1.emplace("dy", input_args[kFlashAttentionScoreGradInputDyIndex]->BuildType());
-  auto type = CheckAndConvertUtils::CheckTensorTypeSame(types1, {kFloat16, kFloat32}, op_name);
+  auto type = CheckAndConvertUtils::CheckTensorTypeSame(types1, {kFloat16, kFloat32, kBFloat16}, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types2, {kFloat32}, op_name);
 
   auto keep_prob_value_ptr = prim->GetAttr("keep_prob");
