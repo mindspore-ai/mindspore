@@ -915,14 +915,18 @@ std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
 
 size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name) {
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
-  MS_EXCEPTION_IF_NULL(op_def);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return SIZE_MAX;
+  }
   auto ks_iter = op_def->indexes_.find(input_name);
   if (ks_iter != op_def->indexes_.end()) {
     size_t index = ks_iter->second;
-    MS_LOG(WARNING) << "Find " << input_name << "in " << index << "th input of OP " << op_name;
+    MS_LOG(INFO) << "Find " << input_name << "in " << index << "th input of OP " << op_name;
     return index;
   }
-  MS_LOG(EXCEPTION) << "Not Find " << input_name << "in OP " << op_name;
+  MS_LOG(INFO) << "Not Find " << input_name << "in OP " << op_name;
+  return SIZE_MAX;
 }
 
 template <typename T>

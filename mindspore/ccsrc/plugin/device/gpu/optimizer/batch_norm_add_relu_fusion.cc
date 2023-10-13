@@ -100,13 +100,16 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   auto kernel_name = common::AnfAlgo::GetCNodeName(batch_norm);
   size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
   auto is_train_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), is_train_idx);
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
+  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), format_idx);
+
+  if (!utils::isa<ValueNodePtr>(is_train_input_node) || !utils::isa<ValueNodePtr>(format_input_node)) {
+    return nullptr;
+  }
   auto is_train_v = ops::GetScalarValue<bool>(is_train_input_node->cast<ValueNodePtr>()->value());
   if (!is_train_v.has_value() || !is_train_v.value()) {
     return nullptr;
   }
-
-  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
-  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), format_idx);
   auto format_v = ops::GetScalarValue<int64_t>(format_input_node->cast<ValueNodePtr>()->value());
   if (!format_v.has_value()) {
     return nullptr;

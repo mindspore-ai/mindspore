@@ -47,14 +47,21 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
   size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
+  if (is_train_idx == SIZE_MAX || format_idx == SIZE_MAX) {
+    return nullptr;
+  }
   auto is_train_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), is_train_idx);
+  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), format_idx);
+
+  if (!utils::isa<ValueNodePtr>(is_train_input_node) || !utils::isa<ValueNodePtr>(format_input_node)) {
+    return nullptr;
+  }
   auto is_train_v = ops::GetScalarValue<bool>(is_train_input_node->cast<ValueNodePtr>()->value());
   if (!is_train_v.has_value() || !is_train_v.value()) {
     return nullptr;
   }
 
-  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
-  auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), format_idx);
   auto format_v = ops::GetScalarValue<int64_t>(format_input_node->cast<ValueNodePtr>()->value());
   if (!format_v.has_value()) {
     return nullptr;

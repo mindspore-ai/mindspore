@@ -20,6 +20,7 @@
 #include <limits>
 
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -49,22 +50,47 @@ const AnfNodePtr NanToNumFusion::Process(const FuncGraphPtr &graph, const AnfNod
   auto nan_none = prim->GetAttr("nan_none");
   if (nan_none != nullptr && GetValue<bool>(nan_none)) {
     common::AnfAlgo::SetNodeAttr("nan", MakeValue(static_cast<float>(0.0)), cnode);
+    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "nan");
+    if (idx != SIZE_MAX) {
+      auto nan_node = common::AnfAlgo::GetInputNode(cnode, idx);
+      if (utils::isa<ValueNodePtr>(nan_node)) {
+        nan_node->cast<ValueNodePtr>()->set_value(MakeValue(static_cast<float>(0.0)));
+      }
+    }
   }
   auto posinf_none = prim->GetAttr("posinf_none");
   if (posinf_none != nullptr && GetValue<bool>(posinf_none)) {
+    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "posinf");
+    ValuePtr posinf = MakeValue(std::numeric_limits<float>::max());
     if (dtype_id == kNumberTypeFloat32) {
       common::AnfAlgo::SetNodeAttr("posinf", MakeValue(std::numeric_limits<float>::max()), cnode);
     } else if (dtype_id == kNumberTypeFloat16) {
       common::AnfAlgo::SetNodeAttr("posinf", MakeValue(static_cast<float>(std::numeric_limits<float16>::max())), cnode);
+      posinf = MakeValue(static_cast<float>(std::numeric_limits<float16>::max()));
+    }
+    if (idx != SIZE_MAX) {
+      auto posinf_node = common::AnfAlgo::GetInputNode(cnode, idx);
+      if (utils::isa<ValueNodePtr>(posinf_node)) {
+        posinf_node->cast<ValueNodePtr>()->set_value(posinf);
+      }
     }
   }
   auto neginf_none = prim->GetAttr("neginf_none");
   if (neginf_none != nullptr && GetValue<bool>(neginf_none)) {
+    size_t idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), "neginf");
+    ValuePtr neginf = MakeValue(std::numeric_limits<float>::lowest());
     if (dtype_id == kNumberTypeFloat32) {
       common::AnfAlgo::SetNodeAttr("neginf", MakeValue(std::numeric_limits<float>::lowest()), cnode);
     } else if (dtype_id == kNumberTypeFloat16) {
       common::AnfAlgo::SetNodeAttr("neginf", MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest())),
                                    cnode);
+      neginf = MakeValue(static_cast<float>(std::numeric_limits<float16>::lowest()));
+    }
+    if (idx != SIZE_MAX) {
+      auto neginf_node = common::AnfAlgo::GetInputNode(cnode, idx);
+      if (utils::isa<ValueNodePtr>(neginf_node)) {
+        neginf_node->cast<ValueNodePtr>()->set_value(neginf);
+      }
     }
   }
 

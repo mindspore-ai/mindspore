@@ -54,6 +54,9 @@ AnfNodePtr AddReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node)
 
   // Add reduce node
   auto reduction_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), kIndex4);
+  if (!utils::isa<ValueNodePtr>(reduction_node)) {
+    return nullptr;
+  }
   auto reduction_v = ops::GetScalarValue<int64_t>(reduction_node->cast<ValueNodePtr>()->value());
   if (!reduction_v.has_value()) {
     return nullptr;

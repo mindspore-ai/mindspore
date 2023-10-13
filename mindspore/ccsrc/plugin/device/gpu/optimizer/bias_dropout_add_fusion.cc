@@ -76,10 +76,13 @@ const AnfNodePtr BiasDropoutAddFusion::Process(const FuncGraphPtr &graph, const 
   common::AnfAlgo::CopyNodeAttrs(dropout, fused_node);
   // set attr for BiasDropoutAdd
   auto prob = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex1);
-  auto prob_v = ops::GetScalarValue<float>(prob->cast<ValueNodePtr>()->value());
   auto seed0 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex2);
-  auto seed0_v = ops::GetScalarValue<int64_t>(seed0->cast<ValueNodePtr>()->value());
   auto seed1 = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(dropout), kIndex3);
+  if (!utils::isa<ValueNodePtr>(prob) || !utils::isa<ValueNodePtr>(seed0) || !utils::isa<ValueNodePtr>(seed1)) {
+    return nullptr;
+  }
+  auto seed0_v = ops::GetScalarValue<int64_t>(seed0->cast<ValueNodePtr>()->value());
+  auto prob_v = ops::GetScalarValue<float>(prob->cast<ValueNodePtr>()->value());
   auto seed1_v = ops::GetScalarValue<int64_t>(seed1->cast<ValueNodePtr>()->value());
   if (!prob_v.has_value() || !seed0_v.has_value() || !seed1_v.has_value()) {
     return nullptr;

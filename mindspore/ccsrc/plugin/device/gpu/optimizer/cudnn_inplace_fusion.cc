@@ -135,9 +135,12 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
   }
 
   auto out_channel_first = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(first_node), kIndex3);
-  auto out_channel_first_v = ops::GetScalarValue<int64_t>(out_channel_first->cast<ValueNodePtr>()->value());
   auto out_channel_sec = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(second_node), kIndex3);
+  if (!utils::isa<ValueNodePtr>(out_channel_first) || !utils::isa<ValueNodePtr>(out_channel_sec)) {
+    return {0, true};
+  }
   auto out_channel_sec_v = ops::GetScalarValue<int64_t>(out_channel_sec->cast<ValueNodePtr>()->value());
+  auto out_channel_first_v = ops::GetScalarValue<int64_t>(out_channel_first->cast<ValueNodePtr>()->value());
 
   if (!out_channel_first_v.has_value() || !out_channel_sec_v.has_value()) {
     return {0, true};

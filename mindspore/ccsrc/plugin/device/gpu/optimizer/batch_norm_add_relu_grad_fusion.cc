@@ -124,7 +124,13 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   size_t format_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(node), "format");
+  if (format_idx == SIZE_MAX) {
+    return false;
+  }
   auto format_input_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), format_idx);
+  if (!utils::isa<ValueNodePtr>(format_input_node)) {
+    return false;
+  }
   auto format_v = ops::GetScalarValue<int64_t>(format_input_node->cast<ValueNodePtr>()->value());
   if (!format_v.has_value()) {
     return false;
@@ -203,7 +209,9 @@ const AnfNodePtr BatchNormAddReluGradFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(batch_norm);
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
   MS_EXCEPTION_IF_NULL(bias);
-
+  if (!utils::isa<ValueNodePtr>(is_train)) {
+    return nullptr;
+  }
   auto is_train_v = ops::GetScalarValue<bool>(is_train->cast<ValueNodePtr>()->value());
   if (!is_train_v.has_value() || !is_train_v.value()) {
     return nullptr;

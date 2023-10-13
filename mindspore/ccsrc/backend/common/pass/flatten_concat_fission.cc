@@ -180,7 +180,8 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
     auto iter = type_id_to_node_info.find(input_type_id);
     if (iter == type_id_to_node_info.end()) {
       std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
-                                               flatten_node};
+                                               flatten_node,
+                                               NewValueNode(MakeValue<int64_t>(0))};  // concat(input, axis)
       type_id_to_node_info[input_type_id] = std::make_pair(concat_inputs, elem_num);
       (void)output_type_id_order.emplace_back(input_type_id);
     } else {
@@ -191,7 +192,8 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
         concat_node->set_scope(cnode->scope());
         (void)concat_nodes.emplace_back(concat_node);
         iter->second.second = elem_num;
-        iter->second.first = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())), flatten_node};
+        iter->second.first = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())), flatten_node,
+                              NewValueNode(MakeValue<int64_t>(0))};  // concat(input, axis)
       } else {
         (void)iter->second.first.emplace_back(flatten_node);
         iter->second.second += elem_num;
