@@ -520,36 +520,51 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
-DEF_PURE_SHAPE_CALC(reduce_shape_shapecalc)
+DEF_PURE_SHAPE_CALC(g_sumgrad_shapecalc)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
     auto r_shape = ReduceShape(x_shape, axis_value);
-    return {r_shape};
+    auto scaling = TupleDiv(x_shape, r_shape);
+    return {r_shape, scaling};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, x_rank};
+  });
+NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout) {
+  auto calc_res = ib->ShapeCalc(g_sumgrad_shapecalc, {x, axis}, {1});
+  const size_t cal_num = 2;
+  if (calc_res.size() != cal_num) {
+    MS_LOG(EXCEPTION) << "Number of ShapeCalc should be 2, but got " << calc_res.size();
+  }
+  auto output_shape_kept_dims = calc_res[0];
+  auto tile_scaling = calc_res[1];
+  auto grad = ib->Reshape(dout, output_shape_kept_dims);
+  if (tile_scaling->isa<ValueNode>() || IsDynamic(x->shape())) {
+    return ib->Tile(grad, tile_scaling);
+  }
+  return ib->Emit("DynamicBroadcastTo", {grad, ib->Value(x->shape())});
+}
+
+DEF_PURE_SHAPE_CALC(g_min_or_max_grad)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto axis_value = inputs.at(1);
+    return {ReduceShape(input_shape, axis_value)};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     return {IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size())};
   });
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims) {
-  auto grad = dout;
-  if (!keep_dims) {
-    auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
-    grad = ib->Reshape(grad, calc_res[0]);
-  }
-  return ib->BroadcastTo(grad, x);
-}
-
 NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout) {
-  auto y = out;
-  auto grad = dout;
-  if (!ib->GetAttr<bool>("keep_dims")) {
-    auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
-    y = ib->Reshape(out, output_shape_kept_dims);
-    grad = ib->Reshape(dout, output_shape_kept_dims);
-  }
+  auto output_shape_kept_dims = ib->ShapeCalc(g_min_or_max_grad, {x, axis}, {1})[0];
+  auto y = ib->Reshape(out, output_shape_kept_dims);
+  auto grad = ib->Reshape(dout, output_shape_kept_dims);
   auto indicators = ib->Cast(ib->Equal(y, x), ib->GetDtype(grad));
-  auto num_selected = ib->ReduceSum(indicators, axis, true, false);
+  auto minn = 1e-24;
+  auto min_num = ib->Tensor(minn, ib->GetDtype(grad));
+  auto num_selected = ib->Reshape(ib->ReduceSum(indicators, axis), output_shape_kept_dims) + min_num;
   return indicators / num_selected * grad;
 }
 

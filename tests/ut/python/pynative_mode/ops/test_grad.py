@@ -210,3 +210,30 @@ def test_MulGrad():
     assert np.all(gout[0].asnumpy() == expect_dx)
     assert np.all(gout[1].asnumpy().shape == expect_dy.shape)
     assert np.all(gout[1].asnumpy() == expect_dy)
+
+
+def test_ReduceSumGrad():
+    """
+    Feature: ReduceSum Grad.
+    Description: Test case for ReduceSum grad operator.
+    Expectation: success.
+    """
+    input_x = Tensor(np.array([[2, 2], [3, 3], [4, 4]], np.float32))
+    input_y = Tensor(np.array([1], np.int64))
+    reduce_sum = P.ReduceSum()
+
+    def fn(x, y):
+        output = reduce_sum(x, y)
+        return output
+
+    out = fn(input_x, input_y)
+    gfn = grad_all_with_sens(fn)
+    sens = Tensor(np.ones_like(out.asnumpy()) * 3)
+    args = [input_x, input_y, sens]
+    gout = gfn(*args)
+    expect_dx = np.ones([3, 2], np.float32) * 3
+    expect_dy = np.ones([1], np.int64) * 0
+    assert np.all(gout[0].asnumpy().shape == expect_dx.shape)
+    assert np.all(gout[0].asnumpy() == expect_dx)
+    assert np.all(gout[1].asnumpy().shape == expect_dy.shape)
+    assert np.all(gout[1].asnumpy() == expect_dy)
