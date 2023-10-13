@@ -1910,7 +1910,9 @@ class ExecuteOrderGenerator {
       // We only try to erase argument link assign nodes,
       // other assign nodes are skipped.
       if (IsOptimizableAssign(node)) {
-        auto &target = node->inputs().at(kAssignTargetIndex);
+        // NOTE: here variable `target` can not declared as reference, since the statements below may change inputs of
+        // `node`, which may lead to `target` to be an invalid reference
+        auto target = node->inputs().at(kAssignTargetIndex);
         MS_EXCEPTION_IF_NULL(target);
         auto para = param_write_times.find(target);
         if (para != param_write_times.end() && para->second.first == 1) {
