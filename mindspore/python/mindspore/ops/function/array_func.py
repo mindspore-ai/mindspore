@@ -296,8 +296,7 @@ def cat(tensors, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(tensors)
+    return concat(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -2168,7 +2167,8 @@ def concat(tensors, axis=0):
         - `Sentiment Classification Implemented by RNN - Dense
           <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
     """
-    return cat(tensors, axis)
+    _concat = _get_cache_prim(P.Concat)(axis)
+    return _concat(tensors)
 
 
 def stack(tensors, axis=0):
