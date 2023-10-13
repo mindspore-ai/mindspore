@@ -331,3 +331,26 @@ def test_gather_tensor_out_of_bound(data_type):
     with pytest.raises(RuntimeError) as info:
         graph_table_tensor.gather(input_indices, axis)
     assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
+def test_gather_tensor_8d(data_type):
+    """
+    Feature: Gather
+    Description: test 8d cases for Gather on cpu
+    Expectation: the result match to numpy
+    """
+    x = np.random.randn(1, 2, 3, 4, 5, 6, 7, 8).astype(data_type)
+    indices = np.array([3, 1, 2], dtype=np.int)
+    axis = 7
+    y_expect = np.take(x, indices, axis)
+
+    x_ms = Tensor(x)
+    indices_ms = Tensor(indices)
+    out = x_ms.gather(indices_ms, axis)
+
+    assert out.shape == y_expect.shape
+    assert np.allclose(out.asnumpy(), y_expect)
