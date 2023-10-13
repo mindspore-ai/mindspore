@@ -390,23 +390,24 @@ Linear Algebraic Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.bmm
     mindspore.ops.addbmm
     mindspore.ops.addmm
-    mindspore.ops.baddbmm
     mindspore.ops.addr
     mindspore.ops.adjoint
+    mindspore.ops.baddbmm
+    mindspore.ops.batch_dot
+    mindspore.ops.bmm
     mindspore.ops.cholesky
     mindspore.ops.cholesky_solve
     mindspore.ops.cond
-    mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eigvals
-    mindspore.ops.inner
-    mindspore.ops.inverse
     mindspore.ops.geqrf
     mindspore.ops.ger
+    mindspore.ops.inner
+    mindspore.ops.inverse
     mindspore.ops.kron
+    mindspore.ops.logdet
     mindspore.ops.lu_solve
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
@@ -424,12 +425,11 @@ Linear Algebraic Functions
     mindspore.ops.ormqr
     mindspore.ops.pinv
     mindspore.ops.svd
-    mindspore.ops.tensor_dot
-    mindspore.ops.vecdot
-    mindspore.ops.logdet
     mindspore.ops.slogdet
     mindspore.ops.trace
+    mindspore.ops.tensor_dot
     mindspore.ops.vander
+    mindspore.ops.vecdot
 
 Spectral Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
