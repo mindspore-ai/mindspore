@@ -196,6 +196,12 @@ bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   return true;
 }
 
+void GeDeviceResManager::ResetStreamAndCtx() {
+  if (runtime_instance_ != nullptr) {
+    runtime_instance_->ResetStreamAndCtx();
+  }
+}
+
 bool GeDeviceResManager::CreateStream(size_t *stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     MS_LOG(ERROR) << "Bind context to current thread failed";
