@@ -40,7 +40,6 @@
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "kernel/oplib/op_info_utils.h"
-#include "common/plugin/opp_so_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #ifndef ENABLE_SECURITY
@@ -331,14 +330,6 @@ bool AscendKernelRuntime::Init() {
     }
     if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
-    }
-
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    const bool is_enable_ge = context_ptr->backend_policy() == "ge";
-    if (!is_enable_ge) {
-      // for tiling rt2 operator to register
-      ::ge::OppSoManager::GetInstance().LoadOppPackage();
     }
     uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");

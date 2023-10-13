@@ -34,7 +34,7 @@ namespace device {
 namespace tiling {
 class OpTilingCalculateAdapter {
  public:
-  OpTilingCalculateAdapter() = default;
+  OpTilingCalculateAdapter();
   ~OpTilingCalculateAdapter() = default;
 
   ::ge::Operator GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) const;
