@@ -20,15 +20,14 @@ import numpy as np
 
 import mindspore
 from mindspore import context
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore import nn
-from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
 class FmaxForward(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.fmax = P.fmax
+        self.fmax = ops.fmax
 
     def construct(self, x1, x2):
         return self.fmax(x1, x2)
@@ -57,14 +56,14 @@ def test_fmax_cpu_broadcast_shape(dtype, context_mode):
     """
     context.set_context(mode=context_mode, device_target="CPU")
     fmax = FmaxForward()
-    x1 = Tensor(np.array([1, 2, 3, 4], [5, 6, 7, 8]).astype(dtype))
+    x1 = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(dtype))
     x2 = Tensor(np.array([4]).astype(dtype))
     fmax.set_inputs(x1, x2)
     y = fmax(x1, x2)
-    expect = np.array([4, 4, 4, 4], [5, 6, 7, 8]).astype(dtype)
+    expect = np.array([[4, 4, 4, 4], [5, 6, 7, 8]]).astype(dtype)
     assert (y.asnumpy() == expect).all()
     fmax_grad = FmaxGrad(FmaxForward())
     out_grad = fmax_grad(x1, x2)
-    expect_grad = np.array([[0., -0., 0., 1.6913142],
-                            [-0.8341683, -0.7388851, 0.18720907, -1.1365079]]).astype(dtype)
-    assert np.allclose(out_grad.asnumpy(), expect_grad)
+    expect_grad = np.array([[0, 0, 0, 1],
+                            [1, 1, 1, 1]]).astype(dtype)
+    assert np.allclose(out_grad[0].asnumpy(), expect_grad)
