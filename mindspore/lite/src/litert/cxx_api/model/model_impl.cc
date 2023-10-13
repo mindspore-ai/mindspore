@@ -279,6 +279,7 @@ Status ModelImpl::Build() {
       auto ret_obf = ModelDeObfuscate();
       if (ret_obf != RET_OK) {
         MS_LOG(ERROR) << "Model deobfuscate failed.";
+        return kLiteError;
       }
       return kSuccess;
     }
@@ -326,6 +327,7 @@ Status ModelImpl::Build() {
   auto ret_obf = ModelDeObfuscate();
   if (ret_obf != RET_OK) {
     MS_LOG(ERROR) << "Model deobfuscate failed.";
+    return kLiteError;
   }
   return kSuccess;
 }
