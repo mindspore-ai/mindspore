@@ -309,7 +309,7 @@ class Profiler:
     MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
     and use Profiler.analyse() to stop profiling and analyse the results.
     Users can visualize the results using the `MindSpore Insight
-    <https://www.mindspore.cn/mindinsight/docs/en/master/index.html>`_ tool.
+    <https://www.mindspore.cn/mindinsight/docs/en/r2.2/index.html>`_ tool.
     Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
     correspondence, cluster, etc data analysis.
 
@@ -547,12 +547,12 @@ class Profiler:
             >>> # Profiler init.
             >>> profiler = Profiler()
             >>> # Train Model or eval Model, taking LeNet5 as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> # Create the dataset taking MNIST as an example.
-            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+            >>> # Refer to https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/mnist.py
             >>> dataloader = create_dataset()
             >>> model = Model(net, loss, optimizer)
             >>> model.train(5, dataloader, dataset_sink_mode=False)

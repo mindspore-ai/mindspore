@@ -388,7 +388,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "./lenet.ckpt",
         ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
@@ -408,7 +408,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
@@ -651,7 +651,7 @@ def load(file_name, **kwargs):
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
-              <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.obfuscate_model.html>`_.
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore/mindspore.obfuscate_model.html>`_.
 
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
@@ -681,7 +681,7 @@ def load(file_name, **kwargs):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     if not isinstance(file_name, str):
         raise ValueError("For 'load', the argument 'file_name' must be string, but "
@@ -1022,7 +1022,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
     specify_prefix = _check_prefix(specify_prefix)
@@ -1252,7 +1252,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
@@ -1262,7 +1262,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
     if not isinstance(net, nn.Cell):
         logger.critical("Failed to combine the net and the parameters.")
@@ -1557,14 +1557,14 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading MindIR
-          <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-mindir>`_
+          <https://mindspore.cn/tutorials/en/r2.2/beginner/save_load.html#saving-and-loading-mindir>`_
     """
     old_ms_jit_value = context.get_context("jit_syntax_level")
     context.set_context(jit_syntax_level=mindspore.STRICT)
@@ -1624,7 +1624,7 @@ def _get_funcgraph(net, *inputs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.get_funcgraph(net, input_tensor)
@@ -2369,14 +2369,14 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.2/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.2/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.2/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np

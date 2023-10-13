@@ -126,7 +126,7 @@ def all_finite(inputs):
 
     Tutorial Examples:
         - `Automatic Mix Precision - Loss Scaling
-          <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+          <https://mindspore.cn/tutorials/en/r2.2/advanced/mixed_precision.html#loss-scaling>`_
     """
     inputs = mutable(inputs)
     _check_overflow_mode = os.environ.get('MS_ASCEND_CHECK_OVERFLOW_MODE')
@@ -142,7 +142,7 @@ class LossScaler(ABC):
     to scale and unscale the loss value and gradients to avoid overflow, `adjust` is used to update the
     loss scale value.
 
-    For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/en/master/advanced/
+    For more information, refer to the `tutorials  <https://mindspore.cn/tutorials/en/r2.2/advanced/
     mixed_precision.html#loss-scaling>`_.
 
     .. warning::
@@ -334,7 +334,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.2/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_scale_map(self.scale_value, inputs)
@@ -351,7 +351,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.2/advanced/mixed_precision.html#loss-scaling>`_
         """
         inputs = mutable(inputs)
         return _grad_unscale_map(self.scale_value, inputs)
@@ -365,7 +365,7 @@ class DynamicLossScaler(LossScaler):
 
         Tutorial Examples:
             - `Automatic Mix Precision - Loss Scaling
-              <https://mindspore.cn/tutorials/en/master/advanced/mixed_precision.html#loss-scaling>`_
+              <https://mindspore.cn/tutorials/en/r2.2/advanced/mixed_precision.html#loss-scaling>`_
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor

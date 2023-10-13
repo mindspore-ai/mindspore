@@ -132,7 +132,7 @@ class AddToken(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_add_token
@@ -193,7 +193,7 @@ class JiebaTokenizer(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_jieba_init
@@ -373,7 +373,7 @@ class Lookup(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_lookup
@@ -434,7 +434,7 @@ class Ngram(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_ngram
@@ -475,7 +475,7 @@ class PythonTokenizer:
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_python_tokenizer
@@ -539,7 +539,7 @@ class SentencePieceTokenizer(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_sentence_piece_tokenizer
@@ -591,7 +591,7 @@ class SlidingWindow(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_slidingwindow
@@ -635,7 +635,7 @@ class ToNumber(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_to_number
@@ -684,7 +684,7 @@ class ToVectors(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_to_vectors
@@ -733,7 +733,7 @@ class Truncate(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_truncate
@@ -780,7 +780,7 @@ class TruncateSequencePair(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_pair_truncate
@@ -825,7 +825,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_with_offsets
@@ -888,7 +888,7 @@ class WordpieceTokenizer(TextTensorOperation):
 
     Tutorial Examples:
         - `Illustration of text transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_wordpiece_tokenizer
@@ -975,7 +975,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_basic_tokenizer
@@ -1073,7 +1073,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_bert_tokenizer
@@ -1122,7 +1122,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def parse(self):
@@ -1151,7 +1151,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def parse(self):
@@ -1188,7 +1188,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
@@ -1237,7 +1237,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_regex_replace
@@ -1298,7 +1298,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_regex_tokenizer
@@ -1351,7 +1351,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
 
         """
 
@@ -1404,7 +1404,7 @@ if platform.system().lower() != 'windows':
 
         Tutorial Examples:
             - `Illustration of text transforms
-              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+              <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_with_offsets

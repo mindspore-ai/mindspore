@@ -156,7 +156,7 @@ class Caltech101Dataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -287,7 +287,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -302,7 +302,7 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -399,7 +399,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: ``None`` , no decryption.
@@ -416,7 +416,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -552,7 +552,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -567,7 +567,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -666,7 +666,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -681,7 +681,7 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -780,7 +780,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -798,7 +798,7 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -931,7 +931,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
             output at the end :py:obj:`[_meta-filename, dtype=string]` . Default: ``False``.
@@ -990,7 +990,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op is added
@@ -1169,7 +1169,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1190,7 +1190,7 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -1337,7 +1337,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1349,7 +1349,7 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -1452,7 +1452,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1465,7 +1465,7 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -1523,7 +1523,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1537,7 +1537,7 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -1628,7 +1628,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -1644,7 +1644,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -1867,7 +1867,7 @@ class Flowers102Dataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2001,7 +2001,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . This argument can only be specified
             when `num_shards` is also specified. Default: ``None`` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2017,7 +2017,7 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2122,7 +2122,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: ``None`` , no decryption.
@@ -2139,7 +2139,7 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The shape of the image column is [image_size] if `decode` flag is ``False``, or [H,W,C] otherwise.
@@ -2266,7 +2266,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards`. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2279,7 +2279,7 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2386,7 +2386,7 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2400,7 +2400,7 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2496,7 +2496,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards`. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2509,7 +2509,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2635,7 +2635,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards`. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2649,7 +2649,7 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2756,7 +2756,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2771,7 +2771,7 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - If `decode` is ``False`` , the "image" column will get the 1D raw bytes of the image.
@@ -2877,7 +2877,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2892,7 +2892,7 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -2982,7 +2982,7 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards`. Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -2995,7 +2995,7 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3102,7 +3102,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3120,7 +3120,7 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3230,7 +3230,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3245,7 +3245,7 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3352,7 +3352,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3366,7 +3366,7 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3450,7 +3450,7 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset.
             Default: ``None`` , expected order behavior shown in the table below.
@@ -3473,7 +3473,7 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> from mindspore import dtype as mstype
@@ -3535,7 +3535,7 @@ class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . This
             argument can only be specified when `num_shards` is also specified. Default: ``None`` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3550,7 +3550,7 @@ class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3746,7 +3746,7 @@ class SBDataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3843,7 +3843,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3857,7 +3857,7 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -3940,7 +3940,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -3954,7 +3954,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -4050,7 +4050,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -4065,7 +4065,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -4163,7 +4163,7 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . This
             argument can only be specified when `num_shards` is also specified. Default: ``None`` .
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -4177,7 +4177,7 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -4336,7 +4336,7 @@ class SVHNDataset(GeneratorDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
@@ -4424,7 +4424,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -4437,7 +4437,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4532,7 +4532,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` . This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
             :py:obj:`[_meta-filename, dtype=string]` will be output at the end. Default: ``False``.
@@ -4556,7 +4556,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op
@@ -4714,7 +4714,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         shard_id (int, optional): The shard ID within `num_shards` . Default: ``None`` .
             This argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
-            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/master/dataset/cache.html>`_ .
+            `Single-Node Data Cache <https://www.mindspore.cn/tutorials/experts/en/r2.2/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
 
     Raises:
@@ -4731,7 +4731,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
 
     Tutorial Examples:
         - `Load & Process Data With Dataset Pipeline
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+          <https://www.mindspore.cn/docs/en/r2.2/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
