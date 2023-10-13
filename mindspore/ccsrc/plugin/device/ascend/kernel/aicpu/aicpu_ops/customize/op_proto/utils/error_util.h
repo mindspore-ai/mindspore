@@ -27,6 +27,7 @@
 #include "common/util/error_manager/error_manager.h"
 #include "error_code.h"
 #include "graph/operator.h"
+#include "op_proto/utils/op_log.h"
 
 #define AICPU_INFER_SHAPE_CALL_ERR_REPORT(op_name, err_msg)                              \
   do {                                                                                   \
@@ -143,6 +144,8 @@ std::string DebugString(const std::vector<std::pair<T, T>> &v) {
   oss << "]";
   return oss.str();
 }
+
+inline std::ostream &operator<<(std::ostream &os, const ge::Operator &op) { return os << get_op_info(op); }
 
 /*
  * str cat util function
