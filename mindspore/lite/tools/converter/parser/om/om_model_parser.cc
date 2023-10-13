@@ -20,20 +20,19 @@
 #include <memory>
 #include <algorithm>
 #include "tools/converter/parser/om/om_model_parser.h"
-#include "mindapi/base/logging.h"
 #include "src/common/mmap_utils.h"
 #include "src/common/log_util.h"
-#include "mindspore/core/utils/ms_utils_secure.h"
 #include "tools/common/string_util.h"
 #include "tools/common/tensor_util.h"
+#include "tools/common/custom_ascend_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
-#include "ops/make_tuple.h"
 #include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace lite {
+constexpr size_t kOneOutputs = 1;
 api::FuncGraphPtr OMModelParser::Parse(const converter::ConverterParameters &flag) {
   auto om_file = flag.model_file;
   if (om_file.empty()) {
@@ -57,155 +56,16 @@ api::FuncGraphPtr OMModelParser::Parse(const converter::ConverterParameters &fla
     MS_LOG(ERROR) << "Create Graph inputs failed.";
     return nullptr;
   }
-  auto om_parameter = CreateOmParameter(graph, om_data);
-  MS_CHECK_TRUE_MSG(om_parameter != nullptr, nullptr, "Create OM Parameter failed.");
-  auto custom_node = CreateCustomNode(graph, om_parameter);
-  MS_CHECK_TRUE_MSG(custom_node != nullptr, nullptr, "Create Custom Node failed.");
-  if (!CreateGraphOutputs(graph, custom_node)) {
+  if (!CreateGraphOutputs(graph)) {
     MS_LOG(ERROR) << "Create Graph outputs failed.";
+    return nullptr;
+  }
+  if (!CustomAscendUtils::CreateCustomFuncGraph(graph, om_data, "ACL_om_data", {}, {})) {
+    MS_LOG(ERROR) << "Create Custom FuncGraph failed.";
     return nullptr;
   }
   auto res_graph = api::MakeShared<api::FuncGraph>(graph);
   return res_graph;
-}
-
-ParameterPtr OMModelParser::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "FuncGraph is null.");
-  ParameterPtr om_parameter = func_graph->add_parameter();
-  MS_CHECK_TRUE_MSG(om_parameter != nullptr, nullptr, "Add OM Parameter failed.");
-  om_parameter->set_name("ACL_om_data");
-
-  auto type_ptr = TypeIdToType(kNumberTypeUInt8);
-  MS_CHECK_TRUE_MSG(type_ptr != nullptr, nullptr, "type_ptr is null.");
-  ShapeVector shape_vector = {static_cast<int64_t>(om_data.DataSize())};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, nullptr, "Create Abstract Tensor failed.");
-  om_parameter->set_abstract(abstract_tensor);
-
-  auto param_value = std::make_shared<tensor::Tensor>(kNumberTypeUInt8, shape_vector);
-  MS_CHECK_TRUE_MSG(param_value != nullptr, nullptr, "Create Parameter Value failed.");
-  auto tensor_data = param_value->data_c();
-  MS_CHECK_TRUE_MSG(tensor_data != nullptr, nullptr, "Tensor data is null.");
-  if (param_value->Size() < om_data.DataSize()) {
-    MS_LOG(ERROR) << "Dst buff size " << param_value->Size() << " should be greater than src buff size "
-                  << om_data.DataSize();
-    return nullptr;
-  }
-  if (common::huge_memcpy(reinterpret_cast<uint8_t *>(tensor_data), param_value->Size(),
-                          reinterpret_cast<const uint8_t *>(om_data.Data()), om_data.DataSize()) != EOK) {
-    MS_LOG(ERROR) << "Memcpy om data failed.";
-    return nullptr;
-  }
-  om_parameter->set_default_param(param_value);
-  return om_parameter;
-}
-
-CNodePtr OMModelParser::CreateCustomNode(const FuncGraphPtr &func_graph, const ParameterPtr &om_parameter) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "Get FuncGraph failed.");
-  auto prim = std::make_shared<ops::Custom>();
-  MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "New Custom op failed.");
-  prim->set_type("ACL");
-  auto prim_c = prim->GetPrim();
-  auto graph_input = func_graph->get_inputs();
-  MS_CHECK_TRUE_MSG(!graph_input.empty(), nullptr, "Graph input is empty.");
-  auto custom_node = func_graph->NewCNode(prim_c, graph_input);
-  MS_CHECK_TRUE_MSG(custom_node != nullptr, nullptr, "Custom CNode failed.");
-  custom_node->set_fullname_with_scope("custom_0");
-  custom_node->add_input(om_parameter);
-
-  if (!SetCustomOutputs(custom_node)) {
-    MS_LOG(ERROR) << "Set custom outputs failed.";
-    return nullptr;
-  }
-
-  std::string output_dim_str;
-  for (auto &item : custom_outputs_info_) {
-    auto output_shape = item.shape;
-    output_dim_str += std::to_string(output_shape.size()) + ",";
-    for (auto &val : output_shape) {
-      output_dim_str += std::to_string(val) + ",";
-    }
-  }
-  std::vector<uint8_t> output_dim_char(output_dim_str.begin(), output_dim_str.end());
-  std::map<std::string, std::vector<uint8_t>> attrs = {{"outputs_shape", output_dim_char}};
-  prim->set_attr(attrs);
-  prim->AddAttr("func_type", api::MakeValue<std::string>("acl_build"));
-  prim->AddAttr("uniq_name", api::MakeValue<std::string>("CustomAscend"));
-  return custom_node;
-}
-
-bool OMModelParser::GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector) {
-  mindspore::AbstractBasePtr cnode_abstract = cnode->abstract();
-  if (cnode_abstract == nullptr) {
-    MS_LOG(ERROR) << "cnode_abstract must not be null.";
-    return false;
-  }
-  if (cnode_abstract->BuildShape() == mindspore::abstract::kNoShape) {
-    *shape_vector = std::vector<int64_t>();
-    return true;
-  }
-  if (!mindspore::utils::isa<mindspore::abstract::AbstractTensorPtr>(cnode_abstract)) {
-    MS_LOG(ERROR) << "Abstract is not abstract tensor." << cnode->fullname_with_scope();
-    return false;
-  }
-  auto cnode_abstract_tensor = cnode_abstract->cast<mindspore::abstract::AbstractTensorPtr>();
-  if (cnode_abstract_tensor == nullptr) {
-    MS_LOG(ERROR) << "cnode_abstract_tensor must not be null!";
-    return false;
-  }
-  if (!mindspore::utils::isa<mindspore::abstract::ShapePtr>(cnode_abstract_tensor->BuildShape())) {
-    MS_LOG(ERROR) << "Shape of abstract tensor should be ShapePtr. " << cnode->fullname_with_scope();
-    return false;
-  }
-  auto shape_ptr = mindspore::utils::cast<mindspore::abstract::ShapePtr>(cnode_abstract_tensor->BuildShape());
-  if (shape_ptr == nullptr) {
-    MS_LOG(ERROR) << "shape_ptr must not be null.";
-    return false;
-  }
-  *shape_vector = shape_ptr->shape();
-  return true;
-}
-
-TypeId OMModelParser::GetTypeFromNode(const AnfNodePtr &node, const size_t tuple_idx) {
-  TypeId type = kNumberTypeFloat32;
-  MS_CHECK_TRUE_MSG(node != nullptr, type, "node is nullptr.");
-  if (utils::isa<CNodePtr>(node)) {
-    auto cnode = node->cast<CNodePtr>();
-    MS_CHECK_TRUE_MSG(cnode != nullptr, type, "cnode is nullptr.");
-    if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
-      auto abstract_tensor = cnode->abstract()->cast<abstract::AbstractTensorPtr>();
-      if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
-        MS_LOG(WARNING) << "Abstract_tensor or abstract_tensor->element() is nullptr.";
-        return type;
-      }
-      auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-      MS_CHECK_TRUE_MSG(type_ptr != nullptr, type, "type_ptr is nullptr");
-      type = type_ptr->type_id();
-    } else if (utils::isa<abstract::AbstractTuplePtr>(cnode->abstract())) {
-      auto abstract_tuple = cnode->abstract()->cast<abstract::AbstractTuplePtr>();
-      if (abstract_tuple->elements().empty()) {
-        MS_LOG(ERROR) << "abstract_tuple elements is empty.";
-        return type;
-      }
-      if (tuple_idx >= abstract_tuple->size()) {
-        MS_LOG(ERROR) << "tuple_idx is out of range.";
-        return type;
-      }
-      auto abstract_base = abstract_tuple->elements()[tuple_idx];
-      if (utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-        auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
-        if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
-          MS_LOG(WARNING) << "Abstract_tensor or abstract_tensor->element() is nullptr.";
-          return type;
-        }
-        auto type_ptr = abstract_tensor->element()->GetTypeTrack();
-        MS_CHECK_TRUE_MSG(type_ptr != nullptr, type, "type_ptr is nullptr.");
-        type = type_ptr->type_id();
-      }
-    }
-    MS_LOG(INFO) << "node type id is " << type;
-  }
-  return type;
 }
 
 bool OMModelParser::CreateGraphInputs(const FuncGraphPtr &func_graph) {
@@ -234,13 +94,20 @@ bool OMModelParser::CreateGraphInputs(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-bool OMModelParser::CreateGraphOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node) {
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "func_graph is null.";
-    return false;
-  }
-  if (custom_node == nullptr) {
-    MS_LOG(ERROR) << "custom_node is null.";
+bool OMModelParser::CreateGraphOutputs(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "Get FuncGraph failed.");
+  auto prim = std::make_shared<ops::Custom>();
+  MS_CHECK_TRUE_MSG(prim != nullptr, false, "New Custom op failed.");
+  prim->set_type("ACL_Fake");
+  auto prim_c = prim->GetPrim();
+  auto graph_input = func_graph->get_inputs();
+  MS_CHECK_TRUE_MSG(!graph_input.empty(), false, "Graph input is empty.");
+  auto custom_node = func_graph->NewCNode(prim_c, graph_input);
+  MS_CHECK_TRUE_MSG(custom_node != nullptr, false, "Create custom node failed.");
+  custom_node->set_fullname_with_scope("custom_fake");
+
+  if (!SetCustomOutputs(custom_node)) {
+    MS_LOG(ERROR) << "Set custom node outputs failed.";
     return false;
   }
   auto return_prim = std::make_shared<ops::Return>();
@@ -254,7 +121,7 @@ bool OMModelParser::CreateGraphOutputs(const FuncGraphPtr &func_graph, const CNo
     return false;
   }
   CNodePtr output_node = nullptr;
-  if (custom_outputs_info_.size() == 1) {
+  if (custom_outputs_info_.size() == kOneOutputs) {
     output_node = custom_node;
   } else {
     output_node = CreateMakeTupleGraphOutput(func_graph, custom_node);
@@ -284,7 +151,7 @@ bool OMModelParser::SetCustomOutputs(const CNodePtr &custom_node) {
     MS_LOG(ERROR) << "custom node is null";
     return false;
   }
-  if (custom_outputs_info_.size() == 1) {
+  if (custom_outputs_info_.size() == kOneOutputs) {
     CustomOutputInfo custom_output_info = custom_outputs_info_.at(0);
     auto name = custom_output_info.name;
     auto dims = custom_output_info.shape;

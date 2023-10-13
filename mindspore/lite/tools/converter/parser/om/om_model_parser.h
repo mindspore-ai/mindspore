@@ -49,12 +49,8 @@ class OMModelParser : public converter::ModelParser {
   api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
  private:
-  ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data);
-  CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph, const ParameterPtr &om_parameter);
-  bool GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int64_t> *shape_vector);
-  TypeId GetTypeFromNode(const AnfNodePtr &node, const size_t tuple_idx = 0);
   bool CreateGraphInputs(const FuncGraphPtr &func_graph);
-  bool CreateGraphOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
+  bool CreateGraphOutputs(const FuncGraphPtr &func_graph);
   CNodePtr CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
   bool SetCustomOutputs(const CNodePtr &custom_node);
   bool SetMultiOutputs(const CNodePtr &custom_node);
