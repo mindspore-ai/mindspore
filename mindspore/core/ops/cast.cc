@@ -32,11 +32,11 @@ class CastInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     auto x = input_args[0];
     abstract::BaseShapePtr shape_ptr{nullptr};
-    if (x->isa<abstract::AbstractTensor>()) {
+    if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
       auto shape = x->GetShape();
       MS_EXCEPTION_IF_NULL(shape);
       shape_ptr = shape->cast<abstract::ShapePtr>();
-    } else if (x->isa<abstract::AbstractScalar>()) {
+    } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex0])) {
       shape_ptr = std::make_shared<abstract::Shape>(ShapeVector{});
     } else {
       MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input should be a Tensor or a number.";

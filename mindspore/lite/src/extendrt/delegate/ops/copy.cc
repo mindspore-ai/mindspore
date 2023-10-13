@@ -49,13 +49,13 @@ class CopyInfer : public abstract::OpInferBase {
 
 BaseShapePtr CopyInfer::InferShape(const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) const {
-  return input_args[kInputIndex0]->BuildShape();
+  return input_args[kInputIndex0]->GetShape();
 }
 
 TypePtr CopyInfer::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto format_ptr = primitive->GetAttr(kCopyFormat);
   auto oper = static_cast<int>(GetValue<int64_t>(format_ptr));
-  TypePtr in_type = input_args[kInputIndex0]->BuildType();
+  TypePtr in_type = input_args[kInputIndex0]->GetType();
   TypePtr res = in_type;
   if ((in_type == kFloat32) && (oper == Copy::CopyFormatType::HOST_DEVICE)) {
     res = kFloat16;

@@ -146,14 +146,15 @@ AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckInputArgs(input_args_abs, kEqual, kInputNum, kNameClipByNorm);
   MS_EXCEPTION_IF_NULL(input_args_abs[0]);
   MS_EXCEPTION_IF_NULL(input_args_abs[1]);
-  if (!input_args_abs[0]->isa<abstract::AbstractTensor>() || !input_args_abs[1]->isa<abstract::AbstractTensor>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args_abs[kInputIndex0]) ||
+      !CheckAndConvertUtils::IsTensor(input_args_abs[kInputIndex1])) {
     MS_EXCEPTION(TypeError) << "For '" << kNameClipByNorm << "', the input args must be tensor.";
   }
   auto infer_type = ClipByNormInferType(primitive, input_args_abs);
   auto infer_shape = ClipByNormInferShape(primitive, input_args_abs);
   auto abs = abstract::MakeAbstract(infer_shape, infer_type);
   MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractScalar>()) {
+  if (CheckAndConvertUtils::IsScalar(abs)) {
     return std::make_shared<abstract::AbstractTensor>(abs);
   }
   return abs;

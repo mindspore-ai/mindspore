@@ -259,7 +259,7 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
@@ -307,7 +307,7 @@ TypePtr EinsumInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();

@@ -63,14 +63,14 @@ class DenseInfer : public abstract::OpInferBase {
     const std::string op_name = primitive->name();
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
                                              op_name);
-    auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(x);
-    MS_EXCEPTION_IF_NULL(x->shape());
-    auto w = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
+    MS_EXCEPTION_IF_NULL(x->GetShape());
+    auto w = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(w);
-    MS_EXCEPTION_IF_NULL(w->shape());
-    auto x_shp = x->shape()->shape();
-    auto w_shp = w->shape()->shape();
+    MS_EXCEPTION_IF_NULL(w->GetShape());
+    auto x_shp = x->GetShape()->GetShapeVector();
+    auto w_shp = w->GetShape()->GetShapeVector();
     ShapeVector ret_shape;
     if (IsDynamicRank(x_shp) || IsDynamicRank(w_shp)) {
       ret_shape.push_back(abstract::Shape::kShapeRankAny);
@@ -83,8 +83,7 @@ class DenseInfer : public abstract::OpInferBase {
     const size_t kTwo = 2;
     const size_t kThree = 3;
     if (input_args.size() == kThree) {
-      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
-      has_bias = b != nullptr;
+      has_bias = CheckAndConvertUtils::IsTensor(input_args[kDenseIndex2]);
     }
     if (w_shp.size() == kOne) {
       const auto kDimW = " if the dim of w is 1.";
@@ -95,9 +94,7 @@ class DenseInfer : public abstract::OpInferBase {
         MS_EXCEPTION(ValueError) << "The value of x.shape[0] should be equal to w.shape[0]" << kDimW;
       }
       if (has_bias) {
-        auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
-        MS_EXCEPTION_IF_NULL(b->shape());
-        auto b_shp = b->shape()->shape();
+        auto b_shp = input_args[kDenseIndex2]->GetShape()->GetShapeVector();
         if (b_shp.size() != kZero) {
           MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0" << kDimW;
         }
@@ -114,9 +111,7 @@ class DenseInfer : public abstract::OpInferBase {
     }
 
     if (has_bias) {
-      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
-      MS_EXCEPTION_IF_NULL(b->shape());
-      auto b_shp = b->shape()->shape();
+      auto b_shp = input_args[kDenseIndex2]->GetShape()->GetShapeVector();
       if (b_shp.size() != kZero && b_shp.size() != kOne) {
         MS_EXCEPTION(ValueError) << "The dim of b should be equal to 0 or 1" << kDimW;
       }
@@ -147,8 +142,7 @@ class DenseInfer : public abstract::OpInferBase {
     bool has_bias = false;
     const size_t kThree = 3;
     if (input_args.size() == kThree) {
-      auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
-      has_bias = b != nullptr;
+      has_bias = CheckAndConvertUtils::IsTensor(input_args[kDenseIndex2]);
       if (has_bias) {
         (void)types.emplace("b", input_args[kDenseIndex2]->GetType());
         (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);

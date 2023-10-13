@@ -82,7 +82,7 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   }
 
   bool shape_valid =
-    input_args[kInputIndex0]->isa<abstract::AbstractTensor>() &&
+    CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) &&
     (input_args[kInputIndex0]->GetValue()->isa<ValueAny>() || input_args[kInputIndex0]->GetValue()->isa<None>());
   if (shape_valid) {
     ShapeVector dense_shape;
@@ -99,12 +99,10 @@ abstract::ShapePtr CSRSparseMatrixToDenseInferShape(const PrimitivePtr &primitiv
   auto shape_abs_ptr = input_args[kInputIndex0];
   MS_EXCEPTION_IF_NULL(shape_abs_ptr);
   ShapeVector y_shape;
-  auto d_shape_value = shape_abs_ptr->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(d_shape_value);
-  auto d_shape_value_ptr = d_shape_value->GetValue();
+  auto d_shape_value_ptr = shape_abs_ptr->GetValue();
   MS_EXCEPTION_IF_NULL(d_shape_value_ptr);
-  auto d_shape_value_ptr_tensor =
-    CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", d_shape_value_ptr, primitive->name());
+  auto d_shape_value_ptr_tensor = CheckAndConvertUtils::CheckTensorIntValue(
+    "x_dense_shape", d_shape_value_ptr, primitive->name(), shape_abs_ptr->GetType());
   for (int64_t i = kZero; i < rank; i++) {
     if (static_cast<int64_t>(d_shape_value_ptr_tensor[static_cast<size_t>(i)]) <= kZero) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()

@@ -153,9 +153,10 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
   if (!IsValueKnown(hypothesis_shape_value_ptr) || !IsValueKnown(truth_shape_value_ptr)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
   }
-  auto hypothesis_shape_value =
-    CheckAndConvertUtils::CheckTensorIntValue("hypothesis_shape", hypothesis_shape_value_ptr, prim_name);
-  auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name);
+  auto hypothesis_shape_value = CheckAndConvertUtils::CheckTensorIntValue(
+    "hypothesis_shape", hypothesis_shape_value_ptr, prim_name, input_args[kIndex2]->GetType());
+  auto truth_shape_value = CheckAndConvertUtils::CheckTensorIntValue("truth_shape", truth_shape_value_ptr, prim_name,
+                                                                     input_args[kIndex2]->GetType());
   ShapeVector infer_shape;
   for (size_t i = 0; i < hypothesis_shape_value.size() - 1; ++i) {
     if (hypothesis_shape_value[i] < 0 || truth_shape_value[i] < 0) {

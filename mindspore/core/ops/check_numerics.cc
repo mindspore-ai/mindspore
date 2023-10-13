@@ -46,7 +46,7 @@ abstract::ShapePtr CheckNumericsInferShape(const PrimitivePtr &, const std::vect
 
 TypePtr CheckNumericsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
   auto x_dtype = input_args[0]->GetType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, primitive->name());

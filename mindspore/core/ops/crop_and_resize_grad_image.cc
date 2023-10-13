@@ -88,7 +88,7 @@ void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, 
 abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size, int64_t max_len,
                                   int64_t image_k_dep) {
   // Infer max shape of output
-  if (output_size->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(output_size)) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->GetType(),
                                                      output_size_valid_types, prim_name);

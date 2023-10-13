@@ -56,9 +56,7 @@ const int64_t kInputs = 6;
 const size_t ksecond = 2;
 
 tensor::TensorPtr Get_Value(const std::vector<AbstractBasePtr> &input_args, size_t index) {
-  auto input = input_args[index]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input);
-  auto input_shape_value_ptr = input->GetValue();
+  auto input_shape_value_ptr = input_args[index]->GetValue();
   MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
   return input_shape_value_ptr->cast<tensor::TensorPtr>();
 }
@@ -170,7 +168,7 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
   CombinedNonMaxSuppressionCheckShapeValue(input0_shape, input1_shape, is_dynamic, prim_name);
 
   for (int64_t i = 0; i < kInputs; i++) {
-    if (!input_args[LongToSize(i)]->isa<abstract::AbstractTensor>()) {
+    if (!CheckAndConvertUtils::IsTensor(input_args[LongToSize(i)])) {
       MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
     }
   }

@@ -29,49 +29,91 @@
 namespace mindspore {
 namespace ops {
 namespace {
+
+std::pair<abstract::BaseShapePtrList, size_t> GetSequnceIndexShape(const PrimitivePtr &primitive, size_t index,
+                                                                   const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  bool is_tuple_x = CheckAndConvertUtils::IsTuple(input_args[index]);
+  bool is_list_x = CheckAndConvertUtils::IsList(input_args[index]);
+  if ((!is_tuple_x) && (!is_list_x)) {
+    MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have ListTensor or TupleTensor input but get "
+                            << input_args[index]->GetType()->ToString();
+  }
+
+  auto idx_shape_ptr = input_args[index]->GetShape();
+  MS_EXCEPTION_IF_NULL(idx_shape_ptr);
+  abstract::BaseShapePtrList idx_shape{};
+  size_t idx_size;
+  if (!is_tuple_x) {
+    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
+    idx_shape = shape_tuple->shape();
+    idx_size = shape_tuple->size();
+  } else {
+    auto shape_list = idx_shape_ptr->cast<abstract::ListShapePtr>();
+    idx_shape = shape_list->shape();
+    idx_size = shape_list->size();
+  }
+  return std::make_pair(idx_shape, idx_size);
+}
+
+TypePtrList GetSequnceIndexType(const PrimitivePtr &primitive, size_t index,
+                                const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  bool is_tuple_x = CheckAndConvertUtils::IsTuple(input_args[index]);
+
+  if (!is_tuple_x) {
+    MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have TupleTensor input, but get "
+                            << input_args[index]->GetType()->ToString();
+  }
+
+  auto idx_type_ptr = input_args[index]->GetType();
+  MS_EXCEPTION_IF_NULL(idx_type_ptr);
+  TypePtrList types_list;
+  if (!is_tuple_x) {
+    types_list = idx_type_ptr->cast<TuplePtr>()->elements();
+  }
+  return types_list;
+}
+
 abstract::ShapePtr BufferAppendInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
 
-  AbstractBasePtrList data_shape = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>()->elements();
-  AbstractBasePtrList exp_shape = input_args[kInputIndex1]->cast<abstract::AbstractSequencePtr>()->elements();
+  auto data_shape = GetSequnceIndexShape(primitive, kInputIndex0, input_args).first;
+  auto data_size = GetSequnceIndexShape(primitive, kInputIndex0, input_args).second;
+  auto exp_shape = GetSequnceIndexShape(primitive, kInputIndex1, input_args).first;
+  auto exp_size = GetSequnceIndexShape(primitive, kInputIndex1, input_args).second;
   auto count_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckInteger("exp elements ", SizeToLong(exp_shape.size()), kEqual,
                                            SizeToLong(data_shape.size()), op_name);
   int64_t exp_batch = 1;
-  if (data_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape().size() ==
-      exp_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape().size()) {
-    exp_batch = exp_shape[0]->GetShape()->cast<abstract::ShapePtr>()->shape()[0];
-    for (size_t i = 0; i < data_shape.size(); i++) {
-      if (data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape().size() !=
-          exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape().size()) {
+  if (data_size == exp_size) {
+    exp_batch = exp_shape[0]->GetShapeVector()[0];
+    for (size_t i = 0; i < data_size; i++) {
+      if (data_size != exp_size) {
         MS_LOG(EXCEPTION) << "For " << op_name << "the dimension of " << i << "th 'exp_shape' must be equal to "
                           << "the dimension of " << i << "th 'data_shape', but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
-                          << ", the " << i
-                          << "th 'data_shape': " << data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
+                          << "th 'exp_shape': " << exp_shape[i]->GetShapeVector() << ", the " << i
+                          << "th 'data_shape': " << data_shape[i]->GetShapeVector();
       }
-      if (data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()[0] <
-          exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()[0]) {
+      if (data_shape[i]->GetShapeVector()[0] < exp_shape[i]->GetShapeVector()[0]) {
         MS_LOG(EXCEPTION) << "For " << op_name << "the first dimension of " << i << "th 'data_shape' "
                           << "must be greater or equal to the dimension of " << i << "th 'exp_shape', "
-                          << "but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
-                          << ", the " << i
-                          << "th 'data_shape': " << data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
+                          << "but got the " << i << "th 'exp_shape': " << exp_shape[i]->GetShapeVector() << ", the "
+                          << i << "th 'data_shape': " << data_shape[i]->GetShapeVector();
       }
     }
   } else {
     for (size_t i = 0; i < data_shape.size(); i++) {
-      auto d_shape = data_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape();
+      auto d_shape = data_shape[i]->GetShapeVector();
       std::vector<int64_t> temp_shape(d_shape.begin() + 1, d_shape.end());
-      if (temp_shape != exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()) {
+      if (temp_shape != exp_shape[i]->GetShapeVector()) {
         MS_LOG(EXCEPTION) << "For " << op_name << ", the " << i << "th 'exp_shape' must be equal to the " << i
                           << "th 'data_shape' which excepts the first dimension. but got the " << i
-                          << "th 'exp_shape': " << exp_shape[i]->GetShape()->cast<abstract::ShapePtr>()->shape()
-                          << ", the " << i << "th 'data_shape': " << d_shape;
+                          << "th 'exp_shape': " << exp_shape[i]->GetShapeVector() << ", the " << i
+                          << "th 'data_shape': " << d_shape;
       }
     }
   }
@@ -83,15 +125,19 @@ TypePtr BufferAppendInferType(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
 
-  AbstractBasePtrList data_type = input_args[kInputIndex0]->cast<abstract::AbstractSequencePtr>()->elements();
-  AbstractBasePtrList exp_type = input_args[kInputIndex1]->cast<abstract::AbstractSequencePtr>()->elements();
+  TypePtrList data_type = GetSequnceIndexType(primitive, kInputIndex0, input_args);
+  TypePtrList exp_type = GetSequnceIndexType(primitive, kInputIndex1, input_args);
   auto count_type = input_args[kInputIndex2]->GetType();
   auto head_type = input_args[kInputIndex3]->GetType();
   for (size_t i = 0; i < data_type.size(); i++) {
-    if (data_type[i]->GetType()->type_id() != exp_type[i]->GetType()->type_id()) {
+    auto data_type_ptr = data_type[i]->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(data_type_ptr);
+    auto exp_type_ptr = exp_type[i]->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(exp_type_ptr);
+    if (data_type_ptr->element()->type_id() != exp_type_ptr->element()->type_id()) {
       MS_LOG(EXCEPTION) << "For " << op_name << ", each tensor in 'exp' must has the same type with 'data',"
-                        << " but got 'data_type': " << data_type[i]->GetType()->ToString()
-                        << ", 'exp_type': " << exp_type[i]->GetType()->ToString();
+                        << " but got 'data_type': " << data_type_ptr->element()->ToString()
+                        << ", 'exp_type': " << exp_type_ptr->element()->ToString();
     }
   }
   const std::set<TypePtr> int_types = {kInt32};

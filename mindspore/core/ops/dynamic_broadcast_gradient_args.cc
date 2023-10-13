@@ -46,17 +46,19 @@ const size_t one = 1;
 
 int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
   MS_EXCEPTION_IF_NULL(input_arg);
-  if (input_arg->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_arg)) {
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->GetShape())[kShape];
     auto input_size = input_shape.size();
     if (input_size != 1) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape must be 1-D, but got: " << input_size << "-D.";
     }
     return input_shape[0];
-  } else if (input_arg->isa<abstract::AbstractTuple>()) {
-    auto x_shape = dyn_cast<abstract::AbstractTuple>(input_arg);
-    auto x_shape_data = x_shape->elements();
-    return SizeToLong(x_shape_data.size());
+  } else if (CheckAndConvertUtils::IsTuple(input_arg)) {
+    auto idx_shape_ptr = input_arg->GetShape();
+    MS_EXCEPTION_IF_NULL(idx_shape_ptr);
+    auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
+    size_t idx_size = shape_tuple->size();
+    return SizeToLong(idx_size);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input type must be a tuple or Tensor.";
   }

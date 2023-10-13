@@ -62,12 +62,10 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", rank, kGreaterThan, 0, prim_name);
 
   int64_t axis;
-  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value_ptr = axis_ptr->GetValue();
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
+    auto axis_value_ptr = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
-    if (axis_value_ptr->isa<tensor::Tensor>()) {
+    if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1]) && IsValueKnown(axis_value_ptr)) {
       auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(axis_tensor);
       if (axis_tensor->data_type_c() == TypeId::kNumberTypeInt64) {
@@ -82,10 +80,8 @@ abstract::ShapePtr CumSumInferShape(const PrimitivePtr &primitive, const std::ve
     } else {
       return std::make_shared<abstract::Shape>(x_shape);
     }
-  } else if (input_args[kInputIndex1]->isa<abstract::AbstractScalar>()) {
-    auto axis_ptr = input_args[kInputIndex1]->cast<abstract::AbstractScalarPtr>();
-    MS_EXCEPTION_IF_NULL(axis_ptr);
-    auto axis_value = axis_ptr->GetValue();
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
+    auto axis_value = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value);
     if (IsValueKnown(axis_value)) {
       axis = GetValue<int64_t>(axis_value);

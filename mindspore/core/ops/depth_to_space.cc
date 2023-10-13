@@ -73,8 +73,6 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_x = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_x);
 
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
   auto x_shape = shape_map[kShape];

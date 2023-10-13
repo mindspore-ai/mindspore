@@ -52,9 +52,10 @@ abstract::ShapePtr ConjugateTransposeInferShape(const PrimitivePtr &primitive,
 
   ShapeVector p_value;
   ShapeVector p_value_raw;
-  if (perm_value->isa<tensor::Tensor>()) {
-    p_value_raw = CheckAndConvertUtils::CheckTensorIntValue("input[perm]", perm_value, op_name);
-  } else if (perm_value->isa<ValueTuple>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1]) && IsValueKnown(perm_value)) {
+    p_value_raw =
+      CheckAndConvertUtils::CheckTensorIntValue("input[perm]", perm_value, op_name, input_args[1]->GetType());
+  } else if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex1]) && IsValueKnown(perm_value)) {
     p_value_raw = CheckAndConvertUtils::CheckTupleInt("input[perm]", perm_value, op_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << op_name << "', the type of perm must be Tuple, but got "

@@ -47,13 +47,13 @@ namespace {
 abstract::BaseShapePtr EighInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto input_x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
-  auto x_shape = input_x->shape();
+  auto input_x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, kInputIndex0, kObjectTypeTensorType);
+  auto x_shape = input_x->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   constexpr size_t kDefaultRank = 2;
   constexpr size_t kRowIndex = 2;
   constexpr size_t kColIndex = 1;
-  auto const &x_shape_list = x_shape->shape();
+  auto const &x_shape_list = x_shape->GetShapeVector();
   const size_t x_rank = x_shape_list.size();
   if (x_rank < kDefaultRank) {
     MS_EXCEPTION(ValueError) << "For Eig, x should be at least rank 2"

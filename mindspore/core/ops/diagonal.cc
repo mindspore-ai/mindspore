@@ -34,8 +34,8 @@ abstract::ShapePtr DiagonalInferShape(const PrimitivePtr &primitive, const std::
   const int64_t dyn_shape = abstract::Shape::kShapeDimAny;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x->GetShape())[kShape];
+  auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+  auto x_shape = x->GetShape()->GetShapeVector();
   auto x_rank = x_shape.size();
   auto offset = GetValue<int64_t>(primitive->GetAttr("offset"));
   auto dim1 = GetValue<int64_t>(primitive->GetAttr("dim1"));

@@ -32,7 +32,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   const int64_t kOneNum = 1;
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == kOneNum) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
@@ -41,9 +41,7 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
                                            prim_name);
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
-  auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
-  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
+  auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[0]->GetShape())[kShape];
   if (IsDynamicRank(element0_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
@@ -84,7 +82,7 @@ TypePtr ConcatInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!input_args[0]->GetShape()->isa<abstract::SequenceShape>()) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
     }
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();

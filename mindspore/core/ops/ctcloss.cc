@@ -81,14 +81,14 @@ abstract::TupleShapePtr CTCLossInferShape(const PrimitivePtr &primitive,
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            op_name);
-  auto inputs = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  auto labels_indices = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  auto labels_values = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 2);
-  auto sequence_length = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 3);
+  auto inputs = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+  auto labels_indices = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 1, kObjectTypeTensorType);
+  auto labels_values = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 2, kObjectTypeTensorType);
+  auto sequence_length = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 3, kObjectTypeTensorType);
   auto inputs_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs->GetShape())[kShape];
-  auto labels_indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_indices->GetShape())[kShape];
-  auto labels_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(labels_values->GetShape())[kShape];
-  auto sequence_length_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(sequence_length->GetShape())[kShape];
+  auto labels_indices_shape = labels_indices->GetShape()->GetShapeVector();
+  auto labels_values_shape = labels_values->GetShape()->GetShapeVector();
+  auto sequence_length_shape = sequence_length->GetShape()->GetShapeVector();
   if (IsDynamicRank(inputs_shape) || IsDynamicRank(labels_indices_shape) || IsDynamicRank(labels_values_shape) ||
       IsDynamicRank(sequence_length_shape)) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
