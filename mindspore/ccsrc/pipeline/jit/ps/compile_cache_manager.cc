@@ -175,6 +175,9 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
     MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   MindIRLoader mindir_loader;
   mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
   mindir_loader.set_has_parallel_info(has_parallel_info);
@@ -184,10 +187,11 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   context.SetFrontNameToFrontNode(name_to_node);
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+  if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
+    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
+  }
 #if defined(__linux__) && defined(WITH_BACKEND)
   // compile cache does not support host collective or graph kernel.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (common::UseHostCollective() || ms_context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL)) {
     context.SetRestrictedScenarios(true);
   }
