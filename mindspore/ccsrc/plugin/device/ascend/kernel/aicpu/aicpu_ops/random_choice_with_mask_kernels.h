@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_OPS_AICPU_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
-#define AICPU_OPS_AICPU_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
+#ifndef AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
+#define AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
 
+#include <random>
 #include <vector>
 #include "common/kernel_base.h"
 
 namespace aicpu {
 class RandomChoiceWithMaskKernel : public KernelBase {
  public:
-  RandomChoiceWithMaskKernel() : KernelBase("RandomChoiceWithMask") {}
+  RandomChoiceWithMaskKernel() : KernelBase("RandomChoiceWithMask"), count_(0), seed_(0), seed2_(0) {}
   ~RandomChoiceWithMaskKernel() = default;
 
  protected:
-  int64_t count_ = 0;
+  int64_t count_;
+  uint64_t seed_;
+  uint64_t seed2_;
+  std::mt19937 rng_;
   std::vector<int64_t> dims_;
   uint32_t DoCompute() override;
   uint32_t ParseKernelParam() override;
   void UpdateOutputShapeValue(int64_t non_zero_num, int64_t output_length);
 };
 }  // namespace aicpu
-#endif  // AICPU_OPS_AICPU_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
+#endif  // AICPU_AICPU_OPS_RANDOM_CHOICE_WITH_MASK_KERNELS_H_
