@@ -83,8 +83,9 @@ bool CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
                       cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpy output failed");
   } else {
-    CalCopyWithSlice(output_size, copy_src_addr, src_storage_info, self_addr, dst_storage_info,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalCopyWithSlice(output_size, copy_src_addr, src_storage_info, self_addr, dst_storage_info,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, "CopyWithSlice");
   }
   return true;
 }
