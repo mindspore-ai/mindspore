@@ -73,6 +73,12 @@ bool AscendDeviceResManager::BindDeviceToCurrentThread(bool /* force_bind */) co
   return true;
 }
 
+void AscendDeviceResManager::ResetStreamAndCtx() {
+  if (runtime_instance_ != nullptr) {
+    runtime_instance_->ResetStreamAndCtx();
+  }
+}
+
 void *AscendDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   MS_EXCEPTION_IF_NULL(mem_manager_);

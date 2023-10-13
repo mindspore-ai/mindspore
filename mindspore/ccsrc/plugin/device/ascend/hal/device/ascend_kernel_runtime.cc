@@ -181,6 +181,19 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   }
 }
 
+void AscendKernelRuntime::ResetStreamAndCtx() {
+  // 1 destroy stream and ctx;
+  AscendStreamMng::GetInstance().DestroyAllStreams();
+  stream_ = nullptr;
+  rt_context_ = nullptr;
+  // 2 re-create stream and ct
+  auto ret = aclrtCreateContext(&rt_context_, device_id_);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtCreateContext failed, ret: " << ret;
+  }
+  CreateDefaultStream();
+}
+
 void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
   if (runtime_core_ != nullptr) {
     return runtime_core_->GetModelStreamCore(graph_id);
