@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,8 @@ Status AddToken(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   if (input->Rank() == 1) {
     std::shared_ptr<Tensor> append;
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(std::vector<std::string>({token}), &append));
-    TensorRow in({input}), out;
+    TensorRow in({input});
+    TensorRow out;
     RETURN_IF_NOT_OK(Concatenate(in, &out, 0, begin ? append : nullptr, begin ? nullptr : append));
     *output = out[0];
   } else {

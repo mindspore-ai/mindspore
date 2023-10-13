@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace dataset {
-SkipPushdownPass::SkipNodes::SkipNodes() : skip_count_(0) {}
+SkipPushdownPass::SkipNodes::SkipNodes() : skip_count_(0), skip_steps_(0) {}
 
 // activate the optimization steps, and increase skip_count_ (if not the first skip node in the pipeline)
 Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<SkipNode> node, bool *const modified) {

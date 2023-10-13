@@ -46,6 +46,7 @@ constexpr int32_t kY2GB = -1160;
 constexpr int32_t kB2B = kU2B * 128 + kY2GB;
 constexpr int32_t kB2G = kU2G * 128 + kV2G * 128 + kY2GB;
 constexpr int32_t kB2R = kV2R * 128 + kY2GB;
+constexpr int32_t kChannelThree = 3;
 
 static bool Equal(const float &a, const float &b) { return std::fabs(a - b) < 1e-6; }
 
@@ -171,8 +172,8 @@ static bool ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
     unsigned char *dst_ptr = dst + dst_width * 3 * (y);
 
     for (int k = 0; k < dst_width * 3; k++) {
-      auto t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
-      auto t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
+      auto t0 = static_cast<int16_t>((y_weight[0] * static_cast<int16_t>(*row0_ptr0++)) >> 16);
+      auto t1 = static_cast<int16_t>((y_weight[1] * static_cast<int16_t>(*row1_ptr1++)) >> 16);
       *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
     y_weight += 2;
@@ -267,8 +268,8 @@ static bool ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     unsigned char *dst_ptr = dst + dst_width * (y);
 
     for (int k = 0; k < dst_width; k++) {
-      auto t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
-      auto t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
+      auto t0 = static_cast<int16_t>((y_weight[0] * static_cast<int16_t>(*row0_ptr0++)) >> 16);
+      auto t1 = static_cast<int16_t>((y_weight[1] * static_cast<int16_t>(*row1_ptr1++)) >> 16);
       *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
 
@@ -444,11 +445,11 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
 
 static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
-    mat.Init(w, h, 3, LDataType::UINT8);
+    mat.Init(w, h, kChannelThree, LDataType::UINT8);
     RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *dst_ptr = mat;
     // mindspore lite version, there is no securec lib
-    memcpy(dst_ptr, data, w * h * 3 * sizeof(unsigned char));
+    memcpy(dst_ptr, data, w * h * kChannelThree * sizeof(unsigned char));
   } else {
     return false;
   }
@@ -457,7 +458,7 @@ static bool ConvertBGR(const unsigned char *data, LDataType data_type, int w, in
 
 static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
-    mat.Init(w, h, 3, LDataType::UINT8);
+    mat.Init(w, h, kChannelThree, LDataType::UINT8);
     RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
@@ -478,7 +479,7 @@ static bool ConvertRGBAToBGR(const unsigned char *data, LDataType data_type, int
 
 static bool ConvertRGBAToRGB(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
-    mat.Init(w, h, 3, LDataType::UINT8);
+    mat.Init(w, h, kChannelThree, LDataType::UINT8);
     RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
@@ -502,7 +503,7 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
     return false;
   }
   if (data_type == LDataType::UINT8) {
-    mat.Init(w, h, 3, LDataType::UINT8);
+    mat.Init(w, h, kChannelThree, LDataType::UINT8);
     RETURN_FALSE_IF_LITEMAT_EMPTY(mat);
     const uint8_t *y_ptr = data;
     const uint8_t *uv_ptr = y_ptr + w * h;
@@ -1120,10 +1121,14 @@ std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig &config) {
     float sk2 = scales[i + 1];
     float sk3 = std::sqrt(sk1 * sk2);
     std::vector<std::vector<float>> all_sizes;
-    float w, h;
+    float w;
+    float h;
+    constexpr int32_t kRation = 2;
     if (i == 0) {
-      w = sk1 * sqrtf(2);
-      h = sk1 / sqrtf(2);
+      // Multiplying the square root by sk1
+      w = sk1 * sqrtf(kRation);
+      // Divide sk2 by the square root
+      h = sk1 / sqrtf(kRation);
       all_sizes = {{0.1, 0.1}, {w, h}, {h, w}};
     } else {
       all_sizes = {{sk1, sk1}};
@@ -1161,6 +1166,7 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
       boxes = {};
       return;
     }
+    // 0, 1, 2, 3 is the vector index of boxes and default_boxes
     boxes[i][0] = boxes[i][0] * config.prior_scaling[0] * default_boxes[i][2] + default_boxes[i][0];
     boxes[i][1] = boxes[i][1] * config.prior_scaling[0] * default_boxes[i][3] + default_boxes[i][1];
     boxes[i][2] = expf(boxes[i][2] * config.prior_scaling[1]) * default_boxes[i][2];
@@ -1800,6 +1806,7 @@ void UpdateOrientationAfineMat(const LiteMat &src, int *rotationDstWidth, int *r
                                int img_orientation) {
   int srcOrientation = img_orientation;
   if (IM_TOOL_EXIF_ORIENTATION_0_DEG_MIRROR == srcOrientation) {
+    // 0, 2 is the matrix index of varM
     (*varM)[0][0] *= -1;
     (*varM)[0][2] += static_cast<float>(*rotationDstWidth - 1);
   } else if ((IM_TOOL_EXIF_ORIENTATION_180_DEG == srcOrientation) ||

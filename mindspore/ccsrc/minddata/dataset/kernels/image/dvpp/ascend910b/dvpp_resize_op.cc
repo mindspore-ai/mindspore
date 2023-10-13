@@ -37,15 +37,20 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
                              std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // the input should be NHWC, N is 1.
-  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == 4, "DvppResize: the input tensor is not HW, HWC or 1HWC.");
+  const auto kNHWCImageRank = 4;
+  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().Rank() == kNHWCImageRank,
+                               "DvppResize: the input tensor is not HW, HWC or 1HWC.");
   // the channel should be 3 or 1
-  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[3] == 1 || input->GetShape().AsVector()[3] == 3,
+  const auto kChannelIndexNHWC = 3;
+  CHECK_FAIL_RETURN_UNEXPECTED(input->GetShape().AsVector()[kChannelIndexNHWC] == 1 ||
+                                 input->GetShape().AsVector()[kChannelIndexNHWC] == kDefaultImageChannel,
                                "DvppResize: the channel of the input is not 1 or 3.");
 
   // the type should be uint8 or float
   CHECK_FAIL_RETURN_UNEXPECTED(input->GetType() == DataType::DE_UINT8 || input->GetType() == DataType::DE_FLOAT32,
                                "DvppResize: the type of the input is not uint8 or float.");
-  std::vector<dsize_t> size = {input->GetShape().AsVector()[1], input->GetShape().AsVector()[2]};
+  const auto kWidthIndexNHWC = 2;
+  std::vector<dsize_t> size = {input->GetShape().AsVector()[1], input->GetShape().AsVector()[kWidthIndexNHWC]};
   int32_t input_h = size[kHeightIndex];
   int32_t input_w = size[kWidthIndex];
   int32_t output_h;
@@ -86,7 +91,8 @@ Status DvppResizeOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &inpu
 Status DvppResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
-  int32_t outputH = -1, outputW = -1;
+  int32_t outputH = -1;
+  int32_t outputW = -1;
   // if size2_ == 0, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
   if (size2_ != 0) {
@@ -108,7 +114,8 @@ Status DvppResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
 }
 
 TensorShape DvppResizeOp::ComputeOutputShape(const TensorShape &input, int32_t output_h, int32_t output_w) {
-  const int kHeightIndex = -3, kWidthIndex = -2;
+  const int kHeightIndex = -3;
+  const int kWidthIndex = -2;
   auto out_shape_vec = input.AsVector();
   auto size = out_shape_vec.size();
   out_shape_vec[size + kHeightIndex] = output_h;

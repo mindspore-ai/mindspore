@@ -16,8 +16,6 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RESIZE_CUBIC_OP_H_
 
-#include <cfloat>
-#include <cstring>
 #include <random>
 #include <utility>
 #include <vector>

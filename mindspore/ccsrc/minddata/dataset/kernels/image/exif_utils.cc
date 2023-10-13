@@ -67,7 +67,8 @@ uint32_t parse_bytes(const uint8_t *buf, bool intel_align) {
 }
 
 int parseExif(const uint8_t *buf, uint32_t len) {
-  if (buf == nullptr || len < 6) {
+  constexpr uint32_t kMinLength = 6;
+  if (buf == nullptr || len < kMinLength) {
     return UNKNOW_ORIENTATION;
   }
 

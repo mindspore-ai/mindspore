@@ -54,7 +54,8 @@ Status RotateOperation::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
-  if (!center_.empty() && center_.size() != 2) {
+  constexpr auto kCenterSize = 2;
+  if (!center_.empty() && center_.size() != kCenterSize) {
     std::string err_msg =
       "Rotate: center must be a vector of two values or empty, got: " + std::to_string(center_.size());
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
