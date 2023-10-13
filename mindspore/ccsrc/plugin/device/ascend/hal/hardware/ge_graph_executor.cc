@@ -764,7 +764,7 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
     }
 
     const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      {output_node, index}, mem, tensor_size, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
+      {output_node, real_index}, mem, tensor_size, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
     auto output_device_addr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
     output_device_addr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
     output_device_addr->set_is_ptr_persisted(true);
@@ -1041,7 +1041,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       output_addr->set_ptr(ge_data);
 
       // Update shape in kernel tensor.
-      const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, idx);
+      const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, real_index);
       MS_EXCEPTION_IF_NULL(kernel_tensor);
       kernel_tensor->SetShapeVector(actual_shapes);
     }

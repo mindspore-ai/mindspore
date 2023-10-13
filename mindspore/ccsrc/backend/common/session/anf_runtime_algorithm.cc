@@ -943,6 +943,25 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
     value = abs->GetValue();
   }
 
+  // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
+  // so the output infer type and device type will be different, we change the output tensor to the real device type.
+  if (type->isa<TensorType>()) {
+    auto real_device_type = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
+    auto abs_tensor_type = type->cast<TensorTypePtr>();
+    auto abs_element = abs_tensor_type->element();
+    if (abs_element != nullptr) {
+      auto abs_tensor_element_type = abs_element->type_id();
+      if (real_device_type != kTypeUnknown && real_device_type != abs_tensor_element_type) {
+        MS_LOG(INFO) << "For kernel " << node->DebugString() << ", the infer type of output[" << output_idx << "] is "
+                     << TypeIdToString(abs_tensor_element_type) << ", but the device type is "
+                     << TypeIdToString(real_device_type)
+                     << ". Maybe there has insert cast pass which changed the device type."
+                     << " So we change the tensor type from " << TypeIdToString(abs_tensor_element_type) << " to "
+                     << TypeIdToString(real_device_type);
+        abs_tensor_type->set_element(TypeIdToType(real_device_type));
+      }
+    }
+  }
   auto kernel_tensor = std::make_shared<KernelTensor>(shape, type, value);
   kernel_info->SetOutputKernelTensor(kernel_tensor, output_idx);
 
