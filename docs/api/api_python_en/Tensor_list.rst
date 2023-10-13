@@ -92,7 +92,6 @@
     mindspore.Tensor.copysign
     mindspore.Tensor.cos
     mindspore.Tensor.cosh
-    mindspore.Tensor.count_nonzero
     mindspore.Tensor.cov
     mindspore.Tensor.cross
     mindspore.Tensor.cummax
@@ -111,7 +110,6 @@
     mindspore.Tensor.dot
     mindspore.Tensor.dsplit
     mindspore.Tensor.dtype
-    mindspore.Tensor.eq
     mindspore.Tensor.equal
     mindspore.Tensor.erf
     mindspore.Tensor.erfc
@@ -319,7 +317,6 @@
     mindspore.Tensor.to
     mindspore.Tensor.to_coo
     mindspore.Tensor.to_csr
-    mindspore.Tensor.tolist
     mindspore.Tensor.topk
     mindspore.Tensor.trace
     mindspore.Tensor.transpose
@@ -327,8 +324,6 @@
     mindspore.Tensor.triu
     mindspore.Tensor.true_divide
     mindspore.Tensor.trunc
-    mindspore.Tensor.type
-    mindspore.Tensor.type_as
     mindspore.Tensor.unbind
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive

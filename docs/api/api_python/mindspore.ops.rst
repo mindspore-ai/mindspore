@@ -354,7 +354,6 @@ Reduction函数
     mindspore.ops.argsort
     mindspore.ops.approximate_equal
     mindspore.ops.bucketize
-    mindspore.ops.eq
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.greater
