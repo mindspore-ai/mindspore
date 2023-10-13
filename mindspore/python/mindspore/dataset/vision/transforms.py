@@ -549,7 +549,7 @@ class Affine(ImageTensorOperation):
         shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between -180 to 180.
             If float is provided, shear along the x axis with this value, without shearing along the y axis;
             If Sequence[float, float] is provided, shear along the x axis and y axis with these two values separately.
-        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Optional `fill_value` to fill the area
             outside the transform in the output image. There must be three elements in tuple and the value
@@ -561,7 +561,7 @@ class Affine(ImageTensorOperation):
         TypeError: If `scale` is not of type float.
         ValueError: If `scale` is non positive.
         TypeError: If `shear` is not of float or Sequence[float, float].
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `resample` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
@@ -627,7 +627,7 @@ class AutoAugment(ImageTensorOperation):
 
             - ``AutoAugmentPolicy.SVHN``, means to apply AutoAugment learned on SVHN dataset.
 
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int]], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
@@ -636,7 +636,7 @@ class AutoAugment(ImageTensorOperation):
 
     Raises:
         TypeError: If `policy` is not of type :class:`mindspore.dataset.vision.AutoAugmentPolicy` .
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not an integer or a tuple of length 3.
         RuntimeError: If given tensor shape is not <H, W, C>.
 
@@ -1568,13 +1568,14 @@ class HWC2CHW(ImageTensorOperation):
     If the input image is of shape <H, W>, it will remain unchanged.
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Raises:
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1604,10 +1605,13 @@ class HWC2CHW(ImageTensorOperation):
 
 class Invert(ImageTensorOperation, PyTensorOperation):
     """
-    Apply invert on input image in RGB mode. This operation will reassign every pixel to (255 - pixel).
+    Invert the colors of the input RGB image.
+
+    For each pixel in the image, if the original pixel value is `pixel`,
+    the inverted pixel value will be `255 - pixel`.
 
     Raises:
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If the input image is not in shape of <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -1850,7 +1854,8 @@ class Normalize(ImageTensorOperation):
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
@@ -1869,7 +1874,7 @@ class Normalize(ImageTensorOperation):
         RuntimeError: If given tensor format is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
-        ``CPU`` ``Ascend``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1925,6 +1930,7 @@ class Normalize(ImageTensorOperation):
             ...                                                 input_columns=["image"])
             >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]).device("Ascend")
             >>> image_folder_dataset = image_folder_dataset.map(operations=normalize_op, input_columns=["image"])
+
         Tutorial Examples:
             - `Illustration of vision transforms
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
@@ -2148,13 +2154,13 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         end_points (Sequence[Sequence[int, int]]): Sequence of the ending point coordinates, containing four
             two-element subsequences, corresponding to [top-left, top-right, bottom-right, bottom-left] of the
             quadrilateral in the target image.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BILINEAR``.
 
     Raises:
         TypeError: If `start_points` is not of type Sequence[Sequence[int, int]].
         TypeError: If `end_points` is not of type Sequence[Sequence[int, int]].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2263,7 +2269,7 @@ class RandAugment(ImageTensorOperation):
             `num_magnitude_bins`. Default: ``9``.
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be no less than 2. Default: ``31``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
@@ -2277,7 +2283,7 @@ class RandAugment(ImageTensorOperation):
         ValueError: If `magnitude` is not positive.
         TypeError: If `num_magnitude_bins` is not of type int.
         ValueError: If `num_magnitude_bins` is less than 2.
-        TypeError: If `interpolation` not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         ValueError: If `fill_value` is not in range of [0, 255].
         RuntimeError: If shape of the input image is not <H, W, C>.
@@ -2390,7 +2396,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
             If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
             from ( `shear` [0], `shear` [1]) and a shearing parallel to Y axis with a factor selected from
             ( `shear` [2], `shear` [3]) will be applied. Default: ``None``, means no shearing.
-        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int]], optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
@@ -2401,7 +2407,7 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         TypeError: If `translate` is not of type sequence.
         TypeError: If `scale` is not of type sequence.
         TypeError: If `shear` is not of type int, float or sequence.
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `resample` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int].
         ValueError: If `degrees` is negative.
         ValueError: If `translate` is not in range [-1.0, 1.0].
@@ -2614,7 +2620,8 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         brightness (Union[float, Sequence[float]], optional): Brightness adjustment factor. Default: ``(1, 1)``.
@@ -2645,7 +2652,7 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -2824,7 +2831,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
             original size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area. Default: ``10``.
             If exceeded, fall back to use center_crop instead. The `max_attempts` value must be positive.
@@ -2833,7 +2840,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
         TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple.
         TypeError: If `ratio` is not of type tuple.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `max_attempts` is not of type integer.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -3360,13 +3367,13 @@ class RandomPerspective(PyTensorOperation):
         distortion_scale (float, optional): Scale of distortion, in range of [0.0, 1.0]. Default: ``0.5``.
         prob (float, optional): Probability of performing perspective transformation, which
             must be in range of [0.0, 1.0]. Default: ``0.5``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BICUBIC``.
 
     Raises:
         TypeError: If `distortion_scale` is not of type float.
         TypeError: If `prob` is not of type float.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         ValueError: If `distortion_scale` is not in range of [0.0, 1.0].
         ValueError: If `prob` is not in range of [0.0, 1.0].
 
@@ -3470,7 +3477,7 @@ class RandomPosterize(ImageTensorOperation):
 class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
     """
     This operation will crop the input image randomly,
-    and resize the cropped image using a selected interpolation mode :class:`mindspore.dataset.vision.Inter` .
+    and resize the cropped image using a selected interpolation mode :class:`~.vision.Inter` .
 
     Note:
         If the input image is more than one, then make sure that the image size is the same.
@@ -3483,7 +3490,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
             size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range [min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop_area. Default: ``10``. If exceeded, fall back to use center_crop instead.
@@ -3492,7 +3499,7 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
@@ -3570,7 +3577,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
             size to be cropped, which must be non-negative. Default: ``(0.08, 1.0)``.
         ratio (Union[list, tuple], optional): Range (min, max) of aspect ratio to be
             cropped, which must be non-negative. Default: ``(3. / 4., 4. / 3.)``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BILINEAR``.
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area. Default: ``10``. If exceeded, fall back to use center crop instead.
@@ -3627,7 +3634,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
 class RandomResize(ImageTensorOperation):
     """
-    Resize the input image using :class:`mindspore.dataset.vision.Inter` , a randomly selected interpolation mode.
+    Resize the input image using :class:`~.vision.Inter` , a randomly selected interpolation mode.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
@@ -3678,7 +3685,7 @@ class RandomResize(ImageTensorOperation):
 class RandomResizeWithBBox(ImageTensorOperation):
     """
     Tensor operation to resize the input image
-    using a randomly selected interpolation mode :class:`mindspore.dataset.vision.Inter` and adjust
+    using a randomly selected interpolation mode :class:`~.vision.Inter` and adjust
     bounding boxes accordingly.
 
     Args:
@@ -3737,7 +3744,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
-        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
             expand the output image to make it large enough to hold the entire rotated image.
@@ -4077,7 +4084,8 @@ class Rescale(ImageTensorOperation):
     with: output = image * rescale + shift.
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         rescale (float): Rescale factor.
@@ -4088,7 +4096,7 @@ class Rescale(ImageTensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4117,19 +4125,19 @@ class Rescale(ImageTensorOperation):
 
 class Resize(ImageTensorOperation, PyTensorOperation):
     """
-    Resize the input image to the given size with a given interpolation mode :class:`mindspore.dataset.vision.Inter` .
+    Resize the input image to the given size with a given interpolation mode :class:`~.vision.Inter` .
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, the smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.LINEAR``.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -4201,12 +4209,13 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         """
         self.device_target = device_target
         if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
-            raise ValueError("The InterpolationMode is not supported by DVPP. It is {}.".format(self.interpolation))
+            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
+                             .format(self.interpolation))
         return self
 
     def parse(self):
         if self.interpolation == Inter.ANTIALIAS:
-            raise TypeError("Current Interpolation is not supported with NumPy input.")
+            raise TypeError("The current InterpolationMode is not supported with NumPy input.")
         return cde.ResizeOperation(self.c_size, Inter.to_c_type(self.interpolation), self.device_target)
 
     def _execute_py(self, img):
@@ -4237,7 +4246,7 @@ class ResizedCrop(ImageTensorOperation):
             If int is provided, the smaller edge of the image will be resized to this value,
             keeping the image aspect ratio the same.
             If Sequence[int, int] is provided, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.BILINEAR``.
 
     Raises:
@@ -4251,7 +4260,7 @@ class ResizedCrop(ImageTensorOperation):
         ValueError: If `width` is not positive.
         TypeError: If `size` is not of type int or Sequence[int, int].
         ValueError: If `size` is not posotive.
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -4300,12 +4309,12 @@ class ResizeWithBBox(ImageTensorOperation):
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.LINEAR``.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
-        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` is not of type :class:`~.vision.Inter` .
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -4402,7 +4411,7 @@ class Rotate(ImageTensorOperation):
 
     Args:
         degrees (Union[int, float]): Rotation degrees.
-        resample (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        resample (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         expand (bool, optional):  Optional expansion flag. Default: ``False``. If set to ``True``,
             expand the output image to make it large enough to hold the entire rotated image.
@@ -4417,7 +4426,7 @@ class Rotate(ImageTensorOperation):
 
     Raises:
         TypeError: If `degrees` is not of type integer, float or sequence.
-        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `resample` is not of type :class:`~.vision.Inter` .
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
         TypeError: If `fill_value` is not of type int or tuple[int].
@@ -4687,9 +4696,6 @@ class ToPIL(PyTensorOperation):
     """
     Convert the input decoded numpy.ndarray image to PIL Image.
 
-    Note:
-        The conversion mode will be determined by the data type using `PIL.Image.fromarray` .
-
     Raises:
         TypeError: If the input image is not of type :class:`numpy.ndarray` or `PIL.Image.Image` .
 
@@ -4790,7 +4796,8 @@ class ToType(TypeCast):
     It is the same as that of :class:`mindspore.dataset.transforms.TypeCast` .
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         data_type (Union[mindspore.dtype, numpy.dtype]): The desired data type of the output image,
@@ -4800,7 +4807,7 @@ class ToType(TypeCast):
         TypeError: If `data_type` is not of type :class:`mindspore.dtype` or :class:`numpy.dtype` .
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -4835,7 +4842,7 @@ class TrivialAugmentWide(ImageTensorOperation):
     Args:
         num_magnitude_bins (int, optional): The number of different magnitude values,
             must be greater than or equal to 2. Default: ``31``.
-        interpolation (Inter, optional): Image interpolation method defined by :class:`mindspore.dataset.vision.Inter` .
+        interpolation (Inter, optional): Image interpolation method defined by :class:`~.vision.Inter` .
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int, int, int]], optional): Pixel fill value for the area outside the
             transformed image, must be in range of [0, 255]. Default: ``0``.
@@ -4845,7 +4852,7 @@ class TrivialAugmentWide(ImageTensorOperation):
     Raises:
         TypeError: If `num_magnitude_bins` is not of type int.
         ValueError: If `num_magnitude_bins` is less than 2.
-        TypeError: If `interpolation` not of type :class:`mindspore.dataset.vision.Inter` .
+        TypeError: If `interpolation` not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         ValueError: If `fill_value` is not in range of [0, 255].
         RuntimeError: If shape of the input image is not <H, W, C>.

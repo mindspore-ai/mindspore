@@ -64,10 +64,20 @@ class BucketBatchByLengthOp : public PipelineOp {
   // @return Status The status code returned
   Status operator()() override;
 
+  /// \brief Gets the next row
+  /// \param row[out] - Fetched TensorRow
+  /// \return Status The status code returned
+  Status GetNextRowPullMode(TensorRow *const row) override;
+
+ protected:
+  /// \brief Gets the implementation status for operator in pull mode
+  /// \return implementation status
+  ImplementedPullMode PullModeImplementationStatus() const override { return ImplementedPullMode::Implemented; }
+
  private:
   Status ObtainElementLength(int32_t *out_element_length, TensorRow element);
 
-  Status PadAndBatchBucket(int32_t bucket_index);
+  Status PadAndBatchBucket(int32_t bucket_index, TensorRow *batched_bucket);
 
   Status ComputeColMap() override;
 
@@ -78,6 +88,7 @@ class BucketBatchByLengthOp : public PipelineOp {
   PadInfo pad_info_;
   bool pad_to_bucket_boundary_;
   bool drop_remainder_;
+  bool eoe_received_ = false;
 
   int32_t batch_count_;
   std::unique_ptr<ChildIterator> child_iterator_;

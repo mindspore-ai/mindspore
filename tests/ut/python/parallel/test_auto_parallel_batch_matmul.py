@@ -33,6 +33,20 @@ class BatchMatmulNet(nn.Cell):
         return output
 
 
+class MatmulBatchMatmulNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.matmul = P.MatMul()
+        self.bmm = P.BatchMatMul()
+        self.reshape = P.Reshape()
+
+    def construct(self, x, y, z, shape):
+        output = self.matmul(x, y)
+        output = self.reshape(output, shape)
+        output = self.bmm(output, z)
+        return output
+
+
 def test_batch_matmul():
     """
     Feature: batch matmul op
@@ -50,3 +64,24 @@ def test_batch_matmul():
     for (k, v) in strategies.items():
         if re.search('BatchMatMul-op', k) is not None:
             assert v == [4, 1, 1, 1]
+
+
+def test_batch_matmul_propagate():
+    """
+    Feature: batch matmul op stra is propagated
+    Description:
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming",
+                                      device_num=8, global_rank=0)
+    input_x = Tensor(np.ones([256, 1024]), dtype=ms.float32)
+    input_y = Tensor(np.ones([128, 128]), dtype=ms.float32)
+    input_z = Tensor(np.ones([8, 32, 8, 32]), dtype=ms.float32)
+    shape = (64, 32, 16, 8)
+    net = MatmulBatchMatmulNet()
+
+    compile_net(net, input_x, input_y, input_z, shape)
+    strategies = _cell_graph_executor._get_shard_strategy(net)
+    for (k, v) in strategies.items():
+        if re.search('BatchMatMul-op', k) is not None:
+            assert v == [4, 2, 1, 1]

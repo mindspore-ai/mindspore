@@ -121,6 +121,7 @@ class GradExecutor {
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
   void WorkerJoin();
+  void WaitBpropTask() const;
   void SaveDynamicInputsCells(const py::object &obj, const py::args &args);
   void SetTopCellDynamicAttr(const py::object &cell);
   bool use_dynamic_shape_process() const {
@@ -216,7 +217,6 @@ class GradExecutor {
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   void DispatchGradQueueTask(std::function<void(void)> &&task) const;
-  void WaitBpropTask() const;
   void ClearBpropTask() const;
   bool init_{false};
   bool grad_flag_{false};

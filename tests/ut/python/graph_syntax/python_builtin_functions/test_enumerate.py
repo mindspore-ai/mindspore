@@ -286,7 +286,7 @@ def test_enumerate_start_type_error():
     net = Net()
     with pytest.raises(TypeError) as ex:
         net(x)
-    assert "For 'enumerate', the 'start'" in str(ex.value)
+    assert "For 'enumerate', the 'start' should be a const int number, but got 1.2." in str(ex.value)
 
 
 def test_fallback_enumerate_with_numpy():

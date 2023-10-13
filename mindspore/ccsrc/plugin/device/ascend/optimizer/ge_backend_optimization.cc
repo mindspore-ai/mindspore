@@ -41,6 +41,7 @@
 #include "plugin/device/ascend/optimizer/ge/insert_identity.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 #include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
+#include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
@@ -153,6 +154,8 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<DealRefOutput>());
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

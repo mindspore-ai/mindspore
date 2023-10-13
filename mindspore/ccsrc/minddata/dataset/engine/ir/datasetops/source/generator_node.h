@@ -103,7 +103,7 @@ class GeneratorNode : public MappableSourceNode {
   /// \brief Sampler setter
   void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
 
-  bool IsMappableSource() { return source_len_ != -1; }
+  bool IsMappableSource() { return sampler_ != nullptr; }
 
  private:
   py::function generator_function_;

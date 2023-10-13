@@ -26,8 +26,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
-import mindspore.ops.function as ops
-from mindspore.ops import functional as F
+import mindspore.ops as ops
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
@@ -113,9 +112,9 @@ reduce_min = P.ReduceMin()
 
 @_primexpr
 def get_x_shape(x_shape):
-    if F.is_sequence_shape_unknown(x_shape):
+    if ops.is_sequence_shape_unknown(x_shape):
         return (-2,)
-    if F.is_sequence_value_unknown(x_shape):
+    if ops.is_sequence_value_unknown(x_shape):
         return (-1,)
     s = 1
     for i in x_shape:
@@ -149,7 +148,7 @@ def _get_type(x):
     """get the dtype of input"""
     if isinstance(x, Tensor):
         return x.dtype
-    return F.typeof(x)
+    return ops.typeof(x)
 
 
 def _get_max_type(start, end, step):
@@ -788,7 +787,7 @@ def full(size, fill_value, *, dtype=None):  # pylint: disable=redefined-outer-na
         raise TypeError(f"For 'ops.full', 'dtype' must be mindspore.type, but got {dtype}.")
     if isinstance(size, list):
         size = tuple(size)
-    return F.fill(dtype, size, fill_value)
+    return ops.fill(dtype, size, fill_value)
 
 
 def full_like(input, fill_value, *, dtype=None):
@@ -839,7 +838,7 @@ def chunk(input, chunks, axis=0):
     Cut the input Tensor into `chunks` sub-tensors along the specified axis.
 
     Note:
-        This function may return less then the specified number of chunks!
+        This function may return less than the specified number of chunks!
 
     Args:
         input (Tensor): A Tensor to be cut.
@@ -1735,8 +1734,8 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
-        perm = F.make_range(0, F.rank(input))
-        new_order = F.tuple_reversed(perm)
+        perm = ops.make_range(0, ops.rank(input))
+        new_order = ops.tuple_reversed(perm)
         input = _get_cache_prim(P.Transpose)()(input, new_order)
 
     # Handle the default case.
@@ -1918,15 +1917,15 @@ def select(cond, x, y):
             input_y = cast_(input_y, mstype.float32)
 
     if is_x_tensor and is_y_tensor and is_cond_tensor:
-        x_shape = F.shape(x)
-        y_shape = F.shape(y)
-        cond_shape = F.shape(cond)
-        all_constant = F.isconstant(cond_shape) and F.isconstant(x_shape) and F.isconstant(y_shape)
+        x_shape = ops.shape(x)
+        y_shape = ops.shape(y)
+        cond_shape = ops.shape(cond)
+        all_constant = ops.isconstant(cond_shape) and ops.isconstant(x_shape) and ops.isconstant(y_shape)
         if all_constant and not _check_select_shape_same(cond_shape, x_shape, y_shape):
             broadcast_shape = _calc_broadcast_shape(cond_shape, x_shape, y_shape)
-            new_cond = F.broadcast_to(cond, broadcast_shape)
-            new_x = F.broadcast_to(x, broadcast_shape)
-            new_y = F.broadcast_to(y, broadcast_shape)
+            new_cond = ops.broadcast_to(cond, broadcast_shape)
+            new_x = ops.broadcast_to(x, broadcast_shape)
+            new_y = ops.broadcast_to(y, broadcast_shape)
             return tensor_select_(new_cond, new_x, new_y)
 
     return tensor_select_(cond, input_x, input_y)
@@ -4060,7 +4059,7 @@ def scatter(input, axis, index, src):
         [0. 0. 0. 0. 0.]
         [0. 0. 0. 0. 0.]]
     """
-    return F.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
+    return ops.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
 
 
 def _get_slice_scatter_const(x_shape, axis, start, end, step):
@@ -4794,7 +4793,7 @@ def broadcast_to(input, shape):  # pylint: disable=redefined-outer-name
         [[1. 1.]
          [2. 2.]]
     """
-    if isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
+    if isinstance(shape, Tensor) or ops.is_sequence_value_unknown(shape):
         _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
         return _dyn_broadcast_to(input, shape)
     _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
@@ -6673,10 +6672,10 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     padding = _check_fold_param(padding, "padding")
     stride = _check_fold_param(stride, "stride")
     fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
-    input_shape = F.shape(input)
+    input_shape = ops.shape(input)
     k = kernel_size[0] * kernel_size[-1]
     r_shape = input_shape[:1] + (-1, k) + input_shape[-1:]
-    input = F.reshape(input, r_shape)
+    input = ops.reshape(input, r_shape)
     return fold_op(input, output_size)
 
 
@@ -6773,9 +6772,9 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
                                         dilations=dilation,
                                         pads=padding)
     tmp = unfold_op(input)
-    tmp_shape = F.shape(tmp)
+    tmp_shape = ops.shape(tmp)
     out_shape = tmp_shape[:1] + (-1,) + tmp_shape[-1:]
-    out = F.reshape(tmp, out_shape)
+    out = ops.reshape(tmp, out_shape)
     return out
 
 
@@ -6845,36 +6844,36 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     x_shape = input.shape
     n, m = x_shape[-2:]
 
-    e = _get_cache_prim(P.Eye)()(n, m, dtype)
+    e = ops.eye(n, m, dtype)
     if offset >= m or offset <= -n:
         zero_shape = x_shape[:-2] + (0,)
         return ops.zeros(zero_shape, dtype)
     if offset != 0:
         e = e.astype(mstype.float32)
         if offset > 0:
-            e_left = F.fill(mstype.float32, (n, offset), 0)
+            e_left = ops.fill(mstype.float32, (n, offset), 0)
             e_right = e[..., 0:m - offset:1]
-            e = _get_cache_prim(P.Concat)(1)((e_left, e_right)).astype(dtype)
+            e = ops.cat((e_left, e_right), 1).astype(dtype)
         elif offset < 0:
-            e_upper = F.fill(mstype.float32, (-offset, m), 0)
+            e_upper = ops.fill(mstype.float32, (-offset, m), 0)
             e_lower = e[0:n + offset:1, ...]
-            e = _get_cache_prim(P.Concat)(0)((e_upper, e_lower)).astype(dtype)
-    e = F.broadcast_to(e, x_shape)
+            e = ops.cat((e_upper, e_lower), 0).astype(dtype)
+    e = ops.broadcast_to(e, x_shape)
 
-    prod_val = _get_cache_prim(P.Mul)()(input, e)
-    res = _get_cache_prim(P.ReduceSum)()(prod_val.astype(mstype.float32), -1)
+    prod_val = ops.mul(input, e)
+    res = ops.ReduceSum()(prod_val.astype(mstype.float32), -1)
 
     begin = ()
     for _ in ms_arrange(x_ndim - 2):
         begin += (0,)
-    last_dim_begin = np.max((0, -offset)).astype(np.int64)
+    last_dim_begin = builtins.max(0, -offset)
     begin += (last_dim_begin,)
     res_size = res.shape[:-1]
-    last_dim_end = np.min((x_shape[-2], np.max((0, (x_shape[-1] - offset))))) - last_dim_begin
+    last_dim_end = builtins.min(x_shape[-2], builtins.max(0, x_shape[-1] - offset)) - last_dim_begin
     if last_dim_end <= 0:
         return Tensor([])
     res_size += (last_dim_end,)
-    res = _get_cache_prim(P.Slice)()(res, begin, res_size)
+    res = ops.slice(res, begin, res_size)
     return res.astype(dtype)
 
 
@@ -7185,7 +7184,7 @@ def _check_axis_valid(axis, ndim):
     to the built-in operator (non-negative, int or tuple).
     """
     if axis is None:
-        axis = F.make_range(ndim)
+        axis = ops.make_range(ndim)
         return axis
     if isinstance(axis, (tuple, list)):
         axis = tuple(map(lambda x: _check_check_axis_in_range(x, ndim), axis))
@@ -7259,7 +7258,7 @@ def movedim(x, source, destination):
         >>> print(output.shape)
         (4, 3, 5)
     """
-    ndim = F.rank(x)
+    ndim = ops.rank(x)
     source = _check_axis_valid(source, ndim)
     destination = _check_axis_valid(destination, ndim)
     if len(source) != len(destination):
@@ -7334,7 +7333,7 @@ def swapaxes(input, axis0, axis1):
     if axis0 > axis1:
         axis0, axis1 = axis1, axis0
 
-    perm = F.make_range(0, input.ndim)
+    perm = ops.make_range(0, input.ndim)
     if axis1 + 1 < input.ndim:
         new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
                    perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1] + perm[axis1 + 1:]
@@ -7375,7 +7374,7 @@ def swapdims(input, dim0, dim1):
         >>> print(output.shape)
         (4, 3, 2)
     '''
-    return F.swapaxes(input, dim0, dim1)
+    return ops.swapaxes(input, dim0, dim1)
 
 
 @constexpr
@@ -7487,7 +7486,7 @@ def repeat_elements(x, rep, axis=0):
         [[0 0 1 1 2 2]
          [3 3 4 4 5 5]]
     """
-    const_utils.check_type_valid(F.dtype(x), mstype.number_type, 'input x')
+    const_utils.check_type_valid(ops.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
     axis = _check_is_int(axis, "axis", "repeat_elements")
     shape_op = P.Shape()
@@ -7579,7 +7578,7 @@ def sequence_mask(lengths, maxlen=None):
     to_tensor_op = P.ScalarToTensor()
     shape_op = P.Shape()
 
-    const_utils.check_type_valid(F.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
+    const_utils.check_type_valid(ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
     _check_sequence_mask_input_len(shape_op(lengths), "sequence_mask")
 
     if maxlen is None:

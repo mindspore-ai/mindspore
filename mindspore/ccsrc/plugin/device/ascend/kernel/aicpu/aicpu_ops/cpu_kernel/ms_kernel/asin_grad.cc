@@ -70,6 +70,9 @@ uint32_t AsinGradCpuKernel::AsinGradParamCheck(const CpuKernelContext &ctx) {
   Tensor *input_y = ctx.Input(0);
   Tensor *input_dy = ctx.Input(1);
   Tensor *output = ctx.Output(0);
+  KERNEL_CHECK_NULLPTR(input_y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'y' failed.")
+  KERNEL_CHECK_NULLPTR(input_dy->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'dy' data failed.")
+  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   DataType input_y_type = input_y->GetDataType();
   DataType input_dy_type = input_dy->GetDataType();
   KERNEL_CHECK_FALSE((input_y_type == input_dy_type), KERNEL_STATUS_PARAM_INVALID,

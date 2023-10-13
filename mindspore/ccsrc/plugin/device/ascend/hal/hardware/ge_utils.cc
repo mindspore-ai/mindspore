@@ -64,7 +64,7 @@ bool IsGeTrain() {
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     return graph->ToString();
   } else {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
@@ -99,7 +99,7 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
   auto enable_io_reuse = common::GetEnv("MS_ENABLE_IO_REUSE");
   auto enable_fea_refreshable = common::GetEnv("MS_FEA_REFRESHABLE");
   MS_LOG(INFO) << "Enable io reuse: " << enable_io_reuse << ", refreshable: " << enable_fea_refreshable;
-  if (enable_io_reuse != "1" || enable_fea_refreshable != "1" || !common::IsEnableRefMode()) {
+  if (enable_io_reuse != "1" || enable_fea_refreshable != "1" || !IsEnableRefMode()) {
     return;
   }
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
@@ -127,7 +127,7 @@ void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option) {
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (graph->has_flag(transform::kGraphFlagHasGetNext) || !ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+  if (graph->has_flag(transform::kGraphFlagHasGetNext) && !graph->has_flag(transform::kGraphNeedIteration)) {
     MS_LOG(INFO) << "key: ge.exec.inputReuseMemIndexes, value: 0."
                  << ", Graph name: " << graph->ToString();
     (void)option->insert(std::make_pair("ge.exec.inputReuseMemIndexes", "0"));
@@ -139,36 +139,21 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
   transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
   auto graph_name = GetGraphName(anf_graph);
-  if (!common::IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
-    if (kg != nullptr) {
-      graph_name = kg->GetFuncGraph()->ToString();
-    }
-  }
-  std::string init_graph = "init_subgraph_" + graph_name;
-  std::string checkpoint_name = "save_" + graph_name;
+  std::string init_graph = "init_subgraph." + graph_name;
+  std::string checkpoint_name = "save." + graph_name;
   ShapeArray shape_array;
   bool dynamic_shape_inputs = false;
   auto options = GetComputeGraphOptions(shape_array, dynamic_shape_inputs);
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  if (transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, true) !=
-      transform::Status::SUCCESS) {
-    return false;
-  }
-  if (transform::AddGraph(init_graph, transform::GenFakeGraph("init")) != transform::Status::SUCCESS) {
-    return false;
-  }
-  if (transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast")) != transform::Status::SUCCESS) {
-    return false;
-  }
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
+  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast"));
 
-  if (!common::IsEnableRefMode()) {
+  if (!IsEnableRefMode()) {
     transform::Status ret = transform::AddGraph(checkpoint_name, transform::GenFakeGraph("checkpoint"));
     if (ret == transform::Status::SUCCESS) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);
-    } else {
-      return false;
     }
   }
   transform::AddOptimizeGraph(graph_name);
@@ -178,12 +163,10 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
-  bool is_train = true;
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
     transform::SetExportAir(converter, true);
-    is_train = false;
   }
   transform::BuildGraph(anf_graph->ToString(), converter, init_inputs_map);
   transform::GenerateBroadcastGraph(converter, init_inputs_map);
@@ -196,26 +179,20 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
 
   auto graph_name = GetGraphName(anf_graph);
-  if (!common::IsEnableRefMode()) {
-    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
-    if (kg != nullptr) {
-      graph_name = kg->GetFuncGraph()->ToString();
-    }
-  }
-  std::string init_graph = "init_subgraph_" + graph_name;
-  std::string checkpoint_name = "save_" + graph_name;
+  std::string init_graph = "init_subgraph." + graph_name;
+  std::string checkpoint_name = "save." + graph_name;
   auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   GetComputeGraphReuseOptions(anf_graph, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, is_train);
-  if (common::IsEnableRefMode()) {
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
+  if (IsEnableRefMode()) {
     (void)transform::AddGraph(init_graph, converter->GetInitGraph());
   } else {
     (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   }
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
-  if (!common::IsEnableRefMode()) {
+  if (!IsEnableRefMode()) {
     transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
     if (ret == transform::Status::SUCCESS) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);

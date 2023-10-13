@@ -51,6 +51,7 @@ class LLMEnginePluginBase {
   virtual ~LLMEnginePluginBase() = default;
   virtual Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
                       const std::map<std::string, std::string> &options) = 0;
+  virtual void Finalize() = 0;
   virtual Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
   virtual Status CompleteRequest(const LLMReq &req) = 0;
   virtual LLMEngineStatus FetchStatus() = 0;

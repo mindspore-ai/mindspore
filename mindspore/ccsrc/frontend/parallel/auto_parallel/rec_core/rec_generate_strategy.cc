@@ -169,6 +169,50 @@ Strategies PrepareMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorIn
   return strategies;
 }
 
+Strategies PreparePropagateBatchMatMul(const std::shared_ptr<OperatorInfo> &op, Dimensions basic_stra) {
+  // This backward propagation does NOT complete strategy on k. Could be done later
+  Strategies stra;
+  auto attrs = op->attrs();
+  bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
+  bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+
+  size_t first_input_size = op->inputs_shape()[0].size();
+  size_t second_input_size = op->inputs_shape()[1].size();
+
+  Dimensions first_input_dim(first_input_size);
+  Dimensions second_input_dim(second_input_size);
+
+  // first input
+  if (!transpose_a) {
+    first_input_dim[first_input_size - 1] = 1;                                  // k axis
+    first_input_dim[first_input_size - 2] = basic_stra[basic_stra.size() - 2];  // i axis
+  } else {
+    first_input_dim[first_input_size - 2] = 1;                                  // k axis
+    first_input_dim[first_input_size - 1] = basic_stra[basic_stra.size() - 2];  // i axis
+  }
+
+  for (size_t idx = 3; idx <= first_input_size; idx++) {
+    first_input_dim[first_input_size - idx] = basic_stra[basic_stra.size() - idx];
+  }
+
+  // second input
+  if (!transpose_b) {
+    second_input_dim[second_input_size - 2] = 1;                                  // k axis
+    second_input_dim[second_input_size - 1] = basic_stra[basic_stra.size() - 1];  // j axis
+  } else {
+    second_input_dim[second_input_size - 1] = 1;                                  // k axis
+    second_input_dim[second_input_size - 2] = basic_stra[basic_stra.size() - 1];  // j axis
+  }
+
+  for (size_t idx = 3; idx <= second_input_size; idx++) {
+    second_input_dim[second_input_size - idx] = basic_stra[basic_stra.size() - idx];
+  }
+
+  stra.push_back(first_input_dim);
+  stra.push_back(second_input_dim);
+  return stra;
+}
+
 Dimensions PrepareBatchMatMulStrategy(Graph::NodeType *node, const bool transpose_a, const bool transpose_b,
                                       const size_t iter_op_inputs, const size_t dim_num) {
   if (node->apply.arguments[iter_op_inputs].tensor_str.str_n == 0 ||
@@ -514,6 +558,10 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
 }
 
 Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy, bool dyn_shape_tmp_fix) {
+  if (dyn_shape_tmp_fix) {
+    return GatherForDynamicShape(op, 0);
+  }
+
   Strategies strategies;
   Shape targeted_shape = op->outputs_shape()[0];
   Dimensions strategie = GenGatherStra(targeted_shape);
@@ -522,12 +570,28 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
   if (axis >= SizeToLong(strategy.size())) {
     MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
   }
-  strategy.clear();
 
-  if (dyn_shape_tmp_fix) {
-    return GatherForDynamicShape(op, 0);
+  int64_t batch_dims = -1;
+  auto attrs = op->attrs();
+  auto attr_iter = attrs.find("batch_dims");
+  if (attr_iter != attrs.end()) {
+    MS_EXCEPTION_IF_NULL(attr_iter->second);
+    if (!attr_iter->second->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << op->name() << ": The value of batch dims is not int";
+    }
+
+    batch_dims = attr_iter->second->cast<Int64ImmPtr>()->value();
+    MS_LOG(INFO) << op->name() << ": batch dims is " << batch_dims;
+  }
+  if (batch_dims > 1) {
+    for (size_t i = 0; i < op->inputs_shape().size(); i++) {
+      strategies.push_back(strategie);
+    }
+    strategies[0][axis] = 1;
+    return strategies;
   }
 
+  strategy.clear();
   if (axis == 0) {
     strategy.push_back(1);
     for (size_t i = 1; i < op->inputs_shape()[0].size(); i++) {
@@ -549,7 +613,7 @@ Strategies PrepareGather(const std::shared_ptr<OperatorInfo> &op, Dimensions str
     }
     strategies.push_back(strategy);
   } else {
-    MS_LOG(EXCEPTION) << "Failure: GatherV2's axis is neither 0 nor 1.";
+    MS_LOG(EXCEPTION) << "Failure: Normal Gather's axis is neither 0 nor 1.";
   }
 
   return strategies;
@@ -817,8 +881,6 @@ Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_
     return PrepareMatMul(node, ops[iter_ops]);
   } else if (type == LAYER_NORM) {
     return PrepareAxisRelatedStrategy(node, ops, iter_ops);
-  } else if (type == BATCH_MATMUL) {
-    return PrepareBatchMatMul(node, ops[iter_ops]);
   } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
     return MakeDataParallelStrategy(node, ops, iter_ops);
   } else if (type == VIRTUAL_DATA_SET) {
@@ -1424,6 +1486,9 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
     strategies.push_back(basic_stra);
     return strategies;
   }
+  if (type == BATCH_MATMUL) {
+    return PreparePropagateBatchMatMul(ops[iter_ops], basic_stra);
+  }
 
   return CheckDivisible(ops[iter_ops], basic_stra);
 }
@@ -1502,7 +1567,7 @@ Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensi
     return s_empty;
   } else if (target_tensor_dim == 1) {  // When target tensor with a single dim.
     bool broadcast_dim_found = false;
-    for (size_t iter = 0; iter < refer_tensor_dim; ++iter) {
+    for (int32_t iter = refer_tensor_dim - 1; iter >= 0; --iter) {
       // Find and copy that dim's strategy from the refer tensor.
       if ((op->inputs_shape()[refer_tensor_index][iter] == op->inputs_shape()[target_tensor_index][0]) &&
           (op->inputs_shape()[refer_tensor_index][iter] > 1) && (refer_tensor_dim == strategy.size())) {

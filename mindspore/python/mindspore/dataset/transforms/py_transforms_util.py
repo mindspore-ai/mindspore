@@ -247,3 +247,9 @@ class FuncWrapper:
             json_obj["tensor_op_name"] = "unknown"
             json_obj["python_module"] = "unknown"
             return json.dumps(json_obj)
+
+    def release_resource(self):
+        # release the executor which is used by current thread/process when
+        # use transform in eager mode in map op or batch op
+        # this will be call in MapOp::WorkerEntry and BatchOp::WorkerEntry
+        t.transforms.clean_unused_executors()

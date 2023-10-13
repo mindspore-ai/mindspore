@@ -525,15 +525,22 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
     auto me_data_ptr = me_tensor.data_c();
     size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
     MS_EXCEPTION_IF_NULL(me_data_ptr);
-    if (me_data_size < ge_tensor->GetSize()) {
-      MS_LOG(ERROR) << "ME tensor data size[" << me_data_size << " bytes] is less than GE tensor ["
-                    << ge_tensor->GetSize() << " bytes]";
+    size_t length = ge_tensor->GetSize();
+    if (me_data_size < length) {
+      MS_LOG(ERROR) << "ME tensor data size[" << me_data_size << " bytes] is less than GE tensor [" << length
+                    << " bytes]";
       return nullptr;
     }
 
-    // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
-    // which is the size limit of memcpy_s.
-    (void)memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
+    if (length < SECUREC_MEM_MAX_LEN) {
+      int ret_code = memcpy_s(me_data_ptr, length, ge_tensor->GetData(), length);
+      if (ret_code != EOK) {
+        MS_LOG(ERROR) << "Memcpy_s from ge_tensor to me_tensor failed.";
+        return nullptr;
+      }
+    } else {
+      (void)memcpy(me_data_ptr, ge_tensor->GetData(), length);
+    }
 
     return make_shared<MeTensor>(me_tensor);
   }

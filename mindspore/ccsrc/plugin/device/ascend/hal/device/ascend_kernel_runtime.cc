@@ -70,6 +70,7 @@
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 using std::vector;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
+constexpr uint32_t kDefaultHcclExecTimeout = 1800;
 
 namespace mindspore::device::ascend {
 static thread_local rtContext_t thread_local_rt_context{nullptr};
@@ -148,7 +149,7 @@ void AscendKernelRuntime::SetContext() {
   }
 }
 
-void AscendKernelRuntime::SetCurrentContext() {
+void AscendKernelRuntime::SetContextForce() {
   if (rt_context_ == nullptr) {
     return;
   }
@@ -159,7 +160,7 @@ void AscendKernelRuntime::SetCurrentContext() {
 }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-  SetCurrentContext();
+  SetContextForce();
   graph_kernel_events_map_.clear();
   if (runtime_core_ != nullptr) {
     runtime_core_->UnloadModelCore();
@@ -167,7 +168,7 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 }
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
-  SetCurrentContext();
+  SetContextForce();
   auto mem_scheduler = mem_scheduler_manager_.GetMemScheduler(graph_id);
   if (mem_scheduler != nullptr) {
     mem_scheduler->Clear();
@@ -244,7 +245,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     }
   }
 #endif
-  SetCurrentContext();
+  SetContextForce();
 
   // release ge runtime
   ClearGraphModelMap();
@@ -297,7 +298,7 @@ bool AscendKernelRuntime::Init() {
   }
 #endif
   if (initialized_) {
-    SetCurrentContext();
+    SetContextForce();
     return true;
   }
 
@@ -331,12 +332,43 @@ bool AscendKernelRuntime::Init() {
     if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
     }
-    // for tiling rt2 operator to register
-    ::ge::OppSoManager::GetInstance().LoadOppPackage();
-    uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
-    auto acl_ret = aclrtSetOpWaitTimeout(op_timeout);
+
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    const bool is_enable_ge = context_ptr->backend_policy() == "ge";
+    if (!is_enable_ge) {
+      // for tiling rt2 operator to register
+      ::ge::OppSoManager::GetInstance().LoadOppPackage();
+    }
+    uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
+    std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");
+    uint32_t notify_wait_timeout;
+    if (hccl_exec_timeout.empty()) {
+      notify_wait_timeout = kDefaultHcclExecTimeout;
+    } else {
+      try {
+        notify_wait_timeout = std::stoi(hccl_exec_timeout);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Parse environment variable HCCL_EXEC_TIMEOUT failed, value" << hccl_exec_timeout
+                      << ", msg: " << e.what();
+        return false;
+      }
+    }
+    if (op_execute_timeout >= notify_wait_timeout) {
+      MS_LOG(WARNING) << "OpExecuteTimeout should be less than NotifyWaitTimeout, but got OpExecuteTimeout "
+                      << op_execute_timeout << ", notify_wait_timeout " << notify_wait_timeout << "."
+                      << "1. You can set OpExecuteTimeout via mindspore.set_context(op_timeout=int)."
+                      << "2. You can set NotifyWaitTimeout via environment variable HCCL_EXEC_TIMEOUT. ";
+    }
+    const uint32_t reserve_time = 180;
+    uint32_t op_wait_timeout = kDefaultHcclExecTimeout + reserve_time;
+    auto acl_ret = aclrtSetOpWaitTimeout(op_wait_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
+    }
+    acl_ret = aclrtSetOpExecuteTimeOut(op_execute_timeout);
+    if (acl_ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
     }
   } catch (const std::exception &e) {
     if (init_device) {
@@ -564,7 +596,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
   current_graph_ = &graph;
-  SetCurrentContext();
+  SetContextForce();
   if (graph.is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
     return RunDynamicKernelAsync(graph);
@@ -576,7 +608,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 }
 
 bool AscendKernelRuntime::SyncStream() {
-  SetCurrentContext();
+  SetContextForce();
   if (stream_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_);
@@ -597,7 +629,7 @@ bool AscendKernelRuntime::SyncStream() {
 }
 
 bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  SetCurrentContext();
+  SetContextForce();
   if (size == 0) {
     MS_LOG(DEBUG) << "rtMemcpyAsync size is 0, copy kind:" << kind;
     return true;
@@ -684,7 +716,7 @@ bool AscendKernelRuntime::InitDevice() {
 }
 
 bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
-  SetCurrentContext();
+  SetContextForce();
   AscendStreamMng::GetInstance().DestroyAllRtEvents();
   if (!AscendStreamMng::GetInstance().DestroyAllStreams()) {
     MS_LOG(ERROR) << "Fail to destroy all streams when reset device.";

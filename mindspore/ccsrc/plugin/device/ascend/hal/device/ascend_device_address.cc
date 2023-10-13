@@ -22,6 +22,7 @@
 #include <algorithm>
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
@@ -42,6 +43,7 @@
 #include "debug/tensor_load.h"
 #endif
 
+namespace py = pybind11;
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -194,6 +196,17 @@ void AscendDeviceAddress::SyncStream() const {
   MS_LOG(DEBUG) << "SyncStream Finish!";
 }
 
+bool AscendDeviceAddress::SyncStream(size_t stream_id) const {
+  const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(stream);
+  BindDevice();
+  if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
+    MS_LOG(ERROR) << "Sync default stream failed.";
+    return false;
+  }
+  return true;
+}
+
 bool AscendDeviceAddress::CopyDeviceToHost(void *dst, const void *src, size_t size, bool async,
                                            size_t stream_id) const {
   return CopyBetweenHostDevice(dst, src, size, async, stream_id, false);
@@ -206,40 +219,16 @@ bool AscendDeviceAddress::CopyHostToDevice(void *dst, const void *src, size_t si
 
 bool AscendDeviceAddress::DeviceToFileDirectly(void *ptr, size_t size, const std::string &file_name,
                                                size_t stream_id) const {
-#if defined(RT_MEMORY_P2PDMA)
-  void *dargs = AscendDmaHandle::GetInstance().GetDargs();
-  void *buf = AscendDmaHandle::GetInstance().GetBuf();
-  if (dargs == nullptr || buf == nullptr) {
-    return false;
-  }
-  std::lock_guard<std::mutex> lock(dma_lock);
-  auto nvme_fd = open(file_name.c_str(), O_RDWR | O_CREAT | O_DIRECT, S_IRUSR | S_IWUSR);
-  if (nvme_fd < 0) {
-    MS_LOG(ERROR) << "Open file failed, file name:" << file_name;
-    return false;
-  }
-  size_t buf_size = AscendDmaHandle::GetInstance().GetSize();
-  size_t count = (size + buf_size - 1) / buf_size;
-  for (size_t i = 0; i < count; i++) {
-    size_t ptr_offset = i * buf_size;
-    size_t write_size = (i == count - 1) ? (size % buf_size) : buf_size;
-    DeviceToDevice(dargs, static_cast<uint8_t *>(ptr) + ptr_offset, write_size, stream_id);
-    size_t w_size = write(nvme_fd, buf, write_size);
-    if (w_size != write_size) {
-      MS_LOG(ERROR) << "Write file failed, file name:" << file_name << ", size:" << size;
-      close(nvme_fd);
-      return false;
-    }
-  }
-  close(nvme_fd);
-  return true;
-#else
-  return false;
-#endif
+  return CopyBetweenFileDeviceDirectly(ptr, file_name, size, stream_id, false);
 }
 
 bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std::string &file_name,
                                                size_t stream_id) const {
+  return CopyBetweenFileDeviceDirectly(ptr, file_name, size, stream_id, true);
+}
+
+bool AscendDeviceAddress::CopyBetweenFileDeviceDirectly(void *ptr, const std::string &file_name, size_t size,
+                                                        size_t stream_id, bool file_to_device) const {
 #if defined(RT_MEMORY_P2PDMA)
   void *dargs = AscendDmaHandle::GetInstance().GetDargs();
   void *buf = AscendDmaHandle::GetInstance().GetBuf();
@@ -247,7 +236,8 @@ bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std
     return false;
   }
   std::lock_guard<std::mutex> lock(dma_lock);
-  auto nvme_fd = open(file_name.c_str(), O_RDWR | O_DIRECT, S_IRUSR | S_IWUSR);
+  auto open_flag = file_to_device ? (O_RDWR | O_DIRECT) : (O_RDWR | O_CREAT | O_DIRECT);
+  auto nvme_fd = open(file_name.c_str(), open_flag, S_IRUSR | S_IWUSR);
   if (nvme_fd < 0) {
     MS_LOG(ERROR) << "Open file failed, file name:" << file_name;
     return false;
@@ -256,21 +246,26 @@ bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std
   size_t count = (size + buf_size - 1) / buf_size;
   for (size_t i = 0; i < count; i++) {
     size_t ptr_offset = i * buf_size;
-    size_t read_size = (i == count - 1) ? (size % buf_size) : buf_size;
-    size_t r_size = read(nvme_fd, buf, read_size);
-    if (r_size != read_size) {
-      MS_LOG(ERROR) << "Read file failed, file name:" << file_name << ", size:" << size;
-      close(nvme_fd);
-      return false;
+    size_t cur_size = (i == count - 1) ? (size - ptr_offset) : buf_size;
+    if (file_to_device) {
+      size_t ret_size = read(nvme_fd, buf, cur_size);
+      if (ret_size != cur_size || !SyncStream(stream_id)) {
+        MS_LOG(ERROR) << "Read file failed, file name:" << file_name << ", size:" << size;
+        close(nvme_fd);
+        return false;
+      }
+      DeviceToDevice(static_cast<uint8_t *>(ptr) + ptr_offset, dargs, cur_size, stream_id);
+    } else {
+      DeviceToDevice(dargs, static_cast<uint8_t *>(ptr) + ptr_offset, cur_size, stream_id);
+      size_t ret_size = write(nvme_fd, buf, cur_size);
+      if (ret_size != cur_size || !SyncStream(stream_id)) {
+        MS_LOG(ERROR) << "Write file failed, file name:" << file_name << ", size:" << size;
+        close(nvme_fd);
+        return false;
+      }
     }
-    DeviceToDevice(static_cast<uint8_t *>(ptr) + ptr_offset, dargs, read_size, stream_id);
   }
   close(nvme_fd);
-  auto res = unlink(file_name.c_str());
-  if (res != 0) {
-    MS_LOG(ERROR) << "Delete file failed, file name:" << file_name;
-  }
-  storage_info_.file_name_ = "";
   return true;
 #else
   return false;
@@ -397,8 +392,8 @@ std::shared_ptr<LaunchTransData> AscendDeviceAddress::CreateLaunchTransData(cons
   if (format_ == kOpFormat_FRAC_Z) {
     groups = GetGroupsWithCache();
   }
-  auto launch_trans_data = std::make_shared<LaunchTransData>(stream, static_cast<uint8_t *>(ptr_), type_id_, size_,
-                                                             ori_format, dst_format, host_shape, groups);
+  auto launch_trans_data =
+    std::make_shared<LaunchTransData>(stream, type_id_, size_, ori_format, dst_format, host_shape, groups);
   MS_EXCEPTION_IF_NULL(launch_trans_data);
   return launch_trans_data;
 }
@@ -414,12 +409,15 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   // launch transdata
+  GilReleaseWithCheck release_gil;
+  launch_transdata_->SetInputAddr(ptr_);
   launch_transdata_->LaunchOpKernel();
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
     launch_transdata_->FreeDeviceMem();
-    MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
+    MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output, actual output size: "
+                      << output_addr_vec.size();
   }
   if (type_id_ == type) {
     SyncMemory(host_ptr, output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -432,12 +430,10 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
       launch_transdata_->FreeDeviceMem();
-      launch_transdata_ = nullptr;
       return false;
     }
   }
   launch_transdata_->FreeDeviceMem();
-  launch_transdata_ = nullptr;
   return sync_ok;
 }
 

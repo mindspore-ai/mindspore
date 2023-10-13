@@ -149,7 +149,8 @@ class Custom(ops.PrimitiveWithInfer):
     <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_ .
 
     .. warning::
-        This is an experimental API that is subject to change.
+        - This is an experimental API that is subject to change.
+        - Currently, the functionality of Custom does not support Ascend 910B.
 
     .. note::
         The supported platforms are determined by the input `func_type`. The supported platforms are as follows:

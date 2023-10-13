@@ -1,7 +1,7 @@
 mindspore.nn.GRUCell
 =====================
 
-.. py:class:: mindspore.nn.GRUCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype: mindspore.dtype = mstype.float32)
+.. py:class:: mindspore.nn.GRUCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype=mstype.float32)
 
     GRU（Gate Recurrent Unit）称为门控循环单元。
 

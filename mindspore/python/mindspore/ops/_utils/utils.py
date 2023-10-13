@@ -77,6 +77,9 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, arg_name1="x", arg_name2="y
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
     return broadcast_shape
 
+def dim_not_equal(dim1, dim2):
+    """Compare dim in shape"""
+    return dim1 != dim2 and dim1 >= 0 and dim2 >= 0
 
 def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
@@ -98,7 +101,7 @@ def get_concat_offset(x_shp, x_type, axis, prim_name):
     for i in range(1, len(x_shp)):
         v = x_shp[i]
         for j in range(rank_base):
-            if j != axis and v[j] != x_shp[0][j] and v[j] >= 0 and x_shp[0][j] >= 0:
+            if j != axis and dim_not_equal(v[j], x_shp[0][j]):
                 raise ValueError(f"The shape of the two input elements of the Concat operator do not match:"
                                  f"shape[0] = {x_shp[0]} and shape[{i}] = {x_shp[i]}.")
         offset.append(all_shp)

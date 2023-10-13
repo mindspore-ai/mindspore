@@ -515,7 +515,7 @@ class _Context:
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', open or load the 'env_config_path' file {} "
                                         "failed, please check whether 'env_config_path' is json file and correct, "
-                                        "or may not have permission to read it.".format(env_config_path))
+                                        "or may not have permission to read it.".format(env_config_path)) from exo
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
     def set_runtime_num_threads(self, runtime_num_threads):
@@ -644,7 +644,8 @@ class _Context:
             raise ValueError(str(exo) + "\nFor 'context.set_context', "
                                         "open or load the 'speedup_config_path' file {} "
                                         "failed, please check whether 'speedup_config_path' is json file and correct, "
-                                        "or may not have permission to read it.".format(speedup_config_real_path))
+                                        "or may not have permission to read it.".format(speedup_config_real_path)) \
+                                        from exo
 
 
 def _context():
@@ -793,7 +794,8 @@ def set_auto_parallel_context(**kwargs):
 
                         - optimizer_weight_shard_size(int): Set the optimizer weight shard group size, if you want to
                           specific the maximum group size across devices when the parallel optimizer is enabled.
-                          The numerical range can be (0, device_num]. If the size of data parallel communication domain
+                          The numerical range can be (0, device_num]. If pipeline parallel is enabled, the numerical
+                          range is (0, device_num/stage]. If the size of data parallel communication domain
                           of the parameter cannot be divided by `optimizer_weight_shard_size`, then the specified
                           communication group size will not take effect. Default value is ``-1`` , which means the
                           optimizer weight shard group size will be the size of data parallel group of each parameter.
@@ -942,7 +944,8 @@ def set_offload_context(offload_config):
             - aio_block_size (str): The size of aio block. The format is "xxGB".
             - aio_queue_depth (int): The depth of aio queue.
             - offload_param (str):  The param for offload destination, cpu or disk, Default: ``""``.
-            - offload_checkpoint (str):  The checkpoint for offload destination, cpu or disk, Default: ``""``.
+            - offload_checkpoint (str):  The checkpoint for offload destination, only valid if recompute is turned on,
+              cpu or disk, Default: ``""``.
             - auto_offload (bool): The flag of whether auto offload. Default: ``True``.
             - host_mem_block_size (str): The memory block size of host memory pool. The format is "xxGB"
 
@@ -951,7 +954,7 @@ def set_offload_context(offload_config):
 
     Examples:
         >>> from mindspore import context
-        >>> context.set_offload_context(offload_config={"offload_param"="cpu"})
+        >>> context.set_offload_context(offload_config={"offload_param":"cpu"})
     """
     _set_offload_context(offload_config)
 
@@ -1307,8 +1310,10 @@ def set_context(**kwargs):
                 When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
                 performance loss.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
+              This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
+              This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .

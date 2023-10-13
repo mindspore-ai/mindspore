@@ -113,6 +113,12 @@ uint32_t AffineGridGradCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T0>
 uint32_t AffineGridGradCpuKernel::AffineGridGradCheck(const CpuKernelContext &ctx) {
+  auto input_0 = ctx.Input(kFirstInputIndex);
+  auto input_1 = ctx.Input(kSecondInputIndex);
+  auto output_0 = ctx.Output(kFirstOutputIndex);
+  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   std::vector<int64_t> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> input0 = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input1 = reinterpret_cast<T0 *>(ctx.Input(1)->GetData());
@@ -138,8 +144,9 @@ template <typename T, typename T0>
 uint32_t AffineGridGradCpuKernel::AffineGridGradCompute(const CpuKernelContext &ctx) {
   bool align_corners = false;
   AttrValue *align_corners_attr_ptr = ctx.GetAttr("align_corners");
+  KERNEL_CHECK_NULLPTR(align_corners_attr_ptr, KERNEL_STATUS_PARAM_INVALID, "'align_corners' is nullptr.")
   if (align_corners_attr_ptr) {
-    align_corners = ctx.GetAttr("align_corners")->GetBool();
+    align_corners = align_corners_attr_ptr->GetBool();
   }
   std::vector<int64_t> outputsize = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   if (outputsize[0] == len_x_size_4D) {

@@ -39,6 +39,7 @@ OpAdapterPtr FindAdapter(AnfNodePtr node, bool train = false);
 
 bool IsPartialSuccNode(const AnfNodePtr node);
 bool IsWhileNode(const AnfNodePtr &node);
+bool IsCallNode(const AnfNodePtr &node);
 bool IsIfNode(const AnfNodePtr &node);
 bool IsCaseNode(const AnfNodePtr &node);
 std::string GetCNodeTargetFuncName(const CNodePtr cnode);
@@ -67,8 +68,7 @@ BACKEND_EXPORT void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr)
 BACKEND_EXPORT GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options);
 BACKEND_EXPORT void SetGraphRunner(const GraphRunnerPtr &runner);
 BACKEND_EXPORT void ClearGraph();
-BACKEND_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {},
-                               const bool &is_train = false);
+BACKEND_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
 BACKEND_EXPORT void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
 BACKEND_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
 BACKEND_EXPORT void AddOptimizeGraph(const std::string &name);
@@ -76,7 +76,8 @@ BACKEND_EXPORT void AddOptimizeGraph(const std::string &name);
 FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 
 // convert
-BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix = "");
+BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix = "",
+                                                RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv);
 
 BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
 BACKEND_EXPORT void SetExportAir(const DfGraphConvertorPtr &converter, bool export_air);
@@ -86,7 +87,8 @@ void GenerateBroadcastGraph(const DfGraphConvertorPtr &converter, const TensorOr
 BACKEND_EXPORT void GenerateCheckpointGraph(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT int ErrCode(const DfGraphConvertorPtr &converter);
 BACKEND_EXPORT bool ConvertCheck(const AnfNodePtr &node);
-
+BACKEND_EXPORT bool DynamicShapeSupportCheck(const AnfNodePtr &node, bool train = true);
+BACKEND_EXPORT bool SinkGraphCheck(const AnfNodePtr &node, bool train = true);
 BACKEND_EXPORT void GenFakeComputeGraph(const std::string &name, const DfGraphConvertorPtr &converter,
                                         const std::map<std::string, std::shared_ptr<tensor::Tensor>> &maps);
 BACKEND_EXPORT DfGraphPtr GenFakeGraph(const std::string &name);

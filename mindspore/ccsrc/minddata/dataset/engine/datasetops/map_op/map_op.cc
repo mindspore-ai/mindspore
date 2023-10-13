@@ -33,6 +33,9 @@
 #endif
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/kernels/py_func_op.h"
+#endif
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
@@ -316,6 +319,10 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"TensorRowFlags", in_row.FlagName()}}));
     RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
   }
+
+  // map operation with PyFunc use global executor in Python Layer to run transform in eager mode
+  // release the executor in the current thread when the thread is done
+  RETURN_IF_NOT_OK(ReleaseResource(worker_id));
 
   return Status::OK();
 }
@@ -733,6 +740,17 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
       }
     }
     (*row) = std::move(i_row);
+  }
+  return Status::OK();
+}
+
+Status MapOp::ReleaseResource(int32_t worker_id) {
+  if (python_mp_ == nullptr) {
+    for (auto &op : tfuncs_[worker_id]) {
+      if (op->Name() == kPyFuncOp) {
+        RETURN_IF_NOT_OK(op->ReleaseResource());
+      }
+    }
   }
   return Status::OK();
 }

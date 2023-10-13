@@ -85,6 +85,6 @@ def _get_cache_prim(cls: Primitive) -> Primitive:
             _PRIM_CACHE[key] = prim
         return _PRIM_CACHE.get(key)
 
-    if _is_need_compile(_temp_func):
+    if _is_need_compile(_temp_func): # @jit.cond: True
         return _new_prim_for_graph
     return _get_cache_prim_for_pynative

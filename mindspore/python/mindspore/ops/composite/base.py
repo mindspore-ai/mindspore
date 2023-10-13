@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from functools import partial
 
 from types import FunctionType, MethodType
+import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -29,7 +30,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
-    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_
+    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -38,7 +39,7 @@ from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, ListAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_,
            ListSliceSetItem_, ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_,
-           HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_]
+           HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_]
 
 
 def add_flags(fn=None, **flags):
@@ -742,6 +743,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        for arg in args:
+            if isinstance(arg, np.ndarray):
+                raise TypeError("For 'MultitypeFuncGraph', the input can not be numpy.ndarray")
         if len(self.entries) == 1:
             output = self.entries[0][1](*args)
             return output

@@ -42,6 +42,7 @@ class OpProto {
   bool IsAttrOptionalTypeByName(const std::string &name) const;
   std::vector<enum ge::DataType> GetInputTypesByName(const std::string &name) const;
   std::vector<enum ge::DataType> GetOutputTypesByName(const std::string &name) const;
+  void ProcessPromoteTypes();
 
  private:
   std::string name_;
@@ -56,6 +57,7 @@ class OpProto {
   HashMap<std::string, std::string> input_types_org_;
   HashMap<std::string, std::string> output_types_org_;
   HashMap<std::string, std::vector<enum ge::DataType>> alias_types_;
+  HashMap<std::string, std::vector<std::string>> promote_types_;
 };
 
 class OpProtoStorage {

@@ -163,19 +163,43 @@ AbstractBasePtr InferImplTopTypeof(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractType>(TypeIdToType(type_id));
 }
 
-AbstractBasePtr InferImplLower(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_abs_list) {
+AbstractBasePtr InferImplStringUpper(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (args_abs_list.empty()) {
-    MS_LOG(EXCEPTION) << "The lower must has one input at least.";
+  if (args_abs_list.size() != 1) {
+    MS_LOG(INTERNAL_EXCEPTION) << "StringUpper takes 1 argument, but got " << args_abs_list.size();
   }
-  MS_EXCEPTION_IF_NULL(args_abs_list[0]);
-  auto input = args_abs_list[0]->BuildValue();
-  if (input == nullptr || !input->isa<StringImm>()) {
-    auto type = args_abs_list[0]->BuildType();
-    MS_EXCEPTION(TypeError) << "Function lower should be call using a string type but got:" << type->ToString();
+  constexpr size_t index_str = 0;
+  auto abs_str = args_abs_list[index_str];
+  MS_EXCEPTION_IF_NULL(abs_str);
+  auto value_str = abs_str->BuildValue();
+  MS_EXCEPTION_IF_NULL(value_str);
+  if (!value_str->isa<StringImm>()) {
+    MS_INTERNAL_EXCEPTION(TypeError) << "StringUpper expected to get a string as input, but got:"
+                                     << value_str->ToString();
   }
-  auto str = input->cast<StringImmPtr>()->value();
+  auto str = value_str->cast<StringImmPtr>()->value();
+  (void)std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+  auto new_str = MakeValue(str);
+  return new_str->ToAbstract();
+}
+
+AbstractBasePtr InferImplStringLower(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (args_abs_list.size() != 1) {
+    MS_LOG(EXCEPTION) << "StringLower takes 1 argument, but got " << args_abs_list.size();
+  }
+  constexpr size_t index_str = 0;
+  auto abs_str = args_abs_list[index_str];
+  MS_EXCEPTION_IF_NULL(abs_str);
+  auto value_str = abs_str->BuildValue();
+  MS_EXCEPTION_IF_NULL(value_str);
+  if (!value_str->isa<StringImm>()) {
+    MS_INTERNAL_EXCEPTION(TypeError) << "StringLower expected to get a string as input, but got:"
+                                     << value_str->ToString();
+  }
+  auto str = value_str->cast<StringImmPtr>()->value();
   (void)std::transform(str.begin(), str.end(), str.begin(), ::tolower);
   auto new_str = MakeValue(str);
   return new_str->ToAbstract();
@@ -1092,7 +1116,8 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGr
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Lower, prim::kPrimLower, InferImplLower, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringUpper, prim::kPrimStringUpper, InferImplStringUpper, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(StringLower, prim::kPrimStringLower, InferImplStringLower, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToAdapterTensor, prim::kPrimConvertToAdapterTensor,
                                    InferImplConvertToAdapterTensor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ConvertToMsTensor, prim::kPrimConvertToMsTensor, InferImplConvertToMsTensor,
@@ -1151,8 +1176,10 @@ void RegPrimitiveFrontEval() {
                                                 InferImplShard, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimVmap,
                                                 InferImplVmap, nullptr);
-  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimLower,
-                                                InferImplLower, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStringUpper,
+                                                InferImplStringUpper, nullptr);
+  abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(), prim::kPrimStringLower,
+                                                InferImplStringLower, nullptr);
   abstract::RegisterStandardPrimitiveEvalHelper(abstract::GetFrontendPrimitiveInferMapPtr(),
                                                 prim::kPrimConvertToAdapterTensor, InferImplConvertToAdapterTensor,
                                                 nullptr);

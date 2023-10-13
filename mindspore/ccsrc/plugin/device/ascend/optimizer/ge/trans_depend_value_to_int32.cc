@@ -34,7 +34,7 @@ tensor::TensorPtr TransValueToInt32(const AnfNodePtr &input) {
   auto ori_value = ori_value_node->value();
   MS_EXCEPTION_IF_NULL(ori_value);
   if (!ori_value->isa<tensor::Tensor>()) {
-    MS_LOG(WARNING) << "Value is not tensor";
+    MS_LOG(INFO) << "Value is not tensor";
     return nullptr;
   }
   auto tensor = ori_value->cast<tensor::TensorPtr>();
@@ -87,6 +87,9 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   // trans depend value from int64 to int32 in call acl mode
   auto inputs = cnode->inputs();
   std::vector<AnfNodePtr> new_inputs = {inputs.at(0)};
+  const auto &manager = kernel_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &users = manager->node_users();
   for (int i = 0; i < SizeToInt(inputs.size()) - 1; ++i) {
     auto input = inputs.at(i + 1);
     if (depend_set.count(i) == 0) {
@@ -103,7 +106,10 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
       continue;
     }
     auto new_value_node = kernel_graph->NewValueNode(tensor);
-    kernel_graph->RemoveNodeFromGraph(input);
+    // If the input used by other node, which can not be removed
+    if (auto it = users.find(input); it != users.end() && it->second.size() <= kIndex1) {
+      kernel_graph->RemoveNodeFromGraph(input);
+    }
     (void)new_inputs.emplace_back(new_value_node);
   }
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, cnode);

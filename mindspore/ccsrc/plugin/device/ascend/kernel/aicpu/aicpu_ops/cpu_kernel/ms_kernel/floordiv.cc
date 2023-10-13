@@ -38,6 +38,26 @@ const int64_t kParallelDataNumSameShapeMid = 32 * 1024;
     }                                                      \
     break;                                                 \
   }
+
+template <typename T>
+bool CheckZero(const T &data) {
+  return data == static_cast<T>(0);
+}
+
+template <>
+bool CheckZero(const float &data) {
+  return false;
+}
+
+template <>
+bool CheckZero(const double &data) {
+  return false;
+}
+
+template <>
+bool CheckZero(const Eigen::half &data) {
+  return false;
+}
 }  // namespace
 
 namespace aicpu {
@@ -142,7 +162,7 @@ uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, i
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = start; i < end; ++i) {
-        if (*(input2 + i) == static_cast<T>(0)) {
+        if (CheckZero(*(input2 + i))) {
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
@@ -151,7 +171,7 @@ uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, i
       break;
     case BcastShapeType::X_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
-        if (*(input2 + i) == static_cast<T>(0)) {
+        if (CheckZero(*(input2 + i))) {
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
@@ -160,7 +180,7 @@ uint32_t FloorDivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, i
       break;
     case BcastShapeType::Y_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
-        if (*input2 == static_cast<T>(0)) {
+        if (CheckZero(*input2)) {
           KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         }
@@ -233,7 +253,7 @@ uint32_t FloorDivCpuKernel::BcastParallelCompute(const CpuKernelContext &ctx, co
   uint32_t status = KERNEL_STATUS_OK;
   auto sharder_floor_div = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
-      if (*(in1 + bcast.GetBroadcastYIndex(i)) == static_cast<T>(0)) {
+      if (CheckZero(*(in1 + bcast.GetBroadcastYIndex(i)))) {
         KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
         status = KERNEL_STATUS_INNER_ERROR;
         break;
@@ -258,7 +278,7 @@ uint32_t FloorDivCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcas
     return BcastParallelCompute<T>(ctx, bcast);
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
-      if (*(in1 + bcast.GetBroadcastYIndex(i)) == static_cast<T>(0)) {
+      if (CheckZero(*(in1 + bcast.GetBroadcastYIndex(i)))) {
         KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
         return KERNEL_STATUS_INNER_ERROR;
       }

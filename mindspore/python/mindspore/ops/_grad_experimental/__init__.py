@@ -17,18 +17,14 @@
 from __future__ import absolute_import
 from mindspore.ops._grad_experimental.grad_base import get_bprop_fn, get_taylor_fprop_fn
 from mindspore.ops._grad_experimental import grad_array_ops
-from mindspore.ops._grad_experimental import grad_image_ops
 from mindspore.ops._grad_experimental import grad_inner_ops
 from mindspore.ops._grad_experimental import grad_nn_ops
 from mindspore.ops._grad_experimental import grad_math_ops
-from mindspore.ops._grad_experimental import grad_linalg_ops
 from mindspore.ops._grad_experimental import grad_sparse
 from mindspore.ops._grad_experimental import grad_sparse_ops
-from mindspore.ops._grad_experimental import grad_scalar_ops
 from mindspore.ops._grad_experimental import grad_comm_ops
 from mindspore.ops._grad_experimental import grad_debug_ops
 from mindspore.ops._grad_experimental import grad_implementations
-from mindspore.ops._grad_experimental import grad_other_ops
 from mindspore.ops._grad_experimental import grad_quant_ops
 from mindspore.ops._grad_experimental import taylor_rule
 

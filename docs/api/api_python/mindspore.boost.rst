@@ -474,7 +474,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **layer2** (int) - 最后一个网络层的值。
 
     输出：
-        - **x** (Tensor) - _DynamicLossScale operator的输出。
+        - **out** (Tensor) - 带有分组loss scale标记的Tensor，用来标记当前Tensor对应的loss scale组号。
 
     .. py:method:: get_loss_scale()
 

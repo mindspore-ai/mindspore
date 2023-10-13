@@ -20,7 +20,7 @@
 
 namespace mindspore::lite {
 bool OnnxNonZeroAdjust::Adjust(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nullptr);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimWhere)) {

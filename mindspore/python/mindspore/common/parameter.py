@@ -329,6 +329,8 @@ class Parameter(Tensor_):
                     # in other place, so we can make a Tensor without copy data.
                     return (Tensor, data)
                 # make a copy of Tensor to init the parameter.
+                if data.dtype == mstype.bfloat16:
+                    return (Tensor, data.float().asnumpy(), mstype.bfloat16)
                 return (Tensor, data.asnumpy())
 
             not_init_data = _is_role_sched() or (_is_role_pserver() and _cache_enable()) or _is_in_parallel_mode()
@@ -812,6 +814,7 @@ class Parameter(Tensor_):
         Tensor_.__init__(param, tensor)
         param.init = None
         param.init_mode = None
+        param.has_init = False
         param.is_default_input_init = False
         Parameter.__init__(param, tensor, *args, **kwargs)
         return param

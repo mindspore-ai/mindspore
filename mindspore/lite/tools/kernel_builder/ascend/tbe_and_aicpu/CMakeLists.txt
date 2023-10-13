@@ -69,7 +69,8 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/cpu/aicpu_kernel/impl
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/gen_impl_and_mrege_json.sh
           ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/scripts/* ./makepkg/
+  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/* ./makepkg/
+  COMMAND sed -i "s/vendor_name=customize/vendor_name=mslite_tbe_and_aicpu/g" ./makepkg/install.sh
   COMMAND
     python3 ${CMAKE_CURRENT_SOURCE_DIR}/../akg/gen_custom_op_files.py
     ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/config

@@ -752,7 +752,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     root_graph_->set_output(output_node_);
   }
   ConstructOutputs(actor_set, outputs, root_graph_);
-
+  actor_set->output_actor_->FreeSummaryNodeMem();
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();
@@ -1300,9 +1300,15 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  if (old_storage_info->data_type == kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
+  }
+  auto type_id = old_storage_info->data_type;
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, old_device_address->type_id(), old_storage_info->shape);
+    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape);
   new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
 
   if (enable_async) {
     RunViewKernelTaskAsyncImpl(pynative::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},

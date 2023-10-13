@@ -682,17 +682,15 @@ def normal(shape, mean, stddev, seed=None):
     Args:
         shape (tuple): The shape of random tensor to be generated.
           The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        mean (Union[Tensor, int, float]): The mean μ distribution parameter, which specifies the location of the peak,
-          with data type in [int8, int16, int32, int64, float16, float32].
-        stddev (Union[Tensor, int, float]): The deviation σ distribution parameter. It should be greater than 0,
-          with data type in [int8, int16, int32, int64, float16, float32].
+        mean (Union[Tensor, int, float]): The mean μ distribution parameter, which specifies the location of the peak.
+        stddev (Union[Tensor, int, float]): The deviation σ distribution parameter. It should be greater than 0.
         seed (int): Seed is used as entropy source for the Random number engines to generate pseudo-random numbers.
           The value must be non-negative. Default: ``None`` , which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
         of `mean` and `stddev`.
-        The dtype is float32.
+        The dtype is [float32, float64].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -104,7 +104,7 @@ target_compile_options(
     -Wall -Wextra -Wno-unused-parameter -Werror -fstack-protector-all -fPIC -D_FORTIFY_SOURCE=2 -O2>
 )
 
-target_link_options(triton-mslite-backend PRIVATE "-Wl,-z,relro,-z,now,-z,noexecstack -s -shared")
+target_link_options(triton-mslite-backend PRIVATE -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
 if(NOT ${TRITON_ENABLE_GITEE})
   target_link_libraries(
     triton-mslite-backend

@@ -79,6 +79,9 @@ bool ExecutionPlan::MallocTensorData(abstract::Kernel *subgraph_kernel) {
   auto kernel_list = subgraph->nodes();
   for (auto kernel_ : kernel_list) {
     for (auto tensor : kernel_->in_tensors()) {
+      if (tensor == nullptr) {
+        continue;
+      }
       if (tensor->category() == lite::VAR) {
         auto ref_count = tensor->init_ref_count();
         tensor->set_init_ref_count(ref_count + 1);

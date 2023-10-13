@@ -102,6 +102,9 @@ class DATASET_API Execute {
   /// \brief Destructor.
   ~Execute();
 
+  // Update the TensorOperation
+  Status UpdateOperation(const std::shared_ptr<TensorOperation> &op);
+
   /// \brief Callable function to execute the TensorTransform in eager mode.
   /// \param[in] input Tensor to be transformed.
   /// \param[out] output Transformed tensor.
@@ -165,18 +168,17 @@ class DATASET_API Execute {
   MapTargetDevice device_type_;
 
   // Ascend310
-  std::shared_ptr<DeviceResource> device_resource_;
+  std::shared_ptr<DeviceResource> device_resource_ = nullptr;
   struct ExtraInfo;
   std::shared_ptr<ExtraInfo> info_;
 
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
-  device::DeviceContext *device_context_;
+  device::DeviceContext *device_context_ = nullptr;
   size_t stream_id_;
 #endif
 
   std::vector<std::shared_ptr<TensorOp>> transforms_rt_;
-  bool ops_created{false};
 };
 
 class PyExecute : public Execute {

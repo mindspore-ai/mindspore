@@ -61,6 +61,11 @@ if(ENABLE_D)
             DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
             COMPONENT mindspore
     )
+    install(
+            TARGETS _c_dataengine
+            DESTINATION ${INSTALL_BASE_DIR}
+            COMPONENT mindspore
+    )
 endif()
 
 if(ENABLE_ACL)

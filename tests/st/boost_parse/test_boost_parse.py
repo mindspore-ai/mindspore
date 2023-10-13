@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, jit, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -70,3 +70,30 @@ def test_equal_np_int8_2():
         net = Net()
         net()
     assert "The self.num should be 2." in str(raise_info)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_constant_condition_comment():
+    """
+    Feature: Support constant folding for parse.
+    Description: Folding the equal judgement according to the comment.
+    Expectation: Get the correct result.
+    """
+
+    @jit
+    def f1(x):
+        if x == 2:  # @jit.cond: True
+            return 1
+        return 0
+
+    @jit
+    def f2(x):
+        if x == 2:  # @jit.cond: False
+            return 1
+        return 0
+
+    x = Tensor(2)
+    assert f1(x) == 1
+    assert f2(x) == 0

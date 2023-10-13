@@ -73,22 +73,29 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       }
       auto nodes = TopoSort(sub_graph->get_return());
       for (const auto &node : nodes) {
-        if (!node->isa<CNode>()) {
+        if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
           continue;
         }
         if (GetCNodeTarget(node) != kAscendDevice) {
           all_support = false;
           continue;
         }
-        auto prim = GetCNodePrimitive(node);
-        if (prim == nullptr) {
+        if (GetCNodePrimitive(node) == nullptr) {
           continue;
         }
         if (!transform::ConvertCheck(node)) {
           all_support = false;
-          auto cnode = node->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(cnode);
-          cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(kCPUDevice));
+          common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          continue;
+        }
+        if (!transform::DynamicShapeSupportCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          continue;
+        }
+        if (!transform::SinkGraphCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
         }
       }
     }
@@ -99,7 +106,16 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
-RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kGraphMode; }
+RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // PyNative is only support ACL now on 910B.
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
+    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
+  }
+  return RunMode::kGraphMode;
+}
 
 void GeDeviceContext::Initialize() {
   GilReleaseWithCheck gil_release;
@@ -125,7 +141,7 @@ void GeDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
     GetKernelExecutor(false)->Initialize();
     // DynamicKernelExecutor and KernenlExecutor should be equal for GE
@@ -440,7 +456,10 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
                                      std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(inst_context);
   MS_EXCEPTION_IF_NULL(ge_options);
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto env_table_file = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
+  if (env_table_file.empty()) {
+    env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  }
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
@@ -544,6 +563,9 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
 
 constexpr auto kGeDevice = "GE";
 MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
+#ifdef ASCEND_910B
+MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

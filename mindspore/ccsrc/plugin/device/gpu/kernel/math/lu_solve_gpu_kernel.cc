@@ -131,6 +131,9 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *b = GetDeviceAddress<T>(inputs, kIndex0);
   T *a = GetDeviceAddress<T>(inputs, kIndex1);
   int *piv_array = GetDeviceAddress<int>(inputs, kIndex2);
+  MS_EXCEPTION_IF_NULL(b);
+  MS_EXCEPTION_IF_NULL(a);
+  MS_EXCEPTION_IF_NULL(piv_array);
 
   auto a_col_major = GetDeviceAddress<T>(workspace, kIndex0);
   auto b_col_major = GetDeviceAddress<T>(workspace, kIndex1);
@@ -139,8 +142,16 @@ bool LuSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   auto a_broadcast = GetDeviceAddress<T>(workspace, kIndex4);
   auto b_broadcast = GetDeviceAddress<T>(workspace, kIndex5);
   auto piv_broadcast = GetDeviceAddress<int>(workspace, kIndex6);
+  MS_EXCEPTION_IF_NULL(a_col_major);
+  MS_EXCEPTION_IF_NULL(b_col_major);
+  MS_EXCEPTION_IF_NULL(a_device_array);
+  MS_EXCEPTION_IF_NULL(b_device_array);
+  MS_EXCEPTION_IF_NULL(a_broadcast);
+  MS_EXCEPTION_IF_NULL(b_broadcast);
+  MS_EXCEPTION_IF_NULL(piv_broadcast);
 
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output);
 
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(blas_handle_, cuda_stream_),
                                        "For LuSolveGpuKernelMod cublasSetStream Fail");

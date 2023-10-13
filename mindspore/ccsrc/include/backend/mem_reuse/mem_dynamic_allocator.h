@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <map>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -73,7 +74,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   virtual ~DynamicMemPoolBestFit();
 
   // The main program entry of memory alloc.
-  DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false);
+  DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false, bool need_recycle = false);
   // The main program entry of continuous memory alloc.
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list);
   // The main program entry of memory free.
@@ -103,20 +104,23 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   virtual size_t free_mem_size() = 0;
   // Set mem pool block size
   virtual void SetMemPoolBlockSize(size_t available_device_mem_size);
+  virtual size_t GetMaxUsedMemSize() const { return 0; }
 
  protected:
   const MemStatusManagerPtr &common_mem() const { return common_mem_; }
   const MemStatusManagerPtr &persistent_mem() const { return persistent_mem_; }
+  void *GetMinUsedMemoryAddr() const;
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
   // Calculate memory block required alloc size when adding the memory block.
-  virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem);
+  virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle = false);
+  std::set<DeviceMemPtr> mem_bufs_;
 
  private:
   // Find the idle memory buf by aligned size when memory alloc.
   DeviceMemPtr FindIdleMemBuf(size_t size, bool from_persistent_mem);
   // Add the memory block and memory buf when memory alloc not find the idle memory buf.
-  DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem);
+  DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem, bool need_recycle);
   // Judge whether need split the memory buf by alloc size and memory buf size.
   bool IsSplit(size_t tensor_size, size_t mem_buf_size) const;
   // Split the memory buf by alloc size.

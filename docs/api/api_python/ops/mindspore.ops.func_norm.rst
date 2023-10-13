@@ -52,4 +52,3 @@ mindspore.ops.norm
 
     .. note::
         - 当前暂不支持复数。
-        - 当ord为 `2` , `-2` or `nuc` 时，不支持在 ``Ascend`` 平台上运行。

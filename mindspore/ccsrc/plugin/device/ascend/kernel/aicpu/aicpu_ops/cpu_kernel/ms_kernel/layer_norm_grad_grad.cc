@@ -174,11 +174,9 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   auto input_d_dx = reinterpret_cast<T *>(ctx.Input(5)->GetData());
   auto input_d_dg = reinterpret_cast<T *>(ctx.Input(6)->GetData());
   auto input_d_db = reinterpret_cast<T *>(ctx.Input(7)->GetData());
-
   auto output_sopd_x = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_sopd_dy = reinterpret_cast<T *>(ctx.Output(1)->GetData());
   auto output_sopd_g = reinterpret_cast<T *>(ctx.Output(2)->GetData());
-
   size_t num = static_cast<size_t>(ctx.Input(0)->NumElements());
   size_t g_num = static_cast<size_t>(ctx.Input(4)->NumElements());
   size_t mean_num = static_cast<size_t>(ctx.Input(3)->NumElements());
@@ -206,10 +204,16 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   std::fill_n(sum3, mean_num, T(0));
   T *sum4 = new T[mean_num];
   std::fill_n(sum4, mean_num, T(0));
-
   res = SwitchParallelCompute0(ctx, ParallelDataNums, num, g_num, mean_num, input_x, input_dy, input_mean, input_gamma,
                                input_d_dx, inv_std, x_hat, dy_gamma, sum1, sum2, sum3, sum4);
   if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+    delete[] inv_std;
+    delete[] x_hat;
+    delete[] dy_gamma;
+    delete[] sum1;
+    delete[] sum2;
+    delete[] sum3;
+    delete[] sum4;
     KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute0 failed.");
     return res;
   }
@@ -221,56 +225,53 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   T *sum7 = new T[mean_num];
   std::fill_n(sum7, mean_num, T(0));
   T *part3 = new T[num];
-
   res =
     SwitchParallelCompute1(ctx, ParallelDataNums, num, g_num, mean_num, input_x, input_dy, input_mean, input_gamma,
                            input_d_dx, input_d_dg, inv_std, x_hat, dy_gamma, sum2, sum3, sum4, sum5, sum6, sum7, part3);
+  delete[] sum3;
+  delete[] sum4;
+  delete[] dy_gamma;
   if (res != KERNEL_STATUS_OK) {
+    delete[] inv_std;
+    delete[] x_hat;
+    delete[] sum1;
+    delete[] sum2;
+    delete[] sum5;
+    delete[] sum6;
+    delete[] sum7;
+    delete[] part3;
     KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute1 failed.");
     return res;
-  }
-
-  if (sum3 != nullptr) {
-    delete[] sum3;
-  }
-  if (sum4 != nullptr) {
-    delete[] sum4;
-  }
-  if (dy_gamma != nullptr) {
-    delete[] dy_gamma;
   }
 
   res =
     SwitchParallelCompute2(ctx, ParallelDataNums, num, g_num, mean_num, input_gamma, input_d_dx, input_d_dg, input_d_db,
                            inv_std, output_sopd_x, output_sopd_dy, x_hat, sum1, sum2, sum5, sum6, sum7, part3);
+  delete[] sum5;
+  delete[] sum6;
+  delete[] sum7;
   if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
+    delete[] inv_std;
+    delete[] x_hat;
+    delete[] sum1;
+    delete[] sum2;
+    delete[] part3;
     KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute2 failed.");
     return res;
   }
 
-  if (sum5 != nullptr) {
-    delete[] sum5;
-  }
-  if (sum6 != nullptr) {
-    delete[] sum6;
-  }
-  if (sum7 != nullptr) {
-    delete[] sum7;
-  }
   std::fill_n(output_sopd_g, g_num, T(0));
-
   res = SwitchParallelCompute3(ctx, ParallelDataNums, num, g_num, mean_num, input_dy, input_d_dx, inv_std,
                                output_sopd_g, x_hat, sum1, sum2);
+  delete[] inv_std;
+  delete[] x_hat;
+  delete[] sum1;
+  delete[] sum2;
+  delete[] part3;
   if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
     KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute3 failed.");
     return res;
   }
-
-  delete[] sum1;
-  delete[] sum2;
-  delete[] inv_std;
-  delete[] x_hat;
-  delete[] part3;
   return KERNEL_STATUS_OK;
 }
 

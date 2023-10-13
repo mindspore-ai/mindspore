@@ -14,7 +14,7 @@
 # ============================================================================
 """Unique name producer for target, name of node, class name, etc."""
 
-from typing import Union
+from typing import Union, Tuple
 
 from .node.node import Node
 from .api.node_type import NodeType
@@ -33,7 +33,7 @@ class Namer:
         self._names: {str: int} = {}
 
     @staticmethod
-    def _real_name(name: str) -> str:
+    def _real_name(name: str) -> Tuple[str, int]:
         """
         Find real name. For example, "name1" is the real name of "name1_10", "name1" is the real name of "name1_10_3".
         If not find real name before find unique name, unique name may be not unique. For example:
@@ -47,21 +47,21 @@ class Namer:
             name (str): Origin name which may have digit prefix.
 
         Returns:
-            A string represents real-name.
+            A string represents real-name and a int represents suffix.
         """
         if name == '_':
-            return name
+            return name, None
         pos = name.rfind("_")
-        if pos == -1:
-            return name
+        if pos == -1 or pos == len(name) - 1:
+            return name, None
         digit = True
         for i in range(pos + 1, len(name)):
             if not name[i].isdigit():
                 digit = False
                 break
         if digit:
-            return Namer._real_name(name[:pos])
-        return name
+            return name[:pos], int(name[pos + 1:])
+        return name, None
 
     def get_name(self, origin_name: str) -> str:
         """
@@ -75,15 +75,28 @@ class Namer:
         """
         if origin_name == '_':
             return origin_name
-        origin_name = Namer._real_name(origin_name)
-        number = self._names.get(origin_name)
+        real_name, suffix_idx = Namer._real_name(origin_name)
+        name = origin_name
+        number = self._names.get(name)
         if number is None:
-            self._names[origin_name] = 1
-            return origin_name
+            self._names[name] = 1
+            if not suffix_idx:
+                # When _names is {x:2} and origin_name is y,
+                # origin_name is not in _names and can be returned.
+                return name
+            if suffix_idx and not self._names.get(real_name, -1) >= suffix_idx:
+                # When _names is {x:2} and origin_name is x_3,
+                # return x_3 and update _names to {x:2, x_3:1}
+                return name
+            # When _names is {x:2} and origin_name is x_1,
+            # set new_name to x_1_1 by set number to 1, and continue to update name.
+            number = 1
         while True:
-            new_name = f"{origin_name}_{number}"
+            new_name = f"{name}_{number}"
             number += 1
-            self._names[origin_name] = number
+            self._names[name] = number
+            # When _names is {x:2, x_3:1}, origin_name is x and number is update to 3,
+            # new_name x_3 is conflict with key x_3, so this new_name need to be skipped.
             if new_name in self._names.keys():
                 continue
             return new_name

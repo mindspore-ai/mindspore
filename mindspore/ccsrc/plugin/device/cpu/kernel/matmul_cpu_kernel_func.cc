@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef __linux__
+#ifdef USE_SELF_DEVELOP
 #include <algorithm>
 #include <utility>
 #include "nnacl/kernel.h"

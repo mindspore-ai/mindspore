@@ -134,9 +134,6 @@ class PipelineTransformer {
   bool is_train_{true};
   std::vector<AnfNodePtr> shared_cell_users_;
   bool enable_share_cell_ = false;
-  // map<rank, tag>
-  mindspore::HashMap<int64_t, int64_t> send_tag_map_;
-  mindspore::HashMap<int64_t, int64_t> recv_tag_map_;
 };
 
 bool IsInWhiteList(const CNodePtr &cnode);

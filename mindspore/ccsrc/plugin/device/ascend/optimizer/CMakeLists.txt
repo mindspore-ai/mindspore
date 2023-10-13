@@ -23,6 +23,8 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./format_type/insert_cast.cc"
         "./format_type/set_fracz_group_attr.cc"
         "./format_type/utils.cc"
+        "./format_type/deal_ref_output.cc"
+        "./ir_fission/cdist_fission.cc"
         "./ir_fission/bn_split.cc"
         "./ir_fission/bn_grad_split.cc"
         "./ir_fission/seed_adapter.cc"

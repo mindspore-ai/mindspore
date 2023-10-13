@@ -33,8 +33,8 @@ class GammaKernel : public KernelBase {
 
   float *alpha_ = NULL;
   float *beta_ = NULL;
-  uint64_t seed_;
-  uint64_t seed2_;
+  int64_t *seed_ = NULL;
+  int64_t *seed2_ = NULL;
   std::vector<uint64_t> shape;
   std::vector<uint64_t> alpha_shape;
   std::vector<uint64_t> beta_shape;

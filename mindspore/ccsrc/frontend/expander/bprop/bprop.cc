@@ -93,7 +93,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
     AbstractBasePtrList abs_list;
     abs_list.reserve(input_nodes.size());
     (void)std::transform(input_nodes.cbegin(), input_nodes.cend(), std::back_insert_iterator(abs_list),
-                         [](const NodePtr &no) { return no->abstract(); });
+                         [](const NodePtr &no) { return no->abstract()->Clone(); });
     FuncGraphPtr graph;
     auto it = bprop_map.find(abs_list);
     if (it == bprop_map.end()) {
@@ -160,8 +160,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
       auto inp = input_nodes[i];
       auto p = inputs.emplace_back(NewNode(graph->add_parameter()));
       p->get()->set_abstract(inp->abstract()->Clone());
-      auto value = p->BuildValue();
-      if ((value == nullptr || value == kValueAny) && p->Value()) {
+      if (!p->HasAbstractValue()) {
         p->SetValue(inp->Value());
         value_index[i] = true;
       }
@@ -229,17 +228,23 @@ class PynativeIRBuilder : public BpropIRBuilder {
     if (scope_ != nullptr) {
       cnode->set_scope(scope_);
     }
-    auto value_depend = abstract::GetValueDependArgIndices(cnode);
-    if (!value_depend.empty()) {
-      for (auto idx : value_depend) {
-        size_t i = LongToSize(idx);
-        if (i < inputs.size()) {
-          inputs[i]->abstract()->set_value(inputs[i]->BuildValue());
-        }
-      }
-    }
+
     auto node = NewNode(cnode->cast<AnfNodePtr>());
     if (need_infer_) {
+      auto value_depend = abstract::GetValueDependArgIndices(cnode);
+      if (!value_depend.empty()) {
+        for (auto idx : value_depend) {
+          size_t i = LongToSize(idx);
+          if (i < inputs.size() && !inputs[i]->HasAbstractValue()) {
+            auto v = inputs[i]->BuildValue();
+            auto tensor = v->cast<tensor::TensorPtr>();
+            if (tensor != nullptr) {
+              tensor->data_sync();
+            }
+            inputs[i]->abstract()->set_value(v);
+          }
+        }
+      }
       infer_->Infer(node);
     }
     if (!need_record_users_) {
@@ -558,6 +563,8 @@ void RegGradOtherOps();
 void RegGradQuantOps();
 void RegGradScipyOps();
 void RegGradSparseOps();
+void RegGradSequenceOps();
+void RegGradScalarOps();
 
 WinBpropRegister::WinBpropRegister() {
   RegGradArrayOps();
@@ -574,6 +581,8 @@ WinBpropRegister::WinBpropRegister() {
   RegGradQuantOps();
   RegGradScipyOps();
   RegGradSparseOps();
+  RegGradSequenceOps();
+  RegGradScalarOps();
 }
 #endif
 }  // namespace bprop

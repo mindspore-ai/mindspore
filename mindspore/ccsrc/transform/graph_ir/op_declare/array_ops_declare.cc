@@ -36,13 +36,19 @@ REG_ADPT_DESC(Constant, kNameConst, ADPT_DESC(Constant, Const))
 // ScalarSummary
 INPUT_MAP(Summary) = {{2, INPUT_DESC(x)}};
 ATTR_MAP(Summary) = EMPTY_ATTR_MAP;
-#ifndef ENABLE_SECURITY
-REG_ADPT_DESC(ScalarSummary, prim::kPrimScalarSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(ImageSummary, prim::kPrimImageSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(TensorSummary, prim::kPrimTensorSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(HistogramSummary, prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary))
-#endif
 REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
+
+// OutfeedEnqueueOpV2
+#ifndef ENABLE_SECURITY
+DYN_INPUT_MAP(OutfeedEnqueueOpV2) = {{2, DYN_INPUT_DESC(x)}};
+INPUT_MAP(OutfeedEnqueueOpV2) = {{1, INPUT_DESC(tensor_name)}};
+ATTR_MAP(OutfeedEnqueueOpV2) = {{"channel_name", ATTR_DESC(channel_name, AnyTraits<std::string>())}};
+OUTPUT_MAP(OutfeedEnqueueOpV2) = EMPTY_OUTPUT_MAP;
+REG_ADPT_DESC(TensorSummary, "TensorSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(ScalarSummary, "ScalarSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(ImageSummary, "ImageSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(HistogramSummary, "HistogramSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+#endif
 
 // Data
 INPUT_MAP(Data) = EMPTY_INPUT_MAP;

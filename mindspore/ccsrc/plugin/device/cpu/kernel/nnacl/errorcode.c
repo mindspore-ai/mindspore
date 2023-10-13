@@ -18,6 +18,8 @@
 #include <stdbool.h>
 
 void InitNNACLKernelErrorCode(char **nnacl_kernel_error_msg) {
+  nnacl_kernel_error_msg[NNACL_CROP_AND_RESIZE_BOX_IDX_INVALID] =
+    "In CropAndResize, the value of box idx should match: [0, batch).";
   nnacl_kernel_error_msg[NNACL_WHERE_INPUT_NUM_INVALID] = "Invalid input number. Where op input number support 1 or 3.";
   nnacl_kernel_error_msg[NNACL_WHERE_CONDITION_DATA_TYPE_ERROR] =
     "Invalid input data type. Where op input data type support int32 fp32 and bool.";
@@ -29,11 +31,11 @@ void InitNNACLKernelErrorCode(char **nnacl_kernel_error_msg) {
 }
 
 char *NNACLErrorMsg(int error_code) {
-  static char *nnacl_kernel_error_msg[NNACL_COMMON_END] = {""};
+  static char nnacl_kernel_error_msg[NNACL_COMMON_END][MAX_MSG_LEN];
   static bool inited = false;
   if (!inited) {
     inited = true;
-    InitNNACLKernelErrorCode(nnacl_kernel_error_msg);
+    InitNNACLKernelErrorCode((char **)nnacl_kernel_error_msg);
   }
 
   if (error_code > NNACL_OK && error_code < NNACL_COMMON_END) {

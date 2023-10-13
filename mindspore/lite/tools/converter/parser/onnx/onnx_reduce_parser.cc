@@ -36,11 +36,12 @@ PrimitiveCPtr OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const 
       for (int i = 0; i < size; ++i) {
         axes.push_back(onnx_node_attr.ints(i));
       }
-      (void)prim_c->AddAttr("axes", MakeValue(axes));
     } else if (attribute_name == "keepdims") {
       prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
+  // An empty axis means that for all axes, the axis attributes will be adjusted to input in inputs_adjust.cc
+  (void)prim_c->AddAttr("axes", MakeValue(axes));
 
   const auto &type = onnx_node.op_type();
   if (type == "ReduceMean") {

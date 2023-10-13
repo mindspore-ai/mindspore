@@ -379,8 +379,6 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  be saved. Default: ``None`` .
         kwargs (dict): Configuration options dictionary.
 
-            - incremental (bool): Whether export checkpoint for MapParameter incrementally.
-
     Raises:
         TypeError: If the parameter `save_obj` is not :class:`mindspore.nn.Cell` , list or dict type.
         TypeError: If the parameter `integrated_save` or `async_save` is not bool type.
@@ -523,7 +521,8 @@ def _convert_cell_param_and_names_to_dict(save_obj, choice_func):
         not_sliced = not param.sliced
         is_graph_mode = context.get_context('mode') == context.GRAPH_MODE
         # All parameters are initialized immediately under PyNative mode, skip this judgement.
-        if is_graph_mode and _is_in_auto_parallel_mode() and (not_sliced or param.has_init):
+        judgment = not_sliced or param.has_init
+        if is_graph_mode and _is_in_auto_parallel_mode() and judgment:
             continue
         if choice_func is not None and not choice_func(param.name):
             continue
@@ -851,17 +850,20 @@ def obfuscate_model(obf_config, **kwargs):
             - model_inputs (list(Tensor)): The inputs of the original model, the values of Tensor can be random, which
               is the same as using :func:`mindspore.export`.
             - obf_ratio (Union(float, str)): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
-              should be in range of (0, 1] or in ["small", "medium", "large"].
+              should be in range of (0, 1] or in ["small", "medium", "large"]. "small", "medium" and "large" are
+              correspond to 0.1, 0.3, and 0.6 respectively.
             - customized_func (function): A python function used for customized function mode, which used for control
-              the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
-              function needs to ensure that its result is constant for any input. Users can refer to opaque
+              the switch branch of obfuscation structure. The outputs of customized_func should be boolean and const (
+              Reference to 'my_func()' in
+              `tutorials <https://www.mindspore.cn/mindarmour/docs/en/master/dynamic_obfuscation_protection.html>`_).
+              This function needs to ensure that its result is constant for any input. Users can refer to opaque
               predicates. If customized_func is set, then it should be passed to :func:`mindspore.load` interface
               when loading obfuscated model.
-            - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
-              weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
-              then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should be
-              noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
-              would be applied if both of them are set.
+            - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
+              structure of obfuscated models corresponding to different random seeds is different. If
+              `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+              obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
+              be set, and the latter mode would be applied if both of them are set.
 
         kwargs (dict): Configuration options dictionary.
 
@@ -1532,17 +1534,20 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
               - type (str): The type of obfuscation, only 'dynamic' is supported until now.
               - obf_ratio (float, str): The ratio of nodes in original model that would be obfuscated. `obf_ratio`
-                should be in range of (0, 1] or in ["small", "medium", "large"].
+                should be in range of (0, 1] or in ["small", "medium", "large"]. "small", "medium" and "large" are
+                correspond to 0.1, 0.3, and 0.6 respectively.
               - customized_func (function): A python function used for customized function mode, which used for control
-                the switch branch of obfuscation structure. The outputs of customized_func should be boolean. This
-                function needs to ensure that its result is constant for any input. Users can refer to opaque
+                the switch branch of obfuscation structure. The outputs of customized_func should be boolean and const (
+                Reference to 'my_func()' in
+                `tutorials <https://www.mindspore.cn/mindarmour/docs/en/master/dynamic_obfuscation_protection.html>`_).
+                This function needs to ensure that its result is constant for any input. Users can refer to opaque
                 predicates. If customized_func is set, then it should be passed to `load()` interface when loading
                 obfuscated model.
-              - obf_random_seed (int): The random seed used for determine the distribution of confusion branches and the
-                weight confusion coefficient, which should be in (0, 9223372036854775807]. If `obf_random_seed` is set,
-                then it should be passed to :class:`nn.GraphCell()` interface when loading obfuscated model. It should
-                be noted that at least one of `customized_func` or `obf_random_seed` should be set, and the latter mode
-                would be applied if both of them are set.
+              - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
+                structure of obfuscated models corresponding to different random seeds is different. If
+                `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+                obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
+                be set, and the latter mode would be applied if both of them are set.
 
             - incremental (bool): export MindIR incrementally.
 
@@ -1804,7 +1809,7 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
         for param_proto in model.graph.parameter:
             name = param_proto.name[param_proto.name.find(":") + 1:]
             param = net_dict[name]
-            raw_data = param.data.asnumpy().tobytes()
+            raw_data = param.data.get_bytes()
             data_length = len(raw_data)
             append_size = 0
             if data_length % 64 != 0:
@@ -1931,7 +1936,7 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
     for param_proto in model.graph.parameter:
         param_name = param_proto.name[param_proto.name.find(":") + 1:]
         if param_name in net_dict.keys():
-            param_data = net_dict[param_name].data.asnumpy().tobytes()
+            param_data = net_dict[param_name].data.get_bytes()
             param_proto.raw_data = param_data
         else:
             raise ValueError("The parameter '{}' is not belongs to any cell,"
@@ -1941,10 +1946,10 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         map_param_name = map_param_proto.name[map_param_proto.name.find(":") + 1:]
         if map_param_name in net_dict.keys():
             map_parameter = net_dict[map_param_name]
-            key_nparr, value_nparr, status_nparr = map_parameter.export_data(incremental)
-            map_param_proto.key_tensor.raw_data = key_nparr.tobytes()
-            map_param_proto.value_tensor.raw_data = value_nparr.tobytes()
-            map_param_proto.status_tensor.raw_data = status_nparr.tobytes()
+            key_bytes, value_bytes, status_bytes = map_parameter.export_bytes(incremental)
+            map_param_proto.key_tensor.raw_data = key_bytes
+            map_param_proto.value_tensor.raw_data = value_bytes
+            map_param_proto.status_tensor.raw_data = status_bytes
         else:
             raise ValueError("The map_parameter '{}' is not belongs to any cell,"
                              "the data of parameter cannot be exported.".format(map_param_proto.name))
@@ -1975,7 +1980,7 @@ def _save_together(net_dict, model):
     for param_proto in model.graph.parameter:
         name = param_proto.name[param_proto.name.find(":") + 1:]
         if name in net_dict.keys():
-            data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
+            data_total += sys.getsizeof(net_dict[name].data.get_bytes()) / 1024
         else:
             raise ValueError("The parameter '{}' is not belongs to any cell,"
                              "the data of parameter cannot be exported.".format(param_proto.name))
@@ -2364,11 +2369,14 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun startup
-            <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np

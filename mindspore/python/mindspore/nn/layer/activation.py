@@ -1333,10 +1333,14 @@ class LRN(Cell):
     r"""
     Local Response Normalization.
 
+    .. warning::
+        LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.nn.BatchNorm`.
+
     Refer to :func:`mindspore.ops.lrn` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

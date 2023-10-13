@@ -222,6 +222,11 @@ uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCheck(const CpuKer
 
 template <typename T1, typename T2>
 uint32_t AdaptiveMaxPool3dGradCpuKernel::AdaptiveMaxPool3dGradCompute(const CpuKernelContext &ctx) {
+  KERNEL_CHECK_NULLPTR(ctx.Input(kFirstInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                       "Get input 'grad' data failed.")
+  KERNEL_CHECK_NULLPTR(ctx.Input(kThirdInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                       "Get input 'argmax' data failed.")
+  KERNEL_CHECK_NULLPTR(ctx.Output(kFirstInputIndex)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   auto input_grad = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input_argmax = reinterpret_cast<int32_t *>(ctx.Input(2)->GetData());
   auto output = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());

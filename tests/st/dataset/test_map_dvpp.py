@@ -523,7 +523,7 @@ def test_map_with_dvpp_resize_with_exception():
     with pytest.raises(ValueError) as info:
         _ = data1.map(vision.Resize([224, 224], interpolation=vision.Inter.ANTIALIAS).device("Ascend"),
                       input_columns="image")
-    assert "The InterpolationMode is not supported by DVPP." in str(info.value)
+    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
 
     # dataset with interpolation=AREA
     data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
@@ -535,7 +535,7 @@ def test_map_with_dvpp_resize_with_exception():
     with pytest.raises(RuntimeError) as info:
         for _ in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The InterpolationMode is not supported by DVPP." in str(info.value)
+    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
 
     # dataset with interpolation=PILCUBIC
     data3 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
@@ -547,7 +547,7 @@ def test_map_with_dvpp_resize_with_exception():
     with pytest.raises(RuntimeError) as info:
         for _ in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
-    assert "The InterpolationMode is not supported by DVPP." in str(info.value)
+    assert "The current InterpolationMode is not supported by DVPP." in str(info.value)
 
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 
@@ -1421,6 +1421,93 @@ def test_map_with_dvpp_normalize_exception():
     os.environ['MS_ENABLE_REF_MODE'] = "0"
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@ascend910b
+def test_map_with_pyfunc_with_multi_op_thread_mode():
+    """
+    Feature: Map op with pyfunc contains dvpp ops & cpu ops
+    Description: Test map with dvpp resize operation
+    Expectation: The result is equal to the expected
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # testcase1 : map with thread mode
+    data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+
+    def pyfunc(img_bytes):
+        length = len(img_bytes)
+        print("image len: {}".format(length), flush=True)
+
+        img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+        # resize(cpu)
+        img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+        # normalize(dvpp)
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+        return img_normalize
+
+    # multi thread mode
+    data1 = data1.map(pyfunc, input_columns="image")
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert item[0].shape == (64, 32, 3)
+        assert item[0].dtype == np.float32
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@ascend910b
+def test_map_with_pyfunc_with_multi_op_process_mode():
+    """
+    Feature: Map op with pyfunc contains dvpp ops & cpu ops
+    Description: Test map with dvpp resize operation
+    Expectation: The result is equal to the expected
+    """
+    os.environ['MS_ENABLE_REF_MODE'] = "1"
+    ms.set_context(device_target="Ascend")
+
+    # can resolve tbe error when map with pyfun in process mode
+    os.environ["MIN_COMPILE_RESOURCE_USAGE_CTRL"] = "ub_fusion,coretype_check,op_compile"
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # testcase2 : map with process mode
+    data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+
+    def pyfunc2(img_bytes):
+        ms.set_context(max_device_memory="2GB")
+
+        length = len(img_bytes)
+        print("image len: {}".format(length), flush=True)
+
+        img_decode = vision.Decode().device("Ascend")(img_bytes)
+
+        # resize(cpu)
+        img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+        # normalize(dvpp)
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_resize)
+        return img_normalize
+
+    # multi process mode
+    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=True)
+    for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        assert item[0].shape == (64, 32, 3)
+        assert item[0].dtype == np.float32
+
+    os.environ['MS_ENABLE_REF_MODE'] = "0"
+
+
 if __name__ == '__main__':
     test_map_with_dvpp_resize()
     test_map_with_dvpp_resize_mixed_op()
@@ -1432,3 +1519,5 @@ if __name__ == '__main__':
     test_map_with_dvpp_normalize()
     test_map_with_dvpp_normalize_mixed_op()
     test_map_with_dvpp_normalize_exception()
+    test_map_with_pyfunc_with_multi_op_thread_mode()
+    test_map_with_pyfunc_with_multi_op_process_mode()

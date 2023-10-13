@@ -27,7 +27,7 @@ class MIND_API ScalarLog : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarLog);
   /// \brief Constructor.
-  ScalarLog() : BaseOperator(kNameScalarLog) {}
+  ScalarLog() : BaseOperator(kNameScalarLog) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

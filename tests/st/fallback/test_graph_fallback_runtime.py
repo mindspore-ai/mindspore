@@ -753,3 +753,24 @@ def test_fallback_self_variable_as_func_args():
     net = Network()
     out = net(Tensor([1], dtype=ms.float32), Tensor([2], dtype=ms.float32))
     assert np.allclose(out.asnumpy(), np.array([3], dtype=np.float32))
+
+
+@pytest.mark.skip(reason="ParseCall convert whole script to pyexecute")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_with_variable_input():
+    """
+    Feature: JIT Fallback
+    Description: Generate Tensor with graph.
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x):
+        return Tensor([0], dtype=x.dtype)
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    ret = foo(Tensor([1, 2, 3]))
+    assert ret == Tensor([0])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

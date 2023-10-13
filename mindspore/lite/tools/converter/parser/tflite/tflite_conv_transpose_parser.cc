@@ -25,6 +25,14 @@ namespace lite {
 PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  if (tflite_op->inputs.size() < kInputSize2) {
+    MS_LOG(ERROR) << "the inputs number of tflite_op deconv parser is illegal";
+    return nullptr;
+  }
+  if (tflite_op->outputs.size() != 1) {
+    MS_LOG(ERROR) << "the outputs number of tflite_op deconv parser is illegal";
+    return nullptr;
+  }
   auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -45,10 +53,6 @@ PrimitiveCPtr TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT>
   prim->set_pad_mode(padMode);
 
   // get weight tensor
-  if (tflite_op->inputs.size() < kInputSize2) {
-    MS_LOG(ERROR) << "the tflite_op shape is illegal";
-    return nullptr;
-  }
   if (tflite_op->inputs.size() == kInputSize2) {
     (void)prim->AddAttr(ops::kHasBias, api::MakeValue<bool>(true));
   }

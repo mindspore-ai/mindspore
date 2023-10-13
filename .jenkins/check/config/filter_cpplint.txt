@@ -34,6 +34,8 @@
 "mindspore/mindspore/ccsrc/pipeline/jit/ps/resource.cc"                                            "readability/fn_size"
 "mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/binary_ops_gpu_kernel.cc"                 "whitespace/indent"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cast_cpu_kernel.cc"                            "readability/braces"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/lp_norm_cpu_kernel.cc"                         "build/include"
+
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/PostProcess/Yolov4TinyMindsporePost.h" "runtime/references"
@@ -93,6 +95,7 @@
 "mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.cc"                       "build/include_order"
 "mindspore/mindspore/lite/src/extendrt/cxx_api/model/model_impl.cc"                                "whitespace/parens"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/gemm_mask_avx512/" "runtime/int"
+"mindspore/mindspore/lite/python/src/lite_infer_pybind.cc"                                         "runtime/references"
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/aicpu/sample/"                                "build/include_subdir"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "build/include_subdir"

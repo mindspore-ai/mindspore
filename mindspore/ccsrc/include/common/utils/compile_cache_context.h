@@ -97,6 +97,9 @@ class COMMON_EXPORT CompileCacheContext {
   }
   std::string CompileCacheDepFilesHash() { return compile_cache_dep_files_hash_; }
 
+  void set_has_cached_queue_name(bool cached) { has_cached_queue_name_ = cached; }
+  bool has_cached_queue_name() const { return has_cached_queue_name_; }
+
  private:
   CompileCacheContext() = default;
   ~CompileCacheContext() = default;
@@ -117,6 +120,7 @@ class COMMON_EXPORT CompileCacheContext {
   mindspore::HashSet<AnfNodePtr> backend_param_gen_from_frontend_param_;
   bool restricted_scenarios_{false};
   std::string compile_cache_dep_files_hash_ = "";
+  bool has_cached_queue_name_{false};
 };
 }  // namespace mindspore
 

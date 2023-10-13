@@ -269,7 +269,7 @@ Status Arena::Init() {
     if (impl_ == nullptr) {
       return Status(StatusCode::kMDOutOfMemory);
     }
-  } catch (std::bad_alloc &e) {
+  } catch (const std::bad_alloc &e) {
     return Status(StatusCode::kMDOutOfMemory);
   }
   return Status::OK();

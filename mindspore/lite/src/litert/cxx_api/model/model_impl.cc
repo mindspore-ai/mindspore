@@ -79,14 +79,6 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
   return proto_;
 }
 
-ExpressionLoader CreateExpressionLoader(const ExpressionLoader &loader) {
-  static ExpressionLoader loader_ = nullptr;
-  if (loader != nullptr) {
-    loader_ = loader;
-  }
-  return loader_;
-}
-
 #if defined(ENABLE_PRE_INFERENCE) && defined(__linux__) && !defined(Debug)
 Status ModelImpl::BuildAndRun(const void *model_data, size_t data_size, ModelType model_type,
                               const std::shared_ptr<Context> &model_context) {
@@ -210,9 +202,6 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
-
-  ModelDeObfuscate();
-
   return kSuccess;
 }
 
@@ -250,9 +239,6 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
-
-  ModelDeObfuscate();
-
   return kSuccess;
 }
 
@@ -290,7 +276,10 @@ Status ModelImpl::Build() {
     if (session != nullptr) {
       session_ = session;
       MS_LOG(DEBUG) << "Build model success.";
-      ModelDeObfuscate();
+      auto ret_obf = ModelDeObfuscate();
+      if (ret_obf != RET_OK) {
+        MS_LOG(ERROR) << "Model deobfuscate failed.";
+      }
       return kSuccess;
     }
   }
@@ -334,7 +323,10 @@ Status ModelImpl::Build() {
   model->buf = model_buf;
   session_.swap(session);
   MS_LOG(DEBUG) << "Build model success.";
-  ModelDeObfuscate();
+  auto ret_obf = ModelDeObfuscate();
+  if (ret_obf != RET_OK) {
+    MS_LOG(ERROR) << "Model deobfuscate failed.";
+  }
   return kSuccess;
 }
 
@@ -969,43 +961,72 @@ lite::LiteSession *ModelImpl::CreateLiteSession(const std::shared_ptr<lite::Inne
   return session;
 }
 
-void ModelImpl::ModelDeObfuscate() {
+bool ModelImpl::IsValidDoubleNum(const std::string &num_str) {
+  if (num_str.empty()) {
+    return false;
+  }
+  std::istringstream iss(num_str);
+  double d;
+  iss >> std::noskipws >> d;
+  return iss.eof() && !iss.fail();
+}
+
+int ModelImpl::ModelDeObfuscate() {
   float obf_ratio = 0.0;
   auto iter = config_info_.find(kBuildSection);
   if (iter != config_info_.end()) {
     auto item_runner = iter->second.find(kObfRatioKey);
     if (item_runner != iter->second.end()) {
-      obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+      if (IsValidDoubleNum(iter->second.at(kObfRatioKey))) {
+        obf_ratio = std::stof(iter->second.at(kObfRatioKey));
+      } else {
+        MS_LOG(ERROR) << "Obfuscate ratio should be float but got " << iter->second.at(kObfRatioKey);
+        return RET_ERROR;
+      }
     }
   } else {
     MS_LOG(INFO) << "No obfuscate key find in config file";
-    return;
+  }
+  if (obf_ratio > 50.0) {
+    MS_LOG(ERROR) << "Obf ratio is greater than 50. Please set it within the range of (0, 50]";
+    return RET_ERROR;
   }
 
-  if (obf_ratio != 1.0 && obf_ratio != 0.0) {
-    auto model = graph_->graph_data_->lite_model();
-    std::string tensor_name = "";
-    for (auto node : model->graph_.all_nodes_) {
-      if (node->name_.find(kObfNodeName) != std::string::npos) {
-        auto idx = node->input_indices_[kDataIndex];
-        auto *tensor = model->graph_.all_tensors_[idx];
+  auto model = graph_->graph_data_->lite_model();
+  std::string tensor_name = "";
+  for (auto node : model->graph_.all_nodes_) {
+    if (node->name_.find(kObfNodeName) != std::string::npos) {
+      auto idx = node->input_indices_[kDataIndex];
+      auto *tensor = model->graph_.all_tensors_[idx];
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Obfuscate tensor is null.";
+        return RET_ERROR;
+      }
+      if (tensor->name() != nullptr) {
         tensor_name = tensor->name()->str();
       }
     }
-    if (tensor_name.empty()) {
-      return;
-    }
-    MS_LOG(DEBUG) << "Find obfuscate value in tensor " << tensor_name;
-    float data[1] = {obf_ratio};
-    auto new_tensor =
-      MSTensor::CreateTensor(tensor_name, mindspore::DataType::kNumberTypeFloat32, {1, 1}, data, kFloatSize);
-    std::vector<mindspore::MSTensor> modify_tensors;
-    modify_tensors.emplace_back(*new_tensor);
-    auto ret = this->UpdateWeights(modify_tensors);
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "UpdateWeights failed.";
-      return;
-    }
   }
+  if (tensor_name.empty()) {
+    MS_LOG(INFO) << "Could not find corresponding tensor of the obfuscate value";
+    return RET_OK;
+  }
+  MS_LOG(DEBUG) << "Find obfuscate value in tensor " << tensor_name;
+
+  float data[1] = {obf_ratio};
+  auto new_tensor =
+    MSTensor::CreateTensor(tensor_name, mindspore::DataType::kNumberTypeFloat32, {1, 1}, data, kFloatSize);
+  if (new_tensor == nullptr) {
+    MS_LOG(ERROR) << "Create tensor failed";
+    return RET_ERROR;
+  }
+  std::vector<mindspore::MSTensor> modify_tensors;
+  modify_tensors.emplace_back(*new_tensor);
+  auto ret = this->UpdateWeights(modify_tensors);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "UpdateWeights failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace mindspore

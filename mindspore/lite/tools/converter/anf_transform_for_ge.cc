@@ -57,8 +57,16 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   CHECK_NULL_RETURN(fusion_pm);
 
   std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>()};
-  if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
+  auto plugin_custom_ops = param->ascendGeOptionCfg.plugin_custom_ops;
+  MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+      find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
+    MS_LOG(INFO) << "using FlashAttention";
     fusions.push_back(std::make_shared<opt::FlashAttentionFusion>());
+  }
+  if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+      find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "KVCache") != plugin_custom_ops.end()) {
+    MS_LOG(INFO) << "using KVCache";
     fusions.push_back(std::make_shared<opt::KVCacheMgrOneBranchFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrConcatFusion>());
     fusions.push_back(std::make_shared<opt::KVCacheMgrLoadFusion>());

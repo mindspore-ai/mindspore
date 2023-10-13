@@ -345,29 +345,6 @@ kernel::PyExecuteOutputUserDataPtr GetUserDataFromAddress(const py::object &res)
   return nullptr;
 }
 
-std::pair<py::object, bool> GetTotalVectorRefPyData(const VectorRef &value_list) {
-  auto value_size = value_list.size();
-  if (value_size == 0) {
-    return {py::none(), false};
-  }
-  auto first_element = value_list[0];
-  auto user_data = GetUserDataFromAddress(BaseRefToPyData(first_element));
-  if (user_data == nullptr) {
-    return {py::none(), false};
-  }
-  // If all elements in VectorRef has the same user data, it is a whole pyexecute node with sequence output.
-  // So, we only need to take out the user data of one element and use it as the whole output.
-  for (size_t i = 1; i < value_size; ++i) {
-    auto element = value_list[i];
-    auto res = BaseRefToPyData(element);
-    auto cur_user_data = GetUserDataFromAddress(res);
-    if (user_data != cur_user_data) {
-      return {py::none(), false};
-    }
-  }
-  return {user_data->obj, true};
-}
-
 py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs);
 
 template <typename T>
@@ -393,16 +370,6 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
 }
 
 py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-  if (!allow_runtime_compile) {
-    // If Runtime compile is supported, all the PyExecute will be AbstractAny in frontend (no AbstractSequence).
-    // There will not exist the scene when multiple elements with the same user data should return as
-    // a whole python object. GetTotalVectorRefPyData will be deleted when MS_RUNTIME_COMPILE is deleted.
-    const auto &[py_res, use_as_total] = GetTotalVectorRefPyData(value_list);
-    if (use_as_total) {
-      return py_res;
-    }
-  }
   if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
     return BaseRefToPyData(value_list, abs);
   }
@@ -1531,7 +1498,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
-    if (!common::IsEnableRefMode()) {
+    if (!IsEnableRefMode()) {
       GeFirstInitParams();
     }
     std::string phase_prefix = GetPhasePrefix(phase);

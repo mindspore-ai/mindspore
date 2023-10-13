@@ -3,7 +3,9 @@ mindspore.dataset.vision.Invert
 
 .. py:class:: mindspore.dataset.vision.Invert()
 
-    在 RGB 模式下对输入图像应用像素反转。将每一个像素重新赋值为（255 - pixel）。
+    对输入的RGB图像进行色彩反转。
+
+    对于图像中的每个像素，若原像素值为 `pixel` ，则反转后的像素值为 `255 - pixel` 。
 
     异常：
         - **RuntimeError** - 如果输入图像的shape不是 <H, W, C>。

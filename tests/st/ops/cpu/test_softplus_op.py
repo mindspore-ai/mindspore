@@ -41,6 +41,11 @@ def SoftplusCompute(x):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_0d_fp32():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with scalar input
+    Expectation: success
+    """
     x_np = np.array(1.2, np.float32)
     y_np = SoftplusCompute(x_np)
 
@@ -55,6 +60,11 @@ def test_softplus_0d_fp32():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_1d_fp32():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with 1d fp32 inputs
+    Expectation: success
+    """
     x_np = np.random.random((50,)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
 
@@ -69,6 +79,11 @@ def test_softplus_1d_fp32():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_2d_fp32():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with 2d fp32 inputs
+    Expectation: success
+    """
     x_np = np.random.random((50, 40)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
 
@@ -83,6 +98,11 @@ def test_softplus_2d_fp32():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_4d_fp32():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with 4d fp32 inputs
+    Expectation: success
+    """
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
 
@@ -97,6 +117,11 @@ def test_softplus_4d_fp32():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_neg():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with neg inputs
+    Expectation: success
+    """
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float32) * -1
     y_np = SoftplusCompute(x_np)
 
@@ -111,6 +136,11 @@ def test_softplus_neg():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_4d_fp16():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with 4d fp16 inputs
+    Expectation: success
+    """
     x_np = np.random.random((32, 3, 224, 224)).astype(np.float16)
     y_np = SoftplusCompute(x_np)
 
@@ -125,6 +155,11 @@ def test_softplus_4d_fp16():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_softplus_7d_fp32():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with 7d fp32 inputs
+    Expectation: success
+    """
     x_np = np.random.random((32, 3, 20, 20, 20, 10, 10)).astype(np.float32)
     y_np = SoftplusCompute(x_np)
 
@@ -133,3 +168,20 @@ def test_softplus_7d_fp32():
     y_ms = net(x_ms)
 
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_softplus_with_big_input():
+    """
+    Feature: test ops.Softplus
+    Description: test the Softplus with input value greater than log(FLT_MAX)
+    Expectation: success
+    """
+    softplus = SoftplusNet()
+    x = Tensor(np.array([0.1, 42.3, 88, 109.2]).astype(np.float32))
+
+    output = softplus(x)
+    expect_output = np.array([0.7443967, 42.3, 88, 109.2]).astype(np.float32)
+    assert np.allclose(output.asnumpy(), expect_output)

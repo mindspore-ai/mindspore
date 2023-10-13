@@ -165,7 +165,6 @@ class InplaceUpdate(Primitive):
     @prim_attr_register
     def __init__(self, indices):
         """Initialize InplaceUpdate"""
-        super().__init__(name="InplaceUpdate")
         self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
         self.indices = indices
         validator.check_value_type("indices", indices, [int, tuple], self.name)
@@ -239,7 +238,7 @@ class Unpack(Primitive):
 
 class ScatterNonAliasingAdd(Primitive):
     """
-    Please use ScatterNonAliasingAdd instead.
+    Please use TensorScatterAdd instead.
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),

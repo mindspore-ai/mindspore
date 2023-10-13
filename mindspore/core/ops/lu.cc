@@ -72,9 +72,9 @@ abstract::TupleShapePtr LuInferShape(const PrimitivePtr &primitive, const std::v
 }
 
 TypePtr LuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  MS_EXCEPTION_IF_NULL(prim);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> lu_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto input_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input type", input_type, lu_types, prim->name());

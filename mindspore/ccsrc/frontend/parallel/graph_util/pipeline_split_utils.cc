@@ -1056,21 +1056,22 @@ void CheckBorderNode(const PipelinePair &forward_start_pair, const PipelinePair 
   auto micro_size = LongToSize(seg_micro_max[0] + 1);
   auto seg_size = LongToSize(seg_micro_max[1] + 1);
   auto total_micro_size = micro_size * seg_size;
+  std::string cause = ". One possible cause is that the @lazy_inline decorator is misplaced.";
   if (forward_start_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "forward_node's size:" << forward_start_pair.first.size()
-                      << "is not equal to micro size:" << total_micro_size;
+                      << "is not equal to micro size:" << total_micro_size << cause;
   }
   if (forward_end_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "forward_node's size:" << forward_end_pair.first.size()
-                      << "is not equal to micro size:" << total_micro_size;
+                      << "is not equal to micro size:" << total_micro_size << cause;
   }
   if (backward_start_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "backward_node's size:" << backward_start_pair.first.size()
-                      << "is not equal to micro size:" << total_micro_size;
+                      << "is not equal to micro size:" << total_micro_size << cause;
   }
   if (backward_end_pair.first.size() != total_micro_size) {
     MS_LOG(EXCEPTION) << "backward_node's size:" << backward_end_pair.first.size()
-                      << "is not equal to micro size:" << total_micro_size;
+                      << "is not equal to micro size:" << total_micro_size << cause;
   }
 }
 

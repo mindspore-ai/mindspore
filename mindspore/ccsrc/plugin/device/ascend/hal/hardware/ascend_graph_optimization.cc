@@ -202,21 +202,6 @@ bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
   };
   return expander::TryExpandCNode(node, f);
 }
-
-// Don't need to set KernelInfo for graph on CPU/GPU when
-// the graph is split and run in single op.
-void SetKernelInfoBeforeIRPass(const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
-    return;
-  }
-  const auto &nodes = TopoSort(graph->get_return());
-  for (const auto &node : nodes) {
-    if (node->kernel_info() == nullptr) {
-      graph->SetKernelInfoForNode(node);
-    }
-  }
-}
 }  // namespace
 
 void AscendGraphOptimization::Reset() {
@@ -654,10 +639,7 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::AscendMindIRPass(const KernelGraphPtr &graph) const {
-  SetKernelInfoBeforeIRPass(graph);
-  opt::AscendUnifyMindIR(graph);
-}
+void AscendGraphOptimization::AscendMindIRPass(const KernelGraphPtr &graph) const { opt::AscendUnifyMindIR(graph); }
 
 void AscendGraphOptimization::OpAdaptation(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);

@@ -5,6 +5,8 @@ mindspore.dataset.vision.AdjustBrightness
 
     调整输入图像的亮度。
 
+    支持 Ascend910B 硬件加速，需要通过 `.device("Ascend")` 方式开启。
+
     参数：
         - **brightness_factor** (float) - 亮度调节因子，需为非负数。输入 ``0`` 值将得到全黑图像， ``1`` 值将得到原始图像，
           ``2`` 值将调整图像亮度为原来的2倍。

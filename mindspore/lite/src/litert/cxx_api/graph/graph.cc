@@ -16,9 +16,7 @@
 
 #include "include/api/graph.h"
 #include "include/api/cell.h"
-#include "include/api/net.h"
 #include "src/litert/cxx_api/graph/graph_data.h"
-#include "src/litert/cxx_api/graph/net_data.h"
 
 namespace mindspore {
 Graph::Graph() : graph_data_(nullptr) {}
@@ -27,14 +25,7 @@ Graph::Graph(const std::shared_ptr<GraphData> &graph_data) : graph_data_(graph_d
 
 Graph::Graph(std::shared_ptr<GraphData> &&graph_data) : graph_data_(graph_data) {}
 
-Graph::Graph(Graph::Type type) : graph_type_(type) {}
-
 Graph::~Graph() {}
-
-Graph::Graph(Net *net) : graph_type_(kExpressionGraph) {
-  auto shared = std::make_shared<NetData>(net->shared_from_this());
-  net_data_ = shared;
-}
 
 Graph::Graph(std::nullptr_t) : graph_data_(nullptr) {}
 

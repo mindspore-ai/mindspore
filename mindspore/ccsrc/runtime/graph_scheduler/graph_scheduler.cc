@@ -1246,7 +1246,24 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
 
   auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kOutputActorNameSuffix;
-  auto output_actor = std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_);
+  // get summary node form graph_compiler_info and build a output actor
+  std::vector<KernelWithIndex> summary_nodes;
+  auto graphs = graph_compiler_info.graphs_;
+  for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!graph->summary_node_exist()) {
+      continue;
+    }
+    const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes = graph->summary_nodes();
+    if (nodes.empty()) {
+      continue;
+    }
+    (void)std::transform(nodes.cbegin(), nodes.cend(), std::back_inserter(summary_nodes), [](const auto &out) {
+      return std::make_pair(out.second.first, IntToSize(out.second.second));
+    });
+  }
+  auto output_actor =
+    std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_, summary_nodes);
   MS_LOG(INFO) << "Create output actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(output_actor);
   InsertActor(output_actor.get());
@@ -1668,9 +1685,8 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
                   << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
                   << " actor:" << dynamic_shape_actor->GetAID();
     // Any type input of graph cannot update shape, it would be fixed in any type kernel actor.
-    if ((common::GetEnv("MS_RUNTIME_COMPILE") == "1" ||
-         (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
-          (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()))) &&
+    if (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
+        (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()) &&
         repeat_it == internal_parameters.end() && to_actor->type() != KernelTransformType::kAnyTypeKernelActor) {
       MS_LOG(DEBUG) << "Add internal parameter:" << internal_parameter->DebugString()
                     << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
@@ -2572,7 +2588,8 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
         auto kernel_actor = dynamic_cast<KernelActor *>(auto_monad_actor);
         MS_EXCEPTION_IF_NULL(kernel_actor);
         from_kernel = kernel_actor->kernel().get();
-      } else if (auto_monad_actor->type() == KernelTransformType::kSuperKernelActor) {
+      } else if (auto_monad_actor->type() == KernelTransformType::kSuperKernelActor ||
+                 auto_monad_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
         auto super_kernel_actor = dynamic_cast<SuperKernelActor *>(auto_monad_actor);
         MS_EXCEPTION_IF_NULL(super_kernel_actor);
         from_graph = super_kernel_actor->graph();

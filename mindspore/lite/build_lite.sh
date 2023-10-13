@@ -312,6 +312,9 @@ build_python_wheel_package() {
       if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so" ]; then
         cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so package/mindspore_lite/lib/
       fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so package/mindspore_lite/lib/
+      fi
     else
       if [[ "X${MSLITE_ENABLE_ACL}" == "Xon" ]]; then
         cp src/litert/kernel/ascend/*.so package/mindspore_lite/lib/
@@ -347,10 +350,9 @@ build_python_wheel_package() {
     cp .commit_id package/mindspore_lite/
     echo "__version__ = '${VERSION_STR}'" > package/mindspore_lite/version.py
     cp ../python/setup.py  package/
-    export TOP_DIR=${BASEPATH}
     cd package
     rm -rf dist/mindspore_lite-*.whl
-    python3 setup.py bdist_wheel
+    python3 setup.py bdist_wheel ${BASEPATH}
     py_tags=`get_python_tag`
     local whl_name=mindspore_lite-${VERSION_STR}-${py_tags}-linux_$1.whl
     cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}

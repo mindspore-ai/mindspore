@@ -142,7 +142,7 @@ class ProfilingUtils {
   static void RecordModelLoad(const rtModel_t rt_model_handle);
   static void RecordModelExecute(const KernelGraphPtr kernel_graph);
   static void RegisterProfType();
-  static void InitReportNode(const CNodePtr &cnode);
+  static void InitReportNode(const CNodePtr &cnode, bool init_begin_time = false);
 
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
@@ -183,6 +183,8 @@ class ProfilingUtils {
   inline static std::vector<MsprofCompactInfo> report_compact_info;
   inline static std::vector<MsprofAdditionalInfo> report_additional_info;
   inline static std::vector<MsprofApi> report_api;
+
+  static std::mutex profiler_mutex;
 };
 }  // namespace ascend
 }  // namespace device

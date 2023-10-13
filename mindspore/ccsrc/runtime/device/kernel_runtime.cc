@@ -106,6 +106,9 @@ bool IsNeedAllocMem(const AnfNodePtr &node, size_t index) {
   if (!graph->has_flag(kFlagEnableZeroCopyInGraph)) {
     return true;
   }
+  if (node->isa<Parameter>() && graph->output() == nullptr) {
+    return false;
+  }
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   return std::find_if(outputs.begin(), outputs.end(), [&node, &index](const KernelWithIndex &output) {
            const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);

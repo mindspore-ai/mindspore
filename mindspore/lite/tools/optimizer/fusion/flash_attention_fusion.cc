@@ -16,7 +16,6 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include <memory>
-#include "ops/sequence_ops.h"
 #include "ops/op_utils.h"
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"
@@ -32,6 +31,7 @@ constexpr auto kNameFlashAttentionPatternForSDBNSD = "FlashAttentionPatternForSD
 constexpr auto kNameFlashAttentionPatternForPg = "FlashAttentionPatternForPg";
 constexpr auto kNameFlashAttentionPatternForLLAMAPatternV1 = "FlashAttentionPatternForLLAMAPatternV1";
 constexpr auto kNameFlashAttentionPatternForLLAMAPatternV2 = "FlashAttentionPatternForLLAMAPatternV2";
+constexpr auto kNameDefineFlashAttentionPatternForBaiChuan = "DefineFlashAttentionPatternForBaiChuan";
 constexpr size_t kNumIndex0 = 0;
 constexpr size_t kNumIndex1 = 1;
 constexpr size_t kNumIndex2 = 2;
@@ -127,6 +127,7 @@ std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns(
   patterns[kNameFlashAttentionPatternForPg] = DefineFlashAttentionPatternForPg();
   patterns[kNameFlashAttentionPatternForLLAMAPatternV1] = DefineFlashAttentionPatternForLLAMAPatternV1();
   patterns[kNameFlashAttentionPatternForLLAMAPatternV2] = DefineFlashAttentionPatternForLLAMAPatternV2();
+  patterns[kNameDefineFlashAttentionPatternForBaiChuan] = DefineFlashAttentionPatternForBaiChuan();
   return patterns;
 }
 
@@ -480,18 +481,12 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForLLAMAPattern
   // ===== attention mask =====
   // sub
   auto sub_mask_input_1 = std::make_shared<Var>();  // input attention mask
-  MS_CHECK_TRUE_RET(sub_mask_input_1 != nullptr, {});
-  auto sub_mask_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(sub_mask_input_2 != nullptr, {});
-  auto is_mask_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSub>);
-  MS_CHECK_TRUE_RET(is_mask_sub != nullptr, {});
-  auto mask_sub = VectorRef({is_mask_sub, sub_mask_input_1, sub_mask_input_2});
   // mul
   auto is_mask_mul_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_mask_mul_param != nullptr, {});
   auto is_mask_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
   MS_CHECK_TRUE_RET(is_mask_mul != nullptr, {});
-  auto mask_mul = VectorRef({is_mask_mul, mask_sub, is_mask_mul_param});
+  auto mask_mul = VectorRef({is_mask_mul, sub_mask_input_1, is_mask_mul_param});
   // ===== end attention mask =====
   // add
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
@@ -510,11 +505,57 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForLLAMAPattern
   return matmul_2;
 }
 
+const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForBaiChuan() const {
+  // matmul 1
+  auto matmul_1_q_input = std::make_shared<Var>();  // input Q
+  MS_CHECK_TRUE_RET(matmul_1_q_input != nullptr, {});
+  auto matmul_1_k_input = std::make_shared<Var>();  // input K
+  MS_CHECK_TRUE_RET(matmul_1_k_input != nullptr, {});
+  auto is_matmul_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBatchMatMul>);
+  MS_CHECK_TRUE_RET(is_matmul_1 != nullptr, {});
+  auto matmul_1 = VectorRef({is_matmul_1, matmul_1_q_input, matmul_1_k_input});
+  // mul
+  auto is_mul_param = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_mul_param != nullptr, {});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  auto mul = VectorRef({is_mul, matmul_1, is_mul_param});
+  // ===== attention mask =====
+  // mul
+  auto is_mask_mul_param1 = std::make_shared<Var>();
+  auto is_mask_mul_param2 = std::make_shared<Var>();
+  auto is_mask_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
+  MS_CHECK_TRUE_RET(is_mask_mul != nullptr, {});
+  auto mask_mul = VectorRef({is_mask_mul, is_mask_mul_param1, is_mask_mul_param2});
+  // ===== end attention mask =====
+  // add
+  auto is_add_param = std::make_shared<Var>();
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  auto add = VectorRef({is_add, mul, is_add_param});
+  // add for mask
+  auto is_add_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
+  MS_CHECK_TRUE_RET(is_add_2 != nullptr, {});
+  auto add_2 = VectorRef({is_add, mask_mul, add});
+  // softmax
+  auto is_softmax = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSoftmax>);
+  MS_CHECK_TRUE_RET(is_softmax != nullptr, {});
+  auto softmax = VectorRef({is_softmax, add_2});
+  // matmul
+  auto v_input = std::make_shared<Var>();  // input V
+  MS_CHECK_TRUE_RET(v_input != nullptr, {});
+  auto is_matmul_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBatchMatMul>);
+  MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
+  auto matmul_2 = VectorRef({is_matmul_2, softmax, v_input});
+  return matmul_2;
+}
+
 CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph,
                                                                       const AnfNodePtr &node, const AnfNodePtr &q,
                                                                       const AnfNodePtr &k, const AnfNodePtr &v,
                                                                       const AnfNodePtr &atten_mask, int64_t num_heads,
-                                                                      int64_t next_token, float scale_value) const {
+                                                                      int64_t next_token, float scale_value,
+                                                                      int64_t num_key_value_heads) const {
   MS_LOG(INFO) << "CreatePromptFlashAttentionCnodeForBNSD";
   // create op
   auto prompt_flash_attention_prim = std::make_shared<ops::PromptFlashAttention>();
@@ -527,6 +568,7 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBNSD(const Func
   prompt_flash_attention_prim->AddAttr("input_layout", api::MakeValue("BNSD"));
   prompt_flash_attention_prim->AddAttr("next_tokens", api::MakeValue(next_token));
   prompt_flash_attention_prim->AddAttr("scale_value", api::MakeValue(scale_value));
+  prompt_flash_attention_prim->AddAttr("num_key_value_heads", api::MakeValue(num_key_value_heads));
 
   MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << ", k name: " << k->fullname_with_scope()
                << ", v name: " << v->fullname_with_scope();
@@ -798,7 +840,8 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForPg(const std::string &
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
   if (seq_len != 1) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
+                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value,
+                                                  input_tensor_k_shape[kNumIndex1]);
   }
   return nullptr;
 }
@@ -922,9 +965,73 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV2(const s
   }
   float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
   int64_t seq_len = input_tensor_q_shape[kNumIndex2];
+  int64_t num_key_value_heads = input_tensor_k_shape[1];
+  if (seq_len != 1) {
+    return CreatePromptFlashAttentionCnodeForBNSD(
+      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
+  }
+  return nullptr;
+}
+
+CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForBaiChuanPattern(const std::string &pattern_name,
+                                                                          const FuncGraphPtr &func_graph,
+                                                                          const AnfNodePtr &node,
+                                                                          const EquivPtr &equiv) const {
+  auto matmul_2 = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul_2 != nullptr, nullptr);
+  auto softmax = matmul_2->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(softmax != nullptr, nullptr);
+  auto add = softmax->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(add != nullptr, nullptr);
+
+  auto attention_mask_mul = add->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(attention_mask_mul != nullptr, nullptr);
+
+  auto add_up = add->input(kNumIndex2)->cast<CNodePtr>();
+  auto mul = add_up->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
+  auto matmul_1 = mul->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
+  // PromptFlashAttention input tensor
+  auto q = matmul_1->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
+  auto k = matmul_1->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
+  auto v = matmul_2->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
+  auto atten_mask = attention_mask_mul->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
+
+  auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
+  if (input_tensor_q_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "q shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_k_shape = GetTensorShape(matmul_1, kNumIndex2);
+  if (input_tensor_k_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "k shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+  if (input_tensor_v_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "v shape is not 4 dims";
+    return nullptr;
+  }
+  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
+               << " , v name: " << v->fullname_with_scope();
+  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
+               << ", v shape: " << input_tensor_v_shape;
+  // check input shape
+  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
+    MS_LOG(ERROR) << "D is -1";
+    return nullptr;
+  }
+  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
+  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
   if (seq_len != 1) {
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
+                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value,
+                                                  input_tensor_k_shape[kNumIndex1]);
   }
   return nullptr;
 }
@@ -958,6 +1065,8 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
     flash_attention_node = CreateFlashAttentionNodeForLLAMAPatternV1(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameFlashAttentionPatternForLLAMAPatternV2) {
     flash_attention_node = CreateFlashAttentionNodeForLLAMAPatternV2(patten_name, func_graph, node, equiv);
+  } else if (patten_name == kNameDefineFlashAttentionPatternForBaiChuan) {
+    flash_attention_node = CreateFlashAttentionNodeForBaiChuanPattern(patten_name, func_graph, node, equiv);
   } else {
     MS_LOG(ERROR) << " not patter.";
   }

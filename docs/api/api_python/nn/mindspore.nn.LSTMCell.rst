@@ -1,7 +1,7 @@
 mindspore.nn.LSTMCell
 ======================
 
-.. py:class:: mindspore.nn.LSTMCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype: mindspore.dtype = mstype.float32)
+.. py:class:: mindspore.nn.LSTMCell(input_size: int, hidden_size: int, has_bias: bool = True, dtype=mstype.float32)
 
     长短期记忆网络单元（LSTMCell）。
 

@@ -65,6 +65,8 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto op_name = primitive->name();
+    const int64_t input_num = 3;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
     auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto gamma_shape_ptr = input_args[kInputIndex1]->BuildShape();
     auto beta_shape_ptr = input_args[kInputIndex2]->BuildShape();
@@ -76,7 +78,9 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
       MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << x_rank << ".";
     }
     if (gamma_shape.empty() || beta_shape.empty()) {
-      MS_EXCEPTION(ValueError) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
+      MS_EXCEPTION(ValueError) << "For 'LayerNorm', the gamma and beta should be at least 1-dimensional, i.e., "
+                                  "containing at least one element, but got gamma shape: "
+                               << gamma_shape << ", beta shape: " << beta_shape << ".";
     }
 
     if (IsDynamicRank(x_shape) || IsDynamicRank(gamma_shape) || IsDynamicRank(beta_shape)) {
@@ -127,7 +131,6 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
     // outputs: y, mean, variance
     MS_EXCEPTION_IF_NULL(primitive);
     const std::string op_name = primitive->name();
-    MS_EXCEPTION_IF_NULL(primitive);
     const int64_t input_num = 3;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
 

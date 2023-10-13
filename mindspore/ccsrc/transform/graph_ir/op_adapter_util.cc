@@ -142,6 +142,9 @@ GeDataType ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEType>) {
     if (kObjectTypeTensorType == me_type) {
       me_type = dyn_cast<TensorType>(type)->element()->type_id();
     }
+  } else if (value->isa<Int32Imm>()) {
+    // type id
+    me_type = static_cast<TypeId>(GetValue<int32_t>(value));
   } else if (value->isa<UInt64Imm>()) {
     // type id
     me_type = static_cast<TypeId>(GetValue<uint64_t>(value));
@@ -399,7 +402,7 @@ std::string GetOpIOFormat(const AnfNodePtr &anf) {
   auto io_format_map = IOFormatMap::get();
   auto iter = io_format_map.find(prim->name());
   if (iter == io_format_map.end()) {
-    return "NCHW";
+    return kOpFormat_DEFAULT;
   }
   if (iter->second == "format") {
     ValuePtr format = prim->GetAttr("format");

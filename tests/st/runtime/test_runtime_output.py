@@ -76,7 +76,7 @@ def test_subgraph_output_with_load():
     assert (output1 == output2).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_runtime_heter():
@@ -97,4 +97,24 @@ def test_runtime_heter():
         f = mul(a, e)
         return f
     ret = foo(Tensor(1), Tensor(2))
+    assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_runtime_fallback_heter():
+    """
+    Feature: Runtime heter.
+    Description: Test any type kernel actor link to copy actor.
+    Expectation: Not throw exception.
+    """
+
+    @jit
+    def foo():
+        d = {'a': 1, 'b': 2, 'c': 3, 'A': 4, 'B': 5, 'D': 6}
+        res = {i.lower(): d.get(i.lower(), 0) + d.get(i.upper(), 0) for i in d}
+        return res
+
+    ret = foo()
     assert ret

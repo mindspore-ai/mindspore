@@ -31,7 +31,8 @@ namespace bprop_pass {
 constexpr auto kIsKNode = "is_knode";
 
 void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
-void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, autograd::AutoGradCellImpl *auto_grad_cell_ptr);
+void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node, SeenNum seen,
+                                         autograd::AutoGradCellImpl *auto_grad_cell_ptr);
 CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target, bool is_dynamic_shape,
                                  bool grad_by_value);
 void ProcessAttrNode(const FuncGraphPtr &tape_graph, const CNodePtr &cnode, ValuePtrList *input_value,

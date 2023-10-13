@@ -27,6 +27,53 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved, _MicroBatch, Cell
+from mindspore import lazy_inline
+from mindspore import ParameterTuple
+
+class SimpleNet(nn.Cell):
+    def __init__(self, matmul_weight):
+        super().__init__()
+        self.matmul1 = P.MatMul()
+        self.matmul2 = P.MatMul()
+        self.matmul1_w = Parameter(matmul_weight[0], name="weight1")
+        self.matmul2_w = Parameter(matmul_weight[1], name="weight2")
+
+    def construct(self, inputs):
+        x = self.matmul1(inputs, self.matmul1_w)
+        x = self.matmul2(x, self.matmul2_w)
+        return x
+
+
+class StageSimpleNet(nn.Cell):
+    @lazy_inline
+    def __init__(self, w_l, micro, stage_num=2):
+        super().__init__()
+        self.micro_size = micro
+        self.block = nn.CellList()
+        self.add = P.TensorAdd()
+        self.w_l = w_l
+        self.add_list = []
+        self.relu_block = nn.CellList()
+        for i in range(self.micro_size):
+            cell = SimpleNet(w_l[i])
+            relu = nn.ReLU()
+            if self.micro_size > stage_num:
+                cell.pipeline_stage = i // 2
+                relu.pipline_stage = i // 2
+            else:
+                cell.pipeline_stage = i
+                relu.pipline_stage = i
+            self.relu_block.append(relu)
+            self.block.append(cell)
+            self.add_list.append(Parameter(Tensor(np.full((1, 16), 0.1, dtype=np.float32)), name=f"weight{i}"))
+        self.add_tuple = ParameterTuple(self.add_list)
+
+    def construct(self, x):
+        for i in range(self.micro_size):
+            x = self.block[i](x)
+            x = self.relu_block[i](x)
+            x = self.add(x, self.add_tuple[i])
+        return x
 
 
 class DatasetLenet():
@@ -574,3 +621,24 @@ def test_pipeline_split_stage1_shape_is_not_divisible_by_micro_size():
     with pytest.raises(ValueError) as e:
         model.train(2, dataset, dataset_sink_mode=False)
     assert "the 0th dimension shape of input(4608) must be divided by micro size(7)" in str(e.value)
+
+
+def test_pipeline_split_stage1_lazy_inline():
+    """
+    Feature: test PipelineSplit with 8 devices in auto parallel.
+    Description: net with pipeline parallel in auto parallel mode using 8 devices, stage0.
+    Expectation: success.
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="recursive_programming")
+    context.set_context(device_target="Ascend")
+
+    w1 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w2 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w3 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w4 = Tensor(0.1 * np.random.randn(16, 16).astype(np.float32))
+    w_l = [[w1, w2], [w3, w4]]
+    net = StageSimpleNet(w_l, 2)
+    pipeline_net = PipelineCell(net, 2)
+    data = Tensor(np.ones([16, 16]), dtype=ms.float32)
+    pipeline_net(data)

@@ -22,6 +22,8 @@ from mindspore.common.tensor import Tensor
 from mindspore import ops
 from mindspore.nn.cell import Cell
 from mindspore.ops._op_impl._custom_op.flash_attention.flash_attention_impl import get_flash_attention
+from mindspore.ops.operations.nn_ops import FlashAttentionScore
+from mindspore._c_expression import MSContext
 
 __all__ = ['FlashAttention']
 
@@ -91,6 +93,7 @@ class FlashAttention(Cell):
 
     def __init__(self,
                  head_dim,
+                 head_num,
                  dropout_rate=0.0,
                  prev_block_num=65536,
                  next_block_num=65536,
@@ -103,18 +106,42 @@ class FlashAttention(Cell):
                  ):
         super(FlashAttention, self).__init__()
 
-        self.flash_attention = get_flash_attention(
-            prev_block_num=prev_block_num,
-            next_block_num=next_block_num,
-            tiling_stgy_name=tiling_stgy_name,
-            high_precision=high_precision
-        )
-        self.flash_attention.add_prim_attr("primitive_target", "Ascend")
         scaling_constant = math.sqrt(head_dim)
-        if scaling_constant != 0:
-            self.scale_factor = Tensor([1. / scaling_constant], dtype=mstype.float16)
-        else:
+        if scaling_constant == 0:
             raise ValueError("the scaling constant must not be 0.")
+        self.scale_factor = Tensor([1. / scaling_constant], dtype=mstype.float16)
+
+        self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "Ascend910"
+        if self.is_910A:
+            self.flash_attention = get_flash_attention(
+                prev_block_num=prev_block_num,
+                next_block_num=next_block_num,
+                tiling_stgy_name=tiling_stgy_name,
+                high_precision=high_precision
+            )
+            self.flash_attention.add_prim_attr("primitive_target", "Ascend")
+        else:
+            if alibi:
+                raise ValueError(f"When soc_version is not Ascend910A, alibi must be False")
+            self.transpose_4d_pre = ops.Transpose().shard(((dp, mp, 1, 1),))
+            self.transpose_4d_post = ops.Transpose().shard(((dp, 1, mp, 1),))
+            self.reshape = ops.Reshape()
+            self.zeros_like = ops.ZerosLike().shard(((dp, mp, 1, 1),))
+            self.zeros = ops.Zeros()
+            self.attn_expand_dims = ops.ExpandDims().shard(((dp, 1, 1),))
+            fa_strategies = ((dp, 1, mp),
+                             (dp, 1, mp),
+                             (dp, 1, mp),
+                             (dp, 1, 1, 1))
+            if dropout_rate > 1e-5:
+                fa_strategies += ((dp, mp, 1, 1),)
+            self.flash_attention = FlashAttentionScore(head_num=head_num, pre_tokens=prev_block_num,
+                                                       next_tokens=next_block_num,
+                                                       keep_prob=1 - dropout_rate,
+                                                       scale_value=1.0,
+                                                       inner_precise=0 if high_precision else 1).shard(fa_strategies)
+
+        self.ones = ops.Ones()
         self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
         self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
         self.dropout_rate = dropout_rate
@@ -196,16 +223,42 @@ class FlashAttention(Cell):
         if seq_len % 16 != 0 or k_seq_len % 16 != 0 or k_seq_len != v_seq_len:
             raise ValueError(
                 "query, key, value seq_len must be a multiple of 16, and key seq_len, value seq_len must be the same.")
-        if self.dropout_rate > 1e-5:
-            drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
-            tensor_shape = (bsz, head_num, seq_len, seq_len)
-            ones = self.fill_v2(tensor_shape, self.tensor_one)
-            ones = self.depend(ones, query)
-            drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
-        else:
-            drop_mask = None
+
         if head_dim > 304:
             raise ValueError(
                 "the head_dim must be less than 304, otherwise the ub would be OOM.")
-        output, _, _ = self.flash_attention(query, key, value, attn_mask, drop_mask, alibi_mask)
+
+        if self.is_910A:
+            # 910A -- FlashAttentionPrimtive
+            if self.dropout_rate > 1e-5:
+                drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
+                tensor_shape = Tensor((bsz, head_num, seq_len, seq_len), mstype.int32)
+                ones = self.fill_v2(tensor_shape, self.tensor_one)
+                ones = self.depend(ones, query)
+                drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
+            else:
+                drop_mask = None
+            output, _, _ = self.flash_attention(query, key, value, attn_mask, drop_mask, alibi_mask)
+        else:
+            # FlashAttentionScore
+            # Useless input, just for binary calls.
+            if self.dropout_rate > 1e-5:
+                drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob),
+                                              (bsz, head_num, seq_len, seq_len // 8))
+            else:
+                drop_mask_bits = None
+            # (B, N, S, D) -> (B, S, H)
+            query = self.reshape(self.transpose_4d_pre(query, (0, 2, 1, 3)), (bsz, seq_len, -1))
+            key = self.reshape(self.transpose_4d_pre(key, (0, 2, 1, 3)), (bsz, seq_len, -1))
+            value = self.reshape(self.transpose_4d_pre(value, (0, 2, 1, 3)), (bsz, seq_len, -1))
+            attn_mask = self.attn_expand_dims(attn_mask, 1)
+            output, _, _ = self.flash_attention(query,
+                                                key,
+                                                value,
+                                                attn_mask,
+                                                drop_mask_bits,
+                                                None,
+                                                None)
+            output = self.transpose_4d_post(self.reshape(output, (bsz, seq_len, head_num, head_dim)), (0, 2, 1, 3))
+
         return output

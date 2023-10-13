@@ -566,6 +566,41 @@ def test_bucket_batch_invalid_column():
         assert "BucketBatchByLength: Couldn't find the specified column in the dataset" in str(info.value)
 
 
+def test_bucket_batch_with_pull_mode():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op to support pull mode
+    Expectation: Output is equal to the expected output
+    """
+    original_debug_mode = ds.config.get_debug_mode()
+    ds.config.set_debug_mode(True)
+    dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
+
+    column_names = ["col1"]
+    bucket_boundaries = [1, 2, 3]
+    bucket_batch_sizes = [3, 3, 2, 2]
+    element_length_function = (lambda x: x[0] % 4)
+
+    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
+                                             bucket_batch_sizes, element_length_function)
+
+    data_size = dataset.get_dataset_size()
+
+    num_rows = 0
+    num_epochs = 2
+    ret = []
+    iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
+    for _ in range(num_epochs):
+        for item in iterator:
+            num_rows += 1
+            ret.append(item['col1'].asnumpy())
+
+    assert data_size * num_epochs == num_rows
+    assert ret[0].all() == np.array([[2], [6]]).all()
+    assert ret[3].all() == np.array([[1], [5], [9]]).all()
+    ds.config.set_debug_mode(original_debug_mode)
+
+
 if __name__ == '__main__':
     test_bucket_batch_invalid_input()
     test_bucket_batch_multi_bucket_no_padding()
@@ -581,3 +616,4 @@ if __name__ == '__main__':
     test_bucket_batch_three_columns()
     test_bucket_batch_get_dataset_size()
     test_bucket_batch_invalid_column()
+    test_bucket_batch_with_pull_mode()

@@ -290,33 +290,9 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
           )
 endif()
 
-
-file(GLOB CXX_API_EXPRESSION
-  ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/expression/*.cc
-  )
-
-file(GLOB EXPRESSION_OPS
-  ${CMAKE_CURRENT_SOURCE_DIR}/expression/ops/*.cc
-  )
-
-set(EXPRESSION_SRC
-    ${CXX_API_EXPRESSION}
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/export.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/expr.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/import.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/net.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/node.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/ops.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/ops_utils.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/param.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/expression/sequential.cc
-    ${EXPRESSION_OPS}
-  )
-
 set(TRAIN_SRC
         ${API_TRAIN_SRC}
         ${TRAIN_SRC_WITH_MD}
-        ${EXPRESSION_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/executor/kernel_exec.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/metrics/accuracy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build.cc
@@ -341,6 +317,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/matmul_activation_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/reshape_gather_reshape_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/matmul_matmul_add_fusion_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/matmul_add_fusion_pass.cc
         ${TOOLS_DIR}/converter/optimizer.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
@@ -398,13 +375,6 @@ endif()
 if(NOT MSLITE_ENABLE_COREML)
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/delegate/coreml/stub/coreml_delegate_stub.cc)
-endif()
-
-if(MSVC)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${EXPRESSION_SRC}
-            )
 endif()
 
 add_subdirectory(litert/kernel/cpu)

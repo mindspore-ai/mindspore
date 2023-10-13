@@ -1,7 +1,7 @@
 mindspore.SummaryRecord
 ================================
 
-.. py:class:: mindspore.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', network=None, max_file_size=None, raise_exception=False, export_options=None)
+.. py:class:: mindspore.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', num_process=32, network=None, max_file_size=None, raise_exception=False, export_options=None)
 
     SummaryRecord用于记录summary数据和lineage数据。
 
@@ -20,6 +20,7 @@ mindspore.SummaryRecord
         - **log_dir** (str) - `log_dir` 是用来保存summary文件的目录。
         - **file_prefix** (str) - 文件的前缀。默认值： ``'events'`` 。
         - **file_suffix** (str) - 文件的后缀。默认值： ``'_MS'`` 。
+        - **num_process** (int) - 设置保存Summary数据的进程数，进程越多性能越好，设置进程多可能会出现Host内存不足的问题。默认值： ``32`` 。
         - **network** (Cell) - 表示用于保存计算图的网络。默认值： ``None`` 。
         - **max_file_size** (int, 可选) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，预期写入文件最大不超过4GB，则设置 `max_file_size=4*1024**3` 。默认值： ``None`` ，表示无限制。
         - **raise_exception** (bool, 可选) - 设置在记录数据中发生RuntimeError或OSError异常时是否抛出异常。默认值： ``False`` ，表示打印错误日志，不抛出异常。

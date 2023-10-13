@@ -51,7 +51,7 @@ std::vector<int64_t> GetOriStrides(const std::vector<int64_t> &shape) {
 
   std::vector<int64_t> ret{1};
   int64_t strides = 1;
-  for (int64_t i = shape.size() - 1; i > 0; i--) {
+  for (size_t i = shape.size() - 1; i > 0; i--) {
     strides *= shape[i];
     (void)ret.emplace(ret.begin(), strides);
   }
@@ -66,11 +66,11 @@ bool IsContiguous(const ShapeVector &shape, const std::vector<int64_t> &strides)
     MS_LOG(EXCEPTION) << "shape.size() != strides.size()";
   }
   int64_t expected_strides = 1;
-  for (int64_t i = strides.size() - 1; i >= 0; i--) {
+  for (int64_t i = static_cast<int64_t>(strides.size() - 1); i >= 0; i--) {
     if (expected_strides != strides[i]) {
       return false;
     }
-    expected_strides *= shape[i];
+    expected_strides *= static_cast<int64_t>(shape[i]);
   }
   return true;
 }

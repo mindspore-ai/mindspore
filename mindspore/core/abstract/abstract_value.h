@@ -1173,7 +1173,7 @@ class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
   /// \brief Get the name of namedtuple object.
   ///
   /// \return A string of namedtuple's type name.
-  const std::string name() const { return type_name_; }
+  const std::string &name() const { return type_name_; }
 
  protected:
   ValuePtr RealBuildValue() const override;

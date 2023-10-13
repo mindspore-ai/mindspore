@@ -658,7 +658,7 @@ class Converter:
         Get device id of device target.
 
         Returns:
-            int: device id of device target.
+            int, device id of device target.
         """
         return self._converter.get_device_id()
 
@@ -682,7 +682,7 @@ class Converter:
         Get rank id of device target.
 
         Returns:
-            int: rank id of device target.
+            int, rank id of device target.
         """
         return self._converter.get_rank_id()
 

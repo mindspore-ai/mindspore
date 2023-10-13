@@ -18,6 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.common.api import _pynative_executor
 
 
 class Net(nn.Cell):
@@ -86,13 +87,28 @@ def scatternd_negative(nptype):
                        [-21.4, -3.1]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
 
+def scatternd_indices_out_of_range(nptype):
+    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 2]]).astype(np.int16)
+    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+    shape = (2, 2)
+    scatternd = Net(shape)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+        _pynative_executor.sync()
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_traning
 @pytest.mark.env_onecard
 def test_scatternd_float64():
     """
     Feature: ScatterNd
-    Description: statternd with float64 dtype
+    Description: scatternd with float64 dtype
     Expectation: success
     """
     scatternd_positive(np.float64)
@@ -104,7 +120,7 @@ def test_scatternd_float64():
 def test_scatternd_float32():
     """
     Feature: ScatterNd
-    Description: statternd with float32 dtype
+    Description: scatternd with float32 dtype
     Expectation: success
     """
     scatternd_positive(np.float32)
@@ -116,7 +132,7 @@ def test_scatternd_float32():
 def test_scatternd_float16():
     """
     Feature: ScatterNd
-    Description: statternd with float16 dtype
+    Description: scatternd with float16 dtype
     Expectation: success
     """
     scatternd_positive(np.float16)
@@ -128,7 +144,7 @@ def test_scatternd_float16():
 def test_scatternd_int64():
     """
     Feature: ScatterNd
-    Description: statternd with int64 dtype
+    Description: scatternd with int64 dtype
     Expectation: success
     """
     scatternd_positive(np.int64)
@@ -140,7 +156,7 @@ def test_scatternd_int64():
 def test_scatternd_int32():
     """
     Feature: ScatterNd
-    Description: statternd with int32 dtype
+    Description: scatternd with int32 dtype
     Expectation: success
     """
     scatternd_positive(np.int32)
@@ -152,7 +168,7 @@ def test_scatternd_int32():
 def test_scatternd_int16():
     """
     Feature: ScatterNd
-    Description: statternd with int16 dtype
+    Description: scatternd with int16 dtype
     Expectation: success
     """
     scatternd_positive(np.int16)
@@ -164,7 +180,7 @@ def test_scatternd_int16():
 def test_scatternd_int8():
     """
     Feature: ScatterNd
-    Description: statternd with int8 dtype
+    Description: scatternd with int8 dtype
     Expectation: success
     """
     scatternd_positive(np.int8)
@@ -176,7 +192,7 @@ def test_scatternd_int8():
 def test_scatternd_uint8():
     """
     Feature: ScatterNd
-    Description: statternd with uint8 dtype
+    Description: scatternd with uint8 dtype
     Expectation: success
     """
     scatternd_positive(np.uint8)
@@ -188,7 +204,7 @@ def test_scatternd_uint8():
 def test_scatternd_uint16():
     """
     Feature: ScatterNd
-    Description: statternd with uint16 dtype
+    Description: scatternd with uint16 dtype
     Expectation: success
     """
     scatternd_positive(np.uint16)
@@ -200,7 +216,7 @@ def test_scatternd_uint16():
 def test_scatternd_uint32():
     """
     Feature: ScatterNd
-    Description: statternd with uint32 dtype
+    Description: scatternd with uint32 dtype
     Expectation: success
     """
     scatternd_positive(np.uint32)
@@ -212,8 +228,20 @@ def test_scatternd_uint32():
 def test_scatternd_uint64():
     """
     Feature: ScatterNd
-    Description: statternd with uint64 dtype
+    Description: scatternd with uint64 dtype
     Expectation: success
     """
     scatternd_positive(np.uint64)
     scatternd_negative(np.uint64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_traning
+@pytest.mark.env_onecard
+def test_scatternd_indices_out_of_range():
+    """
+    Feature: ScatterNd
+    Description: indices has invalid value.
+    Expectation: catch the raised error.
+    """
+    scatternd_indices_out_of_range(np.int16)

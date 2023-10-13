@@ -385,7 +385,7 @@ class Reduce(OpInfer):
             ori_shape, cur_shape = self.input_desc[0]["ori_shape"], self.input_desc[0]["shape"]
             ori_rank = len(ori_shape)
             rank = len(cur_shape)
-            axis = self._get_axis(rank)
+            axis = self._get_axis(ori_rank)
             new_axis = []
             for i in axis:
                 if i == ori_rank - 1:
@@ -432,10 +432,8 @@ class Reshape(OpInfer):
         self.output_desc[0]["ori_shape"] = out_shape
 
     def post_process(self):
-        for item in self.op_desc["attr"]:
-            if item["name"] == "shape":
-                item["ori_value"] = item["value"]
-                item["value"] = self.output_desc[0]["shape"]
+        self.input_desc[1]["ori_value"] = self.input_desc[1]["value"]
+        self.input_desc[1]["value"] = self.output_desc[0]["shape"]
 
 class ExpandDimAndSqueeze(Reshape):
     def copy_axis(self, axis):

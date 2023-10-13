@@ -58,6 +58,7 @@ namespace {
 const std::set<std::string> kIgnoreGEShapeOps = {kSoftMarginLossOpName};
 mindspore::HashMap<std::string, size_t> feature_memorys;
 mindspore::HashMap<std::string, size_t> streams;
+constexpr size_t kNeedRecycleOutput = 5;
 
 void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
   MS_EXCEPTION_IF_NULL(cnode_data);
@@ -425,6 +426,19 @@ void ClearForwardOutputAddress(const KernelGraphPtr &graph, const DeviceContext 
     }
   }
 }
+
+class ContextReset {
+ public:
+  explicit ContextReset(DeviceContext *device_context) : device_context_(device_context) {}
+  ~ContextReset() {
+    if (device_context_ != nullptr && device_context_->device_res_manager_ != nullptr) {
+      device_context_->device_res_manager_->BindDeviceToCurrentThread(true);
+    }
+  }
+
+ private:
+  DeviceContext *device_context_;
+};
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -537,6 +551,7 @@ void GeGraphExecutor::AllocFeatureMemory(const transform::RunOptions &options, s
   if (ret != transform::Status::SUCCESS) {
     MS_LOG(EXCEPTION) << "UpdateFeatureMemory for graph " << options.name << " failed.";
   }
+  memory_manager->ResetDynamicMemory();
   MS_LOG(INFO) << "End AllocFeatureMemory";
 }
 
@@ -696,6 +711,16 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
+  size_t need_alloc_output_cnt = 0;
+  for (const auto &output : outputs) {
+    const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+    auto &output_node = output_with_index.first;
+    if (output_node->isa<Parameter>()) {
+      continue;
+    }
+    need_alloc_output_cnt++;
+  }
+
   for (const auto &output : outputs) {
     const auto &output_with_index = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
     auto &output_node = output_with_index.first;
@@ -725,6 +750,12 @@ void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) cons
     auto output_device_addr = std::make_shared<AscendDeviceAddress>(mem, tensor_size, kOpFormat_DEFAULT, output_type_id,
                                                                     kAscendDevice, device_id);
     output_device_addr->set_is_ptr_persisted(true);
+    if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle() && need_alloc_output_cnt <= kNeedRecycleOutput) {
+      MS_LOG(INFO) << "Set Memory Pool Recycle, graph: " << kernel_graph->ToString()
+                   << ", node: " << output_node->fullname_with_scope();
+      output_device_addr->set_from_persistent_mem(true);
+      output_device_addr->set_need_recycle(true);
+    }
     AnfAlgo::SetOutputAddr(output_device_addr, index, output_node.get());
 
     // When both the input and output of NopNode are used as outputs, different memory needs to be allocated for them.
@@ -806,7 +837,9 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (common::IsEnableRefMode()) {
+  // cppcheck-suppress unreadVariable
+  ContextReset reset_context(device_context_);
+  if (IsEnableRefMode()) {
     KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
     return CompileGraph(kg, compile_options);
   } else {
@@ -888,7 +921,11 @@ size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
     MS_LOG(EXCEPTION) << "Graph " << graph_name << " stream not found.";
   }
   MS_LOG(WARNING) << "Need Profile Memory, graph: " << graph_name << ", stream: " << stream_iter->second;
-  return iter->second;
+  auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
+  auto feature_memory_size = iter->second;
+  auto total_memory_size = max_static_memory_size + feature_memory_size;
+  AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+  return feature_memory_size;
 }
 
 bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
@@ -917,6 +954,25 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
+
+  if (AscendMemAdapter::GetInstance().IsMemoryPoolRecycle()) {
+    auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
+    auto iter = feature_memorys.find(graph_name);
+    if (iter == feature_memorys.end()) {
+      MS_LOG(EXCEPTION) << "Graph " << graph_name << " feature memory not found.";
+    }
+    auto feature_memory_size = iter->second;
+    size_t total_memory_size = max_static_memory_size + feature_memory_size;
+    size_t max_hbm_memory_size = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
+    AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+    if (total_memory_size > max_hbm_memory_size) {
+      MS_LOG(EXCEPTION) << "Memory pool not enough, graph: " << graph_name
+                        << ", max_static_memory_size: " << max_static_memory_size
+                        << ", feature_memory_size: " << feature_memory_size
+                        << ", max_hbm_memory_size: " << max_hbm_memory_size;
+    }
+  }
+
   {
     // Release GIL before calling into (potentially long-running) C++ code
     GilReleaseWithCheck gil_release;
@@ -981,7 +1037,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
       return false;
     }
@@ -1078,7 +1134,7 @@ FuncGraphPtr GeGraphExecutor::BuildDFGraph(const FuncGraphPtr &anf_graph,
   }
 
   if (export_air) {
-    // export air can use session->AddGraph, it will cause atc error.
+    // export air can't use session->AddGraph, it will cause atc error.
     return anf_graph;
   }
 

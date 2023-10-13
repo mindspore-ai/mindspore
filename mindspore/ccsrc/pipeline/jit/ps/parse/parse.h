@@ -50,9 +50,6 @@ enum ParseStatusCode : int64_t {
   PARSE_FAILURE = 0xFF
 };
 
-constexpr char kStandardMethodModelName[] = "mindspore._extends.parse.standard_method";
-constexpr char kMsLenWithCheck[] = "ms_len_with_iterable_check";
-
 // Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 // will be sunk(i.e. not unrolled)
 // NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were
@@ -253,7 +250,10 @@ class Parser {
   bool GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const;
   py::object GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,
                                 bool *is_constant) const;
-  bool CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
+                                       bool *is_true_cond) const;
+  bool CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond,
+                              const py::object &if_node = py::none()) const;
 
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const;

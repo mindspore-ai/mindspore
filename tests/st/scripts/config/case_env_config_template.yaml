@@ -1,17 +1,15 @@
+# 不同用例类型对应的相关环境类型,用例类型：环境类型1，环境类型2, ...
 all_case_type:
-  platform_x86_ascend_training: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
+  platform_x86_ascend_training: ASCEND_X86_EULEROS
   platform_arm_ascend_training: ASCEND_ARM_EULEROS
-  platform_x86_ascend_inference: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
-  platform_arm_ascend_inference: ASCEND_ARM_EULEROS
+  platform_arm_ascend910b_training: ASCEND_ARM_EULEROS_910B
   platform_x86_gpu_training: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
   platform_x86_gpu_inference: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
   platform_x86_cpu: CPU_X86_UBUNTU
 
 case_type:
-  platform_x86_ascend_training: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
   platform_arm_ascend_training: ASCEND_ARM_EULEROS
-  platform_x86_ascend_inference: ASCEND_X86_EULEROS, ASCEND_X86_UBUNTU
-  platform_arm_ascend_inference: ASCEND_ARM_EULEROS
+  platform_arm_ascend910b_training: ASCEND_ARM_EULEROS_910B
   platform_x86_gpu_training: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
   platform_x86_gpu_inference: GPU_X86_UBUNTU_CUDA10,GPU_X86_UBUNTU_CUDA11
   platform_x86_cpu: CPU_X86_UBUNTU

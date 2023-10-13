@@ -24,9 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename U>
-using Complex = mindspore::utils::Complex<U>;
-
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 std::unordered_map<TypeId, CopyWithSliceGpuKernel::CopyWithSliceFunc> CopyWithSliceGpuKernel::func_list_ = {
   {kNumberTypeFloat16, &CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl<half>},
   {kNumberTypeFloat32, &CopyWithSliceGpuKernel::LaunchCopyWithSliceImpl<float>},

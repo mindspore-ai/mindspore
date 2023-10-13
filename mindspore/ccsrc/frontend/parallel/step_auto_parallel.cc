@@ -1031,7 +1031,9 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     // 如果是双递归的话枚举reshape和前向算子的策略
     if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
       (void)GenerateStrategiesByOperatorInfoPtr(operator_info);
-      (void)GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
+      if (pre_operator_info) {
+        (void)GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
+      }
       ConstructCNodeCostGraphEdges(cnode, all_nodes);
     }
     if (is_prev_param) {

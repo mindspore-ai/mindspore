@@ -94,6 +94,7 @@ const AnfNodePtr BatchNormSiluFusion::Process(const FuncGraphPtr &graph, const A
     MS_LOG(EXCEPTION) << "manager replace node failed in batchnorm silu fusion.";
   }
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  MS_EXCEPTION_IF_NULL(kernel_info_setter);
   kernel_info_setter->SetKernelInfo(fused_batch_norm_with_silu, KernelType::UNKNOWN_KERNEL_TYPE);
   MS_LOG(INFO) << "Batch norm and silu operation fusion is finish.";
   return tuple_get_item;

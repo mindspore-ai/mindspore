@@ -563,15 +563,16 @@ std::string VariableAdjoint::ToString() const {
 }
 
 AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async)
+                                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
+                                   bool grad_by_value)
     : ad_param_(std::make_shared<AdParam>()) {
   ad_param()->tape_->debug_info()->set_name("grad_top");
   MS_LOG(DEBUG) << "Start AutoGradCellImpl, input size: " << input_param_values.size();
   ad_param()->variable_adjoint_set_.reserve(op_num_in_bprop_graph);
   ad_param()->anfnode_to_variable_adjoint_.reserve(op_num_in_bprop_graph);
+  ad_param()->users_.dout_user_.reserve(op_num_in_bprop_graph);
   weights_used_in_graph_.reserve(op_num_in_bprop_graph);
-  assist_queue_ = assist_queue;
-  enable_async_ = enable_async;
+
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     auto input_parameter = ad_param()->fg_->add_parameter();
     input_parameter->set_abstract(abs_list[i]);
@@ -594,6 +595,9 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
     (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
   }
 
+  assist_queue_ = assist_queue;
+  enable_async_ = enable_async;
+  grad_by_value_ = grad_by_value;
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
@@ -601,7 +605,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
 
   auto &prim = grad_param->op_grad_info->op_prim;
-  if (!IsPrimNeedGrad(prim) || (grad_param->grad_by_value && !NeedGrad(grad_param->op_grad_info->input_value))) {
+  if (!IsPrimNeedGrad(prim) || (grad_by_value_ && !NeedGrad(grad_param->op_grad_info->input_value))) {
     MS_LOG(DEBUG) << "Prim " << prim->name() << " does not need to do op grad.";
     return true;
   }
@@ -621,7 +625,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   // bprop_cut grad op is ok
   bool is_custom_prim =
     IsPrimitiveEquals(prim, prim::kPrimHookBackward) || IsPrimitiveEquals(prim, prim::kPrimCellBackwardHook);
-  if (!grad_param->grad_by_value && !is_custom_prim) {
+  if (!grad_by_value_ && !is_custom_prim) {
     auto k_node = BuildKNode(NewValueNode(prim), grad_param, true);
     variable_adjoint->set_k_node(k_node);
     SetKNodeInfo(grad_param->op_grad_info->out_value, k_node, grad_param->op_grad_info->out_abs);
@@ -655,7 +659,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     UpdateNextEdgesAsync(variable_adjoint, outputs, grad_param);
   } else {
     UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                    grad_param->op_grad_info->input_abs, grad_param->grad_by_value);
+                    grad_param->op_grad_info->input_abs, grad_by_value_);
   }
   return true;
 }
@@ -666,7 +670,7 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
   CNodePtr bprop_cnode = nullptr;
   AnfNodePtr k_node = nullptr;
   AnfNodePtr dout = nullptr;
-  if (grad_param->grad_by_value) {
+  if (grad_by_value_) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
@@ -699,7 +703,7 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     (void)outputs.emplace_back(din);
   }
   UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                  grad_param->grad_by_value);
+                  grad_by_value_);
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
@@ -887,7 +891,7 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
     pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(ad_graph);
   }
   // Replace cnode with valuenode for reduce compute
-  bool jit_by_value = grad_param->is_jit_graph && grad_param->grad_by_value;
+  bool jit_by_value = grad_param->is_jit_graph && grad_by_value_;
   if (jit_by_value) {
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(ad_graph);
   }
@@ -900,7 +904,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
   MS_EXCEPTION_IF_NULL(grad_param);
   // First handle parameters
   CreateParameterAdjoint(grad_param);
-  bool jit_by_value = grad_param->is_jit_graph && grad_param->grad_by_value;
+  bool jit_by_value = grad_param->is_jit_graph && grad_by_value_;
   const auto &order = TopoSort(grad_param->fg->output());
   for (const auto &node : order) {
     if (node == nullptr || !node->isa<CNode>()) {
@@ -970,7 +974,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       (void)input_abs.emplace_back(cnode->input(i)->abstract());
     }
-    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs, grad_param->grad_by_value);
+    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs, grad_by_value_);
     SetGradMetaData(out, variable_adjoint);
     (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(node, variable_adjoint));
     (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -1024,8 +1028,7 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
   op_grad_info->out_value = out;
   op_grad_info->out_abs = cnode->abstract();
   op_grad_info->input_value_grad_type = grad_param->op_grad_info->input_value_grad_type;
-  auto meta_graph_grad_param =
-    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process);
+  auto meta_graph_grad_param = std::make_shared<GradParam>(op_grad_info, grad_param->use_dynamic_shape_process);
   meta_graph_grad_param->is_jit_graph = true;
   // Set to control flow just let it go by ad::Grad, because grad_func_graph with no abstract
   meta_graph_grad_param->is_control_flow = true;
@@ -1075,11 +1078,23 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
     }
     if (input_node->isa<ValueNode>()) {
       auto v_node = input_node->cast<ValueNodePtr>();
-      (void)PyNativeAlgo::Common::SetValueGradInfo(v_node->value(), nullptr, TensorGradType::kConstant);
+      auto v = v_node->value();
+      if (v != nullptr && v->isa<tensor::Tensor>()) {
+        const auto &t = v->cast<tensor::TensorPtr>();
+        const auto &grad_meta = t->auto_grad_meta_data();
+        // Jit forward graph has no parameters(input is tuple or constant), so input used in graph as valuenode, but it
+        // is used by tape_ as parameter also
+        if (grad_meta != nullptr && PyNativeAlgo::Common::IsParam(grad_meta->grad_type())) {
+          auto new_tensor = std::make_shared<tensor::Tensor>(t->data_type(), t->shape(), t->data_ptr());
+          new_tensor->set_device_address(t->device_address());
+          v = new_tensor;
+        }
+      }
+      (void)PyNativeAlgo::Common::SetValueGradInfo(v, nullptr, TensorGradType::kConstant);
       // In case of jit forward graph and pynative bprop graph used same valuenode
-      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v_node->value(), v_node->abstract());
+      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v, v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
-      (void)input_value.emplace_back(v_node->value());
+      (void)input_value.emplace_back(v);
     } else {
       // Make Fake value
       auto v = MakeValue(0);
@@ -1126,7 +1141,7 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
   MS_EXCEPTION_IF_NULL(grad_param);
   AnfNodePtrList node_list;
   (void)node_list.emplace_back(NewValueNode(grad_param->op_grad_info->op_prim));
-  if (grad_param->grad_by_value || is_custom_prim) {
+  if (grad_by_value_ || is_custom_prim) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
@@ -1393,7 +1408,7 @@ void AutoGradCellImpl::UpdateNextEdgesAsync(const VariableAdjointPtr &variable, 
                                             const GradParamPtr &grad_param) {
   auto task = [this, variable, dins, grad_param]() {
     this->UpdateNextEdges(variable, dins, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                          grad_param->grad_by_value);
+                          grad_by_value_);
   };
   bool success = assist_queue_->Push(new (std::nothrow) BpropTask(std::move(task)));
   if (!success) {
@@ -1775,11 +1790,6 @@ void AutoGradCellImpl::SetSensAndWeights(const tensor::TensorPtrList &weights, b
       UpdateTapeParameter(tensor);
     }
   }
-
-  // For lazy add user data, we need emplace to user.
-  for (const auto &user_data : lazy_user_data_) {
-    AddUser(std::get<kInputNum1>(user_data), std::get<kInputNum2>(user_data), std::get<kInputNum3>(user_data));
-  }
 }
 
 OrderedSet<VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeReverseIter() {
@@ -1794,7 +1804,9 @@ OrderedSet<VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeRe
 }
 
 void AutoGradCellImpl::BackPropagate() {
+  UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
+  SeenNum seen = NewSeenGeneration();
   for (auto iter = last_node_reverse_iter; iter != ad_param()->variable_adjoint_set_.rend(); ++iter) {
     const auto &variable = *iter;
     if (!variable->is_need_propagate() || !variable->is_need_grad()) {
@@ -1821,7 +1833,7 @@ void AutoGradCellImpl::BackPropagate() {
     for (const auto &next_edge : next_edges) {
       const auto &last_variable = next_edge.first;
       const auto &din = next_edge.second;
-      bprop_pass::ConvertMakeTupleInputToDynamicInput(din, this);
+      bprop_pass::ConvertMakeTupleInputToDynamicInput(din, seen, this);
       last_variable->fn()->UpdateAccumulativeDout(din);
       last_variable->set_is_need_propagate(true);
     }
@@ -1961,22 +1973,23 @@ void AutoGradCellImpl::SetOutput(const tensor::TensorPtrList &weights, const std
 void AutoGradCellImpl::LazyAddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(user);
-  (void)lazy_user_data_.emplace_back(std::make_tuple(node, user, index));
+  (void)ad_param()->lazy_user_data_.emplace_back(std::make_tuple(node, user, index));
+}
+
+void AutoGradCellImpl::UpdateLazyUser() {
+  // For lazy add user data, we need emplace to user.
+  for (const auto &user_data : ad_param()->lazy_user_data_) {
+    AddUser(std::get<kInputNum1>(user_data), std::get<kInputNum2>(user_data), std::get<kInputNum3>(user_data));
+  }
 }
 
 void AutoGradCellImpl::AddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(ad_param_);
-  if (ad_param()->users_.dout_user_.find(node) == ad_param()->users_.dout_user_.end()) {
-    ad_param()->users_.dout_user_[node] = {};
-  }
   (void)ad_param()->users_.dout_user_[node].emplace_back(user, index);
 }
 
 void AutoGradCellImpl::AddTupleGetItemUser(const AnfNodePtr &node, const CNodePtr &user, size_t index) {
   MS_EXCEPTION_IF_NULL(ad_param_);
-  if (ad_param()->users_.tuple_getitem_user_.find(node) == ad_param()->users_.tuple_getitem_user_.end()) {
-    ad_param()->users_.tuple_getitem_user_[node] = {};
-  }
   (void)ad_param()->users_.tuple_getitem_user_[node].emplace_back(user, index);
 }
 

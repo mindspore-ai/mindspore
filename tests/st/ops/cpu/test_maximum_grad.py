@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,25 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
-import mindspore.ops.operations._grad_ops as G
+from mindspore.ops import operations as P
+from tests.st.pynative.utils import GradOfAllInputs
 
 context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="CPU")
+
+
+class Maximum(Cell):
+    def __init__(self):
+        super(Maximum, self).__init__()
+        self.max = P.Maximum()
+
+    def construct(self, inputa, inputb):
+        return self.max(inputa, inputb)
 
 
 class MaxmumGradNet(Cell):
     def __init__(self):
         super(MaxmumGradNet, self).__init__()
-        self.maximum_grad = G.MaximumGrad()
+        self.maximum_grad = GradOfAllInputs(Maximum())
 
     def construct(self, x, y, dy):
         return self.maximum_grad(x, y, dy)
@@ -63,7 +73,7 @@ def test_broadcast_grad_cpu_type():
     input_dout = np.maximum(input_x, input_y)
     net = MaxmumGradNet()
     dtypes = (np.int16, np.int32, np.int64, np.float16,
-              np.float32, np.float64, np.uint16, np.uint32, np.uint64)
+              np.float32, np.float64, np.uint16, np.uint32)
     for dtype in dtypes:
         result = net(Tensor(input_x.astype(dtype)), Tensor(input_y.astype(dtype)),
                      Tensor(input_dout.astype(dtype)))
@@ -193,3 +203,25 @@ def test_broadcast_grad_cpu():
     result = net(Tensor(x), Tensor(y), Tensor(dout))
     assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_max_tensor_grad_with_same_input():
+    """
+    Feature: test maximumgrad on CPU
+    Description: test maximumgrad with same input.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    y_np = np.array([1.7, 2.3, 5.8]).astype(np.float32)
+    dout = np.array([1.0, -1.0, 0]).astype(np.float32)
+    net = MaxmumGradNet()
+    output = net(Tensor(x_np), Tensor(y_np), Tensor(dout))
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([0.5, -0.5, 0.])
+    expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,42 +18,9 @@ from __future__ import absolute_import
 
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad_experimental.grad_base import bprop_getters, sum_grad_reduce_axis
-import mindspore as ms
-
-reshape = P.Reshape()
-
-
-@bprop_getters.register(inner.TensorCopySlices)
-def get_bprop_tensor_copy_slices(self):
-    """Generate bprop for TensorCopySlices"""
-    tensor_copy_slices = inner.TensorCopySlices()
-
-    def bprop(x, update, begin, end, stride, out, dout):
-        x_grad = tensor_copy_slices(dout, zeros_like(update), begin, end, stride)
-        update_grad = F.strided_slice(dout, begin, end, stride)
-        res = (x_grad, update_grad, zeros_like(begin), zeros_like(end), zeros_like(stride))
-        return res
-
-    return bprop
-
-
-@bprop_getters.register(inner.DynamicResizeNearestNeighbor)
-def get_bprop_dynamic_resize_nearest_neighbor(self):
-    """Generate bprop for DynamicResizeNearestNeighbor"""
-    op = G.ResizeNearestNeighborGrad(self.align_corners)
-    shape_op = P.Shape()
-
-    def bprop(inputs, size, out, dout):
-        shp = shape_op(inputs)
-        # 2 and 3 represent the height and width
-        shp = (shp[2:])
-        return (op(dout, shp), zeros_like(size))
-
-    return bprop
+from mindspore.ops._grad_experimental.grad_base import bprop_getters
 
 
 @bprop_getters.register(inner.ParallelResizeBilinear)
@@ -66,15 +33,6 @@ def get_bprop_parallel_resize_bilinear(self):
         dx = grad(dout, x, size)
         return dx, zeros_like(size)
 
-    return bprop
-
-
-@bprop_getters.register(inner.ConvertToDynamic)
-def get_bprop_gpu_convert_to_dynamic_rank(self):
-    """Get backprop for ConvertToDynamic."""
-
-    def bprop(x, out, dout):
-        return (dout,)
     return bprop
 
 
@@ -109,44 +67,5 @@ def get_bprop_ps_roi_pooling(self):
         )(dout[0], rois, mapping_channel)
 
         return dx, zeros_like(rois)
-
-    return bprop
-
-
-@bprop_getters.register(inner.DynamicBroadcastTo)
-def get_bprop_dynamic_broadcast_to(self):
-    """Generate bprop for DynamicBroadcastTo"""
-    shape_op = P.Shape()
-
-    def bprop(x, shp, out, dout):
-        x_shape = shape_op(x)
-        broadcast_shape = shape_op(out)
-
-        _, reduction_axes = inner.DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
-        out_type = dout.dtype
-        if out_type in (ms.int16, ms.int32, ms.int64):
-            dout = P.Cast()(dout, ms.float32)
-            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
-            reduced_grad = P.Cast()(reduced_grad, out_type)
-        else:
-            reduced_grad = sum_grad_reduce_axis(dout, reduction_axes, keep_dims=True)
-        dx = reshape(reduced_grad, x_shape)
-        return dx, zeros_like(shp)
-
-    return bprop
-
-
-@bprop_getters.register(inner.SiLU)
-def get_bprop_silu(self):
-    """Generate bprop for SiLU"""
-    sigmoid_grad = G.SigmoidGrad()
-    mul_func = P.Mul()
-
-    def bprop(x, out, dout):
-        sigmoid_input = P.Sigmoid()(x)
-        bc_dx = mul_func(x, dout)
-        bc_dy = mul_func(sigmoid_input, dout)
-        dx = sigmoid_grad(sigmoid_input, bc_dx)
-        return (dx+bc_dy,)
 
     return bprop

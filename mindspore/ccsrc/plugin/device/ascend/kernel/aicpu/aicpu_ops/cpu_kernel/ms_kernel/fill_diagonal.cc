@@ -83,7 +83,7 @@ uint32_t FillDiagonalCpuKernel::Compute(CpuKernelContext &ctx) {
 
   int64_t stride = 0;
   for (int64_t i = (input_dims - 1); i >= 0; i--) {
-    stride += static_cast<int64_t>(pow(width, i));
+    stride += static_cast<int64_t>(std::round(std::pow(width, i)));
   }
 
   switch (input_dtype) {

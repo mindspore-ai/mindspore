@@ -47,7 +47,8 @@
 
 namespace mindspore {
 namespace parallel {
-
+mindspore::HashMap<int64_t, int64_t> send_tag_map;
+mindspore::HashMap<int64_t, int64_t> recv_tag_map;
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
 
 bool IsInWhiteList(const CNodePtr &cnode) {
@@ -335,7 +336,8 @@ void PipelineTransformer::LabelMicroBatch() {
   auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
   MS_EXCEPTION_IF_NULL(graph);
   if (!LabelParameterStart(graph)) {
-    MS_LOG(EXCEPTION) << "Stage 0 should has at least 1 parameter. but got none.";
+    MS_LOG(EXCEPTION) << "Stage 0 should has at least 1 parameter. but got none. "
+                      << "One possible cause is that the @lazy_inline decorator is misplaced.";
   }
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
@@ -514,7 +516,7 @@ bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) const {
   if (IsInWhiteList(cnode)) {
     return false;
   }
-  if (IsInParallelBlackList(prim)) {
+  if (!IsParallelConsiderCNode(cnode)) {
     MS_LOG(INFO) << "PipelineSplit don't care node:" << prim->name();
     return false;
   }
@@ -784,7 +786,7 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
     } else {
       auto graph = user_cnode->func_graph();
       MS_EXCEPTION_IF_NULL(graph);
-      if (graph != root_ && graph != main_graph_ && graph->stage() != -1) {
+      if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
         (void)((*parameter_stage).insert(graph->stage()));
       }
     }
@@ -814,7 +816,7 @@ void PipelineTransformer::ParameterColoring() {
         } else {
           auto graph = user_cnode->func_graph();
           MS_EXCEPTION_IF_NULL(graph);
-          if (graph != root_ && graph != main_graph_ && graph->stage() != -1) {
+          if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
             (void)parameter_stage.insert(graph->stage());
             continue;
           }
@@ -917,8 +919,8 @@ AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) con
 SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage,
                                          const ValuePtr &value) {
   auto dest_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
-  int64_t send_tag = send_tag_map_[dest_rank];
-  send_tag_map_[dest_rank]++;
+  int64_t send_tag = send_tag_map[dest_rank];
+  send_tag_map[dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
   Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(user_node_stage));
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
@@ -974,8 +976,8 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
                                               int64_t node_stage, const ValuePtr &value,
                                               const AnfNodePtr &graph_param) {
   auto src_rank = global_rank_ - (user_node_stage - node_stage) * per_stage_rank_num_;
-  int64_t recv_tag = recv_tag_map_[src_rank];
-  recv_tag_map_[src_rank]++;
+  int64_t recv_tag = recv_tag_map[src_rank];
+  recv_tag_map[src_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(recv_tag));
   Attr attr_rank = std::make_pair(SRC_RANK, MakeValue(node_stage));
   bool is_param = true;
@@ -1304,8 +1306,8 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
   MS_EXCEPTION_IF_NULL(old);
   auto old_is_pipeline_param = old->HasPrimalAttr(PIPELINE_PARAM);
   auto dest_rank = old->user_data<int64_t>(DEST_RANK);
-  auto send_tag = send_tag_map_[*dest_rank];
-  send_tag_map_[*dest_rank]++;
+  auto send_tag = send_tag_map[*dest_rank];
+  send_tag_map[*dest_rank]++;
   Attr attr_tag = std::make_pair(SR_TAG, MakeValue(send_tag));
   Attr attr_rank = std::make_pair(DEST_RANK, MakeValue(*(old->user_data<int64_t>(USER_NODE_STAGE))));
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
@@ -1438,8 +1440,8 @@ AnfNodePtr PipelineTransformer::GenNewRecvFromOld(const AnfNodePtr &node, const 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto src_rank = *(cnode->user_data<int64_t>(SRC_RANK));
-  auto recv_tag = recv_tag_map_[src_rank];
-  recv_tag_map_[src_rank]++;
+  auto recv_tag = recv_tag_map[src_rank];
+  recv_tag_map[src_rank]++;
   auto dtype = node->user_data<Type>(SLICE_DTYPE);
   auto slice_shape = *(cnode->user_data<Shape>(SLICE_SHAPE));
   auto shape = GetShapeValue(slice_shape);
@@ -1686,8 +1688,8 @@ void PipelineTransformer::CutGraph() {
     (void)manager_->Replace(main_graph_->output(), out_node);
     return;
   }
-  send_tag_map_.clear();
-  recv_tag_map_.clear();
+  send_tag_map.clear();
+  recv_tag_map.clear();
   if (!IsLastStage()) {
     HandleGraphOutputs(send_ops);
   }

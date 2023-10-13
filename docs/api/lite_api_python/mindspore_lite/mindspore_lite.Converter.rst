@@ -64,6 +64,14 @@ mindspore_lite.Converter
         返回：
             str，转换模型时的目标设备。仅对Ascend设备有效。使用场景是在Ascend设备上，如果你需要转换生成的模型调用Ascend后端执行推理，则设置该参数，若未设置，默认模型调用CPU后端推理。支持以下目标设备： ``"Ascend"`` 。
 
+    .. py:method:: device_id
+        :property:
+
+        设置/获取转换模型时的目标设备编号。
+
+        返回：
+            int，转换模型时的目标设备。仅对Ascend设备有效。
+
     .. py:method:: enable_encryption
         :property:
 
@@ -159,6 +167,14 @@ mindspore_lite.Converter
             - **DataType.INT8**    - 8位整型数。
             - **DataType.UINT8**   - 无符号8位整型数。
             - **DataType.UNKNOWN** - 设置与模型输出Tensor相同的DataType。
+
+    .. py:method:: rank_id
+        :property:
+
+        设置/获取转换分布式模型时的目标设备rank编号。
+
+        返回：
+            int，转换模型时的目标设备rank编号。仅对Ascend设备有效。
 
     .. py:method:: save_type
         :property:

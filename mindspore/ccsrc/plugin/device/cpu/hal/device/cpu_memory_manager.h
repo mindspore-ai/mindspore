@@ -46,7 +46,7 @@ class BACKEND_EXPORT CPUMemoryManager : public MemoryManager {
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) const;
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
-  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override {
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false) override {
     return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem);
   }
   void FreeMemFromMemPool(void *device_ptr) override { CPUMemoryPool::GetInstance().FreeTensorMem(device_ptr); }

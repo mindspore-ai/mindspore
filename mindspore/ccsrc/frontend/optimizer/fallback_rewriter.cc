@@ -559,7 +559,11 @@ class BeforeOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     // Inputs should be [extract_keyword_arg, arg, key]
     const size_t expect_inputs_size = 3;
-    CheckInputsSize(node, expect_inputs_size);
+    // Inputs should be [extract_keyword_arg, arg, key, monad]
+    const size_t expect_inputs_has_side_effect_size = 4;
+    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
+    }
     constexpr size_t key_index = 2;
     return node->input(key_index);
   }
@@ -1145,14 +1149,6 @@ class AfterOptARewriter : public BaseRewriter {
 
     res->set_debug_info(node->debug_info());
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
-
     MS_LOG(DEBUG) << "Convert make_list node to PyExecute node: " << res->DebugString();
     return res;
   }
@@ -1204,20 +1200,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (inputs_size == max_node_inputs_size) {
       res->add_input(node_inputs[max_node_inputs_size - 1]);
     }
-
     res->set_debug_info(node->debug_info());
-
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto list_abs = abs->cast<abstract::AbstractListPtr>();
-      MS_EXCEPTION_IF_NULL(list_abs);
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
 
     MS_LOG(DEBUG) << "Convert list inplace append node to PyExecute node: " << res->DebugString();
     return res;
@@ -1321,20 +1304,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (inputs_size == max_node_inputs_size) {
       res->add_input(node_inputs[max_node_inputs_size - 1]);
     }
-
     res->set_debug_info(node->debug_info());
-
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto list_abs = abs->cast<abstract::AbstractListPtr>();
-      MS_EXCEPTION_IF_NULL(list_abs);
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
 
     MS_LOG(DEBUG) << "Convert list inplace pop node to PyExecute node: " << res->DebugString();
     return res;
@@ -1382,20 +1352,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (inputs_size == max_node_inputs_size) {
       res->add_input(node_inputs[max_node_inputs_size - 1]);
     }
-
     res->set_debug_info(node->debug_info());
-
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto list_abs = abs->cast<abstract::AbstractListPtr>();
-      MS_EXCEPTION_IF_NULL(list_abs);
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
 
     MS_LOG(DEBUG) << "Convert list inplace reverse node to PyExecute node: " << res->DebugString();
     return res;
@@ -1436,20 +1393,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = fg->NewCNode(key_value_list);
 
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
-
     res->set_debug_info(node->debug_info());
-
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto list_abs = abs->cast<abstract::AbstractListPtr>();
-      MS_EXCEPTION_IF_NULL(list_abs);
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
 
     MS_LOG(DEBUG) << "Convert list inplace clear node to PyExecute node: " << res->DebugString();
     return res;
@@ -1506,20 +1450,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (inputs_size == max_node_inputs_size) {
       res->add_input(node_inputs[max_node_inputs_size - 1]);
     }
-
     res->set_debug_info(node->debug_info());
-
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      auto abs = node->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      auto list_abs = abs->cast<abstract::AbstractListPtr>();
-      MS_EXCEPTION_IF_NULL(list_abs);
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
 
     MS_LOG(DEBUG) << "Convert list inplace insert node to PyExecute node: " << res->DebugString();
     return res;
@@ -2341,13 +2272,6 @@ class AfterOptARewriter : public BaseRewriter {
     auto list_obj_str = list_obj_str_prefix + list_obj_id + "_";
     auto res = fallback::ConvertPyObjectToPyExecute(fg, list_obj_str, list_object, value_node, false);
 
-    static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-    if (!allow_runtime_compile) {
-      // After runtime compile for AbstractAny is supported, PyExecute with list output only need to
-      // be inferred as AbstractAny.
-      fallback::SetRealType(res, list_abs->BuildType());
-      fallback::SetRealShape(res, list_abs->BuildShape());
-    }
     return res;
   }
 

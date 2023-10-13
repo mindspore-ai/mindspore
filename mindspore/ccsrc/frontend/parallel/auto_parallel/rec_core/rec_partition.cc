@@ -94,6 +94,9 @@ double GetWeights(const Graph::NodeType &node) {
   } else if (op.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
     return 0.0;
+  } else if (op.op_type == OperatorType::kRecVirtual) {
+    // For Unknown type
+    return 0.0;
   } else if (op.op_type == OperatorType::kRecStandAlone) {
     // For StandAlone type
     return 0.0;
@@ -268,7 +271,8 @@ StrategyRec PartitionNode(Graph::NodeType node,
   } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
              node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
              node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
-             node.apply.op_type == kRecUnsortedSegmentOp || node.apply.op_type == OperatorType::kRecBatchParallel) {
+             node.apply.op_type == kRecUnsortedSegmentOp || node.apply.op_type == OperatorType::kRecBatchParallel ||
+             node.apply.op_type == OperatorType::kRecVirtual) {
     // For BatchParallel type
     auto cost_ptr = std::make_shared<CostBatchParallel>();
     return cost_ptr->GetOptimalStr(node);
@@ -321,7 +325,7 @@ Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
   return Node;
 }
 
-size_t GetStratNumber(const Graph::NodeType Node) { return Node.apply.strs.size(); }
+size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
 
 void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> &graph) {
   if (!ENABLE_PIPE_ALGO) {

@@ -113,6 +113,11 @@ BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
   auto dout_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];
 
+  constexpr size_t kRank = 4;
+  if (!IsDynamicRank(dout_shape) && dout_shape.size() < kRank) {
+    MS_LOG(EXCEPTION) << "For " << primitive->name() << ", the rank of input[0] can't be less than " << kRank
+                      << ", but got a invalid shape: " << ShapeVectorToStr(dout_shape);
+  }
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   ShapeVector tmp_shape = {dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]};
   auto dout_shape_norm = format == Format::NCHW ? dout_shape : tmp_shape;

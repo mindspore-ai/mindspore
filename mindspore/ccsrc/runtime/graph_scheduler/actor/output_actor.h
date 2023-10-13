@@ -42,10 +42,12 @@ using mindspore::tensor::TensorPtr;
 // The output actor is used to receive the output result of actor which represents the graph output.
 class OutputActor : public AbstractActor {
  public:
-  OutputActor(const std::string &name, size_t loop_count, size_t outputs_num)
+  OutputActor(const std::string &name, size_t loop_count, size_t outputs_num,
+              const std::vector<KernelWithIndex> &summary_nodes)
       : AbstractActor(name, KernelTransformType::kOutputActor, nullptr),
         loop_count_(loop_count),
         current_count_(0),
+        summary_nodes_(summary_nodes),
         outputs_num_(outputs_num),
         current_outputs_num_(0) {
     outputs_.resize(outputs_num);
@@ -64,6 +66,10 @@ class OutputActor : public AbstractActor {
   // The graph output need be set new device address every step or loop, to avoid that the device address
   // context of tensor be rewritten in the next step or next loop.
   void UpdateOutputDeviceAddress();
+
+  // Summary node will keep the inputs, so if the input(except parameter, weight) size changes in dynamic shape,
+  // the input device address will be reuse in a wrong way. So we should free summary node inputs after usage.
+  void FreeSummaryNodeMem();
 
   // Get the member.
   size_t loop_count() const { return loop_count_; }
@@ -93,6 +99,7 @@ class OutputActor : public AbstractActor {
   size_t current_count_;
 
   // The outputs.
+  std::vector<KernelWithIndex> summary_nodes_;
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
   std::vector<DeviceTensor *> output_device_tensors_;

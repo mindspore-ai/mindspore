@@ -33,8 +33,12 @@ const int kMaxGroupLoop = kGroupSize * 3;  // 128 * 3 =
 
 template <typename T, typename S>
 struct Cmp {
-  __device__ static inline bool lt(T a, T b, S i, S j) { return (a < b) || ((a == b) && ((i < 0 || j < i) && j >= 0)); }
-  __device__ static inline bool gt(T a, T b, S i, S j) { return (a > b) || ((a == b) && ((i < 0 || j < i)) && j >= 0); }
+  __device__ static inline bool lt(T a, T b, S i, S j) {
+    return (a < b) || ((a == b) && ((i < 0 || j < i) && j >= 0)) || i < 0;
+  }
+  __device__ static inline bool gt(T a, T b, S i, S j) {
+    return (a > b) || ((a == b) && ((i < 0 || j < i)) && j >= 0) || i < 0;
+  }
 };
 
 template <typename T>
@@ -303,7 +307,7 @@ void GeneralReductionImpl(bool small, size_t outer_size, size_t bound, size_t in
 template <typename T, typename S>
 cudaError_t CalGeneralReduction(bool small, const T *input, const size_t bound, const size_t outerSize,
                                 const size_t innerSize, S *output_index, T *output, cudaStream_t stream) {
-  T init_K = small ? std::numeric_limits<T>::max() : std::numeric_limits<T>::lowest();
+  T init_K = small ? std::numeric_limits<T>::infinity() : std::numeric_limits<T>::lowest();
   GeneralReductionImpl(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
   return GetCudaStatus();
 }
@@ -573,7 +577,7 @@ void GeneralReductionImpl1(bool small, size_t outer_size, size_t bound, size_t i
 template <typename S>
 cudaError_t CalGeneralReduction(bool small, const half *input, const size_t bound, const size_t outerSize,
                                 const size_t innerSize, S *output_index, half *output, cudaStream_t stream) {
-  half init_K = small ? std::numeric_limits<half>::max() : std::numeric_limits<half>::lowest();
+  half init_K = small ? std::numeric_limits<half>::infinity() : std::numeric_limits<half>::lowest();
   GeneralReductionImpl1(small, outerSize, bound, innerSize, input, output, output_index, init_K, stream);
   return GetCudaStatus();
 }

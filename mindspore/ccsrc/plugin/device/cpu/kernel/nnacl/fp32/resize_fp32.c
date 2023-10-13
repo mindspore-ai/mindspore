@@ -587,3 +587,12 @@ float CalculateHalfPixel(int x_resized, int length_original, int length_resized)
   float actual = (float)(x_resized + 0.5) / scale - 0.5;
   return actual > 0 ? actual : 0;
 }
+
+int CheckCropAndResizeBoxIdx(int32_t *box_idx, int32_t num_boxes, int32_t batch) {
+  for (int i = 0; i < num_boxes; i++) {
+    if (box_idx[i] < 0 || box_idx[i] >= batch) {
+      return NNACL_ERR;
+    }
+  }
+  return NNACL_OK;
+}

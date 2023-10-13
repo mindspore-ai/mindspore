@@ -254,3 +254,35 @@ def test_string_not_in_string():
 
     x, y = foo()
     assert (not x) and y
+
+
+def test_string_upper():
+    """
+    Feature: string operation
+    Description: Test str.upper()
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        x = "abc".upper()
+        y = "DeF".upper()
+        return x, y
+
+    x, y = foo()
+    assert x == "ABC" and y == "DEF"
+
+
+def test_string_lower():
+    """
+    Feature: string operation
+    Description: Test str.lower()
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        x = "ABC".lower()
+        y = "DeF".lower()
+        return x, y
+
+    x, y = foo()
+    assert x == "abc" and y == "def"

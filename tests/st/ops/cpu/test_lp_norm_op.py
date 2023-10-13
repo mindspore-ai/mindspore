@@ -103,6 +103,25 @@ def test_lp_norm_op(data_type):
     output = lp_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_lp_norm_op_high_pow():
+    """
+    Feature: Test LpNorm with high pow.
+    Description: The input shape need match to output shape.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    input_x = Tensor(np.array([[0.33854103], [-0.13209231]]).astype(np.float32))
+    error = 1e-6
+    benchmark_output = np.array([0.338541]).astype(np.float32)
+    axis = 0
+    p = 90
+    keep_dims = False
+    lp_norm = LpNormNet(axis, p, keep_dims)
+    output = lp_norm(input_x)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu

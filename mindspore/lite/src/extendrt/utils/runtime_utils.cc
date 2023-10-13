@@ -82,6 +82,8 @@ void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
     bool is_update_shape = false;
     for (size_t i = 0; i < output_num; ++i) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_node, i);
+      MS_EXCEPTION_IF_NULL(device_address);
+      MS_EXCEPTION_IF_NULL(output_addrs[i]);
       auto addr_ptr = device_address->GetMutablePtr();
       if (addr_ptr != nullptr && output_addrs[i]->addr != addr_ptr) {
         free(addr_ptr);
@@ -115,9 +117,11 @@ void RuntimeUtils::UpdateKernelNodeOutputInfo(const AnfNodePtr &kernel_node,
       for (size_t i = 0; i < abstract_tuple->elements().size(); ++i) {
         auto tmp_abstract = abstract_tuple->elements()[i];
         MS_EXCEPTION_IF_NULL(tmp_abstract);
+        MS_EXCEPTION_IF_NULL(kernel_tensors[i]);
         tmp_abstract->set_shape(std::make_shared<abstract::Shape>(kernel_tensors[i]->GetShapeVector()));
       }
     } else {
+      MS_EXCEPTION_IF_NULL(kernel_tensors[0]);
       abstract->set_shape(std::make_shared<abstract::Shape>(kernel_tensors[0]->GetShapeVector()));
     }
   }

@@ -67,13 +67,15 @@ class TensorIndex : public MetaFuncGraph {
   std::vector<AnfNodePtr> NormalizeTupleIndex(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                                               const std::vector<int64_t> &tuple_index_types,
                                               const IndexHandleLevel index_handle_level, const bool has_ellipsis,
-                                              const abstract::AbstractTuplePtr &tuple_abs_ptr, bool *all_empty_tensors);
+                                              const abstract::AbstractTuplePtr &tuple_abs_ptr);
   void RemakeTupleIndex(bool has_ellipsis, const std::vector<int64_t> &tuple_index_types, const AnfNodePtr &data_node,
                         const std::vector<AnfNodePtr> &new_normalized_tensors, size_t not_ellipsis_position_cnt,
                         size_t ellipsis_position);
   std::vector<CNodePtr> GetTupleIndexInfo(const AnfNodePtr &data_node, const AnfNodePtr &fancy_position_node,
                                           const std::vector<AnfNodePtr> &normalized_tensors,
                                           const mindspore::HashMap<std::string, ValuePtr> &attrs);
+  AnfNodePtr ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node, const abstract::AbstractTuplePtr &tuple_abs_ptr,
+                                    const std::vector<int64_t> &tuple_index_types, size_t expand_dims_cnt);
 
   FuncGraphPtr res_graph_;
   ShapeVector data_shape_;
@@ -89,15 +91,11 @@ class TensorIndexGetitem : public TensorIndex {
     return lhs.name_ == rhs.name_;
   }
 
- protected:
-  AnfNodePtr ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node, const abstract::AbstractTuplePtr &tuple_abs_ptr,
-                                    const std::vector<int64_t> &tuple_index_types, size_t expand_dims_cnt);
-
  private:
   void GetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
                       const abstract::AbstractSlicePtr &abs_slice_ptr);
   void GetItemByTuple(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
-                      const abstract::AbstractTuplePtr &tuple_abs_ptr);
+                      const abstract::AbstractTuplePtr &tuple_abs_ptr, const AbstractBasePtr &all_empty_tensor_index);
   std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr> NormalizeStrideInfoFromTuple(
     const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &index_abs,
     const std::vector<int64_t> &tuple_index_types, size_t tuple_index);
@@ -152,6 +150,17 @@ class HandleBoolTensor : public TensorIndex {
   MS_DECLARE_PARENT(HandleBoolTensor, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
   friend bool operator==(const HandleBoolTensor &lhs, const HandleBoolTensor &rhs) { return lhs.name_ == rhs.name_; }
+};
+
+class HandleScalarTensorIndex : public TensorIndex {
+ public:
+  explicit HandleScalarTensorIndex(const std::string &name) : TensorIndex(name) {}
+  ~HandleScalarTensorIndex() override = default;
+  MS_DECLARE_PARENT(HandleScalarTensorIndex, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const HandleScalarTensorIndex &lhs, const HandleScalarTensorIndex &rhs) {
+    return lhs.name_ == rhs.name_;
+  }
 };
 
 class PreSetitemByTuple : public TensorIndex {

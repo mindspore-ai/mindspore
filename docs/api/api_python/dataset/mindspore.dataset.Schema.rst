@@ -8,9 +8,6 @@ mindspore.dataset.Schema
     参数：
         - **schema_file** (str) - schema文件的路径。默认值： ``None`` 。
 
-    返回：
-        schema对象，关于数据集的行列配置的策略信息。
-
     异常：
         - **RuntimeError** - schema文件加载失败。
 

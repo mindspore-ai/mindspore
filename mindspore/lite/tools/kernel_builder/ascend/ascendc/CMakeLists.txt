@@ -22,14 +22,12 @@ endif()
 # modify vendor_name in install.sh and upgrade.sh
 add_custom_command(
   OUTPUT ${CMAKE_BINARY_DIR}/ascendc_scripts/install.sh
-          ${CMAKE_BINARY_DIR}/ascendc_scripts/upgrade.sh
   COMMAND mkdir -p ${CMAKE_BINARY_DIR}/ascendc_scripts
-  COMMAND cp -r ${PROJECT_SOURCE_DIR}/scripts/* ${CMAKE_BINARY_DIR}/ascendc_scripts/
-  COMMAND sed -i "s/vendor_name=customize/vendor_name=${vendor_name}/g"
+  COMMAND cp -r ${PROJECT_SOURCE_DIR}/../scripts/* ${CMAKE_BINARY_DIR}/ascendc_scripts/
+  COMMAND sed -i "s/vendor_name=customize/vendor_name=mslite_ascendc/g"
           ${CMAKE_BINARY_DIR}/ascendc_scripts/*)
 add_custom_target(
-  modify_vendor ALL DEPENDS ${CMAKE_BINARY_DIR}/ascendc_scripts/install.sh
-                            ${CMAKE_BINARY_DIR}/ascendc_scripts/upgrade.sh)
+  modify_vendor ALL DEPENDS ${CMAKE_BINARY_DIR}/ascendc_scripts/install.sh)
 install(
   DIRECTORY ${CMAKE_BINARY_DIR}/ascendc_scripts/
   DESTINATION ${PKG_PATH}

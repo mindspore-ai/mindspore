@@ -25,22 +25,22 @@ TensorStorageInfoPtrList SelectViewCalc(const PrimitivePtr &prim, const std::vec
   if (CheckInputsNull(inputs, kGatherInputsNum)) {
     return {};
   }
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   int64_t dim;
-  if (inputs[2]->isa<tensor::Tensor>()) {
-    auto dim_tensor = inputs[2]->cast<tensor::TensorPtr>();
+  if (inputs[kInputIndex2]->isa<tensor::Tensor>()) {
+    auto dim_tensor = inputs[kInputIndex2]->cast<tensor::TensorPtr>();
     dim = *(static_cast<int64_t *>(dim_tensor->data_c()));
   } else {
-    dim = GetValue<int64_t>(inputs[2]);
+    dim = GetValue<int64_t>(inputs[kInputIndex2]);
   }
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
   dim = DynamicDimWrap(dim, old_shape.size());
-  auto index = GetValue<int64_t>(inputs[1]);
-  old_storage_offset += index * old_strides[dim];
+  auto index = GetValue<int64_t>(inputs[kInputIndex1]);
+  old_storage_offset += static_cast<size_t>(index * old_strides[dim]);
   auto new_strides = old_strides;
   auto new_shape = old_shape;
   (void)new_shape.erase(new_shape.begin() + dim);

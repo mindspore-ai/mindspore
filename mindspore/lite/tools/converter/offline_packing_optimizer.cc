@@ -162,7 +162,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
     in_tensor->set_data(tensor_data, false);
     // Setup quant params.
     in_tensor->set_quant_params(lite_quant_params);
-    in_tensors->emplace_back(in_tensor);
+    (void)in_tensors->emplace_back(in_tensor);
     shape.clear();
     type_id = TypeId::kTypeUnknown;
   }
@@ -177,7 +177,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   }
   auto out_tensor = new (std::nothrow) Tensor(type_id, shape);
   MS_CHECK_TRUE_MSG(out_tensor != nullptr, RET_ERROR, "Create output tensor failed.");
-  out_tensors->emplace_back(out_tensor);
+  (void)out_tensors->emplace_back(out_tensor);
 
   if (in_tensors->size() != cnode->inputs().size() - 1 || out_tensors->empty()) {
     MS_LOG(ERROR) << "Failed to populate input tensors for " << cnode->fullname_with_scope() << ".";
@@ -204,7 +204,7 @@ STATUS MatmulPacking(const mindspore::CNodePtr &cnode_ptr, const FuncGraphPtr &f
     return RET_ERROR;
   }
   op_parameter->thread_num_ = kSingleThread;
-  op_parameter->quant_type_ = GetQuantType(cnode_ptr);
+  op_parameter->quant_type_ = static_cast<int>(GetQuantType(cnode_ptr));
 
   constexpr size_t max_name_len = 100;
   if (memcpy_s(op_parameter->name_, max_name_len, cnode_ptr->fullname_with_scope().c_str(),

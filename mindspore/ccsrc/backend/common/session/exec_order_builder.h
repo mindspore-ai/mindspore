@@ -55,6 +55,7 @@ class ExecOrderBuilder {
   void CheckLoop();
 
   bool IsTrivialNode(const AnfNodePtr &node);
+  void GetTrivialInputNode(const AnfNodePtr &node, SeenNum seen);
 
   // If PyNative graph has is_pynative_kernel_graph_ true, means no control flow and no loop need to be checked
   bool is_pynative_kernel_graph_{false};

@@ -59,6 +59,9 @@ class ReduceOp:
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
             This example should be run with multiple devices.
 
         >>> import numpy as np
@@ -147,6 +150,9 @@ class AllReduce(Primitive):
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
             This example should be run with 2 devices.
 
         >>> import numpy as np
@@ -232,6 +238,9 @@ class AllGather(PrimitiveWithInfer):
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -455,6 +464,9 @@ class ReduceScatter(Primitive):
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
             This example should be run with 2 devices.
 
         >>> import mindspore as ms
@@ -593,6 +605,9 @@ class Broadcast(PrimitiveWithInfer):
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -836,6 +851,9 @@ class AlltoAll(PrimitiveWithInfer):
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
 
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+
             This example should be run with 8 devices.
 
         >>> import os
@@ -956,6 +974,9 @@ class NeighborExchangeV2(Primitive):
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
             <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 

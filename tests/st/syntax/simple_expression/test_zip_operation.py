@@ -60,7 +60,7 @@ def test_zip_operation_args_size():
         assert np.all(out.asnumpy() == 1)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -92,6 +92,6 @@ def test_zip_operation_args_type():
 
     x = Tensor.from_numpy(np.ones([1], np.float32))
     net = AssignInZipLoop()
-    with pytest.raises(Exception, match="For 'zip', the all inputs must be list or tuple."):
+    with pytest.raises(TypeError, match="Cannot iterate over a scalar tensor."):
         out = net(x)
         assert np.all(out.asnumpy() == 1)

@@ -55,6 +55,11 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
         MS_LOG(ERROR) << "Failed to register Ascend plugin";
         return kLiteError;
       }
+      bool is_registered = kernel::AscendAllocatorPlugin::GetInstance().Register();
+      if (!is_registered) {
+        MS_LOG(ERROR) << "AscendAllocatorPlugin failed to register, cannot do acl memory operations";
+        return kLiteError;
+      }
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
       if (ascend_device_info == nullptr) {
         MS_LOG(ERROR) << "Failed to cast device info to AscendDeviceInfo";
@@ -302,10 +307,6 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
     MS_LOG(INFO) << "is multi model sharing mem prepare";
     return kSuccess;
   }
-  bool is_registered = kernel::AscendAllocatorPlugin::GetInstance().Register();
-  if (!is_registered) {
-    MS_LOG(WARNING) << "AscendAllocatorPlugin failed to register, acl memory operations will be skipped";
-  }
   auto ret = InitInputOutputInfos(graph);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Failed to init graph input and output infos";
@@ -482,12 +483,13 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
   for (size_t i = 0; i < inputs_.size(); i++) {
     auto input_tensor = std::dynamic_pointer_cast<TensorDefaultImpl>(inputs_[i]);
     MS_CHECK_TRUE_MSG(input_tensor != nullptr, kLiteNullptr, "cast to TensorDefaultImpl failed");
-    bool is_acl_host = true;
-    input_tensor->SetAclHost(is_acl_host);
+    auto origin_data_size = input_tensor->DataSize();
     input_tensor->SetShape(kernel_args_.inputs[i]->GetShapeVector());
-    void *data_buf = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(input_tensor->DataSize());
-    MS_CHECK_TRUE_MSG(data_buf != nullptr, kLiteNullptr, "malloc on host failed");
-    input_tensor->SetData(data_buf, false);
+    if (input_tensor->DataSize() > origin_data_size) {
+      void *data_buf = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(input_tensor->DataSize());
+      MS_CHECK_TRUE_MSG(data_buf != nullptr, kLiteNullptr, "malloc on host failed");
+      input_tensor->SetAclHostData(data_buf);
+    }
   }
   for (size_t i = 0; i < outputs_.size(); i++) {
     outputs_[i]->SetShape(kernel_args_.outputs[i]->GetShapeVector());

@@ -423,8 +423,8 @@ class Dataset:
         ir_children = [d.parse_tree(getter_mode) for d in self.children]
         # Bootstrap can only be performed on a copy of the original dataset node.
         # Bootstrap on original dataset node will make all iterators share the same process pool
-        self.iterator_bootstrap()
         self.pre_parse(getter_mode)
+        self.iterator_bootstrap()
         ir_node = self.parse(ir_children)
         ir_node = self.post_parse(ir_node)
         return ir_node
@@ -1069,16 +1069,19 @@ class Dataset:
     @check_take
     def take(self, count=-1):
         """
-        Takes at most given numbers of elements from the dataset.
-
-        Note:
-            1. If count is greater than the number of elements in the dataset or equal to -1,
-               all the elements in dataset will be taken.
-            2. The order of using take and batch matters. If take is before batch operation,
-               then take the given number of rows; otherwise take the given number of batches.
+        Take the first specified number of samples from the dataset.
 
         Args:
-            count (int, optional): Number of elements to be taken from the dataset. Default: ``-1`` .
+            count (int, optional): The desired number of samples to take. If the value exceeds
+                the total number of samples in the dataset, all data will be returned.
+                Default: ``-1`` , will return all data.
+
+        Note:
+            When there are operations that will change the number of samples of the dataset in
+            the data pipeline, the location of the `take` operation can change its effect.
+            For example, `batch` operation will combine the successive samples of the specified
+            `batch_size` into 1 sample, so `.batch(batch_size).take(1)` will be equivalent to
+            `.take(batch_size).batch(batch_size)`.
 
         Returns:
             Dataset, a new dataset with the above operation applied.
@@ -1179,7 +1182,7 @@ class Dataset:
                will be different in each epoch.
 
         Returns:
-            Tuple[Dataset], a tuple of new datasets splited from the original one.
+            Tuple[Dataset], a tuple of new datasets split from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -2447,7 +2450,7 @@ class MappableDataset(SourceDataset):
                shard may not be part of the same split.
 
         Returns:
-            Tuple[Dataset], a tuple of new datasets splited from the original one.
+            Tuple[Dataset], a tuple of new datasets split from the original one.
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
@@ -2697,13 +2700,13 @@ class BatchDataset(UnionBaseDataset):
 
 class BatchInfo(cde.CBatchInfo):
     """
-    Only the batch size function and per_batch_map of the batch operation can dynamically adjust parameters
-    based on the number of batches and epochs during training.
+    This class helps to get dataset information dynamically when the input of `batch_size` or `per_batch_map`
+    in `batch` operation is a callable object.
     """
 
     def get_batch_num(self):
         """
-        Return the batch number of the current batch.
+        Return the batch number being processed in current epoch, start from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -2722,7 +2725,7 @@ class BatchInfo(cde.CBatchInfo):
 
     def get_epoch_num(self):
         """
-        Return the epoch number of the current batch.
+        Return the epoch number, start from 0.
 
         Examples:
             >>> # Create a dataset where its batch size is dynamic
@@ -3184,6 +3187,9 @@ class _MPWorker(multiprocessing.Process):
     def close(self):
         try:
             if self.is_alive():
+                # release the eager executor which is used by current process
+                transforms.transforms.clean_unused_executors()
+
                 logger.info(f"Closing worker with PID: {self.pid}")
                 self.pipe.master_close()
                 # del the handle which hold by master

@@ -30,7 +30,7 @@ class NetGather(nn.Cell):
 
 def gather_test(is_dyn_rank):
     x = Tensor(np.random.randn(32, 8, 32).astype(np.float16))
-    indices = Tensor(np.random.randn(2, 2).astype(np.int32))
+    indices = Tensor(np.random.randint(8, size=(2, 2)))
     tester = TestDynamicGrad(NetGather(), skip_convert_out_ids=[0])
     tester.test_dynamic_grad_net([x, indices, 1], is_dyn_rank)
 

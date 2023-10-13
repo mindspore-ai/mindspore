@@ -25,6 +25,8 @@ import mindspore
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
+import mindspore.dataset.vision as vision
+from mindspore.dataset.transforms import transforms
 from mindspore import log as logger
 from mindspore import Tensor
 import mindspore.ops as ops
@@ -1480,6 +1482,39 @@ def test_generator_single_input_6():
     assert_generator_single_input_6(SequentialAccessDatasetInner())
 
 
+def test_generator_one_dimensional_numpy_input():
+    """
+    Feature: Test one-dimensional numpy.int32 input
+    Description: The input source data is a one-dimensional numpy array of type numpy.int32
+    Expectation: No error was reported, and the iteration succeeded
+    """
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = np.array([i for i in range(64)], dtype=np.int32)
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    data1 = ds.GeneratorDataset(SequentialAccessDataset(), ["data"], shuffle=False)
+    i = 0
+    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        golden = np.array(i, dtype=np.int32)
+        np.testing.assert_equal(item["data"], golden)
+        i = i + 1
+
+
 def test_generator_with_seed_5489_when_dist():
     """
     Feature: With default seed (5489) when distributed
@@ -2384,6 +2419,55 @@ def test_generator_multiprocessing_with_fixed_handle():
             assert lsof >= new_lsof
 
 
+class FakeDataWithTransform:
+    def __init__(self):
+        self.input_ids = np.ones((128, 128, 3), dtype=np.uint8)
+        self.input_mask = np.ones((100, 100, 3), dtype=np.int32)
+
+    def __getitem__(self, index):
+        img_resize = vision.Resize(size=(64, 32))(self.input_ids)
+        return img_resize, self.input_mask
+
+    def __len__(self):
+        return 10
+
+
+def generator_with_multi_transforms(mode):
+    GLOBAL_EXECUTOR_LEN = len(transforms.EXECUTORS_LIST)
+
+    # generator with vision.Resize transform
+    data2 = ds.GeneratorDataset(source=FakeDataWithTransform(), column_names=["image", "label"], shuffle=False,
+                                python_multiprocessing=mode, num_parallel_workers=2)
+
+    def pyfunc2(img):
+        # normalize
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec)(img)
+        return img_normalize
+
+    # map with PyFunc transform which contains vision.Normalize
+    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=mode, num_parallel_workers=2)
+
+    for _ in range(5):
+        for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            assert item[0].shape == (64, 32, 3)
+            assert item[0].dtype == np.float32
+
+    time.sleep(1)
+    assert len(transforms.EXECUTORS_LIST) == GLOBAL_EXECUTOR_LEN
+
+
+def test_generator_with_transform_which_use_global_executor():
+    """
+    Feature: Generator op with transform which use global executor
+    Description: Test Generator op with transform
+    Expectation: The result is equal to the expected
+    """
+    generator_with_multi_transforms(True)
+    generator_with_multi_transforms(False)
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2443,3 +2527,4 @@ if __name__ == "__main__":
     test_generator_split_with_next()
     test_generator_with_next_and_dataset_size_when_iter()
     test_generator_multiprocessing_with_fixed_handle()
+    test_generator_with_transform_which_use_global_executor()

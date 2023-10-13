@@ -25,7 +25,6 @@
 #include "base/base.h"
 #include "include/c_api/ms/node.h"
 #include "c_api/src/common.h"
-#include "include/c_api/ms/base/handle_types.h"
 
 struct InnerOpInfo {
   std::string op_name;

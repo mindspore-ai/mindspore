@@ -15,7 +15,7 @@ mindspore.train.HausdorffDistance
     其中 :math:`h(A, B)` 表示，对A中的每个点a找到B集合里的最近点，这些最短距离的最大值为从A到B的单向Hausdorff距离，同理，:math:`h(B, A)` 为集合B到集合A中最近点的最大距离。Hausdoff距离是有方向性的，通常情况下 :math:`h(A, B)` 不等于 :math:`h(B, A)`。:math:`H(A, B)` 为双向Hausdorff距离。
 
     参数：
-        - **distance_metric** (string) - 支持如下三种距离计算方法： "euclidean"、"chessboard" 或 "taxicab"。默认值： ``"euclidean"`` 。
+        - **distance_metric** (string) - 支持如下三种距离计算方法： ``"euclidean"``(欧式距离)、 ``"chessboard"`` (棋盘距离、切比雪夫距离) 或 ``"taxicab"`` (出租车距离、曼哈顿距离)。默认值： ``"euclidean"`` 。
         - **percentile** (float) - 0到100之间的浮点数。指定最终返回的Hausdorff距离的百分位数。默认值： ``None`` 。
         - **directed** (bool) - 如果为True，为单向Hausdorff距离，只计算h(y_pred, y)距离；如果为False，为双向Hausdorff距离，计算max(h(y_pred, y), h(y, y_pred))。默认值： ``False`` 。
         - **crop** (bool) - 是否裁剪输入图像，仅保留目标区域。为了保证y_pred和y的shape匹配，使用(y_pred | y)，即两图像的并集来确定bounding box。默认值： ``True`` 。
@@ -36,10 +36,10 @@ mindspore.train.HausdorffDistance
 
     .. py:method:: update(*inputs)
 
-        使用 `y_pred`、`y` 和 `label_idx` 更新内部评估结果。
+        使用 `y_pred`、 `y` 和 `label_idx` 更新内部评估结果。
 
         参数：
-            - **inputs** - `y_pred`、`y`  和 `label_idx`。`y_pred` 和 `y` 为Tensor， list或numpy.ndarray，`y_pred` 是预测的二值图像，`y` 是实际的二值图像。`label_idx` 的数据类型为int或float，表示像素点的类别值。
+            - **inputs** - `y_pred`、 `y`  和 `label_idx`。 `y_pred` 和 `y` 为Tensor， list或numpy.ndarray， `y_pred` 是预测的二值图像， `y` 是实际的二值图像。 `label_idx` 的数据类型为int或float，表示像素点的类别值。
 
         异常：
             - **ValueError** - 输入的数量不等于3。

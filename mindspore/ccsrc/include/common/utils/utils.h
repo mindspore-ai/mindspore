@@ -162,7 +162,6 @@ constexpr auto kAttrScales = "scales";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
-constexpr auto kAttrNotSupportOpForDevice = "not_support_op_for_device";
 constexpr auto kAttrUseLocking = "use_locking";
 constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
@@ -350,6 +349,8 @@ constexpr auto kPreSetitemByTuple = "pre_setitem_by_tuple";
 constexpr auto kAttrTupleIndexInfoType = "tuple_index_info_type";
 constexpr auto kAttrSimpleSliceInfo = "simple_slice_info";
 constexpr auto kAttrNotCut = "not_cut";
+constexpr auto kAttrNotSupportOpForDevice = "not_support_op_for_device";
+constexpr auto kAttrGraphSplitGroup = "graph_split_group";
 constexpr const char kAttrNeedAllGather[] = "parallel_optimizer_allgather";
 constexpr const char kAttrNodeCloseFollowing[] = "node_close_following";
 constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
@@ -525,6 +526,11 @@ constexpr auto kSliceStep = "step";
 constexpr auto kFuncGraphTypeName = "FuncGraph";
 constexpr auto kKernelGraphTypeName = "KernelGraph";
 
+// graph group
+constexpr auto kDefaultGroup = "DefaultGroup";
+constexpr auto kKernelGroup = "KernelGroup";
+constexpr auto kGraphGroup = "GraphGroup";
+
 // compile cache
 constexpr auto kUniqueCacheName = "UniqueCacheName";
 constexpr auto kDistributedSplit = "distribtued_split";
@@ -618,6 +624,8 @@ COMMON_EXPORT bool IsOneOfUnsignedType(const TypeId &type_id);
 
 COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 COMMON_EXPORT size_t GetSystemFreeDiskSize(const std::string &path);
+
+COMMON_EXPORT bool IsEnableRefMode();
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

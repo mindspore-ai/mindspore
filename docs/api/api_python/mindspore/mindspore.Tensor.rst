@@ -88,6 +88,7 @@ mindspore.Tensor
     mindspore.Tensor.clip
     mindspore.Tensor.col2im
     mindspore.Tensor.conj
+    mindspore.Tensor.contiguous
     mindspore.Tensor.copy
     mindspore.Tensor.copysign
     mindspore.Tensor.cos
@@ -171,6 +172,7 @@ mindspore.Tensor
     mindspore.Tensor.isclose
     mindspore.Tensor.isfinite
     mindspore.Tensor.is_complex
+    mindspore.Tensor.is_contiguous
     mindspore.Tensor.is_floating_point
     mindspore.Tensor.isinf
     mindspore.Tensor.isnan

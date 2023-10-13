@@ -553,10 +553,6 @@ class _TensorIndexGetitem(base.TensorIndexGetitem_):
         Type is the same as the element type of data.
     """
 
-    def __init__(self, name):
-        """Initialize _TensorIndexGetitem."""
-        base.TensorIndexGetitem_.__init__(self, name)
-
     def __call__(self, *args):
         pass
 
@@ -665,7 +661,8 @@ def tensor_index_by_bool_tensor(data, tensor_index):
 def tensor_index_by_tensor(data, tensor_index):
     """Tensor getitem by a single tensor"""
     min_data_dim, max_data_dim = 0, 7
-    const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+    if not F.is_sequence_value_unknown(F.shape(data)):
+        const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
     if const_utils.check_type_isinstance(F.dtype(tensor_index), mstype.Int):
         return F.gather(data, tensor_index, 0)
     if const_utils.check_type_isinstance(F.dtype(tensor_index), mstype.Bool):
@@ -684,16 +681,21 @@ def tensor_index_by_list(data, list_index):
     data_shape = F.shape(data)
     indexes_types = hyper_map(toptypeof, list_index)
     if const_utils.check_type_isinstance(indexes_types, (mstype.Bool, mstype.Int)) \
-        and not F.is_sequence_value_unknown(list_index):
+            and not F.is_sequence_value_unknown(list_index):
         if not F.isconstant(data_shape[0]):
             if all(isinstance(i, bool) for i in list_index):
+                if F.dyn_shape(data)[0] != len(list_index):
+                    raise IndexError(
+                        f'dimension is {F.dyn_shape(data)[0]} but corresponding boolean dimension is {len(list_index)}')
                 tensor_index = Tensor(list_index).nonzero()
                 return F.gather_nd(data, tensor_index)
             tensor_index = const_utils.sequence_to_index(list_index, None)
         else:
-            tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
+            tensor_index = const_utils.sequence_to_index(
+                list_index, data_shape[0])
         if tensor_index is False:
-            const_utils.raise_index_error("When tensor is indexed by list, the list can't be empty.")
+            const_utils.raise_index_error(
+                "When tensor is indexed by list, the list can't be empty.")
         return F.gather(data, tensor_index, 0)
 
     tuple_index_new = ()
@@ -754,10 +756,27 @@ def judge_tuple_index_dim(data, tuple_index):
     judge_tuple_index_dim_check_error(index_dim, data_dim)
 
 
+def judge_simple_tuple_index(data, tuple_index):
+    """Judge whether tuple_index is simple index, which not rollback to cpu ops."""
+    op_name = const_utils.TENSOR_GETITEM
+    indexes_types = hyper_map(toptypeof, tuple_index)
+    contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
+    return F.isconstant(tuple_index) and contain_type == const_utils.ALL_BASIC \
+        and F.is_sequence_value_unknown(F.shape(data)) and F.isconstant(F.rank(data))
+
+
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
     if not tuple_index:
         return data
+    if judge_simple_tuple_index(data, tuple_index):
+        tuple_index = convert_tupleslice_to_tensor(tuple_index)
+        op_name = const_utils.TENSOR_GETITEM
+        tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
+        min_data_dim, max_data_dim = 1, 8
+        const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
+        return _tensor_getitem_by_tuple_slice(data, tuple_index)
+
     if not F.is_sequence_value_unknown(F.shape(data)):
         judge_tuple_index_dim(data, tuple_index)
     tuple_index, zero_index, non_zero_shapes = _handle_bool_tensor(tuple_index)
@@ -769,7 +788,19 @@ def tensor_index_by_tuple(data, tuple_index):
         _, stub_zero_dim_tensor = _handle_empty_slice(data, tuple_index)
         if 0 in stub_zero_dim_tensor.shape:
             return F.fill(data.dtype, stub_zero_dim_tensor.shape, 0)
-    return _tensor_index_getitem(data, tuple_index)
+    has_tensor_index = False
+    for i in tuple_index:
+        if isinstance(i, Tensor):
+            has_tensor_index = True
+            break
+    empty_broadcast_data_shape = False
+    _broadcast_data_shape = _handle_scalar_tensor_index(data, tuple_index)
+    if has_tensor_index and isinstance(_broadcast_data_shape, Tensor) and _broadcast_data_shape == Tensor([0]):
+        empty_broadcast_data_shape = True
+    if has_tensor_index and isinstance(_broadcast_data_shape, tuple) and not _broadcast_data_shape:
+        empty_broadcast_data_shape = True
+    return _tensor_index_getitem(data, tuple_index, empty_broadcast_data_shape)
+
 
 def get_slice_stride(slice_index, dim_size):
     """Get slice stride info"""
@@ -1148,10 +1179,11 @@ def tensor_setitem_by_number(self, index, value):
     return tensor_setitem_by_number_with_sequence(self, index, value)
 
 
-def _tuple_index_transfer(broadcast_shape, final_shape, new_shape, x):
+def _tuple_index_transfer(broadcast_shape, final_shape, new_shape, x, all_empty_tensor):
     """Transform tuple index tensor to the required."""
     if isinstance(broadcast_shape, Tensor):
-        x = F.broadcast_to(x, broadcast_shape)
+        if not all_empty_tensor:
+            x = F.broadcast_to(x, broadcast_shape)
         x = F.reshape(x, new_shape)
         x = F.broadcast_to(x, final_shape)
         return x
@@ -1170,10 +1202,6 @@ class _TensorIndexSetitem(base.TensorIndexSetitem_):
     Returns:
         Type is the same as the element type of data.
     """
-
-    def __init__(self, name):
-        """Initialize _TensorIndexGetitem."""
-        base.TensorIndexSetitem_.__init__(self, name)
 
     def __call__(self, *args):
         pass
@@ -1406,36 +1434,72 @@ class _HandleBoolTensor(base.HandleBoolTensor_):
 
 _handle_bool_tensor = _HandleBoolTensor('handle_bool_tensor')
 
+
+class _HandleScalarTensorIndex(base.HandleScalarTensorIndex_):
+    """
+    Getting item of Tensor.
+
+    Args:
+        data (Tensor): A tuple to be sliced.
+        index: Index of tensor.
+
+    Returns:
+        Type is the same as the element type of data.
+    """
+
+    def __init__(self, name):
+        """Initialize _HandleBoolTensor."""
+        base.HandleScalarTensorIndex_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_handle_scalar_tensor_index = _HandleScalarTensorIndex('handle_scalar_tensor_index')
+
+
 def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     """Assigns the tensor by tuple with tensor value."""
     if const_utils.use_copy_slice(tuple_index) and not const_utils.is_ascend():
         if F.is_sequence_value_unknown(F.shape(data)):
             return tensor_copy_slice_from_tuple(data, tuple_index, value)
-        dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
+        dim1_start, dim1_stop, _ = const_utils.normalize_slice(
+            tuple_index[1], data.shape[1])
         if dim1_stop - dim1_start <= 0:
             return data
         dim0_start = tuple_index[0] if tuple_index[0] >= 0 else tuple_index[0] + data.shape[0]
         start = (dim0_start, dim1_start)
         stop = (dim0_start + 1, dim1_stop)
         step = (1, 1)
-        value_shape = (dim1_stop - dim1_start,) + const_utils.tuple_slice(data.shape, 2, None)
+        value_shape = (dim1_stop - dim1_start,) + \
+            const_utils.tuple_slice(data.shape, 2, None)
         value = _broadcast(value_shape, value)
         return copy_slice(data, value.astype(data.dtype), start, stop, step)
-
     tuple_index, _, non_zero_shapes = _handle_bool_tensor(tuple_index)
+
     for non_zero_shape in non_zero_shapes:
         if F.reduce_min(non_zero_shape) == 0:
             return data
     value = value.astype(data.dtype)
-    special_index, tuple_index, new_value_shape, idx_advanced = _pre_setitem_by_tuple(data, tuple_index, value)
+    special_index, tuple_index, new_value_shape, idx_advanced, _broadcast_data_shape \
+        = _pre_setitem_by_tuple(data, tuple_index, value)
     if special_index == 0:
         return data
     value = F.reshape(value, new_value_shape)
     if not tuple_index or special_index == 1:
         data[True] = value
         return data
-    indices = _tensor_index_setitem(data, tuple_index, value, idx_advanced)
-    updates = _generate_updates_from_tensor(data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
+
+    empty_broadcast_data_shape = False
+    if isinstance(_broadcast_data_shape, Tensor) and _broadcast_data_shape == Tensor([0]):
+        empty_broadcast_data_shape = True
+    if isinstance(_broadcast_data_shape, tuple) and not _broadcast_data_shape:
+        empty_broadcast_data_shape = True
+    indices = _tensor_index_setitem(
+        data, tuple_index, value, idx_advanced, empty_broadcast_data_shape)
+
+    updates = _generate_updates_from_tensor(
+        data, indices, value, const_utils.SET_ITEM_BY_TUPLE_OF_TENSOR)
     if is_parameter(data):
         F.scatter_nd_update(data, indices, updates)
         return data

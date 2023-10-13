@@ -42,6 +42,16 @@ class ArgWithValueDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
+class UnfoldMakeTupleDeco : public ExpanderDecorator {
+ public:
+  explicit UnfoldMakeTupleDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~UnfoldMakeTupleDeco() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<UnfoldMakeTupleDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
 class ProcessCustomOpDeco : public ExpanderDecorator {
  public:
   explicit ProcessCustomOpDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}

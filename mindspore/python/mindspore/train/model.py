@@ -238,7 +238,7 @@ class Model:
         self._lite_incremental_predictor = None
         self._mindspore_lite = None
         self._lite_infer = True  # if backend lite infer fails, set False
-        self._mindspore_lite_model_group_id = id(self)
+        self._mindspore_lite_model_group_id = id(self) & 0xFFFF
 
 
     def _check_for_graph_cell(self, kwargs):
@@ -834,7 +834,7 @@ class Model:
                 os.remove(cb_params.latest_ckpt_file)
                 raise RuntimeError(e.__str__() + ", load ckpt failed and remove the ckpt: "\
                                    + cb_params.latest_ckpt_file) from e
-            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             self.need_load_ckpt = False
 
     def _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
@@ -863,9 +863,9 @@ class Model:
                 self.epoch_iter = recovery_epoch_num
                 cb_params.cur_epoch_num = self.epoch_iter + 1
                 cb_params.last_save_ckpt_step = cb_params.cur_step_num
-                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             else:
-                _reset_training_dataset(0, dataset_helper.sink_size())
+                _reset_training_dataset(0, dataset_helper.iter.dataset.get_dataset_size())
 
             _set_recovery_context(need_reset=False)
 
@@ -1174,7 +1174,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
@@ -1441,7 +1441,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
         valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)

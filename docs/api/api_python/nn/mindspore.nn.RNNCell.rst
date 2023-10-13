@@ -1,7 +1,7 @@
 mindspore.nn.RNNCell
 =====================
 
-.. py:class:: mindspore.nn.RNNCell(input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = 'tanh', dtype: mindspore.dtype = mstype.float32)
+.. py:class:: mindspore.nn.RNNCell(input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = 'tanh', dtype=mstype.float32)
 
     循环神经网络单元，激活函数是tanh或relu。
 

@@ -47,6 +47,7 @@ bool LayerNormGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  epsilon_ = kernel_ptr->get_epsilon();
   return true;
 }
 

@@ -24,6 +24,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
+#include "ops/conv_pool_ops.h"
 #include "ops/structure_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/image_op_name.h"
@@ -88,6 +89,37 @@ bool GLogIsDebug() {
   return is_debug || is_submodule_debug;
 }
 
+const std::map<std::string, std::vector<std::string>> kNextOpFormatList = {
+  {prim::kPrimConv2D->name(), {kOpFormat_NC1HWC0, kOpFormat_FRAC_Z}}};
+
+std::string GetCastWeightFormat(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
+      !common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
+    MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
+                      << kAttrPynativeNextOpName << " has not been set yet!";
+  }
+  auto next_index = common::AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
+  auto next_op_name = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
+  auto iter = kNextOpFormatList.find(next_op_name);
+  if (iter == kNextOpFormatList.end()) {
+    MS_LOG(INFO) << "The op name " << next_op_name << "has not been set in the next op map ";
+    return "";
+  }
+  if (iter->second.size() < next_index) {
+    MS_LOG(EXCEPTION) << "Next input index " << next_index << "is out of range in the next op map max size is "
+                      << iter->second.size();
+  }
+  if (common::AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name()) {
+    MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
+    return "";
+  }
+  if (next_index == 0) {
+    return "";
+  }
+  return iter->second[next_index];
+}
+
 void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<Parameter>()) {
@@ -133,14 +165,19 @@ bool NeedNDInput(const CNodePtr &cnode, const AnfNodePtr &input_node, const std:
   return false;
 }
 
-bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num) {
+bool NeedNDOutput(const CNodePtr &cnode, const size_t input_num, const size_t output_num,
+                  const std::vector<std::string> &input_formats) {
   auto name = GetCNodeFuncName(cnode);
   if (kDefaultOutputNode.count(name) != 0) {
     return true;
   }
 
   if (input_num != output_num) {
-    return true;
+    if (output_num != 1 || input_formats.empty() ||
+        !std::all_of(input_formats.begin(), input_formats.end(),
+                     [&input_formats](const std::string &format) { return format == input_formats[0]; })) {
+      return true;
+    }
   }
 
   for (size_t i = 0; i < output_num; ++i) {
@@ -232,6 +269,23 @@ void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string
                     [](const auto &format) { return !AclHelper::CheckDefaultSupportFormat(format); })) {
       common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
     }
+  }
+}
+
+void RefreshRefFormat(const std::unordered_map<size_t, size_t> &ref_map, const std::vector<std::string> &input_formats,
+                      std::vector<std::string> *output_formats) {
+  if (ref_map.empty()) {
+    return;
+  }
+
+  for (auto [out_idx, in_idx] : ref_map) {
+    if (out_idx >= output_formats->size()) {
+      MS_LOG(EXCEPTION) << "Error output index:" << out_idx << " for refresh!";
+    }
+    if (in_idx >= input_formats.size()) {
+      MS_LOG(EXCEPTION) << "Error input index:" << in_idx << " for refresh!";
+    }
+    output_formats->at(out_idx) = input_formats[in_idx];
   }
 }
 }  // namespace
@@ -426,6 +480,18 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   input_reshape_types->assign(input_num, "");
   output_reshape_types->assign(output_num, "");
 
+  if (common::AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, cnode)) {
+    auto cast_format = GetCastWeightFormat(cnode);
+    if (!cast_format.empty()) {
+      (void)input_formats->emplace_back(cast_format);
+      (void)output_formats->emplace_back(cast_format);
+      auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, 0);
+      auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+      SetParameterFormat(kernel_with_index.first, cast_format, &input_format);
+      return;
+    }
+  }
+
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
     std::vector<size_t> special_inputs;
     for (size_t i = 0; i < input_num; ++i) {
@@ -442,19 +508,24 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
       }
     }
     // Input and output number same's op forward.
-    if (NeedNDOutput(cnode, input_num, output_num)) {
+    if (NeedNDOutput(cnode, input_num, output_num, *input_formats)) {
       for (size_t i = 0; i < output_num; ++i) {
         auto shape = common::AnfAlgo::GetOutputInferShape(node, i);
         (void)output_formats->emplace_back(GET_DEFAULT_FORMAT(shape));
       }
     } else {
-      output_formats->assign(input_formats->begin(), input_formats->end());
+      if (output_num == 1) {
+        output_formats->emplace_back(input_formats->at(0));
+      } else {
+        output_formats->assign(input_formats->begin(), input_formats->end());
+      }
       SetOutputIdentityFlag(node, *output_formats);
     }
 
     if (!special_inputs.empty()) {
       common::AnfAlgo::SetNodeAttr(kAttrAclSpecialInputFormat, MakeValue(special_inputs), node);
     }
+    RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
     return;
   }
 
@@ -462,6 +533,7 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
   GetOutputBuildInfo(node, output_num, acl_info, *input_formats, output_formats);
   SetOutputIdentityFlag(node, *output_formats);
+  RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
 }
 
 std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size_t idx, const std::string &dev_format,

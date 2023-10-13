@@ -356,6 +356,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     return kLiteError;
   }
   UpdateProvider();
+  auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    return kLiteError;
+  }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
   if (mindir_path.empty()) {
     (void)UpdateConfig(lite::kConfigModelFileSection,

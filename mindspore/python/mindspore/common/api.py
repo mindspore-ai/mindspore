@@ -26,7 +26,7 @@ import inspect
 import importlib
 import hashlib
 import contextlib
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -84,9 +84,12 @@ def _convert_python_data(data):
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
     if isinstance(data, tuple):
-        # Skip namedtuple since its type is tuple.
+        # Handle namedtuple since its type is tuple.
         if hasattr(data, "_fields"):
-            return data
+            type_name = data.__class__.__name__
+            data_dict = data._asdict()
+            fields = data_dict.keys()
+            return namedtuple(type_name, fields)(**_convert_python_data(data_dict))
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
         # Keep list object not change for inplace operation.
@@ -187,8 +190,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
         if isinstance(node, ast.ImportFrom):
             if node.module is not None:
                 module_name = node.module
-            if node.level == 1:
-                module_name = "." + module_name
+            module_name = "." * node.level + module_name
         elif not isinstance(node, ast.Import):
             continue
         # Do not care the files in mindspore package
@@ -374,7 +376,7 @@ class _MindsporeFunctionExecutor:
 
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
-        generate_name = self._get_generate_name()
+        generate_name, echo_function_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
         create_time = ''
@@ -414,7 +416,7 @@ class _MindsporeFunctionExecutor:
         if phase in ms_compile_cache:
             return phase
 
-        self._check_recompile(full_function_name, create_time)
+        self._check_recompile(full_function_name, create_time, echo_function_name)
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -446,7 +448,7 @@ class _MindsporeFunctionExecutor:
 
         return phase
 
-    def _check_recompile(self, full_function_name, create_time):
+    def _check_recompile(self, full_function_name, create_time, echo_function_name):
         """Warning when the function has been compiled."""
         ignore_dirs = ["mindspore/ops", "mindspore/nn"]
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
@@ -457,11 +459,11 @@ class _MindsporeFunctionExecutor:
             if len(function_phases[full_function_name]) >= warning_times \
                     and create_time not in function_phases[full_function_name]:
                 tips = "Try to decorate the function with @jit(hash_args=...) " \
-                       "or @jit(compile_once=True). " \
+                       "or @jit(compile_once=True) to reduce the compile time. " \
                        "For more details, get instructions about `jit` at " \
                        "https://www.mindspore.cn/search?inputValue=jit."
 
-                logger.warning(f"The function '{full_function_name}' has been compiled again. "
+                logger.warning(f"The {echo_function_name} has been compiled again. "
                                f"{tips} ")
         else:
             function_phases[full_function_name] = set()
@@ -494,13 +496,15 @@ class _MindsporeFunctionExecutor:
 
     def _get_generate_name(self):
         """get generate name."""
-        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + str(
+            self.fn.__code__.co_firstlineno)
+        echo_function_name = "function \"" + self.fn.__name__ + "\" at the file \"" + self.fn.__code__.co_filename \
+                             + "\", line " + str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
-        return generate_name
+        return generate_name, echo_function_name
 
 
     def _set_compile_cache_dep_files(self):
@@ -613,7 +617,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
         compile_once(bool): ``True``: The function would be compiled once when it was created many times.
-            But it may be wrong if the free variables were changed.``False``: It would be recompiled when
+            But it may be wrong if the free variables were changed. ``False`` : It would be recompiled when
             it was created again
             Default: ``False`` .
 
@@ -659,7 +663,7 @@ def jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_
         ...
         >>> out = tensor_add_with_sig(x, y)
         ...
-        ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
+        ... # Set hash_args as fn, otherwise cache of compiled closure_fn will not be reused.
         ... # While fn differs during calling again, recompilation will be triggered.
         >>> def func(x):
         ...     return ops.exp(x)

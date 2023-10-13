@@ -595,6 +595,9 @@ class SymbolTree(Observer, Observable, NodeManager):
                 raise RuntimeError("node_manager and base_node cannot both be None when inserting a node.")
             node_manager = base_node.get_node_manager()
 
+        # set node's _belong_symbol_tree
+        new_node.set_belong_symbol_tree(self)
+
         if node_manager is self:
             NodeManager.insert_node(self, new_node, base_node, before_node)
             if insert_to_ast:
@@ -608,9 +611,6 @@ class SymbolTree(Observer, Observable, NodeManager):
             new_node.symbol_tree.reg_observer(self)
         elif isinstance(new_node, NodeManager):
             new_node.reg_observer(self)
-
-        # set node's _belong_symbol_tree
-        new_node.set_belong_symbol_tree(self)
 
         return new_node
 
@@ -881,6 +881,15 @@ class SymbolTree(Observer, Observable, NodeManager):
     def unique_name(self, name: str):
         """Get a unique name in the symboltree"""
         return self._target_namer.get_name(name)
+
+    def unique_func_name(self, name: str):
+        """Get a unique function name in the symboltree"""
+        if not hasattr(self._origin_network, name):
+            return name
+        suffix = 1
+        while hasattr(self._origin_network, f"{name}_{suffix}"):
+            suffix += 1
+        return f"{name}_{suffix}"
 
     def set_node_target(self, node: Union[Node, str], index: int, target: Union[ScopedValue, str]):
         """
@@ -1165,7 +1174,8 @@ class SymbolTree(Observer, Observable, NodeManager):
             # insert a new assign statement
             ast_assign = new_node.get_ast()
             if ast_assign is None:
-                new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+                func_name = new_node.get_belong_symbol_tree().unique_func_name(new_node.get_name())
+                new_node.set_func_name(ScopedValue.create_naming_value(func_name, "self"))
                 ast_assign = new_node.update_ast_node()
             if not isinstance(ast_assign, ast.Assign):
                 raise ValueError(f"Only support insert ast.Assign or Input now, but get {type(ast_assign)}")

@@ -28,7 +28,8 @@ from mindspore.ops._utils import get_broadcast_shape
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore import _checkparam as validator
-from mindspore._checkparam import _check_3d_int_or_tuple, is_pack_tensor
+from mindspore._checkparam import _check_3d_int_or_tuple
+from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
@@ -348,7 +349,7 @@ class Cast(PrimitiveWithCheck):
                 data = x.data
                 if data.dtype == dtype:
                     return (True, x)
-            if isinstance(x, Tensor) and x.dtype == dtype and not is_pack_tensor(x):
+            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
                 x = Tensor(x)
                 x.set_cast_dtype()
                 return (True, x)
@@ -2429,6 +2430,8 @@ class Tile(PrimitiveWithInfer):
 
     def check_elim(self, *args):
         base_tensor, multiplier = args
+        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
+            return (False, None)
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")

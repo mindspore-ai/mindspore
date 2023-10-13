@@ -104,9 +104,9 @@ TypePtr MatrixSolveLsInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> l2_valid_types = {kFloat64};
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto matrix_type = input_args[0]->BuildType();
-  auto rhs_type = input_args[1]->BuildType();
-  auto l2_type = input_args[2]->BuildType();
+  auto matrix_type = input_args[kIndex0]->BuildType();
+  auto rhs_type = input_args[kIndex1]->BuildType();
+  auto l2_type = input_args[kIndex2]->BuildType();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("matrix", matrix_type);
   (void)types.emplace("rhs", rhs_type);
@@ -124,9 +124,6 @@ MIND_API_OPERATOR_IMPL(MatrixSolveLs, BaseOperator);
 
 AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = MatrixSolveLsInferType(primitive, input_args);
   auto infer_shape = MatrixSolveLsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

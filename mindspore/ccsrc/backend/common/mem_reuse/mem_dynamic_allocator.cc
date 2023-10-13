@@ -47,12 +47,18 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
   {AllocatorType::kOther, "other"},
 };
 
+bool IsMemoryPoolRecycle() {
+  static const char kMemoryPoolRecycle[] = "MS_MEMORY_POOL_RECYCLE";
+  static const auto memory_pool_recycle = common::GetEnv(kMemoryPoolRecycle);
+  return memory_pool_recycle == "1";
+}
+
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->clear();
   common_mem_->clear();
 }
 
-DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persistent_mem) {
+DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persistent_mem, bool need_recycle) {
   size_t align_size = AlignMemorySize(size);
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
@@ -62,7 +68,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   // Find the idle memory buf by tensor size, if not find, then add new memory block and memory buf.
   DeviceMemPtr device_addr = FindIdleMemBuf(align_size, from_persistent_mem);
   if (!device_addr) {
-    device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem);
+    device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem, need_recycle);
   }
 
   // Alloc memory failed and dump the info.
@@ -76,6 +82,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", device address addr: " << device_addr << ", size: " << size;
   }
 
+  if (IsMemoryPoolRecycle()) {
+    mem_bufs_.insert(device_addr);
+  }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
                 << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
@@ -184,6 +193,13 @@ void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t common_size, size_t persi
   MS_LOG(INFO) << "Set mem alloc unit size, common " << common_size << " persistent " << persist_size;
 }
 
+void *DynamicMemPoolBestFit::GetMinUsedMemoryAddr() const {
+  if (mem_bufs_.empty()) {
+    return nullptr;
+  }
+  return *(mem_bufs_.begin());
+}
+
 void DynamicMemPoolBestFit::SetMemPoolBlockSize(size_t available_device_mem_size) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -206,16 +222,16 @@ void DynamicMemPoolBestFit::SetMemPoolBlockSize(size_t available_device_mem_size
   SetMemAllocUintSize(real_block_size);
 }
 
-DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem) {
+DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem, bool need_recycle) {
   // Persistent mem is not enough, find from common
-  if (from_persistent_mem && !persistent_mem_->mem_block_list_.empty()) {
+  if (from_persistent_mem && !need_recycle && !persistent_mem_->mem_block_list_.empty()) {
     auto mem_addr = FindIdleMemBuf(size, false);
     if (mem_addr != nullptr) {
       return mem_addr;
     }
     from_persistent_mem = false;
   }
-  size_t alloc_mem_size = CalMemBlockAllocSize(size, from_persistent_mem);
+  size_t alloc_mem_size = CalMemBlockAllocSize(size, from_persistent_mem, need_recycle);
   if (alloc_mem_size == 0) {
     MS_LOG(DEBUG) << "Try to find in other mem";
     auto mem_addr = FindIdleMemBuf(size, !from_persistent_mem);
@@ -266,7 +282,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size, bool from_
   return mem_buf->device_addr_;
 }
 
-size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
+size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
     device_free_mem_size = size;
@@ -365,6 +381,9 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
     CombineMemBuf(mem_block, device_addr, common_mem_);
   }
 
+  if (IsMemoryPoolRecycle()) {
+    mem_bufs_.erase(device_addr);
+  }
   MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()
                 << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()

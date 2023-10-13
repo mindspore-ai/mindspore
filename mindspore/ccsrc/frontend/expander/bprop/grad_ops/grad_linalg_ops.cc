@@ -22,16 +22,27 @@
 namespace mindspore::expander::bprop {
 NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
-  auto row = shape[shape.size() - 1];
-  auto out = ib->Emit(
-    "MatrixDiagV3",
-    {x, ib->Tensor(0, kInt32), ib->Tensor(row, kInt32), ib->Tensor(row, kInt32), ib->Tensor(0, ib->GetDtype(x))},
-    {{"align", MakeValue("RIGHT_LEFT")}});
+  NodePtr row = nullptr;
+  if (IsDynamic(shape)) {
+    auto real_shape = ib->Shape(x);
+    row = ib->Emit("Cast", {ib->TupleGetItem(real_shape, ib->Value(static_cast<int64_t>(-1))), ib->EmitValue(kInt32)});
+  } else {
+    row = ib->Tensor(shape[shape.size() - 1], kInt32);
+  }
+  auto out = ib->Emit("MatrixDiagV3", {x, ib->Tensor(0, kInt32), row, row, ib->Tensor(0, ib->GetDtype(x))},
+                      {{"align", MakeValue("RIGHT_LEFT")}});
   return out;
 }
 
 NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   auto shape = ib->GetShape(x);
+  if (IsDynamicRank(shape)) {
+    auto true_case = [&x, &y](Emitter *e) -> NodePtrList { return {e->BatchMatMul(x, y)}; };
+    auto false_case = [&x, &y](Emitter *e) -> NodePtrList { return {e->MatMul(x, y)}; };
+    auto rank = ib->Emit("Rank", {x});
+    auto cond = ib->Emit("scalar_gt", {rank, ib->Value(static_cast<int64_t>(kDim2))});
+    return ib->Conditional(cond, true_case, false_case);
+  }
   if (shape.size() > kDim2) {
     return ib->BatchMatMul(x, y);
   }

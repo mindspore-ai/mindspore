@@ -74,15 +74,17 @@ class GeDeviceResManager : public DeviceResManager {
     return true;
   }
 
-  bool BindDeviceToCurrentThread(bool /* force_bind */) const override;
+  bool BindDeviceToCurrentThread(bool force_bind) const override;
   void *GetStream() const {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     return runtime_instance_->compute_stream();
   }
 
   // Relevant function to allocate and free device memory of raw ptr.
+  bool AllocateMemory(DeviceAddress *const &address) const override;
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+  size_t GetMaxUsedMemorySize() const override;
 
   transform::GeAllocatorPtr GetAllocator() { return std::make_shared<GeAllocator>(this); }
 
@@ -92,6 +94,7 @@ class GeDeviceResManager : public DeviceResManager {
   bool CreateStream(size_t *stream_id) const override;
   void *GetStream(size_t stream_id) const override;
   bool SyncStream(size_t stream_id = 0) const override;
+  bool SyncAllStreams() const override;
 
  private:
   friend class GeGraphExecutor;

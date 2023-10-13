@@ -91,9 +91,10 @@ class TimeMonitor(Callback):
 DATA_DIR = "/home/workspace/mindspore_dataset/coco/coco2014/"
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_yolov3_darknet53():
     devid = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
@@ -216,6 +217,7 @@ def test_yolov3_darknet53():
 @pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_single
 def test_yolov3_darknet_8p():
     cur_path = os.path.dirname(os.path.abspath(__file__))

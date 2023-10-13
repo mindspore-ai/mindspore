@@ -458,7 +458,7 @@ void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std
     }
     auto tensor_value = CreateValueFromTensor(input_tensor);
     ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx, tensor_value, &ge_attr_value);
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, tensor_value, &ge_attr_value);
 
     AttrConverter attr_coverter;
     attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
@@ -703,7 +703,6 @@ void AclConverter::SetRunnerSpecialInfo() {
     runner_.SetStaticMode();
   }
   runner_.SetPrecisionMode(precision_mode_);
-  runner_.SetOpPrecisionMode();
 }
 
 void AclConverter::Run(void *stream_ptr) { runner_.Run(stream_ptr, is_need_retrieve_output_shape_); }

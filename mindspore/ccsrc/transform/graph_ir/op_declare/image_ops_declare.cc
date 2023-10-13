@@ -17,8 +17,8 @@
 #include "transform/graph_ir/op_declare/image_ops_declare.h"
 #include <string>
 #include <vector>
-#include "ops/image_ops.h"
 #include "ops/ascend_op_name.h"
+#include "ops/image_ops.h"
 
 namespace mindspore::transform {
 // ResizeNearestNeighborV2
@@ -74,13 +74,40 @@ ATTR_MAP(ResizeBicubic) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<
 OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
 
+// Reszie
+INPUT_MAP(Resize) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(roi)}, {3, INPUT_DESC(scales)}, {4, INPUT_DESC(sizes)}};
+ATTR_MAP(Resize) = {
+  {"coordinate_transformation_mode", ATTR_DESC(coordinate_transformation_mode, AnyTraits<std::string>())},
+  {"cubic_coeff", ATTR_DESC(cubic_coeff_a, AnyTraits<float>())},
+  {"exclude_outside", ATTR_DESC(exclude_outside, AnyTraits<int32_t>())},
+  {"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
+  {"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(Resize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Resize, kNameResize, ADPT_DESC(Resize))
+
 // CropAndResize
-INPUT_MAP(CropAndResize) = {
-  {1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};
-ATTR_MAP(CropAndResize) = {{"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
-                           {"method", ATTR_DESC(method, AnyTraits<std::string>())}};
-OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResize))
+INPUT_MAP(CropAndResizeD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}};
+INPUT_ATTR_MAP(CropAndResizeD) = {{4, ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(CropAndResizeD) = {{"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())},
+                            {"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                            {"crop_size", ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(CropAndResizeD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResizeD))
+
+// CropAndResizeGradImage
+INPUT_MAP(CropAndResizeGradImage) = {
+  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(image_size)}};
+ATTR_MAP(CropAndResizeGradImage) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                                    {"T", ATTR_DESC(T, AnyTraits<GEType>())}};
+OUTPUT_MAP(CropAndResizeGradImage) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradImage, kCropAndResizeGradImageOpName, ADPT_DESC(CropAndResizeGradImage))
+
+// CropAndResizeGradBoxes
+INPUT_MAP(CropAndResizeGradBoxes) = {
+  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(images)}, {3, INPUT_DESC(boxes)}, {4, INPUT_DESC(box_index)}};
+ATTR_MAP(CropAndResizeGradBoxes) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())}};
+OUTPUT_MAP(CropAndResizeGradBoxes) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradBoxes, kCropAndResizeGradBoxesOpName, ADPT_DESC(CropAndResizeGradBoxes))
 
 // DecodeImage
 INPUT_MAP(DecodeImage) = {{1, INPUT_DESC(contents)}};

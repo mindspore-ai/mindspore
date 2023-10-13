@@ -238,15 +238,15 @@ CTask PoolingCpuKernelNnaclMod::KernelAvgPool(T *input_addr, T *output_addr) {
     for (size_t i = start; i < end; i++) {
       int64_t d_start = d * stride_size_[kD] - padding_l_[kD - kDepthOffset];
       int64_t d_end = std::min(d_start + kernel_size_[kD], d_max);
-      int64_t d_start2 = std::max(d_start, (int64_t)0);
+      int64_t d_start2 = std::max(d_start, static_cast<int64_t>(0));
       int64_t d_end2 = std::min(d_end, in_size_[kD]);
       int64_t h_start = h * stride_size_[kH] - padding_l_[kH - kDepthOffset];
       int64_t h_end = std::min(h_start + kernel_size_[kH], h_max);
-      int64_t h_start2 = std::max(h_start, (int64_t)0);
+      int64_t h_start2 = std::max(h_start, static_cast<int64_t>(0));
       int64_t h_end2 = std::min(h_end, in_size_[kH]);
       int64_t w_start = w * stride_size_[kW] - padding_l_[kW - kDepthOffset];
       int64_t w_end = std::min(w_start + kernel_size_[kW], w_max);
-      int64_t w_start2 = std::max(w_start, (int64_t)0);
+      int64_t w_start2 = std::max(w_start, static_cast<int64_t>(0));
       int64_t w_end2 = std::min(w_end, in_size_[kW]);
 
       if (divisor_override_ == 0) {
@@ -258,18 +258,18 @@ CTask PoolingCpuKernelNnaclMod::KernelAvgPool(T *input_addr, T *output_addr) {
       }
 
       T *input = input_addr + n * input_stride_n_ + c * input_stride_c_;
-      T sum = static_cast<T>(0.0);
+      float sum = 0.0f;
       for (auto dd = d_start2; dd < d_end2; ++dd) {
         int64_t stride_d = dd * input_stride_d_;
         for (auto hh = h_start2; hh < h_end2; ++hh) {
           int64_t stride_dh = stride_d + hh * input_stride_h_;
           for (auto ww = w_start2; ww < w_end2; ++ww) {
             int64_t index = stride_dh + ww;
-            sum += input[index];
+            sum += static_cast<float>(input[index]);
           }
         }
       }
-      output_addr[i] = sum / divisor;
+      output_addr[i] = static_cast<T>(sum / divisor);
       offset_to_index_step(&n, batches_, &c, channels_, &d, out_size_[kD], &h, out_size_[kH], &w, out_size_[kW]);
     }
   };

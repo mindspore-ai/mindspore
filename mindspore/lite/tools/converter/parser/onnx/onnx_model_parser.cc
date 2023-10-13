@@ -107,7 +107,7 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converte
 }
 
 ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
-  MS_ASSERT(anf_graph != nullptr);
+  MS_CHECK_TRUE_RET(anf_graph != nullptr, nullptr);
   auto const_node = anf_graph->add_parameter();
   MS_CHECK_TRUE_RET(const_node != nullptr, nullptr);
   auto const_abstract = CreateTensorAbstract({}, kNumberTypeInt32);
@@ -202,7 +202,7 @@ CNodePtr GetCNodeFromControlFlowNodesMap(
 }
 
 STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodePtr> &return_inputs) {
-  MS_ASSERT(anf_graph != nullptr);
+  MS_CHECK_TRUE_RET(anf_graph != nullptr, RET_NULL_PTR);
   auto return_prim = std::make_shared<ops::Return>();
   if (return_prim == nullptr) {
     MS_LOG(ERROR) << "new Return failed";
@@ -236,7 +236,7 @@ STATUS BuildReturnNode(const FuncGraphPtr &anf_graph, const std::vector<AnfNodeP
 STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor,
                           const std::string &model_file,
                           std::map<std::string, std::pair<size_t, uint8_t *>> *external_datas) {
-  MS_ASSERT(parameter_node != nullptr);
+  MS_CHECK_TRUE_RET(parameter_node != nullptr, RET_NULL_PTR);
   auto data_type = OnnxNodeParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(tensor.data_type()));
   if (data_type == kTypeUnknown) {
     MS_LOG(ERROR) << "not support onnx data type " << static_cast<onnx::TensorProto_DataType>(tensor.data_type());
@@ -402,7 +402,7 @@ STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr
 
 STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
                            const std::unordered_map<std::string, AnfNodePtr> &anf_nodes_map) {
-  MS_ASSERT(anf_graph != nullptr);
+  MS_CHECK_TRUE_RET(anf_graph != nullptr, RET_NULL_PTR);
   std::vector<AnfNodePtr> return_inputs;
   if (onnx_graph.output_size() == 0) {
     MS_LOG(ERROR) << "onnx graph has no output";
@@ -461,7 +461,7 @@ STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPt
 }
 
 FuncGraphPtr BuildCondGraph(const AnfNodePtr &root_while_node, int inputs_num, const std::string &cond_graph_name) {
-  MS_ASSERT(root_while_node != nullptr);
+  MS_CHECK_TRUE_RET(root_while_node != nullptr, nullptr);
   auto cond_graph = std::make_shared<FuncGraph>();
   MS_CHECK_TRUE_MSG(cond_graph != nullptr, nullptr, "create cond_graph return nullptr");
   CNodePtr less_cnode = nullptr;
@@ -544,7 +544,7 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
   MS_CHECK_TRUE_MSG(return_node != nullptr, nullptr, "return node of subgraph is nullptr");
   MS_CHECK_TRUE_RET(return_node->inputs().size() == DIMENSION_2D, nullptr);
   auto return_tuple_cnode = return_node->input(1)->cast<CNodePtr>();
-  MS_ASSERT(return_tuple_cnode != nullptr);
+  MS_CHECK_TRUE_RET(return_tuple_cnode != nullptr, nullptr);
   auto return_new_inputs = return_tuple_cnode->inputs();
   return_new_inputs.insert(return_new_inputs.end() - act_outputs_num, gen_subgraph_inputs.begin(),
                            gen_subgraph_inputs.end());
@@ -689,7 +689,7 @@ api::FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &f
 }
 
 STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
-  MS_ASSERT(res_graph_ != nullptr);
+  MS_CHECK_TRUE_RET(res_graph_ != nullptr, RET_NULL_PTR);
   auto res_graph = ConvertGraph(res_graph_);
   auto status = ValidateFileStr(model_file, ".onnx");
   if (status != RET_OK) {
@@ -896,7 +896,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
 STATUS OnnxModelParser::ConvertIfSubgraph(const onnx::GraphProto &subgraph_proto, const FuncGraphPtr &subgraph,
                                           const std::string &subgraph_name, const std::string &if_node_name,
                                           const std::string &root_node_name) {
-  MS_ASSERT(subgraph != nullptr);
+  MS_CHECK_TRUE_RET(subgraph != nullptr, RET_NULL_PTR);
   std::unordered_map<std::string, AnfNodePtr> anf_nodes_map;
   std::vector<AnfNodePtr> subgraph_extra_inputs;
   auto status = ConvertOnnxGraph(subgraph_proto, subgraph, &anf_nodes_map, &subgraph_extra_inputs, if_node_name);
@@ -929,7 +929,7 @@ STATUS OnnxModelParser::ConvertIfSubgraph(const onnx::GraphProto &subgraph_proto
   int start_index = 0;
   if (subgraph_proto.output_size() > 1) {
     auto return_cnode = return_node->input(1)->cast<CNodePtr>();
-    MS_ASSERT(return_cnode != nullptr);
+    MS_CHECK_TRUE_RET(return_cnode != nullptr, RET_NULL_PTR);
     return_act_inputs = return_cnode->inputs();
     start_index = 1;
   } else {
@@ -1056,7 +1056,7 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
             if (cur_node_map->find(loop_name) != cur_node_map->end()) {
               CHECK_NULL_RETURN(cur_node_map->at(loop_name));
               auto control_node = cur_node_map->at(loop_name)->cast<CNodePtr>();
-              MS_ASSERT(control_node != nullptr);
+              MS_CHECK_TRUE_RET(control_node != nullptr, RET_NULL_PTR);
               control_node->add_input(outside_input_node);
             } else {
               MS_LOG(ERROR) << "loop node: " << loop_name << " not found in cur node map.";
@@ -1199,7 +1199,7 @@ STATUS OnnxModelParser::ParseQuantParam(const onnx::NodeProto &onnx_node) {
 }
 
 STATUS OnnxModelParser::SetTensorQuantParam(const std::string &tensor_name, std::vector<QuantParamT> *quant_params) {
-  MS_ASSERT(quant_params != nullptr);
+  MS_CHECK_TRUE_RET(quant_params != nullptr, RET_NULL_PTR);
   quant_params->clear();
   auto quant_param = std::make_unique<QuantParamT>();
   MS_CHECK_TRUE_MSG(quant_param != nullptr, RET_NULL_PTR, "create QuantParamT return nullptr");
@@ -1239,7 +1239,7 @@ STATUS OnnxModelParser::SetTensorQuantParam(const std::string &tensor_name, std:
 
 STATUS OnnxModelParser::SetTensorQuantParamFromNode(const std::string &tensor_name,
                                                     std::vector<QuantParamT> *quant_params) {
-  MS_ASSERT(quant_params != nullptr);
+  MS_CHECK_TRUE_RET(quant_params != nullptr, RET_NULL_PTR);
   quant_params->clear();
   auto quant_param = std::make_unique<QuantParamT>();
   MS_CHECK_TRUE_MSG(quant_param != nullptr, RET_NULL_PTR, "create QuantParamT return nullptr");
@@ -1277,7 +1277,7 @@ STATUS OnnxModelParser::CopyTensorQuantParam(const std::string &tensor_name, Qua
     return RET_ERROR;
   }
   auto quant_parameter_node = iter->second->cast<ParameterPtr>();
-  MS_ASSERT(quant_parameter_node != nullptr);
+  MS_CHECK_TRUE_RET(quant_parameter_node != nullptr, RET_NULL_PTR);
   if (!quant_parameter_node->has_default()) {
     MS_LOG(ERROR) << "quant param get failed";
     return RET_ERROR;
@@ -1303,7 +1303,7 @@ STATUS OnnxModelParser::CopyTensorQuantParam(const std::string &tensor_name, Qua
 
 STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node, const onnx::NodeProto &onnx_node,
                                                int act_outputs_num, int body_output_size) {
-  MS_ASSERT(root_while_node != nullptr);
+  MS_CHECK_TRUE_RET(root_while_node != nullptr, RET_NULL_PTR);
   auto &loop_node_name = onnx_node.name();
   auto root_anf_graph = root_while_node->func_graph();
   auto stack_elem_node = CreateConstParamter(root_anf_graph, -1);
@@ -1312,8 +1312,10 @@ STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node
   for (int j = 0; j < act_outputs_num; j++) {
     auto output_size = onnx_node.output_size();
     auto &loop_output_name = onnx_node.output(output_size - act_outputs_num + j);
-    MS_ASSERT(control_nodes_map_.find(loop_node_name) != control_nodes_map_.end());
-    MS_ASSERT(control_nodes_map_[loop_node_name]->find(loop_output_name) != control_nodes_map_[loop_node_name]->end());
+    MS_CHECK_TRUE_RET(control_nodes_map_.find(loop_node_name) != control_nodes_map_.end(), RET_NULL_PTR);
+    MS_CHECK_TRUE_RET(
+      control_nodes_map_[loop_node_name]->find(loop_output_name) != control_nodes_map_[loop_node_name]->end(),
+      RET_NULL_PTR);
     auto &while_output_node = control_nodes_map_[loop_node_name]->at(loop_output_name);
     MS_CHECK_TRUE_MSG(while_output_node != nullptr, RET_ERROR, "can not find while_output_node is control_nodes_map");
     auto tensor_list_stack_prim = std::make_shared<ops::TensorListStack>();
@@ -1350,7 +1352,7 @@ STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node
 STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodePtr> *return_new_inputs,
                                            const std::string &loop_node_name,
                                            std::vector<AnfNodePtr> *body_graph_inputs, int act_output_num) {
-  MS_ASSERT(anf_graph != nullptr && return_new_inputs != nullptr && body_graph_inputs != nullptr);
+  MS_CHECK_TRUE_RET(anf_graph != nullptr && return_new_inputs != nullptr && body_graph_inputs != nullptr, RET_NULL_PTR);
   // body graph output is  trip_count,cond_count,loop_var,placeholder,scan_outputs
   auto root_while_node = GetCNodeFromControlFlowNodesMap(loop_node_name, control_nodes_map_);
   MS_CHECK_TRUE_MSG(root_while_node != nullptr, RET_ERROR, "can not find root_while_node is control_nodes_map");
@@ -1456,7 +1458,7 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
 STATUS OnnxModelParser::ConvertLoopOnnxNode(const onnx::NodeProto &onnx_node,
                                             std::unordered_map<std::string, AnfNodePtr> *anf_root_nodes_map,
                                             const std::string &root_node_name) {
-  MS_ASSERT(anf_root_nodes_map != nullptr);
+  MS_CHECK_TRUE_RET(anf_root_nodes_map != nullptr, RET_NULL_PTR);
   for (int i = 0; i < onnx_node.attribute_size(); i++) {
     auto &attr = onnx_node.attribute(i);
     if (attr.name() != "body" || attr.type() != onnx::AttributeProto_AttributeType_GRAPH) {

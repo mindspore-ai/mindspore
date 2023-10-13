@@ -29,5 +29,6 @@ const char *SafeCStr(const std::string &&str) {
   STR_HOLDER[cur_index] = str;
   return STR_HOLDER[cur_index].c_str();
 }
+
 }  // namespace common
 }  // namespace mindspore

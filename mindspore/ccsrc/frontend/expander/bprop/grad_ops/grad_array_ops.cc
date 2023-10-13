@@ -700,7 +700,7 @@ REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(i
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shp = ib->GetShape(x);
-  auto axis_int = CheckRange(GetValue<int64_t>(axis->get<ValueNodePtr>()->value()), SizeToLong(x_shp.size()));
+  auto axis_int = CheckRange(GetIntList(axis->BuildValue())[0], SizeToLong(x_shp.size()));
   if (axis_int == 0) {
     ShapeVector values_shape{ib->GetSize(indices)};
     if (x_shp.size() > 1) {
@@ -1519,13 +1519,6 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
     dout = ib->Reshape(dout, out_shp1);
   }
 
-  if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
-    ind_shp = ib->GetShape(indices);
-    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
-    dout = ib->Reshape(dout, out_shp1);
-  }
-
   out_shp = ib->GetShape(dout);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v, batch_dims);
   auto values_transpose = ib->Transpose(dout, perm_1);
@@ -1647,6 +1640,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto mask = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto dmask = ib->OutZeros(mask);
   mask = ib->Cast(mask, kFloat32);
   dout = ib->Cast(dout, kFloat32);
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
@@ -1669,7 +1663,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
   }
-  return {dinput, ib->OutZeros(mask), dvalue};
+  return {dinput, dmask, dvalue};
 });
 
 REG_BPROP_BUILDER("Coalesce").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {

@@ -55,6 +55,7 @@ public class NativeLibrary {
     private static final String TENSORRT_PLUGIN_LIBNAME = "tensorrt_plugin";
     private static final String MSLITE_SHARED_LIB_LIBNAME = "mslite_shared_lib";
     private static final String TRANSFORMER_SHARED_LIB_LIBNAME = "transformer-shared";
+    private static Long timestamp = null;
 
     /**
      * Load function.
@@ -191,13 +192,19 @@ public class NativeLibrary {
 
 
     private static File mkTmpDir() {
-        Long timestamp = System.currentTimeMillis();
-        String dirName = "mindspore_lite_libs-" + timestamp + "-";
+        if (NativeLibrary.timestamp == null) {
+            NativeLibrary.timestamp = System.currentTimeMillis();
+        }
+        String dirName = "mindspore_lite_libs-" + NativeLibrary.timestamp + "-";
         // try maximum 10 times
         for (int i = 0; i < 10; i++) {
             File tmpDir = new File(new File(System.getProperty("java.io.tmpdir")), dirName + i);
-            if (tmpDir.mkdir()) {
+            if (tmpDir.exists()) {
                 return tmpDir;
+            } else {
+                if (tmpDir.mkdir()) {
+                    return tmpDir;
+                }
             }
         }
         throw new IllegalStateException("create tmp dir failed, dirName: " + dirName);

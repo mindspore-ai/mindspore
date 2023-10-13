@@ -546,6 +546,13 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string backend = context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "On 910B platform, execution_order is not support to dump.";
+    return;
+  }
   bool sink_mode =
     (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph->IsDatasetGraph());
   auto iter_num = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));

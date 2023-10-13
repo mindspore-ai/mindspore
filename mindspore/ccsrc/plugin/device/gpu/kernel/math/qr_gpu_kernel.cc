@@ -27,6 +27,7 @@ constexpr size_t kNum2 = 2;
 bool QrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                           const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::Qr>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr_);
   kernel_name_ = kernel_ptr_->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -170,6 +171,9 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_q = GetDeviceAddress<T>(outputs, kIndex0);
   T *output_r = GetDeviceAddress<T>(outputs, kIndex1);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output_q);
+  MS_EXCEPTION_IF_NULL(output_r);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
   T *d_input = GetDeviceAddress<T>(workspace, kIndex1);
@@ -178,6 +182,13 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   T *d_tau = GetDeviceAddress<T>(workspace, kIndex4);
   T *d_A = GetDeviceAddress<T>(workspace, kIndex5);
   T *d_output_r_t = GetDeviceAddress<T>(workspace, kIndex6);
+  MS_EXCEPTION_IF_NULL(dev_info);
+  MS_EXCEPTION_IF_NULL(d_input);
+  MS_EXCEPTION_IF_NULL(d_output_q);
+  MS_EXCEPTION_IF_NULL(d_output_r);
+  MS_EXCEPTION_IF_NULL(d_tau);
+  MS_EXCEPTION_IF_NULL(d_A);
+  MS_EXCEPTION_IF_NULL(d_output_r_t);
 
   TransposeInfo x_info;
   TransposeInfo y_info;

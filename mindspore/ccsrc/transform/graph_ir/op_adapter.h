@@ -77,7 +77,8 @@ class OpAdapterImpl {
   Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) const;
   Status SetNormalOpInput(const OperatorPtr &op, int index, const OutHandler &handle);
   int setInput(const OperatorPtr &op, int index, const OutHandler &handle);
-  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec);
+  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec,
+               bool use_create_byindex_func = false, size_t dyn_index = 0);
   OutHandler getOutput(const OperatorPtr &op, int index);
   std::vector<OutHandler> getOutputs(const OperatorPtr &op) const;
   OutHandler getCustomOutput(const OperatorPtr &op, int index) const;
@@ -309,8 +310,9 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->setInput(op, index, handle);
   }
 
-  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec) override {
-    return impl_->setInput(op, index, handler_vec);
+  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec,
+               bool use_create_byindex_func = false, size_t dyn_index = 0) override {
+    return impl_->setInput(op, index, handler_vec, use_create_byindex_func, dyn_index);
   }
 
   OutHandler getOutput(const OperatorPtr &op, int index) override { return impl_->getOutput(op, index); }
@@ -386,6 +388,7 @@ class OpAdapter : public BaseOpAdapter {
     return impl_->getAttr(getOp(), input_idx, attr_value);
   }
   mindspore::HashMap<std::string, ValuePtr> GetExtraAttr() override { return extra_attr_; }
+  bool GetDynamicShapeSupport() override { return dynamic_shape_support_; }
 
  private:
   template <typename S>
@@ -628,6 +631,7 @@ class OpAdapter : public BaseOpAdapter {
   // convert input from anf graph to Attr in Operators
   static const mindspore::HashMap<unsigned int, AttrDesc> input_attr_map_;
   static const mindspore::HashMap<std::string, std::string> attr_input_map_;
+  static const bool dynamic_shape_support_;
   static mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> cus_input_map_;
   static mindspore::HashMap<std::string, std::map<int, std::string>> cus_output_map_;
   mindspore::HashMap<std::string, ValuePtr> extra_attr_;
@@ -662,6 +666,8 @@ template <typename T>
 mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<T>::cus_input_map_;
 template <typename T>
 mindspore::HashMap<std::string, std::map<int, std::string>> OpAdapter<T>::cus_output_map_;
+template <typename T>
+const bool OpAdapter<T>::dynamic_shape_support_{true};
 
 // specialization for method
 }  // namespace transform

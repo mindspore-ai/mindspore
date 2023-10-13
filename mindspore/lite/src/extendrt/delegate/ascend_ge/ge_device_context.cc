@@ -312,67 +312,17 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   (*ge_options)["device_id"] = "0";
   (*ge_options)["rank_table_file"] = "";
-  auto env_ddk_version = common::GetEnv("DDK_VERSION");
-  if (!env_ddk_version.empty()) {
-    (*ge_options)["ge.DDK_version"] = env_ddk_version;
-  } else {
-    (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
-  }
+  (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
   (*ge_options)["graphType"] = "1";
-
-  if (ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE) != "0") {
-    (*ge_options)["ge.graphMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_GRAPH_MEMORY_MAX_SIZE);
-  }
-
-  if (ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE) != "0") {
-    (*ge_options)["ge.variableMemoryMaxSize"] = ms_context_ptr->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
-  }
-
   (*ge_options)["ge.graphRunMode"] = "0";
-
-  SetDisableReuseMemoryFlag(ge_options);
-  SetHcclOptions(context, ge_options, config_info);
-
-  auto env_job_id = common::GetEnv("JOB_ID");
-  if (!env_job_id.empty()) {
-    (*ge_options)["ge.exec.jobId"] = env_job_id;
-  } else {
-    (*ge_options)["ge.exec.jobId"] = "0";
-    MS_LOG(WARNING) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
-
-  auto env_fe_flag = common::GetEnv("FE_FLAG");
-  if (!env_fe_flag.empty()) {
-    (*ge_options)["ge.feFlag"] = env_fe_flag;
-    MS_LOG(INFO) << "Use FE, make sure fe lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-  }
-
-  auto env_aicpu_flag = common::GetEnv("AICPU_FLAG");
-  if (!env_aicpu_flag.empty()) {
-    (*ge_options)["ge.aicpuFlag"] = env_aicpu_flag;
-    MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-  }
-
-  auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");
-  if (!proto_lib_path.empty()) {
-    char real_path[PATH_MAX] = {0};
-    if (realpath(proto_lib_path.c_str(), real_path)) {
-      proto_lib_path = real_path;
-      (*ge_options)["ge.opsProtoLibPath"] = proto_lib_path;
-    }
-  } else {
-    MS_LOG(WARNING) << "Set proto lib path failed!";
-  }
-
+  (*ge_options)["ge.exec.disableReuseMemory"] = "0";
+  (*ge_options)["ge.exec.jobId"] = "0";
   (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
+  SetHcclOptions(context, ge_options, config_info);
 
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
 
-  // ge heterogeneous mode
-  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    (*ge_options)["ge.socVersion"] = "Ascend310P3";
-  }
   // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
   // 1: True, dynamic and static graph online compiler op
   // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
@@ -412,19 +362,12 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
     }
   }
 
-  auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
   MS_LOG(INFO) << "Set ge_options for rank table file " << rank_table_file << " device id " << device_id << " rank id "
                << rank_id;
-  if (!(rank_table_file.empty() || !(env_cluster_info.empty()))) {
+  if (!rank_table_file.empty()) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
-    if (!rank_table_file.empty()) {
-      MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-      (*ge_options)["ge.exec.rankTableFile"] = rank_table_file;
-    }
-    auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
-    if (!env_hccl_flag.empty()) {
-      (*ge_options)["ge.exec.hcclFlag"] = env_hccl_flag;
-    }
+    MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
+    (*ge_options)["ge.exec.rankTableFile"] = rank_table_file;
     (*ge_options)["ge.exec.isUseHcom"] = "1";
     (*ge_options)["ge.exec.deviceId"] = std::to_string(device_id);
     (*ge_options)["ge.exec.rankId"] = std::to_string(rank_id);
@@ -436,14 +379,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
                  << "If use hccl, make sure that the rank table file path is set in config file, "
                  << "rank id and device id are set in AscendDeviceInfo.";
   }
-
-  auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
-  if (!env_deploy_mode.empty()) {
-    (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
-  } else {
-    (*ge_options)["ge.exec.deployMode"] = "0";
-    MS_LOG(WARNING) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
-  }
+  (*ge_options)["ge.exec.deployMode"] = "0";
 }
 
 bool GeDeviceContext::FinalizeGe(const std::shared_ptr<MsContext> &inst_context) {

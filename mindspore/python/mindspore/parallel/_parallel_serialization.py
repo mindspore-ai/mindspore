@@ -330,8 +330,8 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst
         device_list = list(range(0, np.prod(from_tensor_layout[0])))
         param_rank_list = _get_needed_rank_list_by_layouts(from_tensor_layout, to_tensor_layout, device_list, rank_id)
         param_rank_list_new = [rank % from_device_num for rank in param_rank_list]
-        param_rank_list_new = set(param_rank_list_new)
-        result_list.update(param_rank_list_new)
+        param_rank_set_new = set(param_rank_list_new)
+        result_list.update(param_rank_set_new)
     return list(result_list)
 
 

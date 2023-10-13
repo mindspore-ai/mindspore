@@ -891,10 +891,23 @@ void Tensor::ExecuteLazyTask() const {
   }
 
   if (storage_info_ != nullptr && contiguous_callback_ != nullptr) {
-    device_sync_ = contiguous_callback_(device_address(), storage_info());
+    device_sync_ = contiguous_callback_(nullptr, device_address(), storage_info());
+    device_sync_->set_original_ref_count(SIZE_MAX);
+    device_sync_->ResetRefCount();
     address_future_ = nullptr;
     storage_info_ = nullptr;
   }
+}
+
+void Tensor::contiguous() {
+  if (storage_info_ != nullptr) {
+    contiguous_callback_(shared_from_base<Tensor>(), nullptr, nullptr);
+  }
+}
+
+bool Tensor::is_contiguous() {
+  auto storage_info = storage_info_;
+  return storage_info == nullptr || storage_info->is_contiguous;
 }
 
 DeviceSyncPtr Tensor::device_address() const {

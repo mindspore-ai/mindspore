@@ -48,7 +48,6 @@ class LiteInferSession : public InferSession {
   std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
                                      bool verify_size);
   std::vector<std::string> ConvertToTensorNames(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
-  std::vector<tensor::TensorPtr> ConvertToTensors(const std::vector<mindspore::lite::Tensor *> &lite_tensors);
 
  private:
   std::shared_ptr<lite::LiteSession> lite_session_;

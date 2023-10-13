@@ -48,7 +48,8 @@ bool GpuContiguousKernelTask::RunWithRet() {
   auto output = MallocMemoryForDeviceAddress(output_address, device_context);
 
   kernel::ContiguousGpuKernel contiguous_kernel;
-  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input, input_storage_info, output, stream);
+  auto ret = contiguous_kernel.LaunchContiguous(input_address->type_id(), input, input_storage_info,
+                                                output_address->type_id(), output, stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "LaunchContiguous failed";
   }

@@ -104,6 +104,7 @@ class ScalarSummary(Primitive):
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
         self.add_prim_attr("side_effect_io", True)
+        self.add_prim_attr("channel_name", "ms_scalar_summary")
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -153,6 +154,7 @@ class ImageSummary(PrimitiveWithInfer):
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
         self.add_prim_attr("side_effect_io", True)
+        self.add_prim_attr("channel_name", "ms_image_summary")
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -221,6 +223,7 @@ class TensorSummary(Primitive):
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
         self.add_prim_attr("side_effect_io", True)
+        self.add_prim_attr("channel_name", "ms_tensor_summary")
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -276,6 +279,7 @@ class HistogramSummary(PrimitiveWithInfer):
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
         self.add_prim_attr("side_effect_io", True)
+        self.add_prim_attr("channel_name", "ms_histogram_summary")
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)

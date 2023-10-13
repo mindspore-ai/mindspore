@@ -33,7 +33,7 @@
 
 namespace mindspore::opt {
 namespace {
-const std::set<std::string> kNodeWithSeedOperators = {kPoissonOpName};
+const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName, kPoissonOpName};
 template <typename T>
 tensor::TensorPtr CreateTensor(T seed) {
   // 1 create seed tensor

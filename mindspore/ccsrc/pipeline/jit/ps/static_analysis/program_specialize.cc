@@ -201,7 +201,8 @@ void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *
 
 // These abstract sequence can't handled by DDE.
 bool IsInvalidAbstractSequence(const AbstractSequencePtr &abs) {
-  if (abs == nullptr || abs->sequence_nodes() == nullptr || abs->sequence_nodes()->empty()) {
+  if (abs == nullptr || abs->isa<AbstractSparseTensor>() || abs->sequence_nodes() == nullptr ||
+      abs->sequence_nodes()->empty()) {
     return true;
   }
   if (abs->dyn_len_arg() || abs->dynamic_len()) {
@@ -637,6 +638,24 @@ void FuncGraphSpecializer::SecondPass() {
 }
 
 namespace {
+void UpdateForEmptySequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node,
+                                const AbstractSequencePtr &old_sequence_abs) {
+  if (!IsValueNode<ValueTuple>(new_node) && !IsValueNode<ValueList>(new_node)) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(old_sequence_abs);
+  auto sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_node));
+  old_sequence_abs->set_sequence_nodes(sequence_nodes);
+  auto flags = GetSequenceNodeElementsUseFlags(old_node);
+  if (flags != nullptr) {
+    SetSequenceNodeElementsUseFlags(new_node, flags);
+  } else {
+    SetSequenceNodeElementsUseFlags(new_node,
+                                    std::make_shared<std::vector<bool>>(old_sequence_abs->elements().size(), true));
+  }
+}
+
 // Update elements use flags for MakeTuple/tuple node,
 // and update the node's AbstractSequence 'sequence_nodes' info.
 void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, const AbstractBasePtr &old_abs) {
@@ -644,10 +663,16 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
     return;
   }
   MS_EXCEPTION_IF_NULL(old_node);
-  auto old_sequence_abs = dyn_cast_ptr<AbstractSequence>(old_abs);
-  if (old_sequence_abs == nullptr || old_sequence_abs->sequence_nodes() == nullptr ||
-      old_sequence_abs->sequence_nodes()->empty()) {
+  auto old_sequence_abs = dyn_cast<AbstractSequence>(old_abs);
+  if (old_sequence_abs == nullptr || old_sequence_abs->isa<AbstractSparseTensor>()) {
+    MS_LOG(DEBUG) << "The abstract is not AbstractTuple/AbstractList, " << old_node->DebugString() << " --> "
+                  << new_node->DebugString();
+    return;
+  }
+  if (old_sequence_abs->sequence_nodes() == nullptr || old_sequence_abs->sequence_nodes()->empty()) {
     MS_LOG(DEBUG) << "No sequence node in old abs, " << old_node->DebugString() << " --> " << new_node->DebugString();
+    // The abstract of old_node may have not sequence_nodes when it is a parameter or tuple output cnode.
+    UpdateForEmptySequenceNode(new_node, old_node, old_sequence_abs);
     return;
   }
 
@@ -848,8 +873,8 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
     }
   }
 
-  auto name = sequence_value->name();
-  auto keys = sequence_value->key();
+  const auto &name = sequence_value->name();
+  const auto &keys = sequence_value->key();
   abstract::AbstractBasePtrList key_abs;
   (void)std::transform(keys.begin(), keys.end(), std::back_inserter(key_abs), [](const ValuePtr &key) {
     MS_EXCEPTION_IF_NULL(key);

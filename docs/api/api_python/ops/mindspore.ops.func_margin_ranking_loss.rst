@@ -17,9 +17,9 @@ mindspore.ops.margin_ranking_loss
        	- **margin** (float, 可选) - 指定运算的调节因子。默认值： ``0.0`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
 
-            - ``"none"``：不应用规约方法。
-            - ``"mean"``：计算输出元素的平均值。
-            - ``"sum"``：计算输出元素的总和。
+          - ``"none"``：不应用规约方法。
+          - ``"mean"``：计算输出元素的平均值。
+          - ``"sum"``：计算输出元素的总和。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `labels` 相同。否则，将返回为Scalar。
@@ -31,4 +31,4 @@ mindspore.ops.margin_ranking_loss
         - **TypeError** - `input1` 和 `target` 类型不一致。
         - **ValueError** - `input1` 和 `input2` shape不一致。
         - **ValueError** - `input1` 和 `target` shape不一致。
-        - **ValueError** - `reduction` 不为 ``"none"`` ， ``"mean"`` 或 ``"sum"`` 。
+        - **ValueError** - `reduction` 不为 ``"none"`` 、 ``"mean"`` 或 ``"sum"`` 。

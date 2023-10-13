@@ -73,6 +73,9 @@ class DeviceContext {
 
   // Analysis the function graph to check whether all nodes are supported, if yes, return true, if no, return false and
   // mark the unsupported node as "NotSupport" through SetCNodeNotSupported()
+  // For further usage, each device can add a attribute kAttrGraphSplitGroup to the node, and give different
+  // group_name (the type must be a std::string, default is 'DefaultGroup') to the attribute, which means the
+  // continuous nodes with the same group_name will be splited into one subgraph.
   virtual bool PartitionGraph(const FuncGraphPtr &func_graph) const { return false; }
 
   // Analysis the function graph and select the appropriate run mode for the graph
@@ -154,6 +157,7 @@ class BACKEND_EXPORT DeviceResManager {
   // Relevant function to allocate and free device memory of DeviceAddress.
   virtual bool AllocateMemory(DeviceAddress *const &address) const;
   virtual void FreeMemory(DeviceAddress *const &address) const;
+  virtual size_t GetMaxUsedMemorySize() const { return 0; }
 
   // Allocate host memory with raii and ref count
   virtual std::shared_ptr<void> AllocateHostMemory(size_t size) const {

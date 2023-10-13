@@ -185,13 +185,6 @@ class PyExecuteInitializer {
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return tensor->ToAbstract();
       }
-      static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-      if (!allow_runtime_compile) {
-        auto ret = GenerateAbstractFromPyObject(output);
-        if (ret != nullptr) {
-          return ret;
-        }
-      }
     } catch (const py::error_already_set &e) {
       auto error_type_name = py::cast<std::string>(python_adapter::GetPyObjAttr(e.type(), "__name__"));
       auto error_iter = exception_types_map.find(error_type_name);

@@ -78,7 +78,8 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimReduceMean->name(), {DependValueDeco::GetCreator({1})}},
     {prim::kPrimTile->name(), {DependValueDeco::GetCreator({1})}},
     {prim::kPrimSlice->name(), {DependValueDeco::GetCreator({1, 2})}},
-    {prim::kPrimGather->name(), {DependValueDeco::GetCreator({2})}}};
+    {prim::kPrimGather->name(), {DependValueDeco::GetCreator({2})}},
+    {prim::kPrimAddN->name(), {UnfoldMakeTupleDeco::Creator}}};
 
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -316,6 +317,23 @@ AnfNodePtr ArgWithValueDeco::Run(const AnfNodePtr &node) {
     });
   }
   return res ? decorated_->Run(node) : nullptr;
+}
+
+AnfNodePtr UnfoldMakeTupleDeco::Run(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().size() == kIndex2 && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeTuple)) {
+    auto make_tupe_cnode = cnode->input(1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tupe_cnode);
+    std::vector<AnfNodePtr> new_inputs;
+    new_inputs.push_back(cnode->input(0));
+    for (size_t i = 1; i < make_tupe_cnode->inputs().size(); ++i) {
+      new_inputs.push_back(make_tupe_cnode->input(i));
+    }
+    cnode = QuickCloneCNode(cnode);
+    cnode->set_inputs(new_inputs);
+  }
+  return decorated_->Run(cnode);
 }
 
 void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph) {

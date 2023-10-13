@@ -12,6 +12,7 @@ mindspore.nn.SyncBatchNorm
 
     .. note::
         目前，SyncBatchNorm仅支持二维和四维输入。
+        :math:`\gamma` 是通过训练学习出的scale值，:math:`\beta` 是通过训练学习出的shift值。
 
     参数：
         - **num_features** (int) - 指定输入Tensor的通道数量，输入Tensor的size为 :math:`(N, C, H, W)` 。

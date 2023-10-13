@@ -48,6 +48,7 @@ class LRScheduler:
         TypeError: If `optimizer` is not an Optimizer.
         KeyError: If `last_epoch` != -1 and ``'initial_lr'`` not in param groups.
         ValueError: if `last_epoch` is not int.
+        ValueError: If `last_epoch` is not greater than -1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -87,7 +88,8 @@ class LRScheduler:
             raise TypeError('{} is not an Optimizer'.format(
                 type(optimizer).__name__))
         Validator.check_value_type("last_epoch", last_epoch, [int])
-
+        if last_epoch < -1:
+            raise ValueError("Invalid last_epoch: {}".format(last_epoch))
         if last_epoch == -1:
             for group in optimizer.param_groups:
                 group.setdefault('initial_lr', group['lr'].value())
@@ -191,7 +193,7 @@ class StepLR(LRScheduler):
         ...     scheduler.step()
         ...     current_lr = scheduler.get_last_lr()
     """
-    def __init__(self, optimizer, step_size, gamma=0.5, last_epoch=-1):
+    def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
         self.step_size = step_size
         self.gamma = gamma
         super(StepLR, self).__init__(optimizer, last_epoch)
@@ -660,7 +662,7 @@ class MultiStepLR(LRScheduler):
             if not isinstance(milestone, int):
                 raise TypeError(f"For 'MultiStepLR', elements of the 'milestones' must be type of int, "
                                 f"but got one element of 'milestones' type: {type(milestone)}.")
-        Validator.check_value_type('gamma', gamma, [float])
+        Validator.check_value_type('gamma', gamma, [float, int])
         self.milestones = Counter(milestones)
         self.milestones_keys = list(self.milestones.keys())
         self.milestones_values = list(self.milestones.values())
@@ -758,7 +760,8 @@ class SequentialLR:
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
-        schedulers (list[:class:`mindspore.experimental.optim.Optimizer`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.experimental.optim.lr_scheduler.LRScheduler`]):
+            List of learning rate schedulers.
         milestones (list): List of integers that reflects milestone points.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
@@ -1078,9 +1081,9 @@ class CyclicLR(LRScheduler):
             argument lambda function, where 0 <= scale_fn(x) <= 1 for all x >= 0.
             If specified, then 'mode' is ignored. Default: ``None``.
         scale_mode (str, optional): {'cycle', 'iterations'}.
-            Defines whether scale_fn is evaluated on
-            cycle number or cycle iterations (training
-            iterations since start of cycle). Default: ``'cycle'``.
+            Defines whether scale_fn is evaluated on cycle number or cycle iterations (training
+            iterations since start of cycle). Illegal inputs will use ``'iterations'`` by defaults.
+            Default: ``'cycle'``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Raises:
@@ -1214,8 +1217,8 @@ class CosineAnnealingWarmRestarts(LRScheduler):
     r"""
     Set the learning rate of each parameter group using a cosine annealing warm restarts
     schedule. Where :math:`\eta_{max}` is set to the initial lr, :math:`\eta_{min}` is the minimum value
-    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`\T_{0}` is the number of iterations for the
-    first restar, :math:`\T_{i}` is the current number of iterations between two warm restarts in SGDR,
+    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`T_{0}` is the number of iterations for the
+    first restar, :math:`T_{i}` is the current number of iterations between two warm restarts in SGDR,
     :math:`T_{cur}` is the number of epochs since the last restart in SGDR.
 
     .. math::
@@ -1237,12 +1240,13 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         T_0 (int): Number of iterations for the first restart.
         T_mult (int, optional): A factor increases :math:`T_{i}` after a restart. Default: ``1``.
-        eta_min (float, optional): Minimum learning rate. Default: ``0``.
+        eta_min (Union(float, int), optional): Minimum learning rate. Default: ``0``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Raises:
         ValueError: `T_0` is less than or equal than 0 or not an int.
         ValueError: `T_mult` is less than or equal than 1 or not an int.
+        ValueError: `eta_min` is not int or float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1274,6 +1278,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         self.T_0 = Parameter(Tensor(T_0, dtype=mstype.float32), name='T_0')
         self.T_i = Parameter(Tensor(T_0, dtype=mstype.float32), name='T_i')
         self.T_mult = T_mult
+        Validator.check_value_type('eta_min', eta_min, [float, int])
         self.eta_min = Tensor(eta_min)
         self.T_cur = Parameter(Tensor(last_epoch, dtype=mstype.float32), name='T_cur')
         self.increase_tensor = Tensor(1, mstype.int32)

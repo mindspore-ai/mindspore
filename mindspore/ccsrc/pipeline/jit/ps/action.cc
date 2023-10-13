@@ -588,17 +588,12 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
     const auto &fg = graphs[0];
-    // fg->parameter_obj_nodes().empty() have been handled by combine like.
-    if (!fg->parameter_obj_nodes().empty()) {
-      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
-      continue;
-    }
     if (cell_key.find("lazy_inline") == cell_key.npos) {
       continue;
     }
     auto reusing_graph = GenerateReusingGraph(fg);
     if (reusing_graph == nullptr) {
-      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+      MS_LOG(WARNING) << "Failed to generate reused graph for cell_key: " << cell_key;
       continue;
     }
     // Let the original cell graph call the reusable graph.
@@ -610,9 +605,10 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const bool enable_ge = context->backend_policy() == "ge";
+  const bool enable_ge = context->backend_policy() == "ge";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
+    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
     const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     context->SetCellReuseLevel(cell_reuse_level);
   }
@@ -1045,7 +1041,7 @@ bool HasIncorporateCallNode(const CNodePtr &cnode) {
     auto input0 = cnode->input(0);
     if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
         IsValueNode<FuncGraph>(input0)) {
-      if (IsCellReuse(input0) && common::IsEnableRefMode()) {
+      if (IsCellReuse(input0) && IsEnableRefMode()) {
         MS_LOG(INFO) << "Use cell reuse when enable ge mode: " << cnode->DebugString();
         return true;
       }

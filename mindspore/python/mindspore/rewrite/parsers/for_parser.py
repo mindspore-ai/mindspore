@@ -89,8 +89,10 @@ class ForParser(Parser):
         iter_var_name = iter_code.split(".")[-1]
         ast_functiondef = node_manager.get_ast_functiondef()
         if not ast_functiondef:
-            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                               "when parsing 'for' statement.")
+            logger.info(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
+                        "when parsing 'for' statement.")
+            stree.try_append_python_node(node, node, node_manager)
+            return
         index = ast_functiondef.body.index(node) + 1
         if isinstance(iter_obj, (list, nn.CellList)):
             for obj in iter_obj:

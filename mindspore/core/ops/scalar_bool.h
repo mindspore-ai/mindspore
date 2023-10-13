@@ -27,7 +27,7 @@ class MIND_API ScalarBool : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarBool);
   /// \brief Constructor.
-  ScalarBool() : BaseOperator(kNameScalarBool) {}
+  ScalarBool() : BaseOperator(kNameScalarBool) { InitIOName({"x"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
 };

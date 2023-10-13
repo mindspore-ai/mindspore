@@ -36,6 +36,9 @@ def lazy_inline(fn=None, attrs=None):
     Returns:
         function, original function.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
@@ -161,7 +164,7 @@ def lazy_inline(fn=None, attrs=None):
                 arguments = arguments.values()
             fn(self, *args, **kwargs)
             if attrs is None:
-                self.cell_init_args = "lazy_inline" + type(self).__name__ + str(arguments)
+                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
                 return
 
             if isinstance(attrs, list):
@@ -175,7 +178,7 @@ def lazy_inline(fn=None, attrs=None):
                     arguments = getattr(self, attrs)
             else:
                 raise ValueError(f"attrs must be list or string")
-            self.cell_init_args = "lazy_inline" + type(self).__name__ + str(arguments)
+            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
 
         return deco
 

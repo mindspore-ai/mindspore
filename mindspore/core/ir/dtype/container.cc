@@ -23,6 +23,7 @@
 #include <type_traits>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "ir/dtype/tensor_type.h"
 
 namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext, bool is_dynamic = false,
@@ -45,11 +46,16 @@ static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_
   // write 'Tuple[Bool, Bool, Bool, Int, Float, Float]' as 'Tuple[Bool...3, Int, Float...2]'
   for (size_t i = 0; i < elements.size(); ++i) {
     TypePtr elem = elements[i];
+    MS_EXCEPTION_IF_NULL(elem);
     cnt += 1;
     bool print = false;
     if (i + 1 < elements.size()) {
       TypePtr next = elements[i + 1];
-      if (*elem != *next) {
+      MS_EXCEPTION_IF_NULL(next);
+      // AnyType is the subclass of TensorType but AnyType and TensorType should not be combined.
+      bool is_tensor_and_any = (elem->isa<TensorType>() && !elem->isa<AnyType>() && next->isa<AnyType>()) ||
+                               (elem->isa<AnyType>() && next->isa<TensorType>() && !next->isa<TensorType>());
+      if (*elem != *next || is_tensor_and_any) {
         print = true;
       }
     } else {

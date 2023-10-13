@@ -116,6 +116,14 @@ TEST_F(TestBoostParse, TestEqualTensor) {
 }
 
 // Feature: Boost parse.
+// Description: Parse the network witch has comparison statement with constant condition comment.
+// Expectation: The false branch should be folded.
+TEST_F(TestBoostParse, TestEqualTensorWithComment) {
+  FuncGraphPtr func_graph = getPyFun_.CallAndParseRet("test_compare", "equal_tensor_with_comment");
+  CheckFalseBranch(func_graph);
+}
+
+// Feature: Boost parse.
 // Description: Parse the network witch has comparison statement.
 // Expectation: The false branch should be folded.
 TEST_F(TestBoostParse, TestNotEqualNum1) {

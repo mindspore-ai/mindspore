@@ -85,8 +85,8 @@ class HausdorffDistance(Metric):
 
     Args:
         distance_metric (string): Three distance measurement methods are supported:
-                            ``"euclidean"`` , ``"chessboard"`` or
-                            ``"taxicab"`` . Default: ``"euclidean"`` .
+                    ``"euclidean"`` (Euclidean Distance) ,  ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
+                    or  ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
         percentile (float): Floating point numbers between 0 and 100. Specify the percentile parameter to get the
                             percentile of the Hausdorff distance. Default: ``None`` .
         directed (bool): If True, it only calculates h(y_pred, y) distance, otherwise, max(h(y_pred, y), h(y, y_pred))
@@ -112,6 +112,7 @@ class HausdorffDistance(Metric):
         >>> print(mean_average_distance)
         1.4142135623730951
     """
+
     def __init__(self, distance_metric="euclidean", percentile=None, directed=False, crop=True):
         super(HausdorffDistance, self).__init__()
         string_list = ["euclidean", "chessboard", "taxicab"]

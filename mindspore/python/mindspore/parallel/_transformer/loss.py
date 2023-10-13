@@ -139,6 +139,7 @@ class _NLLLoss(Cell):
             self.add = P.Add().shard(((dp, mp), ()))
 
     def construct(self, softmax_result, one_hot_label):
+        """The forward of _NLLLoss"""
         log_softmax_result = self.log(self.add(softmax_result, self.eps_const))
         loss = self.mul(log_softmax_result, one_hot_label)
         loss_unsum = self.neg(loss)

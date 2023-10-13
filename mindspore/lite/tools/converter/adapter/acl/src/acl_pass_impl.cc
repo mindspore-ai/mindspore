@@ -52,6 +52,7 @@
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
@@ -95,6 +96,7 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 constexpr auto kOpsTransPose = "Transpose";
+const std::set<std::string> kSocVersionForAscendCFA = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
 
 STATUS ModifyCNodeFormat(const FuncGraphPtr &func_graph, Format format) {
   MS_ASSERT(func_graph != nullptr);
@@ -583,23 +585,24 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
   if (param_->provider != "ge") {
     // if provider is ge, it will fusion in anf_transform_for_ge.cc
     auto plugin_custom_ops = user_options_cfg_.plugin_custom_ops;
-    if (plugin_custom_ops != "All") {
-      MS_LOG(INFO) << plugin_custom_ops << " is not All";
-      return RET_OK;
-    }
-    auto soc_version = AclModelOptions::GetSocName();
-    MS_LOG(INFO) << "soc_version: " << soc_version;
-    MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
-    if (soc_version == "Ascend910B1" || soc_version == "Ascend910B2") {
-      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
-        MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
-        return lite::RET_ERROR;
-      }
-    } else {
-      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
-      if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
-        MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
-        return lite::RET_ERROR;
+    MS_LOG(INFO) << "plugin_custom_ops: " << plugin_custom_ops;
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
+        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "FlashAttention") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using FlashAttention";
+      auto soc_version = AclModelOptions::GetSocName();
+      MS_LOG(INFO) << "soc_version: " << soc_version;
+      MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusion;
+      if (kSocVersionForAscendCFA.find(soc_version) != kSocVersionForAscendCFA.end()) {
+        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusion})) {
+          MS_LOG(ERROR) << kCustomOpFlashAttentionFusion << " op pass failed.";
+          return lite::RET_ERROR;
+        }
+      } else {
+        MS_LOG(INFO) << "run " << kCustomOpFlashAttentionFusionForCustom;
+        if (!lite::RunOptimizerPass(func_graph, {kCustomOpFlashAttentionFusionForCustom})) {
+          MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
+          return lite::RET_ERROR;
+        }
       }
     }
   }
@@ -859,9 +862,14 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
-  auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(false, true, true);
-  if (!redundant_op_remove_pass->Run(func_graph)) {
-    MS_LOG(ERROR) << "Run remove redundant op failed";
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  CHECK_NULL_RETURN(optimizer);
+  auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+  CHECK_NULL_RETURN(fusion_pm);
+  fusion_pm->AddPass(std::make_shared<opt::RemoveLoadPass>());
+  optimizer->AddPassManager(fusion_pm);
+  if (optimizer->Optimize(func_graph) == nullptr) {
+    MS_LOG(ERROR) << "run op fusion failed.";
     return RET_ERROR;
   }
   auto ret = lite::quant::MarkOriginDataType(func_graph);
@@ -870,6 +878,11 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
     return ret;
   }
   if (param_->commonQuantParam.quant_type == lite::quant::QUANT_ALL) {
+    auto redundant_op_remove_pass = std::make_shared<mindspore::opt::RemoveRedundantOpPass>(false, true, true);
+    if (!redundant_op_remove_pass->Run(func_graph)) {
+      MS_LOG(ERROR) << "Run remove redundant op failed";
+      return RET_ERROR;
+    }
     auto value = func_graph->get_attr(ops::kFormat);
     if (value == nullptr) {
       auto unify_format = std::make_shared<lite::UnifyFormatToNHWC>(fmk_type_, false, param_->save_type);
@@ -889,9 +902,9 @@ STATUS AclPassImpl::PreQuantization(const FuncGraphPtr &func_graph) {
         return lite::RET_ERROR;
       }
     }
-    auto optimizer = std::make_shared<opt::GraphOptimizer>();
+    optimizer = std::make_shared<opt::GraphOptimizer>();
     CHECK_NULL_RETURN(optimizer);
-    auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
+    fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
     CHECK_NULL_RETURN(fusion_pm);
     std::vector<opt::PassPtr> fusions{
       std::make_shared<opt::ClipConvertActivationPass>(true),

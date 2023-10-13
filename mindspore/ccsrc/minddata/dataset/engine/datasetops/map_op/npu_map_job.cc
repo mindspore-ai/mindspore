@@ -49,12 +49,15 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
     for (auto &tensor : tensor_row) {
       // if the first op is Decode, confirm that it is in jpeg format.
       if (ops_[0]->Name() == kDvppDecodeOp) {
-        CHECK_FAIL_RETURN_UNEXPECTED(IsNonEmptyJPEG(tensor) == true,
-                                     "[DvppDecode] Invalid image type. Currently only support JPG.");
-        CHECK_FAIL_RETURN_UNEXPECTED(tensor->type() == DataType::DE_UINT8,
-                                     "[DvppDecode] Invalid data type. Currently only support uint8.");
         CHECK_FAIL_RETURN_UNEXPECTED(tensor->shape().Rank() == 1,
-                                     "[DvppDecode] Invalid data shape. Currently only support 1D.");
+                                     "[DvppDecode] Invalid data shape. Currently only support 1D. Its rank is: " +
+                                       std::to_string(tensor->shape().Rank()));
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          IsNonEmptyJPEG(tensor) == true,
+          "[DvppDecode] Invalid image type. Currently only support JPG. Its shape is: " + tensor->shape().ToString());
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          tensor->type() == DataType::DE_UINT8,
+          "[DvppDecode] Invalid data type. Currently only support uint8. Its type is: " + tensor->type().ToString());
       }
       std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
       // here we use the first op's IsHWC() to create device tensor
