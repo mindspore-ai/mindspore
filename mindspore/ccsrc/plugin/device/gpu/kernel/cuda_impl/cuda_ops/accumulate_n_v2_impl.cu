@@ -31,6 +31,18 @@ __global__ void AccumulateNV2(const size_t size, const size_t n, T **inputs, T *
   return;
 }
 
+template <>
+__global__ void AccumulateNV2(const size_t size, const size_t n, half **inputs, half *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+    float temp = 0;
+    for (size_t num = 0; num < n; num++) {
+      temp += __half2float(inputs[num][pos]);
+    }
+    output[pos] = __float2half(temp);
+  }
+  return;
+}
+
 template <typename T>
 cudaError_t CalAccumulateNV2(const size_t size, const size_t n, T **inputs, T *output, const uint32_t &device_id,
                              cudaStream_t cuda_stream) {
