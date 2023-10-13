@@ -106,11 +106,11 @@ class SummaryCollector(Callback):
               training computational graph is collected. Default: ``True`` .
             - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the `lineage page \
-              <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
+              <https://www.mindspore.cn/mindinsight/docs/en/r2.2/lineage_and_scalars_comparison.html>`_
               of MindInsight. Default: ``True`` .
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the `lineage page
-              <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_
+              <https://www.mindspore.cn/mindinsight/docs/en/r2.2/lineage_and_scalars_comparison.html>`_
               of MindInsight. Default: ``True`` .
             - collect_input_data (bool): Whether to collect dataset for each training.
               Currently only image data is supported.
@@ -151,7 +151,7 @@ class SummaryCollector(Callback):
             False: it means that after specified data is set, only the specified data is collected,
             and the others are not collected. Default: ``True`` .
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
-            `lineage page <https://www.mindspore.cn/mindinsight/docs/en/master/lineage_and_scalars_comparison.html>`_ .
+            `lineage page <https://www.mindspore.cn/mindinsight/docs/en/r2.2/lineage_and_scalars_comparison.html>`_ .
             In the custom data, the type of the key supports str, and the type of value supports str, int
             and float. Default: ``None`` , it means there is no custom data.
         collect_tensor_freq (Optional[int]): The same semantics as the `collect_freq`, but controls TensorSummary only.
@@ -191,10 +191,10 @@ class SummaryCollector(Callback):
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r2.2/docs/mindspore/code/lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)

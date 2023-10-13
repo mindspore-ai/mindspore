@@ -238,11 +238,11 @@ class Conv2d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
@@ -456,11 +456,11 @@ class Conv1d(_Conv):
             distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
             ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
             Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
@@ -697,11 +697,11 @@ class Conv3d(_Conv):
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
             lowercase are both acceptable. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , weight will be initialized using ``'HeUniform'``.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
+            `Initializer <https://www.mindspore.cn/docs/en/r2.2/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .

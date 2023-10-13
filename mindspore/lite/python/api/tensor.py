@@ -415,7 +415,7 @@ class Tensor:
 
         Args:
             dtype (DataType): The data type of the Tensor. For details, see
-                `DataType <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.DataType.html>`_ .
+                `DataType <https://mindspore.cn/lite/api/en/r2.2/mindspore_lite/mindspore_lite.DataType.html>`_ .
 
         Raises:
             TypeError: `dtype` is not a DataType.
@@ -451,7 +451,7 @@ class Tensor:
 
         Args:
             tensor_format (Format): The format of the Tensor. For details, see
-                `Format <https://mindspore.cn/lite/api/en/master/mindspore_lite/mindspore_lite.Format.html>`_ .
+                `Format <https://mindspore.cn/lite/api/en/r2.2/mindspore_lite/mindspore_lite.Format.html>`_ .
 
         Raises:
             TypeError: `tensor_format` is not a Format.
