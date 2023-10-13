@@ -46,7 +46,7 @@
         表示算子是否支持动静合一。
 
         参数：
-            - **dynamic_compile_static** (bool) - 表示静合一的标识。默认值： ``False`` 。
+            - **dynamic_compile_static** (bool) - 表示动静合一的标识。默认值： ``False`` 。
 
     .. py:method:: dynamic_rank_support(dynamic_rank_support)
 
