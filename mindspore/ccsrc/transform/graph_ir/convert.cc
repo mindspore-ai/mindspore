@@ -351,23 +351,29 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
   return false;
 }
 
-void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
+bool DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   MS_EXCEPTION_IF_NULL(init_input);
   if (!this->training_) {
-    return;
+    return false;
   }
+  bool is_sink_size_repeat = false;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   int64_t value = 0;
   if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    static int64_t sink_size = 0;
     if (!ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
-      return;
+      return false;
     }
     value = ConfigManager::GetInstance().iter_num();
+    if (sink_size == value) {
+      is_sink_size_repeat = true;
+    }
+    sink_size = value;
   } else {
     MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
     ConfigManager::GetInstance().ResetIterNum();
-    return;
+    return false;
   }
   GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
   auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
@@ -428,6 +434,7 @@ void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   init_ops_.push_back(assign_loop_cond);
   init_ops_.push_back(assign_one);
   init_ops_.push_back(assign_zero);
+  return is_sink_size_repeat;
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {
@@ -451,7 +458,8 @@ void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfN
 }
 
 void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
-                                              const std::vector<::ge::Operator> *const init_input) {
+                                              const std::vector<::ge::Operator> *const init_input,
+                                              bool is_sink_size_repeat) {
   DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
@@ -491,13 +499,11 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 
   // set up init sub graph
-  static bool is_inited = false;
-  if (init_input->size() != 0 && !is_inited) {
+  if (!init_input->empty() && !is_sink_size_repeat) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(*init_input);
     this->init_graph_ = init_graph;
-    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }
@@ -531,14 +537,12 @@ void DfGraphConvertor::SetupParamInitSubGraph() {
 
   // set up init sub graph
   std::vector<::ge::Operator> init_input;
-  InitLoopVar(&init_input);
-  static bool is_inited = false;
-  if (!init_input.empty() && !is_inited) {
+  bool is_sink_size_repeat = InitLoopVar(&init_input);
+  if (!init_input.empty() && !is_sink_size_repeat) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(init_input);
     this->init_graph_ = init_graph;
-    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }
@@ -688,8 +692,8 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   if (ref_mode_) {
     SetupParamInitSubGraph();
   } else {
-    InitLoopVar(&init_input);
-    SetupParamInitSubGraph(tensors, &init_input);
+    bool is_sink_size_repeat = InitLoopVar(&init_input);
+    SetupParamInitSubGraph(tensors, &init_input, is_sink_size_repeat);
   }
 }
 

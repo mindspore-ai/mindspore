@@ -187,7 +187,8 @@ class DfGraphConvertor {
   void SetOpAttrToInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
-  void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input);
+  void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input,
+                              bool is_sink_size_repeat);
   void SetupParamInitSubGraph();
   void DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it);
 
@@ -208,7 +209,7 @@ class DfGraphConvertor {
   std::vector<ShapeVector> input_shapes() { return input_shapes_; }
 
  protected:
-  void InitLoopVar(std::vector<::ge::Operator> *init_input);
+  bool InitLoopVar(std::vector<::ge::Operator> *init_input);
 
  private:
   std::ostringstream compute_sout_;
