@@ -93,8 +93,8 @@ uint32_t EnvironGetKernel::ParseKernelParam() {
   }
 
   // Get value size.
-  default_value_size_ = default_value_tensor.data_size();
-  output_value_size_ = output_value_ptr_tensor.data_size();
+  default_value_size_ = GetTensorMemSizeByShape(default_value_tensor);
+  output_value_size_ = GetTensorMemSizeByShape(output_value_ptr_tensor);
   return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu
