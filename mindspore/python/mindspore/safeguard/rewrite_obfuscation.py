@@ -40,13 +40,15 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     Args:
         network (nn.Cell): The original network that need to be obfuscated.
         ckpt_files (str): The directory path of original ckpt files.
-        target_modules (list[str, str]): The target module of network that need to be obfuscated. The first string
+        target_modules (list[str]): The target module of network that need to be obfuscated. The first string
             represents the network path of target module in original network, which should be in form of ``'A/B/C'``.
             The second string represents the obfuscation target module, which should be in form of ``'D|E|F'``. For
             example, thr target_modules of GPT2 can be ``['backbone/blocks/attention', 'dense1|dense2|dense3']``.
-            If target_modules is ``None``, the function would search target modules by itself. If found, the searched
-            target module would be used, otherwise suggested target modules would be given with warning log.
-            Default: ``None``.
+            If target_modules has the third value, it should be in the format of 'obfuscate_layers:all' or
+            'obfuscate_layers:int', which represents the number of layers need to be obfuscated of duplicate layers
+            (such as transformer layers or resnet blocks). If target_modules is ``None``, the function would search
+            target modules by itself. If found, the searched target module would be used, otherwise suggested target
+            modules would be given with warning log. Default: ``None``.
         saved_path (str): The directory path for saving obfuscated ckpt files and obf_ratios (a numpy file). obf_ratios
             is the necessary data that needs to be load when running obfuscated network. Default: ``'./'``.
 
@@ -56,11 +58,13 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
         TypeError: If `target_modules` is not list.
         TypeError: If target_modules's elements are not string.
         ValueError: If `ckpt_files` is not exist or `saved_path` is not exist.
-        ValueError: If the number of elements of `target_modules` is not ``2``.
+        ValueError: If the number of elements of `target_modules` is less than ``2``.
         ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
             letters, numbers, ``'_'`` and ``'/'``.
         ValueError: If the second string of `target_modules` is empty or contains characters other than uppercase and
             lowercase letters, numbers, ``'_'`` and ``'|'``.
+        ValueError: If the third string of `target_modules` is not in the format of 'obfuscate_layers:all' or
+            'obfuscate_layers:int'.
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint
@@ -104,11 +108,17 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
         if Path(ckpt_files + ckpt_name).is_dir():
             sub_path = ckpt_files + ckpt_name
             sub_ckpt_file_list = os.listdir(sub_path)
+            new_saved_path = os.path.abspath(saved_path) + '/' + ckpt_name
+            if not os.path.exists(new_saved_path):
+                try:
+                    os.mkdir(new_saved_path, mode=0o700)
+                except FileExistsError:
+                    pass
             for sub_ckpt_name in sub_ckpt_file_list:
                 if not sub_ckpt_name.endswith('.ckpt'):
                     continue
                 _obfuscate_single_ckpt(os.path.abspath(sub_path) + '/' + sub_ckpt_name, obf_ratios, path_list,
-                                       target_list, saved_path)
+                                       target_list, new_saved_path)
         else:
             if not ckpt_name.endswith('.ckpt'):
                 continue
@@ -139,14 +149,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_
         obf_param_list.append({'name': item, 'data': ckpt_param[item]})
     ckpt_file_name = ckpt_name.split('/')[-1]
     obf_ckpt_file_name = ckpt_file_name.split('.')[0] + '_obf' + '.ckpt'
-    # for this condition: ckpt_name is 'parent_dir/sub_dir/net.ckpt', saved_path is 'parent_dir/',
-    # then save net_obf.ckpt at 'parent_dir/sub_dir/net_obf.ckpt'
-    if saved_path in ckpt_name:
-        slash_index_list = [item.start() for item in re.finditer('/', ckpt_name)]
-        original_saved_path = ckpt_name[:slash_index_list[-1]]
-        save_checkpoint(obf_param_list, os.path.abspath(original_saved_path) + '/' + obf_ckpt_file_name)
-    else:
-        save_checkpoint(obf_param_list, os.path.abspath(saved_path) + '/' + obf_ckpt_file_name)
+    save_checkpoint(obf_param_list, os.path.abspath(saved_path) + '/' + obf_ckpt_file_name)
 
 
 def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
@@ -156,12 +159,13 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
 
     Args:
         network (nn.Cell): The original network that need to be obfuscated.
-        target_modules (list[str, str]): The target module of network that need to be obfuscated. The first string
+        target_modules (list[str]): The target module of network that need to be obfuscated. The first string
             represents the network path of target module in original network, which should be in form of ``'A/B/C'``.
             The second string represents the obfuscation target module, which should be in form of ``'D|E|F'``. For
             example, thr target_modules of GPT2 can be ``['backbone/blocks/attention', 'dense1|dense2|dense3']``.
-            If target_modules is None, the function would search target modules by itself. If found, the searched
-            target module would be used, otherwise suggested target modules would be given with warning log.
+            If target_modules has the third value, it should be in the format of 'obfuscate_layers:all' or
+            'obfuscate_layers:int', which represents the number of layers need to be obfuscated of duplicate layers
+            (such as transformer layers or resnet blocks).
         obf_ratios (Tensor): The obf ratios generated when execute :func:`mindspore.obfuscate_ckpt`.
         kwargs (dict): Configuration options dictionary.
 
@@ -173,12 +177,14 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
         TypeError: If `obf_ratios` is not Tensor.
         TypeError: If `target_modules` is not list.
         TypeError: If target_modules's elements are not string.
-        ValueError: If the number of elements of `target_modules` is not ``2``.
+        ValueError: If the number of elements of `target_modules` is less than ``2``.
         ValueError: If `obf_ratios` is empty Tensor.
         ValueError: If the first string of `target_modules` contains characters other than uppercase and lowercase
             letters, numbers, ``'_'`` and ``'/'``.
         ValueError: If the second string of `target_modules` is empty or contains characters other than uppercase and
             lowercase letters, numbers, ``'_'`` and ``'|'``.
+        ValueError: If the third string of `target_modules` is not in the format of 'obfuscate_layers:all' or
+            'obfuscate_layers:int'.
         TypeError: If `ignored_func_decorators` is not list[str] or `ignored_class_decorators` is not list[str].
 
     Examples:
@@ -247,8 +253,8 @@ def _check_valid_target(network, target_modules):
     """check whether the input 'target_modules' exists"""
     if not isinstance(target_modules, list):
         raise TypeError("target_modules type should be list, but got {}.".format(type(target_modules)))
-    if len(target_modules) != 2:
-        raise ValueError("target_modules should contain two string values, in the form of ['A/B/C', 'D1|D2'],"
+    if len(target_modules) < 2:
+        raise ValueError("target_modules should contain at least two string values, in the form of ['A/B/C', 'D1|D2'],"
                          "but got {}.".format(target_modules))
     if (not isinstance(target_modules[0], str)) or (not isinstance(target_modules[1], str)):
         raise TypeError("The values of target_modules should be string, but got {} and {}.".
@@ -298,7 +304,26 @@ def _check_valid_target(network, target_modules):
             OBF_RATIOS_WIDTH += 1
     if OBF_RATIOS_WIDTH == 0:
         raise ValueError("all targets {} do not exist in the path {}.".format(target_list, target_modules[0]))
+    _update_max_obf_ratios_num(target_modules)
     return True
+
+
+def _update_max_obf_ratios_num(target_modules):
+    """Update MAX_OBF_RATIOS_NUM"""
+    if len(target_modules) >= 3:
+        obfuscate_layers = target_modules[2].split(':')
+        if len(obfuscate_layers) != 2 or obfuscate_layers[0] != 'obfuscate_layers':
+            raise ValueError("The third value of target_modules should be in the format of 'obfuscate_layers:all' or"
+                             "'obfuscate_layers:int'")
+        global MAX_OBF_RATIOS_NUM
+        if obfuscate_layers[1] == 'all':
+            MAX_OBF_RATIOS_NUM = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
+        else:
+            if not obfuscate_layers[1].isdigit():
+                raise ValueError(
+                    "The third value of target_modules should be in the format of 'obfuscate_layers:all' or"
+                    "'obfuscate_layers:int'")
+            MAX_OBF_RATIOS_NUM = int(obfuscate_layers[1]) * OBF_RATIOS_WIDTH
 
 
 def _get_default_target_modules(ckpt_files):
