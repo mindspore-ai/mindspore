@@ -57,6 +57,21 @@ class ArrayValue {
  public:
   ArrayValue(std::vector<T> &&data, std::set<size_t> &&unknown_value_indexes)
       : data_(std::move(data)), unknown_value_indexes_(std::move(unknown_value_indexes)) {}
+
+  ArrayValue(const ArrayValue &) = default;
+  ArrayValue &operator=(const ArrayValue &) = default;
+
+  ArrayValue(ArrayValue &&other) {
+    data_ = std::move(other.data_);
+    unknown_value_indexes_ = std::move(other.unknown_value_indexes_);
+  }
+
+  ArrayValue &operator=(ArrayValue &&other) {
+    data_ = std::move(other.data_);
+    unknown_value_indexes_ = std::move(other.unknown_value_indexes_);
+    return *this;
+  }
+
   ~ArrayValue() = default;
 
   // Access the value of Array at the index position.
@@ -91,7 +106,7 @@ class ArrayValue {
     size_t element_size = size();
     oss << "{ ";
     for (size_t i = 0; i < element_size; i++) {
-      oss << std::to_string(data_[i]);
+      oss << !IsValueUnknown(i) ? std::to_string(data_[i]) : "ValueUnknown";
       if (i < element_size - 1) {
         oss << ", ";
       }

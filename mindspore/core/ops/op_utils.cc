@@ -990,7 +990,6 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
     MS_EXCEPTION_IF_NULL(data_ptr);
     size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
-    array_data.reserve(element_size);
     array_data.assign(data_ptr, data_ptr + element_size);
   } else if (value->isa<ValueSequence>()) {
     // Sequence structure: Data is stored discretely.
@@ -1003,7 +1002,7 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     for (size_t i = 0; i < element_size; i++) {
       const auto &element = element_values[i];
       MS_EXCEPTION_IF_NULL(element);
-      if (element == kValueAny) {
+      if (element->isa<ValueAny>() || element->isa<None>()) {
         array_data.push_back(static_cast<T>(0));
         unknown_value_indexes.insert(i);
         continue;
@@ -1016,17 +1015,13 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     size_t element_size = tensor->DataSize();
-    array_data.resize(element_size);
-    void *data = tensor->data_c();
-    auto ret = memcpy_s(array_data.data(), array_data.size() * sizeof(T), data, element_size * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Failed to memcpy_s, errno[" << ret << "].";
-    }
+    T *data = reinterpret_cast<T *>(tensor->data_c());
+    array_data.assign(data, data + element_size);
   } else {
     MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->ToString();
   }
 
-  return ArrayValue<T>(std::move(array_data), std::move(unknown_value_indexes));
+  return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::move(unknown_value_indexes));
 }
 
 template std::optional<ArrayValue<int64_t>> GetArrayValue(const ValuePtr &value);
@@ -1039,6 +1034,7 @@ template std::optional<ArrayValue<uint16_t>> GetArrayValue(const ValuePtr &value
 template std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
 }  // namespace ops
 }  // namespace mindspore
