@@ -39,7 +39,7 @@ def generate_inputs(B, N, S, D):
     query = Tensor(np.ones((B, S, H), dtype=np.float16))
     key = Tensor(np.ones((B, S, H), dtype=np.float16))
     value = Tensor(np.ones((B, S, H), dtype=np.float16))
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
     return query, key, value, attn_mask
 
 

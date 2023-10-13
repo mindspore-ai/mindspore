@@ -109,10 +109,14 @@ class FlashAttention(Cell):
         scaling_constant = math.sqrt(head_dim)
         if scaling_constant == 0:
             raise ValueError("the scaling constant must not be 0.")
-        self.scale_factor = Tensor([1. / scaling_constant], dtype=mstype.float16)
-
         self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "Ascend910"
         if self.is_910A:
+            self.scale_factor = Tensor([1. / math.sqrt(scaling_constant)], dtype=mstype.float16)
+            self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
+            self.ones = ops.Ones()
+            self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
+            self.have_attention_mask_batch = have_attention_mask_batch
+            self.alibi = alibi
             self.flash_attention = get_flash_attention(
                 prev_block_num=prev_block_num,
                 next_block_num=next_block_num,
@@ -138,15 +142,10 @@ class FlashAttention(Cell):
             self.flash_attention = FlashAttentionScore(head_num=head_num, pre_tokens=prev_block_num,
                                                        next_tokens=next_block_num,
                                                        keep_prob=1 - dropout_rate,
-                                                       scale_value=1.0,
+                                                       scale_value=1. / scaling_constant,
                                                        inner_precise=0 if high_precision else 1).shard(fa_strategies)
 
-        self.ones = ops.Ones()
-        self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
-        self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
         self.dropout_rate = dropout_rate
-        self.have_attention_mask_batch = have_attention_mask_batch
-        self.alibi = alibi
         if self.dropout_rate > 1e-5:
             self.keep_prob = Tensor(1 - self.dropout_rate, dtype=mstype.float16)
             self.fill_v2 = ops.FillV2().shard(((dp, mp, 1, 1), ()))
@@ -212,7 +211,6 @@ class FlashAttention(Cell):
         :param alibi_mask: [bsz, head_num, 1, seq_len], if not None
         :return: output          [bsz, head_num, seq_len, head_dim]
         """
-        query = self.scale_mul(query, self.scale_factor)
         bsz, head_num, seq_len, head_dim = query.shape
         _, k_head_num, k_seq_len, _ = key.shape
         _, v_head_num, v_seq_len, _ = value.shape
@@ -224,12 +222,11 @@ class FlashAttention(Cell):
             raise ValueError(
                 "query, key, value seq_len must be a multiple of 16, and key seq_len, value seq_len must be the same.")
 
-        if head_dim > 304:
-            raise ValueError(
-                "the head_dim must be less than 304, otherwise the ub would be OOM.")
-
         if self.is_910A:
             # 910A -- FlashAttentionPrimtive
+            if head_dim > 304:
+                raise ValueError(
+                    "the head_dim must be less than 304, otherwise the ub would be OOM.")
             if self.dropout_rate > 1e-5:
                 drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
                 tensor_shape = Tensor((bsz, head_num, seq_len, seq_len), mstype.int32)
@@ -238,10 +235,11 @@ class FlashAttention(Cell):
                 drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
             else:
                 drop_mask = None
+            query = self.scale_mul(query, self.scale_factor)
+            key = self.scale_mul(key, self.scale_factor)
             output, _, _ = self.flash_attention(query, key, value, attn_mask, drop_mask, alibi_mask)
         else:
-            # FlashAttentionScore
-            # Useless input, just for binary calls.
+            # 910B -- FlashAttentionScore
             if self.dropout_rate > 1e-5:
                 drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob),
                                               (bsz, head_num, seq_len, seq_len // 8))
