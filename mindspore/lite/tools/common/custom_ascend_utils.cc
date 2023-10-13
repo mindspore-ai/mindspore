@@ -70,7 +70,9 @@ bool CustomAscendUtils::SetCustomOutputs(const FuncGraphPtr &func_graph, const C
       MS_LOG(ERROR) << "Abstract_tensor is nullptr.";
       return false;
     }
-    custom_node->set_abstract(abstract_tensor->Clone());
+    auto abstract_tensor_clone = abstract_tensor->Clone();
+    abstract_tensor_clone->set_name(abstract_tensor->name());
+    custom_node->set_abstract(abstract_tensor_clone);
     return true;
   } else {
     AbstractBasePtrList abstract_list;
@@ -80,7 +82,9 @@ bool CustomAscendUtils::SetCustomOutputs(const FuncGraphPtr &func_graph, const C
         MS_LOG(ERROR) << "Abstract tensor is nullptr for output " << j;
         return false;
       }
-      abstract_list.emplace_back(abstract_tensor->Clone());
+      auto abstract_tensor_clone = abstract_tensor->Clone();
+      abstract_tensor_clone->set_name(abstract_tensor->name());
+      abstract_list.emplace_back(abstract_tensor_clone);
     }
     custom_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   }
