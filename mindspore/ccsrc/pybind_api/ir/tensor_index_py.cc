@@ -1496,6 +1496,23 @@ size_t GetSpecifiedDimensions(const py::tuple &new_tuple_index, size_t data_dims
   return specified_dimensions;
 }
 
+namespace {
+void CheckDataDim(const ShapeVector &data_shape) {
+  constexpr size_t max_data_dim = 8;
+  if (data_shape.size() > max_data_dim) {
+    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
+                             << data_shape.size() << "'.";
+  }
+}
+
+bool CheckSliceInfoStep(const int step, std::vector<int64_t> *data_transfer_types,
+                        std::vector<py::object> *data_transfer_args) {
+  data_transfer_types->clear();
+  data_transfer_args->clear();
+  return false;
+}
+}  // namespace
+
 bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const ShapeVector &data_shape,
                                          const py::object &py_index, std::vector<int64_t> *data_transfer_types,
                                          std::vector<py::object> *data_transfer_args, const TypePtr &data_type) {
@@ -1536,11 +1553,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       std::vector<int64_t> end_info(new_data_shape);
       std::vector<int64_t> step_info(new_data_shape.size(), 1);
 
-      if (slice_info.step() < 0) {
-        data_transfer_types->clear();
-        data_transfer_args->clear();
-        return false;
-      }
+      CheckSliceInfoStep(slice_info.step(), data_transfer_types, data_transfer_args);
 
       if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
         dim++;
@@ -1580,12 +1593,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       return false;
     }
   }
-  constexpr size_t max_data_dim = 8;
-  if (new_data_shape.size() > max_data_dim) {
-    MS_EXCEPTION(ValueError) << "The input data's dim must in the range of [1, " << max_data_dim << "], but got '"
-                             << data_dims << "'.";
-  }
-
+  CheckDataDim(data_shape);
   py::object slice_output;
   if (data_type != nullptr) {
     slice_output = SetitemCopyView(&slice_op_infos, data_value, new_data_shape, data_type, py_value_handle_);
