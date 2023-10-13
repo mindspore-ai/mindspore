@@ -157,6 +157,11 @@ bool IrExportBuilder::BuildPrimitives() {
 
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
+    if (prim->isa<PrimitiveFunction>()) {
+      prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION);
+    } else {
+      prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE);
+    }
 
     auto real_prim = GetValueWithoutDoSignature(prim)->cast<PrimitivePtr>();
     if (real_prim != nullptr) {

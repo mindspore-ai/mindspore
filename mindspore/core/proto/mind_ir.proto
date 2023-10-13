@@ -235,8 +235,13 @@ message LayoutProto {
 }
 
 message PrimitiveProto {
+  enum PrimType {
+    PRIMITIVE = 1;
+    PRIMITIVE_FUNCTION = 2;
+  }
   optional string name = 1;
   optional string op_type = 2;
   repeated AttributeProto attribute = 3;
   optional string instance_name = 4;
+  optional PrimType prim_type = 5;
 }
