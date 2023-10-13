@@ -58,7 +58,7 @@ def test_flash_attention_score_fwd():
     query = Tensor(np.ones((B, S, H), dtype=np.float16))
     key = Tensor(np.ones((B, S, H), dtype=np.float16))
     value = Tensor(np.ones((B, S, H), dtype=np.float16))
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
     drop_mask = None
     real_shift = None
     padding_mask = None
@@ -88,7 +88,7 @@ def test_flash_attention_score_fwd_bwd():
     query = Tensor(np.ones((B, S, H), dtype=np.float16))
     key = Tensor(np.ones((B, S, H), dtype=np.float16))
     value = Tensor(np.ones((B, S, H), dtype=np.float16))
-    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+    attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.uint8))
     drop_mask = None
     real_shift = None
     padding_mask = None

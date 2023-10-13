@@ -644,6 +644,9 @@ class PipelineCell(Cell):
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
         self.add_list = []
+        if not isinstance(network, Cell):
+            raise TypeError("For 'PipelineCell', the argument 'network' must cell type, "
+                            "but got the type : {}.".format(type(network)))
         if not isinstance(micro_size, int):
             raise TypeError("For 'PipelineCell', the argument 'micro_size' must be integer, "
                             "but got the type : {}.".format(type(micro_size)))
@@ -689,6 +692,9 @@ class GradAccumulationCell(Cell):
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
         self.add_list = []
+        if not isinstance(network, Cell):
+            raise TypeError("For 'GradAccumulationCell', the argument 'network' must cell type, "
+                            "but got the type : {}.".format(type(network)))
         if not isinstance(micro_size, int):
             raise TypeError("For 'GradAccumulationCell', the argument 'micro_size' must be integer, "
                             "but got the type : {}.".format(type(micro_size)))

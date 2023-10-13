@@ -83,15 +83,16 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
 }
 
 TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kFloat16, kFloat32};
+  const std::set valid_types = {kFloat16, kFloat32, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
   // "x", "kernel_query", "kernel_key", "kernel_value", "gamma", " beta", "bias_query", "bias_key", "bias_value"
   (void)types.emplace("query", input_args[kFlashAttentionScoreInputQueryIndex]->BuildType());
   (void)types.emplace("key", input_args[kFlashAttentionScoreInputKeyIndex]->BuildType());
   (void)types.emplace("value", input_args[kFlashAttentionScoreInputValueIndex]->BuildType());
-  (void)types.emplace("attn_mask", input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType();
+  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8}, op_name);
   if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
   }
