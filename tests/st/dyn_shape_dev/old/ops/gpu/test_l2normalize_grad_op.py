@@ -34,11 +34,6 @@ class Net(Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_l2normalize_grad():
-    """
-    Feature: test l2normalize_grad op in gpu.
-    Description: test the ops.
-    Expectation: expect correct shape result.
-    """
     axis_ = 0
     x = np.random.randint(1, 10, (2, 3, 4, 4)).astype(np.float32)
     y = x / np.sqrt(np.sum(x**2, axis=axis_, keepdims=True))

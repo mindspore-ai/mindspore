@@ -39,7 +39,7 @@ bool L2NormalizeGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
   }
   kernel_func_ = func_list_[index].second;
 
-  epsilon_ = GetValue<double_t>(primitive_->GetAttr("epsilon"));
+  epsilon_ = GetValue<float>(primitive_->GetAttr("epsilon"));
   axis_origin_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("axis")));
   return true;
 }

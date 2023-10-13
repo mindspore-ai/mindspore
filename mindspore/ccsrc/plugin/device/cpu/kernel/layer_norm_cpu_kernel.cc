@@ -35,7 +35,7 @@ constexpr size_t kLayerNormOutputVarIndex = 2;
 }  // namespace
 bool LayerNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  eps_ = GetValue<double_t>(primitive_->GetAttr(ops::kEpsilon));
+  eps_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

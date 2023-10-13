@@ -39,14 +39,13 @@ bool MaxPoolGradGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolGradGrad>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast MaxPoolGradGrad ops failed!";
-    return false;
-  }
-  kernels_ = kernel_ptr->get_kernel_size();
-  strides_ = kernel_ptr->get_strides();
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  kernels_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  auto mode_str = GetValue<std::string>(primitive_->GetAttr(ops::kPadMode));
+  (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),
+                             "MaxPoolGradGrad only supports pad mode same or valid, but get " + mode_str);
+  pad_mode_ = mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
   if (pad_mode_ != PadMode::SAME && pad_mode_ != PadMode::VALID) {
     MS_LOG(ERROR) << kernel_name_ << " only support pad mode same or valid, but get " << pad_mode_;
     return false;

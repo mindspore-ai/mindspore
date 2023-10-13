@@ -19,39 +19,34 @@ import pytest
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
-from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import operations as P
 
 class Net(Cell):
-    def __init__(self, axis=0, epsilon=1e-12):
+    def __init__(self, axis=0, epsilon=1e-4):
         super(Net, self).__init__()
-        self.norm_grad = G.L2NormalizeGrad(axis=axis, epsilon=epsilon)
+        self.norm = P.L2Normalize(axis=axis, epsilon=epsilon)
 
-    def construct(self, x, out, dout):
-        return self.norm_grad(x, out, dout)
+    def construct(self, x):
+        return self.norm(x)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_l2normalize_grad():
+def test_l2normalize():
     """
-    Feature: test l2normalize_grad op in gpu.
-    Description: test the ops.
-    Expectation: expect correct shape result.
+    Feature: l2normalize operation test
+    Description: test l2normalize operation
+    Expectation: l2normalize output == expect
     """
-    axis_ = 0
     x = np.random.randint(1, 10, (2, 3, 4, 4)).astype(np.float32)
-    y = x / np.sqrt(np.sum(x**2, axis=axis_, keepdims=True))
-    dy = np.random.randint(1, 10, (2, 3, 4, 4)).astype(np.float32)
-    expect = (dy - y * np.sum(y * dy, axis=axis_, keepdims=True)) / np.sqrt(np.sum(x**2, axis=axis_, keepdims=True))
+    expect = x / np.sqrt(np.sum(x**2, axis=0, keepdims=True))
     x = Tensor(x)
-    y = Tensor(y)
-    dy = Tensor(dy)
     error = np.ones(shape=[2, 3, 4, 4]) * 1.0e-5
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    norm_grad_op = Net(axis=axis_)
-    output = norm_grad_op(x, y, dy)
+    norm_op = Net(axis=0)
+    output = norm_op(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)

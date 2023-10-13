@@ -70,8 +70,8 @@ bool LogNormalReverseGpuKernelMod::Init(const std::vector<KernelTensor *> &input
                       << "but got input type: " << input_dtype_ << " and output type: " << output_dtype_ << ".";
   }
 
-  input_mean_ = GetValue<double_t>(primitive_->GetAttr("mean"));
-  input_std_ = GetValue<double_t>(primitive_->GetAttr("std"));
+  input_mean_ = GetValue<float>(primitive_->GetAttr("mean"));
+  input_std_ = GetValue<float>(primitive_->GetAttr("std"));
 
   kernel_func_ = func_list_[pair.second].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);

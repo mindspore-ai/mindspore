@@ -159,7 +159,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     (void)CheckIONumber(inputs, outputs);
-    epsilon_ = GetValue<double_t>(primitive_->GetAttr("epsilon"));
+    epsilon_ = GetValue<float>(primitive_->GetAttr("epsilon"));
     return true;
   }
 

@@ -209,6 +209,8 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
 
 std::vector<std::pair<KernelAttr, LpNormCpuKernelMod::LpNromFunc>> LpNormCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   &LpNormCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &LpNormCpuKernelMod::LaunchKernel<float>}};
 
 std::vector<KernelAttr> LpNormCpuKernelMod::GetOpSupport() {

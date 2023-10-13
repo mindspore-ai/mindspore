@@ -104,9 +104,9 @@ class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     depth_radius_ = GetValue<int64_t>(primitive_->GetAttr("depth_radius"));
-    bias_ = GetValue<double_t>(primitive_->GetAttr("bias"));
-    alpha_ = GetValue<double_t>(primitive_->GetAttr("alpha"));
-    beta_ = GetValue<double_t>(primitive_->GetAttr("beta"));
+    bias_ = GetValue<float>(primitive_->GetAttr("bias"));
+    alpha_ = GetValue<float>(primitive_->GetAttr("alpha"));
+    beta_ = GetValue<float>(primitive_->GetAttr("beta"));
     use_native_ = false;
     int lrnN = kCoef * depth_radius_ + 1;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
