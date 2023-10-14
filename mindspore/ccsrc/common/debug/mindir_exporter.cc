@@ -282,7 +282,11 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &root_graph, const std::vect
   if (!BuildNodes(root_graph, root_graph_proto)) {
     return false;
   }
-  for (const auto &graph : child_graphs) {
+  std::map<std::string, FuncGraphPtr> sorted_graphs;
+  std::for_each(child_graphs.begin(), child_graphs.end(),
+                [&sorted_graphs](const auto &iter) { sorted_graphs[iter->ToString()] = iter; });
+  for (const auto &iter : sorted_graphs) {
+    const auto &graph = iter.second;
     if (!BuildNodes(graph, graph_protos_[graph])) {
       return false;
     }
