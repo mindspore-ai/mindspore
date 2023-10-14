@@ -40,7 +40,8 @@ int OpAdapterImpl::setAttr(const OperatorPtr &op, const uint32_t &input_idx, con
 int OpAdapterImpl::setInput(const OperatorPtr &op, int index, const OutHandler &handle) { return 0; }
 int OpAdapterImpl::setInput(const OperatorPtr &op, int index, const OperatorPtr &input) { return 0; }
 int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
-                            const std::shared_ptr<std::vector<OutHandler>> &handler_vec) {
+                            const std::shared_ptr<std::vector<OutHandler>> &handler_vec, bool use_create_byindex_func,
+                            size_t dyn_index) {
   return 0;
 }
 OutHandler OpAdapterImpl::getOutput(const OperatorPtr &op, int index) {

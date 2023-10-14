@@ -24,6 +24,26 @@
 namespace mindspore::kernel {
 using mindspore::ops::kNameGather;
 
+int AscendNativeGatherKernel::InferShape() {
+  auto shape_input = in_tensors_.at(FIRST_INPUT)->shape();
+  auto shape_indices = in_tensors_.at(SECOND_INPUT)->shape();
+  int32_t axis = 0;
+  auto axis_tensor = reinterpret_cast<int32_t *>(in_tensors_.at(THIRD_INPUT)->device_data());
+  ascend_native::CopyDeviceFp32ToHostFp32(axis_tensor, &axis, 2, const_cast<void *>(this->get_stream()));
+  std::vector<int32_t> out_shape;
+  for (auto i = 0; i < axis; i++) {
+    out_shape.push_back(shape_input[i]);
+  }
+  for (size_t i = 0; i < shape_indices.size(); i++) {
+    out_shape.push_back(shape_indices[i]);
+  }
+  for (size_t i = axis + 1; i < shape_input.size(); i++) {
+    out_shape.push_back(shape_input[i]);
+  }
+  out_tensors()[0]->set_shape(out_shape);
+  return kSuccess;
+}
+
 int AscendNativeGatherKernel::Prepare() { return kSuccess; }
 
 int AscendNativeGatherKernel::Run() {
@@ -51,5 +71,8 @@ int AscendNativeGatherKernel::Run() {
                             const_cast<void *>(get_stream()));
   return kSuccess;
 }
+
+int AscendNativeGatherKernel::ReSize() { return kSuccess; }
+
 REGISTER_ASCEND_NATIVE_CREATOR(kNameGather, AscendNativeGatherKernel)
 }  // namespace mindspore::kernel

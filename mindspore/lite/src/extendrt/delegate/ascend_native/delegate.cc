@@ -20,6 +20,7 @@
 #include <utility>
 #include <string>
 #include <set>
+#include <functional>
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_composite.h"
 #include "extendrt/delegate/ops/copy.h"
@@ -27,6 +28,7 @@
 #include "extendrt/delegate/ascend_native/ascend_native_impl/utils.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_stub.h"
 #include "extendrt/delegate/factory.h"
+#include "include/common/utils/convert_utils.h"
 
 #include "ops/encoder_layer.h"
 #include "ops/fusion/mul_fusion.h"
@@ -101,15 +103,37 @@ static inline BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode) {
 }  // namespace
 
 bool AscendNativeDelegate::IsSupport(const CNodePtr &cnode) {
+  bool ret = false;
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  std::set<std::string> ops = {ops::kNameEncoderLayer,     ops::kNameMulFusion, ops::kNameAddFusion,
-                               ops::kNameMatMulFusion,     ops::kNameGather,    ops::kNameReshape,
-                               ops::kNameUsePastEmbedding, ops::kNameCast,      ops::kNameNotEqual,
-                               ops::kNameTupleGetItem,     ops::kNameLess};
+  std::set<std::string> ops = {ops::kNameEncoderLayer, ops::kNameAddFusion, ops::kNameMatMulFusion, ops::kNameGather,
+                               ops::kNameTupleGetItem};
   if (ops.find(prim->name()) != ops.end()) {
-    return true;
+    if (prim->name() == ops::kNameMatMulFusion) {
+      auto base_op = CreateOperatorByCNode(cnode);
+      if (base_op == nullptr) {
+        MS_LOG(WARNING) << "no op found for " << cnode->fullname_with_scope();
+        return false;
+      }
+      auto primitive = std::make_shared<ops::MatMulFusion>(base_op->GetPrim());
+      if (primitive == nullptr) {
+        MS_LOG(WARNING) << "cannot create primitive for MatMulFusion";
+        return false;
+      }
+      bool act = primitive->get_activation_type();
+      if ((act == ActivationType::NO_ACTIVATION) && (cnode->inputs().size() == Num3)) {
+        ret = true;
+      }
+    } else if (prim->name() == ops::kNameAddFusion) {
+      auto shape1 = mindspore::BaseShapeToShape(cnode->input(1)->Shape());
+      auto shape2 = mindspore::BaseShapeToShape(cnode->input(2)->Shape());
+      auto in1 = std::reduce(shape1.begin(), shape1.end(), 1.0, std::multiplies<int64_t>());
+      auto in2 = std::reduce(shape2.begin(), shape2.end(), 1.0, std::multiplies<int64_t>());
+      if (in1 == in2) ret = true;
+    } else {
+      ret = true;
+    }
   }
-  return false;
+  return ret;
 }
 
 void AscendNativeDelegate::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) {
@@ -277,6 +301,31 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const std
   }
 }
 
+void AscendNativeDelegate::CopyTensors(InferTensor *t_src, InferTensor *t_dst, const void *stream) const {
+  auto dst = t_dst->device_data();
+  auto elem = t_src->Size();
+  bool t_is_float = (t_src->data_type() == kNumberTypeFloat || t_src->data_type() == kNumberTypeFloat32);
+  if (t_is_float) {
+    ascend_native::CopyHostFp32ToDeviceFp16(t_src->data(), &dst, elem, const_cast<void *>(stream));
+  } else {
+    int elem_size = mindspore::lite::DataTypeSize(t_src->data_type());
+    switch (elem_size) {
+      case Num4:
+        ascend_native::CopyHostFp32ToDeviceFp32(t_src->data(), &dst, elem, const_cast<void *>(stream));
+        break;
+      case Num2:
+        ascend_native::CopyHostFp16ToDeviceFp16(t_src->data(), &dst, elem, const_cast<void *>(stream));
+        break;
+      case Num1:
+        ascend_native::CopyHostFp16ToDeviceFp16(t_src->data(), &dst, elem / 2, const_cast<void *>(stream));
+        break;
+      default:
+        MS_LOG(ERROR) << "no supported size " << elem_size;
+    }
+  }
+  t_dst->set_device_data(dst);
+}
+
 std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const kernel::KernelSpec &spec,
                                                                        const std::vector<InferTensor *> &inputs,
                                                                        const std::vector<InferTensor *> &outputs,
@@ -287,12 +336,13 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const ker
     MS_LOG(ERROR) << "AscendNativeDelegate::CreateKernel cnode is nullptr";
     return nullptr;
   }
-  if (stream_ == nullptr) {
-    stream_ = ascend_native::CreateStream();  // TODO(yoni) - remove
-  }
-  auto stream = stream_;
   // step II - Prepare kernel attributes
   auto kernel_name = cnode->fullname_with_scope();
+  auto stream = ascend_native::CreateStream();
+  if (stream == nullptr) {
+    MS_LOG(ERROR) << "fail to create stream for kernel " << kernel_name;
+    return nullptr;
+  }
   kernel::InferPrimitive primitive;
   primitive.base_operator = spec.primitive;
   primitive.cnode = cnode;
@@ -306,13 +356,8 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const ker
     kernel->set_stream(stream);
     return kernel;
   } else {
-    // create base kernel for debug
-    auto orig_node_type = node_type;
     // step III - Create Ascend native Kernel
     auto &plugin_factory = kernel::AscendNativeRegistrationFactory::Get();
-    if (node_type != ops::kNameCopy) {
-      node_type = ops::kNameAscendNativeStub;
-    }
     if (plugin_factory.HasKey(node_type)) {
       kernel::AscendNativeBaseKernel *ascend_native_op =
         plugin_factory.GetCreator(node_type)(inputs, outputs, primitive, ascend_native_ctx_.get(), stream, node_type);
@@ -324,15 +369,11 @@ std::shared_ptr<kernel::BaseKernel> AscendNativeDelegate::CreateKernel(const ker
         auto in_tensors = ker->in_tensors();
         for (auto &t : in_tensors) {
           if (t->IsConst() && t->device_data() != nullptr) {
-            t->set_device_data(ascend_native::MallocCopy(t->data(), t->Size(), const_cast<void *>(stream)));
+            CopyTensors(t, t, stream);
           }
         }
       }
-      if (node_type == "AscendNativeStub") {
-        ker->set_name(orig_node_type);
-      } else {
-        ker->set_name(kernel_name);
-      }
+      ker->set_name(kernel_name);
       ker->set_stream(stream);
       return ker;
     } else {

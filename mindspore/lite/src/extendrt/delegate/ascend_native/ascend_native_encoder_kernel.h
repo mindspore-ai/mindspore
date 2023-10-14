@@ -42,8 +42,12 @@ class AscendNativeEncoderKernel : public AscendNativeBaseKernel {
 
   size_t get_workspace_size() const override;
 
+  int InferShape() override;
+
  private:
   void build_driver_input_const_tensors();
+  int InitEncoderParam();
+  std::vector<int32_t> GetOutputDimensions();
   ascend_native::EncoderParams param_;
   std::shared_ptr<ascend_native::AscendNativeEncoder> encoder_driver_;
   std::vector<void *> driver_input_tensors_;

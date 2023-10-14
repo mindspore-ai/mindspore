@@ -41,6 +41,8 @@ class AscendNativeCopyKernel : public AscendNativeBaseKernel {
 
   int PostProcess() override;
 
+  int ReSize() override;
+
  private:
   ops::Copy::CopyFormatType copy_type_;
 };

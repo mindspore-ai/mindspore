@@ -722,25 +722,26 @@ int TensorRTSubGraph::OnNewInputShapes(const std::vector<ShapeVector> &new_shape
 
 int TensorRTSubGraph::VSLPreExectute(const std::vector<tensor::Tensor> &inputs, int i, bool sync,
                                      const std::string &tensor_name) {
-  constexpr int input_ids_idx = 0;
-  constexpr int expert_ids_idx = C1NUM;
-  constexpr int attn_mask_idx = C2NUM;
-  constexpr int pos_ids_idx = C3NUM;
-  constexpr int current_idx_idx = C4NUM;
+  const bool is_expert_ids = (inputs.size() == Num6) ? Num1 : 0;
+  const int input_ids_idx = 0;
+  const int expert_ids_idx = (is_expert_ids) ? Num1 : -1;
+  const int attn_mask_idx = Num1 + is_expert_ids;
+  const int pos_ids_idx = Num2 + is_expert_ids;
+  const int current_idx_idx = Num3 + is_expert_ids;
   if (i == input_ids_idx || i == expert_ids_idx || i == pos_ids_idx) {
     int *in_ptr = static_cast<int *>(inputs[i].data_ptr()->data());
-    int batch = inputs[trt_in_tensor_name_.size() - C1NUM].ElementsNum();
+    int batch = inputs[trt_in_tensor_name_.size() - Num1].ElementsNum();
     int seq = inputs[0].ElementsNum() / batch;
-    int export_num = (i != expert_ids_idx) ? C1NUM : inputs[i].ElementsNum() / (batch * seq);
+    int export_num = (i != expert_ids_idx) ? Num1 : inputs[i].ElementsNum() / (batch * seq);
     bool incremental_mode =
       (static_cast<const int32_t *>(inputs[pos_ids_idx].data().const_data())[0] != 0) ? true : false;
     size_t h_token = 0;
     for (int k = 0; k < batch; k++) {
       int actual_seq_len =
         (incremental_mode)
-          ? C1NUM
-          : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k] + C1NUM);
-      int batch_valid = static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k];
+          ? Num1
+          : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - Num1].data().const_data())[k] + Num1);
+      int batch_valid = static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - Num1].data().const_data())[k];
       h_token += (batch_valid == -1) ? 0 : actual_seq_len;
     }
     for (int j = 0; j < export_num; j++) {
@@ -748,8 +749,8 @@ int TensorRTSubGraph::VSLPreExectute(const std::vector<tensor::Tensor> &inputs, 
       for (int k = 0; k < batch; k++) {
         int actual_seq_len =
           (incremental_mode)
-            ? C1NUM
-            : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - C1NUM].data().const_data())[k] + C1NUM);
+            ? Num1
+            : (static_cast<const int32_t *>(inputs[trt_in_tensor_name_.size() - Num1].data().const_data())[k] + Num1);
         for (int l = 0; l < actual_seq_len; l++) {
           in_ptr[j * h_token + h_token_idx + l] =
             static_cast<int *>(inputs[i].data_ptr()->data())[j * batch * seq + k * seq + l];
