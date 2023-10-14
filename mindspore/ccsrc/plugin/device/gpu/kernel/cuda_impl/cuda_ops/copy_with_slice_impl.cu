@@ -39,9 +39,9 @@ class VectorWrapper {
 
 template <typename DataType>
 __global__ void CopyWithSliceKernelDFST(const size_t input_size, const DataType *src_addr, DataType *self_addr,
-                                        size_t ndim,
-                                        VectorWrapper<kMaxDim> output_shape, VectorWrapper<kMaxDim> strides,
-                                        size_t src_storage_offset, size_t dst_storage_offset) {
+                                        size_t ndim, VectorWrapper<kMaxDim> output_shape,
+                                        VectorWrapper<kMaxDim> strides, size_t src_storage_offset,
+                                        size_t dst_storage_offset) {
   for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < input_size; idx += blockDim.x * gridDim.x) {
     int64_t tmp_idx = idx;
     int64_t offset = 0;
@@ -56,9 +56,9 @@ __global__ void CopyWithSliceKernelDFST(const size_t input_size, const DataType 
 
 template <typename DataType>
 __global__ void CopyWithSliceKernelDTSF(const size_t input_size, const DataType *src_addr, DataType *self_addr,
-                                        size_t src_ndim,
-                                        VectorWrapper<kMaxDim> input_shape, VectorWrapper<kMaxDim> src_strides,
-                                        size_t src_storage_offset, size_t dst_storage_offset) {
+                                        size_t src_ndim, VectorWrapper<kMaxDim> input_shape,
+                                        VectorWrapper<kMaxDim> src_strides, size_t src_storage_offset,
+                                        size_t dst_storage_offset) {
   for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < input_size; idx += blockDim.x * gridDim.x) {
     int64_t tmp_idx = idx;
     int64_t offset = 0;
@@ -73,10 +73,10 @@ __global__ void CopyWithSliceKernelDTSF(const size_t input_size, const DataType 
 
 template <typename DataType>
 __global__ void CopyWithSliceKernelDFSF(const size_t input_size, const DataType *src_addr, DataType *self_addr,
-                                        size_t src_ndim, size_t dst_ndim,
-                                        VectorWrapper<kMaxDim> input_shape, VectorWrapper<kMaxDim> output_shape,
-                                        VectorWrapper<kMaxDim> src_strides, VectorWrapper<kMaxDim> dst_strides,
-                                        size_t src_storage_offset, size_t dst_storage_offset) {
+                                        size_t src_ndim, size_t dst_ndim, VectorWrapper<kMaxDim> input_shape,
+                                        VectorWrapper<kMaxDim> output_shape, VectorWrapper<kMaxDim> src_strides,
+                                        VectorWrapper<kMaxDim> dst_strides, size_t src_storage_offset,
+                                        size_t dst_storage_offset) {
   for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < input_size; idx += blockDim.x * gridDim.x) {
     int64_t src_tmp_idx = idx;
     int64_t src_offset = 0;
@@ -98,10 +98,9 @@ __global__ void CopyWithSliceKernelDFSF(const size_t input_size, const DataType 
 }
 
 template <typename DataType>
-void CalCopyWithSlice(const size_t &input_size,
-                      const DataType *src_addr, const mindspore::TensorStorageInfoPtr &src_storage_info,
-                      DataType *self_addr, const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                      cudaStream_t cuda_stream) {
+cudaError_t CalCopyWithSlice(const size_t &input_size, const DataType *src_addr,
+                             const mindspore::TensorStorageInfoPtr &src_storage_info, DataType *self_addr,
+                             const mindspore::TensorStorageInfoPtr &dst_storage_info, cudaStream_t cuda_stream) {
   size_t dst_ndim = dst_storage_info->shape.size();
   VectorWrapper<kMaxDim> output_shape(dst_storage_info->shape);
   VectorWrapper<kMaxDim> dst_strides(dst_storage_info->strides);
@@ -112,90 +111,88 @@ void CalCopyWithSlice(const size_t &input_size,
     VectorWrapper<kMaxDim> src_strides(src_storage_info->strides);
     size_t src_ndim = src_storage_info->shape.size();
     CopyWithSliceKernelDTSF<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-      input_size, src_addr, self_addr, src_ndim, input_shape, src_strides,
-      src_storage_info->storage_offset, dst_storage_info->storage_offset);
+      input_size, src_addr, self_addr, src_ndim, input_shape, src_strides, src_storage_info->storage_offset,
+      dst_storage_info->storage_offset);
   } else if (!dst_is_contiguous && src_is_contiguous) {
     CopyWithSliceKernelDFST<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-      input_size, src_addr, self_addr, dst_ndim, output_shape, dst_strides,
-      src_storage_info->storage_offset, dst_storage_info->storage_offset);
+      input_size, src_addr, self_addr, dst_ndim, output_shape, dst_strides, src_storage_info->storage_offset,
+      dst_storage_info->storage_offset);
   } else {
     VectorWrapper<kMaxDim> input_shape(src_storage_info->shape);
     VectorWrapper<kMaxDim> src_strides(src_storage_info->strides);
     size_t src_ndim = src_storage_info->shape.size();
     CopyWithSliceKernelDFSF<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-      input_size, src_addr, self_addr, src_ndim, dst_ndim, input_shape, output_shape,
-      src_strides, dst_strides, src_storage_info->storage_offset, dst_storage_info->storage_offset);
+      input_size, src_addr, self_addr, src_ndim, dst_ndim, input_shape, output_shape, src_strides, dst_strides,
+      src_storage_info->storage_offset, dst_storage_info->storage_offset);
   }
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalCopyWithSlice<uint8_t>(const size_t &input_size,
-                                                        const uint8_t *src_addr,
-                                                        const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                        uint8_t *self_addr,
-                                                        const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<uint16_t>(const size_t &input_size, const uint16_t *src_addr,
-                                                         const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                         uint16_t *self_addr,
-                                                         const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<uint32_t>(const size_t &input_size, const uint32_t *src_addr,
-                                                         const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                         uint32_t *self_addr,
-                                                         const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<uint64_t>(const size_t &input_size, const uint64_t *src_addr,
-                                                         const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                         uint64_t *self_addr,
-                                                         const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<uint8_t>(const size_t &input_size, const uint8_t *src_addr,
+                                                               const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                               uint8_t *self_addr,
+                                                               const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<uint16_t>(const size_t &input_size, const uint16_t *src_addr,
+                                                                const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                                uint16_t *self_addr,
+                                                                const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<uint32_t>(const size_t &input_size, const uint32_t *src_addr,
+                                                                const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                                uint32_t *self_addr,
+                                                                const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<uint64_t>(const size_t &input_size, const uint64_t *src_addr,
+                                                                const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                                uint64_t *self_addr,
+                                                                const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                                cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCopyWithSlice<half>(const size_t &input_size, const half *src_addr,
-                                                     const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                     half *self_addr,
-                                                     const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<float>(const size_t &input_size, const float *src_addr,
-                                                      const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                      float *self_addr,
-                                                      const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<double>(const size_t &input_size, const double *src_addr,
-                                                       const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                       double *self_addr,
-                                                       const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<bool>(const size_t &input_size, const bool *src_addr,
-                                                     const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                     bool *self_addr,
-                                                     const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<int8_t>(const size_t &input_size, const int8_t *src_addr,
-                                                       const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                       int8_t *self_addr,
-                                                       const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<int16_t>(const size_t &input_size, const int16_t *src_addr,
-                                                        const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                        int16_t *self_addr,
-                                                        const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<int32_t>(const size_t &input_size, const int32_t *src_addr,
-                                                        const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                        int32_t *self_addr,
-                                                        const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<int64_t>(const size_t &input_size, const int64_t *src_addr,
-                                                        const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                                        int64_t *self_addr,
-                                                        const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<half>(const size_t &input_size, const half *src_addr,
+                                                            const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                            half *self_addr,
+                                                            const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<float>(const size_t &input_size, const float *src_addr,
+                                                             const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                             float *self_addr,
+                                                             const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<double>(const size_t &input_size, const double *src_addr,
+                                                              const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                              double *self_addr,
+                                                              const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<bool>(const size_t &input_size, const bool *src_addr,
+                                                            const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                            bool *self_addr,
+                                                            const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<int8_t>(const size_t &input_size, const int8_t *src_addr,
+                                                              const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                              int8_t *self_addr,
+                                                              const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<int16_t>(const size_t &input_size, const int16_t *src_addr,
+                                                               const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                               int16_t *self_addr,
+                                                               const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<int32_t>(const size_t &input_size, const int32_t *src_addr,
+                                                               const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                               int32_t *self_addr,
+                                                               const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<int64_t>(const size_t &input_size, const int64_t *src_addr,
+                                                               const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                                               int64_t *self_addr,
+                                                               const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                                               cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void CalCopyWithSlice<Complex<float>>(
-  const size_t &input_size, const Complex<float> *src_addr,
-  const mindspore::TensorStorageInfoPtr &src_storage_info, Complex<float> *self_addr,
-  const mindspore::TensorStorageInfoPtr &dst_storage_info, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalCopyWithSlice<Complex<double>>(
-  const size_t &input_size, const Complex<double> *src_addr,
-  const mindspore::TensorStorageInfoPtr &src_storage_info, Complex<double> *self_addr,
-  const mindspore::TensorStorageInfoPtr &dst_storage_info, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<Complex<float>>(
+  const size_t &input_size, const Complex<float> *src_addr, const mindspore::TensorStorageInfoPtr &src_storage_info,
+  Complex<float> *self_addr, const mindspore::TensorStorageInfoPtr &dst_storage_info, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice<Complex<double>>(
+  const size_t &input_size, const Complex<double> *src_addr, const mindspore::TensorStorageInfoPtr &src_storage_info,
+  Complex<double> *self_addr, const mindspore::TensorStorageInfoPtr &dst_storage_info, cudaStream_t cuda_stream);

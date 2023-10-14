@@ -82,7 +82,9 @@ bool ContiguousGpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpy output failed");
   } else {
-    CalAsStrided(output_size, input_addr, output_addr, input_storage_info, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto status = CalAsStrided(output_size, input_addr, output_addr, input_storage_info,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_STATUS(status, "Contiguous");
   }
   return true;
 }
