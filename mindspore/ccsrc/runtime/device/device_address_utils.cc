@@ -342,6 +342,7 @@ void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *dev
 
       const auto &real_device_context = device::FetchRealDeviceContext(output, device_context);
       MS_EXCEPTION_IF_NULL(real_device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context->device_res_manager_);
       auto output_format = AnfAlgo::GetOutputFormat(output, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(output, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(output, i);
@@ -647,8 +648,8 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id(),
     old_device_address->host_shape());
-  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
   MS_EXCEPTION_IF_NULL(new_device_address);
+  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
   new_device_address->set_original_ref_count(old_device_address->original_ref_count());
   new_device_address->ResetRefCount();
   auto node = old_device_address->GetNodeIndex();

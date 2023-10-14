@@ -452,6 +452,8 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
                     << any_type_kernel_actor->GetAID() << " to actor:" << actor->GetAID();
       size_t from_index = any_type_kernel_actor->FetchInputNodePosition(pair.second);
 
+      const auto &real_backend_node = real_graph->GetBackendAnfByFrontAnf(pair.second);
+      MS_EXCEPTION_IF_NULL(real_backend_node);
       if (actor->parent_fusion_actor() != nullptr) {
         auto base_actor = actor->parent_fusion_actor_;
         auto fusion_actor = dynamic_cast<FusionActor *>(base_actor);
@@ -467,10 +469,9 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
           std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
         any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
         MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
-                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
-                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
-        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
-          real_graph->GetBackendAnfByFrontAnf(pair.second));
+                      << " add graph input node:" << real_backend_node->DebugString() << " from index:" << from_index
+                      << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(real_backend_node);
         actor->input_datas_num_++;
         (void)actor->input_data_arrow_aids_.emplace_back(
           std::make_pair(any_type_kernel_actor->GetAID(), data_arrow.get()));
@@ -479,10 +480,9 @@ void AnyTypeGraphScheduler::FixDeviceTensorStoreKeyInActor(const std::vector<Abs
         auto data = std::make_unique<OpData<DeviceTensor>>(actor->GetAID(), nullptr, pair.first);
         any_type_kernel_actor->graph_input_data_arrows_[id].emplace_back(data_arrow);
         MS_LOG(DEBUG) << "Any type actor:" << any_type_kernel_actor->GetAID() << " current type:" << id
-                      << " add graph input node:" << real_graph->GetBackendAnfByFrontAnf(pair.second)->DebugString()
-                      << " from index:" << from_index << " to actor:" << actor->GetAID() << " to index:" << pair.first;
-        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(
-          real_graph->GetBackendAnfByFrontAnf(pair.second));
+                      << " add graph input node:" << real_backend_node->DebugString() << " from index:" << from_index
+                      << " to actor:" << actor->GetAID() << " to index:" << pair.first;
+        any_type_kernel_actor->graph_input_data_nodes_[id].emplace_back(real_backend_node);
         any_type_kernel_actor->graph_input_data_[id].emplace_back(std::make_pair(std::move(data), kOutputDataFlagInit));
         actor->input_datas_num_++;
         (void)actor->input_data_arrow_aids_.emplace_back(
