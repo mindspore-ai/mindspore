@@ -67,8 +67,14 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
   }
   auto perm1 = common::AnfAlgo::GetInputNode(transpose1, 1);
   auto perm2 = common::AnfAlgo::GetInputNode(transpose2, 1);
-  auto perm1_value = perm1->cast<ValueNodePtr>()->value();
-  auto perm2_value = perm2->cast<ValueNodePtr>()->value();
+  MS_EXCEPTION_IF_NULL(perm1);
+  MS_EXCEPTION_IF_NULL(perm2);
+  auto value_node1 = perm1->cast<ValueNodePtr>();
+  auto value_node2 = perm2->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node1);
+  MS_EXCEPTION_IF_NULL(value_node2);
+  auto perm1_value = value_node1->value();
+  auto perm2_value = value_node2->value();
   auto perm1_vec = CheckAndConvertUtils::CheckTensorIntValue("permutation1", perm1_value, prim_name);
   auto perm2_vec = CheckAndConvertUtils::CheckTensorIntValue("permutation2", perm2_value, prim_name);
   auto dim = perm1_vec.size();
