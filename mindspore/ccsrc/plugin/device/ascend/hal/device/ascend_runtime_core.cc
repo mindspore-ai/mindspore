@@ -820,11 +820,6 @@ void AscendRuntimeCore::LaunchDataDump(GraphId graph_id) {
 void AscendRuntimeCore::UnloadModelCore(uint32_t graph_id) {
   SetContextForce();
   if (graph_id != UINT32_MAX) {
-    if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
-      MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
-      ModelRunner::Instance().UnloadModel(graph_id);
-      (void)graph_model_map_.erase(model_iter);
-    }
 #ifndef ENABLE_SECURITY
     if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
       MS_LOG(DEBUG) << "Unload dump info " << graph_id;
@@ -837,6 +832,11 @@ void AscendRuntimeCore::UnloadModelCore(uint32_t graph_id) {
       MS_LOG(DEBUG) << "GraphId:" << graph_id << " not found";
     }
 #endif
+    if (auto model_iter = graph_model_map_.find(graph_id); model_iter != graph_model_map_.end()) {
+      MS_LOG(DEBUG) << "Ge UnloadModel " << graph_id;
+      ModelRunner::Instance().UnloadModel(graph_id);
+      (void)graph_model_map_.erase(model_iter);
+    }
     rt_model_zero_copy_.Release(graph_id);
   } else {
 #ifndef ENABLE_SECURITY
