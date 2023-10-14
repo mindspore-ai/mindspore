@@ -214,8 +214,11 @@ void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
                                                   "Invalid device context for super kernel actor:" + GetAID().Name());
   }
-  sort(memory_alloc_list_.begin(), memory_alloc_list_.end(),
-       [](const DeviceTensor *a, const DeviceTensor *b) { return a->GetSize() > b->GetSize(); });
+  sort(memory_alloc_list_.begin(), memory_alloc_list_.end(), [](const DeviceTensor *a, const DeviceTensor *b) {
+    MS_EXCEPTION_IF_NULL(a);
+    MS_EXCEPTION_IF_NULL(b);
+    return a->GetSize() > b->GetSize();
+  });
   if (ActorDispatcher::is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                               device_contexts_[0], context, GetAID());
@@ -228,6 +231,7 @@ void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 
 void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph_);
   {
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
     if (!CopyInputData(context, graph_)) {
@@ -245,7 +249,6 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
                                                     "Invalid device context for super kernel actor:" + GetAID().Name());
     }
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
-    MS_EXCEPTION_IF_NULL(graph_);
     if (!IsSkippedLaunch(nullptr, graph_)) {
       ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kGraphLaunch, GetAID().Name());
       auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
@@ -324,6 +327,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     if (InputDataNoNeedCopy(input_device_tensor, node_device_tensor)) {
       continue;
     }
+    MS_EXCEPTION_IF_NULL(input_device_tensor);
     if (type_ != KernelTransformType::kSuperKernelActor || node_device_tensor->GetSize() == 0) {
       // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
       node_device_tensor->SetSize(input_device_tensor->GetSize());
@@ -407,6 +411,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
 
 void SuperKernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(graph_);
 
   if (device_contexts_.empty() || device_contexts_[0] == nullptr ||
       device_contexts_[0]->device_res_manager_ == nullptr) {

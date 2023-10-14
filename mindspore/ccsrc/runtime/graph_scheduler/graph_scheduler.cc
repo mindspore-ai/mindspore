@@ -1672,6 +1672,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
       common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
     AbstractActor *dynamic_shape_actor = nullptr;
     auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
+    MS_EXCEPTION_IF_NULL(real_from_actor);
     if (real_from_actor->type() == KernelTransformType::kAnyTypeKernelActor ||
         AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
       dynamic_shape_actor = real_from_actor;
@@ -1684,6 +1685,7 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
                                   [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
                                     return internal_parameter == internal_parameter_weakptr.lock();
                                   });
+    MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
     MS_LOG(DEBUG) << "Check internal parameter:" << internal_parameter->DebugString()
                   << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
                   << " actor:" << dynamic_shape_actor->GetAID();
@@ -2267,7 +2269,8 @@ void GraphScheduler::LinkControlArrowForCustomActorByAutoMonad(const ActorSet *a
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(input_node);
       auto front_output_node = front_output_with_index.first;
       if (front_output_node == nullptr || graph_output_to_actor_.count(front_output_with_index) == 0) {
-        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:" << front_output_node->DebugString();
+        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:"
+                      << (front_output_node == nullptr ? "null" : front_output_node->DebugString());
         continue;
       }
       const auto &graph_output_pair = graph_output_to_actor_.at(front_output_with_index);

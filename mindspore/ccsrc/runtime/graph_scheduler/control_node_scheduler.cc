@@ -103,10 +103,12 @@ bool IsControlArrowExistForCallNode(const AnfNodePtr &node, const AbstractActor 
 }
 
 bool IsNotCut(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   return cnode->HasPrimalAttr(kAttrNotCut);
 }
 }  // namespace

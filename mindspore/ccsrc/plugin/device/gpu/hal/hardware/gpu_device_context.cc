@@ -545,6 +545,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
 bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
                        const std::pair<std::string, ExceptionType> &failure_info) {
   auto f = [ori_node = node, &failure_info, &graph](const CNodePtr &basic_op) mutable {
+    MS_EXCEPTION_IF_NULL(basic_op);
     auto res = SetKernelInfoWithMsg(basic_op);
     if (res.first.empty()) {
       // select gpu kernel success.
