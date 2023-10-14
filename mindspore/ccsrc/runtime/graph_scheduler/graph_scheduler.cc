@@ -2189,7 +2189,8 @@ void GraphScheduler::LinkControlArrowForCustomActorByAutoMonad(const ActorSet *a
       auto front_output_with_index = graph->GetOriginFrontNodeByInternalParameter(input_node);
       auto front_output_node = front_output_with_index.first;
       if (front_output_node == nullptr || graph_output_to_actor_.count(front_output_with_index) == 0) {
-        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:" << front_output_node->DebugString();
+        MS_LOG(DEBUG) << "To actor:" << to_actor->GetAID() << " check front node:"
+                      << (front_output_node == nullptr ? "null" : front_output_node->DebugString());
         continue;
       }
       const auto &graph_output_pair = graph_output_to_actor_.at(front_output_with_index);

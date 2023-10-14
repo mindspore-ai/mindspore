@@ -131,6 +131,24 @@ bool IsValidObj(const py::object &obj) {
          py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj);
 }
 
+TypeId GetTypeIdByAbstract(const AbstractBasePtr &abstract) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    const auto &type = abstract->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    return type->type_id();
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    const auto &tensor_abstract = abstract->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_abstract);
+    MS_EXCEPTION_IF_NULL(tensor_abstract->element());
+    const auto &type = tensor_abstract->element()->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    return type->type_id();
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid abstract:" << abstract->ToString();
+  }
+}
+
 bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
   MS_EXCEPTION_IF_NULL(abstract);
   if (abstract->isa<abstract::AbstractScalar>() || abstract->isa<abstract::AbstractTensor>()) {
@@ -149,23 +167,6 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
       ((!sub_abstracts[0]->isa<abstract::AbstractScalar>()) && (!sub_abstracts[0]->isa<abstract::AbstractTensor>()))) {
     return false;
   }
-  auto get_type_id_by_abstract = [](const AbstractBasePtr &abstract) {
-    MS_EXCEPTION_IF_NULL(abstract);
-    if (abstract->isa<abstract::AbstractScalar>()) {
-      const auto &type = abstract->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      return type->type_id();
-    } else if (abstract->isa<abstract::AbstractTensor>()) {
-      const auto &tensor_abstract = abstract->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor_abstract);
-      MS_EXCEPTION_IF_NULL(tensor_abstract->element());
-      const auto &type = tensor_abstract->element()->BuildType();
-      MS_EXCEPTION_IF_NULL(type);
-      return type->type_id();
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid abstract:" << abstract->ToString();
-    }
-  };
 
   auto get_shape_vector_by_abstract = [](const AbstractBasePtr &abstract) -> ShapeVector {
     MS_EXCEPTION_IF_NULL(abstract);
@@ -185,14 +186,14 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
     }
   };
 
-  const auto &base_type_id = get_type_id_by_abstract(sub_abstracts[0]);
+  const auto &base_type_id = GetTypeIdByAbstract(sub_abstracts[0]);
   const auto &base_shape_vector = get_shape_vector_by_abstract(sub_abstracts[0]);
   for (size_t i = 1; i < sub_abstracts.size(); ++i) {
     MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
     if (sub_abstracts[i] == nullptr ||
         ((!sub_abstracts[i]->isa<abstract::AbstractScalar>()) &&
          (!sub_abstracts[i]->isa<abstract::AbstractTensor>())) ||
-        base_type_id != get_type_id_by_abstract(sub_abstracts[i]) ||
+        base_type_id != GetTypeIdByAbstract(sub_abstracts[i]) ||
         base_shape_vector != get_shape_vector_by_abstract(sub_abstracts[i])) {
       return false;
     }

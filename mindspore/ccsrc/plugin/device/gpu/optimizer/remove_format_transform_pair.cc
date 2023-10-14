@@ -68,6 +68,8 @@ const AnfNodePtr RemoveFormatTransformPair::Process(const FuncGraphPtr &graph, c
   }
   auto perm1 = common::AnfAlgo::GetInputNode(transpose1, 1);
   auto perm2 = common::AnfAlgo::GetInputNode(transpose2, 1);
+  MS_EXCEPTION_IF_NULL(perm1);
+  MS_EXCEPTION_IF_NULL(perm2);
   auto perm1_node = perm1->cast<ValueNodePtr>();
   auto perm2_node = perm2->cast<ValueNodePtr>();
   if (perm1_node == nullptr || perm2_node == nullptr) {

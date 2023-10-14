@@ -509,6 +509,7 @@ void DeviceAddressUtils::CreateGraphOutputDeviceAddress(const DeviceContext *dev
 
       const auto &real_device_context = device::FetchRealDeviceContext(output, device_context);
       MS_EXCEPTION_IF_NULL(real_device_context);
+      MS_EXCEPTION_IF_NULL(real_device_context->device_res_manager_);
       auto output_format = AnfAlgo::GetOutputFormat(output, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(output, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(output, i);

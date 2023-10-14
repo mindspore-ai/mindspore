@@ -613,7 +613,7 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   const auto &tmp_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(tmp_kernel_tensor);
   MS_EXCEPTION_IF_NULL(tmp_device_tensor);
-  MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
+  MS_LOG(DEBUG) << "Create device tensor:" << tmp_device_tensor << " type:" << tmp_device_tensor->type_id();
   for (size_t i = 0; i < addr_list.size(); ++i) {
     if (!tmp_device_tensor->SyncDeviceToDevice(addr_list[i])) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");

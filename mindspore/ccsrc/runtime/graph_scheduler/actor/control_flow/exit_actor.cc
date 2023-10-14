@@ -197,7 +197,7 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
     if (real_indexes[i].second) {
       std::vector<DeviceTensor *> addr_list;
       for (size_t index : indexes) {
-        if (index > input_device_tensors_.size()) {
+        if (index >= input_device_tensors_.size()) {
           std::string error_info = "Invalid real index:" + std::to_string(index) + " for index:" + std::to_string(i) +
                                    " total size:" + std::to_string(input_device_tensors_.size()) +
                                    " for actor:" + GetAID().Name();
