@@ -110,7 +110,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t axis_val = 0;
   bool is_axis_dyn = false;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
-  if (input_args[kInputIndex2]->GetType()->object_type() == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
     auto axis_value_ptr = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     auto axis_type_ptr = input_args[kInputIndex2]->GetType();
@@ -123,7 +123,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     } else {
       is_axis_dyn = true;
     }
-  } else if (input_args[kInputIndex2]->GetType()->isa<Number>()) {
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
     auto axis_value = input_args[kInputIndex2]->GetValue();
     if (axis_value->isa<ValueAny>()) {
       is_axis_dyn = true;

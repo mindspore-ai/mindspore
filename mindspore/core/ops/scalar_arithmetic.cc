@@ -255,7 +255,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem_x = input_args[0];
     auto elem_y = input_args[kIndex1];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_y->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
                               << " and y: " << elem_y->ToString();
     }
@@ -295,7 +295,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
     constexpr size_t y_index = 1;
     auto elem_x = input_args[x_index];
     auto elem_y = input_args[y_index];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_y->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
                               << " and y: " << elem_y->ToString();
     }

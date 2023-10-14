@@ -40,6 +40,7 @@
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/random_ops.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -53,7 +54,7 @@ const uint32_t kInputDims = 1;
 const uint32_t kInputSizes = 2;
 abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[0])) {
     MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";
   }
   auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
@@ -66,48 +67,21 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  auto input_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->GetValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
+  auto input_value = input_args[0]->GetValue();
+  MS_EXCEPTION_IF_NULL(input_value);
   auto input_type = input_args[0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
-  auto input_type_id = input_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_type_id);
-  auto input_type_element = input_type_id->element();
-  MS_EXCEPTION_IF_NULL(input_type_element);
   auto shape_ptr = std::make_shared<abstract::Shape>(
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
-  if (!input_args[0]->GetValue()->isa<ValueAny>() && !input_args[0]->GetValue()->isa<None>()) {
-    std::vector<int64_t> out_shape;
-    int64_t shape_m = 1;
-    if (input_type_element->type_id() == kNumberTypeInt32) {
-      auto input_shape_ptr = reinterpret_cast<int32_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
-        } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
-        }
-      }
-    } else if (input_type_element->type_id() == kNumberTypeInt64) {
-      auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= static_cast<int64_t>(input_shape_ptr[i]);
-        } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
-        }
-      }
-    }
-    if (shape_m > max_length) {
+  if (ops::IsValueKnown(input_value)) {
+    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", input_value, "", input_type);
+    size_t shape_m =
+      std::accumulate(out_shape.begin(), out_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
+    if (shape_m > LongToSize(max_length)) {
       MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
                                << "! The shape of  output must be reduced or max_length must be increased";

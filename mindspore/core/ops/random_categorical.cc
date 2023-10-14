@@ -52,7 +52,7 @@ namespace {
 int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   int64_t num_sample = -1;
   const auto &nun_sample_arg = input_args[kInputIndex1];
-  if (nun_sample_arg->GetType()->object_type() == kObjectTypeNumber) {
+  if (CheckAndConvertUtils::IsScalar(nun_sample_arg)) {
     auto num_sample_input_type = nun_sample_arg->GetType();
     auto value = nun_sample_arg->GetValue();
     if (value->isa<ValueAny>()) {
@@ -66,7 +66,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
       MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
                               << TypeIdToString(num_sample_input_type->type_id()) << ".";
     }
-  } else if (nun_sample_arg->GetType()->object_type() == kObjectTypeTensorType) {
+  } else if (CheckAndConvertUtils::IsTensor(nun_sample_arg)) {
     auto num_sample_value_ptr = nun_sample_arg->GetValue();
     MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
     auto nun_sample_type = nun_sample_arg->GetType()->cast<TensorTypePtr>();

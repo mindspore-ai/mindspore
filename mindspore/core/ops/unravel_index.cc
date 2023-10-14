@@ -48,7 +48,7 @@ abstract::ShapePtr UravelIndexInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  if (!input_args[0]->isa<abstract::AbstractTensor>() || !input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (!CheckAndConvertUtils::IsTensor(input_args[0]) || !CheckAndConvertUtils::IsTensor(input_args[1])) {
     MS_EXCEPTION(TypeError) << "Input must be a Tensor.";
   }
 

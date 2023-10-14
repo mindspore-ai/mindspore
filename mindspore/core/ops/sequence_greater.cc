@@ -92,11 +92,27 @@ class SequenceGreaterThanInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(primitive, input_args, false)->GetShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_input = input_args[kIndex0];
+    auto y_input = input_args[kIndex1];
+    if (!(CheckAndConvertUtils::IsSequence(x_input) && CheckAndConvertUtils::IsSequence(y_input))) {
+      MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
+                              << "but got: " << x_input->ToString() << " and " << y_input->ToString();
+    }
+    return abstract::kNoShape;
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(prim, input_args, false)->GetType();
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_input = input_args[kIndex0];
+    auto y_input = input_args[kIndex1];
+    if (!(CheckAndConvertUtils::IsSequence(x_input) && CheckAndConvertUtils::IsSequence(y_input))) {
+      MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
+                              << "but got: " << x_input->ToString() << " and " << y_input->ToString();
+    }
+    return kBool;
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -109,11 +125,27 @@ class SequenceGreaterEqualInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(primitive, input_args, true)->GetShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_input = input_args[kIndex0];
+    auto y_input = input_args[kIndex1];
+    if (!(CheckAndConvertUtils::IsSequence(x_input) && CheckAndConvertUtils::IsSequence(y_input))) {
+      MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
+                              << "but got: " << x_input->ToString() << " and " << y_input->ToString();
+    }
+    return abstract::kNoShape;
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGreaterInferInner(prim, input_args, true)->GetType();
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto x_input = input_args[kIndex0];
+    auto y_input = input_args[kIndex1];
+    if (!(CheckAndConvertUtils::IsSequence(x_input) && CheckAndConvertUtils::IsSequence(y_input))) {
+      MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
+                              << "but got: " << x_input->ToString() << " and " << y_input->ToString();
+    }
+    return kBool;
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

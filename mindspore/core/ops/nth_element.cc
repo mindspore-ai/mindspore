@@ -61,7 +61,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(input_shape.size()), kGreaterEqual, 1,
                                            primitive->name());
   auto n_val = 0;
-  if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(input_args[1])) {
     const std::set<TypePtr> valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("n", input_args[1]->GetType(), valid_types, primitive->name());
     auto n_value_ptr = input_args[1]->GetValue();
@@ -75,7 +75,7 @@ abstract::ShapePtr NthElementInferShape(const PrimitivePtr &primitive,
       }
       n_val = n_value_opt.value()[0];
     }
-  } else if (input_args[1]->GetType()->object_type() == kObjectTypeNumber) {
+  } else if (CheckAndConvertUtils::IsScalar(input_args[1])) {
     auto n_value_ptr = input_args[1]->GetValue();
     if (!n_value_ptr->isa<ValueAny>()) {
       auto n_value_opt = GetScalarValue<int64_t>(n_value_ptr);

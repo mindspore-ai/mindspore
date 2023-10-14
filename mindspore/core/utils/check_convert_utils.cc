@@ -29,7 +29,6 @@
 #include "ir/dtype.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
-#include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "ir/value.h"
@@ -1279,6 +1278,61 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
     MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], the " << arg_name
                             << " must be one of ['int', 'tuple', 'list'] with all Int elements, but got "
                             << attr->ToString();
+  }
+  return result;
+}
+
+std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
+                                                              const std::string &prim_name) {
+  std::vector<int64_t> result{};
+  MS_EXCEPTION_IF_NULL(abs);
+  auto abs_value = abs->GetValue();
+  MS_EXCEPTION_IF_NULL(abs_value);
+  if (!ops::IsValueKnown(abs_value)) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
+                             << "] is unknown, please handle this case before calling this function.";
+  }
+  if (IsSequence(abs)) {
+    const auto &type_list = GetSequenceElementTypes(abs);
+    if (type_list.empty()) {
+      return result;
+    }
+    if (type_list.front()->type_id() == kNumberTypeInt64) {
+      const auto &arr_value = ops::GetArrayValue<int64_t>(abs_value);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      result = arr_value->ToVector();
+    } else if (type_list.front()->type_id() == kNumberTypeInt32) {
+      const auto &arr_value = ops::GetArrayValue<int>(abs_value);
+      if (arr_value->HasUnknownValue()) {
+        MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
+                                 << ", please handle this case before calling this function.";
+      }
+      const auto &vec_value = arr_value->ToVector();
+      (void)std::transform(vec_value.begin(), vec_value.end(), std::back_inserter(result),
+                           [](int ele) -> int64_t { return static_cast<int64_t>(ele); });
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
+                              << "'s type is one of ['tuple', 'list'], its element data type must be int32 or int64, "
+                                 "but got "
+                              << type_list.front()->ToString();
+    }
+  } else {
+    auto data_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(data_type);
+    if (data_type->type_id() == kNumberTypeInt64) {
+      const auto &val = ops::GetScalarValue<int64_t>(abs_value);
+      result.push_back(val.value());
+    } else if (data_type->type_id() == kNumberTypeInt32) {
+      const auto &val = ops::GetScalarValue<int>(abs_value);
+      result.push_back(val.value());
+    } else {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name
+                              << "'s type is 'int', its data type must be int32 or int64, but got "
+                              << data_type->ToString();
+    }
   }
   return result;
 }

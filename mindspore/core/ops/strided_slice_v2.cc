@@ -358,15 +358,16 @@ bool CheckAndGetDynamicSliceV2(const AbstractBasePtr &input_arg, const std::stri
   MS_EXCEPTION_IF_NULL(input_arg);
   auto input_value = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(input_value);
-  if (input_arg->isa<abstract::AbstractTuple>()) {
+  if (CheckAndConvertUtils::IsTuple(input_arg)) {
     if (IsValueKnown(input_value)) {
       *slice_value = CheckAndConvertUtils::CheckTupleInt(arg_name, input_value, "StridedSliceV2");
       *slice_len = (*slice_value).size();
     } else {
-      auto tuple_arg = input_arg->cast<abstract::AbstractTuplePtr>();
+      auto tuple_arg = input_arg->GetShape()->cast<abstract::SequenceShapePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_arg);
       *slice_len = tuple_arg->size();
     }
-  } else if (input_arg->isa<abstract::AbstractTensor>()) {
+  } else if (CheckAndConvertUtils::IsTensor(input_arg)) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt64, kInt32},
                                                      "StridedSliceV2");
     if (input_value->isa<tensor::Tensor>()) {

@@ -51,7 +51,7 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', 'a' should be a 0-dim Tensor, but got rank: " << a_shape.size() << ".";
   }
-  if (input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     auto input_a_ptr = input_args[kInputIndex0]->GetValue();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
     if (!input_a_ptr->isa<ValueAny>()) {
@@ -60,7 +60,7 @@ abstract::ShapePtr PolygammaInferShape(const PrimitivePtr &primitive, const std:
     } else {
       return std::make_shared<abstract::Shape>(x_shape);
     }
-  } else if (input_args[kInputIndex0]->GetType()->object_type() == kObjectTypeNumber) {
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex0])) {
     auto input_a_ptr = input_args[kInputIndex0]->GetValue();
     MS_EXCEPTION_IF_NULL(input_a_ptr);
     if (input_a_ptr->isa<ValueAny>()) {

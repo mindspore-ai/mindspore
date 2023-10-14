@@ -359,6 +359,9 @@ class MS_CORE_API CheckAndConvertUtils {
     return abs->GetShape()->isa<abstract::DynamicSequenceShape>();
   }
   static inline TypePtrList GetSequenceElementTypes(const AbstractBasePtr &abs) {
+    if (IsDynamicSequence(abs)) {
+      MS_EXCEPTION(TypeError) << "The input must not be a dynamic sequence.";
+    }
     auto const &input_type = abs->GetType();
     MS_EXCEPTION_IF_NULL(input_type);
     TypePtrList types_list{};
@@ -372,10 +375,13 @@ class MS_CORE_API CheckAndConvertUtils {
     return types_list;
   }
   static inline abstract::BaseShapePtrList GetSequenceElementShapes(const AbstractBasePtr &abs) {
-    auto const &input_type = abs->GetType();
-    MS_EXCEPTION_IF_NULL(input_type);
+    if (IsDynamicSequence(abs)) {
+      MS_EXCEPTION(TypeError) << "The input must not be a dynamic sequence.";
+    }
     auto const &input_shape = abs->GetShape();
     MS_EXCEPTION_IF_NULL(input_shape);
+    auto const &input_type = abs->GetType();
+    MS_EXCEPTION_IF_NULL(input_type);
     abstract::BaseShapePtrList shapes_list{};
     if (input_type->object_type() == kObjectTypeTuple) {
       shapes_list = input_shape->cast<abstract::TupleShapePtr>()->shape();
@@ -437,7 +443,11 @@ class MS_CORE_API CheckAndConvertUtils {
                                                    const std::string &prim_name);
   static std::vector<double> CheckListOrTupleFloat(const std::string &arg_name, const ValuePtr &attr,
                                                    const std::string &prim_name);
+  // ==========================old=========================
   static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
+                                                 const std::string &prim_name);
+  // ==========================new=========================
+  static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                  const std::string &prim_name);
   static std::vector<int64_t> CheckTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                             const std::string &prim_name);

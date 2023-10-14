@@ -94,7 +94,7 @@ abstract::ShapePtr VmapAssignInferShape(const PrimitivePtr &primitive, const std
   }
   (void)stacked_param_shape_vec.erase(stacked_param_shape_vec.begin());
   for (size_t i = 1; i < input_args.size() - 1; ++i) {
-    if (!input_args[i]->isa<abstract::AbstractTensor>()) {
+    if (!CheckAndConvertUtils::IsTensor(input_args[i])) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input[" << i
                                << "] should be a Tensor, but got:" << input_args[i]->ToString();
     }

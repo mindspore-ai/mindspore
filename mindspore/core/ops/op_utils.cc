@@ -546,45 +546,24 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
 }
 
 ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &arg) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   auto abs_value = arg->GetValue();
   MS_EXCEPTION_IF_NULL(abs_value);
-
+  auto arg_type = arg->GetType();
+  MS_EXCEPTION_IF_NULL(arg_type);
   if (IsValueKnown(abs_value)) {
-    if (abs_value->isa<tensor::Tensor>()) {
-      auto shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "");
-      return shape_value;
-    } else if (abs_value->isa<ValueSequence>()) {
-      auto out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", abs_value, primitive->name());
-      return out_shape;
-    }
-  } else if (arg->isa<abstract::AbstractTensor>()) {
-    auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
-    auto abs_tensor_shape = abs_tensor->shape()->shape();
-    if (abs_tensor_shape.size() != 1) {
-      MS_EXCEPTION(ValueError) << "For Primitive[" << primitive->name()
-                               << "], Shape of shape value only could be one-dimensional";
-    }
-    if (IsDynamic(abs_tensor_shape)) {
-      return {abstract::Shape::kShapeRankAny};
-    }
-    auto shape_size = abs_tensor_shape[0];
-    auto shape_value = abs_tensor->get_shape_value();
-    if (shape_value == nullptr) {
-      return ShapeVector(shape_size, abstract::Shape::kShapeDimAny);
-    } else {
-      auto shape_vector = GetValue<ShapeVector>(shape_value);
-      MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");
-      return shape_vector;
+    if (CheckAndConvertUtils::IsTensor(arg)) {
+      return CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "", arg_type);
+    } else if (CheckAndConvertUtils::IsSequence(arg)) {
+      return CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", arg, prim_name);
     }
   } else if (arg->isa<abstract::AbstractSequence>()) {
-    auto shape = GetSequenceValue("input[shape]", arg, primitive->name());
-    return shape;
+    return GetSequenceValue("input[shape]", arg, prim_name);
   }
 
-  auto size_type = arg->GetType();
-  MS_EXCEPTION_IF_NULL(size_type);
-  MS_EXCEPTION(TypeError) << "For " << primitive->name() << ", the input type must be Tensor/Tuple/List , but got"
-                          << size_type->ToString() << ".";
+  MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input type must be Tensor/Tuple/List , but got"
+                          << arg_type->ToString() << ".";
 }
 
 ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {

@@ -47,16 +47,15 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsIndicesDynamic(const PrimitivePtr &, const AbstractBasePtr &indices_abs) {
-  auto obj_type = indices_abs->GetType()->object_type();
-  if (obj_type == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(indices_abs)) {
     ShapeVector indices_shape = indices_abs->GetShape()->GetShapeVector();
     if (indices_shape.size() != kSizeOne) {
       MS_LOG(EXCEPTION) << "Shape of indices only could be one-dimensional. But got " << indices_shape;
     }
     return IsDynamic(indices_shape);
-  } else if (obj_type == kObjectTypeTuple || obj_type == kObjectTypeList) {
+  } else if (CheckAndConvertUtils::IsSequence(indices_abs)) {
     return indices_abs->GetShape()->isa<abstract::DynamicSequenceShape>();
-  } else if (indices_abs->GetType()->isa<Number>()) {
+  } else if (CheckAndConvertUtils::IsScalar(indices_abs)) {
     return false;
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be scalar, tuple or Tensor.";
@@ -64,11 +63,10 @@ bool IsIndicesDynamic(const PrimitivePtr &, const AbstractBasePtr &indices_abs) 
 }
 
 ShapeVector GetIndicesShape(const PrimitivePtr &primitive, const AbstractBasePtr &indices_abs) {
-  auto obj_type = indices_abs->GetType()->object_type();
-  if (obj_type == kObjectTypeTensorType || obj_type == kObjectTypeTuple || obj_type == kObjectTypeList) {
+  if (CheckAndConvertUtils::IsTensor(indices_abs) || CheckAndConvertUtils::IsSequence(indices_abs)) {
     ShapeVector indices_shape = GetShapeValue(primitive, indices_abs);
     return {SizeToLong(indices_shape.size())};
-  } else if (indices_abs->GetType()->isa<Number>()) {
+  } else if (CheckAndConvertUtils::IsScalar(indices_abs)) {
     return {1};
   } else {
     MS_EXCEPTION(TypeError) << "Input 'indices' should be scalar, tuple or Tensor.";
@@ -121,10 +119,9 @@ TypePtr InplaceOpV2InferType(const PrimitivePtr &prim, const std::vector<Abstrac
 
   const auto &indices_abs = input_args[1];
   const std::set<TypePtr> indices_valid_types = {kInt32, kInt64};
-  auto obj_type = indices_abs->GetType()->object_type();
-  if (obj_type == kObjectTypeTensorType || indices_abs->GetType()->isa<Number>()) {
+  if (CheckAndConvertUtils::IsTensor(indices_abs) || CheckAndConvertUtils::IsScalar(indices_abs)) {
     (void)CheckAndConvertUtils::CheckTypeValid("indices", indices_abs->GetType(), indices_valid_types, prim->name());
-  } else if (obj_type == kObjectTypeTuple) {
+  } else if (CheckAndConvertUtils::IsTuple(indices_abs)) {
     auto indices_type = indices_abs->GetType();
     MS_EXCEPTION_IF_NULL(indices_type);
     auto const &type_ele = indices_type->cast<TuplePtr>()->elements();

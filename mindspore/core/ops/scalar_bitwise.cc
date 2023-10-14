@@ -63,7 +63,7 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
     auto elem_x = input_args[0];
     auto elem_y = input_args[kIndex1];
-    if (!elem_x->isa<abstract::AbstractScalar>() && !elem_y->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
                               << " and y: " << elem_y->ToString();
     }
@@ -82,7 +82,7 @@ class ScalarBitwiseInfer : public abstract::OpInferBase {
     constexpr size_t y_index = 1;
     auto x_elem = input_args[x_index];
     auto y_elem = input_args[y_index];
-    if (!x_elem->isa<abstract::AbstractScalar>() && !y_elem->isa<abstract::AbstractScalar>()) {
+    if (!CheckAndConvertUtils::IsScalar(x_elem) && !CheckAndConvertUtils::IsScalar(y_elem)) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << x_elem->ToString()
                               << " and y: " << y_elem->ToString();
     }

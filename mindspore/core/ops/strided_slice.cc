@@ -337,21 +337,22 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
   MS_EXCEPTION_IF_NULL(input_arg);
   auto input_value = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(input_value);
-  if (input_arg->isa<abstract::AbstractTuple>()) {
+  if (CheckAndConvertUtils::IsTuple(input_arg)) {
     if (IsValueKnown(input_value)) {
       *slice_value = CheckAndConvertUtils::CheckTupleInt(arg_name, input_value, "StridedSlice");
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny
       is_dynamic = true;
-      auto tuple_arg = input_arg->cast<abstract::AbstractTuplePtr>();
-      if (tuple_arg->dynamic_len()) {
+      if (CheckAndConvertUtils::IsDynamicSequence(input_arg)) {
         *dyn_tuple = true;
       } else {
+        auto tuple_arg = input_arg->GetShape()->cast<abstract::SequenceShapePtr>();
+        MS_EXCEPTION_IF_NULL(tuple_arg);
         *slice_len = tuple_arg->size();
       }
     }
-  } else if (input_arg->isa<abstract::AbstractTensor>()) {
+  } else if (CheckAndConvertUtils::IsTensor(input_arg)) {
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt32, kInt64}, "StridedSlice");
     auto slice_shape_ptr = CheckAndConvertUtils::GetTensorInputShape("StridedSlice", {input_arg}, 0);
     auto slice_shape = slice_shape_ptr->shape();
@@ -359,8 +360,9 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got" << slice_shape.size()
                                << "-D.";
     }
-    if (input_value->isa<tensor::Tensor>()) {
-      *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice");
+    if (CheckAndConvertUtils::IsTensor(input_arg)) {
+      *slice_value =
+        CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice", input_arg->GetType());
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny

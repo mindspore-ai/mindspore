@@ -64,7 +64,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   }
 
   int64_t num_samples_val = 0;
-  if (input_args[1]->GetType()->object_type() == kObjectTypeNumber) {
+  if (CheckAndConvertUtils::IsScalar(input_args[1])) {
     auto num_samples_value_ptr = input_args[1]->GetValue();
     if (num_samples_value_ptr->isa<ValueAny>()) {
       num_samples_val = -1;
@@ -80,7 +80,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
                                  << " should be a nonnegative number, but got " << num_samples_val << ".";
       }
     }
-  } else if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType) {
+  } else if (CheckAndConvertUtils::IsTensor(input_args[1])) {
     auto num_samples_value_ptr = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(num_samples_value_ptr);
     if (!num_samples_value_ptr->isa<ValueAny>()) {

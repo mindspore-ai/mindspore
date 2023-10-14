@@ -127,9 +127,9 @@ TypePtr QuantileInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 
   auto q_value = q->GetValue();
   MS_EXCEPTION_IF_NULL(q_value);
-  if (q->GetType()->object_type() == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(q)) {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dict_type, valid_types, prim_name);
-  } else if (q->GetType()->object_type() == kObjectTypeNumber) {
+  } else if (CheckAndConvertUtils::IsScalar(q)) {
     if (q_value != nullptr) {
       auto q_opt = GetScalarValue<float>(q_value);
       if (!q_opt.has_value()) {

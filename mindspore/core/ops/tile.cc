@@ -65,7 +65,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   auto multiple_value = input_args[1]->GetValue();
   auto multiple_shape = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(multiple_value);
-  if (input_args[1]->isa<abstract::AbstractTensor>()) {
+  if (CheckAndConvertUtils::IsTensor(input_args[1])) {
     if (!IsValueKnown(multiple_value)) {
       auto shape = multiple_shape->cast<abstract::ShapePtr>()->shape();
       if (IsDynamic(shape)) {
@@ -75,18 +75,17 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
     }
     multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
   } else {
-    auto tuple_abs = input_args[1]->cast<abstract::AbstractSequencePtr>();
-    if (tuple_abs == nullptr) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[1])) {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
                               << "], the input[multiples] must be a tuple with all Int elements, but got "
                               << input_args[1]->GetType()->ToString();
     }
     if (!IsValueKnown(multiple_value)) {
-      if (tuple_abs->dynamic_len()) {
+      if (CheckAndConvertUtils::IsDynamicSequence(input_args[1])) {
         return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
       }
-      return std::make_shared<abstract::Shape>(
-        ShapeVector(tuple_abs->elements().size(), abstract::Shape::kShapeDimAny));
+      return std::make_shared<abstract::Shape>(ShapeVector(
+        input_args[1]->GetShape()->cast<abstract::SequenceShapePtr>()->size(), abstract::Shape::kShapeDimAny));
     } else {
       multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
     }

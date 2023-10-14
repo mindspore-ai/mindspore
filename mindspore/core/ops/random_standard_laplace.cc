@@ -70,7 +70,7 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+  if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex0])) {
     std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
     if (IsValueKnown(shape_value)) {
       (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
@@ -80,7 +80,7 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
       ShapeVector shape = {dynamic_rank_value};
       return std::make_shared<abstract::Shape>(shape);
     }
-  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+  } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     if (IsValueKnown(shape_value)) {
       auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
       if (x_shape.size() != 1) {
@@ -105,14 +105,14 @@ TypePtr StandardLaplaceInferType(const PrimitivePtr &primitive, const std::vecto
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
-    auto elements = input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements();
+  if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex0])) {
+    auto elements_type = input_args[kInputIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(elements_type);
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
-    for (size_t i = 0; i < elements.size(); ++i) {
-      auto input_dtype = elements[i]->GetType();
+    for (const auto &input_dtype : elements_type->elements()) {
       (void)CheckAndConvertUtils::CheckTypeValid("shape", input_dtype, valid_shape_types, prim_name);
     }
-  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+  } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
     auto input_dtype = input_args[kInputIndex0]->GetType();
     (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_dtype, valid_shape_types, prim_name);

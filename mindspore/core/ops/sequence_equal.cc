@@ -34,17 +34,15 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   constexpr size_t y_index = 1;
   auto x_abs = input_args[x_index];
   auto y_abs = input_args[y_index];
-  if ((!x_abs->isa<abstract::AbstractSequence>()) || (!y_abs->isa<abstract::AbstractSequence>())) {
+  if (!CheckAndConvertUtils::IsSequence(x_abs) || !CheckAndConvertUtils::IsSequence(y_abs)) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }
-  auto seqx_abs = x_abs->cast<abstract::AbstractSequencePtr>();
-  auto seqy_abs = y_abs->cast<abstract::AbstractSequencePtr>();
-  if (seqx_abs->dynamic_len() || seqy_abs->dynamic_len() || seqx_abs->GetValue() == kValueAny ||
-      seqy_abs->GetValue() == kValueAny) {
+  if (CheckAndConvertUtils::IsDynamicSequence(x_abs) || CheckAndConvertUtils::IsDynamicSequence(y_abs) ||
+      x_abs->GetValue() == kValueAny || y_abs->GetValue() == kValueAny) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
-  return std::make_shared<abstract::AbstractScalar>(*seqx_abs->GetValue() == *seqy_abs->GetValue());
+  return std::make_shared<abstract::AbstractScalar>(*x_abs->GetValue() == *y_abs->GetValue());
 }
 
 class SequenceEqualInfer : public abstract::OpInferBase {
