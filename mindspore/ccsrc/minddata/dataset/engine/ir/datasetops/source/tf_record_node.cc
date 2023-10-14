@@ -156,6 +156,14 @@ Status TFRecordNode::ValidateParams() {
 
   RETURN_IF_NOT_OK(ValidateTFRecordCompressionType(compression_type_, dataset_files_, num_shards_));
   RETURN_IF_NOT_OK(ValidateTFRecordFiles(dataset_files_));
+
+  if (!shard_equal_rows_ && dataset_files_.size() < static_cast<uint32_t>(num_shards_)) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid file, numbers of tfrecord file should not less than num_shards when shard_equal_rows is false, "
+      "but got numbers of tfrecord file: " +
+      std::to_string(dataset_files_.size()) + ", num_shards: " + std::to_string(num_shards_));
+  }
+
   return Status::OK();
 }
 

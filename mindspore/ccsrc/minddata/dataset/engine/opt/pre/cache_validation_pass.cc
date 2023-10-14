@@ -164,7 +164,10 @@ Status CacheValidationPass::VisitAfter(std::shared_ptr<TFRecordNode> node, bool 
     // If we are not in a cache path, then we must validate the file-based sharding config.
     // If we are in a cache path, there is no file-based sharding so the check is not required.
     if (!node->shard_equal_rows_ && node->dataset_files_.size() < static_cast<uint32_t>(node->num_shards_)) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, not enough tfrecord files provided.\n");
+      RETURN_STATUS_UNEXPECTED(
+        "Invalid file, numbers of tfrecord file should not less than num_shards when shard_equal_rows is false, "
+        "but got numbers of tfrecord file: " +
+        std::to_string(node->dataset_files_.size()) + ", num_shards: " + std::to_string(node->num_shards_));
     }
   }
   // Reset the flag when this node is cached and is already visited
