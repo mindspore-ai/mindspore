@@ -588,6 +588,11 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
     const auto &fg = graphs[0];
+    // fg->parameter_obj_nodes().empty() have been handled by combine like.
+    if (!fg->parameter_obj_nodes().empty()) {
+      MS_LOG(INFO) << "Finish handling the reusable graph: " << cell_key;
+      continue;
+    }
     if (cell_key.find("lazy_inline") == cell_key.npos) {
       continue;
     }
