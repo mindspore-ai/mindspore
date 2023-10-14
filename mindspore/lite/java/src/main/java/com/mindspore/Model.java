@@ -268,6 +268,9 @@ public class Model {
             return null;
         }
         long tensorAddr = this.getOutputByTensorName(this.modelPtr, tensorName);
+        if (tensorAddr == POINTER_DEFAULT_VALUE) {
+            return null;
+        }
         return new MSTensor(tensorAddr);
     }
 
