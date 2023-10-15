@@ -459,6 +459,8 @@ def _obfuscate_network(model, path_list, target_list, **kwargs):
         if input_y_node is None:
             return
         arg_list = subnode.get_args().copy()
+        kwargs_list = list(subnode.get_kwargs().values())
+        arg_list.extend(kwargs_list)
         v: str = input_y_node.get_targets()[0].value
         arg_obf: ScopedValue = ScopedValue.create_naming_value("y_obf=" + v)
         arg_list.append(arg_obf)
