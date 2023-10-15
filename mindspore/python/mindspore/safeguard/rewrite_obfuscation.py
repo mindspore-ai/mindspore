@@ -17,7 +17,6 @@ import os
 import re
 import secrets
 from pathlib import Path
-import numpy as np
 
 from mindspore import ops, nn
 from mindspore.common.tensor import Tensor
@@ -51,8 +50,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
             (such as transformer layers or resnet blocks). If target_modules is ``None``, the function would search
             target modules by itself. If found, the searched target module would be used, otherwise suggested target
             modules would be given with warning log. Default: ``None``.
-        saved_path (str): The directory path for saving obfuscated ckpt files and obf_ratios (a numpy file). obf_ratios
-            is the necessary data that needs to be load when running obfuscated network. Default: ``'./'``.
+        saved_path (str): The directory path for saving obfuscated ckpt files. Default: ``'./'``.
 
     Raises:
         TypeError: If `network` is not nn.Cell.
@@ -67,6 +65,9 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
             lowercase letters, numbers, ``'_'`` and ``'|'``.
         ValueError: If the third string of `target_modules` is not in the format of 'obfuscate_layers:all' or
             'obfuscate_layers:int'.
+
+    Returns:
+        list[float], obf_ratios, which is the necessary data that needs to be load when running obfuscated network.
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint
@@ -103,7 +104,6 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     for _ in range(number_of_ratios):
         secure_float = secrets_generator.uniform(0.01, 100)
         obf_ratios.append(secure_float)
-    np.save(os.path.abspath(saved_path) + '/' + 'obf_ratios.npy', np.array(obf_ratios))
     # start obfuscate ckpt
     ckpt_dir_files = os.listdir(ckpt_files)
     for ckpt_name in ckpt_dir_files:
@@ -126,6 +126,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
                 continue
             _obfuscate_single_ckpt(os.path.abspath(ckpt_files) + '/' + ckpt_name, obf_ratios, path_list,
                                    target_list, saved_path)
+    return obf_ratios
 
 
 def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_path):
