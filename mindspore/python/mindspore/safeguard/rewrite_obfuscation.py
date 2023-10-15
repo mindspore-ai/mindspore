@@ -17,13 +17,14 @@ import os
 import re
 import secrets
 from pathlib import Path
-import numpy as np
 
 from mindspore import ops, nn
 from mindspore.common.tensor import Tensor
 from mindspore import log as logger
 from mindspore import load_checkpoint, save_checkpoint
 from mindspore.rewrite import SymbolTree, Node, NodeType, TreeNodeHelper, ScopedValue
+from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
+from mindspore.rewrite.parsers.class_def_parser import ModuleParser
 
 OBF_RATIOS_LENGTH = 1
 MAX_OBF_RATIOS_NUM = 50
@@ -49,8 +50,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
             (such as transformer layers or resnet blocks). If target_modules is ``None``, the function would search
             target modules by itself. If found, the searched target module would be used, otherwise suggested target
             modules would be given with warning log. Default: ``None``.
-        saved_path (str): The directory path for saving obfuscated ckpt files and obf_ratios (a numpy file). obf_ratios
-            is the necessary data that needs to be load when running obfuscated network. Default: ``'./'``.
+        saved_path (str): The directory path for saving obfuscated ckpt files. Default: ``'./'``.
 
     Raises:
         TypeError: If `network` is not nn.Cell.
@@ -65,6 +65,9 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
             lowercase letters, numbers, ``'_'`` and ``'|'``.
         ValueError: If the third string of `target_modules` is not in the format of 'obfuscate_layers:all' or
             'obfuscate_layers:int'.
+
+    Returns:
+        list[float], obf_ratios, which is the necessary data that needs to be load when running obfuscated network.
 
     Examples:
         >>> from mindspore import obfuscate_ckpt, save_checkpoint
@@ -91,7 +94,7 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     # generate and save obf_ratios to saved_path
     path_list = to_split_modules[0].split('/')
     target_list = to_split_modules[1].split('|')
-    global OBF_RATIOS_WIDTH, OBF_RATIOS_LENGTH
+    global OBF_RATIOS_LENGTH
     number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
     if number_of_ratios > MAX_OBF_RATIOS_NUM:
         OBF_RATIOS_LENGTH = MAX_OBF_RATIOS_NUM // OBF_RATIOS_WIDTH
@@ -101,12 +104,11 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
     for _ in range(number_of_ratios):
         secure_float = secrets_generator.uniform(0.01, 100)
         obf_ratios.append(secure_float)
-    np.save(os.path.abspath(saved_path) + '/' + 'obf_ratios.npy', np.array(obf_ratios))
     # start obfuscate ckpt
     ckpt_dir_files = os.listdir(ckpt_files)
     for ckpt_name in ckpt_dir_files:
         if Path(ckpt_files + ckpt_name).is_dir():
-            sub_path = ckpt_files + ckpt_name
+            sub_path = os.path.abspath(ckpt_files) + '/' + ckpt_name
             sub_ckpt_file_list = os.listdir(sub_path)
             new_saved_path = os.path.abspath(saved_path) + '/' + ckpt_name
             if not os.path.exists(new_saved_path):
@@ -124,14 +126,18 @@ def obfuscate_ckpt(network, ckpt_files, target_modules=None, saved_path='./'):
                 continue
             _obfuscate_single_ckpt(os.path.abspath(ckpt_files) + '/' + ckpt_name, obf_ratios, path_list,
                                    target_list, saved_path)
+    return obf_ratios
 
 
 def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_path):
     """Obfuscate single ckpt file"""
     module_has_been_obfuscated = set()
-    ckpt_param = load_checkpoint(ckpt_name)
+    try:
+        ckpt_param = load_checkpoint(ckpt_name)
+    except (ValueError, TypeError, OSError):
+        logger.error("Load checkpoint failed for file {}.".format(ckpt_name))
+        return None
     obf_ratios_index = -1
-    global OBF_RATIOS_LENGTH, OBF_RATIOS_WIDTH
     for item in ckpt_param:
         module = _get_valid_module(item, path_list, target_list)
         if module:
@@ -150,6 +156,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_
     ckpt_file_name = ckpt_name.split('/')[-1]
     obf_ckpt_file_name = ckpt_file_name.split('.')[0] + '_obf' + '.ckpt'
     save_checkpoint(obf_param_list, os.path.abspath(saved_path) + '/' + obf_ckpt_file_name)
+    return None
 
 
 def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
@@ -219,7 +226,7 @@ def load_obf_params_into_net(network, target_modules, obf_ratios, **kwargs):
     for _ in range(path_len):
         target_list.append([])
     target_list.append(target_modules[1].split('|'))
-    global MAX_OBF_RATIOS_NUM, OBF_RATIOS_WIDTH, OBF_RATIOS_LENGTH
+    global MAX_OBF_RATIOS_NUM, OBF_RATIOS_LENGTH
     number_of_ratios = OBF_RATIOS_LENGTH * OBF_RATIOS_WIDTH
     if number_of_ratios > MAX_OBF_RATIOS_NUM:
         OBF_RATIOS_LENGTH = MAX_OBF_RATIOS_NUM // OBF_RATIOS_WIDTH
@@ -263,7 +270,7 @@ def _check_valid_target(network, target_modules):
     if not target_modules[1]:
         raise ValueError("{} should be a non-empty string value, in the form of 'D1|D2'"
                          .format(target_modules[1]))
-    if not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\/*_*)*', string=target_modules[0])\
+    if not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\/*_*)*', string=target_modules[0]) \
             or not re.fullmatch(pattern=r'([a-zA-Z]*[0-9]*\|*_*)*', string=target_modules[1]):
         raise ValueError("please check the input 'target_modules'{},it should be in the form of ['A/B/C', 'D1|D2']."
                          "target_modules[0] can only contain uppercase and lowercase letters, numbers, '_' and '/',"
@@ -297,9 +304,9 @@ def _check_valid_target(network, target_modules):
     # check whether target_list is valid
     global OBF_RATIOS_WIDTH
     OBF_RATIOS_WIDTH = 0
-    for j in range(len(target_list)):
-        if not hasattr(net, target_list[j]):
-            logger.warning("{} does not exist in the path {}".format(target_list[j], target_modules[0]))
+    for target in target_list:
+        if not hasattr(net, target):
+            logger.warning("{} does not exist in the path {}".format(target, target_modules[0]))
         else:
             OBF_RATIOS_WIDTH += 1
     if OBF_RATIOS_WIDTH == 0:
@@ -328,6 +335,7 @@ def _update_max_obf_ratios_num(target_modules):
 
 def _get_default_target_modules(ckpt_files):
     """Get the default or suggested target modules, if the target modules is None."""
+
     def _split_to_path_and_target(module, target):
         # split module into path list and target list
         target_index = module.index(target)
@@ -370,7 +378,11 @@ def _get_default_target_modules(ckpt_files):
     for ckpt_name in ckpt_dir_files:
         if not ckpt_name.endswith('.ckpt'):
             continue
-        ckpt_param = load_checkpoint(os.path.abspath(ckpt_files) + '/' + ckpt_name)
+        try:
+            ckpt_param = load_checkpoint(os.path.abspath(ckpt_files) + '/' + ckpt_name)
+        except (ValueError, TypeError, OSError):
+            logger.error("Load checkpoint failed for file {}.".format(os.path.abspath(ckpt_files) + '/' + ckpt_name))
+            return None
         for item in ckpt_param:
             param_path = _remove_digit(item)
             param_path = '/'.join(param_path)
@@ -396,9 +408,9 @@ def _get_valid_module(item, path_list, target_list):
     tar_path = '/'.join(path_list)
     # update the weights with obf_ratios in target module
     if net_path == tar_path:
-        for i in range(len(target_list)):
-            if target_list[i] in item.split('.'):
-                target_index = item.split('.').index(target_list[i])
+        for target in target_list:
+            if target in item.split('.'):
+                target_index = item.split('.').index(target)
                 module = ''.join(item.split('.')[:target_index + 1])
                 return module
     return None
@@ -484,13 +496,11 @@ def _obfuscate_network(model, path_list, target_list, **kwargs):
 
     def _register_denied_func_decorators(fn):
         """set the function decorators which should be denied for parse"""
-        from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
         name = "denied_function_decorator_list"
         setattr(ClassDefParser, name, fn)
 
     def _register_denied_class_decorators(fn):
         """set the class decorators which should be denied for parse"""
-        from mindspore.rewrite.parsers.class_def_parser import ModuleParser
         name = "denied_class_decorator_list"
         setattr(ModuleParser, name, fn)
 
