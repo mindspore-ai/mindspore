@@ -316,6 +316,24 @@ bool IsOverFlowNode(const AnfNodePtr &node, const AnfNodePtr &input) {
          IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2) ||
          IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2);
 }
+
+std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<AnfNodePtr> visited;
+  auto node_users_map = manager->node_users();
+  for (const auto &node_pair : node_users_map[node]) {
+    if (AnfUtils::IsRealKernel(node_pair.first) && node_pair.first->isa<CNode>()) {
+      visited.push_back(node_pair.first);
+    }
+  }
+
+  auto ori_format = std::any_of(visited.begin(), visited.end(),
+                                [](const AnfNodePtr &node) { return GetOpIOFormat(node) == kOpFormat_NCHW; })
+                      ? kOpFormat_NCHW
+                      : kOpFormat_DEFAULT;
+  return ori_format;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -617,7 +635,9 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (op_itor == op_cache_.end()) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
-    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
+
+    auto desc =
+      TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), SelectParamOriFormat(manager, node));
     if (desc == nullptr) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
@@ -805,7 +825,7 @@ DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap 
         auto shape_ge = tensor->shape_c();
 
         // create tensor descriptor for output descriptor
-        auto desc = TransformUtil::GetGeTensorDesc(shape_ge, tensor->data_type(), kOpFormat_NCHW);
+        auto desc = TransformUtil::GetGeTensorDesc(shape_ge, tensor->data_type(), kOpFormat_DEFAULT);
         if (desc == nullptr) {
           MS_LOG(ERROR) << "Create variable " << name << " output descriptor failed!";
           continue;
@@ -1020,7 +1040,7 @@ std::shared_ptr<std::vector<Operator>> DfGraphConvertor::GetWhileSubGraphInput()
       name += name_app;
       auto const_op = adpt_const->generate(name);
       (void)adpt_const->setAttr(const_op, "value", value);
-      auto const_op_desc = TransformUtil::GetGeTensorDesc(value->shape_c(), value->data_type(), kOpFormat_NCHW);
+      auto const_op_desc = TransformUtil::GetGeTensorDesc(value->shape_c(), value->data_type(), kOpFormat_DEFAULT);
       if (const_op_desc == nullptr) {
         MS_LOG(WARNING) << "Create variable " << name << " output descriptor failed!";
         continue;
@@ -2060,14 +2080,14 @@ void DfGraphConvertor::UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr
   }
   auto para = it->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para);
-  std::string format = kOpFormat_NCHW;
+  std::string format = kOpFormat_DEFAULT;
   std::string param_debug_info = para->DebugString();
   auto param_format = param_format_.find(param_debug_info);
   if (param_format != param_format_.end()) {
     format = param_format->second;
     MS_LOG(DEBUG) << "Parameter debug info: " << param_debug_info << ", format is " << format;
   }
-  if (format == kOpFormat_NCHW) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW) {
     MS_LOG(DEBUG) << "Format is not changed, no need to update op desc, name: " << param_debug_info;
     return;
   }
@@ -2114,7 +2134,7 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   std::ostringstream buf;
   buf << "[" << shape << "]";
   MS_LOG(INFO) << "input shape is " << buf.str() << ", type is " << me_type;
-  std::string format = "NCHW";
+  std::string format = kOpFormat_DEFAULT;
   if (it->isa<Parameter>()) {
     auto param = it->cast<ParameterPtr>();
     std::string param_name = param->DebugString();
@@ -3836,7 +3856,7 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
   for (size_t i = 0; i < vec.size(); i++) {
     MS_EXCEPTION_IF_NULL(vec[i]);
     if (vec[i]->isa<MeTensor>()) {
-      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_NCHW);
+      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
       MS_EXCEPTION_IF_NULL(ge_tensor);
       auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
       AddGraphConstInput(const_op);
