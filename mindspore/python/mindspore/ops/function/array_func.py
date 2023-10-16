@@ -6828,7 +6828,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     """
     x_ndim = input.ndim
     if x_ndim < 2:
-        raise ValueError(f"ops.diagonal requires an array of at least two dimensions")
+        raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
     _check_attr_dtype("dim1", dim1, [int], "diagonal")
     _check_attr_dtype("dim2", dim2, [int], "diagonal")
     dtype = input.dtype
