@@ -908,6 +908,7 @@ void DepComputer::Recompute(const FuncGraphPtr &fg) {
 
 FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(
   const FuncGraphPtr &fg, mindspore::HashMap<FuncGraphPtr, FuncGraphSetPtr> *seen_fgs) {
+  MS_EXCEPTION_IF_NULL(fg);
   auto iter = seen_fgs->find(fg);
   if (iter != seen_fgs->end()) {
     return iter->second;
