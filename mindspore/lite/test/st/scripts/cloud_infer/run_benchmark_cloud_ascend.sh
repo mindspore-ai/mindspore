@@ -88,7 +88,6 @@ function Run_Ascend_java() {
         elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
         if [ ${ret} = 0 ]; then
             run_result='Ascend_java: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_java_result_file}
-            Print_Benchmark_Result ${run_java_result_file}
         else
             run_result='Ascend_java: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_java_result_file}
             cat ${run_ascend_java_log_file}
@@ -229,6 +228,7 @@ Run_Ascend_java
 Run_java_status=$?
 if [[ ${Run_java_status} = 0 ]];then
     echo "Run java benchmark success"
+    Print_Benchmark_Result ${run_java_result_file}
 else
     echo "Run java benchmark failed"
     exit 1
