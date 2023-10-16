@@ -214,7 +214,7 @@ void ProfilerAnalyzer::ProcessData() {
   }
 }
 
-void ProfilerAnalyzer::Clear() {
+void ProfilerAnalyzer::Clear() noexcept {
   std::unique_lock<std::mutex> lock(data_mutex_);
   if (!init_ || !profiler_enable_ || data_line_.empty()) {
     return;
