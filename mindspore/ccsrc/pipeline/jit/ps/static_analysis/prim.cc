@@ -2481,6 +2481,45 @@ CNodePtr ConvertArgsForPrimitiveClassType(const PrimitiveFunctionPtr &prim_func,
   (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(op_inputs));
   return fg->NewCNodeInOrder(op_inputs);
 }
+
+std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs,
+                                            const FuncGraphPtr &fg) {
+  // Get init args and inputs of primitive.
+  size_t index_input = 1;
+  std::vector<AnfNodePtr> prim_input_nodes;
+  std::vector<AnfNodePtr> prim_init_arg_nodes;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  auto obj = prim_py->GetPyObj();
+  // Append Primitive arguments to the inputs.
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  MS_EXCEPTION_IF_NULL(op_def);
+  for (const auto &op_arg : op_def->args_) {
+    if (op_arg.as_init_arg_) {
+      auto arg_name = op_arg.arg_name_;
+      py::object arg_value = py::getattr(obj, common::SafeCStr(arg_name));
+      ValuePtr converted_ret = nullptr;
+      bool converted = parse::ConvertData(arg_value, &converted_ret);
+      if (!converted) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: (" << arg_name << " : " << py::str(arg_value)
+                                   << " ) in Primitive '" << prim->name() << "'.";
+      }
+      (void)prim_init_arg_nodes.emplace_back(NewValueNode(converted_ret));
+    } else {
+      if (index_input >= inputs.size()) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args " << index_input
+                                   << " exceeds the size of cnode inputs" << inputs.size() << ".";
+      }
+      auto new_input = GetNodeAfterArgHandler(inputs[index_input], op_arg, fg);
+      (void)prim_input_nodes.emplace_back(new_input);
+      index_input++;
+    }
+  }
+  AnfNodePtrList input_nodes{NewValueNode(std::make_shared<PrimitiveFunction>(prim))};
+  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(input_nodes));
+  (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(input_nodes));
+  return input_nodes;
+}
 }  // namespace
 
 EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
@@ -2493,40 +2532,25 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   auto fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
 
-  // Get init args and inputs of primitive.
-  size_t index_input = 1;
-  std::vector<AnfNodePtr> prim_input_nodes;
-  std::vector<AnfNodePtr> prim_init_arg_nodes;
-  auto prim_py = prim_->cast<PrimitivePyPtr>();
-  MS_EXCEPTION_IF_NULL(prim_py);
-  auto obj = prim_py->GetPyObj();
-  // Append Primitive arguments to the inputs.
-  auto op_def = mindspore::ops::GetOpDef(prim_->name());
-  MS_EXCEPTION_IF_NULL(op_def);
-  for (const auto &op_arg : op_def->args_) {
-    if (op_arg.as_init_arg_) {
-      auto arg_name = op_arg.arg_name_;
-      py::object arg_value = py::getattr(obj, common::SafeCStr(arg_name));
-      ValuePtr converted_ret = nullptr;
-      bool converted = parse::ConvertData(arg_value, &converted_ret);
-      if (!converted) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Cannot convert initialization arg: (" << arg_name << " : " << py::str(arg_value)
-                                   << " ) in Primitive '" << prim_->name() << "'.";
-      }
-      (void)prim_init_arg_nodes.emplace_back(NewValueNode(converted_ret));
-    } else {
-      if (index_input >= cnode->size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args in OpArg exceeds the size of cnode inputs.";
-      }
-      auto new_input = GetNodeAfterArgHandler(cnode->input(index_input), op_arg, fg);
-      (void)prim_input_nodes.emplace_back(new_input);
-      index_input++;
-    }
+  std::vector<AnfNodePtr> new_inputs;
+  constexpr size_t index_op = 0;
+  auto op_node = cnode->input(index_op);
+  if (IsPrimitive(op_node, prim_)) {
+    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg);
+  } else if (cnode->size() == 1 && IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
+    // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}}.
+    std::vector<AnfNodePtr> partial_inputs;
+    auto op_cnode = op_node->cast<CNodePtr>();
+    (void)std::copy(op_cnode->inputs().begin() + 1, op_cnode->inputs().end(), std::back_inserter(partial_inputs));
+    auto new_op_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg);
+    (void)new_op_inputs.insert(new_op_inputs.begin(), NewValueNode(prim::kPrimPartial));
+    auto new_op_cnode = fg->NewCNodeInOrder(new_op_inputs);
+    (void)new_inputs.emplace_back(new_op_cnode);
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
+                               << cnode->DebugString();
   }
 
-  AnfNodePtrList new_inputs{NewValueNode(std::make_shared<PrimitiveFunction>(prim_))};
-  (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(new_inputs));
-  (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(new_inputs));
   auto new_cnode = fg->NewCNodeInOrder(new_inputs);
   auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   MS_LOG(INFO) << "Convert primitive args to inputs: " << prim_->ToString() << ". node: " << cnode->DebugString()

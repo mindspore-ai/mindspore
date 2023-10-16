@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import math
 import pytest
 import numpy as np
 
@@ -137,4 +138,90 @@ def test_pow_create_instance_type_cast():
     ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
     net = PowCreateInstanceNet()
     out = net(1.0, 2)
+    print("out: ", out)
+
+
+class LSTM(nn.Cell):
+    def __init__(self, input_s, hidden_s, num_layers, has_bias, batch_first, bidirectional, dropout):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size=input_s, hidden_size=hidden_s, num_layers=num_layers, has_bias=has_bias,
+                            batch_first=batch_first, bidirectional=bidirectional, dropout=dropout)
+
+    def construct(self, inp, h0, c0):
+        return self.lstm(inp, (h0, c0))
+
+
+class LSTMWeightBias():
+    def __init__(self, num_layers, has_bias, input_size, num_directions, hidden_size, bidirectional):
+        self.num_layers = num_layers
+        self.has_bias = has_bias
+        self.input_size = input_size
+        self.num_directions = num_directions
+        self.hidden_size = hidden_size
+        self.bidirectional = bidirectional
+
+    def get_weight_bias(self):
+        gate_size = 4 * self.hidden_size
+
+        w_ih_list = []
+        w_hh_list = []
+        b_ih_list = []
+        b_hh_list = []
+        stdv = 1 / math.sqrt(self.hidden_size)
+        for layer in range(self.num_layers):
+            for direction in range(self.num_directions):
+                layer_input_size = self.input_size if layer == 0 else self.hidden_size * self.num_directions
+                suffix = '_reverse' if direction == 1 else ''
+
+                w_ih_list.append(ms.Parameter(
+                    ms.Tensor(np.random.uniform(-stdv, stdv, (gate_size, layer_input_size)).astype(np.float32)),
+                    name='weight_ih_l{}{}'.format(layer, suffix)))
+                w_hh_list.append(ms.Parameter(
+                    ms.Tensor(np.random.uniform(-stdv, stdv, (gate_size, self.hidden_size)).astype(np.float32)),
+                    name='weight_hh_l{}{}'.format(layer, suffix)))
+                if self.has_bias:
+                    b_ih_list.append(ms.Parameter(
+                        ms.Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        name='bias_ih_l{}{}'.format(layer, suffix)))
+                    b_hh_list.append(ms.Parameter(
+                        ms.Tensor(np.random.uniform(-stdv, stdv, (gate_size)).astype(np.float32)),
+                        name='bias_hh_l{}{}'.format(layer, suffix)))
+        w_ih_list = ms.ParameterTuple(w_ih_list)
+        w_hh_list = ms.ParameterTuple(w_hh_list)
+        b_ih_list = ms.ParameterTuple(b_ih_list)
+        b_hh_list = ms.ParameterTuple(b_hh_list)
+        return w_ih_list, w_hh_list, b_ih_list, b_hh_list
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_lstm_ops():
+    """
+    Feature: DynamicShape.
+    Description: LSTM with input (3, 32, 32)
+    Expectation: No exception.
+    """
+    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    input_s = 32
+    hidden_s = 16
+    has_bias = True
+    bidirectional = False
+    num_layers = 1
+    num_directions = 1
+
+    fact = LSTMWeightBias(num_layers, has_bias, input_s, num_directions, hidden_s, bidirectional)
+    w_ih_list, w_hh_list, b_ih_list, b_hh_list = fact.get_weight_bias()
+
+    h0 = ms.Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
+    c0 = ms.Tensor(np.random.randn(num_layers * 1, 32, 16).astype(np.float32))
+    input_ms = ms.Tensor(np.random.randn(3, 32, 32).astype(np.float32))
+
+    net = LSTM(input_s=input_s, hidden_s=16, num_layers=num_layers, has_bias=has_bias, batch_first=False,
+               bidirectional=bidirectional, dropout=0.0)
+    net.lstm.w_ih_list = w_ih_list
+    net.lstm.w_hh_list = w_hh_list
+    net.lstm.b_ih_list = b_ih_list
+    net.lstm.b_hh_list = b_hh_list
+    out = net(input_ms, h0, c0)
     print("out: ", out)
