@@ -17,6 +17,8 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -148,6 +150,20 @@ size_t AscendMemoryPool::GetMaxUsedMemSize() const {
   return max_used_hbm - static_offset;
 }
 
+const bool AscendMemoryPool::IsEnableEagerFree() const {
+  return AscendGmemAdapter::GetInstance().is_eager_free_enabled();
+}
+
+const bool AscendMemoryPool::SyncAllStreams() { return AscendStreamMng::GetInstance().SyncAllStreams(); }
+
+size_t AscendMemoryPool::AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) {
+  return AscendGmemAdapter::GetInstance().AllocDeviceMem(size, addr);
+}
+
+size_t AscendMemoryPool::FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) {
+  return AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(addr, size);
+}
+
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
   return AscendMemAdapter::GetInstance().FreeStaticDevMem(addr);
@@ -169,6 +185,8 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
 }
 
 size_t AscendMemoryPool::free_mem_size() { return AscendMemAdapter::GetInstance().FreeDevMemSize(); }
+
+uint64_t AscendMemoryPool::total_mem_size() const { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

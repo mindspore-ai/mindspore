@@ -59,7 +59,7 @@ file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dev
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
-file(GLOB_RECURSE UT_CCSRC_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ccsrc/common/*.cc)
+file(GLOB_RECURSE UT_CCSRC_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ccsrc/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./side_effect/*.cc ./utils/*.cc
         ./place/*.cc)
 file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc ./mock/*.cc)
@@ -134,6 +134,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_kernel_runtime.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_runtime_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_gmem_adapter.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_address.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_stream_manager.cc"
