@@ -90,7 +90,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin, Quantile, Angle, Bernoulli,
                        NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac, Ormqr)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
-                     ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
+                     ApplyMomentum, BatchNorm, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
                      Dropout, Dropout2D, Dropout3D,
                      InstanceNorm,
@@ -138,7 +138,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
                              GatherD, GatherNd, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
-                             Assign, PReLU, RandpermV2, Real,)
+                             Assign, PReLU, RandpermV2, Real, BiasAdd)
 
 __all__ = [
     'HSVToRGB',
