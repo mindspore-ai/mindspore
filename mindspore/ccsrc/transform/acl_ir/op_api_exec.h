@@ -127,7 +127,7 @@ auto GenerateExecutor(const std::string &aclnn_api, Args &... args) {
   auto workspace_func_name = aclnn_api + "GetWorkspaceSize";
   static const auto get_workspace_size_func_ptr = GetOpApiFunc(workspace_func_name.c_str());
   if (get_workspace_size_func_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << get_workspace_size_func_ptr << " not in " << GetOpApiLibName() << ", please check!";
+    MS_LOG(EXCEPTION) << aclnn_api << " get_workspace_size func not in " << GetOpApiLibName() << ", please check!";
   }
   uint64_t workspace_size = 0;
   uint64_t *workspace_size_addr = &workspace_size;

@@ -255,12 +255,13 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   CheckCNodeInputSize(real_div_node, kRealDivInputTensorNum);
 
   int64_t axis = -1;
-  auto axis_node = NewValueNode(axis);
-  MS_EXCEPTION_IF_NULL(axis_node);
   auto axis_abstract = std::make_shared<abstract::AbstractScalar>();
   MS_EXCEPTION_IF_NULL(axis_abstract);
   axis_abstract->set_type(kInt64);
-  axis_node->set_abstract(axis_abstract);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto axis_node = kernel_graph->NewValueNode(axis_abstract, MakeValue(axis));
+  MS_EXCEPTION_IF_NULL(axis_node);
 
   auto expand_dims_primitive = std::make_shared<Primitive>(kExpandDimsOpName);
   std::vector<std::string> input_names = {"x", "axis"};
