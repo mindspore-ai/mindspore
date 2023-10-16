@@ -447,7 +447,9 @@ class SideEffectFinder {
       MS_LOG(DEBUG) << "branch_node: " << branch_node->DebugString(recursive_level)
                     << ", abstract: " << (branch_abs != nullptr ? branch_abs->ToString() : "null");
       auto branch_cnode = branch_node->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(branch_cnode);
       branch_fg_node = branch_cnode->input(1);
+      MS_EXCEPTION_IF_NULL(branch_fg_node);
       MS_LOG(DEBUG) << "branch_fg_node: " << branch_fg_node->DebugString(recursive_level);
     }
     return GetValueNode<FuncGraphPtr>(branch_fg_node);
@@ -492,7 +494,6 @@ class SideEffectFinder {
   EffectInfo TracePartialCallEffectInfo(const CNodePtr &cnode, const EffectInfo &old_info) {
     const AnfNodePtr &func_node = cnode->input(0);
     MS_EXCEPTION_IF_NULL(func_node);
-    MS_EXCEPTION_IF_NULL(func_node->abstract());
     // Only handle for Parameter or Non-Partial CNode.
     if (!func_node->isa<Parameter>() && (!func_node->isa<CNode>() || IsPrimitiveCNode(func_node, prim::kPrimPartial))) {
       return old_info;
@@ -513,6 +514,7 @@ class SideEffectFinder {
 
     // Try to obtain the effect info of func graph.
     auto effect_info = ObtainEffectInfoForFuncGraph(partial_real_func);
+    MS_EXCEPTION_IF_NULL(func_node->abstract());
     MS_LOG(DEBUG) << "CNode or Parameter func: " << func_node->DebugString()
                   << ", partial_real_func: " << partial_real_func->ToString() << ", "
                   << func_node->abstract()->ToString() << ", cnode: " << cnode->DebugString()
@@ -563,6 +565,7 @@ class SideEffectFinder {
       const auto &caller = call.first;
       const auto &func_graph = call.second;
       const auto &effect_info = ObtainEffectInfoForFuncGraph(func_graph);
+      MS_EXCEPTION_IF_NULL(caller->abstract());
       MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", caller: " << caller->DebugString() << ", "
                     << caller->abstract()->ToString() << ", effect_info: " << effect_info.memory << "/"
                     << effect_info.io << "/" << effect_info.load << "/" << effect_info.back_mem;
