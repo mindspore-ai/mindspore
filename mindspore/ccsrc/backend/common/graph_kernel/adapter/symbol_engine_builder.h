@@ -29,5 +29,6 @@ class SymbolEngineBuilder : public opt::Pass {
 };
 
 SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg);
+SymbolEnginePtr BuildSubSymbolEngine(const FuncGraphPtr &sub_fg, const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_ADAPTER_SYMBOL_ENGINE_BUILDER_H_

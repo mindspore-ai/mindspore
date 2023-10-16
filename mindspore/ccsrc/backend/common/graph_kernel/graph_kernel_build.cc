@@ -177,9 +177,8 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
     MS_EXCEPTION_IF_NULL(engine);
     graph_kernel_json_generator.set_symbol_engine(engine);
   } else if (common::AnfAlgo::IsDynamicShape(node)) {
-    auto engine = BuildSymbolEngine(sub_func_graph);
+    auto engine = BuildSubSymbolEngine(sub_func_graph, node);
     MS_EXCEPTION_IF_NULL(engine);
-    sub_func_graph->set_attr(kAttrSymbolEngine, engine);
     graph_kernel_json_generator.set_symbol_engine(engine);
   }
   if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {

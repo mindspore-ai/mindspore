@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 
+#include "abstract/abstract_value.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
 #include "backend/common/graph_kernel/symbol_engine/utils.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/operation.h"
@@ -26,21 +27,43 @@
 namespace mindspore::graphkernel::symbol {
 namespace ops::infershape {
 inline int64_t NormAxis(int64_t axis, size_t rank) { return axis >= 0 ? axis : axis + static_cast<int64_t>(rank); }
-class RealShape : public Operation {
+
+class InferShapeOp : public Operation {
  public:
-  explicit RealShape(const SymbolPtr &inp) : Operation({inp}) {}
+  using Operation::Operation;
+  ~InferShapeOp() override = default;
+  MS_DECLARE_PARENT(InferShapeOp, Operation)
+
+ protected:
+  void UpdateMathInfo() override { SetPositive(output_as<ListSymbol>()); }
+  void SetPositive(ListSymbol *list);
+};
+
+class RealShape : public InferShapeOp {
+ public:
+  struct ShapeHint {
+    size_t input_index;
+    SymbolPtrList cnode_inputs;
+    SymbolPtrList param_inputs;
+  };
+  explicit RealShape(const SymbolPtr &inp, const ShapeHint *shape_hint = nullptr)
+      : InferShapeOp({inp}), shape_hint_(shape_hint) {}
   ~RealShape() override = default;
-  MS_DECLARE_PARENT(RealShape, Operation)
+  MS_DECLARE_PARENT(RealShape, InferShapeOp)
 
  protected:
   SymbolPtr Eval() override;
+  SymbolPtr ParseTensorShape(const abstract::TensorShapePtr &shape_ptr);
+  SymbolPtr ParseBaseShape(const BaseShapePtr &base_shape_ptr);
+  SymbolPtr SearchPrevSymbols(ListSymbol *cur, size_t axis);
+  const ShapeHint *shape_hint_{nullptr};
 };
 
-class BinElemwise : public Operation {
+class BinElemwise : public InferShapeOp {
  public:
-  BinElemwise(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
+  BinElemwise(const SymbolPtr &lhs, const SymbolPtr &rhs) : InferShapeOp({lhs, rhs}) {}
   ~BinElemwise() override = default;
-  MS_DECLARE_PARENT(BinElemwise, Operation)
+  MS_DECLARE_PARENT(BinElemwise, InferShapeOp)
 
   static SymbolPtrList Process(const SymbolPtrList &lhs, const SymbolPtrList &rhs, const Emitter &e, size_t shift = 0);
 
@@ -48,23 +71,23 @@ class BinElemwise : public Operation {
   SymbolPtr Eval() override;
 };
 
-class Reduce : public Operation {
+class Reduce : public InferShapeOp {
  public:
   Reduce(const SymbolPtr &inp, const SymbolPtr &axis, const SymbolPtr &keepdims, const SymbolPtr &skip_mode)
-      : Operation({inp, axis, keepdims, skip_mode}) {}
+      : InferShapeOp({inp, axis, keepdims, skip_mode}) {}
   ~Reduce() override = default;
-  MS_DECLARE_PARENT(Reduce, Operation)
+  MS_DECLARE_PARENT(Reduce, InferShapeOp)
 
  protected:
   SymbolPtr Eval() override;
   bool GetAxisSet(const SymbolPtr &axis, int64_t rank, bool skip_mode, HashSet<int64_t> *axis_set) const;
 };
 
-class Reshape : public Operation {
+class Reshape : public InferShapeOp {
  public:
-  Reshape(const SymbolPtr &input, const SymbolPtr &shape) : Operation({input, shape}) {}
+  Reshape(const SymbolPtr &input, const SymbolPtr &shape) : InferShapeOp({input, shape}) {}
   ~Reshape() override = default;
-  MS_DECLARE_PARENT(Reshape, Operation)
+  MS_DECLARE_PARENT(Reshape, InferShapeOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -77,11 +100,11 @@ class Reshape : public Operation {
   OpPtrList inner_ops_;
 };
 
-class Transpose : public Operation {
+class Transpose : public InferShapeOp {
  public:
-  Transpose(const SymbolPtr &data, const SymbolPtr &perm) : Operation({data, perm}) {}
+  Transpose(const SymbolPtr &data, const SymbolPtr &perm) : InferShapeOp({data, perm}) {}
   ~Transpose() override = default;
-  MS_DECLARE_PARENT(Transpose, Operation)
+  MS_DECLARE_PARENT(Transpose, InferShapeOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -97,18 +120,46 @@ class Transpose : public Operation {
   }
 };
 
-class MatMul : public Operation {
+class MatMul : public InferShapeOp {
  public:
   MatMul(const SymbolPtr &a, const SymbolPtr &b, const SymbolPtr &transpose_a, const SymbolPtr &transpose_b,
          bool has_batch = false)
-      : Operation({a, b, transpose_a, transpose_b}), has_batch_(has_batch) {}
+      : InferShapeOp({a, b, transpose_a, transpose_b}), has_batch_(has_batch) {}
   ~MatMul() override = default;
-  MS_DECLARE_PARENT(MatMul, Operation)
+  MS_DECLARE_PARENT(MatMul, InferShapeOp)
   std::string name() const override { return has_batch_ ? "BatchMatMul" : "MatMul"; }
 
  protected:
   SymbolPtr Eval() override;
   bool has_batch_;
+};
+
+class ExpandDims : public InferShapeOp {
+ public:
+  ExpandDims(const SymbolPtr &input, const SymbolPtr &axis) : InferShapeOp({input, axis}) {}
+  ~ExpandDims() override = default;
+  MS_DECLARE_PARENT(ExpandDims, InferShapeOp)
+
+ protected:
+  SymbolPtr Eval() override;
+};
+
+class BiasAddGrad : public InferShapeOp {
+ public:
+  BiasAddGrad(const SymbolPtr &x, const SymbolPtr &fmt) : InferShapeOp({x, fmt}) {}
+  ~BiasAddGrad() override = default;
+  MS_DECLARE_PARENT(BiasAddGrad, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+};
+
+class LayerNorm : public InferShapeOp {
+ public:
+  LayerNorm(const SymbolPtr &x, const SymbolPtr &begin_axis) : InferShapeOp({x, begin_axis}) {}
+  ~LayerNorm() override = default;
+  MS_DECLARE_PARENT(LayerNorm, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
 };
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

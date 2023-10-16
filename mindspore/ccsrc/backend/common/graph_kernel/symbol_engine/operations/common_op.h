@@ -33,7 +33,8 @@ class ScalarAdd : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) + AsInt(input(1))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) + AsInt(input(1))); }
+  void UpdateMathInfo() override;
 };
 
 class ScalarSub : public Operation {
@@ -43,7 +44,8 @@ class ScalarSub : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) - AsInt(input(1))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) - AsInt(input(1))); }
+  void UpdateMathInfo() override;
 };
 
 class ScalarMul : public Operation {
@@ -53,7 +55,8 @@ class ScalarMul : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) * AsInt(input(1))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) * AsInt(input(1))); }
+  void UpdateMathInfo() override;
 };
 
 class ScalarDiv : public Operation {
@@ -63,7 +66,8 @@ class ScalarDiv : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) / AsInt(input(1))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(AsInt(input(0)) / AsInt(input(1))); }
+  void UpdateMathInfo() override;
 };
 
 class ScalarMax : public Operation {
@@ -73,7 +77,8 @@ class ScalarMax : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::max(AsInt(input(0)), AsInt(input(1)))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::max(AsInt(input(0)), AsInt(input(1)))); }
+  void UpdateMathInfo() override;
 };
 
 class ScalarMin : public Operation {
@@ -83,7 +88,8 @@ class ScalarMin : public Operation {
 
  protected:
   SymbolPtr Eval() override;
-  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::min(AsInt(input(0)), AsInt(input(1)))); };
+  void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::min(AsInt(input(0)), AsInt(input(1)))); }
+  void UpdateMathInfo() override;
 };
 
 class Product : public Operation {

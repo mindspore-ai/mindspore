@@ -35,6 +35,50 @@ void ScalarSymbol::UpdateImpl(const SymbolPtr &s) {
   }
 }
 
+std::shared_ptr<IntSymbol> IntSymbol::Make(int64_t val, const OpPtr &op) {
+  auto s = std::make_shared<IntSymbol>(true, true, op);
+  s->value_ = val;
+  s->SetRange(val, val);
+  return s;
+}
+
+std::string IntSymbol::ToString() const {
+  std::ostringstream oss;
+  oss << ScalarSymbol::ToString();
+  if (has_data_) {
+    return oss.str();
+  }
+  oss << "<" << (range_min() == -kINF ? "-inf" : range_min() == kINF ? "inf" : std::to_string(range_min())) << ",";
+  oss << (range_max() == -kINF ? "-inf" : range_max() == kINF ? "inf" : std::to_string(range_max())) << ">";
+  return oss.str();
+}
+
+void IntSymbol::UpdateImpl(const SymbolPtr &s) {
+  if (is_const_) {
+    MS_LOG(EXCEPTION) << "Const symbol '" << ToString() << "' cannot be updated, other: " << s->ToString();
+  }
+  auto other = s->as<IntSymbol>();
+  if (other == nullptr) {
+    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " is not a IntSymbol.";
+  }
+  if (!other->has_data_) {
+    MS_LOG(EXCEPTION) << "Symbol " << s->ToString() << " has no data.";
+  }
+  value_ = other->value_;
+  has_data_ = true;
+}
+
+bool IntSymbol::operator==(const Symbol &s) const {
+  if (this == &s) {
+    return true;
+  }
+  if (!has_data_ || !s.HasData()) {
+    return false;
+  }
+  auto p = s.as<IntSymbol>();
+  return p != nullptr && p->value_ == value_;
+}
+
 bool ListSymbol::operator==(const Symbol &s) const {
   if (this == &s) {
     return true;

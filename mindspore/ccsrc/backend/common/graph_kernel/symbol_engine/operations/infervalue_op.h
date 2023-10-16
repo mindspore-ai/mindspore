@@ -33,6 +33,8 @@ class RealValue : public Operation {
 
  protected:
   SymbolPtr Eval() override;
+  SymbolPtr GenVarByShape(const IListSymbol &shape);
+  SymbolPtr GenListVariables(const ListSymbol &list);
 };
 }  // namespace ops::infervalue
 }  // namespace mindspore::graphkernel::symbol

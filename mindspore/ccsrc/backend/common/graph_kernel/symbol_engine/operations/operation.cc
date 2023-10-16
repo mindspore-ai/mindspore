@@ -20,6 +20,8 @@
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/hash_set.h"
+#include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
+#include "backend/common/graph_kernel/symbol_engine/operations/infervalue_op.h"
 
 namespace mindspore::graphkernel::symbol {
 namespace ops {
@@ -28,11 +30,19 @@ void Operation::Build() {
   MS_LOG(DEBUG) << ">>> Building operation " << ToString();
   output_ = Eval();
   MS_EXCEPTION_IF_NULL(output_);
+  UpdateMathInfo();
   if (!output_->CanUpdate()) {
     need_eval_ = false;
   }
   MS_LOG(DEBUG) << "<<< Build result of [" << name() << "]: " << output_->ToString() << ". need_eval=" << need_eval();
   is_building_ = false;
+}
+
+SymbolPtr Operation::Emitter::RealShape(const SymbolPtr &inp_symbol) const {
+  return Emit(std::make_shared<infershape::RealShape>(inp_symbol));
+}
+SymbolPtr Operation::Emitter::RealValue(const SymbolPtr &inp_symbol) const {
+  return Emit(std::make_shared<infervalue::RealValue>(inp_symbol));
 }
 }  // namespace ops
 }  // namespace mindspore::graphkernel::symbol

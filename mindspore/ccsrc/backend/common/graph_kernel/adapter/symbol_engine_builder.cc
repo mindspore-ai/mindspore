@@ -19,21 +19,31 @@
 
 namespace mindspore::graphkernel {
 bool SymbolEngineBuilder::Run(const FuncGraphPtr &func_graph) {
-  auto todos = TopoSort(func_graph->output());
-  bool changed = false;
-  for (auto &node : todos) {
-    auto fg = GetCNodeFuncGraph(node);
-    if (fg != nullptr && common::AnfAlgo::IsDynamicShape(node)) {
-      fg->set_attr(kAttrSymbolEngine, BuildSymbolEngine(fg));
-      changed = true;
-    }
-  }
-  return changed;
+  BuildSymbolEngine(func_graph);
+  return true;
 }
 
 SymbolEnginePtr BuildSymbolEngine(const FuncGraphPtr &fg) {
-  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg->ToString());
-  engine->Build(fg);
+  auto engine = std::make_shared<symbol::SymbolEngineImpl>(fg);
+  fg->set_attr(kAttrSymbolEngine, engine);
+  engine->PreBuild();
+  engine->Build();
+  return engine;
+}
+
+SymbolEnginePtr BuildSubSymbolEngine(const FuncGraphPtr &sub_fg, const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto engine = std::make_shared<symbol::SymbolEngineImpl>(sub_fg);
+  sub_fg->set_attr(kAttrSymbolEngine, engine);
+  engine->PreBuild();
+  if (node->func_graph()->has_attr(kAttrSymbolEngine)) {
+    auto main_engine = node->func_graph()->get_attr(kAttrSymbolEngine)->cast_ptr<symbol::SymbolEngineImpl>();
+    MS_EXCEPTION_IF_NULL(main_engine);
+    main_engine->BuildSubgraphSymbol(cnode);
+  } else {
+    engine->Build();
+  }
   return engine;
 }
 }  // namespace mindspore::graphkernel

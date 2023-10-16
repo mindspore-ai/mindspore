@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <ostream>
 #include <string>
+#include <utility>
 #include "base/base.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
@@ -166,8 +167,8 @@ class ScalarSymbol : public Symbol {
 
  protected:
   void UpdateImpl(const SymbolPtr &s) override;
-  virtual void SetValueByScalar(const ScalarSymbol *s) = 0;
-  virtual void GetValueStr(std::ostringstream &oss) const = 0;
+  virtual void SetValueByScalar(const ScalarSymbol *s) {}
+  virtual void GetValueStr(std::ostringstream &oss) const {}
   bool is_const_;
   bool has_data_;
 };
@@ -208,10 +209,51 @@ class ScalarSymbol : public Symbol {
     vtype value_{};                                                                                         \
   }
 
-DECLARE_SCALAR_CLASS(IntSymbol, int64_t);
 DECLARE_SCALAR_CLASS(BoolSymbol, bool);
 DECLARE_SCALAR_CLASS(FloatSymbol, double);
+DECLARE_SCALAR_CLASS(StrSymbol, std::string);
 #undef DECLARE_SCALAR_CLASS
+
+constexpr int64_t kINF = 1000000000LL;  // 1e9
+
+class IntSymbol : public ScalarSymbol {
+ public:
+  struct MathInfo {
+    std::pair<int64_t, int64_t> range{-kINF, kINF};  // close range, represent "[first, second]" in IntSymbol.
+  };
+  using ScalarSymbol::ScalarSymbol;
+  ~IntSymbol() override = default;
+  MS_DECLARE_PARENT(IntSymbol, ScalarSymbol)
+  static std::shared_ptr<IntSymbol> Make(int64_t val, const OpPtr &op = nullptr);
+  static inline std::shared_ptr<IntSymbol> Make(const OpPtr &op = nullptr) {
+    return std::make_shared<IntSymbol>(false, false, op);
+  }
+  std::string ToExpr() const override { return has_data_ ? std::to_string(value_) : sid(); }
+  std::string ToString() const override;
+  bool operator==(const Symbol &s) const override;
+  void SetValue(int64_t v) {
+    has_data_ = true;
+    value_ = v;
+  }
+  int64_t value() const { return value_; }
+
+  const MathInfo &math_info() const { return math_info_; }
+  void SetRangeMin(int64_t m) { math_info_.range.first = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
+  void SetRangeMax(int64_t m) { math_info_.range.second = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
+  void SetRange(int64_t minv, int64_t maxv) {
+    SetRangeMin(minv);
+    SetRangeMax(maxv);
+  }
+  int64_t range_min() const { return math_info_.range.first; }
+  int64_t range_max() const { return math_info_.range.second; }
+  bool is_positive() const { return has_data_ ? value_ > 0 : range_min() > 0; }
+  bool is_negative() const { return has_data_ ? value_ < 0 : range_max() < 0; }
+
+ protected:
+  void UpdateImpl(const SymbolPtr &s) override;
+  int64_t value_{0};
+  MathInfo math_info_;
+};
 
 std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post,
                             bool expr = false);
