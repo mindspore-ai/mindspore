@@ -76,8 +76,8 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
 
       auto status = CalTranspose<T, true>(num_elements_, x, InInfo, ws_x, reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_STATUS(status, "Transpose called by " + kernel_name_);
-      status = CalLocalResponseNormNHWC(ws_x, depth_radius_, bias_, alpha_, beta_, transpose_shape_[3], num_elements_,
-                                        ws_scale, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
+      status = CalLocalResponseNormNHWC(ws_x, depth_radius_, bias_, alpha_, beta_, transpose_shape_[kDim3],
+                                        num_elements_, ws_scale, ws_y, reinterpret_cast<cudaStream_t>(stream_ptr));
 
       CHECK_CUDA_STATUS(status, kernel_name_);
       CalTranspose<T, true>(num_elements_, ws_y, OutInfo, y, reinterpret_cast<cudaStream_t>(stream_ptr));
