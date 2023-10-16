@@ -154,7 +154,9 @@ DeviceMemPtr DynamicMemPoolBestFit::FindAvailableMemBuf(size_t size, bool from_p
     MS_LOG(DEBUG) << "Find idle mem buf failed and eager free is enabled, try to search in eager free bufs.";
     // Check total used max memory limits, since real occupy memory size equals to used mem size plus idle mem size.
     // Eager free mem may occupy some memory, so total_mem_size need multiply by a factor.
-    if (TotalUsedMemStatistics() + TotalIdleMemStatistics() + size <= total_mem_size() * 0.8) {
+    float threshold_factor = 0.8f;
+    size_t threshold = static_cast<size_t>(total_mem_size() * threshold_factor);
+    if (TotalUsedMemStatistics() + TotalIdleMemStatistics() + size <= threshold) {
       addr = FindMemBufByStatus(size, from_persistent_mem, DynamicMemBufStatus::kMemBufEagerFree);
     }
   }

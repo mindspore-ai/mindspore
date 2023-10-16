@@ -85,22 +85,22 @@ int EmbeddingHashMap::GetOrInsertDataUnsafe(const int key) {
 }
 
 int EmbeddingHashMap::InsertDataUnsafe(const int key) {
-  auto hash_index = FindPosUnsafe(key);
+  auto hash_index = FindPosUnsafe();
   if (hash_index == kInvalidIndexValue) {
     MS_LOG(WARNING) << "Insert data unsafe failed as map is full.";
     return hash_index;
   }
 
   ids_to_indices_->Put(key, hash_index);
-  hash_map_elements_[hash_index].set_step(1);
+  hash_map_elements_[hash_index].set_step((size_t)1);
   return hash_index;
 }
 
-int EmbeddingHashMap::FindPosUnsafe(const int key) {
+int EmbeddingHashMap::FindPosUnsafe() {
   if (current_pos_ >= valid_capacity_) {
     return kInvalidIndexValue;
   }
-  return ++current_pos_;
+  return static_cast<int>(++current_pos_);
 }
 
 int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
