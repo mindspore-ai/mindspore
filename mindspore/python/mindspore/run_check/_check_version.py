@@ -500,13 +500,6 @@ def check_env(device, _):
 
 def set_env(device, library_path):
     """callback function for setting environment variables"""
-    if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
-        if device in os.environ["MS_DEV_CLOSE_VERSION_CHECK"]:
-            return
-        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = os.environ["MS_DEV_CLOSE_VERSION_CHECK"] + ":" + device
-    else:
-        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = device
-
     if device.lower() == "ascend":
         env_checker = AscendEnvChecker(library_path)
     elif device.lower() == "gpu":
@@ -532,8 +525,6 @@ def check_version_and_env_config():
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, please refer to the FAQ for a solution: "
                            "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
-        if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
-            return
         MSContext.get_instance().register_check_env_callback(check_env)
         MSContext.get_instance().register_set_env_callback(set_env)
         MSContext.get_instance().set_device_target_inner(MSContext.get_instance().get_param(ms_ctx_param.device_target))

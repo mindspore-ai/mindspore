@@ -1315,7 +1315,7 @@ void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     SetRunMode(resource->func_graph(), resource->GetBackend().get());
   } else {
     OriginSetRunMode(resource);

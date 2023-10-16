@@ -324,12 +324,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   (*ge_options)["rank_table_file"] = "";
-  auto env_ddk_version = common::GetEnv("DDK_VERSION");
-  if (!env_ddk_version.empty()) {
-    (*ge_options)["ge.DDK_version"] = env_ddk_version;
-  } else {
-    (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
-  }
   (*ge_options)["graphType"] = "1";
 
   SetDisableReuseMemoryFlag(ge_options);
@@ -342,18 +336,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   } else {
     (*ge_options)["ge.exec.jobId"] = "0";
     MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
-
-  auto env_fe_flag = common::GetEnv("FE_FLAG");
-  if (!env_fe_flag.empty()) {
-    (*ge_options)["ge.feFlag"] = env_fe_flag;
-    MS_LOG(INFO) << "Use FE, make sure fe lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-  }
-
-  auto env_aicpu_flag = common::GetEnv("AICPU_FLAG");
-  if (!env_aicpu_flag.empty()) {
-    (*ge_options)["ge.aicpuFlag"] = env_aicpu_flag;
-    MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
   if (CompileCacheEnable()) {
@@ -488,15 +470,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     MS_LOG(INFO) << "No hccl mode. "
-                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
-  }
-
-  auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
-  if (!env_deploy_mode.empty()) {
-    (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
-  } else {
-    (*ge_options)["ge.exec.deployMode"] = "0";
-    MS_LOG(INFO) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
+                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID] all be set in ENV.";
   }
 }
 
