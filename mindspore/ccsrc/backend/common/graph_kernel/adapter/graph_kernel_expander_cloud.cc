@@ -95,7 +95,41 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
+  std::vector<OpWithLevel> expand_ops_with_level_v2 = {
+    // CPU
+    {kCPUDevice, OpLevel_0, prim::kPrimIdentityMath},
+    {kCPUDevice, OpLevel_0, prim::kPrimSqueeze},
+    {kCPUDevice, OpLevel_0, prim::kPrimSlice},
+
+    // GPU
+    {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropout},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimLayerNorm},
+    {kGPUDevice, OpLevel_0, prim::kPrimLayerNormGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimRelu},
+    {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
+  };
   const auto &flags = GraphKernelFlags::GetInstance();
+  std::vector<std::string> disable_expand_ops = flags.disable_expand_ops;
+  auto cb = Callback::Instance();
+
+  std::vector<std::string> disable_expand_op_list_v2 = {
+    "OnesLike",    "FloatStatus", "OneHot",     "StridedSlice", "CumSum",      "Transpose",
+    "BatchMatMul", "MatMul",      "ExpandDims", "ElemAny",      "BroadcastTo",
+  };
+  if (flags.kernel_generator == "AKG_V2") {
+    std::move(expand_ops_with_level_v2.begin(), expand_ops_with_level_v2.end(),
+              std::back_inserter(expand_ops_with_level));
+    if (cb->GetTargetFromContext() == kGPUDevice) {
+      for (const std::string &item : disable_expand_op_list_v2) {
+        if (std::find(flags.enable_expand_ops.begin(), flags.enable_expand_ops.end(), item) ==
+            flags.enable_expand_ops.end()) {
+          disable_expand_ops.push_back(item);
+        }
+      }
+    }
+  }
   auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
                                   flags.enable_expand_ops, flags.disable_expand_ops);
   return GkUtils::FilterExcludedOps(ops);

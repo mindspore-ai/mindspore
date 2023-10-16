@@ -166,7 +166,7 @@ class OpInfoExtractor {
     auto op_info = std::make_shared<OpInfo>();
     op_info->set_op_name(AnfUtils::GetCNodeName(cnode_));
     const auto &flags = GraphKernelFlags::GetInstance();
-    if (flags.enable_dynamic_shape_fusion) {
+    if (flags.kernel_generator == "AKG_V2") {
       op_info->set_imply_type(OpImplyType::kImplyDynamicAKG);
     } else {
       op_info->set_imply_type(OpImplyType::kImplyAKG);
@@ -681,7 +681,7 @@ OpInfoPtr GraphKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) co
     OpImplyType imply_type;
     const auto &flags = GraphKernelFlags::GetInstance();
 
-    if (flags.enable_dynamic_shape_fusion) {
+    if (flags.kernel_generator == "AKG_V2") {
       imply_type = OpImplyType::kImplyDynamicAKG;
     } else {
       imply_type = OpImplyType::kImplyAKG;
