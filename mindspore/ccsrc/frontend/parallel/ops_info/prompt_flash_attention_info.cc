@@ -83,7 +83,6 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
     dp_ = query_strategy[kInputQueryBatchDimBSH];
     mp_ = query_strategy[kInputQueryHiddenDimBSH];
-
   } else if (input_layout_ == "BNSD") {
     if (!CheckStrategy(query_strategy[kInputQuerySeqDimBNSD], 1, "S-Dimention", "query") ||
         !CheckStrategy(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
@@ -148,14 +147,14 @@ std::vector<StrategyPtr> PromptFlashAttentionInfo::GenerateOpStrategies(int64_t 
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
   }
 
-  std::vector<StrategyPtr> sp_vector;
-  if (GenerateStrategiesForDependentInputs(stage_id, inputs_shape_, splitable_inputs, &sp_vector) != SUCCESS) {
+  std::vector<StrategyPtr> strategy_vector;
+  if (GenerateStrategiesForDependentInputs(stage_id, inputs_shape_, splitable_inputs, &strategy_vector) != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Generate strategies for dependent inputs() failed.";
   }
-  if (sp_vector.empty()) {
+  if (strategy_vector.empty()) {
     MS_LOG(EXCEPTION) << name_ << ": No valid strategy.";
   }
-  return sp_vector;
+  return strategy_vector;
 }
 
 // 只针对batch 是否可以切分
