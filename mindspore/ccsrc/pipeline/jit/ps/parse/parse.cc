@@ -1192,7 +1192,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
 
   return new_node;
@@ -1730,7 +1730,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
           call_cnode = HandleInterpret(block, call_cnode, node);
         }
       }
-      auto new_expr_src = fallback::GeneratePyExecuteScriptForCallNode(call_cnode, name_id);
+      auto new_expr_src = fallback::GeneratePyInterpretScriptForCallNode(call_cnode, name_id);
       fallback::SetNodeExprSrc(call_cnode, new_expr_src);
       return call_cnode;
     } else if (syntax_support != SYNTAX_SUPPORTED) {
@@ -2147,7 +2147,7 @@ AnfNodePtr Parser::ParseSingleCompare(const FunctionBlockPtr &block, const py::o
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2359,7 +2359,7 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   auto slice_type = ast_->GetNodeType(slice_node);
   std::string slice_type_name = slice_type->node_name();
   bool is_slice = slice_type_name == "Slice";
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript(value_str, slice_str, is_slice);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2431,7 +2431,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   // Generate expression script for binary operation node.
   std::string operand_str = GetExprStr(operand_node, operand);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForUnary(operand_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForUnary(operand_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2528,7 +2528,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(target_node, target_object);
   std::string right_str = GetExprStr(value_node, value_object);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(augassign_app, new_expr_src);
   return block;
 }
@@ -3063,7 +3063,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
-  auto less_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "less_right_str", "<");
+  auto less_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "less_right_str", "<");
   CloneInnerNodeLocation(cond_node);
   fallback::SetNodeExprSrc(cond_node, less_expr_src);
 
@@ -3081,7 +3081,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   } else {
     CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
     target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
-    auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
+    auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
     CloneInnerNodeLocation(target_var);
     fallback::SetNodeExprSrc(target_var, new_expr_src);
   }
@@ -3094,7 +3094,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
   auto add_one = NewValueNode(static_cast<int64_t>(1));
   CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, add_one});
-  auto add_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "add_right_str", "+");
+  auto add_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "add_right_str", "+");
   CloneInnerNodeLocation(loop_var_inc);
   fallback::SetNodeExprSrc(loop_var_inc, add_expr_src);
 
