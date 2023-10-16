@@ -687,15 +687,19 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::InferShapeAndResize() {
+  MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope();
   // 1. Infer operator's output's Shape.
   auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(base_shape);
 
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
 
   // 3. Resize kernel mod.
+  MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
+  MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   if (ret != kernel::KRET_OK) {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }

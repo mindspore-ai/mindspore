@@ -583,7 +583,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   uint32_t device_id_;
 
   // The stream index in all stream array managed by Framework, starting form 0.
-  size_t stream_id_{SIZE_MAX};
+  size_t stream_id_{0};
 
   // User data is the extra data required by the kernel or framework.
   UserDataPtr user_data_{nullptr};
