@@ -40,7 +40,7 @@ TensorStorageInfoPtrList SelectViewCalc(const PrimitivePtr &prim, const std::vec
   auto old_storage_offset = old_tensor_info->old_offset;
   dim = DynamicDimWrap(dim, old_shape.size());
   auto index = GetValue<int64_t>(inputs[kInputIndex1]);
-  old_storage_offset += static_cast<size_t>(index * old_strides[dim]);
+  old_storage_offset += LongToSize(index * old_strides[dim]);
   auto new_strides = old_strides;
   auto new_shape = old_shape;
   (void)new_shape.erase(new_shape.begin() + dim);

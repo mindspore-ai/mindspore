@@ -41,6 +41,13 @@ bool HasZero(const std::vector<int64_t> &value);
 bool CheckInputsNull(const std::vector<ValuePtr> &inputs, const size_t &input_num);
 
 struct OldTensorInfo {
+  OldTensorInfo(std::vector<int64_t> old_shape, std::vector<int64_t> old_strides, std::vector<int64_t> ori_shape,
+                std::vector<int64_t> ori_strides, size_t old_offset)
+      : old_shape(std::move(old_shape)),
+        old_strides(std::move(old_strides)),
+        ori_shape(std::move(ori_shape)),
+        ori_strides(std::move(ori_strides)),
+        old_offset(old_offset) {}
   std::vector<int64_t> old_shape;
   std::vector<int64_t> old_strides;
   std::vector<int64_t> ori_shape;

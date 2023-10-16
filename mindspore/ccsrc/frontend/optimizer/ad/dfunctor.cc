@@ -231,6 +231,7 @@ static AnfNodePtr SkipHookNodeInBackProp(const AnfNodePtr &node) {
   }
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     auto tuple_get_item = node->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(tuple_get_item);
     auto inp = tuple_get_item->input(1);
     if (IsPrimitiveCNode(inp, prim::kPrimHookBackward) || IsPrimitiveCNode(inp, prim::kPrimCellBackwardHook)) {
       MS_LOG(WARNING) << "Hook operation does not work in graph mode or functions decorated with 'jit', it will be "

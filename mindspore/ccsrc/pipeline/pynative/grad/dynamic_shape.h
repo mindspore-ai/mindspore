@@ -100,16 +100,6 @@ class TopCellUnknownShapeDetect {
 
   // Like TrainOneStep, it is a cell and run first, top cell create first, but set inputs set in main cell
   // and run later, so need change top cell to unknown shape too.
-  // class C2:
-  //    def construct(self):
-  //      ...
-  // class C1:
-  //    def construct(self,c,x):
-  //        self.c(x)
-  //        ...
-  // obj = C2
-  // obj.set_inputs();
-  // TrainOneStep(C1(obj,x))
   void UpdatePossibleTopCellToUnknownShape(const TopCellInfoPtr &cur_top_cell,
                                            const std::vector<string> &cur_arg_id_vec,
                                            const abstract::BaseShapePtrList &cur_args_shape);

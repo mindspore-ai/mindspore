@@ -50,7 +50,7 @@ bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::A
   if (iter == func_list_.end()) {
     MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
   }
-  int64_t type_size = GetDataTypeSize(input_type_id) / GetDataTypeSize(output_type_id);
+  int64_t type_size = SizeToLong(GetDataTypeSize(input_type_id) / GetDataTypeSize(output_type_id));
 
   return iter->second(this, input, input_storage_info, output, type_size);
 }
@@ -82,11 +82,11 @@ bool ContiguousCpuKernel::LaunchContiguousImpl(const kernel::AddressPtr &input,
     }
   } else {
     size_t ndim = input_storage_info->shape.size();
-    int64_t storage_offset = static_cast<int64_t>(input_storage_info->storage_offset);
+    int64_t storage_offset = SizeToLong(input_storage_info->storage_offset);
     auto strides = input_storage_info->strides;
     auto task = [&](size_t start, size_t end) {
       for (size_t pos = start; pos < end; ++pos) {
-        int64_t tmp_idx = static_cast<int64_t>(pos);
+        int64_t tmp_idx = SizeToLong(pos);
         int64_t offset = 0;
         for (size_t dim = 0; dim < ndim; dim++) {
           auto index = ndim - dim - 1;
