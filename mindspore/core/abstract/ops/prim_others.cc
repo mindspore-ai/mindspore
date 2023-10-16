@@ -26,7 +26,7 @@
 #include "utils/shape_utils.h"
 #include "ops/ops_func_impl/real_div.h"
 #include "ops/ops_func_impl/add.h"
-#include "ops/mul.h"
+#include "ops/ops_func_impl/mul.h"
 #include "ops/sub.h"
 #include "ops/ops_func_impl/square.h"
 
@@ -536,10 +536,16 @@ AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const Primitive
   auto add2_y = args_abs_list[9];
 
   auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
-  auto mul1 = ops::MulInfer(nullptr, primitive, {mul1_x, input0});
-  auto mul0 = ops::MulInfer(nullptr, primitive, {mul0_x, input2});
-  auto mul2 = ops::MulInfer(nullptr, primitive, {mul2_x, input1});
-  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0.value()});
+  auto mul_infer_impl = std::make_shared<ops::MulFuncImpl>();
+  auto mul1 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul1_x, input0}),
+                           mul_infer_impl->InferType(primitive, {mul1_x, input0}));
+  auto mul0 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul0_x, input2}),
+                           mul_infer_impl->InferType(primitive, {mul0_x, input2}));
+  auto mul2 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul2_x, input1}),
+                           mul_infer_impl->InferType(primitive, {mul2_x, input1}));
+  auto mul3 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul3_x, square0.value()}),
+                           mul_infer_impl->InferType(primitive, {mul3_x, square0.value()}));
+
   auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
   auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
@@ -548,7 +554,8 @@ AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const Primitive
   auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
   auto infer_type = infer_impl->InferType(primitive, {add0, add2});
   auto true_div0 = MakeAbstract(infer_shape, infer_type);
-  auto mul4 = ops::MulInfer(nullptr, primitive, {input4, true_div0});
+  auto mul4 = MakeAbstract(mul_infer_impl->InferShape(primitive, {input4, true_div0}),
+                           mul_infer_impl->InferType(primitive, {input4, true_div0}));
   auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul4});
 
   AbstractBasePtrList rets = {add1, add0, sub0};
@@ -578,23 +585,30 @@ AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const 
   auto mul3_x = args_abs_list[8];
   auto mul4_x = args_abs_list[9];
   auto add2_y = args_abs_list[10];
-
-  auto mul0 = ops::MulInfer(nullptr, primitive, {mul0_x, input2});
-  auto mul1 = ops::MulInfer(nullptr, primitive, {mul1_x, input0});
+  auto mul_infer_impl = std::make_shared<ops::MulFuncImpl>();
+  auto mul0 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul0_x, input2}),
+                           mul_infer_impl->InferType(primitive, {mul0_x, input2}));
+  auto mul1 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul1_x, input0}),
+                           mul_infer_impl->InferType(primitive, {mul1_x, input0}));
   auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
   auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
-  auto mul2 = ops::MulInfer(nullptr, primitive, {mul2_x, input1});
-  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0.value()});
+  auto mul2 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul2_x, input1}),
+                           mul_infer_impl->InferType(primitive, {mul2_x, input1}));
+  auto mul3 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul3_x, square0.value()}),
+                           mul_infer_impl->InferType(primitive, {mul3_x, square0.value()}));
+
   auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
   auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
   auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
-  auto mul4 = ops::MulInfer(nullptr, primitive, {mul4_x, input3});
+  auto mul4 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul4_x, input3}),
+                           mul_infer_impl->InferType(primitive, {mul4_x, input3}));
   auto infer_impl = std::make_shared<ops::RealDivFuncImpl>();
   auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
   auto infer_type = infer_impl->InferType(primitive, {add0, add2});
   auto real_div0 = MakeAbstract(infer_shape, infer_type);
   auto add3 = ops::AddInfer(nullptr, primitive, {mul4, real_div0});
-  auto mul5 = ops::MulInfer(nullptr, primitive, {input4, add3});
+  auto mul5 = MakeAbstract(mul_infer_impl->InferShape(primitive, {input4, add3}),
+                           mul_infer_impl->InferType(primitive, {input4, add3}));
   auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul5});
   AbstractBasePtrList rets = {add1, add0, sub0};
   return std::make_shared<AbstractTuple>(rets);

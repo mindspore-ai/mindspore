@@ -74,7 +74,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Cos, Cross, Div, DivNoNan, EqualCount,
                        Ceil, Acosh, Greater, GreaterEqual, Lerp, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,
                        LogicalNot, LogicalOr, LogicalXor, LpNorm, MatMul, Maximum, MulNoNan,
-                       MatrixDeterminant, LogMatrixDeterminant, Minimum, Mul, Neg, NMSWithMask, NotEqual,
+                       MatrixDeterminant, LogMatrixDeterminant, Minimum, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus, LinSpace, Einsum, Renorm,
                        NPUGetFloatStatus, Pow, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
@@ -137,8 +137,8 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
-                             GatherD, GatherNd, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh, Assign, PReLU,
-                             RandpermV2, Real,)
+                             GatherD, GatherNd, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
+                             Assign, PReLU, RandpermV2, Real,)
 
 __all__ = [
     'HSVToRGB',

@@ -41,7 +41,6 @@
 #include "ops/arg_min.h"
 #include "ops/ops_func_impl/greater_equal.h"
 #include "ops/ops_func_impl/greater.h"
-#include "ops/mul.h"
 #include "ops/mod.h"
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
