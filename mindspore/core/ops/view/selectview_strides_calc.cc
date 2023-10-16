@@ -30,6 +30,7 @@ TensorStorageInfoPtrList SelectViewCalc(const PrimitivePtr &prim, const std::vec
   int64_t dim;
   if (inputs[kInputIndex2]->isa<tensor::Tensor>()) {
     auto dim_tensor = inputs[kInputIndex2]->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(dim_tensor);
     dim = *(static_cast<int64_t *>(dim_tensor->data_c()));
   } else {
     dim = GetValue<int64_t>(inputs[kInputIndex2]);

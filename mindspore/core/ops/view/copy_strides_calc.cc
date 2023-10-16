@@ -27,6 +27,8 @@ TensorStorageInfoPtrList CopyWithSliceCalc(const PrimitivePtr &prim, const std::
   }
   auto self_tensor = inputs[0]->cast<tensor::TensorPtr>();
   auto src_tensor = inputs[1]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(self_tensor);
+  MS_EXCEPTION_IF_NULL(src_tensor);
 
   auto storage_info = self_tensor->storage_info();
   if (storage_info == nullptr) {
