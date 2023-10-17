@@ -303,6 +303,8 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   // Connect grad graph of jit to context.
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, TensorGradType::kOpOutput);
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
+  MS_EXCEPTION_IF_NULL(jit_forward_graph->output());
+  MS_EXCEPTION_IF_NULL(jit_forward_graph->output()->abstract());
   if (grad_executor->dynamic_shape()->enable_unknown_shape() &&
       jit_forward_graph->output()->abstract()->BuildShape()->IsDynamic()) {
     MS_LOG(DEBUG) << "Set jit unknown shape out to abs cache";
