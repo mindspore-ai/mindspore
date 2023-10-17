@@ -108,15 +108,6 @@ class AsinhGrad(Primitive):
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
-class ReciprocalGrad(Primitive):
-    """Performs grad of Reciprocal operation."""
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ReciprocalGrad"""
-        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
-
-
 class RsqrtGrad(Primitive):
     """Performs grad of Rsqrt operation."""
 
@@ -137,9 +128,13 @@ class ScaleAndTranslateGrad(Primitive):
         validator.check_value_type("antialias", antialias, [bool], self.name)
 
 
-class SoftmaxGrad(ReciprocalGrad):
+class SoftmaxGrad(Primitive):
     """Performs grad of Softmax operation."""
 
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SoftmaxGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 class SqrtGrad(Primitive):
     """Performs grad of Sqrt operation."""

@@ -1,11 +1,10 @@
 #operator reciprocal
 reciprocal:
     args:
-        input:
+        x:
             dtype: tensor
     returns:
-        output:
+        y:
             dtype: tensor
-    class:
-        name: Reciprocal
-        
+    function:
+        name: reciprocal_

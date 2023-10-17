@@ -2453,55 +2453,6 @@ class Sqrt(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class Reciprocal(PrimitiveWithCheck):
-    r"""
-    Returns reciprocal of a tensor element-wise.
-
-    .. math::
-
-        out_{i} =  \frac{1}{x_{i}}
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-
-    Outputs:
-        Tensor, has the same shape as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> reciprocal = ops.Reciprocal()
-        >>> output = reciprocal(x)
-        >>> print(output)
-        [1.   0.5  0.25]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Reciprocal"""
-        if context.get_context("device_target") == "GPU":
-            self.target = "GPU"
-        else:
-            self.target = "OTHER"
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            out = 1.0 / x
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
-
-
 class Pow(Primitive):
     r"""
     Calculates the `y` power of each element in `x`.

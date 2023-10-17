@@ -153,7 +153,11 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
     if (frontend_func_impl != nullptr) {
       op_run_info->base_op_run_info.abstract =
         frontend_func_impl->InferAbstract(prim, op_run_info->op_grad_info->input_abs);
-    } else if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
+    }
+    if (op_run_info->base_op_run_info.abstract != nullptr) {
+      prim->EndRecordAddAttr();
+    }
+    if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
       MS_EXCEPTION_IF_NULL(op_def->func_impl_);
       (void)op_def->func_impl_->CheckValidation(prim, op_run_info->op_grad_info->input_abs);
       auto shape = op_def->func_impl_->InferShape(prim, op_run_info->op_grad_info->input_abs);

@@ -19,8 +19,7 @@
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
-namespace mindspore {
-namespace ops {
+namespace mindspore::ops {
 class MIND_API ReciprocalFuncImpl : public OpFuncImpl {
  public:
   ReciprocalFuncImpl() = default;
@@ -30,7 +29,6 @@ class MIND_API ReciprocalFuncImpl : public OpFuncImpl {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-}  // namespace ops
-}  // namespace mindspore
+}  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RECIPROCAL_H_

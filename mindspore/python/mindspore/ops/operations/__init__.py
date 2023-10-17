@@ -77,7 +77,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        MatrixDeterminant, LogMatrixDeterminant, Minimum, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus, LinSpace, Einsum, Renorm,
                        NPUGetFloatStatus, Pow, IsNan, IsInf, IsFinite, FloatStatus,
-                       Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
+                       CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
                        Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
                        Addcmul, Square, Sub, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Eps,
                        Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Imag, Complex, Trunc, IsClose, LuSolve,
@@ -138,7 +138,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
                              GatherD, GatherNd, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
-                             Assign, PReLU, RandpermV2, Real, BiasAdd)
+                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal,)
 
 __all__ = [
     'HSVToRGB',
