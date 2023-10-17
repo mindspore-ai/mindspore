@@ -168,6 +168,20 @@ TypeId OnnxNodeParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type)
   return iter->second;
 }
 
+void OnnxNodeParser::SetTypeAndValueForFloat(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
+                                             size_t data_count) {
+  for (size_t i = 0; i < data_count; i++) {
+    value->push_back(static_cast<float>(reinterpret_cast<const float16 *>(onnx_tensor.raw_data().data())[i]));
+  }
+}
+
+void OnnxNodeParser::SetTypeAndValueForBool(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
+                                            size_t data_count) {
+  for (size_t i = 0; i < data_count; i++) {
+    value->push_back(static_cast<float>(reinterpret_cast<const bool *>(onnx_tensor.raw_data().data())[i]));
+  }
+}
+
 STATUS OnnxNodeParser::SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
                                            size_t data_count, int *type) {
   switch (onnx_tensor.data_type()) {
@@ -209,15 +223,11 @@ STATUS OnnxNodeParser::SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor,
       break;
     case onnx::TensorProto_DataType_FLOAT16:
       *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT16);
-      for (size_t i = 0; i < data_count; i++) {
-        value->push_back(static_cast<float>(reinterpret_cast<const float16 *>(onnx_tensor.raw_data().data())[i]));
-      }
+      SetTypeAndValueForFloat(onnx_tensor, value, data_count);
       break;
     case onnx::TensorProto_DataType_BOOL:
       *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
-      for (size_t i = 0; i < data_count; i++) {
-        value->push_back(static_cast<float>(reinterpret_cast<const bool *>(onnx_tensor.raw_data().data())[i]));
-      }
+      SetTypeAndValueForBool(onnx_tensor, value, data_count);
       break;
     default:
       MS_LOG(ERROR) << "The data type is not supported.";
