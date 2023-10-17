@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace kernel {
 bool OrmqrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Ormqr>(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -38,8 +37,8 @@ bool OrmqrGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   }
   launch_kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
-  left_ = kernel_ptr->get_left();
-  transpose_ = kernel_ptr->get_transpose();
+  left_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrLeft));
+  transpose_ = GetValue<bool>(primitive_->GetAttr(ops::kAttrTranspose));
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   return true;
 }

@@ -21,7 +21,6 @@ namespace kernel {
 constexpr size_t kColindex = 1;
 constexpr size_t kRowindex = 2;
 bool PDistGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Pdist>(primitive_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -34,7 +33,7 @@ bool PDistGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  p_ = kernel_ptr->get_p();
+  p_ = GetValue<double>(primitive_->GetAttr(ops::kP));
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }

@@ -50,8 +50,8 @@ int NoRepeatNGramGpuKernelMode::Resize(const std::vector<KernelTensor *> &inputs
   if (ret != KRET_OK) {
     return ret;
   }
-  if (input_size_list_.size() != kNoRepeatNGramInputNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2 , but got " << input_size_list_.size();
+  if (inputs.size() != kNoRepeatNGramInputNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2 , but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   state_seq_shape_ = inputs[kIndex0]->GetShapeVector();
@@ -77,7 +77,7 @@ bool NoRepeatNGramGpuKernelMode::LaunchKernel(const std::vector<KernelTensor *> 
   auto mem_size = (seq_len_ + 1) * sizeof(StateType);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output, log_probs, input_size_list_[kIndex1], cudaMemcpyDeviceToDevice,
+    cudaMemcpyAsync(output, log_probs, inputs[kIndex1]->size(), cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "For 'no_repeat_ngram', it launch memcopy failed.");
 

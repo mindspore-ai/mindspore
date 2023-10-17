@@ -28,14 +28,8 @@ namespace mindspore {
 namespace kernel {
 constexpr int kQuantileDefaultDim = 10000;
 bool QuantileGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Quantile>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-
-  dim_ = kernel_ptr->get_dim();
-  ignorenan_ = kernel_ptr->get_ignorenan();
+  dim_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  ignorenan_ = GetValue<bool>(primitive_->GetAttr("ignore_nan"));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

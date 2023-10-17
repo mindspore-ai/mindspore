@@ -48,7 +48,7 @@ class PdistCpuKernelMod : public NativeCpuKernelMod {
 
   int64_t h_;
   int64_t w_;
-  float p_;
+  double p_;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

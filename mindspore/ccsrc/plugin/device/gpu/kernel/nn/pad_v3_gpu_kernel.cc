@@ -92,17 +92,14 @@ bool PadV3GpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
 }
 
 bool PadV3GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(primitive_);
-  MS_ERROR_IF_NULL(kernel_ptr);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
   MS_ERROR_IF_NULL(attr_ptr_);
-  attr_ptr_->mode = kernel_ptr->get_mode();
-  attr_ptr_->paddings_contiguous = kernel_ptr->get_paddings_contiguous();
+  attr_ptr_->mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
+  attr_ptr_->paddings_contiguous = GetValue<bool>(primitive_->GetAttr("paddings_contiguous"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
@@ -113,8 +110,6 @@ int PadV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   if (ret != KRET_OK) {
     return ret;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
 
   std::vector<int64_t> paddings_arg;
   std::vector<int64_t> paddings_val;

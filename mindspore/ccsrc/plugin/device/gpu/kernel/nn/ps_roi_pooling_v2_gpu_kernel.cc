@@ -101,19 +101,13 @@ int PSROIPoolingV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   rois_num_ = static_cast<int32_t>(rois_shape[kNumberIndex]);
   output_n_ = batch_size_ * rois_num_;
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PSROIPooling>(primitive_);
-  auto spatial_scale_ptr = kernel_ptr->GetAttr("spatial_scale");
-  MS_EXCEPTION_IF_NULL(spatial_scale_ptr);
-  spatial_scale_ = GetValue<float>(spatial_scale_ptr);
+  spatial_scale_ = GetValue<float>(primitive_->GetAttr("spatial_scale"));
 
-  auto group_size_ptr = kernel_ptr->GetAttr("group_size");
-  MS_EXCEPTION_IF_NULL(group_size_ptr);
-  pooled_height_ = LongToInt(GetValue<int64_t>(group_size_ptr));
-  pooled_width_ = LongToInt(GetValue<int64_t>(group_size_ptr));
-  group_size_ = LongToInt(GetValue<int64_t>(group_size_ptr));
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
+  group_size_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("group_size")));
 
-  auto output_dim_ptr = kernel_ptr->GetAttr("output_dim");
-  output_channels_ = LongToInt(GetValue<int64_t>(output_dim_ptr));
+  output_channels_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr("output_dim")));
 
   for (auto tensor_ptr : inputs) {
     if (tensor_ptr->IsDynamicShape()) return KRET_UNKNOWN_SHAPE;

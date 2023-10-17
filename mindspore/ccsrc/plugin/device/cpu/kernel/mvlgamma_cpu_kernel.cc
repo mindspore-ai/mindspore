@@ -35,7 +35,7 @@ bool MvlgammaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
   // get kernel attr
-  attr_p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  attr_p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   if (attr_p_ < 1) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1.";
     return false;

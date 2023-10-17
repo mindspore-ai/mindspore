@@ -87,7 +87,7 @@ bool MultinomialWithReplacementCpuKernelMod::Init(const std::vector<KernelTensor
     MS_LOG(ERROR) << "MultinomialWithReplacement does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  numsamples_ = GetValue<float>(primitive_->GetAttr("numsamples"));
+  numsamples_ = GetValue<int64_t>(primitive_->GetAttr("numsamples"));
   replacement_ = GetValue<bool>(primitive_->GetAttr("replacement"));
   kernel_func_ = func_list_[index].second;
   return true;

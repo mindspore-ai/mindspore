@@ -78,19 +78,14 @@ class MedianGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::MedianGrad>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Median ops failed!";
-      return false;
-    }
     if (((inputs.size() != kInputsNum4) && (inputs.size() != kInputsNum3)) || outputs.size() > kMedianOutputsNum) {
       MS_LOG(ERROR) << kernel_name_ << ": input size should be 4 or 3"
                     << "but get " << inputs.size() << " and output size should be 1, but get " << outputs.size();
       return false;
     }
-    global_median_ = kernel_ptr->get_global_median();
-    keep_dims_ = kernel_ptr->get_keep_dims();
-    axis_ = kernel_ptr->get_axis();
+    global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+    keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+    axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
     input_shape_ = inputs[1]->GetShapeVector();
     input1_dim_ = input_shape_.size();
     std::vector<int64_t> input0_shape = inputs[0]->GetShapeVector();

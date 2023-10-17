@@ -71,14 +71,14 @@ bool MultilabelMarginLossGpuKernelMod::Launch(const std::vector<KernelTensor *> 
 
 bool MultilabelMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultilabelMarginLoss>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->reduction = kernel_ptr->get_reduction();
+  static std::map<std::string, int64_t> kReductionModeMap{{"none", 0}, {"mean", 1}, {"sum", 2}};
+  string reduc_str = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
+  attr_ptr_->reduction = kReductionModeMap[reduc_str];
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;

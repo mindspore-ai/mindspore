@@ -35,12 +35,10 @@ bool ROIAlignGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   // Get primitive args
-  auto op = std::dynamic_pointer_cast<ops::ROIAlignGrad>(primitive_);
-  pooled_height_ = op->get_pooled_height();
-  pooled_width_ = op->get_pooled_width();
-  spatial_scale_ = op->get_spatial_scale();
-  sample_num_ = op->get_sample_num();
-
+  pooled_height_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledHeight)));
+  pooled_width_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kPooledWidth)));
+  spatial_scale_ = GetValue<double>(primitive_->GetAttr(ops::kSpatialScale));
+  sample_num_ = LongToInt(GetValue<int64_t>(primitive_->GetAttr(ops::kSampleNum)));
   return true;
 }
 

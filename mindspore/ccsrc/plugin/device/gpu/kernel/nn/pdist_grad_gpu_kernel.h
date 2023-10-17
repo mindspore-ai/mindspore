@@ -67,7 +67,7 @@ class PDistGradGpuKernelMod : public NativeGpuKernelMod {
   using PDistGradFunc =
     std::function<bool(PDistGradGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
-  float p_{0};
+  double p_{0};
   size_t input_type_size_{1};
   size_t y_grad_size_;
   size_t x_size_;

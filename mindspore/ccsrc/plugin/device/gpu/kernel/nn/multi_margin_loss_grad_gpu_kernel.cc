@@ -29,19 +29,13 @@ namespace mindspore {
 namespace kernel {
 bool MultiMarginLossGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MultiMarginLossGrad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-
-  p_ = kernel_ptr->get_p();
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   if (p_ != p_num_1 && p_ != p_num_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' p should be 1 or 2, but got " << p_;
     return false;
   }
-  margin_ = kernel_ptr->get_margin();
-  string reduction = kernel_ptr->get_reduction();
+  margin_ = GetValue<double>(primitive_->GetAttr(ops::kMargin));
+  string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   reduction_ = 1;
   if (reduction == "mean") {
     reduction_ = reduction_num_1;

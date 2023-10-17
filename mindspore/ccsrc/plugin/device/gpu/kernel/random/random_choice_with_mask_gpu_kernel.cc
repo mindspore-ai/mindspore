@@ -35,11 +35,11 @@ bool RandomChoiceWithMaskGpuKernelMod::Init(const std::vector<KernelTensor *> &i
   }
   kernel_func_ = func_list_[index].second;
   // init seed_
-  auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(primitive_);
-  uint64_t seed = random_choice_with_mask_ptr->get_seed();
-  uint64_t seed2 = random_choice_with_mask_ptr->get_seed2();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
-  count_ = random_choice_with_mask_ptr->get_count();
+  count_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("count")));
+
   batch_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
   return true;
 }

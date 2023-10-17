@@ -59,14 +59,14 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
                     << kMedianOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
       return false;
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Median>(primitive_);
-    if (kernel_ptr->get_ignore_nan()) {
+
+    if (GetValue<bool>(primitive_->GetAttr(ops::kIgnoreIndex))) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attribute ignore_nan is not supported on GPU yet.";
       return false;
     }
-    global_median_ = kernel_ptr->get_global_median();
-    keep_dims_ = kernel_ptr->get_keep_dims();
-    attr_axis_ = kernel_ptr->get_axis();
+    global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
+    keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
+    attr_axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
     return true;
   }
 

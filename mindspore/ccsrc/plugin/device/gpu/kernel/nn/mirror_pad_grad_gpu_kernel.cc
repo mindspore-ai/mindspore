@@ -66,8 +66,7 @@ bool MirrorPadGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   MS_EXCEPTION_IF_NULL(prim);
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPadGrad>(primitive_);
-  std::string mode = kernel_ptr->get_mode();
+  std::string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "REFLECT") {
     mode_ = 0;  // reflected mirroring
   } else if (mode == "SYMMETRIC") {

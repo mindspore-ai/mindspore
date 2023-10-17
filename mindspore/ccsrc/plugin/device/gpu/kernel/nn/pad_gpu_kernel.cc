@@ -35,12 +35,6 @@ constexpr size_t kPadElemSize = 2;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 bool PadFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Pad>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Pad ops failed!";
-    return false;
-  }
-
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
 

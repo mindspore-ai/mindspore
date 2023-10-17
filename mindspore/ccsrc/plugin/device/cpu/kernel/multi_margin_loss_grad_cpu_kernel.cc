@@ -34,8 +34,8 @@ constexpr char kKernelName[] = "MultiMarginLossGrad";
 bool MultiMarginLossGradCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
   reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
-  p = GetValue<float>(primitive_->GetAttr(ops::kP));
-  margin = GetValue<float>(primitive_->GetAttr(ops::kMargin));
+  p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  margin = GetValue<double>(primitive_->GetAttr(ops::kMargin));
 
   dtype_ = inputs[kZero]->dtype_id();
   input_num = inputs.size();

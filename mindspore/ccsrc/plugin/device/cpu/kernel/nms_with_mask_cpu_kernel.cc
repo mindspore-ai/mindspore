@@ -63,7 +63,7 @@ bool NMSWithMaskCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << outputs.size()
                   << "output(s).";
   }
-  iou_value_ = GetValue<float>(primitive_->GetAttr(kAttrIouThreshold));
+  iou_value_ = GetValue<float>(primitive_->GetAttr(ops::kNmsIouThreshold));
   if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;
   }

@@ -64,8 +64,6 @@ bool NthElementGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
 
 bool NthElementGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::NthElement>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
@@ -76,7 +74,7 @@ bool NthElementGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  attr_ptr_->reverse = kernel_ptr->get_reverse();
+  attr_ptr_->reverse = GetValue<bool>(primitive_->GetAttr(ops::kReverse));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;

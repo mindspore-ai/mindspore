@@ -85,7 +85,7 @@ static inline T PdistNormalcompute(T diff, T grad, T dist, float p) {
 
 bool PdistGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  p_ = GetValue<double>(primitive_->GetAttr(ops::kP));
   if (inputs.size() != kPdistGradInputsNum || outputs.size() != kPdistGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kPdistGradInputsNum << " and "
                   << kPdistGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();

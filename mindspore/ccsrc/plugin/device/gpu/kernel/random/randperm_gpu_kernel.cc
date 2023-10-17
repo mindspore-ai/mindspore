@@ -19,9 +19,6 @@
 namespace mindspore {
 namespace kernel {
 bool RandpermGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto randperm_ptr = std::dynamic_pointer_cast<ops::Randperm>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(randperm_ptr, false);
-
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 1;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
@@ -36,8 +33,8 @@ bool RandpermGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   }
   kernel_func_ = func_list_[index].second;
 
-  max_length_ = static_cast<size_t>(randperm_ptr->get_max_length());
-  pad_ = randperm_ptr->get_pad();
+  max_length_ = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("max_length")));
+  pad_ = GetValue<int64_t>(primitive_->GetAttr(ops::kPad));
   return true;
 }
 

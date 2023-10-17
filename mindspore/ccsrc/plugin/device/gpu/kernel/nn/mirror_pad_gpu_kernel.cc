@@ -22,11 +22,6 @@ namespace mindspore {
 namespace kernel {
 bool MirrorPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MirrorPad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "cast ExtractVolumePatches ops failed!";
-  }
-
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
@@ -37,7 +32,7 @@ bool MirrorPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   in_type_size_ = GetTypeByte(TypeIdToType(inputs[0]->dtype_id()));
   out_type_size_ = GetTypeByte(TypeIdToType(outputs[0]->dtype_id()));
-  string mode = kernel_ptr->get_mode();
+  string mode = GetValue<std::string>(primitive_->GetAttr(ops::kMode));
   if (mode == "REFLECT") {
     mode_ = 0;  // reflected mirroring
   } else {

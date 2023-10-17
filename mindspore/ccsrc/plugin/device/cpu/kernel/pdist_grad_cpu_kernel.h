@@ -57,7 +57,7 @@ class PdistGradCpuKernelMod : public NativeCpuKernelMod {
   int64_t x_size_;
   int64_t col_;
   int64_t temp_;
-  float p_;
+  double p_;
 };
 }  // namespace kernel
 }  // namespace mindspore
