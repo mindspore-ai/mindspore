@@ -264,6 +264,7 @@ std::string Common::GetCellId(const std::string &obj_id, const std::vector<std::
     if (cache_abs != nullptr) {
       fn(cache_abs);
     } else {
+      MS_EXCEPTION_IF_NULL(input_arg_value_vec[i]);
       fn(SetAbstractValueToAnyValue(input_arg_value_vec[i]->ToAbstract()));
     }
   }
@@ -1228,6 +1229,7 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
     if (unused_inputs.find(i) == unused_inputs.end() && cnode->input(i + 1)->isa<CNode>()) {
       // Input used by bprop graph, and it is a cnode have produce real output
       const auto &input_c = cnode->input(i + 1)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_c);
       if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
         size_t tuple_input_num = input_c->size() - 1;
         for (size_t j = 0; j < tuple_input_num; ++j) {
