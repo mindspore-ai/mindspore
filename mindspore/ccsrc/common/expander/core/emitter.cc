@@ -141,6 +141,8 @@ NodePtr Emitter::Log(const NodePtr &x) {
 }
 
 NodePtr Emitter::Cast(const NodePtr &node, const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(type);
   // do not emit a node when the dst type is the same as src type
   if (node->dtype()->type_id() == type->type_id()) {
     return node;
@@ -158,6 +160,7 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
   auto vnode = node->get<ValueNodePtr>();
   if (vnode != nullptr) {
     // If node and shape is both known, return node itself or a new tensor with target shape.
+    MS_EXCEPTION_IF_NULL(vnode->value());
     auto tensor = vnode->value()->cast<tensor::TensorPtr>();
     if (tensor != nullptr && tensor->data().const_data() != nullptr) {
       const auto &tensor_shape = tensor->shape_c();
@@ -199,6 +202,8 @@ NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_
 }
 
 NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(perm);
   auto [success, perm_list] = GetIntList(perm);
   if (!success) {
     return Emit(kTransposeOpName, {node, perm});
@@ -216,6 +221,8 @@ NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {
 }
 
 NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(multiples);
   auto [success, multiples_list] = GetIntList(multiples);
   if (!success) {
     return Emit(kTileOpName, {node, multiples});
@@ -228,6 +235,7 @@ NodePtr Emitter::Tile(const NodePtr &node, const NodePtr &multiples) {
 }
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
       return Tensor(0);
@@ -484,6 +492,7 @@ class Emitter::CtrlFlowBlock {
     }
     for (size_t i = 1; i < cond_cnode->size(); i++) {
       auto inp = cond_cnode->input(i);
+      MS_EXCEPTION_IF_NULL(inp);
       if (!inp->isa<ValueNode>()) {
         cond_cnode->set_input(i, replace_by_param(inp));
       }
