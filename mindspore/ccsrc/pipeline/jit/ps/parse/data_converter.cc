@@ -1183,6 +1183,78 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
   return std::make_shared<TD>(value_list);
 }
 
+ValuePtr ConvertTensorToInt(const py::object &obj) {
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
+  if (tensor->DataSize() != 1) {
+    MS_LOG(INFO) << "Can only convert tensor with one element to int, but got " << tensor->ToString();
+    return nullptr;
+  }
+  if (tensor->data_type() != kNumberTypeInt64) {
+    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
+    return nullptr;
+  }
+  return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+}
+
+ValuePtr ConvertTensorToFloat(const py::object &obj) {
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
+  if (tensor->DataSize() != 1) {
+    MS_LOG(INFO) << "Can only convert tensor with one element to float, but got " << tensor->ToString();
+    return nullptr;
+  }
+  if (tensor->data_type() != kNumberTypeFloat64) {
+    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to float";
+    return nullptr;
+  }
+  return MakeValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+}
+
+ValuePtr ConvertTensorToBool(const py::object &obj) {
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
+  if (tensor->DataSize() != 1) {
+    MS_LOG(INFO) << "Can only convert tensor with one element to bool, but got " << tensor->ToString();
+    return nullptr;
+  }
+  if (tensor->data_type() != kNumberTypeBool) {
+    MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to bool";
+    return nullptr;
+  }
+  return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+}
+
+ValuePtr ConvertTensorToNumber(const py::object &obj) {
+  if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    return nullptr;
+  }
+
+  auto tensor = ObjCast<TensorPtr>(obj)->cast<TensorPtr>();
+  if (tensor->DataSize() != 1) {
+    MS_LOG(INFO) << "Can only convert tensor with one element to number, but got " << tensor->ToString();
+    return nullptr;
+  }
+
+  switch (tensor->data_type()) {
+    case kNumberTypeBool:
+      return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+    case kNumberTypeInt64:
+      return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+    case kNumberTypeFloat64:
+      return MakeValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+    default:
+      MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to number";
+      return nullptr;
+  }
+}
+
 static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   // convert functions without type_cast
   {(int32_t)mindspore::ops::DT_BOOL, ConvertBool},
@@ -1292,6 +1364,12 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
    ConvertTensorToSequence<ValueList, bool, BoolImm, kNumberTypeBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),
    ConvertTensorToSequenceAny<ValueList>},
+
+  // TypeCast5: convert tensor to single element
+  {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_INT), ConvertTensorToInt},
+  {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_FLOAT), ConvertTensorToFloat},
+  {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_BOOL), ConvertTensorToBool},
+  {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_NUMBER), ConvertTensorToNumber},
 };
 
 OpDefConvertFunc GetConverterByType(int32_t dtype) {

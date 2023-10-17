@@ -32,9 +32,7 @@ bool SequenceConcatGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceConcat>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  ori_axis_ = kernel_ptr->get_axis();
+  ori_axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
 
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }

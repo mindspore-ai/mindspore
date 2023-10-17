@@ -74,7 +74,7 @@ BaseShapePtr SequenceStackInferShape(const PrimitivePtr &primitive, const std::v
   }
 
   if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
+    if (!CheckAndConvertUtils::IsSequence(input_args[0])) {
       MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input data type must be list or tuple of tensors.";
     }
   }

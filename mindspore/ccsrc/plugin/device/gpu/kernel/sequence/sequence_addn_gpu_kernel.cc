@@ -45,7 +45,7 @@ int SequenceAddNGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
-  workspace_size_list_.push_back(input_size_list_.front());
+  workspace_size_list_.push_back(inputs[kIndex0]->size());
   return KRET_OK;
 }
 

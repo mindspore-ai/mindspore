@@ -26,6 +26,8 @@ class MIND_API ReverseV2FuncImpl : public OpFuncImpl {
   ReverseV2FuncImpl() = default;
   ~ReverseV2FuncImpl() = default;
 
+  int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

@@ -56,9 +56,7 @@ int SequenceStackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   std::vector<int64_t> shape_vec_item;
   std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SequenceStack>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  axis_ = kernel_ptr->get_axis();
+  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   if (axis_ < 0) {
     axis_ += (SizeToInt(shape_vec_item.size()) + 1);
   }
