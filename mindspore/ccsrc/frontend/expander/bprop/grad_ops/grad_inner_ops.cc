@@ -24,9 +24,9 @@ namespace mindspore::expander::bprop {
 
 NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto base_eye = ib->Emit(
-    "Eye", {ib->Value(x_shape[x_shape.size() - 2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
+    "Eye", {ib->Value(x_shape[x_shape.size() - i2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
-  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - 2);
+  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - i2);
   auto tile = ib->Tile(base_eye, tile_shape);
   auto assist = ib->Reshape(tile, x_shape);
   return assist;

@@ -68,15 +68,15 @@ class LayerNormGrad : public OpDesc {
 
     auto begin_norm_axis = GetValue<int64_t>(attrs_["begin_norm_axis"]);
     if (begin_norm_axis < 0) {
-      begin_norm_axis += ori_shape_x.size();
+      begin_norm_axis += static_cast<int64_t>(ori_shape_x.size());
     }
     auto begin_params_axis = GetValue<int64_t>(attrs_["begin_params_axis"]);
     if (begin_params_axis < 0) {
-      begin_params_axis += ori_shape_x.size();
+      begin_params_axis += static_cast<int64_t>(ori_shape_x.size());
     }
 
     auto norm_axis = ShapeVector();
-    if (ori_shape_x.size() - begin_norm_axis < 0) {
+    if (static_cast<int64_t>(ori_shape_x.size()) - begin_norm_axis < 0) {
       MS_LOG(INFO) << "begin_norm_axis should be less than or equal to the dimension of x, but got begin_norm_axis: "
                    << begin_norm_axis << ", the dimension of x: " << ori_shape_x.size();
       return {};
