@@ -185,6 +185,7 @@ std::string GetSequenceText(const ValuePtr &value, const std::shared_ptr<SubGrap
 
 std::string GetDictText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   std::ostringstream oss;
+  MS_EXCEPTION_IF_NULL(value);
   ValueDictionaryPtr dict = value->cast<ValueDictionaryPtr>();
   oss << "{";
   bool first_flag = true;
@@ -1113,6 +1114,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 }
 
 void DumpIRHead(const FuncGraphPtr &top_func, std::ostringstream &ofs) {
+  MS_EXCEPTION_IF_NULL(top_func);
   auto sub_graphs = top_func->func_graphs_used_total();
   DumpGlobalInfoEntry(top_func, ofs, sub_graphs.size());
   OrderedMap<AnfNodePtr, int32_t> para_map;

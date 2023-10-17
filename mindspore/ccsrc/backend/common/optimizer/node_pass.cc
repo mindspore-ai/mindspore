@@ -79,12 +79,15 @@ void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     FuncGraphPtr switch_subgraph = nullptr;
     const auto &node = inputs.at(kSwitchBranchIndex);
+    MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto partial_node = dyn_cast<CNode>(node);
       const auto &partial_inputs = partial_node->inputs();
+      MS_EXCEPTION_IF_NULL(partial_inputs.at(0));
       if (!IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
         MS_LOG(EXCEPTION) << "Invalid switch node: " << cnode->DebugString();
       }
+      MS_EXCEPTION_IF_NULL(partial_inputs.at(kPartialArgsIndex));
       switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     } else if (node->isa<ValueNode>()) {
       switch_subgraph = GetValueNode<FuncGraphPtr>(node);
@@ -151,6 +154,7 @@ std::string GetCNodeKey(const AnfNodePtr &node) {
 }
 
 bool IsNeedUnfoldSubGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   return !func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL) && !func_graph->has_flag(kFlagJitCallGraph);
 }
 
