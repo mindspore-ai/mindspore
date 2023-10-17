@@ -148,6 +148,9 @@ void AsyncHqueue::Wait() {
   if (worker_ == nullptr) {
     return;
   }
+  if (worker_->get_id() == std::this_thread::get_id()) {
+    return;
+  }
   while (status_.load() == kThreadBusy) {
   }
 }
