@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnorm_to_bninfer.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/histogram_fixed_width_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
@@ -123,6 +124,8 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   // just rename primitive name
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
+  // flash_attention_fusion
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::FlashAttentionFusion>());
 }
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
