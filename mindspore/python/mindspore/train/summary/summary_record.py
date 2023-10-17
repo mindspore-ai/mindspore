@@ -21,6 +21,7 @@ import re
 import threading
 import time
 from collections import defaultdict
+import numpy as np
 
 from mindspore import log as logger
 from mindspore.nn import Cell
@@ -36,6 +37,7 @@ from mindspore.train.summary._summary_adapter import get_event_file_name, packag
 from mindspore.train.summary._writer_pool import WriterPool
 from mindspore.train.summary.enums import PluginEnum
 from mindspore.ops.operations import debug_ops
+import mindspore.ops as ops
 
 # for the moment, this lock is for caution's sake,
 # there are actually no any concurrences happening.
@@ -62,9 +64,16 @@ def _cache_summary_tensor_data(summary):
         return True
 
 
-def _get_summary_tensor_data():
+def _get_summary_tensor_data(end_flag=None, del_end_flag=False):
     """Get summary tensor data."""
     global SUMMARY_TENSOR_CACHE
+    if end_flag:
+        for _ in range(0, 100):
+            if SUMMARY_TENSOR_CACHE.get(end_flag):
+                break
+            time.sleep(0.01)
+        if del_end_flag and SUMMARY_TENSOR_CACHE.get(end_flag):
+            del SUMMARY_TENSOR_CACHE[end_flag]
     with _summary_lock:
         data = SUMMARY_TENSOR_CACHE
         SUMMARY_TENSOR_CACHE = {}
@@ -209,6 +218,8 @@ class SummaryRecord:
         self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
+        self.tensor_summary = ops.TensorSummary()
+
         try:
             self._initialize()
         except (TypeError, ValueError) as err:
@@ -389,7 +400,9 @@ class SummaryRecord:
                     return True
 
         if self._mode == 'train':
-            self._add_summary_tensor_data()
+            step_end_flag = Tensor((np.ones([1])).astype(np.int32))
+            self.tensor_summary("step_end_flag_" + str(step), step_end_flag)
+            self._add_summary_tensor_data(step)
 
         if not plugin_filter:
             self._event_writer.write(self._consume_data_pool(step))
@@ -444,10 +457,13 @@ class SummaryRecord:
         _get_summary_tensor_data()
         atexit.register(self.close)
 
-    def _add_summary_tensor_data(self):
+    def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
         _record_summary_tensor_data()
-        summary_data = _get_summary_tensor_data()
+        end_flag = None
+        if step_index >= 0:
+            end_flag = "step_end_flag_" + str(step_index) + "[:Tensor]"
+        summary_data = _get_summary_tensor_data(end_flag=end_flag, del_end_flag=True)
         if not summary_data:
             logger.debug(f'No summary data bubbled from the network.')
         for name, tensor in summary_data.items():
