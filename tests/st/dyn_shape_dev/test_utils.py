@@ -15,6 +15,10 @@
 
 from functools import wraps
 from mindspore import nn
+import mindspore as ms
+
+
+ms.set_context(jit_syntax_level=ms.STRICT)
 
 
 class Net(nn.Cell):
