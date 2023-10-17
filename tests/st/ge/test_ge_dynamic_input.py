@@ -15,6 +15,7 @@
 import pytest
 from ge_test_utils import run_testcase
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -22,8 +23,8 @@ from ge_test_utils import run_testcase
 @pytest.mark.env_onecard
 def test_ge_nested_tuple():
     """
-    Description: Test GE nested tuple.
-    Description: Support nested tuple.
+    Description: Test GE dynamic input.
+    Description: Support dynamic inputs.
     Expectation: The result match with expect.
     """
-    run_testcase("run_ge_nested_tuple", "test_ge_nested_tuple")
+    run_testcase("run_ge_dynamic_input", "test_ge_dynamic_input")
