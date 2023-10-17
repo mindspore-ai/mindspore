@@ -228,7 +228,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
-      output_node->abstract()->cast<abstract::AbstractSequencePtr>()->size() == 0) {
+      !output_kernel_tensor->GetShapeVector().empty() && output_kernel_tensor->GetShapeVector().front() == 0) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
     ShapeVector shape = {0};
