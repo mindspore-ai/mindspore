@@ -977,7 +977,8 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     } else if (host_tensor_address != device_tensor) {
       // In the scenario of training + inference , the device address of the weight node can not be changed when
       // multi-graphs sink mode is set.
-      if (device_tensor->is_ptr_persisted() || host_tensor_address->format() != device_tensor->format()) {
+      if (device_tensor->is_ptr_persisted() ||
+          !AnfAlgo::IsEquivalentFormat(host_tensor_address->format(), device_tensor->format())) {
         if ((device_tensor->GetPtr() == nullptr) &&
             (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
           SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
