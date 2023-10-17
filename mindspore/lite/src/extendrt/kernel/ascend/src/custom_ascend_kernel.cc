@@ -257,7 +257,6 @@ void CustomAscendKernelMod::UpdateOutputKernelTensorInfo() {
   const std::vector<ShapeVector> shapes = model_infer_->GetOutputShape();
   const std::vector<TypeId> types = model_infer_->GetOutputDataType();
   const std::vector<Format> formats = model_infer_->GetOutputFormat();
-  MS_LOG(INFO) << "check output kernel tensor info nums";
   if (!CheckOutputNums(shapes, outputs_) || !CheckOutputNums(types, outputs_) || !CheckOutputNums(formats, outputs_)) {
     return;
   }
@@ -279,7 +278,6 @@ void CustomAscendKernelMod::UpdateInputKernelTensorInfo() {
   const std::vector<ShapeVector> shapes = model_infer_->GetInputShape();
   const std::vector<TypeId> types = model_infer_->GetInputDataType();
   const std::vector<Format> formats = model_infer_->GetInputFormat();
-  MS_LOG(INFO) << "check input kernel tensor info nums";
   if (!CheckInputNums(shapes, inputs_) || !CheckInputNums(types, inputs_) || !CheckInputNums(formats, inputs_)) {
     return;
   }
