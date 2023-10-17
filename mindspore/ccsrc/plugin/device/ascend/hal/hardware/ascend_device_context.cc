@@ -161,8 +161,10 @@ MS_REGISTER_DEVICE(kDavinciMultiGraphInferenceDevice, AscendDeviceContext);
 
 void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(device_context);
   auto outputs = common::AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (auto output : outputs) {
+    MS_EXCEPTION_IF_NULL(output);
     if (!output->isa<CNode>() || !AnfUtils::IsRealKernel(output)) {
       continue;
     }
@@ -186,6 +188,7 @@ void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device:
     auto pre_node_out_device_address = AnfAlgo::GetPrevNodeOutputAddr(output, real_input_index);
     MS_EXCEPTION_IF_NULL(pre_node_out_device_address);
     auto ptr = pre_node_out_device_address->GetPtr();
+    MS_EXCEPTION_IF_NULL(ptr);
     auto size = pre_node_out_device_address->GetSize();
     std::string output_format = AnfAlgo::GetOutputFormat(output, 0);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(output, 0);

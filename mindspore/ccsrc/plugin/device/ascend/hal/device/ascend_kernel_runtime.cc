@@ -476,6 +476,7 @@ void AscendKernelRuntime::GetShadowBackendNodeMap(const session::KernelGraph &gr
   MS_EXCEPTION_IF_NULL(shadow_backend_node_map);
   std::map<AnfNodePtr, AnfNodePtr> front_nodes_map;
   for (auto &node : input_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(node, graph);
     if (front_node == nullptr || common::AnfAlgo::IsTupleOutput(front_node)) {
       continue;

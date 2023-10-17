@@ -168,6 +168,8 @@ AnfNodePtr DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_f
 
 bool TryExpandFallback(const KernelGraphPtr &graph, const CNodePtr &node,
                        const std::pair<std::string, ExceptionType> &failure_info) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto f = [&graph, ori_node = node, &failure_info](const CNodePtr &n) mutable {
     auto [status, msg, etype] = device::ascend::SelectKernelInfoWithMsg(n);
     MS_LOG(DEBUG) << "Node " << n->fullname_with_scope() << " select kernel status: " << status;
