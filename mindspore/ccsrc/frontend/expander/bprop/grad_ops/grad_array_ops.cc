@@ -2071,5 +2071,48 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("ParameterizedTruncatedNormal").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("Ones").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto dims = ib->GetInput(0);
+  return {ib->OutZeros(dims)};
+});
+
+REG_BPROP_BUILDER("Zeros").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto dims = ib->GetInput(0);
+  return {ib->OutZeros(dims)};
+});
+
+REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto kernel_size = GetValue<std::vector<int64_t>>(ib->GetAttr("ksizes"));
+  auto dilation = GetValue<std::vector<int64_t>>(ib->GetAttr("dilations"));
+  auto stride = GetValue<std::vector<int64_t>>(ib->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(ib->GetAttr("pads"));
+  std::vector<int64_t> padding = {pads[0], pads.back()};
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+  NodePtr shape = nullptr;
+  if (IsDynamic(x_shape)) {
+    auto tensor_shape = ib->Emit("TensorShape", {x});
+    // Im2Col only support 4-D input, so we hard-code [2:4] here
+    shape =
+      ib->Emit("StridedSlice",
+               {tensor_shape, ib->Value<ShapeVector>({2}), ib->Value<ShapeVector>({4}), ib->Value<ShapeVector>({1})},
+               {{"begin_mask", MakeValue<int64_t>(0)},
+                {"end_mask", MakeValue<int64_t>(0)},
+                {"ellipsis_mask", MakeValue<int64_t>(0)},
+                {"new_axis_mask", MakeValue<int64_t>(0)},
+                {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+  } else {
+    ShapeVector output_shape(x_shape.begin() + i2, x_shape.end());
+    shape = ib->Tensor(output_shape);
+  }
+  auto dx = ib->Emit("Col2Im", {dout, shape},
+                     {{"kernel_size", MakeValue(kernel_size)},
+                      {"dilation", MakeValue(dilation)},
+                      {"stride", MakeValue(stride)},
+                      {"padding", MakeValue(padding)}});
+  return {dx};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
