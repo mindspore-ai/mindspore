@@ -1161,6 +1161,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
 #endif
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const {
+  MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> make_tuple_inputs;
   (void)make_tuple_inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(*prim::kPrimMakeTuple)));
   MS_EXCEPTION_IF_NULL(graph);

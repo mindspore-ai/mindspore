@@ -212,6 +212,7 @@ size_t GetSizeForAbstract(const abstract::AbstractBasePtr &abstract) {
     const auto &shape = base_shape->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     const auto &shape_vector = shape->shape();
+    MS_EXCEPTION_IF_NULL(tensor_abstract->element());
     const auto &type = tensor_abstract->element()->BuildType();
     return std::accumulate(shape_vector.begin(), shape_vector.end(), GetTypeByte(type), std::multiplies<size_t>());
   }
