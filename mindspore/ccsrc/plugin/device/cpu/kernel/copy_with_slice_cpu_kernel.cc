@@ -79,10 +79,6 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
   auto &dst_storage_offset = dst_storage_info->storage_offset;
   size_t src_storage_offset{0};
   if (src_storage_info != nullptr) {
-    if (src_storage_info->data_type != dst_storage_info->data_type) {
-      MS_LOG(EXCEPTION) << "src data_type:" << src_storage_info->data_type
-                        << "  dst data_type:" << dst_storage_info->data_type;
-    }
     src_storage_offset = src_storage_info->storage_offset;
   }
   auto src_is_contiguous = src_storage_info == nullptr || src_storage_info->is_contiguous;

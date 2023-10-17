@@ -327,6 +327,9 @@ bool EnableView(const FrontendOpRunInfoPtr &op_run_info) {
 
   auto view_value = op_run_info->op_grad_info->input_value[0];
   MS_EXCEPTION_IF_NULL(view_value);
+  if (!view_value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(TypeError) << "input value is not Tensor";
+  }
   auto tensor = view_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &type_id = tensor->data_type();
@@ -603,6 +606,9 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
   // Only split and chunk has mul outputs, and input tensor is first input.
   auto view_value = op_run_info->op_grad_info->input_value[0];
   MS_EXCEPTION_IF_NULL(view_value);
+  if (!view_value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(TypeError) << "input value is not Tensor";
+  }
   auto view_input_tensor = view_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(view_input_tensor);
   DeviceSyncPtr input_origin_device_address{nullptr};
