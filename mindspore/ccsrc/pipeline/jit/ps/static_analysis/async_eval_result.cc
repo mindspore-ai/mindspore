@@ -237,6 +237,7 @@ bool AsyncAbstract::SetPossibleResult(bool first) {
     // Set the result with the other branches abstract
     // when there are not available branches to infer.
     // Just copy the type otherwise the two branches would be optimized to a const value.
+    MS_EXCEPTION_IF_NULL(result_->BuildValue());
     if (!result_->BuildValue()->isa<ValueAny>()) {
       result_ = AbstractBroaden(result_);
     }
