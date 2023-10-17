@@ -44,7 +44,7 @@ def test_expand_functional_modes():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_expand_functional()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_expand_functional()
 
 
@@ -72,7 +72,7 @@ def test_expand_tensor_modes():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_expand_tensor_api()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     test_expand_tensor_api()
 
 

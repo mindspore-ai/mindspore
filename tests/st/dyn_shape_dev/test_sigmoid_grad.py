@@ -33,7 +33,7 @@ def sigmoid_grad_backward_func(y, dy):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_sigmoid_grad_forward(mode):
     """
     Feature: Ops.
@@ -52,7 +52,7 @@ def test_sigmoid_grad_forward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_sigmoid_grad_backward(mode):
     """
     Feature: Ops.

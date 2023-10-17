@@ -24,7 +24,7 @@ import test_utils
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 #@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @pytest.mark.env_onecard
 def test_bias_add_4d(mode):
     """
@@ -53,7 +53,7 @@ def test_bias_add_4d(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_2d(mode):
     """
     Feature: BiasAdd 2D.
@@ -81,7 +81,7 @@ def test_bias_add_2d(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_3d(mode):
     """
     Feature: BiasAdd 3D.
@@ -109,7 +109,7 @@ def test_bias_add_3d(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_5d(mode):
     """
     Feature: BiasAdd 5D.
@@ -137,7 +137,7 @@ def test_bias_add_5d(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_backward(mode):
     """
     Feature: BiasAdd Grad.
@@ -161,7 +161,7 @@ def test_bias_add_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_vmap(mode):
     """
     Feature: biasadd vmap test.

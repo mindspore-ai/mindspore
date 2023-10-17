@@ -1431,7 +1431,6 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
 #ifndef ENABLE_TEST
     // VM no need run pass
     din = bprop_pass::ConvertConstInputToAttr(din, device_target_, false, grad_by_value);
-    bprop_pass::ConvertValueNodeValueToTensor(din);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
   }

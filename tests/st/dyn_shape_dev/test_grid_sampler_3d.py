@@ -38,7 +38,7 @@ def grid_sampler_3d_backward_func(input_x, grid):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_forward(mode):
     """
     Feature: Ops.
@@ -86,7 +86,7 @@ def test_grid_sampler_3d_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_backward(mode):
     """
     Feature: Auto grad.
@@ -146,7 +146,7 @@ def test_grid_sampler_3d_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_3d_vmap(mode):
     """
     Feature: test vmap function.

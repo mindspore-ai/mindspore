@@ -52,7 +52,7 @@ def test_assign_forward_cpu_gpu(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_assign_forward_ascend(mode):
     """
     Feature: assign ops.

@@ -34,7 +34,7 @@ def gather_nd_backward_func(input_x, indices):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_gather_nd_forward(mode):
     """
     Feature: Ops.
@@ -52,7 +52,7 @@ def test_gather_nd_forward(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_gather_nd_backward(mode):
     """
     Feature: Auto grad.
@@ -70,7 +70,7 @@ def test_gather_nd_backward(mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_gather_nd_vmap(mode):
     """
     Feature: test vmap function.

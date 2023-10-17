@@ -29,7 +29,7 @@ def tan(nptype):
     np.random.seed(0)
     x_np = np.random.rand(2, 3, 4, 4).astype(nptype)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     output_ms = P.Tan()(Tensor(x_np))
     output_np = np.tan(x_np)
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
@@ -80,7 +80,7 @@ def test_tan_tensor_func_check():
     Description: test cases for tensor func
     Expectation: raise TypeError.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     in_np = np.random.rand(10).astype(np.float32)
     in_tensor = Tensor(in_np)
@@ -100,7 +100,7 @@ def test_tan_functional_func_check():
     Description: test cases for functional func.
     Expectation: raise TypeError.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     in_np = np.random.rand(3, 5).astype(np.float32)
     in_tensor = Tensor(in_np)
@@ -158,7 +158,7 @@ def test_tan_vmap():
     Description: in_axes : 1
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     np.random.seed(0)
     in_np = np.random.rand(3, 4, 5).astype(np.float32)

@@ -46,6 +46,7 @@ int CeluCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (ret != 0) {
     return ret;
   }
+
   input_elements_ = output_size_list_[0] / unit_size_;
   return KRET_OK;
 }
@@ -55,7 +56,7 @@ std::vector<KernelAttr> CeluCpuKernelMod::GetOpSupport() { return kernel_attr; }
 bool CeluCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs) {
   auto in_data = static_cast<float *>(inputs[0]->device_ptr());
-  double alpha_data = static_cast<float>(inputs[kIndex1]->GetValueWithCheck<float>());
+  auto alpha_data = inputs[kIndex1]->GetValueWithCheck<float>();
   auto out_data = static_cast<float *>(outputs[0]->device_ptr());
 
   auto task = [this, in_data, alpha_data, out_data](size_t start, size_t end) {

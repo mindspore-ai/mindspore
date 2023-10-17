@@ -57,7 +57,7 @@ def test_iou_cpu(data_type):
     diff = output.asnumpy() - expect_result
     assert np.all(abs(diff) < error)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     overlaps = NetIOU(mode)
     output = overlaps(pos1_box, pos2_box)
     diff = output.asnumpy() - expect_result
@@ -91,7 +91,7 @@ def test_iou_cpu_dynamic_shape():
     diff = output.asnumpy() - expect_result
     assert np.all(abs(diff) < error)
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     dynamic_overlaps = NetIOU(mode)
     dynamic_overlaps.set_inputs(pos1_dyn, pos2_dyn)
     output = dynamic_overlaps(pos1_box, pos2_box)

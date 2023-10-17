@@ -51,7 +51,7 @@ def test_nan_to_num_forward(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_nan_to_num_backward(mode):
     """
     Feature: Auto grad.
