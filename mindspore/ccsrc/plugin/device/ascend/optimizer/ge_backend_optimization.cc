@@ -59,6 +59,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_grad_split.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_convert_tuple_input_to_dynamic_input.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 
@@ -133,6 +134,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::AdaptiveMaxPool2DGeFusion>());
   opt_acl_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
   opt_acl_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
+  opt_acl_pm->AddPass(std::make_shared<opt::FlashAttentionFusion>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
