@@ -19,6 +19,7 @@
 #include "kernel/common_utils.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_proximal_adagrad_impl.cuh"
+#include "ops/op_utils.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -33,8 +34,7 @@ constexpr size_t kGradIndex = 5;
 
 bool ApplyProximalAdagradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyProximalAdagrad>(primitive_);
-  batch_rank_ = kernel_ptr->get_batch_rank();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

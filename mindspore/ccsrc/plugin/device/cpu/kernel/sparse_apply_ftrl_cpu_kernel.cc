@@ -24,6 +24,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/fused_sparse_ftrl.h"
 #include "ops/sparse_apply_ftrl.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -311,7 +312,7 @@ bool SparseApplyFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr_power' must be a non-negative scalar, but got " << lr_power_;
     return false;
   }
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }

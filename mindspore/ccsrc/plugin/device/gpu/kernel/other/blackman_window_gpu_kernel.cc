@@ -20,8 +20,6 @@ namespace mindspore {
 namespace kernel {
 bool BlackmanWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::BlackmanWindow>(primitive_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -36,7 +34,7 @@ bool BlackmanWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = func_list_[index].second;
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
-  periodic_ = kernel_ptr_->get_periodic();
+  periodic_ = GetValue<bool>(primitive_->GetAttr(ops::kPeriodic));
   return true;
 }
 

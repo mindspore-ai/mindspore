@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/apply_ftrl.h"
 #include "ops/apply_ftrl.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,7 +41,7 @@ constexpr size_t kIndexOutput = 0;
 bool ApplyFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   if (inputs.size() != kApplyFtrlInputsNum || outputs.size() != kApplyFtrlOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's inputs and output size should be " << kApplyFtrlInputsNum

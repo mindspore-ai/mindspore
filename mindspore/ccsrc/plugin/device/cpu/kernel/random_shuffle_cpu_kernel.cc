@@ -20,6 +20,7 @@
 #include <complex>
 #include "mindspore/core/ops/random_shuffle.h"
 #include "kernel/philox_random.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,7 +39,7 @@ bool RandomShuffleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   uint64_t init_seed = random::GetSeed(seed, seed2);
   rng_.seed(init_seed);
-  batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank)));
+  batch_rank_ = LongToSize(ops::get_batch_rank(primitive_));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

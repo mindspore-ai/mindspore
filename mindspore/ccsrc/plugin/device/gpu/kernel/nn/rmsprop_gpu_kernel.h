@@ -26,6 +26,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/rmsprop_impl.cuh"
 #include "mindspore/core/ops/apply_rms_prop.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -160,9 +161,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     return true;
   }
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyRMSProp>(primitive_);
-
-    batch_rank_ = kernel_ptr->get_batch_rank();
+    batch_rank_ = ops::get_batch_rank(primitive_);
     if (kernel_name_ == "ApplyCenteredRMSProp") {
       use_center_ = true;
     }

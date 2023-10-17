@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "ops/apply_rms_prop.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -172,7 +173,7 @@ void RMSPropCpuKernelMod::LaunchRMSPropUseCenter(std::complex<double> *variable,
 
 bool RMSPropCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   if (kernel_name_ == "ApplyCenteredRMSProp") {
     use_center_ = true;

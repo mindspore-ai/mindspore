@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/gpu/kernel/nn/adam_gpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,9 +45,7 @@ bool AdamGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
   if (prim->HasAttr("use_nesterov")) {
     use_nesterov_ = GetValue<bool>(prim->GetAttr("use_nesterov"));
   }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Adam>(primitive_);
-  batch_rank_ = kernel_ptr->get_batch_rank();
+  batch_rank_ = ops::get_batch_rank(prim);
   constexpr size_t input_num = 10;
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);

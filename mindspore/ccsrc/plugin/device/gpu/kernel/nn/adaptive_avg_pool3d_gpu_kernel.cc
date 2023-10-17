@@ -51,16 +51,13 @@ bool AdaptiveAvgPool3DGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
 
 bool AdaptiveAvgPool3DGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool3D>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-
-  attr_ptr_->output_size = kernel_ptr->get_output_size();
+  const auto &output_size_ptr = primitive_->GetAttr("output_size");
+  attr_ptr_->output_size = GetValue<std::vector<int64_t>>(output_size_ptr);
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;

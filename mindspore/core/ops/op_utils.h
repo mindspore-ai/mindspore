@@ -278,5 +278,13 @@ constexpr auto kIsCSR = "is_csr";
 constexpr auto kCSRDenseShape = "dense_shape";
 constexpr auto kCSRAxis = "axis";
 constexpr auto kHasDynamicValue = "has_dynamic_value";
+
+inline int64_t get_batch_rank(const PrimitivePtr &prim) {
+  if (prim->HasAttr(kBatchRank)) {
+    auto value_ptr = prim->GetAttr(kBatchRank);
+    return GetValue<int64_t>(value_ptr);
+  }
+  return 0;
+}
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

@@ -51,9 +51,6 @@ bool AdaptiveAvgPool3DGradGpuKernelMod::Launch(const std::vector<KernelTensor *>
 
 bool AdaptiveAvgPool3DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool3DGrad>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {

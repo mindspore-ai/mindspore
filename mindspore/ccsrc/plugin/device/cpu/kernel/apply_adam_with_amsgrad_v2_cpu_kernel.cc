@@ -24,6 +24,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "mindspore/core/ops/apply_adam_with_amsgradv2.h"
 #include "utils/ms_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,7 +37,7 @@ constexpr size_t kScalarIndex = 0;
 bool ApplyAdamWithAmsgradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   if (inputs.size() != kApplyAdamWithAmsgradV2InputsNum || outputs.size() != kApplyAdamWithAmsgradV2OutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be "

@@ -18,6 +18,7 @@
 #include <complex>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
 
 namespace {
 const size_t kZero = 0;
@@ -36,7 +37,7 @@ using complex128 = std::complex<double>;
 
 bool ApplyGradientDescentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   dtype_ = inputs[kZero]->dtype_id();
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyGradientDescentInputsNum, kernel_name_);

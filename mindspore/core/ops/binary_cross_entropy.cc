@@ -148,5 +148,18 @@ Reduction BinaryCrossEntropy::get_reduction() const {
 void BinaryCrossEntropy::Init(const Reduction &reduction) { this->set_reduction(reduction); }
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BinaryCrossEntropy, prim::kPrimBinaryCrossEntropy, BinaryCrossEntropyInfer, false);
+
+// ValuePtr is mindspore::ValuePtr rather than mindspore::api::ValuePtr
+Reduction BinaryCrossEntropy::get_reduction(const ValuePtr &reduction_ptr) {
+  MS_EXCEPTION_IF_NULL(reduction_ptr);
+  MS_EXCEPTION_IF_CHECK_FAIL(reduction_ptr->isa<StringImm>() || reduction_ptr->isa<Int64Imm>(), "invalid value type");
+  if (reduction_ptr->isa<StringImm>()) {
+    auto value_ptr = MakeValue(GetValue<std::string>(reduction_ptr));
+    int64_t reduction = 0;
+    CheckAndConvertUtils::GetReductionEnumValue(value_ptr, &reduction);
+    return Reduction(reduction);
+  }
+  return Reduction(GetValue<int64_t>(reduction_ptr));
+}
 }  // namespace ops
 }  // namespace mindspore

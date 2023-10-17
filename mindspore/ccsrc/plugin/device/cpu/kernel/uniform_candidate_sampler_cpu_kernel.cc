@@ -24,6 +24,8 @@
 #include "abstract/utils.h"
 #include "mindspore/core/ops/uniform_candidate_sampler.h"
 #include "kernel/philox_random.h"
+#include "ops/op_utils.h"
+
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -164,7 +166,7 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
 
 bool UniformCandidateSamplerCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   if (kernel_name_ != prim::kPrimUniformCandidateSampler->name()) {
     MS_LOG(EXCEPTION) << "For UniformCandidateSamplerCpuKernelMod, it's name must be UniformCandidateSampler, but got "

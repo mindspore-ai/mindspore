@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -46,7 +47,7 @@ int SparseSegmentMeanCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   auto x_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto indices_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   auto y_shape = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
-  auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  auto batch_rank = ops::get_batch_rank(primitive_);
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank, size_t(1), std::multiplies{});
   outer_size_ = x_shape.at(LongToSize(batch_rank));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank + 1, x_shape.end(), size_t(1), std::multiplies{});

@@ -22,6 +22,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/sparse_apply_adagrad_v2.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,7 +60,7 @@ bool SparseApplyAdagradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &i
   lr_ = GetValue<float>(primitive_->GetAttr(kAttrLr));
   epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
   update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   if (lr_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', 'lr' must be a positive scalar, but got " << lr_;
     return false;

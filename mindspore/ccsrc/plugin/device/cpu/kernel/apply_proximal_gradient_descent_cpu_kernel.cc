@@ -21,6 +21,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/apply_proximal_gradient_descent_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
+#include "ops/op_utils.h"
 
 namespace {
 constexpr size_t kApplyProximalGradientDescentInputsNum = 5;
@@ -61,7 +62,7 @@ namespace kernel {
 bool ApplyProximalGradientDescentCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                     const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   return true;
 }
 

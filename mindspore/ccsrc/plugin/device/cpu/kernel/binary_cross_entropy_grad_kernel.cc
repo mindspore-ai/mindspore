@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/binary_cross_entropy_grad_kernel.h"
 #include <map>
 #include "mindspore/core/ops/grad/binary_cross_entropy_grad.h"
+#include "ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
@@ -104,7 +105,7 @@ bool BinaryCrossEntropyGradCpuKernelMod::Init(const std::vector<KernelTensor *> 
   weight_defined_ = (input_num == kBceGradInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
 
-  const auto reduction = GetValue<int64_t>(primitive_->GetAttr(ops::kReduction));
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = kNone;
   } else if (reduction == Reduction::MEAN) {

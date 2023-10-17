@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/kernel/apply_adadelta_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,7 +35,7 @@ constexpr size_t kGradIndex = 6;
 
 bool ApplyAdadeltaCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
 
   auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {

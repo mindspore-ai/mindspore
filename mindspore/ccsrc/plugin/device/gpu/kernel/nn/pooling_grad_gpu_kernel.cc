@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/grad/max_pool_3d_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,22 +34,49 @@ constexpr auto kAvgPool3DGrad = "AvgPool3DGrad";
 constexpr size_t kInputNum = 3;
 constexpr size_t kAvgPool3DGradDynamicInputNum = 2;
 
+// it is similar to the get_pad_mode in PoolGrad op
+PadMode get_pad_mode(const ValuePtr &value_ptr) {
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::StringImm>()) {
+    return PadMode(GetValue<int64_t>(value_ptr));
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = ops::pad_map.find(attr_value_str);
+  if (iter == ops::pad_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use CALCULATED, PAD, VALID or SAME";
+  }
+  return PadMode(iter->second);
+}
+
+// it is similar to the get_format in PoolGrad op
+Format get_format(const ValuePtr &value_ptr) {
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::StringImm>()) {
+    return Format(GetValue<int64_t>(value_ptr));
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = ops::dataformat_map.find(attr_value_str);
+  if (iter == ops::dataformat_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << " use NCHW, NHWC NCDHW or NDHWC";
+  }
+  return Format(iter->second);
+}
+
 bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  auto pool_grad_ptr = std::dynamic_pointer_cast<ops::PoolGrad>(primitive_);
-  format_attr_ = pool_grad_ptr->get_format();
-  pad_mode_ = pool_grad_ptr->get_pad_mode();
-  stride_me_ = pool_grad_ptr->get_strides();
-  window_me_ = pool_grad_ptr->get_kernel_size();
+  format_attr_ = get_format(primitive_->GetAttr(ops::kFormat));
+  pad_mode_ = get_pad_mode(primitive_->GetAttr(ops::kPadMode));
+  stride_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+  window_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   if (kernel_name_ == kMaxPool3DGrad) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DGrad>(primitive_);
-    pad_list_ = kernel_ptr->get_pad_list();
+    pad_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPadList));
   } else if (kernel_name_ == kAvgPool3DGrad) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AvgPool3DGrad>(primitive_);
-    pad_list_ = kernel_ptr->get_pad_list();
-    divisor_override_ = kernel_ptr->get_divisor_override();
-    ceil_mode_ = kernel_ptr->get_ceil_mode();
-    include_ = kernel_ptr->get_count_include_pad();
+    pad_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPadList));
+    divisor_override_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDivisorOverride));
+    ceil_mode_ = GetValue<bool>(primitive_->GetAttr(ops::kCeilMode));
+    include_ = GetValue<bool>(primitive_->GetAttr(ops::kCountIncludePad));
   }
   SetFirstInputIndex(inputs.size());
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[first_input_index_]->dtype_id()));

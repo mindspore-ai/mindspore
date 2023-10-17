@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/stft.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -83,7 +84,7 @@ struct Trans2R {
 }  // namespace
 
 bool STFTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   n_fft_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNFft));
   hop_length_ = GetValue<int64_t>(primitive_->GetAttr(ops::kHopLength));
   if (hop_length_ <= 0) {

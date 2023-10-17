@@ -74,9 +74,6 @@ bool AdaptiveMaxPool2DGradGpuKernelMod::Launch(const std::vector<KernelTensor *>
 
 bool AdaptiveMaxPool2DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2DGrad>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {

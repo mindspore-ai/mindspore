@@ -27,6 +27,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/thread_pool.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -121,7 +122,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
     is_need_retrieve_output_shape_ = true;
-    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+    auto batch_rank = ops::get_batch_rank(primitive_);
     if (batch_rank < 0) {
       return false;
     }

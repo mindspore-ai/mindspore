@@ -75,13 +75,6 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-      return false;
-    }
-
     return InitSize(inputs, outputs);
   }
 
@@ -89,12 +82,6 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
     int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
-    }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveMaxPool2D>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[AdaptiveMaxPool2D], cast op from BaseOperator to AdaptiveMaxPool2D failed.";
-      return false;
     }
 
     // Check the parameters valid.
@@ -124,7 +111,7 @@ class AdaptiveMaxPool2DKernelMod : public NativeGpuKernelMod {
       input_size_ *= input_shape[i];
     }
 
-    auto output_size = kernel_ptr->output_size();
+    auto output_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("output_size"));
     if (output_size.size() == ops::kOutputSizeAttrSize) {
       // If the output size is none, the output shapes should be same as the input.
       output_height_ = (output_size[0] != ops::kPyValueNone ? static_cast<size_t>(output_size[0]) : input_height_);

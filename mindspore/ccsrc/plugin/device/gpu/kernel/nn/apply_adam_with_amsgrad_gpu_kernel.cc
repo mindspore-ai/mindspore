@@ -20,6 +20,7 @@
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "include/curand.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,12 +45,10 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const std::vector<KernelTensor *> &i
                   << outputs.size();
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(primitive_);
-  batch_rank_ = kernel_ptr->get_batch_rank();
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-  beta1_ = kernel_ptr->get_beta1();
-  beta2_ = kernel_ptr->get_beta2();
-  epsilon_ = kernel_ptr->get_epsilon();
+  batch_rank_ = ops::get_batch_rank(primitive_);
+  beta1_ = GetValue<float>(primitive_->GetAttr(ops::kBeta1));
+  beta2_ = GetValue<float>(primitive_->GetAttr(ops::kBeta2));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

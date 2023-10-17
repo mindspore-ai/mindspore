@@ -17,6 +17,8 @@
 #include <map>
 #include "mindspore/core/ops/binary_cross_entropy.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/loss_with_reduction_impl.cuh"
+#include "ops/binary_cross_entropy.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,13 +60,7 @@ void BinaryCrossEntropyGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
 
 bool BinaryCrossEntropyGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BinaryCrossEntropy>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "cast BinaryCrossEntropy ops failed!";
-    return false;
-  }
-
-  const auto reduction = kernel_ptr->get_reduction();
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = ReductionMode::kNone;
   } else if (reduction == Reduction::MEAN) {

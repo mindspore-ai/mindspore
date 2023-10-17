@@ -21,6 +21,7 @@
 #include <functional>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/apply_adagrad_da_cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -47,7 +48,7 @@ bool ApplyAdagradDACpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_EXCEPTION(ValueError) << "ApplyAdagradDA input is empty";
   }
   dtype_ = inputs[0]->dtype_id();
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   return true;
 }
 

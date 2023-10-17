@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/binary_cross_entropy_cpu_kernel.h"
 #include <map>
 #include "mindspore/core/ops/binary_cross_entropy.h"
+#include "ops/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace kernel {
@@ -139,8 +140,7 @@ bool BinaryCrossEntropyCpuKernelMod::Init(const std::vector<KernelTensor *> &inp
   size_t input_num = inputs.size();
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
   dtype_ = inputs[kIndex0]->dtype_id();
-
-  const auto reduction = GetValue<int64_t>(primitive_->GetAttr(ops::kReduction));
+  const auto reduction = ops::BinaryCrossEntropy::get_reduction(primitive_->GetAttr(ops::kReduction));
   if (reduction == Reduction::NONE) {
     reduction_ = kNone;
   } else if (reduction == Reduction::MEAN) {

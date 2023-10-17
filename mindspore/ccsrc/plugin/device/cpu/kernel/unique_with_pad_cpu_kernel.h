@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/unique_cpu_kernel.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,7 +40,7 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
-    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+    auto batch_rank = ops::get_batch_rank(primitive_);
     if (batch_rank < 0) {
       return false;
     }

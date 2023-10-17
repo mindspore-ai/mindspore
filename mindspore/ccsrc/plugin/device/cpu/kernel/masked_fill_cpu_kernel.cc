@@ -20,6 +20,7 @@
 #include <functional>
 #include <complex>
 #include "mindspore/core/ops/masked_fill.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,7 +33,7 @@ constexpr size_t kMaskedFillOutputsNum = 1;
 
 bool MaskedFillCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

@@ -22,6 +22,7 @@
 #include <utility>
 #include <thread>
 #include <vector>
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,7 +39,7 @@ constexpr size_t kGradIndex = 3;
 
 bool ApplyAdagradV2CpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
   update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
 

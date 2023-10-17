@@ -41,6 +41,11 @@ class MIND_API BinaryCrossEntropy : public BaseOperator {
   ///
   /// \return reduction.
   Reduction get_reduction() const;
+
+  /// \brief Get reduction in static.
+  ///
+  /// \return reduction.
+  static Reduction get_reduction(const ValuePtr &reduction_ptr);
 };
 }  // namespace ops
 }  // namespace mindspore

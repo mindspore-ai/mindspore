@@ -20,6 +20,7 @@
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/apply_proximal_adagrad_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -33,7 +34,7 @@ constexpr size_t kGradIndex = 5;
 
 bool ApplyProximalAdagradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto input_type_id = inputs[0]->dtype_id();
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "',  does not support " << TypeIdToString(input_type_id);

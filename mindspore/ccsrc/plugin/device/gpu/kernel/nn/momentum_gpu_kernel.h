@@ -44,9 +44,7 @@ class MomentumGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_NUM << ", but got "
                         << inputs.size();
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyMomentum>(primitive_);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
-    use_nesterov_ = kernel_ptr->get_use_nesterov();
+    use_nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kUseNesterov));
 
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

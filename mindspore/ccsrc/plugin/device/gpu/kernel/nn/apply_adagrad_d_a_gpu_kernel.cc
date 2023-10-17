@@ -22,6 +22,7 @@
 
 #include "kernel/common_utils.h"
 #include "abstract/utils.h"
+#include "ops/op_utils.h"
 
 #include "plugin/device/gpu/kernel/nn/apply_adagrad_d_a_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_adagrad_d_a_impl.cuh"
@@ -58,7 +59,7 @@ bool ApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "Cast ApplyAdagradDA ops failed!";
     return false;
   }
-  batch_rank_ = kernel_ptr->get_batch_rank();
+  batch_rank_ = ops::get_batch_rank(primitive_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;

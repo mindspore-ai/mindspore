@@ -84,9 +84,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSoftmaxCrossEntropyWithLogits>(primitive_);
-    MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-    is_grad_ = kernel_ptr->get_is_grad();
+    is_grad_ = GetValue<bool>(primitive_->GetAttr(ops::kIsGrad));
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     InitResource();
     return true;
