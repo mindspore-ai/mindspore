@@ -389,7 +389,6 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
     shapes = BaseShapeToShapeVector(input_tensor->base_shape_ptr());
     types = std::vector(shapes.size(), input_tensor->data_type());
     common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, input_node);
-    return;
   } else {
     // In runtime, the dynamic len tag should be removed.
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, input_node.get(), true);
