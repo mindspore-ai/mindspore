@@ -119,25 +119,28 @@ auto ConvertToOpApiFunc(const Tuple &params, void *opApiAddr) {
 // Convert Value
 class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
  public:
+  OpApiAttrConverter() = default;
+  ~OpApiAttrConverter() = default;
+
   template <typename T>
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar *scalar) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<T> &, aclScalar **scalar) {
     auto real_val = GetValue<T>(value);
     MS_EXCEPTION_IF_NULL(scalar);
     static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
     if (aclCreateScalar == nullptr) {
-      scalar = nullptr;
+      *scalar = nullptr;
     }
-    scalar = aclCreateScalar(&real_val, GetDataType(value));
+    *scalar = aclCreateScalar(&real_val, GetDataType(value));
   }
 
-  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar *scalar) {
+  void ConvertValue(const ValuePtr &value, const AttrDeclType<int32_t> &, aclScalar **scalar) {
     auto real_val = static_cast<int64_t>(GetValue<int32_t>(value));
     MS_EXCEPTION_IF_NULL(scalar);
     static const auto aclCreateScalar = GET_OP_API_FUNC(aclCreateScalar);
     if (aclCreateScalar == nullptr) {
-      scalar = nullptr;
+      *scalar = nullptr;
     }
-    scalar = aclCreateScalar(&real_val, ACL_INT64);
+    *scalar = aclCreateScalar(&real_val, ACL_INT64);
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, aclIntArray *array) {
@@ -184,9 +187,6 @@ class OpApiAttrConverter : public AttrHelper<OpApiAttrConverter> {
   }
 
  private:
-  OpApiAttrConverter() = default;
-  ~OpApiAttrConverter() = default;
-
   inline aclDataType GetDataType(const ValuePtr &value) { return AclConverter::ConvertType(value->type()->type_id()); }
 };
 
@@ -233,13 +233,66 @@ inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &te
   return tensor_list;
 }
 
-template <typename T>
-T ConvertType(const ValuePtr &value) {
+inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
+  if (aclCreateTensor == nullptr) {
+    return nullptr;
+  }
+
+  auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
+  auto shape = tensor->shape();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
+
+  // Create strides.
+  auto strides = shape;
+  if (!strides.empty()) {
+    strides.erase(strides.begin());
+  }
+  strides.push_back(1);
+  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+    strides[i] = strides[i] * strides[i + 1];
+  }
+
+  auto device_address = tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_address);
+  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
+                                    shape_size, device_address->GetMutablePtr());
+  return acl_tensor;
+}
+
+inline aclScalar *ConvertType(const ScalarPtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  OpApiAttrConverter op_api_attr_converter;
-  T res;
-  op_api_attr_converter.ConvertValueToRealType(value, "", res);
-  return res;
+  aclScalar *acl_scalar;
+  OpApiAttrConverter converter;
+  if (value->isa<BoolImm>()) {
+    converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
+  } else if (value->isa<Int64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
+  } else if (value->isa<Int32Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
+  } else if (value->isa<FP32Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
+  } else if (value->isa<StringImm>()) {
+    converter.ConvertValue(value, AttrDeclType<std::string>(), &acl_scalar);
+  } else {
+    MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
+  }
+  return acl_scalar;
 }
 
 template <typename T>
