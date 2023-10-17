@@ -30,6 +30,7 @@ CsvWriter &CsvWriter::GetInstance() {
 }
 
 bool CsvWriter::OpenFile(const std::string &path, const std::string &header, bool trunc) {
+  std::shared_lock<std::shared_mutex> lock(write_mutex_);
   if (file_.is_open() && path == file_path_str_) {
     return true;
   }
