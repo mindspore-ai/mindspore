@@ -15,9 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
-#include <memory>
-#include <algorithm>
-#include <set>
 #include "ops/ascend_op_name.h"
 #include "ops/other_op_name.h"
 #include "ops/array_op_name.h"

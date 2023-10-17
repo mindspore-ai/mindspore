@@ -82,6 +82,7 @@ std::string ConvertGeTypeToString(::ge::DataType type) {
 }
 
 void PrintQueryAclTypeErr(const AnfNodePtr &node, const transform::ErrorAclType acl_err_type) {
+  MS_EXCEPTION_IF_NULL(node);
   std::stringstream ss;
   ss << "The current [" << node->fullname_with_scope()
      << "] operator did not match any operator prototype library. The reason is:" << std::endl;
@@ -322,6 +323,7 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
 }
 
 bool GraphWithNoRealKernel(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &nodes = kernel_graph->execution_order();
   for (auto &node : nodes) {
     if (AnfUtils::IsRealKernel(node)) {

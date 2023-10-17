@@ -16,13 +16,10 @@
 
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 
-#include <tuple>
-#include <utility>
 #include "include/common/utils/anfalgo.h"
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "include/common/utils/scoped_long_running.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/kernel_graph.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
