@@ -36,7 +36,7 @@ TensorStorageInfoPtrList ExpandDimsCalc(const PrimitivePtr &prim, const std::vec
   auto new_shape = old_shape;
   auto new_strides = old_strides;
 
-  int64_t dim_size = static_cast<int64_t>(new_shape.size());
+  int64_t dim_size = SizeToLong(new_shape.size());
   auto axis = GetValue<int64_t>(inputs[1]);
   axis = DynamicDimWrap(axis, new_shape.size() + 1);
   int64_t tmp_strides = axis >= dim_size ? 1 : new_shape[axis] * new_strides[axis];
