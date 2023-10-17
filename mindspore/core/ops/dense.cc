@@ -29,7 +29,6 @@
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
-#include "mindapi/base/type_id.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -146,7 +145,8 @@ class DenseInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
     bool has_bias = false;
-    if (input_args.size() == 3) {
+    const size_t kThree = 3;
+    if (input_args.size() == kThree) {
       auto b = dyn_cast<abstract::AbstractTensor>(input_args[kDenseIndex2]);
       has_bias = b != nullptr;
       if (has_bias) {
