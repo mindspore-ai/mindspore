@@ -218,6 +218,7 @@ GeAdapterManager &GeAdapterManager::GetInstance() {
 }
 
 GeAdapterInfoPtr GeAdapterManager::GetInfo(const std::string &prim_name, bool is_training = true) {
+  std::lock_guard<std::mutex> guard(lock_);
   auto iter = op_cache_.find(prim_name);
   if (iter != op_cache_.end()) {
     return iter->second;
