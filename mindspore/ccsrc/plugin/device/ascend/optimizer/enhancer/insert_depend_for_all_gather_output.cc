@@ -32,6 +32,7 @@ void InsertDependForAllGatherOutput::InsertDepend(const AnfNodePtr &prior_node, 
   MS_EXCEPTION_IF_NULL(prior_node);
   MS_EXCEPTION_IF_NULL(post_node);
   auto post_cnode = post_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(post_cnode);
   auto manager = root->manager();
   std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), post_cnode->input(1), prior_node};
   auto depend_node = root->NewCNode(depend_input);
@@ -41,10 +42,12 @@ void InsertDependForAllGatherOutput::InsertDepend(const AnfNodePtr &prior_node, 
 int64_t InsertDependForAllGatherOutput::DealSegment(const std::vector<AnfNodePtr> &node_list) {
   int64_t seg_max = -1;
   for (auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     // get forward segment first recv
     if (!cnode->HasPrimalAttr(kPrimalAttrForwardNodeName) && cnode->HasPrimalAttr(kAttrSegment) &&
         cnode->HasPrimalAttr(kAttrMicro) && GetValue<int64_t>(cnode->GetPrimalAttr(kAttrMicro)) == 0 &&

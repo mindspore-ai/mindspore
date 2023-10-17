@@ -70,6 +70,7 @@ void InsertDependForAllReduce::FindEachSegLastSend() {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (IsPrimitiveCNode(cnode, prim::kPrimSend) && cnode->HasPrimalAttr(kPrimalAttrForwardNodeName) &&
         cnode->HasPrimalAttr(kAttrMicro) && GetValue<int64_t>(cnode->GetPrimalAttr(kAttrMicro)) == micro_max_ &&
         cnode->HasPrimalAttr(kAttrSegment)) {
@@ -92,6 +93,7 @@ bool InsertDependForAllReduce::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->HasPrimalAttr(kAttrMicro) && cnode->GetPrimalAttr(kAttrMicro)->isa<Int64Imm>()) {
       int64_t micro = GetValue<int64_t>(cnode->GetPrimalAttr(kAttrMicro));
       micro_max_ = std::max(micro_max_, micro);
