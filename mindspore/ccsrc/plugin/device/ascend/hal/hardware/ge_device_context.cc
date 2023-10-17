@@ -62,6 +62,7 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
   if (IsDynamicShapeFuncGraph(func_graph)) {
     bool all_support = true;
     auto mng = func_graph->manager();
@@ -73,6 +74,7 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       }
       auto nodes = TopoSort(sub_graph->get_return());
       for (const auto &node : nodes) {
+        MS_EXCEPTION_IF_NULL(node);
         if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
           continue;
         }

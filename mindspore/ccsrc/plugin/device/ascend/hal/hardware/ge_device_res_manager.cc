@@ -27,6 +27,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 ::ge::MemBlock *GeAllocator::Malloc(size_t size) {
+  MS_EXCEPTION_IF_NULL(res_manager_);
   auto addr = res_manager_->AllocateMemory(size);
   MS_LOG(DEBUG) << "GE Allocator malloc addr: " << addr << " size: " << size;
   auto mem_block = new ::ge::MemBlock(*this, addr, size);
@@ -34,6 +35,7 @@ namespace ascend {
 }
 
 void GeAllocator::Free(::ge::MemBlock *block) {
+  MS_EXCEPTION_IF_NULL(res_manager_);
   res_manager_->FreeMemory(block->GetAddr());
   MS_LOG(DEBUG) << "GE Allocator free addr: " << block->GetAddr();
   delete block;
