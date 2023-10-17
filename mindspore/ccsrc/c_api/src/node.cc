@@ -1591,7 +1591,7 @@ STATUS CheckExtraInfo(const DynamicOpInfo &extra_info) {
   MS_ERROR_IF_TRUE_W_RET_N_LOG(
     extra_info.attr_num != 0 && (extra_info.attr_names == nullptr || extra_info.attr_values == nullptr), RET_ERROR,
     "The attr_name and attr_values must be specified if attr_num is non-negative!");
-  MS_ERROR_IF_TRUE_W_RET_N_LOG(extra_info.output_dims != 0 && extra_info.output_shapes == nullptr, RET_ERROR,
+  MS_ERROR_IF_TRUE_W_RET_N_LOG(extra_info.output_dims != nullptr && extra_info.output_shapes == nullptr, RET_ERROR,
                                "The output_shapes must be not nullptr if output_dims is non-zero!");
   return RET_OK;
 }
