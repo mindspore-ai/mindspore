@@ -230,6 +230,7 @@ bool AscendDeviceAddress::FileToDeviceDirectly(void *ptr, size_t size, const std
 bool AscendDeviceAddress::CopyBetweenFileDeviceDirectly(void *ptr, const std::string &file_name, size_t size,
                                                         size_t stream_id, bool file_to_device) const {
 #if defined(RT_MEMORY_P2PDMA)
+  MS_EXCEPTION_IF_NULL(ptr);
   void *dargs = AscendDmaHandle::GetInstance().GetDargs();
   void *buf = AscendDmaHandle::GetInstance().GetBuf();
   if (dargs == nullptr || buf == nullptr) {

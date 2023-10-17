@@ -1482,6 +1482,8 @@ std::string TryBackoffCpu(const KernelGraphPtr &graph, const CNodePtr &node,
 
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
                                const std::pair<std::string, ExceptionType> &failure_info) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto msg = TryBackoffCpu(graph, node, failure_info);
   if (!msg.empty()) {
     MS_EXCEPTION(failure_info.second) << msg;

@@ -188,6 +188,7 @@ bool TDTTensorUtils::ConvertDataset2Tensor(acltdtDataset *acl_dataset, ChannelTy
     size_t acl_data_size = acltdtGetDataSizeFromItem(item);
     aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
 
+    MS_EXCEPTION_IF_NULL(acl_addr);
     char *acl_data = reinterpret_cast<char *>(acl_addr);
     if (channel_type != ChannelType::kMbuf) {
       acl_data = reinterpret_cast<std::string *>(acl_data)->data();
@@ -248,6 +249,7 @@ bool TDTTensorUtils::PrintTensorToString(const char *str_data_ptr, mindspore::te
 }
 
 void JoinAclPrintThread(std::thread *thread) {
+  MS_EXCEPTION_IF_NULL(thread);
   try {
     if (thread->joinable()) {
       MS_LOG(INFO) << "join acl tdt host receive process";
