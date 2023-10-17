@@ -107,7 +107,7 @@ class ForParser(Parser):
                     ast_functiondef.body.insert(index, new_node)
                     index += 1
             # Expand "for" statement and replace the body with Pass
-            for body in node.body:
+            for body in node.body[:]:
                 node.body.remove(body)
             node.body.append(ast.Pass())
 
