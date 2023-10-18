@@ -5,6 +5,8 @@ mindspore.dataset.TFRecordDataset
 
     读取和解析TFData格式的数据文件构建数据集。生成的数据集的列名和列类型取决于TFRecord文件中的保存的列名与类型。
 
+    .. note:: Windows平台尚不支持 `TFRecordDataset` 。
+
     参数：
         - **dataset_files** (Union[str, list[str]]) - 数据集文件路径，支持单文件路径字符串、多文件路径字符串列表或可被glob库模式匹配的字符串，文件列表将在内部进行字典排序。
         - **schema** (Union[str, :class:`~.dataset.Schema`], 可选) - 数据格式策略，用于指定读取数据列的数据类型、数据维度等信息。
