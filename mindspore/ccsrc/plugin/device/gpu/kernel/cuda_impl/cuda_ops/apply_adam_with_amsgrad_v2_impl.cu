@@ -65,8 +65,7 @@ cudaError_t CalApplyAdamWithAmsgradV2(const size_t size, const int64_t batch_siz
                                       T *beta1_power, T *beta2_power, const T *lr, const T *grad, const T *beta1,
                                       const T *beta2, const T *epsilon, T *output_var, T *output_m, T *output_v,
                                       T *output_vhat, const uint32_t &device_id, cudaStream_t stream_ptr) {
-  int thread_num = size > 512 ? 512 : size;
-  CalApplyAdamWithAmsgradV2Kernel<<<CUDA_BLOCKS(device_id, size), thread_num, 0, stream_ptr>>>(
+  CalApplyAdamWithAmsgradV2Kernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream_ptr>>>(
     size, batch_size, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1, beta2, epsilon, output_var, output_m,
     output_v, output_vhat);
   return GetCudaStatus();
