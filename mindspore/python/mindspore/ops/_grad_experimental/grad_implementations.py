@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad_experimental.grad_base import bprops
+from mindspore.ops._grad_experimental.grad_base import bprops, bprop_getters
 from mindspore.common import dtype as mstype
 
 get_dtype = P.DType()
@@ -193,7 +193,7 @@ def bprop_tensor_move(x, out, dout):
     return (dout,)
 
 
-@bprops.register("DictInplaceSetItem")
+@bprop_getters.register("DictInplaceSetItem")
 def get_bprop_dict_inplace_setitem(self):
     """Generate bprop for dict inplace pop"""
 
