@@ -939,3 +939,118 @@ def test_grad_squence_out():
     expect_grad = Tensor(
         [[0.999995, 0.999995], [0.999995, 0.999995]], mstype.float32)
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_graph_return_ids():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad when setting return_ids to true in pynative mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = net.trainable_params()
+
+        def construct(self, x):
+            value, gradient = value_and_grad(
+                net, 0, self.weights, False, True)(x)
+            return value, gradient
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    grad_net = GradNet(net)
+    value, gradient = grad_net(x)
+    expect_grad_input = np.array([24, 24]).astype(np.float32)
+    expect_grad_weight1 = np.array([12, 24]).astype(np.float32)
+    expect_grad_weight2 = np.array([8, 16]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(gradient[0][1].asnumpy(), expect_grad_input)
+    assert np.allclose(gradient[1][0][1].asnumpy(), expect_grad_weight1)
+    assert np.allclose(gradient[1][1][1].asnumpy(), expect_grad_weight2)
+    assert gradient[0][0] == 0
+    assert gradient[1][0][0] == net.w.name
+    assert gradient[1][1][0] == net.z.name
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_graph_get_grad():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad and getgrad from the result in pynative mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = net.trainable_params()
+
+        def construct(self, x):
+            value, gradient = value_and_grad(
+                net, 0, self.weights, False, True)(x)
+            res1 = get_grad(gradient, 0)
+            res2 = get_grad(gradient, self.net.w)
+            res3 = get_grad(gradient, self.net.z)
+            return value, res1, res2, res3
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    grad_net = GradNet(net)
+    value, res1, res2, res3 = grad_net(x)
+    expect_grad_input = np.array([24, 24]).astype(np.float32)
+    expect_grad_weight1 = np.array([12, 24]).astype(np.float32)
+    expect_grad_weight2 = np.array([8, 16]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(res1.asnumpy(), expect_grad_input)
+    assert np.allclose(res2.asnumpy(), expect_grad_weight1)
+    assert np.allclose(res3.asnumpy(), expect_grad_weight2)
+                
