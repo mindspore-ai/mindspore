@@ -301,7 +301,7 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
   // Step 3: Get infer value from output abstract.
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
   MS_EXCEPTION_IF_NULL(infer_value);
-  if (!infer_value->isa<ValueAny>()) {
+  if (!infer_value->ContainsValueAny()) {
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
