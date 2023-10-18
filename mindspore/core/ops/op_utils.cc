@@ -1018,7 +1018,7 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     T *data = reinterpret_cast<T *>(tensor->data_c());
     array_data.assign(data, data + element_size);
   } else {
-    MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->ToString();
+    MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->type_name();
   }
 
   return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::move(unknown_value_indexes));
