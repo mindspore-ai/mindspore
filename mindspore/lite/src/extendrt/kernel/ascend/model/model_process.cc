@@ -1177,7 +1177,8 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   aclError acl_ret;
   struct timeval start_time;
   auto env = std::getenv("GLOG_v");
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  bool output_timecost = (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel));
+  if (output_timecost) {
     (void)gettimeofday(&start_time, nullptr);
   }
 
@@ -1190,7 +1191,7 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
     MS_LOG(DEBUG) << "Unlock after aclmdlExecute.";
     AclMemManager::GetInstance().Unlock();
   }
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  if (output_timecost) {
     struct timeval end_time;
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;

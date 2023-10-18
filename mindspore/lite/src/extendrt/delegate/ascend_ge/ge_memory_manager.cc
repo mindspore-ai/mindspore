@@ -29,7 +29,8 @@ size_t ALIGN_OFFSET(void *addr) {
   return kMemAlignSize - extra;
 }
 
-size_t ALIGN_UP(size_t size) { return ((size + 2 * kMemAlignSize - 1) / kMemAlignSize) * kMemAlignSize; }
+constexpr size_t kAlignSizeMulti = 2;
+size_t ALIGN_UP(size_t size) { return ((size + kAlignSizeMulti * kMemAlignSize - 1) / kMemAlignSize) * kMemAlignSize; }
 
 GeMemoryManager::GeMemoryManager() = default;
 GeMemoryManager::~GeMemoryManager() { FreeAllMemory(); }

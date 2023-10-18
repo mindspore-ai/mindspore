@@ -23,7 +23,7 @@ from mindspore_lite._checkparam import check_isinstance, check_input_shape, chec
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, \
     format_cxx_py_map
-from mindspore_lite.model import ModelType, model_type_py_cxx_map, model_type_cxx_py_map
+from mindspore_lite.model import ModelType, model_type_py_cxx_map, model_type_cxx_py_map, set_env
 
 __all__ = ['FmkType', 'Converter']
 
@@ -700,6 +700,7 @@ class Converter:
         check_isinstance("rank_id", rank_id, int)
         self._converter.set_rank_id(rank_id)
 
+    @set_env
     def convert(self, fmk_type, model_file, output_file, weight_file="", config_file=""):
         """
         Perform conversion, and convert the third-party model to the MindSpore model or MindSpore Lite model.

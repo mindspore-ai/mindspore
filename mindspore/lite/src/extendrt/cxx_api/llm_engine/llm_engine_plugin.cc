@@ -338,8 +338,8 @@ LLMEngineStatus LLMEnginePlugin::FetchStatus() {
     return LLMEngineStatus();
   }
   LLMEngineStatus status;
-  // llm::LLMEngineStatus llm_status = llm_engine_->fetchLLMEngineStatus();
-  // status.empty_max_prompt_kv = llm_status.empty_max_prompt_kv;
+  // When llm_engine_->fetchLLMEngineStatus() is implemented, it will be replaced by return of fetchLLMEngineStatus.
+  status.empty_max_prompt_kv = 0;
   return status;
 }
 
