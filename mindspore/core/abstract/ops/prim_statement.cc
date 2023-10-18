@@ -146,6 +146,7 @@ bool SupportedIsTargetValue(const ValuePtr t) {
 
 bool CheckIfDataIsTarget(const std::string &op_name, const AbstractBasePtr &data_abs,
                          const AbstractBasePtr &target_abs) {
+  MS_EXCEPTION_IF_NULL(target_abs);
   // Check if data and target are both None.
   if (data_abs->isa<AbstractNone>() || target_abs->isa<AbstractNone>()) {
     return data_abs->isa<AbstractNone>() && target_abs->isa<AbstractNone>();
