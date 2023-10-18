@@ -51,7 +51,7 @@ uint32_t EpsCpuKernel::Compute(CpuKernelContext &ctx) {
     EPS_COMPUTE_CASE(DT_FLOAT, float, ctx)
     EPS_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("For Eps, , the supported data types are ['float16', 'float32', 'float64'], but got: [%s].",
+      KERNEL_LOG_ERROR("For Eps, the supported data types are ['float16', 'float32', 'float64'], but got: [%s].",
                        DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
