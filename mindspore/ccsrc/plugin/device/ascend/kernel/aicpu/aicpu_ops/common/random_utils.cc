@@ -25,6 +25,9 @@
 namespace aicpu {
 namespace random {
 uint64_t GetRNG(int64_t *seed, int64_t *seed2) {
+  if (seed == nullptr || seed2 == nullptr) {
+    KERNEL_LOG_ERROR("seed and seed2 cannot be null.");
+  }
   AICPU_LOGD("Before compute, seed, seed2: [%lld], [%lld]", *seed, *seed2);
   std::random_device rd;
   uint64_t rng_seed = 0;
