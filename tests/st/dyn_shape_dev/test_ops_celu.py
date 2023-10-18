@@ -12,31 +12,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import pytest
 import numpy as np
-from mindspore import Tensor, context
-from mindspore.ops import auto_generate as P
 import test_utils
+
+from  mindspore import ops
+import mindspore as ms
 
 
 @test_utils.run_with_cell
-def celu_forward_func(x, alpha):
-    return P.CeLU(alpha)(x)
+def celu_forward_func(x, alpha=1.0):
+    return ops.auto_generate.celu_(x, alpha)
+
+
+@test_utils.run_with_cell
+def celu_backward_func(x, alpha=1.0):
+    return ops.grad(celu_forward_func, (0,))(x, alpha)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("data_type", [np.float32, np.float16])
-def test_celu_op_cpu(data_type):
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_celu_forward(mode):
     """
-    Feature: Celu cpu kernel
-    Description: test the celu alpha = 1.0.
-    Expectation: match to np benchmark.
+    Feature: Ops.
+    Description: test op celu.
+    Expectation: expect correct result.
     """
-    x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU', precompile_only=True)
-    output = celu_forward_func(x, 1.)
-    print(output)
-    assert output is None
+    ms.context.set_context(mode=mode)
+    error = 1e-4
+    expect = np.array([-0.86468, -0.63212, 1., 2.]).astype(np.float32)
+    x = np.array([-2.0, -1.0, 1.0, 2.0]).astype(np.float32)
+    input_x = ms.Tensor(x, ms.float32)
+    output = celu_forward_func(input_x, 1.0)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_celu_backward(mode):
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op celu.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    error = 1e-4
+    expect = np.array([1, 1, 0.22313])
+    x = np.array([1.1, 2.5, -1.5]).astype(np.float32)
+    input_x = ms.Tensor(x, ms.float32)
+    grads = celu_backward_func(input_x, 1.0)
+    np.testing.assert_allclose(grads.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_celu_vmap(mode):
+    """
+    Feature: test vmap function.
+    Description: test celu op vmap.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    error = 1e-4
+    in_axes = (0)
+    x = ms.Tensor(np.array([[[-2.0, -1.0, 1.0, 2.0]]]).astype(np.float32))
+    nest_vmap = ops.vmap(celu_forward_func, in_axes=in_axes, out_axes=0)
+    vmap_out = nest_vmap(x)
+    expect = np.array([[[-0.86468, -0.63212, 1., 2.]]]).astype(np.float32)
+    np.testing.assert_allclose(vmap_out.asnumpy(), expect, rtol=error)

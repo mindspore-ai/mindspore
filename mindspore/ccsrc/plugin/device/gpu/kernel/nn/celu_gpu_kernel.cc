@@ -44,12 +44,7 @@ int CeluGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != 2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 1.";
-    return KRET_RESIZE_FAILED;
-  }
-  input_elements_ = input_size_list_[0] / unit_size_;
-
+  input_elements_ = output_size_list_[0] / unit_size_;
   return KRET_OK;
 }
 
@@ -57,21 +52,30 @@ template <typename T>
 bool CeluGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  double *alpha = GetDeviceAddress<double>(inputs, kIndex1);
+  double alpha = static_cast<double>(inputs[kIndex1]->GetValueWithCheck<float>());
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
     CalculateCelu(input, input_elements_, alpha, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CHECK_CUDA_STATUS(status, this->kernel_name_);
+  CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
 const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> &CeluGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat16),
      &CeluGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &CeluGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat64),
      &CeluGpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

@@ -1,30 +1,30 @@
 celu:
-  description: |
-    Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
+    description: |
+        Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
 
-    Refer to :func:`mindspore.ops.celu` for more details.
+        Refer to :func:`mindspore.ops.celu` for more details.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
 
-    Args:
-        input_x (Tensor) - The input tensor with a dtype of float16 or float32.
-        alpha (float, optional): - The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
+        Args:
+            input_x (Tensor) - The input tensor with a dtype of float16 or float32.
+            alpha (float, optional): - The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
+        Outputs:
+            Tensor, with the same type and shape as the `input_x`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
-        >>> output = ops.celu_(input_x, alpha=1.0)
-        >>> print(output)
-        [-0.86466473 -0.63212055  1.          2.        ]
-        >>> input_x = Tensor(2.1, mindspore.float32)
-        >>> output = ops.celu(input_x, alpha=1.0)
-        >>> print(output)
-        2.1
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
+            >>> output = ops.celu_(input_x, alpha=1.0)
+            >>> print(output)
+            [-0.86466473 -0.63212055  1.          2.        ]
+            >>> input_x = Tensor(2.1, mindspore.float32)
+            >>> output = ops.celu(input_x, alpha=1.0)
+            >>> print(output)
+            2.1

@@ -27,7 +27,7 @@ bool EluCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   const auto *in = reinterpret_cast<T *>(inputs[0]->device_ptr());
   auto *out = reinterpret_cast<T *>(outputs[0]->device_ptr());
   const size_t lens = outputs[0]->size() / sizeof(T);
-  auto alpha = inputs[kIndex1]->GetValueWithCheck<double>();
+  auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
 
   auto task = [in, out, alpha](size_t start, size_t end) {
     if constexpr (std::is_same_v<T, float>) {
@@ -46,12 +46,12 @@ const std::vector<std::pair<KernelAttr, EluCpuKernelMod::KernelRunFunc>> &EluCpu
   static const std::vector<std::pair<KernelAttr, EluCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat32),
      &EluCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
        .AddOutputAttr(kNumberTypeFloat64),
      &EluCpuKernelMod::LaunchKernel<double>}};
   return func_list;

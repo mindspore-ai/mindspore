@@ -24,8 +24,10 @@ namespace mindspore {
 namespace kernel {
 namespace {
 
-const std::vector<KernelAttr> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32)}};
+const std::vector<KernelAttr> kernel_attr = {{KernelAttr()
+                                                .AddInputAttr(kNumberTypeFloat32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                .AddOutputAttr(kNumberTypeFloat32)}};
 }  // namespace
 
 bool CeluCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -44,12 +46,8 @@ int CeluCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != 2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 1.";
-    return KRET_RESIZE_FAILED;
-  }
-  input_elements_ = input_size_list_[0] / unit_size_;
-  return ret;
+  input_elements_ = output_size_list_[0] / unit_size_;
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> CeluCpuKernelMod::GetOpSupport() { return kernel_attr; }
@@ -57,7 +55,7 @@ std::vector<KernelAttr> CeluCpuKernelMod::GetOpSupport() { return kernel_attr; }
 bool CeluCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs) {
   auto in_data = static_cast<float *>(inputs[0]->device_ptr());
-  auto alpha_data = static_cast<double *>(inputs[1]->device_ptr());
+  double alpha_data = static_cast<float>(inputs[kIndex1]->GetValueWithCheck<float>());
   auto out_data = static_cast<float *>(outputs[0]->device_ptr());
 
   auto task = [this, in_data, alpha_data, out_data](size_t start, size_t end) {
@@ -65,7 +63,7 @@ bool CeluCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
     auto dst = out_data + start;
     auto length = end - start;
     for (size_t i = 0; i < length; ++i) {
-      dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / (*alpha_data)) * (*alpha_data));
+      dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / alpha_data) * alpha_data);
     }
   };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);

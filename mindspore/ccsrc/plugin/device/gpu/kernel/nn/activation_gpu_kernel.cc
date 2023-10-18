@@ -33,17 +33,17 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ActivationFwdGpuKernelMo
     {ops::kNameElu,
      {{KernelAttr()
          .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
          .AddOutputAttr(kNumberTypeFloat64),
        &ActivationFwdGpuKernelMod::LaunchKernel<double>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
          .AddOutputAttr(kNumberTypeFloat32),
        &ActivationFwdGpuKernelMod::LaunchKernel<float>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
          .AddOutputAttr(kNumberTypeFloat16),
        &ActivationFwdGpuKernelMod::LaunchKernel<half>}}},
 };
@@ -105,7 +105,7 @@ int ActivationFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
   if (mode_ == CUDNN_ACTIVATION_ELU) {
-    auto alpha = inputs[kIndex1]->GetValueWithCheck<double>();
+    auto alpha = inputs[kIndex1]->GetValueWithCheck<float>();
     coef = static_cast<double>(alpha);
   }
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
