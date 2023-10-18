@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include "plugin/device/gpu/kernel/dynamic_akg/dynamic_utils.h"
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
 #include "kernel/common_utils.h"
@@ -62,80 +63,6 @@ class DynamicAkgGpuKernelManager {
 };
 using DynamicAkgGpuKernelManagerPtr = std::shared_ptr<DynamicAkgGpuKernelManager>;
 
-struct PairHash {
-  template <typename T>
-  size_t operator()(const std::pair<T, T> &p) const {
-    auto h1 = std::hash<T>{}(p.first);
-    auto h2 = std::hash<T>{}(p.second);
-    return h1 ^ h2;
-  }
-};
-
-struct MappingInfo {
-  uint32_t total_alloc_grid{1};
-  uint32_t total_alloc_block{1};
-  uint32_t curr_grid[3]{1, 1, 1};
-  uint32_t curr_block[3]{1, 1, 1};
-  uint32_t max_grid[3]{2147483647, 65535, 65535};
-  uint32_t max_block[3]{1024, 1024, 64};
-  uint32_t max_total_block{1024};
-  std::vector<size_t> solve_order_id;
-  uint32_t GetMapLimit(size_t id);
-  void UpdateCurrMapSize(size_t id, uint32_t map_size);
-  std::string ToString() {
-    std::string res;
-    res += "total_alloc_grid: [";
-    for (auto g : curr_grid) {
-      res += std::to_string(g) + ", ";
-    }
-    res += "] = " + std::to_string(total_alloc_grid) + "; ";
-    res += "total_alloc_block: [";
-    for (auto b : curr_block) {
-      res += std::to_string(b) + ", ";
-    }
-    res += "] = " + std::to_string(total_alloc_block) + "\n";
-    return res;
-  }
-};
-
-struct RuntimeVar {
- public:
-  // Init from json
-  int64_t prime;                   // prime is like a unique id for this var to speedup lower in pipeline
-  int argIndex{-1};                // index in the func argument
-  std::string mapping{"Default"};  // used for GPU mapping, can be chosen from [Grid, Block, Seq]
-  std::string mapDim{""};          // used for GPU mapping, can be chosen from [x, y, z]
-  std::string expr{""};            // used to solve dynamic tiling
-  int mark{999};                   // used to solve dynamic tiling for specific algorithms, default is unknown{999}
-
-  // Init in resize
-  int64_t upper_bound{-1};
-  int outer_map_id{-1};
-  int curr_map_id{-1};
-  int64_t runtime_size{-1};
-
-  std::string ArgIndexKey() { return "argIndex"; }
-  std::string ExprKey() { return "expr"; }
-  std::string MarkKey() { return "mark"; }
-  std::string MapDimKey() { return "mapDim"; }
-  std::string MappingKey() { return "mapping"; }
-  std::string PrimeKey() { return "prime"; }
-  std::string ToString() {
-    std::string res = "[RuntimeVar " + std::to_string(prime) + "]";
-    res += "  -> " + mapping + "." + mapDim + " at " + std::to_string(argIndex) + " input\n";
-    res += "  -> expr: " + expr + "\n";
-    res += "  -> mark: " + std::to_string(mark) + "\n";
-    res += "  -> upper bound " + std::to_string(upper_bound) + "; curr_map_id " + std::to_string(curr_map_id) +
-           "; outer_map_id " + std::to_string(outer_map_id) + "\n";
-    res += "  -> runtime_size " + std::to_string(runtime_size) + "\n";
-    return res;
-  }
-
-  static std::unordered_map<std::string, int> mark_table_;
-};
-using RuntimeVarPtr = std::shared_ptr<RuntimeVar>;
-using RuntimeVarsMap = std::map<int, RuntimeVarPtr>;
-
 class DynamicAkgGpuKernelMod : public GpuKernelMod {
  public:
   explicit DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack);
@@ -164,60 +91,29 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   void InitBeforeMapping();
   void UpdateDynamicShapeTilingInfo();
   void UpdateDynamicShapeMappingInfo();
+  void InitAkgKernelImpls();
   void UpdateStaticShapeMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
-  void GetDeviceArgSizeVec(const size_t inputs_num);
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
 
   static DynamicAkgGpuKernelManagerPtr kernel_manager_;
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
-  void UpdateMapping(int curr_id, int64_t map_size, int64_t prime);
   std::string kernel_name_;
-  std::vector<std::string> map_arg_list_;
-
-  // dynamic tiling related
-  void preprocessDynamicReduceTiling();
-
-  int static_reduce_length_{1};
-  std::vector<int> runtime_threads_order_;
-  std::vector<std::pair<int, int>> template_tiling_order_;  // pair includes prime & mark
-  std::unordered_map<int, int> prime_to_mapping_idx_;
-  bool enable_atomic_{false};
-  int dyn_algorithm_{0};
-  static std::unordered_map<std::string, int> algo_to_int_;
 
  private:
   KernelPackPtr kernel_pack_;
   std::vector<uint32_t> thread_info_;
-  std::vector<uint32_t> init_mapping_;
   CUfunction kernel_addr_{nullptr};
   bool is_dynamic_{false};
   std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<std::vector<int64_t>> device_shape_list_;
   nlohmann::json parsed_js_;
   std::vector<int> arg_size_vec_;
-  std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
-  std::unordered_map<size_t, std::pair<size_t, size_t>> unknown_map_loc_;
-  std::unordered_map<size_t, std::string> unknown_map_symbol_;
-  std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
 
-  // Used to solve dynamic tiling size during resize
-  void UpdateRuntimeVarUpperBound();
-  void SolveDynamicTiling(size_t curr_id);
-  void SolveDynamicReduction();
-  size_t max_shape_rank_ = 0;
-  std::unordered_set<size_t> solved_map_loc_;
-  RuntimeVarsMap runtime_vars_;
-  std::vector<std::pair<uint32_t, RuntimeVarPtr>> sorted_runtime_vars_;
-  std::unordered_map<uint32_t, std::pair<size_t, size_t>> local_upper_bound_;
-  std::unordered_map<uint32_t, std::string> local_upper_bound_symbol_;
-  MappingInfo init_mapping_info_;
-  MappingInfo curr_mapping_info_;
-  std::unordered_map<int64_t, std::string> product_var_;   // map: prime -> symbol like `s0`
-  std::unordered_map<std::string, int> axis_length_left_;  // update map: symbol axis -> total length of one axis
-  std::unordered_map<int, std::vector<int>> related_values_;
+  AkgKernelImplInfoPtr kernel_impl_;
+  std::unordered_map<std::string, AkgKernelImplInfoPtr> kernel_map_;
+  AkgKernelImplInfoPtr SelectKernelImpl();
 };
 
 class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
