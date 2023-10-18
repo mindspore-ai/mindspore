@@ -35,15 +35,15 @@ constexpr auto kUnderLine = "_";
 constexpr auto kHexPrefix = "0x";
 constexpr auto kPyExecuteSlice = "[__start__:__stop__:__step__]";
 
-AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
-                                              const AnfNodePtrList &node_inputs, std::string script_str);
+AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
+                                                const AnfNodePtrList &node_inputs, std::string script_str);
 void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src);
 std::string GetNodeExprSrc(const AnfNodePtr &node);
-std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const std::string &right,
-                                                const std::string &op);
-std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op);
-std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
-std::string GeneratePyExecuteScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id);
+std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
+                                                  const std::string &op);
+std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op);
+std::string GeneratePyInterpretScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
+std::string GeneratePyInterpretScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id);
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -54,6 +54,10 @@ CNodePtr CreatePyExecuteCNodeInOrder(const FuncGraphPtr &fg, const AnfNodePtr &s
                                      const AnfNodePtr &values, const NodeDebugInfoPtr &debug_info);
 CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodePtr &script, const AnfNodePtr &keys,
                                      const AnfNodePtr &values);
+// Create a PyInterpret CNode by old node or debug_info.
+CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
+                                       const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
+                                       const NodeDebugInfoPtr &debug_info);
 void SetPyObjectToLocalVariable(const std::string &key, const py::object &value);
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node, bool replace);

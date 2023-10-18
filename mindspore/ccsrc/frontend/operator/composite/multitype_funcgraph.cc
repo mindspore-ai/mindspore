@@ -277,7 +277,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
       func_graph->set_output(template_node);
       return func_graph;
     }
-    auto ret_node = fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
+    auto ret_node = fallback::GeneratePyInterpretNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
     if (ret_node != nullptr) {
       func_graph->set_output(ret_node);
       return func_graph;
