@@ -57,10 +57,10 @@ int RemakeTupleIndexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
 bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                 const std::vector<AddressPtr> &outputs) {
-  auto output_attr = reinterpret_cast<char *>(outputs[kIndex0]->addr);
+  auto output_attr = static_cast<char *>(outputs[kIndex0]->addr);
   size_t ellipse_position = 0;
   size_t not_ellipsis_position_cnt = 0;
-  for (size_t i = 0; i < 8; i++) {
+  for (size_t i = 0; i < kMaxTensorIndexDimNums; i++) {
     if (tuple_index_types_[i] == kMetaTypeEllipsis) {
       ellipse_position = i;
     } else if (tuple_index_types_[i] != kTypeUnknown) {
@@ -70,15 +70,15 @@ bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   std::vector<char *> inputs_host;
 
   for (size_t i = 0; i < ellipse_position; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + i]->addr));
+    (void)inputs_host.emplace_back(static_cast<char *>(inputs[kIndex1 + i]->addr));
   }
   size_t ellipse_count = valid_tensor_num_ - not_ellipsis_position_cnt;
   for (size_t i = 0; i < ellipse_count; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->addr));
+    (void)inputs_host.emplace_back(static_cast<char *>(inputs[kIndex1 + not_ellipsis_position_cnt + i]->addr));
   }
   size_t remain_dims = valid_tensor_num_ - inputs_host.size();
   for (size_t i = 0; i < remain_dims; i++) {
-    (void)inputs_host.emplace_back(reinterpret_cast<char *>(inputs[kIndex1 + ellipse_position + i]->addr));
+    (void)inputs_host.emplace_back(static_cast<char *>(inputs[kIndex1 + ellipse_position + i]->addr));
   }
   // multi-threading
   size_t copy_time = output_size_list_[0] / sizeof(int64_t);
