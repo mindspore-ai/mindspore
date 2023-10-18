@@ -171,6 +171,7 @@ bool AscendRuntimeCore::GenTask(const session::KernelGraph &graph) {
   }
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph.graph_id();
 #ifndef ENABLE_SECURITY
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     // Update needed dump kernels for old runtime.
     DumpJsonParser::GetInstance().UpdateNeedDumpKernels(graph);
@@ -259,6 +260,7 @@ void AscendRuntimeCore::GenKernelEventsCore(const session::KernelGraph &graph) {
           auto record_stream = AscendStreamMng::GetInstance().GetStream(pre_cnode_stream_id);
           MS_EXCEPTION_IF_NULL(record_stream);
           auto event = CreateDeviceEvent();
+          MS_EXCEPTION_IF_NULL(event);
           event->set_wait_stream(wait_stream);
           event->set_record_stream(record_stream);
           (void)kernel_post_run_events[pre_cnode].emplace_back([event]() { event->RecordEvent(); });
@@ -268,6 +270,7 @@ void AscendRuntimeCore::GenKernelEventsCore(const session::KernelGraph &graph) {
     }
     if (!found_depend && wait_stream != stream_) {
       auto pre_event = CreateDeviceEvent();
+      MS_EXCEPTION_IF_NULL(pre_event);
       pre_event->set_wait_stream(wait_stream);
       pre_event->set_record_stream(stream_);
       (void)kernel_pre_run_events[kernel].emplace_back([pre_event]() { pre_event->RecordEvent(); });
@@ -280,6 +283,7 @@ void AscendRuntimeCore::GenKernelEventsCore(const session::KernelGraph &graph) {
 
 void AscendRuntimeCore::GetLastNodesOnStream(const std::vector<CNodePtr> &kernels,
                                              std::vector<size_t> *stream_last_nodes) const {
+  MS_EXCEPTION_IF_NULL(stream_last_nodes);
   std::map<size_t, size_t> last_kernel;
   for (size_t i = 0; i < kernels.size(); ++i) {
     const auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
@@ -294,6 +298,7 @@ void AscendRuntimeCore::GetLastNodesOnStream(const std::vector<CNodePtr> &kernel
 void AscendRuntimeCore::ProcessBoundaryEvent(
   const std::vector<CNodePtr> &kernels, std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
   const std::vector<size_t> &last_stream_nodes) {
+  MS_EXCEPTION_IF_NULL(kernel_run_events);
   for (auto &i : last_stream_nodes) {
     if (i >= kernels.size()) {
       MS_LOG(ERROR) << "Node index exceed kernel size.";
