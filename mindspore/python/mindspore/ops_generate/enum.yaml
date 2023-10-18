@@ -1,114 +1,114 @@
 
-#enum TypeId
-type_id:
-  kTypeUnknown: 0
-  #Meta types.
-  kMetaTypeBegin: 0
-  kMetaTypeType: 1
-  kMetaTypeAny: 2
-  kMetaTypeObject: 3
-  kMetaTypeTypeType: 4
-  kMetaTypeProblem: 5
-  kMetaTypeExternal: 6
-  kMetaTypeNone: 7
-  kMetaTypeNull: 8
-  kMetaTypeEllipsis: 9
-  kMetaTypeEnd: 10
-  #
-  # Object types
-  #
-  kObjectTypeBegin: 10
-  kObjectTypeNumber: 11
-  kObjectTypeString: 12
-  kObjectTypeList: 13
-  kObjectTypeTuple: 14
-  kObjectTypeSlice: 15
-  kObjectTypeKeyword: 16
-  kObjectTypeTensorType: 17
-  kObjectTypeRowTensorType: 18
-  kObjectTypeCOOTensorType: 19
-  kObjectTypeUndeterminedType: 20
-  kObjectTypeClass: 21
-  kObjectTypeDictionary: 22
-  kObjectTypeFunction: 23
-  kObjectTypeJTagged: 24
-  kObjectTypeSymbolicKeyType: 25
-  kObjectTypeEnvType: 26
-  kObjectTypeRefKey: 27
-  kObjectTypeRef: 28
-  kObjectTypeEnd: 29
-  #
-  # Number Types
-  #
-  kNumberTypeBegin: 29
-  kNumberTypeBool: 30
-  kNumberTypeInt: 31
-  kNumberTypeInt8: 32
-  kNumberTypeInt16: 33
-  kNumberTypeInt32: 34
-  kNumberTypeInt64: 35
-  kNumberTypeUInt: 36
-  kNumberTypeUInt8: 37
-  kNumberTypeUInt16: 38
-  kNumberTypeUInt32: 39
-  kNumberTypeUInt64: 40
-  kNumberTypeFloat: 41
-  kNumberTypeFloat16: 42
-  kNumberTypeFloat32: 43
-  kNumberTypeFloat64: 44
-  kNumberTypeBFloat16: 45
-  kNumberTypeDouble: 46
-  kNumberTypeComplex: 47
-  kNumberTypeComplex64: 48
-  kNumberTypeComplex128: 49
-  kNumberTypeInt4: 50
-  kNumberTypeGLUInt: 51
-  kNumberTypeEnd: 52
-  #
-  # Monad Types
-  #
-  kMonadTypeBegin: 52
-  kObjectTypeMonad: 53
-  kObjectTypeUMonad: 54
-  kObjectTypeIOMonad: 55
-  kMonadTypeEnd: 56
-  #
-  # Sparse Types
-  #
-  kSparseTypeBegin: 56
-  kObjectTypeCSRTensorType: 57
-  kObjectTypeSparseTensorType: 58
-  kObjectTypeMapTensorType: 59
-  kSparseTypeEnd: 60
+# #enum TypeId
+# type_id:
+#   kTypeUnknown: 0
+#   #Meta types.
+#   kMetaTypeBegin: 0
+#   kMetaTypeType: 1
+#   kMetaTypeAny: 2
+#   kMetaTypeObject: 3
+#   kMetaTypeTypeType: 4
+#   kMetaTypeProblem: 5
+#   kMetaTypeExternal: 6
+#   kMetaTypeNone: 7
+#   kMetaTypeNull: 8
+#   kMetaTypeEllipsis: 9
+#   kMetaTypeEnd: 10
+#   #
+#   # Object types
+#   #
+#   kObjectTypeBegin: 10
+#   kObjectTypeNumber: 11
+#   kObjectTypeString: 12
+#   kObjectTypeList: 13
+#   kObjectTypeTuple: 14
+#   kObjectTypeSlice: 15
+#   kObjectTypeKeyword: 16
+#   kObjectTypeTensorType: 17
+#   kObjectTypeRowTensorType: 18
+#   kObjectTypeCOOTensorType: 19
+#   kObjectTypeUndeterminedType: 20
+#   kObjectTypeClass: 21
+#   kObjectTypeDictionary: 22
+#   kObjectTypeFunction: 23
+#   kObjectTypeJTagged: 24
+#   kObjectTypeSymbolicKeyType: 25
+#   kObjectTypeEnvType: 26
+#   kObjectTypeRefKey: 27
+#   kObjectTypeRef: 28
+#   kObjectTypeEnd: 29
+#   #
+#   # Number Types
+#   #
+#   kNumberTypeBegin: 29
+#   kNumberTypeBool: 30
+#   kNumberTypeInt: 31
+#   kNumberTypeInt8: 32
+#   kNumberTypeInt16: 33
+#   kNumberTypeInt32: 34
+#   kNumberTypeInt64: 35
+#   kNumberTypeUInt: 36
+#   kNumberTypeUInt8: 37
+#   kNumberTypeUInt16: 38
+#   kNumberTypeUInt32: 39
+#   kNumberTypeUInt64: 40
+#   kNumberTypeFloat: 41
+#   kNumberTypeFloat16: 42
+#   kNumberTypeFloat32: 43
+#   kNumberTypeFloat64: 44
+#   kNumberTypeBFloat16: 45
+#   kNumberTypeDouble: 46
+#   kNumberTypeComplex: 47
+#   kNumberTypeComplex64: 48
+#   kNumberTypeComplex128: 49
+#   kNumberTypeInt4: 50
+#   kNumberTypeGLUInt: 51
+#   kNumberTypeEnd: 52
+#   #
+#   # Monad Types
+#   #
+#   kMonadTypeBegin: 52
+#   kObjectTypeMonad: 53
+#   kObjectTypeUMonad: 54
+#   kObjectTypeIOMonad: 55
+#   kMonadTypeEnd: 56
+#   #
+#   # Sparse Types
+#   #
+#   kSparseTypeBegin: 56
+#   kObjectTypeCSRTensorType: 57
+#   kObjectTypeSparseTensorType: 58
+#   kObjectTypeMapTensorType: 59
+#   kSparseTypeEnd: 60
 
 # #enum OpDtype
 op_dtype:
-  DT_BEGIN: 0
-  DT_BOOL: 1
-  DT_INT: 2
-  DT_FLOAT: 3
-  DT_NUMBER: 4
-  DT_TENSOR: 5
-  DT_STR: 6
-  DT_ANY: 7
-  DT_TUPLE_BOOL: 8
-  DT_TUPLE_INT: 9
-  DT_TUPLE_FLOAT: 10
-  DT_TUPLE_NUMBER: 11
-  DT_TUPLE_TENSOR: 12
-  DT_TUPLE_STR: 13
-  DT_TUPLE_ANY: 14
-  DT_LIST_BOOL: 15
-  DT_LIST_INT: 16
-  DT_LIST_FLOAT: 17
-  DT_LIST_NUMBER: 18
-  DT_LIST_TENSOR: 19
-  DT_LIST_STR: 20
-  DT_LIST_ANY: 21
-  DT_END: 22
+  PY_DT_BEGIN: 0
+  PY_DT_BOOL: 1
+  PY_DT_INT: 2
+  PY_DT_FLOAT: 3
+  PY_DT_NUMBER: 4
+  PY_DT_TENSOR: 5
+  PY_DT_STR: 6
+  PY_DT_ANY: 7
+  PY_DT_TUPLE_BOOL: 8
+  PY_DT_TUPLE_INT: 9
+  PY_DT_TUPLE_FLOAT: 10
+  PY_DT_TUPLE_NUMBER: 11
+  PY_DT_TUPLE_TENSOR: 12
+  PY_DT_TUPLE_STR: 13
+  PY_DT_TUPLE_ANY: 14
+  PY_DT_LIST_BOOL: 15
+  PY_DT_LIST_INT: 16
+  PY_DT_LIST_FLOAT: 17
+  PY_DT_LIST_NUMBER: 18
+  PY_DT_LIST_TENSOR: 19
+  PY_DT_LIST_STR: 20
+  PY_DT_LIST_ANY: 21
+  PY_DT_END: 22
 
 # enum Format
-format:
+py_format:
   NCHW: 0
   NHWC: 1
 

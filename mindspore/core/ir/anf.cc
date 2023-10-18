@@ -486,6 +486,7 @@ void ValueNode::set_value(const ValuePtr &value) {
   if (value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
   }
+  value_ = value;
 }
 
 const ValuePtr &ValueNode::value() const { return value_; }

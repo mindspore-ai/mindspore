@@ -27,7 +27,7 @@
 #include "ops/conv2d.h"
 #include "ops/squeeze.h"
 #include "ops/unsqueeze.h"
-#include "ops/batch_norm.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/primitive_c.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"

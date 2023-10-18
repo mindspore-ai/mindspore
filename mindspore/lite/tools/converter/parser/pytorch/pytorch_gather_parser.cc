@@ -16,7 +16,8 @@
 
 #include "tools/converter/parser/pytorch/pytorch_gather_parser.h"
 #include <memory>
-#include "ops/gather_d.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/gather_d.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

@@ -31,10 +31,10 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/common/utils.h"
 
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+
 #include "ops/reshape.h"
 #include "ops/strided_slice.h"
-#include "ops/expand_dims.h"
 #include "ops/fusion/topk_fusion.h"
 #include "ops/broadcast_to.h"
 

@@ -35,7 +35,7 @@
 #include "ops/batch_matmul.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/standard_normal.h"
 #include "ops/tuple_get_item.h"
 #include "cxx_api/model/acl/model_converter.h"

@@ -24,7 +24,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/full_connection.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/slice_fusion.h"
 #include "ops/softmax.h"
 #include "ops/op_utils.h"

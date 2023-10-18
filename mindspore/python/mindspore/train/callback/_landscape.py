@@ -56,19 +56,19 @@ def nptype_to_prototype(np_value):
         Type, proto data type.
     """
     np2pt_tbl = {
-        np.bool_: 'DT_BOOL',
-        np.int8: 'DT_INT8',
-        np.int16: 'DT_INT16',
-        np.int32: 'DT_INT32',
-        np.int64: 'DT_INT64',
+        np.bool_: 'PY_DT_BOOL',
+        np.int8: 'PY_DT_INT8',
+        np.int16: 'PY_DT_INT16',
+        np.int32: 'PY_DT_INT32',
+        np.int64: 'PY_DT_INT64',
         np.uint8: 'DT_UINT8',
         np.uint16: 'DT_UINT16',
         np.uint32: 'DT_UINT32',
         np.uint64: 'DT_UINT64',
-        np.float16: 'DT_FLOAT16',
-        np.float: 'DT_FLOAT64',
-        np.float32: 'DT_FLOAT32',
-        np.float64: 'DT_FLOAT64',
+        np.float16: 'PY_DT_FLOAT16',
+        np.float: 'PY_DT_FLOAT64',
+        np.float32: 'PY_DT_FLOAT32',
+        np.float64: 'PY_DT_FLOAT64',
         None: 'DT_UNDEFINED'
     }
     if np_value is None:

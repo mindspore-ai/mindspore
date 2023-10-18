@@ -22,7 +22,8 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/onehot_tensorrt.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/one_hot_impl.cuh"
-#include "ops/one_hot.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/one_hot.h"
 
 namespace mindspore::lite {
 constexpr int INDICES_INDEX = 0;

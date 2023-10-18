@@ -16,13 +16,14 @@
 
 #include "tools/converter/parser/pytorch/pytorch_elementop_parser.h"
 #include <memory>
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/less_equal.h"
-#include "ops/equal.h"
+// #include "ops/equal.h"
 #include "ops/less.h"
-#include "ops/greater.h"
-#include "ops/logical_and.h"
-#include "ops/logical_not.h"
-#include "ops/logical_or.h"
+// #include "ops/greater.h"
+// #include "ops/logical_and.h"
+// #include "ops/logical_not.h"
+// #include "ops/logical_or.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

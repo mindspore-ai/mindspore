@@ -20,7 +20,8 @@
 #include <vector>
 #include "common/op_attr.h"
 #include "common/anf_util.h"
-#include "ops/flatten.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/flatten.h"
 #include "op/flatten_operator.h"
 
 namespace mindspore {

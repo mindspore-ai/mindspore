@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_GATHER_FUSION_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
+#include "ops/auto_generate/gen_ops_name.h"
 #include "ops/gather.h"
 
 using mindspore::ops::kNameGather;

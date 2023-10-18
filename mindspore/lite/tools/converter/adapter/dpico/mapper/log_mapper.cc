@@ -19,7 +19,8 @@
 #include <utility>
 #include <vector>
 #include "common/anf_util.h"
-#include "ops/log.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/log.h"
 #include "op/log_operator.h"
 
 namespace mindspore {

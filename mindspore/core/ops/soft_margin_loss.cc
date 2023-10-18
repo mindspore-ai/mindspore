@@ -59,7 +59,7 @@ abstract::ShapePtr SoftMarginLossInferShape(const PrimitivePtr &primitive,
   auto out_shape = predict;
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
-  if (reduction == REDUCTION_SUM || reduction == MEAN) {
+  if (reduction == mindspore::REDUCTION_SUM || reduction == mindspore::MEAN) {
     out_shape.resize(0);
   }
   return std::make_shared<abstract::Shape>(out_shape);

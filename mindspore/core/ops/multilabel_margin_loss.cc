@@ -64,7 +64,7 @@ abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primi
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
-  if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
+  if (reduction_ == mindspore::REDUCTION_SUM || reduction_ == mindspore::MEAN) {
     out_shape0.resize(0);
   }
   if (x.size() == xsizemin) {

@@ -59,19 +59,19 @@ def get_type_str(type_str):
     """
     # add more type here
     type_kind_dict = {
-        'int': 'OpDtype.DT_INT',
-        'float': 'OpDtype.DT_FLOAT',
-        'bool': 'OpDtype.DT_BOOL',
-        'number': 'OpDtype.DT_NUMBER',
-        'tuple[int]': 'OpDtype.DT_TUPLE_ANY',
-        'tuple[float]': 'OpDtype.DT_TUPLE_ANY',
-        'tuple[bool]': 'OpDtype.DT_TUPLE_ANY',
-        'tuple[tensor]': 'OpDtype.DT_TUPLE_ANY',
-        'list[int]': 'OpDtype.DT_LIST_ANY',
-        'list[float]': 'OpDtype.DT_LIST_ANY',
-        'list[bool]': 'OpDtype.DT_LIST_ANY',
-        'list[tensor]': 'OpDtype.DT_LIST_ANY',
-        'tensor': 'OpDtype.DT_TENSOR',
+        'int': 'OpDtype.PY_DT_INT',
+        'float': 'OpDtype.PY_DT_FLOAT',
+        'bool': 'OpDtype.PY_DT_BOOL',
+        'number': 'OpDtype.PY_DT_NUMBER',
+        'tuple[int]': 'OpDtype.PY_DT_TUPLE_ANY',
+        'tuple[float]': 'OpDtype.PY_DT_TUPLE_ANY',
+        'tuple[bool]': 'OpDtype.PY_DT_TUPLE_ANY',
+        'tuple[tensor]': 'OpDtype.PY_DT_TUPLE_ANY',
+        'list[int]': 'OpDtype.PY_DT_LIST_ANY',
+        'list[float]': 'OpDtype.PY_DT_LIST_ANY',
+        'list[bool]': 'OpDtype.PY_DT_LIST_ANY',
+        'list[tensor]': 'OpDtype.PY_DT_LIST_ANY',
+        'tensor': 'OpDtype.PY_DT_TENSOR',
     }
     if type_str in type_kind_dict:
         return type_kind_dict[type_str]

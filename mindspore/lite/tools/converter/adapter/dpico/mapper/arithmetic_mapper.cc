@@ -20,7 +20,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "ops/neg.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/neg.h"
 #include "common/anf_util.h"
 #include "op/binary_math_operator.h"
 

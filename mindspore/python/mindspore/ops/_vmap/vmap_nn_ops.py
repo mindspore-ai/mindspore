@@ -29,7 +29,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _bdim_at_any, _bdim_at_front, _bdim_at_back, _handle_broadcasting, get_unary_grad_vmap_rule, _raise_value_error, \
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.auto_generate.gen_enum_def import Format
+from mindspore.ops.auto_generate.gen_enum_def import PyFormat
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -372,7 +372,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
     @constexpr
     def get_channal_pos_in_x(d_format, n_dims):
-        if d_format == Format.NHWC:
+        if d_format == PyFormat.NHWC:
             return n_dims
         return 2
 
@@ -424,7 +424,7 @@ def get_bias_add_grad_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAddGrad` operation."""
     @constexpr
     def get_channal_pos(d_format, x_rank):
-        if d_format == Format.NHWC:
+        if d_format == PyFormat.NHWC:
             return x_rank
         return 2
 

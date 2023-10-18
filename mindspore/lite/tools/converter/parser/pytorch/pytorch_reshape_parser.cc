@@ -16,7 +16,8 @@
 
 #include "tools/converter/parser/pytorch/pytorch_reshape_parser.h"
 #include <memory>
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/reshape.h"
 #include "ops/squeeze.h"
 #include "ops/unsqueeze.h"
 #include "nnacl/op_base.h"

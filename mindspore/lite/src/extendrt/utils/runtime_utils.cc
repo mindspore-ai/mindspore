@@ -46,7 +46,7 @@ void RuntimeUtils::SetAddressPtr(device::DeviceAddressPtr address_ptr, void *ptr
 void RuntimeUtils::AllocAddressPtr(device::DeviceAddressPtr address_ptr) {
   MS_EXCEPTION_IF_NULL(address_ptr);
   if (address_ptr->GetDevicePtr() == nullptr) {
-    address_ptr->SetDevicePtr(malloc(address_ptr->size_));
+    address_ptr->SetDevicePtr(malloc(address_ptr->GetSize()));
   }
 }
 
@@ -55,11 +55,11 @@ kernel::AddressPtr RuntimeUtils::GetAddressFromDevice(device::DeviceAddressPtr d
   kernel::AddressPtr kernel_address = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(kernel_address);
   if (device_address->GetDevicePtr() == nullptr) {
-    device_address->SetDevicePtr(malloc(device_address->size_));
+    device_address->SetDevicePtr(malloc(device_address->GetSize()));
   }
   MS_EXCEPTION_IF_NULL(device_address->GetDevicePtr());
   kernel_address->addr = device_address->GetDevicePtr();
-  kernel_address->size = device_address->size_;
+  kernel_address->size = device_address->GetSize();
   return kernel_address;
 }
 

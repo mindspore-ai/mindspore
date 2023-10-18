@@ -22,7 +22,8 @@
 #include "common/op_attr.h"
 #include "common/op_enum.h"
 #include "common/fetch_content.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/reshape.h"
 #include "op/reshape_operator.h"
 
 namespace mindspore {

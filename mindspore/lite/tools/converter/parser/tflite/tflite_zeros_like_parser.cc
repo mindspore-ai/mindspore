@@ -18,7 +18,8 @@
 #include "tools/converter/parser/tflite/tflite_zeros_like_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/zeros_like.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/zeros_like.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

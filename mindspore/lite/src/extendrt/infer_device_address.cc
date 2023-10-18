@@ -30,8 +30,8 @@ void InferDeviceAddress::ClearDeviceMemory() {
 
 bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, TypeId type, void *host_ptr) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
   if (GetDevicePtr() == nullptr) {
@@ -43,9 +43,9 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
     return true;
   }
 
-  if (type == type_id_) {
-    if (size > size_) {
-      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (type == type_id()) {
+    if (size > GetSize()) {
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
       return true;
     }
     errno_t ret_code = memcpy_s(host_ptr, size, GetDevicePtr(), size);
@@ -63,8 +63,8 @@ bool InferDeviceAddress::SyncDeviceToHost(const ShapeVector &, size_t size, Type
 bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId type, const void *host_ptr,
                                           const std::string &) const {
   // The input or output may be empty.
-  if ((size == 0) || (size_ == 0)) {
-    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << size_;
+  if ((size == 0) || (GetSize() == 0)) {
+    MS_LOG(INFO) << "No need sync, host size: " << size << ", device size: " << GetSize();
     return true;
   }
   if (GetDevicePtr() == nullptr) {
@@ -76,9 +76,9 @@ bool InferDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, Type
     return true;
   }
 
-  if (type == type_id_) {
-    if (size > size_) {
-      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << size_;
+  if (type == type_id()) {
+    if (size > GetSize()) {
+      MS_LOG(WARNING) << "Please check whether need sync data, host size: " << size << ", device size: " << GetSize();
       return true;
     }
 

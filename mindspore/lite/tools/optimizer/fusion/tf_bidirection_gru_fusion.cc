@@ -31,7 +31,7 @@
 #include "ops/split.h"
 #include "ops/squeeze.h"
 #include "ops/stack.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "include/common/utils/utils.h"

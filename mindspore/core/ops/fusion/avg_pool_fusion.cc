@@ -50,7 +50,7 @@ ActivationType AvgPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-// MIND_API_OPERATOR_IMPL(AvgPoolFusion, AvgPool);
-REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
+MIND_API_OPERATOR_IMPL(AvgPoolFusion, BaseOperator);
+// REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

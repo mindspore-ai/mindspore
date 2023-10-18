@@ -17,7 +17,7 @@
 #include "parser/caffe/caffe_batchnorm_parser.h"
 #include <cmath>
 #include <memory>
-#include "ops/batch_norm.h"
+#include "ops/manually_defined_lite_ops.h"
 #include "common/op_attr.h"
 
 namespace mindspore {

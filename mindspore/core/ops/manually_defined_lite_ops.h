@@ -87,6 +87,7 @@ class MIND_API BatchNormWithAddAndActivation : public BatchNorm {
   }
 };
 
+/*
 class MIND_API BatchNormGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchNormGrad);
@@ -104,6 +105,7 @@ class MIND_API BatchNormGrad : public BaseOperator {
   void set_inplace_algo(const std::string &inplace_algo);
 };
 
+
 class MIND_API BatchNormGradWithActivation : public BatchNormGrad {
  public:
   MIND_API_BASE_MEMBER(BatchNormGradWithActivation);
@@ -115,6 +117,7 @@ class MIND_API BatchNormGradWithAddAndActivation : public BatchNormGrad {
   MIND_API_BASE_MEMBER(BatchNormGradWithAddAndActivation);
   BatchNormGradWithAddAndActivation() : BatchNormGrad(kBatchNormGradWithAddAndActivationOpName) {}
 };
+*/
 }  // namespace ops
 }  // namespace mindspore
 

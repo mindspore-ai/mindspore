@@ -15,6 +15,7 @@
  */
 
 #include "src/litert/cxx_api/kernel_executor/op_converter.h"
+#include "ops/manually_defined_lite_ops.h"
 #include "ops/relu.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
@@ -22,7 +23,6 @@
 #include "ops/fusion/arg_min_fusion.h"
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fused_batch_norm.h"
-#include "ops/batch_norm.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/div_fusion.h"

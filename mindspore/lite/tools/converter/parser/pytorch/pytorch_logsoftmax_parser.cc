@@ -16,7 +16,8 @@
 
 #include "tools/converter/parser/pytorch/pytorch_logsoftmax_parser.h"
 #include <memory>
-#include "ops/log_softmax.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/log_softmax.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

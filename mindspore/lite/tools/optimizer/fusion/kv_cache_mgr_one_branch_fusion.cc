@@ -31,12 +31,9 @@
 #include "ops/comparison_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "ops/fusion/kv_cache_mgr.h"
-#include "ops/add.h"
-#include "ops/expand_dims.h"
-#include "ops/mul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/make_tuple.h"
 #include "ops/concat.h"
-#include "ops/assign.h"
 namespace mindspore::opt {
 const BaseRef KVCacheMgrOneBranchFusion::DefinePattern() const {
   if (!InitVar()) {

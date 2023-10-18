@@ -51,62 +51,62 @@ def list_to_tensor(data):
 
 
 # scalar
-DT_INT = OpDtype.DT_INT.value
-DT_FLOAT = OpDtype.DT_FLOAT.value
-DT_BOOL = OpDtype.DT_BOOL.value
-DT_NUMBER = OpDtype.DT_NUMBER.value
+PY_DT_INT = OpDtype.PY_DT_INT.value
+PY_DT_FLOAT = OpDtype.PY_DT_FLOAT.value
+PY_DT_BOOL = OpDtype.PY_DT_BOOL.value
+PY_DT_NUMBER = OpDtype.PY_DT_NUMBER.value
 # tuple
-DT_TUPLE_BOOL = OpDtype.DT_TUPLE_ANY.value
-DT_TUPLE_INT = OpDtype.DT_TUPLE_INT.value
-DT_TUPLE_FLOAT = OpDtype.DT_TUPLE_FLOAT.value
-DT_TUPLE_NUMBER = OpDtype.DT_TUPLE_NUMBER.value
-DT_TUPLE_TENSOR = OpDtype.DT_TUPLE_TENSOR.value
-DT_TUPLE_STR = OpDtype.DT_TUPLE_STR.value
-DT_TUPLE_ANY = OpDtype.DT_TUPLE_ANY.value
+PY_DT_TUPLE_BOOL = OpDtype.PY_DT_TUPLE_ANY.value
+PY_DT_TUPLE_INT = OpDtype.PY_DT_TUPLE_INT.value
+PY_DT_TUPLE_FLOAT = OpDtype.PY_DT_TUPLE_FLOAT.value
+PY_DT_TUPLE_NUMBER = OpDtype.PY_DT_TUPLE_NUMBER.value
+PY_DT_TUPLE_TENSOR = OpDtype.PY_DT_TUPLE_TENSOR.value
+PY_DT_TUPLE_STR = OpDtype.PY_DT_TUPLE_STR.value
+PY_DT_TUPLE_ANY = OpDtype.PY_DT_TUPLE_ANY.value
 # list
-DT_LIST_BOOL = OpDtype.DT_LIST_BOOL.value
-DT_LIST_INT = OpDtype.DT_LIST_INT.value
-DT_LIST_FLOAT = OpDtype.DT_LIST_FLOAT.value
-DT_LIST_NUMBER = OpDtype.DT_LIST_NUMBER.value
-DT_LIST_TENSOR = OpDtype.DT_LIST_TENSOR.value
-DT_LIST_STR = OpDtype.DT_LIST_STR.value
-DT_LIST_ANY = OpDtype.DT_LIST_ANY.value
+PY_DT_LIST_BOOL = OpDtype.PY_DT_LIST_BOOL.value
+PY_DT_LIST_INT = OpDtype.PY_DT_LIST_INT.value
+PY_DT_LIST_FLOAT = OpDtype.PY_DT_LIST_FLOAT.value
+PY_DT_LIST_NUMBER = OpDtype.PY_DT_LIST_NUMBER.value
+PY_DT_LIST_TENSOR = OpDtype.PY_DT_LIST_TENSOR.value
+PY_DT_LIST_STR = OpDtype.PY_DT_LIST_STR.value
+PY_DT_LIST_ANY = OpDtype.PY_DT_LIST_ANY.value
 # tensor
-DT_TENSOR = OpDtype.DT_TENSOR.value
+PY_DT_TENSOR = OpDtype.PY_DT_TENSOR.value
 
 
 def is_tuple(type_id):
     """
     Check type id is tuple.
     """
-    return type_id in (DT_TUPLE_BOOL, DT_TUPLE_INT, DT_TUPLE_FLOAT, type_id == DT_TUPLE_NUMBER, DT_TUPLE_TENSOR,
-                       DT_TUPLE_STR, DT_TUPLE_ANY)
+    return type_id in (PY_DT_TUPLE_BOOL, PY_DT_TUPLE_INT, PY_DT_TUPLE_FLOAT, type_id == PY_DT_TUPLE_NUMBER,
+                       PY_DT_TUPLE_TENSOR, PY_DT_TUPLE_STR, PY_DT_TUPLE_ANY)
 
 
 def is_list(type_id):
     """
     Check type id is list.
     """
-    return type_id in (DT_LIST_BOOL, DT_LIST_INT, DT_LIST_FLOAT, DT_LIST_NUMBER, DT_LIST_TENSOR,
-                       DT_LIST_STR, DT_LIST_ANY)
+    return type_id in (PY_DT_LIST_BOOL, PY_DT_LIST_INT, PY_DT_LIST_FLOAT, PY_DT_LIST_NUMBER, PY_DT_LIST_TENSOR,
+                       PY_DT_LIST_STR, PY_DT_LIST_ANY)
 
 
 def is_numer(type_id):
     """
     Check type id is number.
     """
-    return type_id in (DT_INT, DT_FLOAT, DT_BOOL, DT_NUMBER)
+    return type_id in (PY_DT_INT, PY_DT_FLOAT, PY_DT_BOOL, PY_DT_NUMBER)
 
 
 def is_instance_of(data, type_id):
     """
     Instead isinstance(obj, type).
     """
-    if type_id == DT_INT:
+    if type_id == PY_DT_INT:
         return isinstance(data, int)
-    if type_id == DT_FLOAT:
+    if type_id == PY_DT_FLOAT:
         return isinstance(data, float)
-    if type_id == DT_BOOL:
+    if type_id == PY_DT_BOOL:
         return isinstance(data, bool)
     if is_numer(type_id):
         return isinstance(data, (int, float, bool))
@@ -114,7 +114,7 @@ def is_instance_of(data, type_id):
         return isinstance(data, tuple)
     if is_list(type_id):
         return isinstance(data, list)
-    if type_id == DT_TENSOR:
+    if type_id == PY_DT_TENSOR:
         return isinstance(data, Tensor)
     return False
 
@@ -139,7 +139,7 @@ def type_it(data, src_type, dst_type):
         return data
     if not is_instance_in(data, src_type):
         raise TypeError(f"For type_it, the {data} should be {src_type}, but got {type(data)}")
-    if dst_type == DT_FLOAT:
+    if dst_type == PY_DT_FLOAT:
         if isinstance(data, int):
             return int_to_float(data)
     elif is_tuple(dst_type):
@@ -149,7 +149,7 @@ def type_it(data, src_type, dst_type):
             return list_to_tuple(data)
         if isinstance(data, Tensor):
             return tensor_to_tuple(data)
-    elif dst_type == DT_TENSOR:
+    elif dst_type == PY_DT_TENSOR:
         if isinstance(data, (int, float, bool)):
             return scalar_to_tensor(data)
         if isinstance(data, tuple):

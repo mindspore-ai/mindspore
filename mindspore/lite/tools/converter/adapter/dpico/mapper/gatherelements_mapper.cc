@@ -18,7 +18,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "ops/gather_d.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/gather_d.h"
 #include "op/gather_elements_operator.h"
 
 namespace mindspore {

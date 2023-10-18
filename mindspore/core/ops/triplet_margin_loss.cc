@@ -99,7 +99,7 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);
   mindspore::Reduction reduction_ = static_cast<mindspore::Reduction>(reduction);
-  if (reduction_ == REDUCTION_SUM || reduction_ == MEAN) {
+  if (reduction_ == mindspore::REDUCTION_SUM || reduction_ == mindspore::MEAN) {
     out_shape.resize(0);
   }
   return std::make_shared<abstract::Shape>(out_shape);

@@ -27,7 +27,8 @@
 #include "common/string_util.h"
 #include "ops/custom.h"
 #include "ops/tuple_get_item.h"
-#include "ops/transpose.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/transpose.h"
 #include "common/check_base.h"
 namespace mindspore {
 namespace ops {

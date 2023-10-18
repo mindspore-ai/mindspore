@@ -19,7 +19,8 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
-#include "ops/bias_add.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/bias_add.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "common/op_enum.h"

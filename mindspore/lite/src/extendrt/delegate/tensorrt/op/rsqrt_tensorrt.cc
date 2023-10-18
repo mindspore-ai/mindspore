@@ -16,7 +16,8 @@
 
 #include <memory>
 #include "src/extendrt/delegate/tensorrt/op/rsqrt_tensorrt.h"
-#include "ops/rsqrt.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/rsqrt.h"
 
 namespace mindspore::lite {
 int RsqrtTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

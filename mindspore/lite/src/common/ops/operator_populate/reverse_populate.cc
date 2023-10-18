@@ -15,7 +15,8 @@
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/fp32/reverse_fp32.h"
-#include "ops/reverse_v2.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/reverse_v2.h"
 using mindspore::ops::kNameReverseV2;
 using mindspore::schema::PrimitiveType_ReverseV2;
 

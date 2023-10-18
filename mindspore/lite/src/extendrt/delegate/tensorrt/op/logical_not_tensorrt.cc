@@ -24,7 +24,8 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/logical.cuh"
-#include "ops/logical_not.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+// #include "ops/logical_not.h"
 
 namespace mindspore::lite {
 int LogicalNotTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

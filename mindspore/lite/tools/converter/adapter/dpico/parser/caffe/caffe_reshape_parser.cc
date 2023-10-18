@@ -17,7 +17,7 @@
 #include "parser/caffe/caffe_reshape_parser.h"
 #include <memory>
 #include "common/op_attr.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_name.h"
 
 namespace mindspore {

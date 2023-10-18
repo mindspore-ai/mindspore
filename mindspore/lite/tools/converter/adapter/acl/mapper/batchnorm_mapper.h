@@ -18,15 +18,13 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_BATCHNORM_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/batch_norm.h"
-
-using mindspore::ops::kNameBatchNorm;
+#include "ops/manually_defined_lite_ops.h"
 
 namespace mindspore {
 namespace lite {
 class BatchNormMapper : public PrimitiveMapper {
  public:
-  BatchNormMapper() : PrimitiveMapper(kNameBatchNorm) {}
+  BatchNormMapper() : PrimitiveMapper(kBatchNormOpName) {}
 
   ~BatchNormMapper() override = default;
 

@@ -44,7 +44,7 @@ constexpr size_t kSparseCrossInputValueStart = 1;
 constexpr size_t kSparseCrossInputShapeStart = 2;
 constexpr size_t kSparseCrossInputDenseStart = 3;
 
-TypePtrList GetSequenceTypes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+TypePtrList GetCrossSequenceTypes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
   bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
   bool is_list = x->GetType()->object_type() == kObjectTypeList;
   if ((!is_tuple) && (!is_list)) {
@@ -62,7 +62,7 @@ TypePtrList GetSequenceTypes(const PrimitivePtr &primitive, const AbstractBasePt
   return types_list;
 }
 
-abstract::BaseShapePtrList GetSequenceShapes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
+abstract::BaseShapePtrList GetCrossSequenceShapes(const PrimitivePtr &primitive, const AbstractBasePtr &x) {
   bool is_tuple = x->GetType()->object_type() == kObjectTypeTuple;
   bool is_list = x->GetType()->object_type() == kObjectTypeList;
   if ((!is_tuple) && (!is_list)) {
@@ -92,13 +92,13 @@ bool SparseCrossCheckShape(const PrimitivePtr &primitive, const std::vector<Abst
   }
   auto op_name = primitive->name();
 
-  auto inputs_indices_shapes = GetSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
+  auto inputs_indices_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
   auto indices_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes[0])[kShape];
-  auto inputs_values_shapes = GetSequenceShapes(primitive, input_args[kSparseCrossInputValueStart]);
+  auto inputs_values_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputValueStart]);
   auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values_shapes[0])[kShape];
-  auto inputs_shapes_shapes = GetSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
+  auto inputs_shapes_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
   auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes_shapes[0])[kShape];
-  auto inputs_denses_shapes = GetSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
+  auto inputs_denses_shapes = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
   auto denses_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_denses_shapes[0])[kShape];
 
   if (IsDynamic(indices_element0_shape) || IsDynamic(values_element0_shape) || IsDynamic(shapes_element0_shape) ||
@@ -150,10 +150,10 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{out_indices_shape, out_value_shape, out_shape_shape});
   }
-  auto inputs_indices_shapes1 = GetSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
+  auto inputs_indices_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputIndicesStart]);
   auto indices_element0_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices_shapes1[0])[kShape];
-  auto inputs_dense_shapes1 = GetSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
-  auto inputs_shape_shapes1 = GetSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
+  auto inputs_dense_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputDenseStart]);
+  auto inputs_shape_shapes1 = GetCrossSequenceShapes(primitive, input_args[kSparseCrossInputShapeStart]);
   auto shape_shape1 = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shape_shapes1[0])[kShape];
   int64_t rank = indices_element0_shape1[1];
   int64_t indices_row = 0;
@@ -181,7 +181,7 @@ abstract::TupleShapePtr SparseCrossInferShape(const PrimitivePtr &primitive,
 
 TuplePtr SparseCrossInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
-  auto input_values_types = GetSequenceTypes(primitive, input_args[kSparseCrossInputValueStart]);
+  auto input_values_types = GetCrossSequenceTypes(primitive, input_args[kSparseCrossInputValueStart]);
   for (size_t i = 0; i < input_values_types.size(); ++i) {
     auto input_dtype = input_values_types[i];
     (void)CheckAndConvertUtils::CheckTypeValid("values", input_dtype, {kInt64}, op_name);

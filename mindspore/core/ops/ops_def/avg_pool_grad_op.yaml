@@ -22,7 +22,7 @@ avg_pool_grad:
         data_format:
             dtype: int
             init: "'NCHW'"
-            arg_handler: format_to_enum
+            arg_handler: py_format_to_enum
     returns:
         output:
             dtype: tensor

@@ -19,7 +19,6 @@
 #include <memory>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
-#include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
 #include "include/common/utils/utils.h"
 #include "ops/fusion/scale_fusion.h"

@@ -21,10 +21,11 @@
 #include <vector>
 #include <string>
 #include "mindspore/core/ops/lite_ops.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/op_utils.h"
-#include "ops/assign.h"
+// #include "ops/assign.h"
 #include "ops/depend.h"
 #include "ops/sequence_ops.h"
 #include "tools/common/func_graph_utils.h"

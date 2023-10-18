@@ -22,7 +22,10 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "ops/op_name.h"
+#include "mindapi/src/helper.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
@@ -88,5 +91,6 @@ Format BatchNorm::get_format() const {
   }
   return Format(iter->second);
 }
+MIND_API_OPERATOR_IMPL(BatchNorm, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

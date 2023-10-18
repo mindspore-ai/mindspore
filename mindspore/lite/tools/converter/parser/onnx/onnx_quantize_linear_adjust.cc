@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include "ops/primitive_c.h"
-#include "ops/reshape.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/scale_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "tools/converter/ops/ops_def.h"
