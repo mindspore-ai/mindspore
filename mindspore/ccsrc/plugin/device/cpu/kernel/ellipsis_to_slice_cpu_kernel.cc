@@ -67,13 +67,13 @@ int EllipsisToSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 bool EllipsisToSliceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs) {
-  const auto input_addr1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  auto output_addr0 = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_addr1 = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_addr2 = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+  const auto input_addr1 = static_cast<int64_t *>(inputs[kIndex1]->addr);
+  auto output_addr0 = static_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_addr1 = static_cast<int64_t *>(outputs[kIndex1]->addr);
+  auto output_addr2 = static_cast<int64_t *>(outputs[kIndex2]->addr);
   ShapeVector data_shape = data_shapes_[0];
   size_t dim_size = data_shape.size();
-  size_t slice_nums = data_shapes_[1][1];
+  size_t slice_nums = static_cast<size_t>(data_shapes_[1][1]);
   const size_t max_indices_num = 8;
   std::vector<size_t> ini_index;
   size_t ellipse_position = 0;
