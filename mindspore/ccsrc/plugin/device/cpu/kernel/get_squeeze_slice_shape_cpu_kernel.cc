@@ -65,7 +65,7 @@ int GetSqueezeSliceShapeCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 bool GetSqueezeSliceShapeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                     const std::vector<AddressPtr> &workspace,
                                                     const std::vector<AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_addr = static_cast<int64_t *>(outputs[kIndex0]->addr);
 
   ShapeVector data_shape = data_shapes_[0];
   std::vector<size_t> ini_index;
