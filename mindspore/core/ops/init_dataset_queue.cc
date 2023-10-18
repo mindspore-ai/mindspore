@@ -17,7 +17,6 @@
 #include "ops/init_dataset_queue.h"
 #include "mindapi/src/helper.h"
 #include "ops/primitive_c.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
