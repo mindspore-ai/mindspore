@@ -105,6 +105,8 @@ class MS_CORE_API ForkUtils {
 
   std::vector<fork_callback_info> GetCallbacks() { return fork_callbacks_; }
 
+  bool fork_valid_flag = false;
+
  private:
   ForkUtils() = default;
   ~ForkUtils() = default;
