@@ -281,19 +281,13 @@ STATUS ConverterFuncGraph::UnifyFuncGraphInputFormat(const std::shared_ptr<Conve
   return RET_OK;
 }
 
-STATUS ConverterFuncGraph::UnifyFuncGraphInputDataType(const std::shared_ptr<ConverterPara> &param,
+STATUS ConverterFuncGraph::UnifyFuncGraphInOutDataType(const std::shared_ptr<ConverterPara> &param,
                                                        FuncGraphPtr func_graph) {
-  if (param->input_data_type == DataType::kNumberTypeInt64) {
-    if (param->fmk_type != FmkType::kFmkTypeTf) {
-      MS_LOG(WARNING) << "In the current version, only TF model setting int64 input data type is supported.";
-    }
-    return RET_OK;
-  }
-
-  opt::InputDTypeTransPass pass(DataType::kNumberTypeInt32, DataType::kNumberTypeInt64);
+  opt::InOutDTypeTransPass pass(param->input_data_type, param->output_data_type);
   auto status = pass.Run(func_graph);
   if (!status) {
-    MS_LOG(ERROR) << "Failed to Specify graph input data type to " << param->input_data_type;
+    MS_LOG(ERROR) << "Failed to Specify graph input data type to " << param->input_data_type
+                  << " and output data type to " << param->output_data_type;
     return RET_ERROR;
   }
   return RET_OK;
@@ -470,7 +464,7 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     }
   }
 
-  status = UnifyFuncGraphInputDataType(param, func_graph);
+  status = UnifyFuncGraphInOutDataType(param, func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UnifyFuncGraphForInfer failed.";
     return status;

@@ -49,7 +49,7 @@ class ConverterFuncGraph {
                                        std::vector<std::string> *output_names);
   static STATUS UnifyFuncGraphInputFormat(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static STATUS UnifyFuncGraphOutputFormat(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
-  static STATUS UnifyFuncGraphInputDataType(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+  static STATUS UnifyFuncGraphInOutDataType(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static FuncGraphPtr Load(const std::shared_ptr<ConverterPara> &param);
   static FuncGraphPtr Load3rdModelToFuncgraph(const std::shared_ptr<ConverterPara> &param);
   static STATUS Quantize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
