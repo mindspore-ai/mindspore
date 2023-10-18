@@ -38,6 +38,24 @@ get_version() {
     VERSION_STR=$(cat ${BASEPATH}/version.txt)
 }
 
+get_cpack_dir() {
+    # ${CPACK_PACKAGE_DIR}/${pkg_name} is the output of package_lite.cmake(make package)
+    # ${INSTALL_PREFIX}/${pkg_name} is the output of make install
+    # please use ${CPACK_PACKAGE_DIR}/${pkg_name} instead of ${INSTALL_PREFIX}/${pkg_name}
+    local pack_dir="_CPack_Packages"
+
+    local platform="Linux"
+    local machine="linux-x64"
+    if [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
+        platform="Android"
+        machine="android-aarch64"
+    fi
+
+    local generator="TGZ"
+
+    CPACK_PACKAGE_DIR=${INSTALL_PREFIX}/${pack_dir}/${platform}/${generator}/mindspore-lite-${VERSION_STR}/${machine}
+}
+
 write_commit_file() {
     COMMIT_STR=$(git log -1 | grep commit)
     echo ${COMMIT_STR} > "${BASEPATH}/mindspore/lite/build/.commit_id"
@@ -327,8 +345,8 @@ build_python_wheel_package() {
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl/*.so* package/mindspore_lite/lib/
     fi
-    if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels" ]; then
-      cp -rf ${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels package/mindspore_lite/
+    if [ -d "${CPACK_PACKAGE_DIR}/${pkg_name}/tools/custom_kernels" ]; then
+      cp -rf ${CPACK_PACKAGE_DIR}/${pkg_name}/tools/custom_kernels package/mindspore_lite/
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib/*.so* package/mindspore_lite/lib/
@@ -978,6 +996,8 @@ fi
 
 get_version
 CMAKE_ARGS="${CMAKE_ARGS} -DVERSION_STR=${VERSION_STR}"
+
+get_cpack_dir
 
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar
