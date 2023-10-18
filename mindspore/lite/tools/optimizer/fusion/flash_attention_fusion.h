@@ -83,6 +83,11 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreateFAForSD15(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
                            const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
                            float scale_value) const;
+  CNodePtr CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const CNodePtr &matmul_1,
+                                 const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul) const;
+  CNodePtr CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                        const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
+                                        const CNodePtr &attention_mask_mul) const;
 
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
   const VectorRef DefineFlashAttentionPatternForSDBSH() const;
