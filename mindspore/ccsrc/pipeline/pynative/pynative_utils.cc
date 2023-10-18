@@ -361,11 +361,13 @@ ValuePtr Common::FilterSensValues(const ValuePtr &value) {
     auto value_seq = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_seq);
     for (auto &filter_value : value_seq->value()) {
-      if (FilterSensValues(filter_value) != nullptr) {
-        (void)value_list.emplace_back(filter_value);
+      if (auto t = FilterSensValues(filter_value); t != nullptr) {
+        (void)value_list.emplace_back(t);
       }
     }
     return std::make_shared<ValueTuple>(value_list);
+  } else if (value->isa<ValueDictionary>()) {
+    return FilterSensValues(DataConvert::ConvertValueDictToValueTuple(value));
   } else {
     MS_LOG(DEBUG) << "Value type: " << value->ToString();
     return nullptr;
@@ -442,6 +444,10 @@ ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePt
       (void)out.emplace_back(std::make_shared<tensor::Tensor>(type_id, GetShapeFromAbstract(abs_seq->elements()[i])));
     }
     return std::make_shared<ValueTuple>(out);
+  }
+  if (!abs->isa<abstract::AbstractTensor>()) {
+    MS_LOG(DEBUG) << "Get non tensor output";
+    return CreateNonTensorByAbstract(abs);
   }
   return std::make_shared<tensor::Tensor>(type_id, GetShapeFromAbstract(abs));
 }

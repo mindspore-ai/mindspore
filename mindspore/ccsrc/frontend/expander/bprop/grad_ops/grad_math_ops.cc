@@ -462,7 +462,7 @@ REG_BPROP_BUILDER("ScalarCast").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(i
   auto dout = ib->GetInput(kIndex3);
   if (x->abstract()->isa<abstract::AbstractTensor>()) {
     auto dx = ib->Emit("ScalarToTensor", {dout, ib->Value(ib->GetDtype(x))});
-    return {dx, ib->ZerosLike(t)};
+    return {dx, ib->OutZeros(t)};
   }
   auto dx = ib->Emit("ScalarCast", {dout, ib->Value(ib->GetDtype(x))});
   return {dx, ib->OutZeros(t)};
