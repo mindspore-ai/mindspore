@@ -1376,7 +1376,7 @@ bool GeGraphExecutor::RunGraphWithStreamAsync(uint32_t graph_id, void *stream, c
   MS_EXCEPTION_IF_NULL(outputs);
 
   MS_LOG(INFO) << "Run the graph in GE with " << inputs.size() << " inputs";
-  struct timeval start_time, end_time;
+  struct timeval start_time;
   (void)gettimeofday(&start_time, nullptr);
 
   ge::Status ret = ge_session_->RunGraphWithStreamAsync(graph_id, stream, inputs, *outputs);
@@ -1388,7 +1388,7 @@ bool GeGraphExecutor::RunGraphWithStreamAsync(uint32_t graph_id, void *stream, c
     MS_LOG(ERROR) << "Sync stream for RunGraphWithStreamAsync failed";
     return false;
   }
-
+  struct timeval end_time;
   (void)gettimeofday(&end_time, nullptr);
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
