@@ -109,7 +109,7 @@ def test_fold_functional_api_with_invalid_output_size():
         F.fold(x, output_size, kernel_size=2, dilation=2, padding=2, stride=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
