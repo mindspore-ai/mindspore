@@ -50,6 +50,8 @@ constexpr int64_t kNumPadSize = 8;
 
 bool PFACheckShape(float scale_value, int64_t q_seq_len = 0, int64_t k_seq_len = 0, int64_t v_seq_len = 0,
                    int64_t d_value = 0) {
+  MS_LOG(INFO) << "check param in stable diffusion models, scale_value: " << scale_value << ", q_seq_len: " << q_seq_len
+               << ", k_seq_len: " << k_seq_len << ", v_seq_len: " << v_seq_len << ", d_value: " << d_value;
   if (q_seq_len != 0 && k_seq_len != 0 && v_seq_len != 0 && d_value != 0) {
     // for static shape
     if (q_seq_len == k_seq_len && q_seq_len == v_seq_len) {
@@ -75,11 +77,11 @@ bool PFACheckShape(float scale_value, int64_t q_seq_len = 0, int64_t k_seq_len =
     // for dynamic shape, can not check seq len, so D value must be an integer multiple of 32.
     float d = 1 / pow(scale_value, 2);
     if (ceil(d) != floor(d)) {
-      MS_LOG(WARNING) << "cann not support, in dynamic rang shape";
+      MS_LOG(INFO) << "cann not support, in dynamic rang shape";
       return false;
     }
     if (static_cast<int>(d) % kNumMultiple32 != 0) {
-      MS_LOG(WARNING) << "for static shape: now D value must be an integer multiple of 32, d value: " << d;
+      MS_LOG(INFO) << "for dynamic shape: now D value must be an integer multiple of 32, d value: " << d;
       return false;
     }
   }
@@ -89,22 +91,27 @@ bool PFACheckShape(float scale_value, int64_t q_seq_len = 0, int64_t k_seq_len =
 int GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
   auto concat_cnode = q_trans_reshape->cast<CNodePtr>()->input(kNumIndex2)->cast<CNodePtr>();
   if (concat_cnode == nullptr) {
+    MS_LOG(WARNING) << "concat_cnode is nullptr.";
     return -1;
   }
   auto concat_const_input = concat_cnode->input(kNumIndex3);
   if (!utils::isa<ParameterPtr>(concat_const_input)) {
+    MS_LOG(WARNING) << "concat_const_input is not ParameterPtr .";
     return -1;
   }
   auto concat_param = concat_cnode->input(kNumIndex3)->cast<ParameterPtr>()->default_param();
   if (concat_param == nullptr) {
+    MS_LOG(WARNING) << "concat_param is nullptr.";
     return -1;
   }
   auto concat_value = std::dynamic_pointer_cast<tensor::Tensor>(concat_param);
   if (concat_value == nullptr) {
+    MS_LOG(WARNING) << "concat_value is nullptr.";
     return -1;
   }
   auto concat_data = reinterpret_cast<int32_t *>(concat_value->data_c());
   if (concat_data == nullptr) {
+    MS_LOG(WARNING) << "concat_data is nullptr.";
     return -1;
   }
   return static_cast<int64_t>(concat_data[0]);
@@ -126,6 +133,7 @@ std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
 }  // namespace
 
 std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns() const {
+  MS_LOG(INFO) << "start define flash attention fusion patterns.";
   std::unordered_map<std::string, VectorRef> patterns;
   patterns[kNameFlashAttentionPatternForSDBSH] = DefineFlashAttentionPatternForSDBSH();
   patterns[kNameFlashAttentionPatternForPg] = DefineFlashAttentionPatternForPg();
@@ -149,9 +157,16 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
   std::vector<std::vector<int32_t>> paddings = {{0, 0}, {0, 0}, {0, 0}, {0, pad_size}};
 
   auto pad_prim_c = pad_prim->GetPrim();
+  if (pad_prim_c == nullptr) {
+    MS_LOG(WARNING) << "pad_prim_c is nullptr.";
+    return nullptr;
+  }
   AnfNodePtr paddings_node =
     BuildIntVec2DParameterNode(func_graph, paddings, node->fullname_with_scope() + "_paddings");
-
+  if (paddings_node == nullptr) {
+    MS_LOG(WARNING) << "paddings_node is nullptr.";
+    return nullptr;
+  }
   auto inputs = {node, paddings_node};
   auto pad_cnode = func_graph->NewCNode(pad_prim_c, inputs);
   if (pad_cnode == nullptr) {
@@ -187,15 +202,24 @@ CNodePtr FlashAttentionFusion::CreateSliceCNode(const FuncGraphPtr &func_graph, 
   }
 
   AnfNodePtr begin_node = BuildIntVecParameterNode(func_graph, begin, node->fullname_with_scope() + "_begin");
+  if (begin_node == nullptr) {
+    MS_LOG(WARNING) << "BuildIntVecParameterNode failed.";
+    return nullptr;
+  }
   AnfNodePtr size_node = BuildIntVecParameterNode(func_graph, size, node->fullname_with_scope() + "_size");
+  if (size_node == nullptr) {
+    MS_LOG(WARNING) << "BuildIntVecParameterNode failed.";
+    return nullptr;
+  }
 
   auto inputs = {node, begin_node, size_node};
   auto slice_cnode = func_graph->NewCNode(slice_prim_c, inputs);
-  slice_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_fa_slice");
   if (slice_cnode == nullptr) {
-    MS_LOG(ERROR) << "slice_cnode is nullptr.";
+    MS_LOG(WARNING) << "create slice_cnode failed.";
     return nullptr;
   }
+
+  slice_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_fa_slice");
   if (node->abstract() != nullptr) {
     slice_cnode->set_abstract(node->abstract()->Clone());
   }
@@ -493,18 +517,12 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForLLAMAPattern
   // ===== attention mask =====
   // sub
   auto sub_mask_input_1 = std::make_shared<Var>();  // input attention mask
-  MS_CHECK_TRUE_RET(sub_mask_input_1 != nullptr, {});
-  auto sub_mask_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(sub_mask_input_2 != nullptr, {});
-  auto is_mask_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSub>);
-  MS_CHECK_TRUE_RET(is_mask_sub != nullptr, {});
-  auto mask_sub = VectorRef({is_mask_sub, sub_mask_input_1, sub_mask_input_2});
   // mul
   auto is_mask_mul_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_mask_mul_param != nullptr, {});
   auto is_mask_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
   MS_CHECK_TRUE_RET(is_mask_mul != nullptr, {});
-  auto mask_mul = VectorRef({is_mask_mul, mask_sub, is_mask_mul_param});
+  auto mask_mul = VectorRef({is_mask_mul, sub_mask_input_1, is_mask_mul_param});
   // ===== end attention mask =====
   // add
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
@@ -710,6 +728,128 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBSH(const FuncG
   return prompt_flash_attention_cnode;
 }
 
+CNodePtr FlashAttentionFusion::CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                            const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
+                                                            const CNodePtr &attention_mask_mul) const {
+  auto q = qk_matmul->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
+  auto k = qk_matmul->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
+  auto v = v_matmul->input(kNumIndex2);
+  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
+  auto atten_mask = attention_mask_mul->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
+
+  auto input_tensor_q_shape = GetTensorShape(qk_matmul, kNumIndex1);
+  if (input_tensor_q_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "q shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_k_shape = GetTensorShape(qk_matmul, kNumIndex2);
+  if (input_tensor_k_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "k shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_v_shape = GetTensorShape(v_matmul, kNumIndex2);
+  if (input_tensor_v_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "v shape is not 4 dims";
+    return nullptr;
+  }
+  auto atten_mask_input_shape = GetTensorShape(attention_mask_mul, 1);
+  if (input_tensor_v_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "v shape is not 4 dims";
+    return nullptr;
+  }
+  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
+               << " , v name: " << v->fullname_with_scope()
+               << ", atten mask name: " << atten_mask->fullname_with_scope();
+  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
+               << ", v shape: " << input_tensor_v_shape << ", atten mask name: " << atten_mask_input_shape;
+  // check input shape
+  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
+    MS_LOG(ERROR) << "D is -1";
+    return nullptr;
+  }
+  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
+  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
+  int64_t num_key_value_heads = input_tensor_k_shape[1];
+  if (seq_len != 1) {
+    return CreatePromptFlashAttentionCnodeForBNSD(
+      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
+  } else {
+    MS_LOG(WARNING) << "seq len is 1, now not support incre flash attention.";
+  }
+  return nullptr;
+}
+
+CNodePtr FlashAttentionFusion::CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                     const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
+                                                     const CNodePtr &attention_mask_mul) const {
+  auto q = qk_matmul->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
+
+  auto k_reshape = qk_matmul->input(kNumIndex2)->cast<CNodePtr>();
+  MS_LOG(INFO) << k_reshape->fullname_with_scope();
+  auto k_tile = k_reshape->input(kNumIndex1)->cast<CNodePtr>();
+  MS_LOG(INFO) << k_tile->fullname_with_scope();
+  auto k_expend_dim = k_tile->input(kNumIndex1)->cast<CNodePtr>();
+
+  auto v_reshape = v_matmul->input(kNumIndex2)->cast<CNodePtr>();
+  MS_LOG(INFO) << v_reshape->fullname_with_scope();
+  auto v_tile = v_reshape->input(kNumIndex1)->cast<CNodePtr>();
+  MS_LOG(INFO) << v_tile->fullname_with_scope();
+  auto v_expend_dim = v_tile->input(kNumIndex1)->cast<CNodePtr>();
+
+  auto k = k_expend_dim->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
+  auto v = v_expend_dim->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
+
+  auto atten_mask = attention_mask_mul->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
+
+  auto input_tensor_q_shape = GetTensorShape(qk_matmul, kNumIndex1);
+  if (input_tensor_q_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "q shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_k_shape = GetTensorShape(k_expend_dim, kNumIndex1);
+  if (input_tensor_k_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "k shape is not 4 dims";
+    return nullptr;
+  }
+  auto input_tensor_v_shape = GetTensorShape(v_expend_dim, kNumIndex1);
+  if (input_tensor_v_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "v shape is not 4 dims";
+    return nullptr;
+  }
+  auto atten_mask_input_shape = GetTensorShape(attention_mask_mul, 1);
+  if (input_tensor_v_shape.size() != kNumDimSize4) {
+    MS_LOG(ERROR) << "v shape is not 4 dims";
+    return nullptr;
+  }
+  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
+               << " , v name: " << v->fullname_with_scope()
+               << ", atten mask name: " << atten_mask->fullname_with_scope();
+  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
+               << ", v shape: " << input_tensor_v_shape << ", atten mask shape: " << atten_mask_input_shape;
+  // check input shape
+  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
+    MS_LOG(ERROR) << "D is -1";
+    return nullptr;
+  }
+  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
+  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
+  int64_t num_key_value_heads = input_tensor_k_shape[1];
+  if (seq_len != 1) {
+    return CreatePromptFlashAttentionCnodeForBNSD(
+      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
+  } else {
+    MS_LOG(WARNING) << "seq len is 1, now not support incre flash attention.";
+  }
+  return nullptr;
+}
+
 CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph,
                                                                      const AnfNodePtr &node, const AnfNodePtr &q,
                                                                      const AnfNodePtr &k, const AnfNodePtr &v,
@@ -753,11 +893,28 @@ CNodePtr FlashAttentionFusion::CreateFAForSD15(const FuncGraphPtr &func_graph, c
                                                const AnfNodePtr &q_trans, const AnfNodePtr &k_trans,
                                                const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
                                                float scale_value) const {
+  MS_LOG(INFO) << "create flash attention for stable diffusion V1.5.";
   auto q_pad_node = CreatePadCNode(func_graph, q_trans, kNumPadSize);
+  if (q_pad_node == nullptr) {
+    MS_LOG(WARNING) << "create q_pad_node failed.";
+    return nullptr;
+  }
   auto k_pad_node = CreatePadCNode(func_graph, k_trans, kNumPadSize);
+  if (k_pad_node == nullptr) {
+    MS_LOG(WARNING) << "create q_pad_node failed.";
+    return nullptr;
+  }
   auto v_pad_node = CreatePadCNode(func_graph, v_trans, kNumPadSize);
+  if (v_pad_node == nullptr) {
+    MS_LOG(WARNING) << "create q_pad_node failed.";
+    return nullptr;
+  }
   auto fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_pad_node, k_pad_node, v_pad_node, nullptr,
                                                         num_head, next_token, scale_value, num_head);
+  if (fa_node == nullptr) {
+    MS_LOG(WARNING) << "create fa_node failed.";
+    return nullptr;
+  }
   auto slice_node = CreateSliceCNode(func_graph, fa_node, kNumDValue);
   return slice_node;
 }
@@ -834,11 +991,13 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
   if (input_tensor_q_shape.size() != kNumShapeSize4 && utils::isa<ParameterPtr>(mul_const_input)) {
     scale_value = GetScaleValueForDynamicShape(mul_const_input);
     // process bnsd shape
+    MS_LOG(INFO) << "get flash attention param for dynamic shape.";
     std::vector<int32_t> new_shape = {0, 0, -1};
     auto shape_node = BuildIntVecParameterNode(func_graph, new_shape, node->fullname_with_scope() + "_new_shape");
     auto output_shape_node = node->cast<CNodePtr>();
     output_shape_node->set_input(2, shape_node);
   } else if (input_tensor_q_shape.size() == kNumShapeSize4) {
+    MS_LOG(INFO) << "get flash attention param for static shape.";
     // for static shape: get scale value
     scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
     num_head = input_tensor_q_shape[kNumIndex1];
@@ -868,7 +1027,6 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
     }
   }
   if (q_seq_len == 1) {
-    MS_LOG(INFO) << "now not support incre flash attention.";
     return nullptr;
   }
 
@@ -879,6 +1037,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
     fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_trans, k_trans, v_trans, nullptr, num_head,
                                                      next_tokens, scale_value, num_head);
   }
+  MS_CHECK_TRUE_MSG(fa_node != nullptr, nullptr, "create FA failed, fa_node is nullptr.");
   auto manager = Manage(func_graph);
   (void)manager->Replace(cnode, fa_node);
   MS_LOG(INFO) << "create prompt flash attention success for stable diffusion.";
@@ -972,47 +1131,18 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV1(const s
   MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
   auto matmul_1 = mul->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
-  // PromptFlashAttention input tensor
-  auto q = matmul_1->input(kNumIndex1);
-  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
-  auto k = matmul_1->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
-  auto v = matmul_2->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
-  auto atten_mask = attention_mask_mul->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
 
-  auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
-  if (input_tensor_q_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "q shape is not 4 dims";
-    return nullptr;
+  auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
+  auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
+  auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+
+  // process for GQA
+  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
+      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+    MS_LOG(INFO) << "create GQA node for bnsd.";
+    return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
-  auto input_tensor_k_shape = GetTensorShape(matmul_1, kNumIndex2);
-  if (input_tensor_k_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "k shape is not 4 dims";
-    return nullptr;
-  }
-  auto input_tensor_v_shape = GetTensorShape(matmul_2, kNumIndex2);
-  if (input_tensor_v_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "v shape is not 4 dims";
-    return nullptr;
-  }
-  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
-               << " , v name: " << v->fullname_with_scope();
-  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
-               << ", v shape: " << input_tensor_v_shape;
-  // check input shape
-  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
-    MS_LOG(ERROR) << "D is -1";
-    return nullptr;
-  }
-  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
-  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
-  if (seq_len != 1) {
-    return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value);
-  }
-  return nullptr;
+  return CreateFAForBNSDWithAttenMask(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
 }
 
 CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV2(const std::string &pattern_name,
@@ -1033,48 +1163,18 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForLLAMAPatternV2(const s
   MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
   auto matmul_1 = mul->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
-  // PromptFlashAttention input tensor
-  auto q = matmul_1->input(kNumIndex1);
-  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
-  auto k = matmul_1->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
-  auto v = matmul_2->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
-  auto atten_mask = attention_mask_mul->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
 
-  auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
-  if (input_tensor_q_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "q shape is not 4 dims";
-    return nullptr;
+  auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
+  auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
+  auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+
+  // process for GQA
+  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
+      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+    MS_LOG(INFO) << "create GQA node for bnsd.";
+    return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
-  auto input_tensor_k_shape = GetTensorShape(matmul_1, kNumIndex2);
-  if (input_tensor_k_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "k shape is not 4 dims";
-    return nullptr;
-  }
-  auto input_tensor_v_shape = GetTensorShape(matmul_2, kNumIndex2);
-  if (input_tensor_v_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "v shape is not 4 dims";
-    return nullptr;
-  }
-  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
-               << " , v name: " << v->fullname_with_scope();
-  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
-               << ", v shape: " << input_tensor_v_shape;
-  // check input shape
-  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
-    MS_LOG(ERROR) << "D is -1";
-    return nullptr;
-  }
-  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
-  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
-  int64_t num_key_value_heads = input_tensor_k_shape[1];
-  if (seq_len != 1) {
-    return CreatePromptFlashAttentionCnodeForBNSD(
-      func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
-  }
-  return nullptr;
+  return CreateFAForBNSDWithAttenMask(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
 }
 
 CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForBaiChuanPattern(const std::string &pattern_name,
@@ -1096,53 +1196,21 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForBaiChuanPattern(const 
   MS_CHECK_TRUE_RET(mul != nullptr, nullptr);
   auto matmul_1 = mul->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
-  // PromptFlashAttention input tensor
-  auto q = matmul_1->input(kNumIndex1);
-  MS_CHECK_TRUE_RET(q != nullptr, nullptr);
-  auto k = matmul_1->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(k != nullptr, nullptr);
-  auto v = matmul_2->input(kNumIndex2);
-  MS_CHECK_TRUE_RET(v != nullptr, nullptr);
-  auto atten_mask = attention_mask_mul->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(atten_mask != nullptr, nullptr);
-
-  auto input_tensor_q_shape = GetTensorShape(matmul_1, kNumIndex1);
-  if (input_tensor_q_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "q shape is not 4 dims";
-    return nullptr;
+  // process for GQA
+  auto pfa_q_shape = GetTensorShape(matmul_1, kNumIndex1);
+  auto pfa_k_shape = GetTensorShape(matmul_1, kNumIndex2);
+  auto pfa_v_shape = GetTensorShape(matmul_2, kNumIndex2);
+  if (pfa_q_shape.size() > 1 && pfa_k_shape.size() > 1 && pfa_v_shape.size() > 1 && pfa_q_shape[1] > 0 &&
+      pfa_k_shape[1] && pfa_q_shape[1] != pfa_k_shape[1] && pfa_k_shape[1] == pfa_v_shape[1]) {
+    MS_LOG(INFO) << "create GQA node for BNSD.";
+    return CreateGQACNodeForBNSD(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
   }
-  auto input_tensor_k_shape = GetTensorShape(matmul_1, kNumIndex2);
-  if (input_tensor_k_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "k shape is not 4 dims";
-    return nullptr;
-  }
-  auto input_tensor_v_shape = GetTensorShape(matmul_2, kNumIndex2);
-  if (input_tensor_v_shape.size() != kNumDimSize4) {
-    MS_LOG(ERROR) << "v shape is not 4 dims";
-    return nullptr;
-  }
-  MS_LOG(INFO) << "q name: " << q->fullname_with_scope() << " , k name: " << k->fullname_with_scope()
-               << " , v name: " << v->fullname_with_scope();
-  MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << ", k shape: " << input_tensor_k_shape
-               << ", v shape: " << input_tensor_v_shape;
-  // check input shape
-  if (input_tensor_q_shape[kNumIndex3] <= 0 || input_tensor_q_shape[kNumIndex1] <= 0) {
-    MS_LOG(ERROR) << "D is -1";
-    return nullptr;
-  }
-  float scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], 0.5));
-  int64_t seq_len = input_tensor_q_shape[kNumIndex2];
-  if (seq_len != 1) {
-    return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
-                                                  input_tensor_q_shape[kNumIndex1], 0, scale_value,
-                                                  input_tensor_k_shape[kNumIndex1]);
-  }
-  return nullptr;
+  return CreateFAForBNSDWithAttenMask(func_graph, node, matmul_1, matmul_2, attention_mask_mul);
 }
 
 AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const {
-  MS_LOG(INFO) << "do fusion, pattern name: " << patten_name;
+  MS_LOG(INFO) << "do flash attention fusion, pattern name: " << patten_name;
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     MS_LOG(ERROR) << "function graph, node or equiv is nullptr.";
     return nullptr;
@@ -1162,14 +1230,19 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
   }
   CNodePtr flash_attention_node = nullptr;
   if (patten_name == kNameFlashAttentionPatternForSDBNSD || patten_name == kNameFlashAttentionPatternForSDBSH) {
+    MS_LOG(INFO) << "start create flash attention node for stable diffusion.";
     flash_attention_node = CreateFlashAttentionNodeForSD(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameFlashAttentionPatternForPg) {
+    MS_LOG(INFO) << "start create flash attention node for PanGu models.";
     flash_attention_node = CreateFlashAttentionNodeForPg(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameFlashAttentionPatternForLLAMAPatternV1) {
+    MS_LOG(INFO) << "start create flash attention node for LLAMAV1 Pattern V1.";
     flash_attention_node = CreateFlashAttentionNodeForLLAMAPatternV1(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameFlashAttentionPatternForLLAMAPatternV2) {
+    MS_LOG(INFO) << "start create flash attention node for LLAMAV1 Pattern V2.";
     flash_attention_node = CreateFlashAttentionNodeForLLAMAPatternV2(patten_name, func_graph, node, equiv);
   } else if (patten_name == kNameDefineFlashAttentionPatternForBaiChuan) {
+    MS_LOG(INFO) << "start create flash attention node for BaiChuan models.";
     flash_attention_node = CreateFlashAttentionNodeForBaiChuanPattern(patten_name, func_graph, node, equiv);
   } else {
     MS_LOG(ERROR) << " not patter.";
@@ -1179,7 +1252,8 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
     return nullptr;
   }
   manager->Replace(node, flash_attention_node);
-  MS_LOG(INFO) << "flash attention node fusion success, node name: " << flash_attention_node->fullname_with_scope();
+  MS_LOG(INFO) << "flash attention node fusion success, fusion node name: "
+               << flash_attention_node->fullname_with_scope();
   return flash_attention_node;
 }
 
