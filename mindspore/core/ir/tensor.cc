@@ -905,7 +905,7 @@ void Tensor::contiguous() {
   }
 }
 
-bool Tensor::is_contiguous() {
+bool Tensor::is_contiguous() const {
   auto storage_info = storage_info_;
   return storage_info == nullptr || storage_info->is_contiguous;
 }
