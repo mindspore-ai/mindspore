@@ -4042,73 +4042,45 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   return true;
 }
 
-// Remove space character, newline character, tab character, carriage character, so on.
-string ProcessStrip(const string &str) {
-  const string &chars = " \n\r\t\\+";
-  constexpr int64_t str_len = 2;
-  size_t end = str.find_last_not_of(chars);
-  if (end == std::string::npos) {
-    return "";
+size_t GetSubStrNum(const string &script_text, const string &sub) {
+  size_t count = 0;
+  size_t pos = script_text.find(sub);
+  while (pos != string::npos) {
+    count++;
+    pos = script_text.find(sub, pos + 1);
   }
-  auto remove_str = str.substr(0, end + 1);
-  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
-      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
-    remove_str = remove_str.substr(1, remove_str.size() - str_len);
-  }
-
-  end = remove_str.find_first_not_of(chars);
-  if (end == std::string::npos) {
-    return "";
-  }
-  remove_str = remove_str.substr(end);
-  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
-      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
-    remove_str = remove_str.substr(1, remove_str.size() - str_len);
-  }
-  return remove_str;
+  return count;
 }
 
-string RemoveExcessFString(const string &script_text, int64_t begin, int64_t end) {
-  string update_str = "";
-  constexpr int64_t str_len = 2;
-  if (begin == 0 && begin < end) {
-    update_str = script_text.substr(begin + str_len, end - begin);
-  } else if (begin > 0 && begin < end) {
-    auto temp_str = script_text.substr(0, begin);
-    auto remove_str = ProcessStrip(temp_str);
-    update_str = remove_str + script_text.substr(begin + str_len, end - begin);
+std::string UpdateString(const string &str) {
+  string temp = "";
+  std::string new_string = "";
+  for (size_t i = 0; i < str.length(); i++) {
+    if (str[i] != '\n') {
+      temp += str[i];
+    } else {
+      if (temp[temp.length() - 1] != '\\') {
+        temp += "+\\";
+      }
+      auto pos = temp.find_first_not_of(" ");
+      temp = temp.substr(pos) + '\n';
+      new_string += temp;
+      temp = "";
+    }
   }
-  if (end + str_len < SizeToLong(script_text.size())) {
-    auto temp_str = script_text.substr(end + str_len + 1, script_text.size() - end - str_len - 1);
-    auto remove_str = ProcessStrip(temp_str);
-    update_str = update_str + remove_str;
-  }
-  return update_str;
+  auto pos = temp.find_first_not_of(" ");
+  new_string += temp.substr(pos);
+  return new_string;
 }
 
 string ProcessIndentationInScript(const string &script_text) {
-  if (script_text.find("\n") == string::npos) {
+  const size_t f_string_num = 2;
+  size_t num1 = GetSubStrNum(script_text, "f'");
+  size_t num2 = GetSubStrNum(script_text, "f\"");
+  if (script_text.find("\n") == string::npos || num1 + num2 < f_string_num) {
     return script_text;
   }
-  const string &old_script = script_text;
-  string new_script = script_text;
-  const size_t str_len = 2;
-  while (new_script.find("f'") != string::npos) {
-    int64_t begin = new_script.find("f'");
-    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
-    int64_t end = begin + sub.find("'");
-    new_script = RemoveExcessFString(new_script, begin, end);
-  }
-  while (new_script.find("f\"") != string::npos) {
-    int64_t begin = new_script.find("f\"");
-    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
-    int64_t end = begin + sub.find("\"");
-    new_script = RemoveExcessFString(new_script, begin, end);
-  }
-  if (new_script != old_script) {
-    new_script = "f\"" + new_script + "\"";
-  }
-  return new_script;
+  return UpdateString(script_text);
 }
 
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
