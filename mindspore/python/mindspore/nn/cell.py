@@ -1088,9 +1088,6 @@ class Cell(Cell_):
         if not isinstance(param, Parameter) and param is not None:
             raise TypeError(f"For `insert_param_to_cell`, the argument `param` must be `Parameter` if not None, "
                             f"but got {type(param)}.")
-        if param is None:
-            raise TypeError(f"For `insert_param_to_cell`, the argument `param` can not be None, "
-                            f"but got None.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
         self._params[param_name] = param
