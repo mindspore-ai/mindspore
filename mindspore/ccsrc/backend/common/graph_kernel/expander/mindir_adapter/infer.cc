@@ -20,6 +20,7 @@
 #include "backend/common/graph_kernel/model/op_register.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore::graphkernel::expander {
 void InferByDeviceInfo::InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) {
@@ -75,6 +76,33 @@ void InferByDeviceInfo::HandleInputs(const NodePtrList &inputs) {
       node_base.format = cb->GetOutputFormat(anfnode, 0);
       inner_node_cache_[inp] = std::make_shared<inner::ParamNode>(node_base);
     }
+  }
+}
+void InferByHostInfo::InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) {
+  // refer to CppInfer::InferAnfnode
+  auto anfnode = node->as<AnfNodePtr>();
+  if (anfnode->isa<ValueNode>()) {
+    anfnode->set_abstract(anfnode->cast<ValueNodePtr>()->value()->ToAbstract());
+    return;
+  }
+  auto cnode = anfnode->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  AbstractBasePtrList abs_list;
+  abs_list.reserve(cnode->size());
+  (void)std::transform(args.cbegin(), args.cend(), std::back_inserter(abs_list), [](const NodePtr &node) {
+    auto anfnode = node->as<AnfNodePtr>();
+    const auto &abs = anfnode->abstract();
+    if (abs == nullptr) {
+      MS_EXCEPTION_IF_CHECK_FAIL(anfnode->isa<ValueNode>(), anfnode->ToString() + " has no abstract");
+      return anfnode->cast<ValueNodePtr>()->value()->ToAbstract();
+    }
+    return abs;
+  });
+  auto found = abstract::GetPrimitiveInferImpl(prim);
+  if (found.has_value() && found.value().IsImplInferShapeAndType()) {
+    cnode->set_abstract(found.value().InferShapeAndType(nullptr, prim, abs_list));
+  } else {
+    MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
 }
 }  // namespace mindspore::graphkernel::expander
