@@ -162,12 +162,13 @@ class BACKEND_EXPORT Callback {
    */
   virtual bool IsUseDeviceInfo() { return true; }
 
+  static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
+
  private:
   // to avoid the default argument in virtual function.
   virtual std::string GetTargetFromContextImpl(bool detail) = 0;
 
   friend class CallbackImplRegister;
-  static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
 #ifndef _MSC_VER
   BACKEND_EXPORT inline static CallbackPtr instance_{nullptr};
 #else
