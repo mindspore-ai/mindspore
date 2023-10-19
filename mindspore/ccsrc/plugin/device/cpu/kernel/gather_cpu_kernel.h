@@ -75,6 +75,7 @@ class GatherCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector input_shape_;
   ShapeVector indices_shape_;
   ShapeVector output_shape_;
+  int64_t batch_dims_{0};
   size_t input_type_size_ = 0;
   size_t indices_type_size_ = 0;
   bool is_null_input_ = false;

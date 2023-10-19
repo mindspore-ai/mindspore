@@ -108,7 +108,7 @@ class MIND_API AGFusedAdaFactorInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return FusedAdaFactorInferShape(primitive, input_args);
+    return input_args[kParamIndex]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

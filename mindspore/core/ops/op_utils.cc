@@ -559,7 +559,16 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
       return CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", arg, prim_name);
     }
   } else if (CheckAndConvertUtils::IsTensor(arg)) {
-    return {abstract::Shape::kShapeRankAny};
+    auto arg_shape = arg->GetShape()->GetShapeVector();
+    if (arg_shape.size() != 1) {
+      MS_EXCEPTION(ValueError) << "For Primitive[" << primitive->name()
+                               << "], Shape of shape value only could be one-dimensional";
+    }
+    if (IsDynamic(arg_shape)) {
+      return {abstract::Shape::kShapeRankAny};
+    }
+    auto shape_size = arg_shape[0];
+    return ShapeVector(shape_size, abstract::Shape::kShapeDimAny);
   } else if (arg->isa<abstract::AbstractSequence>()) {
     return GetSequenceValue("input[shape]", arg, prim_name);
   }

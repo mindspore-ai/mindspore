@@ -49,6 +49,8 @@ int GatherCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   input_shape_ = inputs[kIndexZero]->GetShapeVector();
   indices_shape_ = inputs[kIndexOne]->GetShapeVector();
   output_shape_ = outputs[kIndexZero]->GetShapeVector();
+  batch_dims_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  batch_dims_ = batch_dims_ < 0 ? batch_dims_ + SizeToLong(input_shape_.size()) : batch_dims_;
 
   is_null_input_ = input_shape_.empty() || indices_shape_.empty() || output_shape_.empty();
   if (is_null_input_) {
@@ -67,8 +69,6 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
   const auto *indices_data = reinterpret_cast<S *>(inputs[1]->device_ptr());
   auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->device_ptr());
   auto axis_v = *(reinterpret_cast<int64_t *>(inputs[kIndex2]->device_ptr()));
-  auto batch_dims_v = *(reinterpret_cast<int64_t *>(inputs[kIndex3]->device_ptr()));
-  batch_dims_v = batch_dims_v < 0 ? batch_dims_v + SizeToLong(input_shape_.size()) : batch_dims_v;
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_v < 0) {
@@ -80,7 +80,7 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
   size_t indices_element_size = 1;
   size_t inner_size = 1;
   auto axis = LongToSize(axis_v);
-  auto batch_dims = LongToSize(batch_dims_v);
+  auto batch_dims = LongToSize(batch_dims_);
   for (size_t i = 0; i < batch_dims; i++) {
     batch_size *= LongToSize(input_shape_.at(i));
   }
