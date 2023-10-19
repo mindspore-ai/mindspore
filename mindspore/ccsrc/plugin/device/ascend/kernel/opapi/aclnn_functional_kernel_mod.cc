@@ -47,8 +47,11 @@ void AclnnFunctionalKernelMod::CreateTensorAddress(const tensor::TensorPtr &tens
     tensor->set_device_address(device_address);
   }
 
-  if ((device_address->GetPtr() == nullptr) &&
-      (!device_context_->device_res_manager_->AllocateMemory(device_address.get()))) {
+  if (device_address->GetPtr() != nullptr) {
+    return;
+  }
+
+  if (!device_context_->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
 

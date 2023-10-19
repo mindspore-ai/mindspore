@@ -38,6 +38,7 @@ file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/*.cc"
         "hccl/*.cc"
         "opapi/*.cc"
+        "pyboost/*.cc"
         "ascend_kernel_mod.cc"
         )
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})

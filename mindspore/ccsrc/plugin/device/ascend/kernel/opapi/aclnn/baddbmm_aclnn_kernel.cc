@@ -30,9 +30,13 @@ bool BaddbmmAclnnFunctionalKernelMod::Call(const tensor::TensorPtr &self, const 
   CreateTensorAddress(self, "self");
   CreateTensorAddress(batch1, "batch1");
   CreateTensorAddress(batch2, "batch2");
+  CreateTensorAddress(out, "out");
 
   size_t workspace_size = 0;
-  tie(workspace_size, executor_, std::ignore) = GEN_EXECUTOR_CUSTOM(aclnnBaddbmm, self, batch1, batch2, alpha, out);
+  // 910A not support 0
+  int8_t cube_math_type = 0;
+  tie(workspace_size, executor_, std::ignore) =
+    GEN_EXECUTOR_CUSTOM(aclnnBaddbmm, self, batch1, batch2, beta, alpha, out, cube_math_type);
 
   auto stream_ptr = device_context_->device_res_manager_->GetStream(kDefaultStreamIndex);
   if (workspace_size == 0) {

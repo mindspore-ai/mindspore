@@ -49,6 +49,7 @@ class BACKEND_EXPORT OpFactory {
   using OpCreater = std::function<std::shared_ptr<T>()>;
   static OpFactory<T> &Get();
   void Register(const std::string &device, OpCreater &&func) {
+    MS_LOG(DEBUG) << "Reg for op ";
     auto ret = op_creater_.try_emplace(device, func);
     if (!ret.second) {
       MS_LOG(WARNING) << "Duplicate op creater for " << device;
