@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,12 +123,12 @@ const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {
 
 uint32_t ProfilingReporter::GetStreamId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return stream_ids_[(uint32_t)index];
+  return stream_ids_[static_cast<uint32_t>(index)];
 }
 
 uint32_t ProfilingReporter::GetTaskId(const string &node_name) {
   auto index = node_name_index_map_[node_name];
-  return task_ids_[(uint32_t)index];
+  return task_ids_[static_cast<uint32_t>(index)];
 }
 
 void ProfilingReporter::ReportParallelStrategy() const {
