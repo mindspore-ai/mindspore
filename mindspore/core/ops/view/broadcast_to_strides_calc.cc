@@ -16,10 +16,13 @@
 
 #include "ops/view/broadcast_to_strides_calc.h"
 #include <memory>
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 constexpr size_t kBroadCastToInputsNum = 1;
 bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int64_t> &x_shape) {
+  CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()),
+                              "BroadcastTo");
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
