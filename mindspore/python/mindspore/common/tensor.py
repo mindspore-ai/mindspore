@@ -2186,7 +2186,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [0.7] [3]
         """
         if self.shape == ():
-            return (Tensor(0), self)
+            return (self, Tensor(0))
         self._init_check()
         return tensor_operator_registry.get('argmax_with_value')(self, axis, keep_dims)
 
@@ -2234,7 +2234,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [0.0] [0]
         """
         if self.shape == ():
-            return (Tensor(0), self)
+            return (self, Tensor(0))
         self._init_check()
         return tensor_operator_registry.get('argmin_with_value')(self, axis, keep_dims)
 
