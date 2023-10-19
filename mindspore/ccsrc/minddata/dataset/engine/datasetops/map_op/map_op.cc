@@ -331,7 +331,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list, device::DeviceContext *device_context,
                             size_t stream_id) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -431,7 +431,7 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
 #else
 Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
                             const std::vector<std::shared_ptr<MapJob>> &job_list) {
-  int32_t num_cols = in_row.size();
+  size_t num_cols = in_row.size();
 
   std::vector<TensorRow> job_input_table;
   std::vector<TensorRow> original_table;
@@ -695,6 +695,7 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
 }
 
 Status MapOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   if (new_row.eoe()) {

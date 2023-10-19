@@ -40,7 +40,7 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
                       mindspore::device::DeviceContext *device_context, const size_t &stream_id) {
   RETURN_UNEXPECTED_IF_NULL(out);
   RETURN_UNEXPECTED_IF_NULL(device_context);
-  int32_t num_rows = in.size();
+  size_t num_rows = in.size();
 
   // create the device tensor which copy the data from host to device
   std::vector<std::vector<std::shared_ptr<DeviceTensorAscend910B>>> device_in(num_rows);
