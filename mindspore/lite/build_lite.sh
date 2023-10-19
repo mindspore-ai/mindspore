@@ -43,17 +43,33 @@ get_cpack_dir() {
     # ${INSTALL_PREFIX}/${pkg_name} is the output of make install
     # please use ${CPACK_PACKAGE_DIR}/${pkg_name} instead of ${INSTALL_PREFIX}/${pkg_name}
     local pack_dir="_CPack_Packages"
+    local ms_pack="mindspore-lite-${VERSION_STR}"
+    local cpack_dir="${INSTALL_PREFIX}/${pack_dir}"
 
-    local platform="Linux"
-    local machine="linux-x64"
-    if [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
-        platform="Android"
-        machine="android-aarch64"
+    local linux_x86_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-x64"
+    local linux_cortex_path="${cpack_dir}/Linux/TGZ/${ms_pack}/none-cortex-m7"
+    local linux_aarch64_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-aarch64"
+    local linux_aarch32_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-aarch32"
+    local android_aarch64_path="${cpack_dir}/Android/TGZ/${ms_pack}/android-aarch64"
+    local android_aarch32_path="${cpack_dir}/Android/TGZ/${ms_pack}/android-aarch32"
+
+    CPACK_PACKAGE_DIR=""
+    if [ -d "${linux_x86_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_x86_path}
+    elif [ -d "${linux_cortex_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_cortex_path}
+    elif [ -d "${linux_aarch64_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_aarch64_path}
+    elif [ -d "${linux_aarch32_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_aarch32_path}
+    elif [ -d "${android_aarch64_path}" ]; then
+      CPACK_PACKAGE_DIR=${android_aarch64_path}
+    elif [ -d "${android_aarch32_path}" ]; then
+      CPACK_PACKAGE_DIR=${android_aarch32_path}
+    else
+      echo "Please check cpack path."
     fi
-
-    local generator="TGZ"
-
-    CPACK_PACKAGE_DIR=${INSTALL_PREFIX}/${pack_dir}/${platform}/${generator}/mindspore-lite-${VERSION_STR}/${machine}
+    echo "Using cpack output path: ${CPACK_PACKAGE_DIR}"
 }
 
 write_commit_file() {
@@ -600,7 +616,10 @@ build_lite() {
           make install
         fi
       fi
+
       make package
+      get_cpack_dir
+
       local package_wheel=${MSLITE_ENABLE_PACKAGE_WHEEL}
       if [[ ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") || ("${MSLITE_ENABLE_SERVER_INFERENCE}" == "on") ]] && [[ ${MSLITE_ENABLE_PACKAGE_WHEEL} == "" ]]; then
         package_wheel=on
@@ -996,8 +1015,6 @@ fi
 
 get_version
 CMAKE_ARGS="${CMAKE_ARGS} -DVERSION_STR=${VERSION_STR}"
-
-get_cpack_dir
 
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar
