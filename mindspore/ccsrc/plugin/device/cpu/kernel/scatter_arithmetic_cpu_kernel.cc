@@ -28,6 +28,16 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+template <typename T>
+void UpdateOutputData(T *output, size_t sz_out, T *input, size_t sz_in, const std::string &kernel_name) {
+  auto ret = memcpy_s(output, sz_out, input, sz_in);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', memory copy failed. Error no: " << ret;
+  }
+}
+}  // namespace
+
 constexpr size_t kScatterArithmeticInputsNum = 3;
 constexpr size_t kScatterArithmeticOutputsNum = 1;
 
@@ -163,10 +173,7 @@ bool ScatterArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
   // output. After removing the old runtime, the following copy logic code can be deleted.
   if (input != output) {
     auto bufferSize = outputs[0]->size;
-    auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
-    }
+    UpdateOutputData<T>(output, bufferSize, input, input_size_ * sizeof(T), kernel_name_);
   }
   return true;
 }

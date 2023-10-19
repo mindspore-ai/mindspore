@@ -21,7 +21,6 @@ import copy
 import functools
 import subprocess
 
-
 from tbe.common.buildcfg import get_current_build_config
 from impl.util.util_select_op_base import gen_param
 from impl.util.util_select_op_base import get_dynamic_param_in_json
@@ -193,7 +192,7 @@ class ElemwiseBinary(OpInfer):
                 return shape[:-2] + [shape[-1] // BLOCK, 1, 1, BLOCK]
             if shape[-2] % BLOCK == 0 and shape[-1] == 1:
                 return shape[:-2] + [1, shape[-2] // BLOCK, BLOCK, 1]
-        return None
+        return []
 
     def broadcast_shape(self, sh0, sh1):
         """calculate broadcast shape"""
@@ -222,10 +221,12 @@ class ElemwiseBinary(OpInfer):
                                                    "FRACTAL_Z,FRACTAL_Z,FRACTAL_Z"])
         else:
             # note: (1, 640), (640)  "FRACTAL_NZ,ND,FRACTAL_NZ", (1, 640) comes from MatMul
-            if len(sh0) == 2 and len(sh1) == 1 and sh0[-1] == sh1[-1] and sh1[-1] % BLOCK == 0:
-                self.update_format(supported_formats, "FRACTAL_NZ,ND,FRACTAL_NZ")
-            elif len(sh0) == 1 and len(sh1) == 2 and sh0[-1] == sh1[-1] and sh0[-1] % BLOCK == 0:
-                self.update_format(supported_formats, "ND,FRACTAL_NZ,FRACTAL_NZ")
+            if len(sh0) == 2 and len(sh1) == 1:
+                if sh0[-1] == sh1[-1] and sh1[-1] % BLOCK == 0:
+                    self.update_format(supported_formats, "FRACTAL_NZ,ND,FRACTAL_NZ")
+            elif len(sh0) == 1 and len(sh1) == 2:
+                if sh0[-1] == sh1[-1] and sh0[-1] % BLOCK == 0:
+                    self.update_format(supported_formats, "ND,FRACTAL_NZ,FRACTAL_NZ")
             # Broadcast case
             pad_sh0, pad_sh1, _ = self.broadcast_shape(sh0, sh1)
             # 1D with broadcast only supports "ND,ND,ND"
@@ -258,11 +259,11 @@ class ElemwiseBinary(OpInfer):
         if format0 != format1:
             new_sh0 = self.nd2fractal_nz(sh0)
             new_sh1 = self.nd2fractal_nz(sh1)
-            if format0 == "FRACTAL_NZ" and new_sh1 is not None:
+            if format0 == "FRACTAL_NZ" and new_sh1:
                 _, _, out_shape = self.broadcast_shape(sh0, new_sh1)
                 self.output_desc[0]["shape"] = out_shape
                 return
-            if format1 == "FRACTAL_NZ" and new_sh0 is not None:
+            if format1 == "FRACTAL_NZ" and new_sh0:
                 _, _, out_shape = self.broadcast_shape(new_sh0, sh1)
                 self.output_desc[0]["shape"] = out_shape
                 return
@@ -367,7 +368,8 @@ class Reduce(OpInfer):
             return ["float16,int64,float16", "float32,int64,float32"]
         if in_type == "float32":
             return ["float32,int64,float32"]
-        return ",".join([in_type, in_type])
+        io_type = ",".join([in_type, "int64", in_type])
+        return [io_type]
 
     def supported_format(self):
         supported_formats = ["ND,DefaultFormat,ND"]
@@ -428,12 +430,14 @@ class Reshape(OpInfer):
                     tmp.append(s)
             if len(tmp) + 1 != len(out_shape):
                 raise ValueError("Find multiple -1 in attr 'shape' {}".format(out_shape))
-            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape) // functools.reduce(lambda x, y: x * y, tmp)
+            tmp_sz = functools.reduce(lambda x, y: x * y, tmp, 1)
+            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape, 1) // tmp_sz
         self.output_desc[0]["ori_shape"] = out_shape
 
     def post_process(self):
         self.input_desc[1]["ori_value"] = self.input_desc[1]["value"]
         self.input_desc[1]["value"] = self.output_desc[0]["shape"]
+
 
 class ExpandDimAndSqueeze(Reshape):
     def copy_axis(self, axis):
@@ -443,6 +447,7 @@ class ExpandDimAndSqueeze(Reshape):
         else:
             out_axis = copy.deepcopy(axis)
         return out_axis
+
 
 class Squeeze(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
@@ -455,6 +460,7 @@ class Squeeze(ExpandDimAndSqueeze):
             input_shape.pop(idx)
         self.output_desc[0]["ori_shape"] = input_shape
 
+
 class ExpandDim(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
         axis = self.copy_axis(self.input_desc[1]["value"])
@@ -462,6 +468,7 @@ class ExpandDim(ExpandDimAndSqueeze):
         for idx in axis:
             input_shape.insert(idx, 1)
         self.output_desc[0]["ori_shape"] = input_shape
+
 
 class BroadcastTo(OpInfer):
     """BroadcastTo op."""
