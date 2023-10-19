@@ -1195,7 +1195,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       size_t type_size = GetTypeByte(TypeIdToType(host_type));
       memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
     }
-    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
+    (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {
