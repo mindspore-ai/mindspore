@@ -315,10 +315,27 @@ void PyNativeExecutor::WaitBeforeFork() {
   runtime::OpExecutor::GetInstance().WaitAll();
   grad_executor_->bprop_queue()->Wait();
   MS_LOG(INFO) << "PyNativeExecutor waits for async task finish done.";
+  // If the forked thread does not hold the gil lock, we need to manually acquire the gil lock before forking,
+  // otherwise the child process will block when acquiring the gil lock.
+  ForkUtils::GetInstance().set_gil_hold_before_fork(PyGILState_Check());
+  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
+    ForkUtils::GetInstance().set_gil_state(static_cast<int>(PyGILState_Ensure()));
+  }
+}
+
+void PyNativeExecutor::ParentAfterFork() {
+  // Release the gil lock that was acquired manually before forking.
+  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
+    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+  }
 }
 
 void PyNativeExecutor::ReinitAfterFork() {
   MS_LOG(INFO) << "fork event detected in child process, PyNativeExecutor resources will be reinitialized.";
+  // Release the gil lock that was acquired manually before forking.
+  if (!ForkUtils::GetInstance().is_gil_hold_before_fork()) {
+    PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().get_gil_state()));
+  }
   // reset ms context after fork
   MsContext::GetInstance()->ResetContext();
   // clear op cache after fork
