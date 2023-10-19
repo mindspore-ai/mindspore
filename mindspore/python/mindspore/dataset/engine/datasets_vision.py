@@ -973,6 +973,10 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     |                         |                                              |
     |                         |   [area, dtype=uint32]                       |
     +-------------------------+----------------------------------------------+
+    | Captioning              |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [captions, dtype=string]                   |
+    +-------------------------+----------------------------------------------+
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.

@@ -8,8 +8,8 @@
         - **num_consumer** (int，可选) - 加载数据的并发数。默认值： ``4`` 。不应小于1或大于处理器的核数。
 
     异常：
-        - **ParamValueError** - `file_name` 、`num_consumer` 或 `columns` 无效。
-        - **MRMInitSegmentError** - 初始化ShardSegment失败。
+        - **ParamValueError** - `file_name` 不是str类型或list[str]类型。
+        - **ParamValueError** - `num_consumer` 不是int类型。
 
     .. py:method:: candidate_fields
         :property:

@@ -29,6 +29,5 @@
             - **MRMValidateDataError** - 原始数据集数据异常。
             - **MRMSetHeaderError** - 设置MindRecord文件头失败。
             - **MRMWriteDatasetError** - 创建MindRecord索引失败。
-            - **TypeError** - 参数 `parallel_writer` 不是bool类型。
             - **IOError** - 参数 `source` 不存在。
             - **ValueError** - CSV文件首行为列名，每个字段不能以数字开头。

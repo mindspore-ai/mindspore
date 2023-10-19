@@ -33,8 +33,8 @@ class MindPage:
             It should not be smaller than 1 or larger than the number of processor cores.
 
     Raises:
-        ParamValueError: If `file_name` , `num_consumer` or columns is invalid.
-        MRMInitSegmentError: If failed to initialize ShardSegment.
+        ParamValueError: If `file_name` is not type str or list[str].
+        ParamValueError: If `num_consumer` is not type int.
 
     Examples:
         >>> from mindspore.mindrecord import MindPage

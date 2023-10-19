@@ -130,7 +130,6 @@ class Cifar100ToMR:
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
-            TypeError: If `parallel_writer` is not bool.
             ValueError: If parameter `fields` is invalid.
         """
 
