@@ -20,9 +20,20 @@
 
 namespace mindspore::ops {
 constexpr size_t kBroadCastToInputsNum = 1;
-bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int64_t> &x_shape) {
+bool BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &input_x,
+                      const std::vector<int64_t> &x_shape) {
   CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(input_x.size()),
                               "BroadcastTo");
+  bool is_empty_shape_input =
+    std::any_of(input_x.begin(), input_x.end(), [](const auto &element) { return element == 0; });
+  bool is_empty_shape_x = std::any_of(x_shape.begin(), x_shape.end(), [](const auto &element) { return element == 0; });
+  if (is_empty_shape_input && !is_empty_shape_x) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', each dimension pair, input_x shape and target shape must be equal or input dimension is 1 or target "
+         "dimension is -1. But got input_x shape: "
+      << ShapeVectorToStr(x_shape) << ", target shape: " << ShapeVectorToStr(input_x) << ".";
+  }
   auto outer_dim_offset = input_x.size() - x_shape.size();
   bool flag = true;
   if (input_x.end() == find(input_x.begin(), input_x.end(), -1)) {
@@ -34,6 +45,11 @@ bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int
     for (size_t i = 0; i < input_x.size(); i++) {
       if (input_x[i] == -1) {
         if (i < outer_dim_offset) {
+          MS_EXCEPTION(ValueError) << "For '" << prim_name
+                                   << "', -1 in init shape is in an incompatible "
+                                      "location with given input tensor, -1 index in init shape: "
+                                   << i << " but -1 can only be in index" << x_shape.size()
+                                   << "onwards for this input.";
           return false;
         }
       }
@@ -44,6 +60,11 @@ bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int
       continue;
     }
     if (input_x[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', in order to broadcast, each dimension pair must be equal or input dimension is 1 or target "
+           "dimension is -1. But got x_shape: "
+        << ShapeVectorToStr(x_shape) << ", target shape: " << ShapeVectorToStr(input_x) << ".";
       return false;
     }
   }
@@ -55,7 +76,8 @@ TensorStorageInfoPtrList BroadCastToProcess(const tensor::TensorPtr input_tensor
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
-  if (!BroadcastToCheck(input_x, old_shape)) {
+  auto prim_name = prim->name();
+  if (!BroadcastToCheck(prim_name, input_x, old_shape)) {
     return {};
   }
   int64_t ndim = SizeToInt(input_x.size());
