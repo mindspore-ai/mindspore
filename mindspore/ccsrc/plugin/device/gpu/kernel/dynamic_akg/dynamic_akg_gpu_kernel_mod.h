@@ -153,6 +153,7 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
+  void Initialize();
   void CheckJsonParsed();
   void InitJsonShapeInformation();
   bool CheckJsonValueFormat(const std::string key) {
@@ -200,7 +201,6 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
   std::unordered_map<size_t, std::pair<size_t, size_t>> unknown_map_loc_;
   std::unordered_map<size_t, std::string> unknown_map_symbol_;
-  bool json_shape_updated_{false};
   std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
 
   // Used to solve dynamic tiling size during resize

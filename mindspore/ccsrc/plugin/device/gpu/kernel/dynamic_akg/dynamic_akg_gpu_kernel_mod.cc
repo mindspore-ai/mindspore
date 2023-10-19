@@ -645,22 +645,31 @@ void DynamicAkgGpuKernelMod::preprocessDynamicReduceTiling() {
   dyn_algorithm_ = DynamicAkgGpuKernelMod::algo_to_int_[parsed_js_[kSupportInfo][kDynAlgorithm]];
 }
 
+void DynamicAkgGpuKernelMod::Initialize() {
+  CheckJsonParsed();
+  if (is_dynamic_) {
+    InitJsonShapeInformation();
+    InitJsonMappingInformation();
+    if (parsed_js_[kSupportInfo]["OperatorType"] == "Reduce") {
+      preprocessDynamicReduceTiling();
+    }
+  } else {
+    UpdateStaticShapeMappingInfo();
+    if (thread_info_.size() != 6 ||
+        (std::any_of(thread_info_.begin(), thread_info_.end(), [](uint32_t t) { return t <= 0; }))) {
+      MS_EXCEPTION(ValueError) << "For " << kernel_name_
+                               << ", gpu mapping config must be updated to 6 positive numbers before "
+                               << "launch, but got thread_info = " << thread_info_;
+    }
+  }
+}
+
 int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const vector<KernelTensorPtr> &inputs,
                                    const vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-  CheckJsonParsed();
-  if (!json_shape_updated_) {
-    InitJsonShapeInformation();
-    InitJsonMappingInformation();
-    json_shape_updated_ = true;
-    if (parsed_js_[kSupportInfo]["OperatorType"] == "Reduce") {
-      preprocessDynamicReduceTiling();
-    }
-  }
   UpdateShapeList(inputs, outputs);
   GetDeviceArgSizeVec(inputs.size());
-
   // It is important to do some initialization before mapping when shape changes.
   InitBeforeMapping();
   UpdateDynamicShapeTilingInfo();
@@ -682,16 +691,6 @@ bool DynamicAkgGpuKernelMod::Launch(const vector<AddressPtr> &inputs, const vect
   MS_LOG(INFO) << "Start Launch for " << kernel_name_;
   CUresult result;
   if (kernel_addr_ == nullptr) {
-    if (!is_dynamic_) {
-      CheckJsonParsed();
-      UpdateStaticShapeMappingInfo();
-    }
-    if (thread_info_.size() != 6 ||
-        (std::any_of(thread_info_.begin(), thread_info_.end(), [](uint32_t t) { return t <= 0; }))) {
-      MS_LOG(ERROR) << "For " << kernel_name_ << ", gpu mapping config must be updated to 6 positive numbers before "
-                    << "launch, but got thread_info = " << thread_info_;
-      return false;
-    }
     result = kernel_manager_->GetFunction(kernel_pack_, false, &thread_info_, &kernel_addr_, kernel_name_);
     if (result != CUDA_SUCCESS) {
       const char *msg = nullptr;
