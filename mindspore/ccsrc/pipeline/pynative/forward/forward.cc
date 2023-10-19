@@ -563,7 +563,7 @@ TypePtr InferTypeForViewComplex(const tensor::TensorPtr &tensor) {
   } else if (tensor->data_type() == kNumberTypeComplex128) {
     return TypeIdToType(kNumberTypeFloat64);
   } else {
-    MS_LOG(EXCEPTION) << "tensor->data_type() is " << TypeIdToString(tensor->data_type()) << " unsupported";
+    return tensor->Dtype();
   }
 }
 
