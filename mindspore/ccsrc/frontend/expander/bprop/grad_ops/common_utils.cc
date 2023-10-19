@@ -47,10 +47,10 @@ std::pair<std::vector<bool>, std::vector<std::vector<int64_t>>> DynBroadcastGrad
   const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape) {
   auto x_size = x_shape.size();
   auto y_size = y_shape.size();
-  ShapeVector shape[2] = {x_shape, y_shape};
+  ShapeVector shape[kDim2] = {x_shape, y_shape};
   auto n = std::max(x_size, y_size);
   std::vector<bool> need_shapecalc = {false, false};
-  std::vector<std::vector<int64_t>> reduce_axis(2);
+  std::vector<std::vector<int64_t>> reduce_axis(kDim2);
   if (IsDynamicRank(shape[0]) || IsDynamicRank(shape[1])) {
     return {{true, true}, reduce_axis};
   }
@@ -63,13 +63,13 @@ std::pair<std::vector<bool>, std::vector<std::vector<int64_t>>> DynBroadcastGrad
         break;
       }
     } else if (dim_value[1] > 0 && dim_value[0] > 0) {
-      for (size_t j = 0; j < 2; j++) {
+      for (size_t j = 0; j < kDim2; j++) {
         if (dim_value[j] == 1) {
           (void)reduce_axis[j].emplace_back(reduce_idx);
         }
       }
     } else {
-      for (size_t j = 0; j < 2; j++) {
+      for (size_t j = 0; j < kDim2; j++) {
         if (dim_value[j] == -1) {
           if (dim_value[j ^ 1] == 1) {
             (void)reduce_axis[j ^ 1].emplace_back(reduce_idx);
