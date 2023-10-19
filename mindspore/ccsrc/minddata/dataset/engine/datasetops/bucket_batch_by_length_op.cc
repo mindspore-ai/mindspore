@@ -128,6 +128,7 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
 }
 
 Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, TensorRow *batched_bucket) {
+  RETURN_UNEXPECTED_IF_NULL(batched_bucket);
   std::unique_ptr<TensorQTable> *bucket = &buckets_[bucket_index];
 
   PadInfo pad_info_copy = pad_info_;
@@ -178,6 +179,7 @@ Status BucketBatchByLengthOp::ComputeColMap() {
 }
 
 Status BucketBatchByLengthOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();
   if (eoe_received_) {
     if (!drop_remainder_) {
