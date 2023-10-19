@@ -25,6 +25,7 @@ import stat
 
 from mindspore import log as logger
 
+
 def to_int(param, param_name):
     """
     Transfer param to int type.

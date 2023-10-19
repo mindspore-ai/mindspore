@@ -578,7 +578,7 @@ class GpuFrameWorkParser:
                 op_occurrences = int(op_detail[0])
                 op_total_time = float(op_detail[1])
                 op_avg_time = float(op_detail[2])
-                if op_shape in op_shape_dict.keys():
+                if op_shape in op_shape_dict:
                     # Classify according to the operator information of the same shape.
                     op_shape_dict.get(op_shape)[0] += op_occurrences
                     op_shape_dict.get(op_shape)[1] += op_total_time

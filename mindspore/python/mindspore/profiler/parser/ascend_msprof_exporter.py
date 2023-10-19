@@ -74,15 +74,15 @@ class AscendMsprofExporter:
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
-            raise RuntimeError(exc)
+            raise RuntimeError(exc) from exc
         try:
             outs, errs = proc.communicate(timeout=self._time_out)
-        except TimeoutExpired:
+        except TimeoutExpired as err:
             proc.kill()
             msg = "The possible cause is that too much data is collected " \
                   "and the export time is too long."
             logger.error(msg)
-            raise TimeoutError(msg)
+            raise TimeoutError(msg) from err
         logger.info(outs)
         if raise_error and errs != "":
             raise RuntimeError(errs)
@@ -143,8 +143,7 @@ class AscendMsprofExporter:
         summary_path = os.path.join(device_path, self._summary_dir)
         timeline_path = os.path.join(device_path, self._timeline_dir)
 
-        msprof_export_cmd = self._msprof_command_generator(prof_path)
-        self._run_cmd(msprof_export_cmd)
+        self._run_cmd(self._msprof_command_generator(prof_path))
 
         if not os.path.isdir(summary_path):
             msg = "Path {} is not a existing directory. Make sure there is " \
@@ -158,16 +157,15 @@ class AscendMsprofExporter:
             return None
 
         step_trace = defaultdict(list)
-        with open(step_trace_file, newline='', mode='r') as csvfile:
+        with os.fdopen(os.open(step_trace_file, os.O_RDONLY, 0o600), newline='', mode='r') as csvfile:
             reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-            header = next(reader)
-            for index, value in enumerate(header):
+            for index, value in enumerate(next(reader)):
                 if value == 'Model ID':
-                    Model_ID = index
+                    model_id = index
                 if value == 'Iteration ID':
-                    Iteration_ID = index
+                    iteration_id = index
             for row in reader:
-                step_trace[int(row[Model_ID])].append(int(row[Iteration_ID]))
+                step_trace[int(row[model_id])].append(int(row[iteration_id]))
 
         if os.path.isdir(summary_path):
             shutil.rmtree(summary_path)
