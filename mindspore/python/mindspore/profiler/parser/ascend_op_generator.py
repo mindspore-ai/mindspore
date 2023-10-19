@@ -124,7 +124,7 @@ class AscendOPGenerator:
                     writer.writerows(self.aicpu_detail.tolist())
             except (IOError, OSError) as err:
                 logging.critical('Errot occurred when write aicpu detail file: %s', err)
-                raise ProfilerIOException()
+                raise ProfilerIOException() from err
             if os.path.exists(aicpu_intermediate_detail_path):
                 os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 

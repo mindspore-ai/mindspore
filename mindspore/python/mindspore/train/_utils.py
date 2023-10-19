@@ -173,9 +173,9 @@ def check_summary_param(summary_name, tag, tensor):
                             f'but got {type(tensor).__name__}')
         _check_to_numpy(plugin, tensor, prim=True)
     except TypeError as err:
-        raise TypeError(err)
+        raise TypeError(err) from err
     except ValueError as err:
-        raise ValueError(err)
+        raise ValueError(err) from err
     finally:
         debug_ops.SUMMARY_TENSOR_CACHE = []
 
