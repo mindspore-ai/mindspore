@@ -31,8 +31,9 @@ constexpr int64_t kMinChannelBlock = 4;
 enum kAxisIdx : int { kD = 2, kH, kW };
 
 void GetAxisPad(int64_t hw, int64_t kernel, int64_t stride, int64_t *pad_l, int64_t *pad_r) {
+  MS_EXCEPTION_IF_ZERO("stride", stride);
   int64_t tail = hw % stride;
-  auto pad = std::max((tail > 0 ? kernel - tail : kernel - stride), (int64_t)0);
+  auto pad = std::max((tail > 0 ? kernel - tail : kernel - stride), static_cast<int64_t>(0));
   *pad_l = std::floor(pad >> 1);
   *pad_r = pad - *pad_l;
 }
