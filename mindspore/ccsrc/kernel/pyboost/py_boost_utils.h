@@ -22,7 +22,6 @@ class BACKEND_EXPORT PyBoostUtils {
  public:
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
 };
-
 template <typename T, std::size_t... ls>
 AbstractBasePtr InferImpl(const PrimitivePtr &primitive, const T &t, std::index_sequence<ls...>) {
   auto eval_impl = abstract::GetPrimitiveInferImpl(primitive);
@@ -38,6 +37,8 @@ void BACKEND_EXPORT InferOutput(const PrimitivePtr &primitive, std::vector<tenso
   outputs->clear();
   PyBoostUtils::CreateOutputTensor(output_abs, outputs);
 }
+KernelTensorPtr TensorToKernelTensor(const ValuePtr &value);
+KernelTensorPtr ScalarToKernelTensor(const ValuePtr &value);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

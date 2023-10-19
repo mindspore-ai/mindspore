@@ -41,6 +41,37 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
 }
+KernelTensorPtr TensorToKernelTensor(const ValuePtr &value,const DeviceContext *device_context) {
+  if (!value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(TypeError) << "value is not Tensor";
+  }
+  auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
+  auto &shape = tensor->shape();
+  auto dtype = tensor->Dtype();
+  size_t tensor_size = SizeOf(shape) * GetDataTypeSize(dtype->type_id());
+
+  // TODO (CARRY) Waiting dyn_shape_dev
+  //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size, tensor->device_info().host_format_, dtype, shape,
+  //                                                                  device_context->device_context_key().device_name_,
+  //                                                                  device_context->device_context_key().device_id_);
+  //  return new_kernel_tensor;
+  return std::make_shared<KernelTensor>();
+}
+KernelTensorPtr ScalarToKernelTensor(const ValuePtr &value,const DeviceContext *device_context) {
+  if (!value->isa<Scalar>()) {
+    MS_EXCEPTION(TypeError) << "value is not Scalar";
+  }
+  auto scalar = std::dynamic_pointer_cast<Scalar>(value);
+  auto dtype = scalar->type();
+  size_t tensor_size = GetDataTypeSize(dtype->type_id());
+
+  // TODO (CARRY) Waiting dyn_shape_dev
+  //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size, tensor->device_info().host_format_, dtype, {},
+  //                                                                  device_context->device_context_key().device_name_,
+  //                                                                  device_context->device_context_key().device_id_);
+  //  return new_kernel_tensor;
+  return std::make_shared<KernelTensor>();
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
