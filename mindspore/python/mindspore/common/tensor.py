@@ -4631,23 +4631,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def imag(self):
         r"""
-        Returns a new tensor containing imaginary value of the input tensor.
-        If input tensor is real, it will return zeros.
-
-        Returns:
-            Tensor, the shape is the same as the input tensor.
-
-        Supported Platforms:
-            ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
-            >>> output = x.imag()
-            >>> print(output)
-            0.4
+        For details, please refer to :func:`mindspore.ops.imag`.
         """
         self._init_check()
         return tensor_operator_registry.get('imag')(self)
