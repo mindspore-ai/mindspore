@@ -146,6 +146,12 @@ ATTR_MAP(LRNGrad) = {{"depth_radius", ATTR_DESC(depth_radius, AnyTraits<int64_t>
 OUTPUT_MAP(LRNGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(LRNGrad, kNameLRNGrad, ADPT_DESC(LRNGrad))
 
+// DropoutGrad
+INPUT_MAP(LNDropoutGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(LNDropoutGrad) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())}};
+OUTPUT_MAP(LNDropoutGrad) = {{0, OUTPUT_DESC(pd_x)}};
+REG_ADPT_DESC(LNDropoutGrad, kDropoutGradOpName, ADPT_DESC(LNDropoutGrad))
+
 // DropoutDoMask
 INPUT_MAP(DropOutDoMask) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}, {3, INPUT_DESC(keep_prob)}};
 ATTR_MAP(DropOutDoMask) = EMPTY_ATTR_MAP;
