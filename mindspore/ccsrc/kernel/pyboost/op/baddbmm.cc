@@ -15,10 +15,32 @@
  */
 
 #include "kernel/pyboost/op/baddbmm.h"
+#include "kernel/pyboost/py_boost_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+void Baddbmm::CastInput() {
+  // todo
+}
+
+void Baddbmm::InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
+                          const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
+  // todo: DoInfer and get AbstractBasePtr.
+  // output_abstract_ = Infer();
+  // same shape with input
+
+  auto create_tensor = [](const TypeId &type, const ShapeVector &shape_vector) {
+    auto output_tensor = std::make_shared<tensor::Tensor>(type, shape_vector);
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+    return output_tensor;
+  };
+
+  MS_EXCEPTION_IF_NULL(input);
+  output_ = create_tensor(input->data_type(), input->shape());
+}
+
 tensor::TensorPtr Baddbmm::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                 const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
   // TODO: For cpu/gpu, split and run Mul/Add/BatchMatmul.

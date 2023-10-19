@@ -19,11 +19,18 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
+                           const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
+                           const tensor::TensorPtr &output) {
+  // aclnn_kernel_mod->launch.
+  return true;
+}
+
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                       const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
-  // TODO: call aclnn
-  MS_LOG(ERROR) << "Call in Baddbmm Ascend";
-  return nullptr;
+  InferOutput(input, batch1, batch2, beta, alpha);
+  Launch(input, batch1, batch2, beta, alpha, output_);
+  return output_;
 }
 }  // namespace pyboost
 }  // namespace kernel

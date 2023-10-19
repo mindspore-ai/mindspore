@@ -35,13 +35,12 @@ class BACKEND_EXPORT Op {
   Op() = default;
   virtual ~Op() = default;
   virtual void CastInput() = 0;
-  virtual void InferOutput() = 0;
-  virtual void Grad() = 0;
+  void Grad() {}
 
-  const std::vector<ValuePtr> &outputs() const { return outputs_; }
+  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
  protected:
-  std::vector<ValuePtr> outputs_;
+  std::vector<tensor::TensorPtr> outputs_;
 };
 
 template <typename T>
@@ -71,15 +70,14 @@ template <typename T>
 class OpRegister {
  public:
   using OpCreater = std::function<std::shared_ptr<T>()>;
-  OpRegister(const std::string &device, OpCreater &&fun) {
-    OpFactory<T>::Get().Register(device, std::move(fun));
-  }
+  OpRegister(const std::string &device, OpCreater &&fun) { OpFactory<T>::Get().Register(device, std::move(fun)); }
   ~OpRegister() = default;
 };
 
-#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                              \
-static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op"); \
-static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#DEVICE, []() { return std::make_shared<clazz##DEVICE>(); });
+#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                               \
+  static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op"); \
+  static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(       \
+    #DEVICE, []() { return std::make_shared<clazz##DEVICE>(); });
 
 #define MS_REG_PYBOOST_OP(DEVICE, clazz) MS_REG_PYBOOST_OP_REG(DEVICE, clazz)
 }  // namespace pyboost
