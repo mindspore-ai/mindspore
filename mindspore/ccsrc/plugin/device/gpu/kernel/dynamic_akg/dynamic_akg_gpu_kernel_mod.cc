@@ -16,6 +16,10 @@
 
 #include "plugin/device/gpu/kernel/dynamic_akg/dynamic_akg_gpu_kernel_mod.h"
 #include <fstream>
+#include <numeric>
+#include <functional>
+#include <chrono>
+#include <cmath>
 #include <algorithm>
 #include <map>
 #include "nlohmann/json.hpp"
@@ -36,12 +40,28 @@ const int REGISTER_UNIT_IN_WARP = 256;
 const int WARP_SIZE = 32;
 const int WARP_ALLOC_GRAN = 4;
 const int ELEM_BEST_GRID_SIZE = 512;
+const int MAX_THREAD_NUM = 1024;
 const int AKG_KERNEL_MOD_BX_IDX = 0;
 const int AKG_KERNEL_MOD_BY_IDX = 1;
 const int AKG_KERNEL_MOD_BZ_IDX = 2;
 const int AKG_KERNEL_MOD_TX_IDX = 3;
 const int AKG_KERNEL_MOD_TY_IDX = 4;
 const int AKG_KERNEL_MOD_TZ_IDX = 5;
+const int AKG_DYN_ALGO_REDUCE_X = 10;
+const int AKG_DYN_ALGO_REDUCE_Y = 11;
+const int AKG_DYN_ALGO_REDUCE_SMALL = 12;
+const int AKG_DYN_MARK_THREAD_LOWER_BOUND = 10;
+const int AKG_DYN_MARK_THREAD_UPPER_BOUND = 20;
+const int AKG_DYN_MARK_SEQ_LOWER_BOUND = 20;
+const int AKG_DYN_MARK_SEQ_UPPER_BOUND = 30;
+const int AKG_DYN_MARK_ONE = 30;
+const int AKG_DYN_MARK_PRODUCT = 40;
+const int AKG_DYN_MARK_UNKNOWN = 999;
+const int kNum16 = 16;
+const int kNum32 = 32;
+const int kNum64 = 64;
+const int kNum256 = 256;
+const int kNum1024 = 1024;
 constexpr auto kBlockIdxX = "blockIdx.x";
 constexpr auto kBlockIdxY = "blockIdx.y";
 constexpr auto kBlockIdxZ = "blockIdx.z";
@@ -52,8 +72,66 @@ constexpr auto kLocalPrefix = "Seq";
 constexpr auto kHostShapes = "hostShapes";
 constexpr auto kDeviceShapes = "deviceShapes";
 constexpr auto kRuntimeVars = "runtimeVars";
+constexpr auto kSupportInfo = "SupportInfo";
+constexpr auto kReduceSizeStatic = "ReduceSizeStatic";
+constexpr auto kDynAlgorithm = "DynAlgorithm";
+constexpr auto kEnableAtomic = "EnableAtomic";
 constexpr auto kRemove = -100000;
 constexpr auto kKeep = -99999;
+
+std::unordered_map<std::string, int> RuntimeVar::mark_table_ = {{"unknown", 999},
+                                                                {"reduce-thread-last", 10},
+                                                                {"reduce-thread", 11},
+                                                                {"parallel-thread-last", 12},
+                                                                {"parallel-thread", 13},
+                                                                {"reduce-y-seq", 20},
+                                                                {"reduce-x-seq", 21},
+                                                                {"parallel-seq", 22},
+                                                                {"1", 30},
+                                                                {"product", 40}};
+
+std::unordered_map<std::string, int> DynamicAkgGpuKernelMod::algo_to_int_ = {
+  {"reduce-x", AKG_DYN_ALGO_REDUCE_X},
+  {"reduce-y", AKG_DYN_ALGO_REDUCE_Y},
+  {"reduce-small", AKG_DYN_ALGO_REDUCE_SMALL}};
+
+inline void getProperReduceXConfig(int redSize, const bool &useAtomicFlag, int *block_num, int *thread_num,
+                                   int *seq_num) {
+  const int acc_num = 4;
+  *block_num = useAtomicFlag ? (redSize - 1) / MAX_THREAD_NUM + 1 : 1;
+  redSize = useAtomicFlag ? (redSize - 1) / (*block_num) + 1 : redSize;
+  (*thread_num) = redSize < kNum32 ? redSize : kNum32;
+  while ((*thread_num) * 2 * acc_num <= redSize && (*thread_num) <= MAX_THREAD_NUM) (*thread_num) *= 2;
+  (*seq_num) = (redSize - 1) / ((*thread_num) * (*block_num)) + 1;
+}
+
+inline void getProperReduceYConfig(const int &redSize, const bool &useAtomicFlag, int *block_num, int *seq_num) {
+  *block_num = 1;
+  *seq_num = redSize;
+  if (useAtomicFlag) {
+    if (redSize < kNum256) {
+      *seq_num = kNum16;
+    } else if (redSize < kNum1024) {
+      *seq_num = kNum32;
+    } else {
+      *seq_num = kNum64;
+    }
+    *block_num = (redSize - 1) / (*seq_num) + 1;
+  }
+}
+
+inline void getReduceTileSize(const int &mark, const int &upper_bound, const int &proper_block,
+                              const int &proper_thread, const int &proper_seq, int *tile_size) {
+  if (AKG_DYN_MARK_THREAD_LOWER_BOUND <= mark && mark < AKG_DYN_MARK_THREAD_UPPER_BOUND) {
+    *tile_size = std::min(upper_bound, proper_thread);
+  } else if (AKG_DYN_MARK_SEQ_LOWER_BOUND <= mark && mark < AKG_DYN_MARK_SEQ_UPPER_BOUND) {
+    *tile_size = std::min(upper_bound, proper_seq);
+  } else if (mark == AKG_DYN_MARK_ONE) {
+    *tile_size = 1;
+  } else {
+    *tile_size = -1;
+  }
+}
 
 struct RuntimeVarCompare {
   bool operator()(const std::pair<uint32_t, RuntimeVarPtr> &a, const std::pair<uint32_t, RuntimeVarPtr> &b) const {
@@ -145,6 +223,7 @@ void DynamicAkgGpuKernelMod::InitJsonShapeInformation() {
         device_loc_map[device_loc] = device_shape_str;
       }
     }
+
     (void)device_shape_list_.emplace_back(device_tensor_shape);
   }
   // Record map <symbol, host_loc>
@@ -172,6 +251,7 @@ void DynamicAkgGpuKernelMod::InitJsonMappingInformation() {
     RuntimeVarPtr v = std::make_shared<RuntimeVar>();
     v->argIndex = parsed_js_[kRuntimeVars][i][v->ArgIndexKey()];
     v->expr = parsed_js_[kRuntimeVars][i][v->ExprKey()];
+    v->mark = RuntimeVar::mark_table_[parsed_js_[kRuntimeVars][i].value(v->MarkKey(), "unknown")];
     v->mapDim = parsed_js_[kRuntimeVars][i][v->MapDimKey()];
     v->mapping = parsed_js_[kRuntimeVars][i][v->MappingKey()];
     v->prime = parsed_js_[kRuntimeVars][i][v->PrimeKey()];
@@ -190,9 +270,9 @@ void DynamicAkgGpuKernelMod::InitJsonMappingInformation() {
   // Initialize mapping info as a vector. Only store dividend number for unknown mapping args
   // Record map <unknown map ard id, host_loc>
   init_mapping_.clear();
-  vector<string> map_arg_list = {kBlockIdxX, kBlockIdxY, kBlockIdxZ, kThreadIdxX, kThreadIdxY, kThreadIdxZ};
-  for (size_t i = 0; i < map_arg_list.size(); i++) {
-    auto map_arg = map_arg_list[i];
+  map_arg_list_ = {kBlockIdxX, kBlockIdxY, kBlockIdxZ, kThreadIdxX, kThreadIdxY, kThreadIdxZ};
+  for (size_t i = 0; i < map_arg_list_.size(); i++) {
+    auto map_arg = map_arg_list_[i];
     if (parsed_js_[map_arg].is_number()) {
       uint32_t map_size = parsed_js_[map_arg];
       (void)init_mapping_.emplace_back(map_size);
@@ -203,12 +283,13 @@ void DynamicAkgGpuKernelMod::InitJsonMappingInformation() {
       } else {
         it->second->curr_map_id = i;
       }
-    } else if (parsed_js_[map_arg].is_array() && parsed_js_[map_arg].size() == 2 &&
-               parsed_js_[map_arg][0].is_string() && parsed_js_[map_arg][1].is_number()) {
+    } else if (CheckJsonValueFormat(map_arg)) {
       string divisor_symbol = parsed_js_[map_arg][0];
       auto dividend = parsed_js_[map_arg][1];
       (void)init_mapping_.emplace_back(static_cast<uint32_t>(dividend));
       unknown_map_loc_[i] = host_loc_map_[divisor_symbol];
+      unknown_map_symbol_[i] = divisor_symbol;
+      product_var_[dividend] = divisor_symbol;
     } else {
       MS_EXCEPTION(RuntimeError) << "Mapping info format error.";
       return;
@@ -217,11 +298,29 @@ void DynamicAkgGpuKernelMod::InitJsonMappingInformation() {
 
   for (auto it = parsed_js_.begin(); it != parsed_js_.end(); ++it) {
     std::string key = it.key();
-    if (key.find(kLocalPrefix) != std::string::npos && parsed_js_[key].is_array() && parsed_js_[key].size() == 2 &&
-        parsed_js_[key][0].is_string() && parsed_js_[key][1].is_number()) {
+    if (key.find(kLocalPrefix) != std::string::npos && CheckJsonValueFormat(key)) {
       string divisor_symbol = parsed_js_[key][0];
       auto prime = static_cast<int>(parsed_js_[key][1]);
       local_upper_bound_[prime] = host_loc_map_[divisor_symbol];
+      local_upper_bound_symbol_[prime] = divisor_symbol;
+      product_var_[prime] = divisor_symbol;
+    }
+  }
+
+  // update relationship: product = prime0 * prime1
+  for (const auto &kv : runtime_vars_) {
+    int prime0 = kv.first;
+    if (prime0 <= 1) continue;
+    if (runtime_vars_.find(prime0) != runtime_vars_.end()) {
+      for (const auto &kv2 : runtime_vars_) {
+        int product = kv2.first;
+        if (product > 0 && product != prime0 && product % prime0 == 0) {
+          product_var_[prime0] = product_var_[product];
+          product_var_[product / prime0] = product_var_[product];
+          std::vector<int> vars({prime0, product / prime0});
+          related_values_[product] = vars;
+        }
+      }
     }
   }
   MS_LOG(INFO) << "Done InitJsonMappingInformation for " << kernel_name_;
@@ -248,9 +347,10 @@ void DynamicAkgGpuKernelMod::GetDeviceArgSizeVec(const size_t inputs_num) {
   for (auto item : device_host_shape_loc_) {
     auto device_loc = item.first;
     auto host_loc = item.second;
-    device_shape[device_loc.first][device_loc.second] = shape_list_[host_loc.first][host_loc.second];
+    if (shape_list_[host_loc.first].size() != 0) {
+      device_shape[device_loc.first][device_loc.second] = shape_list_[host_loc.first][host_loc.second];
+    }
   }
-
   for (size_t i = 0; i < device_shape.size(); i++) {
     if (i < inputs_num) {
       MS_LOG(DEBUG) << "For " << kernel_name_ << ", input[" << i << "]: host_shape = " << shape_list_[i]
@@ -296,9 +396,12 @@ void DynamicAkgGpuKernelMod::UpdateDynamicShapeTilingInfo() {
   }
 
   UpdateRuntimeVarUpperBound();
-
-  for (auto curr_id : curr_mapping_info_.solve_order_id) {
-    SolveDynamicTiling(curr_id);
+  if (parsed_js_[kSupportInfo]["OperatorType"] == "Reduce") {
+    SolveDynamicReduction();
+  } else {
+    for (auto curr_id : curr_mapping_info_.solve_order_id) {
+      SolveDynamicTiling(curr_id);
+    }
   }
 
   for (auto it : sorted_runtime_vars_) {
@@ -309,7 +412,7 @@ void DynamicAkgGpuKernelMod::UpdateDynamicShapeTilingInfo() {
 
 void DynamicAkgGpuKernelMod::UpdateRuntimeVarUpperBound() {
   // Comes from `Block/Thread: [upper_bound, prime]`
-  for (auto item : unknown_map_loc_) {
+  for (const auto &item : unknown_map_loc_) {
     auto thread_info_id = item.first;
     auto host_loc = item.second;
     auto tile_size = thread_info_[thread_info_id];
@@ -318,32 +421,87 @@ void DynamicAkgGpuKernelMod::UpdateRuntimeVarUpperBound() {
       auto dim_size = shape_list_[host_loc.first][host_loc.second];
       it->second->upper_bound = dim_size;
       it->second->outer_map_id = thread_info_id;
+      auto symbol = unknown_map_symbol_[item.first];
+      axis_length_left_[symbol] = dim_size;
     }
   }
 
   // Comes from `Seq: [upper_bound, prime]`
-  for (auto it : local_upper_bound_) {
+  for (const auto &it : local_upper_bound_) {
     auto prime = it.first;
-    auto host_loc = it.second;
-    auto dim_size = shape_list_[host_loc.first][host_loc.second];
-    runtime_vars_[prime]->upper_bound = dim_size;
+    if (runtime_vars_.find(prime) != runtime_vars_.end()) {
+      auto host_loc = it.second;
+      auto dim_size = shape_list_[host_loc.first][host_loc.second];
+      runtime_vars_[prime]->upper_bound = dim_size;
+      auto symbol = local_upper_bound_symbol_[prime];
+      axis_length_left_[symbol] = dim_size;
+    }
+  }
+}
+
+void DynamicAkgGpuKernelMod::UpdateMapping(int curr_id, int64_t map_size, int64_t prime) {
+  // skip when mark is seq.x
+  if (curr_id != -1) {
+    thread_info_[curr_id] = map_size;
+    solved_map_loc_.insert(curr_id);
+    curr_mapping_info_.UpdateCurrMapSize(curr_id, map_size);
+  }
+  if (runtime_vars_.find(prime) == runtime_vars_.end()) {
+    return;
+  }
+  runtime_vars_[prime]->runtime_size = map_size;
+  int64_t neg_prime = -prime;
+  if (runtime_vars_.find(neg_prime) != runtime_vars_.end()) {
+    runtime_vars_[neg_prime]->runtime_size = -map_size;
+  }
+}
+
+void DynamicAkgGpuKernelMod::SolveDynamicReduction() {
+  int total_red_size = static_reduce_length_;
+  int proper_block = -1, proper_thread = -1, proper_seq = -1;
+  total_red_size =
+    std::accumulate(runtime_threads_order_.begin(), runtime_threads_order_.end(), 1,
+                    [&](int total, int prime) { return total * axis_length_left_[product_var_[prime]]; });
+
+  if (dyn_algorithm_ == AKG_DYN_ALGO_REDUCE_X) {
+    (void)getProperReduceXConfig(total_red_size, enable_atomic_, &proper_block, &proper_thread, &proper_seq);
+  } else if (dyn_algorithm_ == AKG_DYN_ALGO_REDUCE_Y) {
+    (void)getProperReduceYConfig(total_red_size, enable_atomic_, &proper_block, &proper_seq);
+  }
+
+  if (dyn_algorithm_ != AKG_DYN_ALGO_REDUCE_X) {
+    proper_thread = kNum32;
+  }
+
+  proper_thread = (proper_thread - 1) / curr_mapping_info_.total_alloc_block + 1;  // remove used
+  for (const auto &p : template_tiling_order_) {
+    int prime = p.first;
+    int mark = p.second;
+    int upper_bound = -1;
+    auto symbol = product_var_[prime];
+    auto current_length = axis_length_left_[symbol];
+    if (AKG_DYN_MARK_THREAD_LOWER_BOUND <= mark && mark < AKG_DYN_MARK_THREAD_UPPER_BOUND) {
+      upper_bound = std::min<int>(current_length, (MAX_THREAD_NUM / curr_mapping_info_.total_alloc_block));
+    } else {
+      upper_bound = current_length;
+    }
+    int tile_size = -1;
+    if (mark == AKG_DYN_MARK_PRODUCT) {
+      tile_size =
+        runtime_vars_[related_values_[prime][0]]->runtime_size * runtime_vars_[related_values_[prime][1]]->runtime_size;
+    } else {
+      (void)getReduceTileSize(mark, upper_bound, proper_block, proper_thread, proper_seq, &tile_size);
+      if (AKG_DYN_MARK_SEQ_LOWER_BOUND <= mark && mark < AKG_DYN_MARK_SEQ_UPPER_BOUND) {
+        proper_seq = proper_seq / tile_size;
+      }
+    }
+    int curr_idx = prime_to_mapping_idx_[prime];
+    UpdateMapping(curr_idx, tile_size, prime);
+    axis_length_left_[symbol] = (current_length - 1) / tile_size + 1;
   }
 }
 
 void DynamicAkgGpuKernelMod::SolveDynamicTiling(size_t curr_id) {
-  auto Update = [this](size_t curr_id, uint32_t map_size, uint32_t prime) {
-    thread_info_[curr_id] = map_size;
-    solved_map_loc_.insert(curr_id);
-    curr_mapping_info_.UpdateCurrMapSize(curr_id, map_size);
-    if (runtime_vars_.find(prime) == runtime_vars_.end()) {
-      return;
-    }
-    runtime_vars_[prime]->runtime_size = map_size;
-    auto neg_prime = -prime;
-    if (runtime_vars_.find(neg_prime) != runtime_vars_.end()) {
-      runtime_vars_[neg_prime]->runtime_size = -map_size;
-    }
-  };
   auto prime = thread_info_[curr_id];
   auto it = runtime_vars_.find(prime);
   if (it == runtime_vars_.end()) {
@@ -357,7 +515,7 @@ void DynamicAkgGpuKernelMod::SolveDynamicTiling(size_t curr_id) {
       // In this branch, dividend is stored in thread_info_ and dividend equals to prime number
       // means that the mapping of `curr_id` equals to the upper bound ceildiv the `runtime_size`.
       auto dividend = static_cast<uint32_t>((var->upper_bound - 1) / var->runtime_size) + 1;
-      Update(curr_id, dividend, 0);
+      UpdateMapping(curr_id, dividend, 0);
     }
     return;
   }
@@ -383,7 +541,7 @@ void DynamicAkgGpuKernelMod::SolveDynamicTiling(size_t curr_id) {
     }
   }
   dyn_tile_size = std::min<int64_t>(dyn_tile_size, upper_bound);
-  Update(curr_id, dyn_tile_size, prime);
+  UpdateMapping(curr_id, dyn_tile_size, prime);
 }
 
 void DynamicAkgGpuKernelMod::UpdateDynamicShapeMappingInfo() {
@@ -443,6 +601,50 @@ void DynamicAkgGpuKernelMod::CheckJsonParsed() {
   parsed_js_ = nlohmann::json::parse(js->contents, js->contents + js->len);
 }
 
+void DynamicAkgGpuKernelMod::preprocessDynamicReduceTiling() {
+  // keep static reduce length
+  static_reduce_length_ = parsed_js_[kSupportInfo][kReduceSizeStatic];
+
+  // collect thread-level idx
+  runtime_threads_order_.clear();
+  for (const auto &kv : runtime_vars_) {
+    auto var = kv.second;
+    // whether the runtime var has "thread" mark
+    if (var->prime <= 0 ||
+        (var->mark < AKG_DYN_MARK_THREAD_LOWER_BOUND || var->mark >= AKG_DYN_MARK_THREAD_UPPER_BOUND))
+      continue;
+    runtime_threads_order_.push_back(kv.first);
+  }
+
+  // sort tiling orders
+  const std::vector<int> orders = {10, 11, 12, 13, 20, 21, 22, 30, 40};  // mark order
+  template_tiling_order_.clear();
+  for (auto order : orders) {
+    for (auto kv : runtime_vars_) {
+      auto var = kv.second;
+      if (var->prime <= 0 || var->mark != order) continue;
+      template_tiling_order_.push_back(std::make_pair(kv.first, var->mark));
+    }
+  }
+
+  // build a map from prime number to mapping idx
+  prime_to_mapping_idx_.clear();
+  for (const auto &p : template_tiling_order_) {
+    int prime = p.first;
+    prime_to_mapping_idx_[prime] = -1;
+    for (size_t i = 0; i < map_arg_list_.size(); i++) {
+      auto map_arg = map_arg_list_[i];
+      if (parsed_js_[map_arg].is_number() && parsed_js_[map_arg] == prime) {
+        prime_to_mapping_idx_[prime] = i;
+        break;
+      }
+    }
+  }
+
+  enable_atomic_ = parsed_js_[kSupportInfo][kEnableAtomic];
+  dyn_algorithm_ = DynamicAkgGpuKernelMod::algo_to_int_[parsed_js_[kSupportInfo][kDynAlgorithm]];
+}
+
 int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const vector<KernelTensorPtr> &inputs,
                                    const vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -452,6 +654,9 @@ int DynamicAkgGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const v
     InitJsonShapeInformation();
     InitJsonMappingInformation();
     json_shape_updated_ = true;
+    if (parsed_js_[kSupportInfo]["OperatorType"] == "Reduce") {
+      preprocessDynamicReduceTiling();
+    }
   }
   UpdateShapeList(inputs, outputs);
   GetDeviceArgSizeVec(inputs.size());
