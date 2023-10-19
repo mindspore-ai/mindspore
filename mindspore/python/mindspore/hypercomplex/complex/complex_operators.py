@@ -165,17 +165,17 @@ class Conv2d(_UniformOperator):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
             \end{array}
 
         pad_mode is 'valid':
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                H_{out} = \left \lceil{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                W_{out} = \left \lceil{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}}} \right \rceil \\
             \end{array}
 
@@ -183,9 +183,9 @@ class Conv2d(_UniformOperator):
 
         .. math::
             \begin{array}{ll} \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (\text{kernel_size[0]} - 1) \times
                 \text{dilation[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (\text{kernel_size[1]} - 1) \times
                 \text{dilation[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -579,9 +579,9 @@ class Conv3d(_UniformOperator):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+                D_{out} = \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
 
@@ -589,11 +589,11 @@ class Conv3d(_UniformOperator):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -601,11 +601,11 @@ class Conv3d(_UniformOperator):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
