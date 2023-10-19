@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import pytest
 
 from mindspore import Tensor, context
 from mindspore import dtype as mstype
+from mindspore.common.api import _pynative_executor
 
 
 def setup_module():
@@ -70,6 +71,7 @@ def test_tesnsor_augassign_by_slice():
 
     with pytest.raises(ValueError):
         input_tensor_3d[index_slice_8] /= value_list_much_ele
+        _pynative_executor.sync()
 
 
 # GPU: does not supported op "FloorMod"
@@ -200,6 +202,7 @@ def test_tesnsor_augassign_by_bool():
 
     with pytest.raises(IndexError):
         input_tensor_3d[index_bool_2] *= value_tensor_2
+        _pynative_executor.sync()
 
 
 # GPU: does not supported op "FloorMod"
@@ -298,24 +301,33 @@ def test_tesnsor_augassign_by_number():
 
     with pytest.raises(IndexError):
         input_tensor_1d[number_index_3] += value_number
+        _pynative_executor.sync()
     with pytest.raises(IndexError):
         input_tensor_3d[number_index_3] -= value_number
+        _pynative_executor.sync()
     with pytest.raises(IndexError):
         input_tensor_1d[number_index_4] *= value_number
+        _pynative_executor.sync()
     with pytest.raises(IndexError):
         input_tensor_3d[number_index_4] /= value_number
+        _pynative_executor.sync()
 
     with pytest.raises(ValueError):
         input_tensor_1d[number_index_1] *= value_tuple_mul_ele
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         input_tensor_3d[number_index_1] *= value_tuple_much_ele
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         input_tensor_1d[number_index_1] /= value_tuple_empty
+        _pynative_executor.sync()
 
     with pytest.raises(ValueError):
         input_tensor_3d[number_index_2] //= value_list_much_ele
+        _pynative_executor.sync()
     with pytest.raises(ValueError):
         input_tensor_3d[number_index_2] *= value_list_empty
+        _pynative_executor.sync()
 
 
 # GPU: does not supported op "FloorMod"
@@ -597,10 +609,13 @@ def test_tesnsor_augassign_by_list():
 
     with pytest.raises(IndexError):
         input_tensor_3d[list_index_empty] += value_number
+        _pynative_executor.sync()
     with pytest.raises(IndexError):
         input_tensor_3d[list_index_int_overflow] += value_number
+        _pynative_executor.sync()
     with pytest.raises(IndexError):
         input_tensor_3d[list_index_bool_1] += value_number
+        _pynative_executor.sync()
 
 
 # GPU: does not supported op "FloorMod"
@@ -646,6 +661,8 @@ def test_tesnsor_augassign_by_tuple():
 
     with pytest.raises(IndexError):
         input_tensor_3d[index_tuple_5] *= value_number
+        _pynative_executor.sync()
 
     with pytest.raises(IndexError):
         input_tensor_3d[index_tuple_6] %= value_number
+        _pynative_executor.sync()
