@@ -36,15 +36,15 @@
 
 #### Ascend
 
-- [Stable] Supports user configurable operator high-precision/high-performance mode, users can use `context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})` to configure high-precision/high-performance modes for some TBE operators.
-- [Beta] Supports user configurable operators for fp16-in and fp32-out, users can use `context.set_context(ascend_config={"precision_mode": "force_fp32"})` to configure fp16-in and fp32-out for the TBE Cube operators.
-- [Beta] No need to set up MS_ENABLE_GE and MS_GE_TRAIN environment variable when running the network in the Ascend 910B platform.
-- [Beta] Remove the strong binding between `jit_level="O3"` and GE processes, so users no longer need to set `jit_level="O3"` when executing GE processes.
-- [Beta] Supports the use of NAN/INF overflow detection mode in the Ascend 910B environment, which can be achieved by setting the environment variable MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN-MODE".
+- [STABLE] Supports user configurable operator high-precision/high-performance mode, users can use `context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})` to configure high-precision/high-performance modes for some TBE operators.
+- [BETA] Supports user configurable operators for fp16-in and fp32-out, users can use `context.set_context(ascend_config={"precision_mode": "force_fp32"})` to configure fp16-in and fp32-out for the TBE Cube operators.
+- [BETA] No need to set up MS_ENABLE_GE and MS_GE_TRAIN environment variable when running the network in the Ascend 910B platform.
+- [BETA] Remove the strong binding between `jit_level="O3"` and GE processes, so users no longer need to set `jit_level="O3"` when executing GE processes.
+- [BETA] Supports the use of NAN/INF overflow detection mode in the Ascend 910B environment, which can be achieved by setting the environment variable MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN-MODE".
 
 #### Parallel
 
-- [Stable] Support the gradient accumulation feature in non-pipeline parallel scenarios in semi-automatic/fully automatic mode. Users can enable gradient accumulation by writing `net = GradAccumulationCell(net, micro_size)`. The gradient accumulation feature is compatible with the  lazy_inline feature.
+- [STABLE] Support the gradient accumulation feature in non-pipeline parallel scenarios in semi-automatic/fully automatic mode. Users can enable gradient accumulation by writing `net = GradAccumulationCell(net, micro_size)`. The gradient accumulation feature is compatible with the  lazy_inline feature.
 
 #### Inference
 
@@ -57,9 +57,7 @@ The C++ APIs provided by the two solutions are basically the same. In the future
 
 ### Bug fixes
 
-- [I7Q9RX] The Ascend platform supports adaptive identification of different hardware types.
 - [I7SDA0] Fixed an issue where the accuracy of the CRNN network deteriorates on the NES platform.
-- [I6QYCD] Fixed an issue where the precision of the maskrcnn network deteriorates on the OptiX OSN 8800 platform.
 - [I7T4QK] Fixed an issue where the inference precision of the WGAN network deteriorates on the OptiX OSN 8800 platform.
 - [I7TJ8Z] Fixed an issue where the inference precision of the LGTM network deteriorates on the OptiX OSN 8800 platform.
 - [I7M58O] Fixed ASR-dynamic network training core dump issue on Ascend platform.
@@ -88,7 +86,6 @@ Contributions of any kind are welcome!
 
 - [I7Q9RX] The Ascend platform supports adaptive identification of different hardware types.
 - [I7SDA0] Fixed an issue where the accuracy of the CRNN network deteriorates on the NES platform.
-- [I6QYCD] Fixed an issue where the precision of the maskrcnn network deteriorates on the OptiX OSN 8800 platform.
 - [I7T4QK] Fixed an issue where the inference precision of the WGAN network deteriorates on the OptiX OSN 8800 platform.
 - [I7TJ8Z] Fixed an issue where the inference precision of the LGTM network deteriorates on the OptiX OSN 8800 platform.
 
@@ -405,7 +402,6 @@ Contributions of any kind are welcome!
 
 - [I6TKLW] Fix the issue of MobileNetV2 network performance degradation on the Ascend platform.
 - [I7CP5H] Fix the issue where ASR network training failed on the Ascend platform.
-- [I6QYCD] Fix the issue where the BERT-Large-Boost network fails to train in pynative mode on the Ascend platform.
 - [I7I3EZ] Fix the issue that caused run_check() failure due to changes to the enumeration interface in Pillow version 10.0.0. If encountered in a lower version of MindSpore, install versions of Pillow below 10.0.0 to avoid this issue.
 - [I7IZ8K] Fix accuracy issues with the assignsub interface in PyNative mode.
 - [I7HGY0] Fix the issue that the loss of the functional programming does not converge in the PyNative data_sink mode.
