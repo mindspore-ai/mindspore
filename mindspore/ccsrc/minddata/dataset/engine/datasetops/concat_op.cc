@@ -48,8 +48,6 @@ ConcatOp::ConcatOp(const std::shared_ptr<SamplerRT> &sampler,
     // distributed sample mode
     num_shard_ = static_cast<int32_t>(distribute_sampler->GetDeviceNum());
     shard_index_ = static_cast<int32_t>(distribute_sampler->GetDeviceID());
-  } else {
-    // keep sequential sample mode
   }
 }
 

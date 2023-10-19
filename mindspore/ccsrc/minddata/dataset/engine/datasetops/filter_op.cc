@@ -177,6 +177,7 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 }
 
 Status FilterOp::GetNextRowPullMode(TensorRow *const row) {
+  RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(row));
 
