@@ -2217,7 +2217,8 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
       false_block = MakeFunctionBlock();
     }
     MakeConditionBlocks(block, true_block, false_block);
-    FunctionBlockPtr b1, b2;
+    FunctionBlockPtr b1;
+    FunctionBlockPtr b2;
 
     // If it is and, we need to process the rest nodes;
     // If it is or, we continue to next
