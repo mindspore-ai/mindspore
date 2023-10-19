@@ -66,6 +66,8 @@ std::map<std::string, std::map<size_t, std::string>> AicpuOpInputToAttrMap = {
   {kStridedSliceOpName, {{1, "listInt"}, {2, "listInt"}, {3, "listInt"}}}, {kExpandDimsOpName, {{1, "int"}}}};
 
 void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *infos) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(infos);
   auto graph = kernel_node->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
@@ -124,6 +126,7 @@ void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<strin
 }
 
 bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::string> &input_to_attr_info) {
+  MS_EXCEPTION_IF_NULL(cnode);
   AnfNodePtrList new_inputs;
   auto primitive = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
@@ -140,6 +143,7 @@ bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::
       MS_EXCEPTION_IF_NULL(value);
       if (value->isa<tensor::Tensor>()) {
         auto tensor = value->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
         if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
           MS_LOG(DEBUG) << "Const input data ptr is null from op " << cnode->fullname_with_scope() << "'s input " << i;
           return false;
@@ -176,6 +180,7 @@ bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::
 }  // namespace
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
+  MS_EXCEPTION_IF_NULL(info);
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (AicpuOpAttrToInputMap.find(op_name) == AicpuOpAttrToInputMap.end()) {
     return false;
@@ -186,6 +191,7 @@ bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pai
 }
 
 bool GetAicpuOpInputToAttrInfo(const CNodePtr &kernel_node, std::map<size_t, std::string> *input_to_attr_info) {
+  MS_EXCEPTION_IF_NULL(input_to_attr_info);
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (AicpuOpInputToAttrMap.find(op_name) == AicpuOpInputToAttrMap.end()) {
     return false;
