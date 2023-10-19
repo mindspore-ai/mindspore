@@ -177,6 +177,7 @@ class IrExportBuilder {
   bool SetQuantizationParamToAttrProto(const std::shared_ptr<QuantizationParam> &quantization_param,
                                        mind_ir::TensorProto_QuantParamProto *const quant_param_proto);
   bool SetFunctorToAttrProto(const FunctorPtr &value, mind_ir::AttributeProto *const attr_proto);
+  bool SetTensorTypeToAttributeProto(const ValuePtr &value, mind_ir::TensorProto *tensor_proto);
 
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
