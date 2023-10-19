@@ -101,7 +101,8 @@ void KernelTensor::CalculateMemSize() {
 
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   if (type_id_ != kObjectTypeTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently.";
+    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently, but got type: "
+                      << TypeIdLabel(type_id_);
   }
   shape_vector_ = shape_vector;
   shape_->SetShapeVector(shape_vector_);
@@ -109,7 +110,8 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
 
 void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
   if (type_id_ != kObjectTypeTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently.";
+    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently, but got type: "
+                      << TypeIdLabel(type_id_);
   }
   shape_vector_ = std::move(shape_vector);
   shape_->SetShapeVector(shape_vector_);

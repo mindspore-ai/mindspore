@@ -552,17 +552,27 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   auto &device_context = op_compiler_info->device_context_;
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+
   auto format = cached_device_address->format();
   auto dtype = cached_device_address->type_id();
   const auto &shape = tensor->shape();
   size_t tensor_size = GetTensorDeviceSize(device_context, node, shape, format, dtype, 0);
 
-  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size, format, dtype, shape,
-                                                                  device_context->device_context_key().device_name_,
-                                                                  device_context->device_context_key().device_id_);
+  // Update shape and size for cached device address.
+  cached_device_address->set_host_shape(shape);
+  cached_device_address->kernel_tensor()->SetShapeVector(shape);
+  cached_device_address->SetSize(tensor_size);
+
+  // Create new device address from cached device device address.
+  const auto &kernel_tensor = cached_device_address->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto new_kernel_tensor = kernel_tensor->Clone();
+  MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+  new_kernel_tensor->set_device_ptr(nullptr);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
   MS_EXCEPTION_IF_NULL(new_device_address);
   new_device_address->set_from_persistent_mem(tensor->is_parameter());
+
   if (!skip_sync) {
     if (!device_context->device_res_manager_->AllocateMemory(new_device_address.get())) {
       MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
@@ -576,9 +586,6 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   }
 
   cached_device_address->set_ptr(new_device_address->GetMutablePtr());
-  cached_device_address->set_host_shape(new_device_address->host_shape());
-  cached_device_address->kernel_tensor()->SetShapeVector(new_device_address->host_shape());
-  cached_device_address->SetSize(new_device_address->GetSize());
   return new_device_address;
 }
 
