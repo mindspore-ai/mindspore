@@ -50,6 +50,10 @@ constexpr int64_t kNumPadSize = 8;
 
 bool PFACheckShape(float scale_value, int64_t q_seq_len = 0, int64_t k_seq_len = 0, int64_t v_seq_len = 0,
                    int64_t d_value = 0) {
+  if (scale_value < 0) {
+    MS_LOG(WARNING) << "scale value is invalid.";
+    return false;
+  }
   MS_LOG(INFO) << "check param in stable diffusion models, scale_value: " << scale_value << ", q_seq_len: " << q_seq_len
                << ", k_seq_len: " << k_seq_len << ", v_seq_len: " << v_seq_len << ", d_value: " << d_value;
   if (q_seq_len != 0 && k_seq_len != 0 && v_seq_len != 0 && d_value != 0) {
@@ -109,7 +113,15 @@ int GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
     MS_LOG(WARNING) << "concat_value is nullptr.";
     return -1;
   }
-  auto concat_data = reinterpret_cast<int32_t *>(concat_value->data_c());
+  if (concat_value->ElementsNum() != 1) {
+    MS_LOG(WARNING) << "concat value elements num is not 1, ElementsNum is: " << concat_value->ElementsNum();
+    return -1;
+  }
+  if (concat_value->data_type() != kNumberTypeInt32) {
+    MS_LOG(WARNING) << "head num is not int32, now not support other data type.";
+    return -1;
+  }
+  auto concat_data = static_cast<int32_t *>(concat_value->data_c());
   if (concat_data == nullptr) {
     MS_LOG(WARNING) << "concat_data is nullptr.";
     return -1;
@@ -929,11 +941,23 @@ float FlashAttentionFusion::GetScaleValueForDynamicShape(const AnfNodePtr &mul_c
   if (mul_value == nullptr) {
     return -1;
   }
-  auto mul_data = reinterpret_cast<float *>(mul_value->data_c());
-  if (mul_data == nullptr) {
+  if (mul_value->data_c() == nullptr) {
+    MS_LOG(WARNING) << "mul data is nullptr.";
     return -1;
   }
-  return mul_data[0];
+  if (mul_value->ElementsNum() != 1) {
+    MS_LOG(WARNING) << "mul value elements num is not 1, ElementsNum is: " << mul_value->ElementsNum();
+    return -1;
+  }
+  if (mul_value->data_type() == kNumberTypeFloat32) {
+    return static_cast<float *>(mul_value->data_c())[0];
+  } else if (mul_value->data_type() == kNumberTypeFloat16) {
+    return static_cast<float>(static_cast<float16 *>(mul_value->data_c())[0]);
+  } else {
+    MS_LOG(ERROR) << "bot support data type, " << mul_value->data_type();
+    return -1;
+  }
+  return -1;
 }
 
 CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &pattern_name,
@@ -991,7 +1015,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSD(const std::string &
   if (input_tensor_q_shape.size() != kNumShapeSize4 && utils::isa<ParameterPtr>(mul_const_input)) {
     scale_value = GetScaleValueForDynamicShape(mul_const_input);
     // process bnsd shape
-    MS_LOG(INFO) << "get flash attention param for dynamic shape.";
+    MS_LOG(INFO) << "get flash attention param for dynamic shape, scale value is " << scale_value;
     std::vector<int32_t> new_shape = {0, 0, -1};
     auto shape_node = BuildIntVecParameterNode(func_graph, new_shape, node->fullname_with_scope() + "_new_shape");
     auto output_shape_node = node->cast<CNodePtr>();
