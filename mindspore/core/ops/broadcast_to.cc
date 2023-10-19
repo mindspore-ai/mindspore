@@ -150,7 +150,7 @@ class MIND_API AGBroadcastToInfer : public abstract::OpInferBase {
     return BroadcastToInfer(engine, primitive, input_args);
   }
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+  // std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(BroadcastTo, prim::kPrimBroadcastTo, AGBroadcastToInfer, false);

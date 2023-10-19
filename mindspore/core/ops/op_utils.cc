@@ -894,6 +894,20 @@ std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
   std::set<int64_t> depend_list;
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_prim->name());
   if (op_def == nullptr) {
+    // Use old Primitive infer.
+    auto op_infer_opt = abstract::GetPrimitiveInferImpl(op_prim);
+    if (!op_infer_opt.has_value()) {
+      if (op_prim->HasAttr(kAttrMeOpName)) {
+        auto ori_prim_name = GetValue<std::string>(op_prim->GetAttr(kAttrMeOpName));
+        op_infer_opt = abstract::GetPrimitiveInferImpl(std::make_shared<Primitive>(ori_prim_name));
+      }
+    }
+    if (op_infer_opt.has_value()) {
+      auto op_infer = op_infer_opt.value().Get();
+      if (op_infer != nullptr && depend_list.empty()) {
+        depend_list = op_infer->GetValueDependArgIndices();
+      }
+    }
     return depend_list;
   }
   auto op_func_impl = op_def->func_impl_;
