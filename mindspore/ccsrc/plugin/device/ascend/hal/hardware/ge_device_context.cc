@@ -116,7 +116,13 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
     auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
     return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
   }
-  return RunMode::kGraphMode;
+  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+    MS_LOG(INFO) << "RunMode::kKernelMode";
+    return RunMode::kKernelMode;
+  } else {
+    MS_LOG(INFO) << "RunMode::kGraphMode";
+    return RunMode::kGraphMode;
+  }
 }
 
 void GeDeviceContext::Initialize() {
