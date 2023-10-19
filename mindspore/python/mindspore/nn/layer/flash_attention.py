@@ -64,8 +64,8 @@ class FlashAttention(Cell):
       - **query** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, head_num, seq_length, head_dim])
       - **key** (Tensor) - Tensor key (:class:`mstype.fp16` [batch_size, head_num, seq_length, head_dim])
       - **value** (Tensor) - Tensor value (:class:`mstype.fp16` [batch_size, head_num, seq_length, head_dim])
-      - **attention_mask** (Tensor) - Float Tensor the mask of (:class:`mstype.fp16` [batch_size, seq_length,
-          seq_length]): A matrix to pass masked information.
+      - **attention_mask** (Tensor) - Float Tensor the mask of (:class:`mstype.fp16` `mstype.uint8`
+        [batch_size, seq_length, seq_length]): A matrix to pass masked information.
 
     Outputs:
         A Tensor. The output of the attention with shape [batch_size, head_num, seq_length, head_dim]
@@ -134,7 +134,7 @@ class FlashAttention(Cell):
             self.reshape = ops.Reshape()
             self.zeros_like = ops.ZerosLike().shard(((dp, mp, 1, 1),))
             self.zeros = ops.Zeros()
-            self.attn_expand_dims = ops.ExpandDims().shard(((dp, 1, 1),))
+            self.attn_cast = ops.Cast()
             if use_mqa:
                 fa_strategies = ((dp, mp, 1, 1),
                                  (dp, 1, 1, 1),
@@ -246,6 +246,7 @@ class FlashAttention(Cell):
                 drop_mask = None
             query = self.scale_mul(query, self.scale_factor)
             key = self.scale_mul(key, self.scale_factor)
+            attn_mask = self.cast(attn_mask, mstype.float16)
             output, _, _ = self.flash_attention(query, key, value, attn_mask, drop_mask, alibi_mask)
         else:
             # 910B -- FlashAttentionScore
@@ -255,7 +256,7 @@ class FlashAttention(Cell):
             else:
                 drop_mask_bits = None
             # (B, N, S, D) -> (B, S, H)
-            attn_mask = self.attn_expand_dims(attn_mask, 1)
+            attn_mask = self.cast(self.reshape(attn_mask, (bsz, 1, seq_len, seq_len)), mstype.uint8)
             output, _, _ = self.flash_attention(query,
                                                 key,
                                                 value,
@@ -264,5 +265,4 @@ class FlashAttention(Cell):
                                                 None,
                                                 None,
                                                 None)
-
         return output

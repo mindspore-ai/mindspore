@@ -11400,7 +11400,7 @@ class FlashAttentionScore(Primitive):
           Input tensor of shape :math:`(B, S, H)`.
         - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8 or float16.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of uint8.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
