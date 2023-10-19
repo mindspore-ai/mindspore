@@ -3691,13 +3691,6 @@ class AffineGridGrad(Primitive):
         self.init_prim_io_names(inputs=['y_grad', 'x_size'], outputs=['x_grad'])
 
 
-class HSigmoidGrad(Primitive):
-    """Gets the gradient of HSigmoid operation."""
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSigmoidGrad"""
-        self.init_prim_io_names(inputs=['grads', 'input_x'], outputs=['output'])
-
 
 class GluGrad(Primitive):
     """

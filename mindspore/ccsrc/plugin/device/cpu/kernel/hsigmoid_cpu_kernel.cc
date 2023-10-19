@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/hsigmoid_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/hsigmoid.h"
+#include "mindspore/core/ops/ops_func_impl/hsigmoid.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {

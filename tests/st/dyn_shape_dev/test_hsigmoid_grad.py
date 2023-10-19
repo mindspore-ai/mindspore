@@ -1,0 +1,105 @@
+# Copyright 2023 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+import numpy as np
+import pytest
+import test_utils
+
+from mindspore import ops
+from mindspore import Tensor
+import mindspore as ms
+
+
+@test_utils.run_with_cell
+def hsigmoid_grad_forward_func(grads, x):
+    return ops.auto_generate.hsigmoid_grad(grads, x)
+
+
+@test_utils.run_with_cell
+def hsigmoid_grad_dyn_shape_func(grads, x):
+    return ops.auto_generate.hsigmoid_grad(grads, x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_hsigmoid_grad_forward(mode):
+    """
+    Feature: Ops.
+    Description: test op hsigmoid_grad.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    grads = Tensor(np.array([0.6666667, 0.8333333, 1.]).astype('float32'))
+    np_array = np.array([1.0, 2.0, 3.0]).astype('float32')
+    x = Tensor(np_array)
+    out = hsigmoid_grad_forward_func(grads, x)
+    print("out: ", out)
+    expect = np.array([0.11111111, 0.13888888, 0.]).astype('float32')
+    assert np.allclose(out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_hsigmoid_grad_vmap(mode):
+    """
+    Feature: test vmap function.
+    Description: test avgpool op vmap.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    grads = Tensor(
+        np.array([[0.6666667, 0.8333333, -0.5, 1.]]).astype('float32'))
+    np_array = np.array([[0.5, 0.4, 0.3, 0.2]]).astype('float32')
+    x = Tensor(np_array)
+    nest_vmap = ops.vmap(
+        ops.vmap(hsigmoid_grad_forward_func, in_axes=0), in_axes=0)
+    out = nest_vmap(grads, x)
+    print("vmap out: ", out)
+    expect = np.array(
+        [[0.11111111, 0.13888888, -0.08333334, 0.16666667]]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_hsigmoid_grad_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of avg pool.
+    Description: test dynamic tensor and dynamic scalar of avg pool.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    grads_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    x = ms.Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
+    grads = Tensor(np.array([0.6666667, 0.8333333, 1.]).astype('float32'))
+    test_cell = test_utils.to_cell_obj(hsigmoid_grad_dyn_shape_func)
+    test_cell.set_inputs(grads_dyn, x_dyn)
+    out = test_cell(grads, x)
+    print("out:", out)
+    expect = np.array([0.11111111, 0.13888888, 0.]).astype(np.float32)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)

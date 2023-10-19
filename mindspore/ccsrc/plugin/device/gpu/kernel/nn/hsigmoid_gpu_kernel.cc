@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
-#include "mindspore/core/ops/hsigmoid.h"
+#include "mindspore/core/ops/ops_func_impl/hsigmoid.h"
 
 namespace mindspore {
 namespace kernel {

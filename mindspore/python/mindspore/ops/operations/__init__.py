@@ -21,7 +21,8 @@ A collection of operators to build neural networks or to compute functions.
 
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from ._inner_ops import (MatmulDDS, DSDMatmul, Cummin, ExtractImagePatches, SelectView, CopyWithSlice)
+from ._inner_ops import (MatmulDDS, DSDMatmul, Cummin,
+                         ExtractImagePatches, SelectView, CopyWithSlice)
 from ._quant_ops import *
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
@@ -100,7 +101,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmaxV2, OneHot, Pad, MirrorPad, Mish, ReLU, ReLU6, ReLUV2,
-                     HSwish, HSigmoid,
+                     HSwish,
                      ResizeBilinear, Sigmoid, SeLU, HShrink, ApplyKerasMomentum,
                      SigmoidCrossEntropyWithLogits, NLLLoss, BCEWithLogitsLoss,
                      SmoothL1Loss, SoftMarginLoss, Softmax, Softsign, Softplus, LRN, RNNTLoss, DynamicRNN, DynamicGRUV2,
@@ -137,8 +138,9 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
-                             GatherD, GatherNd, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
+                             GatherD, GatherNd, HSigmoid, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
                              Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal,)
+
 
 __all__ = [
     'HSVToRGB',

@@ -1,0 +1,12 @@
+#operator hsigmoid_grad
+hsigmoid_grad:
+    args:
+        grads:
+            dtype: tensor
+        input_x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSigmoidGrad

@@ -954,38 +954,6 @@ class Sigmoid(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class HSigmoid(Primitive):
-    r"""
-    Hard sigmoid activation function.
-
-    Refer to :func:`mindspore.ops.hardsigmoid` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The input Tensor.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> hsigmoid = ops.HSigmoid()
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> result = hsigmoid(input_x)
-        >>> print(result)
-        [0.3333 0.1666 0.5    0.8335 0.6665]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSigmoid."""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-
-
 class Tanh(Primitive):
     r"""
     Computes hyperbolic tangent of input element-wise.
