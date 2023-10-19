@@ -33,9 +33,9 @@ void PoolingCpuKernelMod::InitPoolingFields(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  dtype_ = inputs[0]->GetDtype();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
+  dtype_ = inputs[0]->GetDtype();
 
   format_ = GetValue<std::string>(base_operator->GetAttr(FORMAT));
   pad_mode = GetValue<std::string>(base_operator->GetAttr(PAD_MODE));
