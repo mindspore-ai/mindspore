@@ -36,15 +36,15 @@
 
 #### Ascend
 
-- [Stable] 支持用户可配置算子高精度/高性能模式，用户可以通过`context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})`对部分TBE算子配置高精度/高性能模式。
-- [Beta] 支持用户可配置fp16进fp32出的算子，用户可以通过`context.set_context(ascend_config={"precision_mode": "force_fp32"})`对TBE Cube算子配置fp16进fp32出。
-- [Beta] 在Ascend 910B环境运行网络时无需再设置MS_ENABLE_GE和MS_GE_TRAIN环境变量。
-- [Beta] 去除jit level "O3"与GE流程强绑定，用户在执行GE流程时无需再设置`jit_level="O3"`。
-- [Beta] 支持Ascend 910B环境使用NAN/INF的溢出检测模式，可以通过设置环境变量MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN_MODE"进行切换。
+- [STABLE] 支持用户可配置算子高精度/高性能模式，用户可以通过`context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})`对部分TBE算子配置高精度/高性能模式。
+- [BETA] 支持用户可配置fp16进fp32出的算子，用户可以通过`context.set_context(ascend_config={"precision_mode": "force_fp32"})`对TBE Cube算子配置fp16进fp32出。
+- [BETA] 在Ascend 910B环境运行网络时无需再设置MS_ENABLE_GE和MS_GE_TRAIN环境变量。
+- [BETA] 去除jit level "O3"与GE流程强绑定，用户在执行GE流程时无需再设置`jit_level="O3"`。
+- [BETA] 支持Ascend 910B环境使用NAN/INF的溢出检测模式，可以通过设置环境变量MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN_MODE"进行切换。
 
 #### Parallel
 
-- [Stable] 支持半自动/全自动模式下，非流水线并行场景的梯度累加特性，用户可以通过`net = GradAccumulationCell(net, micro_size)`方式，对网络使能梯度累加。梯度累加特性同样支持LazyInline编译加速。
+- [STABLE] 支持半自动/全自动模式下，非流水线并行场景的梯度累加特性，用户可以通过`net = GradAccumulationCell(net, micro_size)`方式，对网络使能梯度累加。梯度累加特性同样支持LazyInline编译加速。
 
 #### 推理
 
@@ -57,9 +57,7 @@
 
 ### Bug fixes
 
-- [I7Q9RX] 昇腾平台支持不同硬件类型自适应识别。
 - [I7SDA0] 修复了昇腾平台上CRNN网络精度劣化的问题。
-- [I6QYCD] 修复了昇腾平台上maskrcnn网络精度劣化问题。
 - [I7T4QK] 修复了昇腾平台上wgan网络推理精度劣化问题。
 - [I7TJ8Z] 修复了昇腾平台上lgtm网络推理精度劣化问题。
 - [I7M58O] 修复了昇腾平台上ASR-dynamic网络训练core-dump的问题
@@ -88,7 +86,6 @@ bantao,Bingliang,BJ-WANG,Brian-K,caifubi,ccsszz,changzherui,chenfei_mindspore,ch
 
 - [I7Q9RX] 昇腾平台支持不同硬件类型自适应识别。
 - [I7SDA0] 修复了昇腾平台上CRNN网络精度劣化的问题。
-- [I6QYCD] 修复了昇腾平台上maskrcnn网络精度劣化问题。
 - [I7T4QK] 修复了昇腾平台上wgan网络推理精度劣化问题。
 - [I7TJ8Z] 修复了昇腾平台上lgtm网络推理精度劣化问题。
 
@@ -401,7 +398,6 @@ changzherui,chenfei_mindspore,chenjianping,chenkang,chenweifeng,chujinjin,fangwe
 
 - [I6TKLW] 修复了昇腾平台上MobileNetV2网络性能劣化的问题。
 - [I7CP5H] 修复了昇腾平台上ASR网络训练失败的问题。
-- [I6QYCD] 修复了昇腾平台上BERT-Large-Boost网络在pynative模式下训练失败的问题。
 - [I7I3EZ] 修复了由于Pillow 10.0.0版本变更枚举接口导致run_check()失败的问题。若在低版本MindSpore遇到，则安装10.0.0以下版本Pillow避免此问题。
 - [I7IZ8K] 修复了assignsub接口在PyNative下的精度问题。
 - [I7HGY0] 修复了函数式编程，在PyNative模式数据下沉场景，loss不收敛的问题。
