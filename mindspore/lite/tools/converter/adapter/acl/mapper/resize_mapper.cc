@@ -75,7 +75,7 @@ STATUS ResizeMapper::Mapper(const CNodePtr &cnode) {
       ops::Resize op_resize;
       dst_prim = op_resize.GetPrim();
       dst_prim->set_attr("coordinate_transformation_mode", MakeValue("pytorch_half_pixel"));
-      dst_prim->set_attr("mode", MakeValue("cubic"));
+      src_prim->set_attr("mode", MakeValue("cubic"));
       auto func_graph = cnode->func_graph();
       auto roi_node = opt::BuildFloatValueParameterNode(func_graph, 0, cnode->fullname_with_scope() + "_roi");
       auto scales_node = opt::BuildFloatVecParameterNode(func_graph, {0}, cnode->fullname_with_scope() + "_scales");
@@ -192,7 +192,7 @@ STATUS ResizeMapper::CalResizeShape(const CNodePtr &cnode, const PrimitivePtr &p
   }
   auto cast_int32_node = NewCNode(cnode, prim::kPrimCast, {mul_node, NewValueNode(TypeIdToType(kNumberTypeInt32))},
                                   {DIMENSION_2D}, kNumberTypeInt32, cnode->fullname_with_scope() + "_shape_cast_int32");
-  manager->Replace(scale_input, cast_int32_node);
+  cnode->set_input(kResizeShapeInputIndex, cast_int32_node);
   return RET_OK;
 }
 
