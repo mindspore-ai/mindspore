@@ -1,6 +1,7 @@
 file(GLOB_RECURSE _PYNATIVE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "forward/*.cc"
         "grad/*.cc"
+        "op_function/*.cc"
         "*.cc"
 )
 

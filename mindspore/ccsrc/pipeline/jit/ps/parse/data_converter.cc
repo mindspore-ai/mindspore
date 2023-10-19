@@ -37,13 +37,6 @@
 
 namespace mindspore {
 namespace parse {
-namespace {
-struct PyDataToValueRegister {
-  PyDataToValueRegister() noexcept {
-    python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue);
-  }
-} callback_register;
-}  // namespace
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
@@ -61,6 +54,101 @@ static constexpr int kBit8 = 8;
 static constexpr int kBit16 = 16;
 static constexpr int kBit32 = 32;
 static constexpr int kBit64 = 64;
+namespace {
+struct PyDataToValueRegister {
+  PyDataToValueRegister() noexcept {
+    python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue);
+  }
+} callback_register;
+
+template <typename T>
+ValuePtr ConvertNumberWithType(const T &obj, const TypePtr &dtype) {
+  ValuePtr data = nullptr;
+  auto int_dypte = dyn_cast<Int>(dtype);
+  if (int_dypte != nullptr) {
+    switch (int_dypte->nbits()) {
+      case kBit8:
+        data = std::make_shared<Int8Imm>(obj);
+        break;
+      case kBit16:
+        data = std::make_shared<Int16Imm>(obj);
+        break;
+      case kBit32:
+        data = std::make_shared<Int32Imm>(obj);
+        break;
+      case kBit64:
+        data = std::make_shared<Int64Imm>(obj);
+        break;
+      default:
+        data = std::make_shared<Int64Imm>(obj);
+    }
+    return data;
+  }
+
+  auto uint_dypte = dyn_cast<UInt>(dtype);
+  if (uint_dypte != nullptr) {
+    switch (uint_dypte->nbits()) {
+      case kBit8:
+        data = std::make_shared<UInt8Imm>(obj);
+        break;
+      case kBit16:
+        data = std::make_shared<UInt16Imm>(obj);
+        break;
+      case kBit32:
+        data = std::make_shared<UInt32Imm>(obj);
+        break;
+      case kBit64:
+        data = std::make_shared<UInt64Imm>(obj);
+        break;
+      default:
+        data = std::make_shared<UInt32Imm>(obj);
+    }
+    return data;
+  }
+
+  auto float_dypte = dyn_cast<Float>(dtype);
+  if (float_dypte != nullptr) {
+    switch (float_dypte->nbits()) {
+      case kBit32:
+        data = std::make_shared<FP32Imm>(obj);
+        break;
+      case kBit64:
+        data = std::make_shared<FP64Imm>(obj);
+        break;
+      default:
+        data = std::make_shared<FP32Imm>(obj);
+    }
+    return data;
+  }
+  return nullptr;
+}
+ValuePtr ConvertIntegerWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
+  auto obj_int64 = py::cast<int64_t>(obj);
+  if (dtype == nullptr) {
+    return std::make_shared<Int64Imm>(obj_int64);
+  }
+  return ConvertNumberWithType<int64_t>(obj_int64, dtype);
+}
+
+ValuePtr ConvertFloatWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
+  auto obj_double = py::cast<double>(obj);
+  if (dtype == nullptr) {
+    auto ret = std::make_shared<FP64Imm>(obj_double);
+    return ret;
+  }
+  return ConvertNumberWithType<float>(obj_double, dtype);
+}
+
+template <typename T, typename U>
+ValuePtr PyCast(const py::object &obj) {
+  return std::make_shared<T>(py::cast<U>(obj));
+}
+
+template <typename T>
+ValuePtr ObjCast(const py::object &obj) {
+  return obj.cast<T>();
+}
+}  // namespace
 
 class DataConvertFunc {
  public:
@@ -94,36 +182,36 @@ template <typename T>
 class ByTypeDataConvertFunc : public DataConvertFunc {
  public:
   explicit ByTypeDataConvertFunc(const InstanceConvertFunc &convert_func)
-      : DataConvertFunc(convert_func), check_func_(py::isinstance<T>) {}
+    : DataConvertFunc(convert_func), check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ValuePtr &converted_type)
-      : DataConvertFunc([converted_type](const py::object &, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return converted_type;
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([converted_type](const py::object &, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return converted_type;
+  }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjTypeConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &dtype,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, dtype); }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &dtype,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, dtype); }),
+      check_func_(py::isinstance<T>) {}
 
   explicit ByTypeDataConvertFunc(const ArgsObjArgsValueConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &,
-                                       const ValuePtrList &args_value_list) -> ValuePtr {
-          return convert_func(obj, args_value_list);
-        }),
-        check_func_(py::isinstance<T>) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &,
+                                     const ValuePtrList &args_value_list) -> ValuePtr {
+    return convert_func(obj, args_value_list);
+  }),
+      check_func_(py::isinstance<T>) {}
 
   ~ByTypeDataConvertFunc() override = default;
 
@@ -137,15 +225,15 @@ class ByTypeDataConvertFunc : public DataConvertFunc {
 class ByAttrDataConvertFunc : public DataConvertFunc {
  public:
   ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        attr_name_(attr_name) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      attr_name_(attr_name) {}
 
   ByAttrDataConvertFunc(const std::string &attr_name, const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        attr_name_(attr_name) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      attr_name_(attr_name) {}
 
   ~ByAttrDataConvertFunc() override = default;
 
@@ -159,15 +247,15 @@ class ByAttrDataConvertFunc : public DataConvertFunc {
 class ByFuncDataConvertFunc : public DataConvertFunc {
  public:
   ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
-          return convert_func(obj);
-        }),
-        match_func_(match_func) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool, const TypePtr &, const ValuePtrList &) -> ValuePtr {
+    return convert_func(obj);
+  }),
+      match_func_(match_func) {}
 
   ByFuncDataConvertFunc(const InstanceCheckFunc &match_func, const ArgsObjSigConvertFunc &convert_func)
-      : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
-                                       const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
-        match_func_(match_func) {}
+    : DataConvertFunc([convert_func](const py::object &obj, bool use_sig, const TypePtr &,
+                                     const ValuePtrList &) -> ValuePtr { return convert_func(obj, use_sig); }),
+      match_func_(match_func) {}
 
   ~ByFuncDataConvertFunc() override = default;
 

@@ -41,6 +41,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
                              CumSum, Less, LessEqual)
+from mindspore._c_expression import pyboost_baddbmm
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -826,6 +827,13 @@ class BatchMatMul(Primitive):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
         self.add_prim_attr('adj_x1', self.transpose_a)
         self.add_prim_attr('adj_x2', self.transpose_b)
+
+class Baddbmm(Primitive):
+    @prim_attr_register
+    def __init__(self):
+        cls_name = self.name
+    def __call__(self, *args):
+        return pyboost_baddbmm(args)
 
 
 class AddN(Primitive):

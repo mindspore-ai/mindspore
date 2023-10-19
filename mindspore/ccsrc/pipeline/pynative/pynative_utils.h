@@ -57,6 +57,9 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
+  static TensorPtr StubNodeToTensor(const ValuePtr &value);
+  std::vector<TensorPtr> StubNodeToTensorList(const ValuePtr &v);
+  static std::vector<TensorPtr> StubNodeToTensorSequence(const ValuePtr &value);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
                                   mindspore::HashSet<size_t> *input_to_attr_index);

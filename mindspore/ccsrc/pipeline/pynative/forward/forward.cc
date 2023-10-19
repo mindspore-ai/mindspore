@@ -42,6 +42,7 @@ using mindspore::profiler::ProfilerManager;
 
 namespace mindspore {
 namespace pynative {
+enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 namespace {
 const mindspore::HashMap<std::string, mindspore::HashMap<size_t, std::string>> kSliceOpInputToAttr = {
   {kBroadcastToOpName, {{0, ops::kShape}}}};
@@ -50,7 +51,6 @@ const std::set<std::string> kViewOpForComplexToOtherType = {"Real", "Imag"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
 constexpr auto kOpNameCustom = "Custom";
-enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 // Shallow Copy Value and change shape
 ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &value) {
@@ -437,6 +437,11 @@ bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
   auto forward_task = std::make_shared<FrontendTask>(
     [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpFrontend(op_run_info); }, op_run_info);
+  frontend_queue_->Push(forward_task);
+}
+
+void ForwardExecutor::DispatchAnyFrontendTask(std::function<void(void)> &&task) {
+  auto forward_task = std::make_shared<FrontendTask>([task](...) { task(); }, nullptr);
   frontend_queue_->Push(forward_task);
 }
 

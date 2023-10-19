@@ -507,6 +507,28 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
+TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (utils::isa<stub::StubNode>(v)) {
+    auto stub = utils::cast<stub::StubNodePtr>(v);
+    return stub->WaitValue()->cast<tensor::TensorPtr>();
+  } else if (v->isa<tensor::Tensor>()) {
+    return v->cast<tensor::TensorPtr>();
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
+}
+
+std::vector<TensorPtr> Common::StubNodeToTensorList(const ValuePtr &v) {
+  if (utils::isa<ValueSequence>(v)) {
+    const auto &value_seq = utils::cast<ValueSequencePtr>(v);
+    const auto &values = value_seq->value();
+    std::vector<TensorPtr> tensor_list;
+    (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
+                         [](const ValuePtr &value) { return StubNodeToTensor(value); });
+  }
+  MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
+}
+
 void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                  const std::string &device_target, bool is_dynamic_shape,
                                  mindspore::HashSet<size_t> *input_to_attr_index) {
@@ -764,6 +786,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   }
   prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = prim;
+  op_run_info->base_op_run_info.op_name = prim->name();
   op_run_info->signatures = prim->signatures();
   op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }

@@ -1,0 +1,20 @@
+#operator baddbmm
+baddbmm:
+  args:
+    input:
+      dtype: tensor
+    batch1:
+      dtype: tensor
+    batch2:
+      dtype: tensor
+    beta:
+      dtype: float
+      init: 1.0
+    alpha:
+      dtype: float
+      init: 1.0
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Baddbmm

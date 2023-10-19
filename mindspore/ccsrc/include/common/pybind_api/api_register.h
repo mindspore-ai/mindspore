@@ -43,7 +43,8 @@ void RegRandomNormal(py::module *m);
 
 namespace pynative {
 void RegPyNativeExecutor(const py::module *m);
-}
+void RegisterPyBoostFunction(py::module *m);
+}  // namespace pynative
 
 namespace tensor {
 void RegMetaTensor(const py::module *m);

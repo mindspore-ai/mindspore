@@ -143,6 +143,7 @@ void RegModule(py::module *m) {
   RegMsContext(m);
   RegSecurity(m);
   mindspore::pynative::RegPyNativeExecutor(m);
+  mindspore::pynative::RegisterPyBoostFunction(m);
   mindspore::prim::RegCompositeOpsGroup(m);
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
