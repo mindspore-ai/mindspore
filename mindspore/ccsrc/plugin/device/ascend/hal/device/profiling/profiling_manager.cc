@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,7 @@ bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t
   device_id_ = device_id;
 
   auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
   if (backend == "ge") {
     MS_LOG(INFO) << "GE backend has been declare. No need to declare VM backend.";
