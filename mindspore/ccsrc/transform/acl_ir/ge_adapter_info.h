@@ -189,6 +189,7 @@ class GeAdapterManager {
   GeAdapterManager() = default;
   ~GeAdapterManager() = default;
   mindspore::HashMap<std::string, GeAdapterInfoPtr> op_cache_;
+  std::mutex lock_;
 };
 }  // namespace mindspore::transform
 
