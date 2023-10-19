@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/pyboost/baddbmm_ascend.h"
-#include "plugin/device/ascend/kernel/opapi/aclnn/baddbmm_aclnn_kernel.h"
+#include "plugin/device/ascend/kernel/pyboost/baddbmm_aclnn.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,8 +23,7 @@ namespace pyboost {
 bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                            const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
                            const tensor::TensorPtr &output) {
-  BaddbmmAclnnFunctionalKernelMod kernel;
-  kernel.Init(nullptr, false);
+  BaddbmmAclnn kernel;
   return kernel.Call(input, batch1, batch2, beta, alpha, output);
 }
 

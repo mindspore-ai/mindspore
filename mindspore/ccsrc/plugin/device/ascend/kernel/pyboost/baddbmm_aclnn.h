@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BADDBMM_ACLNN_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BADDBMM_ACLNN_KERNEL_MOD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_
 #include <vector>
 #include "ops/base_operator.h"
-#include "plugin/device/ascend/kernel/opapi/aclnn_functional_kernel_mod.h"
-#include "transform/acl_ir/acl_convert.h"
+#include "kernel/pyboost/op/baddbmm.h"
 
 namespace mindspore {
 namespace kernel {
-class BaddbmmAclnnFunctionalKernelMod : public AclnnFunctionalKernelMod {
+class BaddbmmAclnn : public pyboost::Baddbmm {
  public:
-  BaddbmmAclnnFunctionalKernelMod() {}
-  ~BaddbmmAclnnFunctionalKernelMod() = default;
+  BaddbmmAclnn() = default;
+  ~BaddbmmAclnn() = default;
 
   bool Call(const tensor::TensorPtr &self, const tensor::TensorPtr &batch1, const tensor::TensorPtr &batch2,
             const ScalarPtr &beta, const ScalarPtr &alpha, const tensor::TensorPtr &out);
 };
+
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_BADDBMM_ACLNN_KERNEL_MOD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_

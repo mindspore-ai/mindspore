@@ -752,5 +752,115 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   new_device_address->set_padding_type(old_device_address->padding_type());
   return new_device_address;
 }
+
+void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                                  const std::string &input_name) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address == nullptr) {
+    auto tensor_size = LongToSize(tensor->data().nbytes());
+    // Padding shape/format
+    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+                                                                              tensor->data_type(), tensor->shape());
+
+    device_address->set_from_persistent_mem(tensor->is_parameter());
+    tensor->set_device_address(device_address);
+  }
+
+  if (device_address->GetPtr() != nullptr) {
+    return;
+  }
+
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  }
+
+  // Padding shape/format
+  if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                        tensor->data_c(), tensor->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  }
+  MS_LOG(DEBUG) << "input_name:" << input_name << " ptr:" << device_address->GetPtr();
+}
+
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                                   const std::string &output_name, bool is_gradient_out) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address == nullptr) {
+    auto tensor_size = LongToSize(tensor->data().nbytes());
+    // Padding shape/format
+    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+                                                                              tensor->data_type(), tensor->shape());
+
+    device_address->set_from_persistent_mem(is_gradient_out);
+    tensor->set_device_address(device_address);
+  }
+
+  if (device_address->GetPtr() != nullptr) {
+    return;
+  }
+
+  if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate memory failed";
+  }
+  MS_LOG(DEBUG) << "output_name:" << output_name << " ptr:" << device_address->GetPtr();
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,
+                                                                    const size_t &workspace_size) {
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto device_address =
+    device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_size, "", kTypeUnknown, ShapeVector());
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetPtr() == nullptr &&
+      !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+    MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+  }
+
+  return device_address;
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::CreateScalarAddress(const DeviceContext *device_context,
+                                                                 const ScalarPtr &scalar_value) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(scalar_value);
+  MS_EXCEPTION_IF_NULL(scalar_value->type());
+  TypeId type_id = scalar_value->type()->type_id();
+  auto size = GetTypeByte(TypeIdToType(type_id));
+
+  void *scalar_addr = nullptr;
+  if (scalar_value->isa<BoolImm>()) {
+    auto value = GetValue<bool>(scalar_value);
+    scalar_addr = &value;
+  } else if (scalar_value->isa<Int64Imm>()) {
+    auto value = GetValue<int64_t>(scalar_value);
+    scalar_addr = &value;
+  } else if (scalar_value->isa<Int32Imm>()) {
+    auto value = GetValue<int32_t>(scalar_value);
+    scalar_addr = &value;
+  } else if (scalar_value->isa<FP32Imm>()) {
+    auto value = GetValue<float>(scalar_value);
+    scalar_addr = &value;
+  } else if (scalar_value->isa<StringImm>()) {
+    auto value = GetValue<std::string>(scalar_value);
+    scalar_addr = &value;
+  } else {
+    MS_LOG(EXCEPTION) << "Currently not support value: " << scalar_value->ToString();
+  }
+
+  auto device_address =
+    device_context->device_res_manager_->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector());
+  if (!device_address->SyncHostToDevice({}, size, type_id, scalar_addr, kOpFormat_DEFAULT)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  }
+  return device_address;
+}
+
 }  // namespace runtime
 }  // namespace mindspore

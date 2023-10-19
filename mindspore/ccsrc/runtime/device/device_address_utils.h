@@ -49,6 +49,15 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr &old_device_address,
                                                           const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
+
+  static void CreateInputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                       const std::string &input_name);
+  static void CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                        const std::string &output_name, bool is_gradient_out);
+  static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
+                                                         const size_t &workspace_size);
+  static device::DeviceAddressPtr CreateScalarAddress(const DeviceContext *device_context,
+                                                      const ScalarPtr &scalar_value);
 };
 device::DeviceAddressPtr GetInputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info);
 device::DeviceAddressPtr GetOutputAddressForRef(const AnfNodePtr &node, const OpCompilerInfoPtr &op_compiler_info,
