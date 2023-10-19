@@ -96,15 +96,16 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 }
 
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
-// PyBoost Example:
-//  auto op = kernel::pyboost::OpFactory<kernel::pyboost::Baddbmm>::Get().Create("Ascend");
-//  op->Call(nullptr, nullptr, nullptr, nullptr, nullptr);
-  auto op_name = args[static_cast<size_t>(1)].cast<std::string>();
+  // PyBoost Example:
+  // auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
+  // op->set_grad_func([](){});
+  // op->Call();
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   SetCallbackForInputTensor(op_run_info);
 
   StoreAsyncStatus(op_run_info);
+  const auto &op_name = op_run_info->base_op_run_info.op_name;
   // 1. get top_type from Primitive::PredictOutputType
   auto top_type = PredictOutType(op_run_info);
   // 2. if disable PyTraceAsync, return after infer(half-asynchronous) or run(synchronous mode)

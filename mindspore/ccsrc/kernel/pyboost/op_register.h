@@ -35,12 +35,14 @@ class BACKEND_EXPORT Op {
   Op() = default;
   virtual ~Op() = default;
   virtual void CastInput() = 0;
-  void Grad() {}
+  void set_grad_func(const std::function<void()> &grad_func) { grad_func_ = grad_func; }
+  void DoGrad() { grad_func_(); }
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;
+  std::function<void()> grad_func_;
 };
 
 template <typename T>
@@ -48,15 +50,15 @@ class BACKEND_EXPORT OpFactory {
  public:
   using OpCreater = std::function<std::shared_ptr<T>()>;
   static OpFactory<T> &Get();
-  void Register(const std::string &device, OpCreater &&func) {
-    MS_LOG(DEBUG) << "Reg for op ";
+  void Register(const std::string &name, const std::string &device, OpCreater &&func) {
+    MS_LOG(DEBUG) << "Reg for op " << name << " on device " << device;
     auto ret = op_creater_.try_emplace(device, func);
     if (!ret.second) {
-      MS_LOG(WARNING) << "Duplicate op creater for " << device;
+      MS_LOG(WARNING) << "Duplicate op creater for " << name << " on device " << device;
     }
   }
 
-  std::shared_ptr<T> Create(const std::string &device);
+  std::shared_ptr<T> Create(const std::string &name, const std::string &device);
 
   bool IsRegistered(const std::string &device) const { return op_creater_.find(device) != op_creater_.end(); }
 
@@ -71,16 +73,21 @@ template <typename T>
 class OpRegister {
  public:
   using OpCreater = std::function<std::shared_ptr<T>()>;
-  OpRegister(const std::string &device, OpCreater &&fun) { OpFactory<T>::Get().Register(device, std::move(fun)); }
+  OpRegister(const std::string &name, const std::string &device, OpCreater &&fun) {
+    OpFactory<T>::Get().Register(name, device, std::move(fun));
+  }
   ~OpRegister() = default;
 };
 
 #define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                               \
   static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op"); \
   static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(       \
-    #DEVICE, []() { return std::make_shared<clazz##DEVICE>(); });
+    #clazz, #DEVICE, []() { return std::make_shared<clazz##DEVICE>(); });
 
 #define MS_REG_PYBOOST_OP(DEVICE, clazz) MS_REG_PYBOOST_OP_REG(DEVICE, clazz)
+
+#define CREATE_PYBOOST_OP(NAME, DEVICE) \
+  mindspore::kernel::pyboost::OpFactory<mindspore::kernel::pyboost::NAME>::Get().Create(#NAME, DEVICE);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
