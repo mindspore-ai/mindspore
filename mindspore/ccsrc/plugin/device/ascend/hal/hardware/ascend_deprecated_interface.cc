@@ -414,22 +414,13 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
     {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
     {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    version = soc_version;
-  }
-  auto iter = kAscendSocVersions.find(version);
+  auto soc_version = GetSocVersion();
+  auto iter = kAscendSocVersions.find(soc_version);
   if (iter == kAscendSocVersions.end()) {
     MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
     return;
   }
+  ctx->set_ascend_detail_soc_version(soc_version);
   if (iter->second == k910BAscendVersion) {
     ctx->set_ascend_soc_version(k910BAscendVersion);
   } else if (iter->second == k910AAscendVersion) {

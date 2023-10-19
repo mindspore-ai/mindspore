@@ -208,6 +208,8 @@ class MS_CORE_API MsContext {
   bool set_backend_policy(const std::string &policy);
   std::string ascend_soc_version() const;
   bool set_ascend_soc_version(const std::string &soc_version);
+  std::string ascend_detail_soc_version() const;
+  void set_ascend_detail_soc_version(const std::string &soc_version);
   // _comm_helper.py will try to dlopen libhccl.so, and minddata will try to dlopen libdvpp_utils.so. if load ascend
   // plugin failed on ascend environment, loading above libraries will crush the process.
   bool IsAscendPluginLoaded() const;
@@ -281,6 +283,7 @@ class MS_CORE_API MsContext {
   mutable std::vector<bool> params_read_status_;
   MsBackendPolicy backend_policy_;
   AscendSocVersion ascend_soc_version_;
+  std::string ascend_detail_soc_version_ = "ascend";
   bool default_device_target_ = true;
 
   EnvFunc set_env_ = nullptr;
