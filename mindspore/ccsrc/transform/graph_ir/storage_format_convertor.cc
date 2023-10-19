@@ -36,6 +36,7 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   std::vector<std::pair<AnfNodePtr, int>> res;
   std::queue<std::pair<AnfNodePtr, int>> anf_queue;
   std::vector<AnfNodePtr> visited;
+  MS_EXCEPTION_IF_NULL(manager);
   auto node_users_map = manager->node_users();
   for (const auto &node_pair : node_users_map[node]) {
     anf_queue.push(node_pair);
@@ -121,6 +122,7 @@ void StorageFormatConvertor::SetStorageFormatFromConfig(const AnfGraphPtr &anf_g
       continue;
     }
     // Step 4: update desc and param format
+    MS_EXCEPTION_IF_NULL(user_node.first);
     auto format = GetGeFormat(param, user_node.first, storage_format_info.format_, desc->GetOriginShape().GetDimNum());
     MS_LOG(INFO) << "Update desc format from config, graph: " << anf_graph->ToString()
                  << ", used node: " << user_node.first->DebugString() << ", full name: " << user_node.first->ToString()
@@ -136,6 +138,7 @@ void StorageFormatConvertor::SetStorageFormatFromConfig(const AnfGraphPtr &anf_g
 }
 
 void StorageFormatConvertor::UpdateTensorDesc(const std::shared_ptr<GeTensorDesc> &desc, int32_t format) {
+  MS_EXCEPTION_IF_NULL(desc);
   desc->SetFormat(static_cast<ge::Format>(format));
   desc->SetShape({});
   desc->SetPlacement(ge::kPlacementDevice);
@@ -169,7 +172,6 @@ bool StorageFormatConvertor::InitParameterKernelInfo(const AnfNodePtr &param, st
     return false;
   }
 
-  MS_EXCEPTION_IF_NULL(build_info);
   std::vector<TypeId> output_infer_types;
   std::vector<std::string> output_formats;
   (void)output_infer_types.emplace_back(common::AnfAlgo::GetOutputInferDataType(param, 0));
