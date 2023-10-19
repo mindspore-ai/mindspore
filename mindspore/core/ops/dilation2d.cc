@@ -49,9 +49,8 @@ namespace ops {
 namespace {
 void CheckDilation2DShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
-    if ((shape[i] < 0) && (shape[i] != abstract::Shape::kShapeDimAny)) {
-      MS_EXCEPTION(ValueError) << op << " shape element [" << i
-                               << "] must be positive integer or kShapeDimAny, but got " << shape[i];
+    if (shape[i] < 0) {
+      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer, but got " << shape[i];
     }
   }
 }
@@ -124,11 +123,6 @@ abstract::ShapePtr Dilation2DInferShape(const PrimitivePtr &primitive, const std
     output_shape = {x_shape[n_axis], depth, output_hw[0], output_hw[1]};
   }
   CheckDilation2DShapeAnyAndPositive(prim_name + " output_shape", output_shape);
-  if (data_format == Format::NHWC) {
-    output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], depth};
-  } else {
-    output_shape = {x_shape[n_axis], depth, output_hw[0], output_hw[1]};
-  }
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
