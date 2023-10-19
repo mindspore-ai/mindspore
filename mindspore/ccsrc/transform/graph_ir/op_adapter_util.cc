@@ -223,6 +223,8 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>) 
     reduction_id = static_cast<int64_t>(GetValue<int64_t>(value));
   } else if (value->isa<UInt64Imm>()) {
     reduction_id = static_cast<int64_t>(GetValue<uint64_t>(value));
+  } else if (value->isa<KernelTensorValue>()) {
+    reduction_id = ops::GetValueWithCheck<int64_t>(value);
   }
   return GEReduction::ConvertEnumToString(reduction_id);
 }

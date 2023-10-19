@@ -452,7 +452,7 @@ class OpAdapter : public BaseOpAdapter {
 
   // specialization for int
   static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<int64_t>) {
-    return static_cast<int64_t>(GetValue<int64_t>(value));
+    return ops::GetValueWithCheck<int64_t>(value);
   }
 
   // specialization for float
@@ -460,7 +460,7 @@ class OpAdapter : public BaseOpAdapter {
     if (value->isa<FP64Imm>()) {
       return static_cast<float>(GetValue<double>(value));
     }
-    return GetValue<float>(value);
+    return ops::GetValueWithCheck<float>(value);
   }
 
   // specialization for int or tuple broadcast to Vector

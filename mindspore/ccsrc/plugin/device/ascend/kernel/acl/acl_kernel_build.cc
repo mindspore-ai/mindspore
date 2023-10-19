@@ -61,6 +61,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   }
   kernel_mod_ptr->SetNeedConvertHostTensor(true);
   kernel_mod_ptr->CreateAclConverter();
+  kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
   return kernel_mod_ptr;
 }
 }  // namespace kernel
