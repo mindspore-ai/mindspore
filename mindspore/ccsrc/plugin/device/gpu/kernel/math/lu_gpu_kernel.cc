@@ -75,7 +75,6 @@ int LuGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std:
 
 void LuGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

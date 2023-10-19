@@ -62,11 +62,7 @@ int MeshgridCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != output_size_list_.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be equal, but get "
-                  << input_size_list_.size() << " and " << output_size_list_.size();
-    return static_cast<int>(KRET_RESIZE_FAILED);
-  }
+
   input_shape_.clear();
   output_shape_.clear();
 

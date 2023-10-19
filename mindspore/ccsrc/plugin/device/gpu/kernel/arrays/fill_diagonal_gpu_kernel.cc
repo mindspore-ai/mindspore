@@ -93,7 +93,6 @@ int FillDiagonalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     num_diagonal_elements_ = ceil(static_cast<double>(min_size * min_size) / step_);
   }
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   workspace_size_list_.push_back(sizeof(bool));
   return KRET_OK;

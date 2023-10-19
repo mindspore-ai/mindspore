@@ -62,10 +62,6 @@ int CompareAndBitpackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
     x_count_ *= x_shape[i];
   }
   y_count_ = x_count_ / kBitpack;
-  size_t x_size = x_count_ * x_unit_size_;
-  input_size_list_.emplace_back(x_size);
-  size_t threshold_size = threshold_unit_size_;
-  input_size_list_.emplace_back(threshold_size);
   size_t output_size = y_count_ * sizeof(uint8_t);
   output_size_list_.emplace_back(output_size);
   size_t workspace_size = 0;
@@ -76,7 +72,6 @@ int CompareAndBitpackGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
 void CompareAndBitpackGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
   x_count_ = 1;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

@@ -60,7 +60,6 @@ int TruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   for (size_t i = 0; i < output_shape_.size(); i++) {
     output_num_ *= output_shape_[i];
   }
-  input_size_list_.emplace_back(input_num_ * unit_input_size_);
   output_size_list_.emplace_back(output_num_ * unit_output_size_);
   workspace_size_list_.emplace_back(output_num_ * sizeof(curandState));
   return KRET_OK;
@@ -70,7 +69,6 @@ void TruncatedNormalGpuKernelMod::ResetResource() noexcept {
   input_num_ = 1;
   output_num_ = 1;
   workspace_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 

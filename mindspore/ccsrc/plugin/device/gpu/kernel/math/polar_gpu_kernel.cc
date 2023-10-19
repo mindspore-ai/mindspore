@@ -65,8 +65,6 @@ int PolarGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  input_size_list_.push_back(output_elements_ * unit_input_size_);
-  input_size_list_.push_back(output_elements_ * unit_input_size_);
   output_size_list_.push_back(output_elements_ * unit_output_size_);
 
   return KRET_OK;

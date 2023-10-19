@@ -33,14 +33,11 @@ void UnsortedSegmentMaxGpuKernelMod::ResetResource() {
   input_dim1_ = 1;
   output_dim0_ = 1;
   output_dim1_ = 1;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void UnsortedSegmentMaxGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(batch_size_ * input_dim0_ * input_dim1_ * data_unit_size_);
-  input_size_list_.push_back(batch_size_ * input_dim0_ * ids_unit_size_);
   output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
 }
 

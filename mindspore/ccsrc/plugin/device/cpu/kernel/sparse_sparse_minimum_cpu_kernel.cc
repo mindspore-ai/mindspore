@@ -70,7 +70,6 @@ int SparseSparseMinimumCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
   auto x1_indice_shape = inputs.at(kIndex0)->GetShapeVector();
   auto x2_indice_shape = inputs.at(kIndex3)->GetShapeVector();
@@ -78,12 +77,6 @@ int SparseSparseMinimumCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   x2_nnz_ = x2_indice_shape[0];
   num_dims_ = x1_indice_shape[1];
   auto max_nnz = x1_nnz_ + x2_nnz_;
-  (void)input_size_list_.emplace_back(x1_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(x1_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
-  (void)input_size_list_.emplace_back(x2_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(x2_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
   (void)output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
   (void)output_size_list_.emplace_back(max_nnz * value_size_);
   return KRET_OK;

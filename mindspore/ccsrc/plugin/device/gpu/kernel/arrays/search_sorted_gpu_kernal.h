@@ -55,7 +55,6 @@ class SearchSortedGpuKernelMod : public NativeGpuKernelMod {
     sequence_shape_.clear();
     value_shape_.clear();
     output_shape_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

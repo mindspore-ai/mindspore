@@ -180,22 +180,8 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists() {
     size_t input_size = size_ * sizeof(T);
     if (!use_center_) {
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(sizeof(T));
-      input_size_list_.push_back(input_size);
       output_size_list_.push_back(input_size);
     } else {
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(input_size);
-      input_size_list_.push_back(sizeof(T));
-      input_size_list_.push_back(sizeof(T));
-      input_size_list_.push_back(sizeof(T));
-      input_size_list_.push_back(sizeof(T));
       output_size_list_.push_back(input_size);
     }
   }

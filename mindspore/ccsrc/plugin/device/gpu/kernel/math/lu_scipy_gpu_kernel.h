@@ -211,9 +211,6 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    size_t input_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
-    input_size_list_.push_back(input_size);
-
     size_t output_size = batch_size_ * lu_row_ * lu_col_ * unit_size_;
 
     size_t output_piv_size = 0;

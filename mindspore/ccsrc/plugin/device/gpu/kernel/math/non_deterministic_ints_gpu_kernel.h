@@ -46,7 +46,6 @@ class NonDeterministicIntsGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     input_num_ = 1;
     output_num_ = 1;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

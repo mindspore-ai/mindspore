@@ -42,7 +42,6 @@ void Col2ImFwdGpuKernelMod::ResetResource() noexcept {
   dilation_height_ = 0;
   dilation_width_ = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

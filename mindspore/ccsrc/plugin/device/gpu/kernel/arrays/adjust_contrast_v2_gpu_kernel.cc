@@ -37,14 +37,10 @@ constexpr int last_dim = 1, second_dim = 2, third_dim = 3;
 void AdjustContrastV2GpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
 void AdjustContrastV2GpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(total_ * per_batch_elements_ * data_unit_size_);
-  input_size_list_.push_back(sizeof(float));
-
   output_size_list_.push_back(total_ * per_batch_elements_ * data_unit_size_);
 }
 

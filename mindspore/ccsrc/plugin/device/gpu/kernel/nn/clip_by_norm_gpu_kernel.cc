@@ -309,12 +309,10 @@ void ClipByNormGpuKernelMod<T, S>::InitSizeLists() {
   // Init input size list
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(inputA_descriptor_, &x_size_),
                                       kernel_name_ + " running cudnnGetTensorSizeInBytes failed.");
-  input_size_list_.emplace_back(x_size_);
   size_t clip_norm_data_type_size = sizeof(S);
   clip_norm_size_ = std::accumulate(clip_norm_shape_.begin(), clip_norm_shape_.end(), clip_norm_data_type_size,
                                     std::multiplies<size_t>());
   clip_norm_size_ = std::max(clip_norm_data_type_size, clip_norm_size_);
-  input_size_list_.emplace_back(clip_norm_size_);
   // Init workspace size list
   // size for casting x to float32
   size_t float_type_size = sizeof(float);
@@ -410,7 +408,6 @@ void ClipByNormGpuKernelMod<T, S>::ResetResource() {
   l2_norm_ouths_shape_.clear();
   clip_norm_rhs_shape_.clear();
   output_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 }  // namespace kernel

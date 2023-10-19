@@ -112,9 +112,6 @@ bool MapTensorGetDataGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
 }
 
 void MapTensorGetDataGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
-  // Return size 1 as the first input size for MapTensorGetData. Real map tensor is assigned by framework.
-  input_size_list_.push_back(kSizeOne);
-
   auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
   MS_EXCEPTION_IF_ZERO("keys size", keys_size);
   output_size_list_.push_back(keys_size * output_key_type_size_);

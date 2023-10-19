@@ -52,7 +52,6 @@ int DigammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   }
 
   size_t output_size = output_elements_ * unit_size_;
-  input_size_list_.push_back(unit_size_);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }

@@ -265,14 +265,8 @@ class CtcLossGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
-                               probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
-    input_size_list_.push_back(label_indice_size_);
-    input_size_list_.push_back(label_size_);
-    input_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(probs_dims_[kProbDimsIdxForMaxTime] * probs_dims_[kProbDimsIdxForBatch] *
                                    probs_dims_[kProbDimsIdxForNumClass] * sizeof(T));
     workspace_size_list_.push_back(sequence_lengths_size_);

@@ -62,7 +62,6 @@ bool MultiMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 int MultiMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   int inputs_size = 0;
@@ -84,7 +83,6 @@ int MultiMarginLossGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   dim_ = input_shape.at(1);
   has_weight_ = (inputs_size == has_weight_inputs_size) ? true : false;
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   return KRET_OK;
 }

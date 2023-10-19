@@ -20,7 +20,6 @@ namespace mindspore {
 namespace kernel {
 void AdadeltaGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  input_size_list_.clear();
   output_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
@@ -40,13 +39,6 @@ void AdadeltaGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inp
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
@@ -75,13 +67,6 @@ void AdadeltaGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inp
     gradient_size_ *= gradient_shape_[i];
   }
 
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(accumulation_size_);
-  input_size_list_.push_back(accumulation_update_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(rho_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(accumulation_size_);
   output_size_list_.push_back(accumulation_update_size_);

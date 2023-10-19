@@ -32,15 +32,10 @@ constexpr size_t OUTPUT_NUM = 1;
 void AdjustHueGpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void AdjustHueGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_elements * data_unit_size_);
-  input_size_list_.push_back(sizeof(float));
-  output_size_list_.push_back(input_elements * data_unit_size_);
-}
+void AdjustHueGpuKernelMod::InitSizeLists() { output_size_list_.push_back(input_elements * data_unit_size_); }
 
 bool AdjustHueGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {

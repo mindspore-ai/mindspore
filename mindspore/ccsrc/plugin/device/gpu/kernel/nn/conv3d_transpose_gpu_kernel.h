@@ -152,7 +152,6 @@ class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod,
     workspace_size_ = 0;
     use_pad_ = true;
     greater_stride_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

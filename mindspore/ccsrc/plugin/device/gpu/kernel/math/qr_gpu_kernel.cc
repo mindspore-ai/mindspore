@@ -93,7 +93,6 @@ int QrGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std:
   transpose_q_shape_[input_dims_ - kDim2] = p_;
   transpose_q_shape_[input_dims_ - kDim1] = m_;
 
-  input_size_list_ = {total_size_ * unit_input_size_};
   output_size_list_ = {batch_size_ * m_ * p_ * unit_input_size_, batch_size_ * p_ * n_ * unit_input_size_};
   workspace_size_list_ = {
     batch_size_ * sizeof(int),

@@ -20,7 +20,6 @@ namespace mindspore {
 namespace kernel {
 void AdamaxGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  input_size_list_.clear();
   output_size_list_.clear();
 
   std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs[kIndex0]->GetDeviceShapeVector().begin(),
@@ -36,15 +35,6 @@ void AdamaxGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &input
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
@@ -76,15 +66,6 @@ void AdamaxGpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &input
     gradient_size_ *= gradient_shape_[i];
   }
 
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(m_size_);
-  input_size_list_.push_back(v_size_);
-  input_size_list_.push_back(beta1_power_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(beta1_size_);
-  input_size_list_.push_back(beta2_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(m_size_);
   output_size_list_.push_back(v_size_);

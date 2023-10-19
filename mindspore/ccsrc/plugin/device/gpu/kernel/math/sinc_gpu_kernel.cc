@@ -58,9 +58,7 @@ int SincGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  size_t input_size = output_elements_ * unit_input_size_;
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.emplace_back(input_size);
   output_size_list_.emplace_back(output_size);
   return KRET_OK;
 }

@@ -208,13 +208,8 @@ int PSROIPoolingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
-
-  for (auto tensor_ptr : inputs) {
-    input_size_list_.push_back(tensor_ptr->size());
-  }
 
   for (auto tensor_ptr : outputs) {
     output_size_list_.push_back(tensor_ptr->size());

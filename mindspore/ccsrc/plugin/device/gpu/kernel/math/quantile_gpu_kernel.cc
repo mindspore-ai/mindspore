@@ -68,7 +68,6 @@ uint32_t MaybeWrapDim(int dim, int dim_post_expr) {
 int QuantileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   for (const auto &input : inputs) {
@@ -79,10 +78,8 @@ int QuantileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     }
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto q_shape = inputs.at(kIndex1)->GetShapeVector();
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
-  auto q_elements = std::accumulate(q_shape.begin(), q_shape.end(), size_t(1), std::multiplies<size_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), size_t(1), std::multiplies<size_t>());
   if (input_elements_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
@@ -104,9 +101,6 @@ int QuantileGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   each_q_elements_ = input_elements_ / y_;
   size_t input_size = input_elements_ * input_unit_size_;
-  size_t q_size = q_elements * q_unit_size_;
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(q_size);
   output_size_list_.push_back(output_elements_ * input_unit_size_);
   ceil_power2_ = RoundUpPower2(y_);
   workspace_size_list_.push_back(input_size / y_ * ceil_power2_);

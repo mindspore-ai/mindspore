@@ -128,7 +128,6 @@ bool SparseApplyRMSPropCpuKernelMod::ResizedOutputSize(const std::vector<KernelT
 }
 
 void SparseApplyRMSPropCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   indices_size_ = 0;
   var_first_dim_size_ = 0;

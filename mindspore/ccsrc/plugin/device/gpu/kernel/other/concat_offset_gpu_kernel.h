@@ -77,14 +77,7 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
       axis += rank_int;
     }
     size_t input_num = inputs.size();
-    for (size_t i = 0; i < input_num; i++) {
-      int64_t input_size = 1;
-      auto input_shape_i = inputs[i]->GetDeviceShapeVector();
-      for (size_t j = 0; j < input_shape_i.size(); j++) {
-        input_size *= input_shape_i[j];
-      }
-      input_size_list_.push_back(LongToSizeClipNeg(input_size) * sizeof(T));
-    }
+
     // cal offset
     int64_t shape_offset = input_shape[axis];
     std::vector<size_t> offset(input_num, 0);
@@ -126,7 +119,6 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     out_offset_.clear();
   }

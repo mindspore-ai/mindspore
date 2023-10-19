@@ -128,11 +128,6 @@ int SparseCountSparseOutputCpuKernelMod::Resize(const std::vector<KernelTensor *
   }
   values_size_ = LongToSize(values_shape_[0]);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kSparseCountSparseOutputInputsNum) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kSparseCountSparseOutputInputsNum
-                    << ", but got " << input_size_list_.size() << ".";
-      return KRET_RESIZE_FAILED;
-    }
     output_size_list_.clear();
     auto max_out_size = indices_shape_[0] * indices_shape_[1];
     (void)output_size_list_.emplace_back(max_out_size * kMaxIndicesRank * GetTypeByte(TypeIdToType(types_[kIndex0])));

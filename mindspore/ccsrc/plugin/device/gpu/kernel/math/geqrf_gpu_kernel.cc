@@ -91,8 +91,6 @@ int GeqrfGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
 
 template <typename T>
 void GeqrfGpuKernelMod::InitSizeLists() {
-  // input x
-  input_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
   // output y, tau
   output_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
   output_size_list_.push_back(batch_size_ * p_ * sizeof(T));

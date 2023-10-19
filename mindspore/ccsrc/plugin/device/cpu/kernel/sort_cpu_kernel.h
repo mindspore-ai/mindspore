@@ -44,7 +44,6 @@ class SortCpuKernelMod : public NativeCpuKernelMod {
     descending_ = false;
     axisIterator_.SetOffset(0);
     axisIterator_.SetOffset(0, 0);
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

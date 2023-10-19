@@ -62,18 +62,6 @@ int ApplyPowerSignGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   }
   size_t variable_size_ = t_elements_ * t_size_;
   size_t accumulation_size_ = t_elements_ * t_size_;
-  size_t learning_rate_size_ = s_elements_ * s_size_;
-  size_t logbase_size_ = s_elements_ * s_size_;
-  size_t sign_decay_size_ = s_elements_ * s_size_;
-  size_t beta_size_ = s_elements_ * s_size_;
-  size_t gradient_size_ = g_elements_ * g_size_;
-  input_size_list_.emplace_back(variable_size_);
-  input_size_list_.emplace_back(accumulation_size_);
-  input_size_list_.emplace_back(learning_rate_size_);
-  input_size_list_.emplace_back(logbase_size_);
-  input_size_list_.emplace_back(sign_decay_size_);
-  input_size_list_.emplace_back(beta_size_);
-  input_size_list_.emplace_back(gradient_size_);
   output_size_list_.emplace_back(variable_size_);
   output_size_list_.emplace_back(accumulation_size_);
   return KRET_OK;
@@ -84,7 +72,6 @@ void ApplyPowerSignGpuKernelMod::ResetResource() noexcept {
   s_elements_ = 0;
   g_elements_ = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 

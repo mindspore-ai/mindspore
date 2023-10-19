@@ -100,23 +100,11 @@ class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
-    size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * type_size_;
-
     size_t h_size = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(weight_size_);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(reserved_size_);
     size_t state_size = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size),
                                         "get dropout states size failed");
-    input_size_list_.push_back(state_size);
 
     output_size_list_.clear();
     size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * type_size_;

@@ -82,10 +82,6 @@ int CdistGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   l1_size_ = r0_ * m_;
   l2_size_ = r1_ * m_;
 
-  input_size_list_.push_back(grad_size_ * unit_size_);
-  input_size_list_.push_back(input0_size_ * unit_size_);
-  input_size_list_.push_back(input1_size_ * unit_size_);
-  input_size_list_.push_back(dist_size_ * unit_size_);
   output_size_list_.push_back(out_size_ * unit_size_);
   return KRET_OK;
 }

@@ -74,14 +74,6 @@ bool ReservoirReplayBufferPushCpuKernel::Init(const std::vector<KernelTensor *> 
   reservoir_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
 
-  for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type_id = inputs[i]->dtype_id();
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
-    size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    input_size_list_.push_back(tensor_size);
-  }
-
   output_size_list_.push_back(sizeof(handle_));
   return true;
 }

@@ -58,14 +58,12 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     is_null_input_ = false;
     stream_ptr_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
  protected:
   void InitSizeLists() {
-    input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   }

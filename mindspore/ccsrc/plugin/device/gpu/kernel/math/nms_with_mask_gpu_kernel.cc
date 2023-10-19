@@ -54,8 +54,6 @@ int NMSWithMaskFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   auto ceil_power_2 = NmsRoundUpPower2(num_input_);
   auto dtype_byte = abstract::TypeIdSize(inputs[kIndex0]->dtype_id());
 
-  input_size_list_.clear();
-  input_size_list_.push_back(num_input_ * dtype_byte * box_size_);
   output_size_list_.clear();
   output_size_list_.push_back(num_input_ * dtype_byte * box_size_);
   output_size_list_.push_back(num_input_ * sizeof(int));

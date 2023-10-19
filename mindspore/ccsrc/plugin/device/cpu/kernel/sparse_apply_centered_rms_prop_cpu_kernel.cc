@@ -67,7 +67,6 @@ bool SparseApplyCenteredRMSPropCpuKernelMod::Init(const std::vector<KernelTensor
 }
 
 void SparseApplyCenteredRMSPropCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;

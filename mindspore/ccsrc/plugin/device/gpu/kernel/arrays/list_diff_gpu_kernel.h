@@ -54,13 +54,11 @@ class ListDiffGpuKernelMod : public NativeGpuKernelMod {
 
   void ResetResource() noexcept {
     stream_ptr_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   }

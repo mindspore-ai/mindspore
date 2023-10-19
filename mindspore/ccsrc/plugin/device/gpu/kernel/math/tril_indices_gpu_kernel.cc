@@ -59,7 +59,6 @@ int TrilIndicesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
 void TrilIndicesGpuKernelMod::ResetResource() noexcept {
   tril_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }

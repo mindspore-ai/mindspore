@@ -126,13 +126,6 @@ bool MapTensorGetCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
 }
 
 void MapTensorGetCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &output_shape) {
-  // Return size 1 as the first input size for MapTensorGet. Real memory should be assigned by MindRT.
-  input_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_key_type_size_);
-
   auto output_size = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies{});
   MS_EXCEPTION_IF_ZERO("output size", output_size);
   output_size_list_.push_back(output_size * output_type_size_);

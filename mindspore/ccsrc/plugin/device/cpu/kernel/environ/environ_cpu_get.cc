@@ -51,10 +51,7 @@ int EnvironGetCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   for (auto &i : value_shapes) {
     value_size_ *= static_cast<size_t>(i);
   }
-  input_size_list_.clear();
-  input_size_list_.push_back(handle_size_);
-  input_size_list_.push_back(key_size_);
-  input_size_list_.push_back(value_size_);
+
   output_size_list_.clear();
   output_size_list_.push_back(value_size_);
   return KRET_OK;

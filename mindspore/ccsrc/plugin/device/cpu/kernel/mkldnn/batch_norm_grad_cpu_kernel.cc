@@ -94,7 +94,6 @@ void BatchNormGradCpuKernelMod::InitWorkspaceSize(const std::vector<KernelTensor
   size_t type_size = sizeof(float);
   auto shape = inputs[kIndex0]->GetDeviceShapeVector();
   size_t tensor_size = static_cast<size_t>(shape[C]) * kScaleShiftNum * type_size;
-  input_size_list_.pop_back();
   // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
   // [2, c] to store diff_scale and diff_bias

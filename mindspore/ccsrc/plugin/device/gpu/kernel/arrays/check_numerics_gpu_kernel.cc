@@ -54,7 +54,6 @@ int CheckNumericsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     is_null_input_ = true;
   }
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(output_size);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back(kNumber2 * sizeof(int32_t));
   return KRET_OK;

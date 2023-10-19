@@ -49,7 +49,6 @@ bool NonZeroGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
 void NonZeroGpuKernelMod::ResetResource() noexcept {
   real_output_size_ = 0;
   input_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -64,7 +63,6 @@ int NonZeroGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return KRET_UNKNOWN_SHAPE;
   }
 
-  input_size_list_.push_back(input_size_ * data_size_);
   workspace_size_list_.push_back(sizeof(size_t));
   output_size_list_.push_back(input_size_ * input_shape_.size() * index_size_);
   return KRET_OK;

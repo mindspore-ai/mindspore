@@ -107,10 +107,6 @@ int MaxPoolGradGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kMaxPoolGradGradInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal kMaxPoolGradGradInputsNum.";
-    return KRET_RESIZE_FAILED;
-  }
   in_shapes_ = inputs[kIndex0]->GetShapeVector();
   batch_ = LongToInt(in_shapes_[kDim0]);
   channel_ = LongToInt(in_shapes_[kDim1]);

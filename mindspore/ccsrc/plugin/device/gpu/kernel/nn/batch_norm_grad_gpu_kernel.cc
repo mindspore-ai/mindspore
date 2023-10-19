@@ -147,10 +147,6 @@ void BatchNormGradGpuKernelMod::InitSizeLists() {
                                         handle_, mode_, bn_ops_, x_desc_, y_desc_, dy_desc_, dz_desc_, dx_desc_,
                                         scale_bias_diff_desc_, activation_desc_, &workspace_size_),
                                       "cudnnGetBatchNormalizationBackwardExWorkspaceSize failed");
-  if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-    input_size_list_.push_back(para_size_);
-    input_size_list_.push_back(x_size_);
-  }
 
   workspace_size_list_.push_back(workspace_size_);
 }

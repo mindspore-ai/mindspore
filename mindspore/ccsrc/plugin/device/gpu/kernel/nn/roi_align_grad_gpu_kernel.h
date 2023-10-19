@@ -60,16 +60,11 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   void ResetResource() noexcept {
     is_null_input_ = false;
     stream_ptr_ = nullptr;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
-  void InitSizeLists() {
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(rois_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  void InitSizeLists() { output_size_list_.push_back(output_size_); }
 
  private:
   void *stream_ptr_{nullptr};

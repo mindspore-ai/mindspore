@@ -51,9 +51,6 @@ int ApproximateEqualGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
   std::vector<int64_t> input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeVector().begin(),
                                                            inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_elements_ * sizeof(bool));
   return KRET_OK;
 }
@@ -61,7 +58,6 @@ int ApproximateEqualGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
 void ApproximateEqualGpuKernelMod::ResetResource() noexcept {
   input_elements_ = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 

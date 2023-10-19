@@ -32,20 +32,7 @@ int BatchAssignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   lock_ = GetValue<bool>(primitive_->GetAttr("lock"));
   size_t input_num = inputs.size();
   elements_num_ = input_num / kHalf;
-  // Compute the size for each input. There has two input lists.
-  // Each list has the same elements number, shape series， type series.
-  input_size_list_.clear();
-  for (size_t i = 0; i < elements_num_; i++) {
-    auto type = inputs[i]->dtype_id();
-    auto shape = inputs[i]->GetShapeVector();
-    auto element_size =
-      std::accumulate(shape.begin(), shape.end(), GetTypeByte(TypeIdToType(type)), std::multiplies<size_t>());
-    input_size_list_.push_back(element_size);
-  }
-  // Set input size for another input list.
-  for (size_t i = 0; i < elements_num_; i++) {
-    input_size_list_.push_back(input_size_list_[i]);
-  }
+
   // Set an output for placeholder.
   output_size_list_.clear();
   output_size_list_.push_back(sizeof(float));

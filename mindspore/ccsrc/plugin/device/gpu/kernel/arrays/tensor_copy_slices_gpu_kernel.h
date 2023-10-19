@@ -150,10 +150,7 @@ class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(update_size_);
     output_size_list_.push_back(output_size_);
     return;
   }

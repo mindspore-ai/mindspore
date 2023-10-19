@@ -117,7 +117,6 @@ int SparseAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) != KRET_OK) {
     return KRET_UNKNOWN_SHAPE;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   dx1_size_ = input_shapes.at(kSparseAddGradIndex1).at(kSparseAddGradIndex0);

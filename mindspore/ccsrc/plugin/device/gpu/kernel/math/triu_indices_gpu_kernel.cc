@@ -59,7 +59,6 @@ int TriuIndicesGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
 void TriuIndicesGpuKernelMod::ResetResource() noexcept {
   triu_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }

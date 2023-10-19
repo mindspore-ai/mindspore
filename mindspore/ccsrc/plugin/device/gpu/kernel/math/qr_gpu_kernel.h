@@ -68,7 +68,6 @@ class QrGpuKernelMod : public NativeGpuKernelMod {
     s_ = 0;
     batch_size_ = 1;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   };

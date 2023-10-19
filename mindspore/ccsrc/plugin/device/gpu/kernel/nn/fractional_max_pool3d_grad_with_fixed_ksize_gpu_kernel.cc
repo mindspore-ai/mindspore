@@ -145,7 +145,6 @@ int FractionalMaxPool3DGradWithFixedKsizeGpuKernelMod::Resize(const std::vector<
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

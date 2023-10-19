@@ -42,7 +42,6 @@ class XlogyCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Xl
 
  protected:
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
     index_listx_.clear();

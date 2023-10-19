@@ -491,7 +491,6 @@ int KernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vec
 int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 
   for (size_t idx = 0; idx < outputs.size(); idx++) {

@@ -45,7 +45,6 @@ class SparseApplyAdagradDAGpuKernelMod : public NativeGpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
   void ResetResource() noexcept {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }

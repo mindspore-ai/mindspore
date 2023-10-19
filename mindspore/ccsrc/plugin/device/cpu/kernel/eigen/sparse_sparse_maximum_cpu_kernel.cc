@@ -137,7 +137,6 @@ int SparseSparseMaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
   auto a_indice_shape = inputs.at(kIndex0)->GetShapeVector();
   auto b_indice_shape = inputs.at(kIndex3)->GetShapeVector();
@@ -149,12 +148,6 @@ int SparseSparseMaximumCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   b_nnz_ = b_indice_shape[0];
   num_dims_ = a_indice_shape[1];
   auto max_nnz = a_nnz_ + b_nnz_;
-  (void)input_size_list_.emplace_back(a_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(a_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
-  (void)input_size_list_.emplace_back(b_nnz_ * num_dims_ * indice_size_);
-  (void)input_size_list_.emplace_back(b_nnz_ * value_size_);
-  (void)input_size_list_.emplace_back(num_dims_ * shape_size_);
   (void)output_size_list_.emplace_back(max_nnz * num_dims_ * indice_size_);
   (void)output_size_list_.emplace_back(max_nnz * value_size_);
   CheckInputShape(inputs, a_nnz_, b_nnz_, num_dims_);

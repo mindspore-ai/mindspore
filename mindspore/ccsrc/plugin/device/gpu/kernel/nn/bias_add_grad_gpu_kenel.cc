@@ -134,7 +134,6 @@ void BiasAddGradGpuKernelMod::ResetResource() noexcept {
   data_format_ = Format::NCHW;
   cudnn_data_type_ = CUDNN_DATA_FLOAT;
   cudnn_compute_format_ = CUDNN_TENSOR_NCHW;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -197,7 +196,6 @@ void BiasAddGradGpuKernelMod::InitSizeLists() {
                                         "cudnnGetTensorSizeInBytes failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(db_desc_, &db_size),
                                         "cudnnGetTensorSizeInBytes failed");
-    input_size_list_.push_back(dy_size);
     output_size_list_.push_back(db_size);
     size_t indices_size, workspace_size;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
@@ -209,7 +207,6 @@ void BiasAddGradGpuKernelMod::InitSizeLists() {
     workspace_size_list_.push_back(indices_size);
     workspace_size_list_.push_back(workspace_size);
   } else {
-    input_size_list_.push_back(dy_num_ * unit_size_);
     output_size_list_.push_back(db_num_ * unit_size_);
   }
 }

@@ -103,7 +103,6 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     stream_ptr_ = nullptr;
     output_shape_ = 0;
     max_output_length_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

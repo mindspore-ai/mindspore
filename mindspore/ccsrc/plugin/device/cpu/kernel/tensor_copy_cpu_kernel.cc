@@ -38,7 +38,6 @@ bool TensorCopyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
   auto copy_size = GetTypeByte(TypeIdToType(input_type));
   copy_size = std::accumulate(input_shape.begin(), input_shape.end(), copy_size, std::multiplies<size_t>());
-  input_size_list_.push_back(copy_size);
   output_size_list_.push_back(copy_size);
   if (input_type != output_type) {
     MS_LOG(ERROR) << "For '" << kernel_name_

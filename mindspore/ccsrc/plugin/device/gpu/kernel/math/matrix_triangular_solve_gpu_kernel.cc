@@ -210,11 +210,8 @@ int MatrixTriangularSolveGpuKernelMod::Resize(const std::vector<KernelTensor *> 
     }
   }
 
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
-  input_size_list_.emplace_back(a_elements * unit_size_);
-  input_size_list_.emplace_back(b_elements * unit_size_);
   output_size_list_.emplace_back(output_elements * unit_size_);
   workspace_size_list_.emplace_back(output_batch_num_ * sizeof(void *));
   workspace_size_list_.emplace_back(output_batch_num_ * sizeof(void *));

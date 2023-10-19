@@ -89,7 +89,6 @@ int MultinomialCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 }
 
 void MultinomialCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

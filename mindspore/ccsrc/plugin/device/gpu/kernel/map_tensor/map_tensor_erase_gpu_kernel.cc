@@ -111,12 +111,7 @@ bool MapTensorEraseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
 void MapTensorEraseGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape) {
   // Return size 1 as the first input size and the output size for MapTensorErase. Real map tensor is assigned by
   // framework.
-  input_size_list_.push_back(kSizeOne);
   output_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_key_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MapTensorErase, MapTensorEraseGpuKernelMod);

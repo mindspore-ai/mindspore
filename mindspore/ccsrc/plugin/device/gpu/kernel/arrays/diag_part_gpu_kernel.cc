@@ -64,9 +64,7 @@ int DiagPartGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (input_elements_ == 0) {
     is_null_input_ = true;
   }
-  size_t input_size = input_elements_ * unit_size_;
   size_t output_size = output_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }

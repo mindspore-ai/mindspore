@@ -65,9 +65,7 @@ int GerGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
   output_elements_ = clo_shape[0] * row_shape[0];
   matrix_row_ = clo_shape[0];
   matrix_col_ = row_shape[0];
-  int64_t input_size = input_elements_ * unit_size_;
   int64_t output_size = output_elements_ * unit_size_;
-  input_size_list_.emplace_back(input_size);
   output_size_list_.emplace_back(output_size);
   return KRET_OK;
 }
@@ -77,7 +75,6 @@ void GerGpuKernelMod::ResetResource() noexcept {
   matrix_col_ = 0;
   input_elements_ = 0;
   output_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

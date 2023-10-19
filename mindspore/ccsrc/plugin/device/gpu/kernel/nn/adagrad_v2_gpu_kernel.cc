@@ -26,7 +26,6 @@ namespace mindspore {
 namespace kernel {
 void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -44,10 +43,6 @@ void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &in
   is_null_input_ = (input_elements_ == 0);
 
   if (is_null_input_) {
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     output_size_list_.push_back(0);
     return;
@@ -67,10 +62,6 @@ void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &in
   for (int64_t i = 0; i < static_cast<int64_t>(gradient_shape_.size()); i++) {
     gradient_size_ *= gradient_shape_[i];
   }
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(accumulation_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(variable_size_);
   output_size_list_.push_back(accumulation_size_);
 }

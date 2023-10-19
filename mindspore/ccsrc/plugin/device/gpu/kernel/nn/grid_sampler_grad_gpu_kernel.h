@@ -289,7 +289,6 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     size_ = 0;
     dinput_size_ = 0;
     dgrid_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

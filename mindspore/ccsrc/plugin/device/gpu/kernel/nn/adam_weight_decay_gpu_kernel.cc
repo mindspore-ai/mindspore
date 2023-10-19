@@ -34,15 +34,6 @@ bool AdamWeightDecayGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 }
 
 void AdamWeightDecayGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(variable_size_);
-  input_size_list_.push_back(m_size_);
-  input_size_list_.push_back(v_size_);
-  input_size_list_.push_back(learning_rate_size_);
-  input_size_list_.push_back(beta1_size_);
-  input_size_list_.push_back(beta2_size_);
-  input_size_list_.push_back(epsilon_size_);
-  input_size_list_.push_back(decay_size_);
-  input_size_list_.push_back(gradient_size_);
   output_size_list_.push_back(0);
   output_size_list_.push_back(0);
   output_size_list_.push_back(0);
@@ -53,7 +44,6 @@ int AdamWeightDecayGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
 
   variable_size_ = s_type_id_size_;

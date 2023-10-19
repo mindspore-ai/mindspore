@@ -62,7 +62,6 @@ int AccumulateNV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   n_ = inputs.size();
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(n_ * output_size);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back(n_ * sizeof(void *));
   return KRET_OK;

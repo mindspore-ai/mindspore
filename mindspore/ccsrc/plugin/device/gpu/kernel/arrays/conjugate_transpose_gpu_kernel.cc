@@ -105,11 +105,7 @@ int ConjugateTransposeGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
     output_stride[shape_size_ - 1 - i] = output_stride[shape_size_ - i] * y_shape[shape_size_ - i];
   }
   size_t workspace_size_ = MAX_DIMS * sizeof(size_t);
-  size_t input_one_size = x_one_count_ * unit_size_one_;
-  size_t input_two_size = x_two_count_ * unit_size_two_;
   size_t output_size = y_count_ * out_unit_size_;
-  input_size_list_.push_back(input_one_size);
-  input_size_list_.push_back(input_two_size);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back(workspace_size_);
   workspace_size_list_.push_back(workspace_size_);
@@ -125,7 +121,6 @@ void ConjugateTransposeGpuKernelMod::ResetResource() noexcept {
   x_one_shape_.clear();
   x_two_shape_.clear();
   y_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

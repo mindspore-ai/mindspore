@@ -72,10 +72,6 @@ int InplaceOpV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_elements_v = std::accumulate(input_shape_v.begin(), input_shape_v.end(), 1, std::multiplies<int64_t>());
   size_t input_size_x = input_elements_x * unit_size_;
   size_t indices_size = (input_shape_indices.empty() ? kSizeOne : input_shape_indices[kIndex0]) * indices_size_;
-  size_t input_size_v = input_elements_v * unit_size_;
-  input_size_list_.push_back(input_size_x);
-  input_size_list_.push_back(indices_size);
-  input_size_list_.push_back(input_size_v);
   output_size_list_.push_back(input_size_x);
   if (kernel_name_ == ops::kNameInplaceUpdateV2) {
     workspace_size_list_.push_back(indices_size);
@@ -88,7 +84,6 @@ void InplaceOpV2GpuKernelMod::ResetResource() noexcept {
   input_elements_x = 0;
   input_elements_v = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

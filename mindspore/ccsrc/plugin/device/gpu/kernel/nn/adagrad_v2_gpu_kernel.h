@@ -60,7 +60,6 @@ class AdagradV2GpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ = false;
     t_size_ = DEFAULT_SIZE_;
     s_size_ = DEFAULT_SIZE_;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

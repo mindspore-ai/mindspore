@@ -62,7 +62,6 @@ int BlackmanWindowGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     is_null_input_ = true;
   }
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(unit_input_size_);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }

@@ -39,19 +39,14 @@ constexpr size_t kSeqLenRank = 1;
 void CTCGreedyDecoderGpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
 
 void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
-  auto input_elements_ = inputs_x_shape_[kIndex0] * inputs_x_shape_[kIndex1] * inputs_x_shape_[kIndex2];
   max_time_ = inputs_x_shape_[kIndex0];
   batch_size_ = inputs_x_shape_[kIndex1];
   bound_ = inputs_x_shape_[kIndex2];
-
-  input_size_list_.push_back(input_elements_ * data_unit_size_);
-  input_size_list_.push_back(sequence_shape_[kIndex0] * sizeof(int32_t));
 
   workspace_size_list_.push_back(sizeof(int64_t));
   workspace_size_list_.push_back(batch_size_ * sizeof(int64_t));

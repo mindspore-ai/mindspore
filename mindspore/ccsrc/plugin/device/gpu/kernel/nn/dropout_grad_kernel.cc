@@ -76,15 +76,10 @@ void DropoutGradBwdGpuKernelMod::ResetResource() noexcept {
   mask_size_ = 0;
   output_size_ = 0;
   num_count_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void DropoutGradBwdGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(dy_size_);
-  input_size_list_.push_back(mask_size_);
-  output_size_list_.push_back(output_size_);
-}
+void DropoutGradBwdGpuKernelMod::InitSizeLists() { output_size_list_.push_back(output_size_); }
 
 template <typename T>
 bool DropoutGradBwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,

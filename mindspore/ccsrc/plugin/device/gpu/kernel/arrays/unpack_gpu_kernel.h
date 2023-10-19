@@ -104,7 +104,6 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
         dims_after_axis_ *= static_cast<size_t>(input_shape[i]);
       }
     }
-    input_size_list_.push_back(input_size_ * sizeof(T));
 
     return KRET_OK;
   }
@@ -114,7 +113,6 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ = false;
     input_size_ = 1;
     dims_after_axis_ = 1;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

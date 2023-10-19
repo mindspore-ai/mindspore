@@ -54,7 +54,6 @@ class LinSpaceGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     value_count_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

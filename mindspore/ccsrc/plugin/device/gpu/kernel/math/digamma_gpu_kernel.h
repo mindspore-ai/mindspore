@@ -54,7 +54,6 @@ class DigammaGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     output_elements_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

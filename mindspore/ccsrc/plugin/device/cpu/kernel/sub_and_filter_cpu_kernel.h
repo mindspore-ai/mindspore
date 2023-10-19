@@ -57,7 +57,6 @@ class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
  protected:
   void SyncOutputShape() override;
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

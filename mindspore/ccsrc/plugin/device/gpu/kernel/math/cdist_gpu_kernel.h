@@ -57,7 +57,6 @@ class CdistGpuKernelMod : public NativeGpuKernelMod {
     x_row_ = 0;
     y_row_ = 0;
     x_col_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

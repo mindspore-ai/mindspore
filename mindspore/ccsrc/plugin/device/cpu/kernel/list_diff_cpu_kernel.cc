@@ -57,7 +57,6 @@ bool ListDiffCPUKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
 }
 
 void ListDiffCPUKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -76,8 +75,6 @@ int ListDiffCPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto y_shape = inputs[kIndex1]->GetShapeVector();
   x_size_ = x_shape[0];
   y_size_ = y_shape[0];
-  (void)input_size_list_.emplace_back(x_size_ * data_size_);
-  (void)input_size_list_.emplace_back(y_size_ * data_size_);
   (void)output_size_list_.emplace_back(x_size_ * data_size_);
   (void)output_size_list_.emplace_back(x_size_ * index_size_);
   return KRET_OK;

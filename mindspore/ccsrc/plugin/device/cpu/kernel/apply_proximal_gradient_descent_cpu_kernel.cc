@@ -72,10 +72,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const std::vector<KernelTen
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyProximalGradientDescentInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 5.";
-    return KRET_RESIZE_FAILED;
-  }
+
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> alpha_shape = inputs[kAlphaIndex]->GetShapeVector();
   std::vector<int64_t> l1_shape = inputs[kL1Index]->GetShapeVector();

@@ -56,7 +56,6 @@ class TriuGpuKernelMod : public NativeGpuKernelMod {
     matrix_row_ = 0;
     matrix_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

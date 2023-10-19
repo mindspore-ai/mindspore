@@ -107,7 +107,6 @@ void ClipByNormCpuKernelMod::ResetResource() {
   clip_norm_shape_.clear();
   l2_norm_output_shape_.clear();
   output_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -176,8 +175,6 @@ void ClipByNormCpuKernelMod::InitSizeLists() {
   size_t clip_norm_type_size = GetTypeByte(TypeIdToType(data_type_.second));
   size_t clip_norm_size = SizeOf(clip_norm_shape_);
   clip_norm_size = std::max(clip_norm_size, clip_norm_type_size);
-  (void)input_size_list_.emplace_back(x_size);
-  (void)input_size_list_.emplace_back(clip_norm_size);
   // Init workspace size list
   size_t float_type_size = sizeof(float);
   auto l2_norm_out_size = float_type_size * SizeOf(l2_norm_output_shape_);

@@ -114,7 +114,6 @@ void AffineGridGpuKernelMod::ResetResource() noexcept {
   grid_dim_ = AffineGridDim::unknown;
   theta_shape_.clear();
   grid_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

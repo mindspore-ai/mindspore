@@ -51,13 +51,11 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     if (use_workspace_) {
       workspace_size_list_.push_back(input_size_);

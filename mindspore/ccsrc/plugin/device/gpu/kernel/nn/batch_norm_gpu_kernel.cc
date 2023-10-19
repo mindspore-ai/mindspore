@@ -189,7 +189,6 @@ void BatchNormGpuKernelMod::ResetResource() noexcept {
   activation_desc_ = nullptr;
   handle_ = nullptr;
   cudnn_data_type_ = CUDNN_DATA_FLOAT;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -243,10 +242,6 @@ void BatchNormGpuKernelMod::InitSizeLists() {
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetBatchNormalizationTrainingExReserveSpaceSize(
                                         handle_, mode_, bn_ops_, activation_desc_, x_desc_, &reserve_size_),
                                       "Get reserve size failed");
-
-  if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-    input_size_list_.push_back(input_z_size_);  // input z
-  }
 
   output_size_list_.clear();
   output_size_list_.push_back(output_size_);   // output

@@ -74,7 +74,6 @@ int TriuGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   matrix_row_ = input_shape[input_dims - kRowindex];
   matrix_col_ = input_shape[input_dims - kColindex];
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   return KRET_OK;
 }

@@ -44,13 +44,11 @@ class CoalesceGpuKernelMod : public NativeGpuKernelMod {
   void SyncOutputShape() override;
 
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   }

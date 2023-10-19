@@ -151,7 +151,6 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     workspace_size_list_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
 
     auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -269,8 +268,6 @@ class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
                                         "cudnnGetTensorSizeInBytes failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
                                         "cudnnGetFilterSizeInBytes failed");
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(input_size_);
 
     if (use_pad_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(

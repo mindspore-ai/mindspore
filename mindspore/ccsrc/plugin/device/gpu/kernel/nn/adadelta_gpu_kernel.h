@@ -61,7 +61,6 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
     t_size_ = DEFAULT_SIZE_;
     s_size_ = DEFAULT_SIZE_;
     g_size_ = DEFAULT_SIZE_;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

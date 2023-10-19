@@ -166,7 +166,6 @@ int Dilation2DBackpropFilterGpuKernelMod::Resize(const std::vector<KernelTensor 
     return KRET_RESIZE_FAILED;
   }
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   return KRET_OK;
 }

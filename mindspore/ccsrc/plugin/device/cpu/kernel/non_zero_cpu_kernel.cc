@@ -60,7 +60,6 @@ int NonZeroCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   }
   input_rank_ = input_shape_.size();
 
-  input_size_list_.push_back(input_size_ * data_size_);
   output_size_list_.push_back(input_size_ * input_shape_.size() * index_size_);
   return KRET_OK;
 }
@@ -68,7 +67,6 @@ int NonZeroCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
 void NonZeroCpuKernelMod::ResetResource() noexcept {
   real_output_size_ = 0;
   input_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

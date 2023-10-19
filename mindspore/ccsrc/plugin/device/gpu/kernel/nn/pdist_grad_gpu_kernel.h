@@ -54,7 +54,6 @@ class PDistGradGpuKernelMod : public NativeGpuKernelMod {
  protected:
   void ResetResource() noexcept {
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }

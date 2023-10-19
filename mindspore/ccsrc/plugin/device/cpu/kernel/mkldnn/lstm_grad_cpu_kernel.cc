@@ -74,7 +74,6 @@ int LSTMGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
-  input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
   auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
   auto src_h_shape = inputs[kIndex1]->GetDeviceShapeVector();
   auto src_c_shape = inputs[kIndex2]->GetDeviceShapeVector();

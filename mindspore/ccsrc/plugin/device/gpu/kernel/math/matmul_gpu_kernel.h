@@ -66,7 +66,6 @@ class MatMulGpuKernelMod : public NativeGpuKernelMod {
     dtype_c_ = CUDA_R_32F;
     algo_ = CUBLAS_GEMM_DEFAULT;
     is_fused_matmul_biasadd_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

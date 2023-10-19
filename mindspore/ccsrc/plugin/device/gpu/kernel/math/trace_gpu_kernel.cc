@@ -64,9 +64,6 @@ int TraceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   matrix_row_ = input_shape[input_dims - kRowindex];
   matrix_col_ = input_shape[input_dims - kColindex];
-  size_t input_elements = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-  size_t input_size = input_elements * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(unit_size_);
   return KRET_OK;
 }

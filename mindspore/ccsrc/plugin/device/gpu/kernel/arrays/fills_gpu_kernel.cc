@@ -94,7 +94,6 @@ std::vector<KernelAttr> FillsGpuKernelMod::GetOpSupport() {
 void FillsGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

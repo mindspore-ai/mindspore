@@ -101,16 +101,9 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
 
     size_t input_size = size_ * sizeof(T);
-    input_size_list_.push_back(input_size);  // parameter
-    input_size_list_.push_back(input_size);  // gradient
-    input_size_list_.push_back(sizeof(T));   // lr
-    input_size_list_.push_back(input_size);  // accum
-    input_size_list_.push_back(sizeof(T));   // momentum
-    input_size_list_.push_back(input_size);  // stat
     output_size_list_.push_back(input_size);
   }
 

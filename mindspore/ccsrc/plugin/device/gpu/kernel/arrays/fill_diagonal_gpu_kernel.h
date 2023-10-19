@@ -58,7 +58,6 @@ class FillDiagonalGpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ = false;
     input_elements_ = 0;
     step_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

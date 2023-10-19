@@ -69,7 +69,6 @@ int CholeskyInverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
                   << "while row is" << matrix_row << ", col is" << matrix_col;
   }
   rank_ = matrix_row;
-  input_size_list_.push_back(output_elements_ * unit_size_);
   output_size_list_.push_back(output_elements_ * unit_size_);
   workspace_size_list_.push_back(sizeof(int));  // dev_info
   workspace_size_list_.push_back(sizeof(int));  // d_work

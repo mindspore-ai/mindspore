@@ -47,7 +47,6 @@ bool MirrorPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int MirrorPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  input_size_list_.clear();
   output_size_list_.clear();
   auto input_shape = inputs[0]->GetShapeVector();
   auto padding_shape = inputs[1]->GetShapeVector();
@@ -93,8 +92,7 @@ int MirrorPadGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     output_size_ *= LongToSizeClipNeg(x);
     output_shape_.push_back(LongToInt(x));
   }
-  input_size_list_.push_back(num_input_ * in_type_size_);
-  input_size_list_.push_back(kSymmetricCoef * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
+
   output_size_list_.push_back(output_size_);
   return static_cast<int>(KRET_OK);
 }

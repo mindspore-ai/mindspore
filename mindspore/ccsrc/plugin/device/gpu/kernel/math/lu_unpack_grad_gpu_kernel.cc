@@ -73,9 +73,6 @@ int LuUnpackGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   int64_t input_L_size = input_L_elements_ * unit_size_;
   int64_t input_U_size = input_U_elements_ * unit_size_;
   int64_t input_LU_size = input_LU_elements_ * unit_size_;
-  input_size_list_.emplace_back(input_L_size);
-  input_size_list_.emplace_back(input_U_size);
-  input_size_list_.emplace_back(input_LU_size);
   output_size_list_.emplace_back(input_LU_size);
   output_size_list_.emplace_back(input_LU_size);
   workspace_size_list_.emplace_back(input_L_size);
@@ -87,7 +84,6 @@ int LuUnpackGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 void LuUnpackGradGpuKernelMod::ResetResource() noexcept {
   input_elements_ = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

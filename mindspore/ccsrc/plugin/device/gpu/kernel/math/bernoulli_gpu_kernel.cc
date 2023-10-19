@@ -111,9 +111,6 @@ int BernoulliGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     }
   }
   size_t input_size = x_count_ * unit_size_;
-  input_size_list_.emplace_back(input_size);
-  size_t p_size = p_count_ * p_unit_size_;
-  input_size_list_.emplace_back(p_size);
   output_size_list_.emplace_back(input_size);
   size_t workspace_size = 0;
   workspace_size_list_.emplace_back(workspace_size);
@@ -126,7 +123,6 @@ void BernoulliGpuKernelMod::ResetResource() noexcept {
   p_count_ = 1;
   x_shape_.clear();
   p_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

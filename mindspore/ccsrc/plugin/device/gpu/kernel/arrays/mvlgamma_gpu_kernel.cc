@@ -65,7 +65,6 @@ int MvlgammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_RESIZE_FAILED;
   }
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   workspace_size_list_.push_back(sizeof(int));
   return KRET_OK;

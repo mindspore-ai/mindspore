@@ -184,7 +184,6 @@ void MaskedFillGpuKernelMod::ResetResource() noexcept {
   lhs_shape_.clear();
   rhs_shape_.clear();
   output_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

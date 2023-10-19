@@ -145,7 +145,6 @@ bool DeformableOffsetsCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
 }
 
 void DeformableOffsetsCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

@@ -51,7 +51,6 @@ int LgammaGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     is_null_input_ = true;
   }
   size_t calc_shape = output_elements_ * input_size_;
-  input_size_list_.push_back(calc_shape);
   output_size_list_.push_back(calc_shape);
   return KRET_OK;
 }

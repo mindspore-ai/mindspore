@@ -44,7 +44,6 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     ow_ = 0;
     kernel_name_ = "BatchToSpace";
     crops_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     input_shape_.clear();
   }

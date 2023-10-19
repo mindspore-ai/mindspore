@@ -82,14 +82,9 @@ int PDistGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (x_grad_size == 0) {
     is_null_input_ = true;
   }
-  size_t y_grad_size = y_grad_size_ * input_type_size_;
-  size_t x_size = x_size_ * input_type_size_;
-  size_t y_size = y_size_ * input_type_size_;
+
   size_t output_size = x_grad_size * input_type_size_;
   size_t work_size = ((matrix_row_ - 1) * x_size_) * input_type_size_;
-  input_size_list_.push_back(y_grad_size);
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(y_size);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back(work_size);
   return KRET_OK;

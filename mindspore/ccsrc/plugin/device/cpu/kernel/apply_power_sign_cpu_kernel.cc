@@ -112,11 +112,6 @@ int ApplyPowerSignCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     return ret;
   }
 
-  if (input_size_list_.size() != kPowerSignInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 7.";
-    return KRET_RESIZE_FAILED;
-  }
-
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();

@@ -74,8 +74,6 @@ int SearchSortedGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_UNKNOWN_SHAPE;
   }
   size_t output_size = output_elements_ * unit_output_size_;
-  input_size_list_.push_back(sequence_size_ * sequence_per_size_);
-  input_size_list_.push_back(value_size_ * value_per_size_);
   workspace_size_list_.push_back(sizeof(int));
   workspace_size_list_.push_back(sizeof(int));
   output_size_list_.push_back(output_size);

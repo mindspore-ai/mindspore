@@ -126,16 +126,7 @@ bool MapTensorPutCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
 void MapTensorPutCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
   // Return size 1 as the first input size and the output size for MapTensorPut. Real map tensor is assigned by
   // framework.
-  input_size_list_.push_back(kSizeOne);
   output_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_key_type_size_);
-
-  auto values_size = std::accumulate(values_shape.begin(), values_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("values size", values_size);
-  input_size_list_.push_back(values_size * input_value_type_size_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapTensorPut, MapTensorPutCpuKernelMod);

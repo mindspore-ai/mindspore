@@ -87,7 +87,6 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
       return ret;
     }
-    input_size_list_.clear();
     output_size_list_.clear();
 
     auto in_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
@@ -138,8 +137,6 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     workspace_size = outer_batch_ * sizeof(int);
     workspace_size_list_.emplace_back(workspace_size);
 
-    size_t input_size = outer_batch_ * m_ * lda_ * unit_size_;
-    input_size_list_.push_back(input_size);
     size_t output_size = outer_batch_ * m_ * lda_ * unit_size_;
     output_size_list_.push_back(output_size);
   }

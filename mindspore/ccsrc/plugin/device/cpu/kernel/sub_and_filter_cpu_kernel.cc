@@ -46,9 +46,6 @@ int SubAndFilterCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto input_x_shape = inputs.at(kIndex0)->GetShapeVector();
   batch_size_ = SizeOf(input_x_shape);
   MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
-  (void)input_size_list_.emplace_back(batch_size_ * x_dtype_size_);
-  (void)input_size_list_.emplace_back(x_dtype_size_);
-  (void)input_size_list_.emplace_back(x_dtype_size_);
   (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
   (void)output_size_list_.emplace_back(batch_size_ * x_dtype_size_);
   return KRET_OK;

@@ -132,7 +132,6 @@ bool FusedSparseFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 }
 
 void FusedSparseFtrlCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
@@ -320,7 +319,6 @@ bool SparseApplyFtrlCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 }
 
 void SparseApplyFtrlCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   indices_data_type_ = kNumberTypeInt32;
   indices_size_ = 0;

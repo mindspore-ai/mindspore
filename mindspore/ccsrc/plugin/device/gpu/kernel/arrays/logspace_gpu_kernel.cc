@@ -40,8 +40,6 @@ bool LogSpaceGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
     return false;
   }
   {
-    size_t input_size = 2 * unit_size_;
-    input_size_list_.emplace_back(input_size);
     size_t output_size = steps_ * unit_size_;
     output_size_list_.emplace_back(output_size);
   }
@@ -57,15 +55,10 @@ int LogSpaceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     }
   }
   ResetResource();
-  size_t input_size = 2 * unit_size_;
-  input_size_list_.emplace_back(input_size);
   output_size_list_.emplace_back(steps_ * unit_size_);
   return KRET_OK;
 }
-void LogSpaceGpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
-  output_size_list_.clear();
-}
+void LogSpaceGpuKernelMod::ResetResource() noexcept { output_size_list_.clear(); }
 template <typename T>
 bool LogSpaceGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                         const std::vector<kernel::KernelTensor *> &,

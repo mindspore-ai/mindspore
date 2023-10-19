@@ -41,7 +41,6 @@ int CastGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   is_null_input_ =
     CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
   if (is_null_input_) {
-    input_size_list_.push_back(0);
     output_size_list_.push_back(0);
     return KRET_OK;
   }

@@ -118,7 +118,6 @@ int MaxUnpool3DGPUKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (helper_ptr_->CalMemSize(input_maxunpool3d_shapes, output_maxunpool3d_shapes) == -1) {
     return KRET_RESIZE_FAILED;
   }
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

@@ -58,7 +58,6 @@ class DataFormatVecPermuteGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     output_elements_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }
@@ -66,7 +65,6 @@ class DataFormatVecPermuteGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists() {
     size_t x_size = output_elements_ * unit_size_;
     size_t work_size = kDataFormatNum * sizeof(int32_t);
-    input_size_list_.emplace_back(x_size);
     workspace_size_list_.emplace_back(work_size);
     output_size_list_.emplace_back(x_size);
   }

@@ -135,17 +135,6 @@ bool MapTensorGetGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
 }
 
 void MapTensorGetGradGpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &dout_shape) {
-  // Put size one for map tensor input, the real memory will allocate by gpu hash table dynamically.
-  input_size_list_.push_back(kSizeOne);
-
-  auto keys_size = std::accumulate(keys_shape.begin(), keys_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("keys size", keys_size);
-  input_size_list_.push_back(keys_size * input_keys_type_size_);
-
-  auto dout_size = std::accumulate(dout_shape.begin(), dout_shape.end(), 1, std::multiplies{});
-  MS_EXCEPTION_IF_ZERO("dout size", dout_size);
-  input_size_list_.push_back(dout_size * input_dout_type_size_);
-
   // Put size one for map tensor output, the real memory will allocate by gpu hash table dynamically.
   output_size_list_.push_back(kSizeOne);
 }

@@ -428,7 +428,6 @@ bool DeformableOffsetsGradCpuKernelMod::LaunchKernel(const std::vector<kernel::K
 }
 
 void DeformableOffsetsGradCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -439,11 +438,7 @@ int DeformableOffsetsGradCpuKernelMod::Resize(const std::vector<KernelTensor *> 
   if (ret != KRET_OK) {
     return ret;
   }
-  if (input_size_list_.size() != kInputNum || output_size_list_.size() != kOutputNum) {
-    MS_LOG(ERROR) << kernel_name_ << " resize : input and output size should be " << kInputNum << " and " << kOutputNum
-                  << ", but get " << input_size_list_.size() << " and " << output_size_list_.size();
-    return KRET_RESIZE_FAILED;
-  }
+
   SetDims(inputs);
   return KRET_OK;
 }

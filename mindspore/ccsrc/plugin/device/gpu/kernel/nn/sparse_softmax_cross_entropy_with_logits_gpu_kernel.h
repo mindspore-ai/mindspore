@@ -126,11 +126,8 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
   }
 
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-    input_size_list_.push_back(logits_size_);
-    input_size_list_.push_back(labels_size_);
     output_size_list_.push_back(output_size_);
     workspace_size_list_.push_back(softmax_output_logits_size_);
   }

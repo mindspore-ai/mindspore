@@ -79,11 +79,6 @@ int CTCGreedyDecoderCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
                                          const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kInputNum) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kInputNum << ", but got "
-                    << input_size_list_.size() << ".";
-      return KRET_RESIZE_FAILED;
-    }
     output_size_list_.clear();
     max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
     batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];

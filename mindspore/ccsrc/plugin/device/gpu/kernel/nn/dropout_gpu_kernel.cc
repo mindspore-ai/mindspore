@@ -89,13 +89,11 @@ void DropoutFwdGpuKernelMod::ResetResource() noexcept {
   use_fused_dropout_ = false;
   only_use_first_output_ = false;
   only_use_second_output_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void DropoutFwdGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_size_);
   if (only_use_second_output_) {
     output_size_list_.push_back(1);
   } else {

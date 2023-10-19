@@ -48,16 +48,11 @@ class GatherCpuKernelMod : public NativeCpuKernelMod {
     indices_shape_.clear();
     output_shape_.clear();
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    auto input_size = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
-    auto indices_size = std::accumulate(indices_shape_.begin(), indices_shape_.end(), 1, std::multiplies{});
-    input_size_list_.push_back(LongToSize(input_size) * input_type_size_);
-    input_size_list_.push_back(LongToSize(indices_size) * indices_type_size_);
     auto output_size =
       std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<size_t>(1), std::multiplies{});
     output_size_list_.push_back(output_size * input_type_size_);

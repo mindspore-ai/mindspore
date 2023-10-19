@@ -292,11 +292,6 @@ void PoolingGradGpuKernelMod::InitResource() {
 }
 
 void PoolingGradGpuKernelMod::InitSizeLists() {
-  if (first_input_index_ == 1) {
-    input_size_list_.resize(1);
-  } else {
-    input_size_list_.clear();
-  }
   output_size_list_.clear();
   workspace_size_list_.clear();
   std::string err_msg = "For '" + kernel_name_ + "', cudnnGetTensorSizeInBytes failed";
@@ -304,7 +299,6 @@ void PoolingGradGpuKernelMod::InitSizeLists() {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(x_descriptor_, &input_size_), err_msg);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dx_descriptor_, &output_size_), err_msg);
   }
-  input_size_list_.push_back(input_size_);
   output_size_list_.push_back(output_size_);
   if (kernel_name_ == kAvgPool3DGrad) {
     workspace_size_list_.push_back(output_size_);
@@ -314,15 +308,10 @@ void PoolingGradGpuKernelMod::InitSizeLists() {
       workspace_size_list_.push_back(input_size_);
     }
   }
-  if (!is_null_input_) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(y_descriptor_, &input_size_), err_msg);
-  }
-  input_size_list_.push_back(input_size_);
 
   if (!is_null_input_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(dy_descriptor_, &input_size_), err_msg);
   }
-  input_size_list_.push_back(input_size_);
 }
 
 void PoolingGradGpuKernelMod::SetPad() {

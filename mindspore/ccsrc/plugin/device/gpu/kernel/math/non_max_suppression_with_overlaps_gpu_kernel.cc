@@ -39,18 +39,11 @@ constexpr int64_t INPUT_DIMS_0 = 0;
 void NMSWithOverlapsFwdGpuKernelMod::ResetResource() {
   stream_ptr_ = nullptr;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void NMSWithOverlapsFwdGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(num_input_ * num_input_ * data_unit_size_);
-  input_size_list_.push_back(num_input_ * data_unit_size_);
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(data_unit_size_);
-  input_size_list_.push_back(data_unit_size_);
-
   output_size_list_.push_back(num_input_ * sizeof(int));
 
   workspace_size_list_.push_back(ceil_power_2 * sizeof(int));              // index buff

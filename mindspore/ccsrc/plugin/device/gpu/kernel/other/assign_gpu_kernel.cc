@@ -110,7 +110,6 @@ int AssignGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
 
   return KRET_OK;

@@ -61,7 +61,6 @@ class UpperBoundGpuKernelMod : public NativeGpuKernelMod {
     values_row_ = 0;
     values_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

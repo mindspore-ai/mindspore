@@ -220,13 +220,7 @@ int SparseCrossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() < kInputsNum) {
-      MS_LOG(ERROR) << "For SparseCross, the number of inputs list should be greater" << kInputsNum << ", but got "
-                    << input_size_list_.size() << ".";
-      return KRET_RESIZE_FAILED;
-    }
-  }
+
   N_ = GetValue<int64_t>(primitive_->GetAttr("N"));
   return KRET_OK;
 }

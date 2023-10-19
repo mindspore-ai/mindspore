@@ -154,7 +154,6 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource() noexcept {
     input_shape_.clear();
     transpose_shape_.clear();
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
@@ -192,7 +191,6 @@ class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
                                             "Get output y size failed");
       }
     }
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
   }
 

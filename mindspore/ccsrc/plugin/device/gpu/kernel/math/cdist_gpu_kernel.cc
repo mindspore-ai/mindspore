@@ -74,11 +74,7 @@ int CdistGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   x_col_ = in_shape_x[in_shape_size - kOne];
   y_row_ = in_shape_y[in_shape_size - kTwo];
 
-  size_t x_size = x_elements_ * unit_size_;
-  size_t y_size = y_elements_ * unit_size_;
   size_t out_size = out_elements_ * unit_size_;
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(y_size);
   output_size_list_.push_back(out_size);
 
   return KRET_OK;

@@ -25,18 +25,11 @@ namespace kernel {
 constexpr int DimSize4 = 4;
 void CombinedNonMaxSuppressionGpuKernelMod::ResetResource() noexcept {
   cuda_stream_ = nullptr;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
 
 void CombinedNonMaxSuppressionGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(batch_size_ * num_boxes_ * q_ * DimSize4 * sizeof(T));
-  input_size_list_.push_back(batch_size_ * num_boxes_ * num_classes_ * sizeof(T));
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(int));
-  input_size_list_.push_back(sizeof(T));
-  input_size_list_.push_back(sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * DimSize4 * sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * sizeof(T));
   output_size_list_.push_back(batch_size_ * per_detections_ * sizeof(T));

@@ -136,7 +136,6 @@ int RollGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
 

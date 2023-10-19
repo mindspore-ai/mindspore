@@ -55,16 +55,11 @@ class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHe
                     const std::vector<kernel::KernelTensor *> &outputs);
 
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
-  void InitSizeLists() {
-    input_size_list_.push_back(dy_size_);
-    input_size_list_.push_back(rois_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  void InitSizeLists() { output_size_list_.push_back(output_size_); }
 
  private:
   bool is_xdiff_shape_dyn_{false};

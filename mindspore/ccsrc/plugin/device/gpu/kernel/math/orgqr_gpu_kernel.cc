@@ -119,9 +119,6 @@ int OrgqrGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
 
 template <typename T>
 void OrgqrGpuKernelMod::InitSizeLists() {
-  // input x, tau
-  input_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
-  input_size_list_.push_back(batch_size_ * k_ * sizeof(T));
   // output y
   output_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
   workspace_size_list_.push_back(batch_size_ * sizeof(int));

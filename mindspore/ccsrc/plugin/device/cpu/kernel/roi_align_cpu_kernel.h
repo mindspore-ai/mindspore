@@ -54,16 +54,11 @@ class ROIAlignCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
                     const std::vector<kernel::KernelTensor *> &outputs);
 
   void ResetResource() noexcept {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
-  void InitSizeLists() {
-    input_size_list_.push_back(x_size_);
-    input_size_list_.push_back(rois_size_);
-    output_size_list_.push_back(output_size_);
-  }
+  void InitSizeLists() { output_size_list_.push_back(output_size_); }
 
  private:
   int pooled_height_{0};

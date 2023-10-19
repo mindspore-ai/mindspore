@@ -61,9 +61,7 @@ int PDistGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   matrix_row_ = input_shape[input_shape.size() - kRowindex];
   matrix_col_ = input_shape[input_shape.size() - kColindex];
-  size_t input_size = x_size_ * input_type_size_;
   size_t output_size = y_size_ * input_type_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }

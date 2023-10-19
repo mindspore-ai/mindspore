@@ -69,7 +69,6 @@ int GRUGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if (ret != KRET_OK) {
     return ret;
   }
-  input_size_list_[kIndex8] = reserve_size_;
   auto src_shape = inputs[kIndex0]->GetDeviceShapeVector();
   auto src_h_shape = inputs[kIndex1]->GetDeviceShapeVector();
   if (src_shape.size() != kDims || src_h_shape.size() != kDims) {

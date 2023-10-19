@@ -92,7 +92,6 @@ void MaskedSelectGradGpuKernelMod::ResetResource() noexcept {
     mask_shape_[i] = 1;
     broadcast_shape_[i] = 1;
   }
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -144,9 +143,6 @@ int MaskedSelectGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
     mask_broadcast_ = true;
   }
 
-  // list
-  input_size_list_.push_back(input_size_ * input_type_size_);
-  input_size_list_.push_back(mask_size_ * mask_type_size_);
   workspace_size_list_.push_back(broadcast_size_ * sizeof(size_t));  // save prefix sum of mask
   if (input_broadcast_) {
     workspace_size_list_.push_back(broadcast_size_ * input_type_size_);  // save broadcast result of input
@@ -154,7 +150,6 @@ int MaskedSelectGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
   if (mask_broadcast_) {
     workspace_size_list_.push_back(broadcast_size_ * mask_type_size_);  // save broadcast result of mask
   }
-  input_size_list_.push_back(broadcast_size_ * input_type_size_);
   output_size_list_.push_back(input_size_ * input_type_size_);
   return KRET_OK;
 }

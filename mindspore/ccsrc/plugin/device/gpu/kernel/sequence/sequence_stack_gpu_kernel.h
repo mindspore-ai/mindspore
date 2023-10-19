@@ -55,7 +55,6 @@ class SequenceStackGpuKernelMod : public NativeGpuKernelMod, public MatchKernelH
     input_num_ = 1;
     output_size_ = 0;
     dims_behind_axis_ = 1;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

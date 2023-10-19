@@ -116,7 +116,6 @@ class Conv3dGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<C
     padded_size_ = 0;
     workspace_size_ = 0;
     use_pad_ = true;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

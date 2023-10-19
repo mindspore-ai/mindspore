@@ -34,7 +34,6 @@ int ConvertToDynamicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
                                          const std::vector<KernelTensor *> &outputs) {
   auto ret = KRET_OK;
   workspace_size_list_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
 
   const size_t kInOutNum = 1;
@@ -55,7 +54,6 @@ int ConvertToDynamicCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
     tensor_size = std::max(tensor_size, type_size);
   }
 
-  (void)input_size_list_.emplace_back(tensor_size);
   (void)output_size_list_.emplace_back(tensor_size);
 
   outputs_.clear();

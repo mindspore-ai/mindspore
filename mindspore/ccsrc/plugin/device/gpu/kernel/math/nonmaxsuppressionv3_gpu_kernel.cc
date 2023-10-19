@@ -143,7 +143,6 @@ int NonMaxSuppressionV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &i
     return KRET_RESIZE_FAILED;
   }
 
-  input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
   workspace_size_list_ = helper_ptr_->GetWorkSizeList();
   return KRET_OK;

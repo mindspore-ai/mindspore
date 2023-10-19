@@ -146,9 +146,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
       inner_size_ *= shape[i];
     }
 
-    input_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     output_size_list_.push_back(output_size_ / sizeof(S) * sizeof(T));
     return true;
@@ -162,7 +160,6 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
     bound_ = 0;
     outer_size_ = 0;
     inner_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

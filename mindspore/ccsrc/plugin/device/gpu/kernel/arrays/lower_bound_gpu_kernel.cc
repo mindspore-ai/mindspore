@@ -80,11 +80,7 @@ int LowerBoundGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  size_t sorted_x_size = sorted_x_elements_ * unit_size_;
-  size_t values_size = values_elements_ * unit_size_;
   size_t output_size = values_elements_ * unit_out_size_;
-  input_size_list_.emplace_back(sorted_x_size);
-  input_size_list_.emplace_back(values_size);
   output_size_list_.emplace_back(output_size);
 
   return KRET_OK;

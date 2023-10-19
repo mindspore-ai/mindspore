@@ -152,20 +152,9 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
 
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(m_size_);
-    input_size_list_.push_back(v_size_);
-    input_size_list_.push_back(learning_rate_size_);
-    input_size_list_.push_back(beta1_size_);
-    input_size_list_.push_back(beta2_size_);
-    input_size_list_.push_back(epsilon_size_);
-    input_size_list_.push_back(decay_size_);
-    input_size_list_.push_back(global_step_size_);
-    input_size_list_.push_back(gradient_size_);
     workspace_size_list_.push_back(update_size_);
     workspace_size_list_.push_back(var_float_size_);
     workspace_size_list_.push_back(grad_float_size_);

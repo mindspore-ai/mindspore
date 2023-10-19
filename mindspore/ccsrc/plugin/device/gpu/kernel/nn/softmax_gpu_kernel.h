@@ -55,7 +55,6 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
                                                   const std::vector<kernel::KernelTensor *> &, void *)>;
 
   void ResetResource() {
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
     input_shape_.clear();
@@ -70,7 +69,6 @@ class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     return;
   }

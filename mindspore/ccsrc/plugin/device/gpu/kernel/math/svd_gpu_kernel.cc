@@ -70,8 +70,6 @@ int SvdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
 }
 
 void SvdGpuKernelMod::InitSizeLists() {
-  // input a
-  input_size_list_.push_back(total_size_ * unit_size_);
   // output s, u, v
   output_size_list_.push_back(batch_size_ * p_ * unit_size_);
   if (compute_uv_) {

@@ -51,11 +51,7 @@ int KLDivLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto kl_div_loss_grad_ptr = std::dynamic_pointer_cast<ops::KLDivLossGrad>(primitive_);
   string reduction = kl_div_loss_grad_ptr->get_reduction();
   reduction_ = kReductionModeMap[reduction];
-  if (reduction_ == ReductionMode::kNone) {
-    input_size_list_[0] = input_size_ * type_id_size_;
-  } else {
-    input_size_list_[0] = type_id_size_;
-  }
+
   return KRET_OK;
 }
 
