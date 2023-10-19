@@ -34,7 +34,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         BatchToSpaceNDV2, BroadcastTo, Cast, Coalesce, Concat, Cummax, DType, DepthToSpace, Diag,
                         DiagPart, EditDistance, EmbeddingLookup, ExpandDims, ExtractVolumePatches,
                         Fill, Identity, Im2Col, InvertPermutation,
-                        LowerBound, Lstsq, MaskedFill, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
+                        LowerBound, Lstsq, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
                         Padding, ParallelConcat, PopulationCount, Reshape, ResizeNearestNeighbor,
                         ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
                         ScatterDiv, ScatterMax, ScatterMin, ScatterMul, ScatterNd, ScatterNdAdd, ScatterNdDiv,
@@ -139,7 +139,7 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
                              GatherD, GatherNd, HSigmoid, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
-                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal,)
+                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal, MaskedFill,)
 
 
 __all__ = [

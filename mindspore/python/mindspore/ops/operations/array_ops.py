@@ -6410,46 +6410,6 @@ class RangeV2(Primitive):
         validator.check_positive_int(maxlen, "maxlen", self.name)
 
 
-class MaskedFill(Primitive):
-    """
-    Fills elements with value where mask is True.
-
-    Note:
-        If `value` is a floating-point number of Python, it will be converted to float32 later by default.
-        In this case, if `input_x` is a float16 Tensor, it will be converted to float32 for calculation,
-        and the result type will be converted back to float16 on the CPU and Ascend platforms, which may
-        cause the performance penalty. A TypeError may be raised on the GPU platform. Therefore,
-        it is recommended that 'value' should use a Tensor with the same dtype as `input_x`.
-
-    Refer to :func:`mindspore.ops.masked_fill` for more details.
-
-    Inputs:
-        - **input** (Tensor) - The input Tensor.
-        - **mask** (Tensor[bool]) - The boolean mask.
-        - **value** (Union[float, Tensor]) - The value to fill in with, which dtype is the same as `input`.
-
-    Outputs:
-        Tensor, has the same type and shape as `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
-        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
-        >>> output = ops.MaskedFill()(input, mask, 0.5)
-        >>> print(output)
-        [0.5 0.5 3.  0.5]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['input', 'mask', 'value'], outputs=['output'])
-
-
 class MaskedScatter(Primitive):
     """
     Updates the value in the input with value in `updates` according to the `mask`.

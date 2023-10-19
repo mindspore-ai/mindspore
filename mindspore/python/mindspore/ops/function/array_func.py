@@ -5333,48 +5333,6 @@ def masked_select(input, mask):
     return masked_select_(input, mask)
 
 
-def masked_fill(input_x, mask, value):
-    """
-    Fills elements of Tensor with value where mask is True.
-    The shapes of `input_x` and `mask` need to be the same or broadcastable.
-
-    Args:
-        input_x (Tensor): The source Tensor whose data type is one of bool, uint8, int8, int16, int32,
-                    int64, float16, float32, float64, complex64, complex128.
-        mask (Tensor[bool]): The boolean mask.
-        value (Union[float, Tensor]): The value to fill in with, which dtype is the same as `input_x`.
-
-    Returns:
-        Tensor, has the same type and shape as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `mask` is not bool.
-        TypeError: If `input_x` or `mask` is not a Tensor.
-        ValueError: If the shapes of `input_x` and `mask` could not be broadcast.
-        TypeError: If dtype of `input_x` or `value` is not one of bool, uint8, int8, int16, int32,
-                   int64, float16, float32, float64, complex64, complex128.
-        TypeError: If dtype of `value` is different from that of `input_x`.
-        TypeError: If `value` is neither float number nor Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
-        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
-        >>> output = ops.masked_fill(input_x, mask, 0.5)
-        >>> print(output)
-        [0.5 0.5 3.  0.5]
-    """
-    if isinstance(value, (float, int)) and isinstance(input_x, Tensor):
-        value = scalar_to_tensor_(value, input_x.dtype)
-    masked_fill_ = _get_cache_prim(P.MaskedFill)()
-    return masked_fill_(input_x, mask, value)
-
-
 def diag(input):
     r"""
     Constructs a diagonal tensor with a given diagonal values.
@@ -7634,7 +7592,6 @@ __all__ = [
     'gather_elements',
     'gather_nd',
     'one_hot',
-    'masked_fill',
     'masked_select',
     'where',
     'narrow',

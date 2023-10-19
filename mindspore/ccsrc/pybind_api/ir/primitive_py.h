@@ -201,6 +201,7 @@ class PrimitiveFunctionAdapter {
   py::object has_label(const std::string &label) {
     return py::bool_(attached_primitive_function_.lock()->HasAttr(label));
   }
+  void set_label(const std::string &label, const py::object &value);
   py::object get_label(const std::string &label) {
     return ValueToPyData(attached_primitive_function_.lock()->GetAttr(label));
   }

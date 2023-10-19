@@ -19,8 +19,8 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_fill_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "mindspore/core/ops/masked_fill.h"
 #include "abstract/utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,7 +51,7 @@ bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
 
 bool MaskedFillGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+  batch_rank_ = ops::get_batch_rank(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

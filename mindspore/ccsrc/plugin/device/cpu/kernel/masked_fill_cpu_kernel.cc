@@ -19,7 +19,6 @@
 #include <utility>
 #include <functional>
 #include <complex>
-#include "mindspore/core/ops/masked_fill.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {

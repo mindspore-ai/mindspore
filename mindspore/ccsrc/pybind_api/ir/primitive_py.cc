@@ -807,6 +807,14 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
   return primitive_data->obj;
 }
 
+void PrimitiveFunctionAdapter::set_label(const std::string &label, const py::object &value) {
+  ValuePtr converted_value = nullptr;
+  if (!parse::ConvertData(value, &converted_value)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For '" << PrimitiveFunctionAdapter::name() << "', Convert data failed.";
+  }
+  attached_primitive_function_.lock()->AddAttr(label, converted_value);
+}
+
 void RegPrimitive(const py::module *m) {
   (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
     .value("unknown", PrimType::kPrimTypeUnknown)
@@ -839,6 +847,7 @@ void RegPrimitiveFunction(const py::module *m) {
     .def(py::init<>())
     .def("name", &PrimitiveFunctionAdapter::name, "Get function name.")
     .def("has_label", &PrimitiveFunctionAdapter::has_label, "Has function attr.")
+    .def("set_label", &PrimitiveFunctionAdapter::set_label, "Set function attr.")
     .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.");
 }
 }  // namespace mindspore

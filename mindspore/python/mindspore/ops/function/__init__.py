@@ -86,7 +86,6 @@ from .array_func import (
     gather_nd,
     is_tensor,
     scalar_cast,
-    masked_fill,
     narrow,
     tensor_scatter_add,
     tensor_scatter_sub,
@@ -712,10 +711,11 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, prelu, randperm, real, sin, sinc, sinh)
+from ..auto_generate import (assign, masked_fill, prelu, randperm, real, sin, sinc, sinh)
 
 __all__ = [
     'assign',
+    'masked_fill',
     'prelu',
     'rank',
     'randperm',

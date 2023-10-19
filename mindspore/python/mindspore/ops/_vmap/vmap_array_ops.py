@@ -1521,13 +1521,12 @@ def get_meshgrid_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.MaskedFill)
 def get_masked_fill_vmap_rule(prim, axis_size):
     """VmapRule for `MaskedFill` operation."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label('batch_rank'):
+        batch_rank = prim.get_label('batch_rank') + 1
     else:
         batch_rank = 1
 
-    batch_prim = P.MaskedFill()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(input_bdim, mask_bdim, value_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim, mask_bdim, value_bdim)
@@ -1540,7 +1539,7 @@ def get_masked_fill_vmap_rule(prim, axis_size):
         input_x = _bdim_at_front(input_x, x_dim, axis_size)
         mask = _bdim_at_front(mask, mask_dim, axis_size)
         value = _bdim_at_front(value, value_dim, axis_size)
-        out = batch_prim(input_x, mask, value)
+        out = prim(input_x, mask, value)
         return out, 0
 
     return vmap_rule
