@@ -113,7 +113,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/maximum.h
             ${TOP_DIR}/mindspore/core/ops/switch_layer.h
             ${TOP_DIR}/mindspore/core/ops/mfcc.h
-            ${TOP_DIR}/mindspore/core/ops/minimum.h
+        #     ${TOP_DIR}/mindspore/core/ops/minimum.h
             ${TOP_DIR}/mindspore/core/ops/mod.h
         #     ${TOP_DIR}/mindspore/core/ops/neg.h
         #     ${TOP_DIR}/mindspore/core/ops/not_equal.h

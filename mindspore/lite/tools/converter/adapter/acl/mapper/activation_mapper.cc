@@ -22,7 +22,6 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/leaky_relu.h"
-#include "ops/hsigmoid.h"
 #include "ops/softsign.h"
 #include "ops/softplus.h"
 #include "ops/selu.h"

@@ -20,7 +20,6 @@
 #include "ops/leaky_relu.h"
 #include "ops/tanh.h"
 #include "ops/hswish.h"
-#include "ops/hsigmoid.h"
 #include "ops/softplus.h"
 using mindspore::ops::kActivationType;
 using mindspore::ops::kAlpha;

@@ -4,9 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 
-if(ENABLE_GEN_CODE)
-    include(${CMAKE_SOURCE_DIR}/cmake/gencode.cmake)
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gencode.cmake)
 if("${ENABLE_HIDDEN}" STREQUAL "OFF" AND NOT MSVC)
     string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -120,9 +118,8 @@ set(CORE_SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/abstract/utils.cc
         )
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
-if(ENABLE_GEN_CODE)
-    add_dependencies(mindspore_core generated_code)
-endif()
+add_dependencies(mindspore_core generated_code)
+
 if(ENABLE_NATIVE_PROTOBUF)
     target_link_libraries(mindspore_core PRIVATE ${PROTOBUF_LIB})
 elseif(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
