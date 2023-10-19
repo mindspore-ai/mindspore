@@ -106,7 +106,7 @@ class FlashAttention(Cell):
                  ):
         super(FlashAttention, self).__init__()
 
-        scaling_constant = math.sqrt(math.sqrt(head_dim))
+        scaling_constant = math.sqrt(head_dim)
         if scaling_constant == 0:
             raise ValueError("the scaling constant must not be 0.")
         self.is_910A = MSContext.get_instance().get_ascend_soc_version() == "Ascend910"
