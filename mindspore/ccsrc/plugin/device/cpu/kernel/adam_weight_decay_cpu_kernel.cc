@@ -91,6 +91,7 @@ bool AdamWeightDecayCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   kernel_name_ = base_operator->name();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   dtype_ = inputs[kIndex0]->GetDtype();
   return true;
 }
@@ -98,6 +99,10 @@ bool AdamWeightDecayCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
 bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
+  for (size_t i = 0; i < kAdamWeightDecayInputsNum; ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+  }
   if (inputs[kIndex0]->size != inputs[kIndex1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dtype and shape of 'm' and 'var' must be the same, but got the memory size of 'm': "
