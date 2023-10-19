@@ -140,7 +140,7 @@ TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vecto
   (void)types.emplace("value", input_args[kFlashAttentionScoreInputValueIndex]->BuildType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kFloat16}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8}, op_name);
   if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreInputPaddingMaskIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'padding_mask' must be None currently.";
   }

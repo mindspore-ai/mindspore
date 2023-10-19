@@ -1313,6 +1313,9 @@ bool HandleFuncConcatSlice(const FuncGraphManagerPtr &manager, const std::pair<s
       }
       user_func_graph->set_parameters(new_user_graph_parameters);
       auto new_call_cnode = fg_users.first->func_graph()->NewCNode(fg_users_inputs_all);
+      auto user_func_graph_return_cnode = user_func_graph->get_return();
+      auto return_input_cnode = user_func_graph_return_cnode->input(1);
+      new_call_cnode->set_abstract(return_input_cnode->abstract()->Clone());
       manager->Replace(fg_users.first, new_call_cnode);
       // Handle user_func_graph slice cnode
       auto new_maketuple_cnode = user_func_graph->NewCNode(new_concat_maketuple_inputs);
