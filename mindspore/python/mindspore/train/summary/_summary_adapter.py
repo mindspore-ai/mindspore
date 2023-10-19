@@ -392,7 +392,7 @@ def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
     else:
         if max_value != min_value:
             # Mapping the value to range [0, 255] linearly.
-            scale_factor = 255/(max_value - min_value + 1)
+            scale_factor = 255 / (max_value - min_value + 1)
         shift = min_value
     tensor = tensor.astype(np.float32)
     tensor = ((tensor - shift) * scale_factor).astype(np.uint8)

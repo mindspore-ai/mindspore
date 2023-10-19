@@ -497,9 +497,9 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             )
             if intersection_start < intersection_end:
                 intersection_segment_display_list.append(
-                    [display_name, self._tid_dict[display_name][0],
+                    [display_name, self._tid_dict.get(display_name, ('',))[0],
                      intersection_start, (intersection_end - intersection_start) * factor_ns_to_us,
-                     self._tid_dict[display_name][1]]
+                     self._tid_dict.get(display_name, ('', ''))[1]]
                 )
             if first_time_list[first_list_idx][self._duration_idx] >= \
                     second_time_list[second_list_idx][self._duration_idx]:
