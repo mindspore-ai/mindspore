@@ -38,6 +38,7 @@ namespace mindspore::graphkernel {
 namespace {
 constexpr auto kPerm = "perm";
 constexpr auto kShape = "shape";
+const int kMinUpdateSize = 2;
 std::vector<int64_t> GetTransposePerm(const PrimitivePtr &primitive) {
   ValuePtr perm = primitive->GetAttr(kPerm);
   MS_EXCEPTION_IF_NULL(perm);
@@ -223,7 +224,7 @@ bool ParallelOpCombiner::CheckLevel(const Group &branches, size_t depth) {
 }
 
 bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
-  if (to_update->size() < 2) {
+  if (to_update->size() < kMinUpdateSize) {
     MS_LOG(ERROR) << "Cannot auto update for " << to_update->fullname_with_scope() << " with input size "
                   << to_update->size();
     return false;
