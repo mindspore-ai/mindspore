@@ -235,3 +235,7 @@ coordinate_transformation_mode:
   ALIGN_CORNERS: 0
   HALF_PIXEL: 1
 
+# enum KVCacheAlignMode
+k_v_cache_align_mode:
+  RIGHT: 0
+  LEFT: 1
