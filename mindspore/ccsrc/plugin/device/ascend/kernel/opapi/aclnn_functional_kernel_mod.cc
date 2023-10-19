@@ -20,9 +20,9 @@ namespace mindspore {
 namespace kernel {
 
 void AclnnFunctionalKernelMod::Init(const PrimitivePtr &prim, bool is_gradient_out) {
-  MS_EXCEPTION_IF_NULL(prim);
-  prim_ = prim;
-  kernel_name_ = prim->name();
+//  MS_EXCEPTION_IF_NULL(prim);
+//  prim_ = prim;
+//  kernel_name_ = prim->name();
   is_gradient_out_ = is_gradient_out;
   auto ms_context = MsContext::GetInstance();
   device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(

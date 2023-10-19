@@ -20,7 +20,7 @@
 #include "kernel/pyboost/op/baddbmm.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pybind_api/gil_scoped_long_running.h"
-using namespace mindspore::kernel::pyboost;
+
 namespace mindspore::ops {
 extern OpDef gBaddbmm;
 }
@@ -91,7 +91,7 @@ py::object Pyboost_Baddbmm(const py::args &args) {
   //    GilReleaseWithCheck release_gil;
   //    forward_executor()->DispatchAnyFrontendTask(dispatch_baddbmm);
 
-  auto op = OpFactory<Baddbmm>::Get().Create(op_run_info->base_op_run_info.device_target);
+  auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
   auto output = op->Call(input, batch1, batch2, beta, alpha);
   return parser.Wrap(output);
 }
