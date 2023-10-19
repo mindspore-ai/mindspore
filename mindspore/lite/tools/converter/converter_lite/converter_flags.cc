@@ -41,13 +41,14 @@ Flags::Flags() {
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");
   AddFlag(&Flags::inputDataTypeStr, "inputDataType",
-          "Data type of input tensors, default is same with the type defined in model. FLOAT | INT8 | UINT8 | INT32 | "
-          "INT64 | DEFAULT",
+          "Data type of input tensors, default is same with the type defined in model. FLOAT16 | FLOAT | INT8 | UINT8 "
+          "| INT32 | INT64 | DEFAULT",
           "DEFAULT");
-  AddFlag(&Flags::outputDataTypeStr, "outputDataType",
-          "Data type of output and output tensors, default is same with the type defined in model. FLOAT | INT8 | "
-          "UINT8 | DEFAULT",
-          "DEFAULT");
+  AddFlag(
+    &Flags::outputDataTypeStr, "outputDataType",
+    "Data type of output and output tensors, default is same with the type defined in model. FLOAT16 | FLOAT | INT8 | "
+    "UINT8 | DEFAULT",
+    "DEFAULT");
   AddFlag(&Flags::configFile, "configFile",
           "Configuration for post-training, offline split op to parallel,"
           "disable op fusion ability and set plugin so path",
@@ -108,9 +109,10 @@ Flags::Flags() {
 int Flags::InitInputOutputDataType() {
   // value check not here, it is in converter c++ API's CheckValueParam method.
   std::map<std::string, DataType> StrToEnumDataTypeMap = {
-    {"FLOAT", DataType::kNumberTypeFloat32}, {"INT8", DataType::kNumberTypeInt8},
-    {"UINT8", DataType::kNumberTypeUInt8},   {"INT32", DataType::kNumberTypeInt32},
-    {"INT64", DataType::kNumberTypeInt64},   {"DEFAULT", DataType::kTypeUnknown}};
+    {"FLOAT16", DataType::kNumberTypeFloat16}, {"FLOAT", DataType::kNumberTypeFloat32},
+    {"INT8", DataType::kNumberTypeInt8},       {"UINT8", DataType::kNumberTypeUInt8},
+    {"INT32", DataType::kNumberTypeInt32},     {"INT64", DataType::kNumberTypeInt64},
+    {"DEFAULT", DataType::kTypeUnknown}};
   if (StrToEnumDataTypeMap.find(this->inputDataTypeStr) != StrToEnumDataTypeMap.end()) {
     this->inputDataType = StrToEnumDataTypeMap.at(this->inputDataTypeStr);
   } else {
