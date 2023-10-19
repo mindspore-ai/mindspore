@@ -188,7 +188,7 @@ class AscendMsprofExporter:
         summary_path = os.path.join(device_path, self._summary_dir)
         timeline_path = os.path.join(device_path, self._timeline_dir)
 
-        self._run_cmd(self._msprof_command_generator_old(prof_path))
+        _ = self._run_cmd(self._msprof_command_generator_old(prof_path))
 
         if not os.path.isdir(summary_path):
             msg = "Path {} is not a existing directory. Make sure there is " \
