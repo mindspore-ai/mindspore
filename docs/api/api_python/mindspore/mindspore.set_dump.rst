@@ -23,6 +23,5 @@ mindspore.set_dump
     样例：
 
     .. note::
-
         运行此样例之前请设置环境变量 `MINDSPORE_DUMP_CONFIG` 到配置文件，并将配置文件中的 `dump_mode` 字段设置为2。
         详细信息请参阅 `Dump功能文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/r2.2/debug/dump.html>`_ 。
