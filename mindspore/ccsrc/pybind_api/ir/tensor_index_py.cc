@@ -1242,6 +1242,21 @@ std::pair<ValuePtr, bool> GetStubTensorValue(const py::handle &obj) {
   return std::make_pair(stub, is_pack_node);
 }
 
+std::pair<ValuePtr, bool> SqueezeRDataValue(TensorPtr tensor, const py::handle &py_value, ValuePtr rdata_value,
+                                            bool is_pack_node) {
+  auto rdata_shape = tensor->shape();
+  if (rdata_shape.size() >= 1 && (rdata_shape.at(0) > 1 || rdata_shape.size() > 1)) {
+    MS_EXCEPTION(ValueError)
+      << "For SetItem, the shape of right value must be () or (1, ) when shape of left value is 0, but got"
+      << rdata_shape;
+  } else if (rdata_shape.size() == 1 && rdata_shape.at(0) == 1) {
+    auto new_value = py::cast<py::list>(py_value);
+    auto first_value = new_value[0];
+    return GetStubTensorValue(first_value);
+  }
+  return std::make_pair(rdata_value, is_pack_node);
+}
+
 static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *slice_op_infos,
                                          const ValuePtr data_value, const std::vector<int64_t> &new_data_shape,
                                          const TypePtr &data_type, const py::handle &py_value) {
@@ -1265,10 +1280,18 @@ static inline py::object SetitemCopyView(std::vector<pynative::SliceOpInfoPtr> *
   if (IsStubTensor(py_value)) {
     bool is_pack_node = false;
     std::tie(rdata_value, is_pack_node) = GetStubTensorValue(py_value);
+    if (new_data_shape.size() == 0) {
+      auto tensor = ConvertStubTensor(py_value);
+      std::tie(rdata_value, is_pack_node) = SqueezeRDataValue(tensor, py_value, rdata_value, is_pack_node);
+    }
   } else if (py::isinstance<Tensor>(py_value)) {
     auto tensor = py_value.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     rdata_value = tensor;
+    if (new_data_shape.size() == 0) {
+      bool is_pack_node = false;
+      std::tie(rdata_value, is_pack_node) = SqueezeRDataValue(tensor, py_value, rdata_value, is_pack_node);
+    }
   } else if (py::isinstance<py::int_>(py_value)) {
     rdata_value = MakeValue(py::cast<int64_t>(py_value));
   } else if (py::isinstance<py::float_>(py_value)) {
