@@ -105,13 +105,22 @@ class MS_CORE_API ForkUtils {
 
   std::vector<fork_callback_info> GetCallbacks() { return fork_callbacks_; }
 
-  bool fork_valid_flag = false;
+  void set_gil_hold_before_fork(bool gil_hold_before_fork) { hold_gil_before_fork_ = gil_hold_before_fork; }
+
+  bool is_gil_hold_before_fork() const { return hold_gil_before_fork_; }
+
+  void set_gil_state(int gil_state) { gil_state_ = gil_state; }
+
+  int get_gil_state() const { return gil_state_; }
 
  private:
   ForkUtils() = default;
   ~ForkUtils() = default;
   std::vector<fork_callback_info> fork_callbacks_;
   std::once_flag once_flag_;
+  // Record whether forked thread holds the gil lock when the fork occurs.
+  bool hold_gil_before_fork_ = false;
+  int gil_state_ = 0;
   void RegisterOnce() {
 #if !defined(_WIN32) && !defined(BUILD_LITE)
     std::call_once(once_flag_, []() {

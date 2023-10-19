@@ -84,6 +84,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void WorkerJoin();
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
   void WaitBeforeFork();
+  void ParentAfterFork();
   void ReinitAfterFork();
   py::object RunSliceOpStub(const std::vector<ValuePtr> &input_v,
                             const std::vector<SliceOpInfoPtr> &slice_op_infos) const;
@@ -92,8 +93,7 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   PyNativeExecutor() {
     // Register fork event callbacks.
     ForkUtils::GetInstance().RegisterCallbacks(this, &PyNativeExecutor::WaitBeforeFork,
-                                               static_cast<void (PyNativeExecutor::*)()>(nullptr),
-                                               &PyNativeExecutor::ReinitAfterFork);
+                                               &PyNativeExecutor::ParentAfterFork, &PyNativeExecutor::ReinitAfterFork);
   }
   static std::shared_ptr<PyNativeExecutor> executor_;
   static std::mutex instance_lock_;
