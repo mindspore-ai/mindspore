@@ -48,7 +48,7 @@ class RollGrad(nn.Cell):
         return gout
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_roll_1d():
@@ -72,7 +72,7 @@ def test_roll_1d():
     assert np.allclose(except_output, output_ms.asnumpy())
     assert np.allclose(except_grad_output, output_grad_ms[0].asnumpy())
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_roll_exception_1():
@@ -90,7 +90,7 @@ def test_roll_exception_1():
         assert True
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_roll_exception_2():

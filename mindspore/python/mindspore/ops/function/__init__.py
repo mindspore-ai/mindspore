@@ -711,7 +711,7 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, masked_fill, prelu, randperm, real, sin, sinc, sinh)
+from ..auto_generate import (assign, masked_fill, prelu, randperm, real, sin, sinc, sinh, roll_,)
 
 __all__ = [
     'assign',

@@ -112,7 +112,8 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(size_v);
   std::vector<int64_t> size_value;
   if (!size_v->isa<ValueAny>() && !size_v->isa<None>()) {
-    size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name);
+    auto size_type = input_args[kInputIndex1]->GetType();
+    size_value = CheckAndConvertUtils::CheckTensorIntValue("size", size_v, prim_name, size_type);
     // check scale greater than zero
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("size", size_value, prim_name);
     std::vector<int64_t> out_shape;

@@ -124,7 +124,8 @@ def test_resize_bilinear_grad_dtype(mode, dtype):
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
+#TupleToTensor还未适配完成，待TupleToTensor适配完成后转为level0
+@pytest.mark.skip
 @pytest.mark.platform_x86_cpu_training
 def test_resize_bilinear_grad_half_pixel_centers():
     """

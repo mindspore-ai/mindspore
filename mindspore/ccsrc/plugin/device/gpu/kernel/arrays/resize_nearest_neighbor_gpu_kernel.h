@@ -86,8 +86,12 @@ class ResizeNearestNeighborGpuKernelMod : public NativeGpuKernelMod {
     for (size_t i = 0; i < output_shape.size(); ++i) {
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
-    // for ResizeNearestNeighbor, the inputs index will be out of range.
-    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+    if (primitive_->HasAttr(ops::kAlignCorners)) {
+      align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
+    } else {
+      // for ResizeNearestNeighbor, the inputs index will be out of range.
+      align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+    }
     return KRET_OK;
   }
 

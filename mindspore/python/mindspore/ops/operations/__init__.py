@@ -36,7 +36,7 @@ from .array_ops import (ArgMaxWithValue, ArgMinWithValue, Argmax, Argmin, BatchT
                         Fill, Identity, Im2Col, InvertPermutation,
                         LowerBound, Lstsq, MaskedSelect, Meshgrid, Mvlgamma, Ones, OnesLike,
                         Padding, ParallelConcat, PopulationCount, Reshape, ResizeNearestNeighbor,
-                        ReverseSequence, ReverseV2, Rint, ScalarToTensor, ScatterAdd,
+                        ReverseSequence, Rint, ScalarToTensor, ScatterAdd,
                         ScatterDiv, ScatterMax, ScatterMin, ScatterMul, ScatterNd, ScatterNdAdd, ScatterNdDiv,
                         ScatterNdMax, ScatterNdMin, ScatterNdSub, ScatterNdUpdate, ScatterSub,
                         ScatterUpdate, SearchSorted, Select, Shape, Size, Slice, Sort, SpaceToBatch, SpaceToBatchND,
@@ -62,7 +62,7 @@ from .custom_ops import (Custom)
 from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB, AdjustHue, AdjustSaturation,
-                        NonMaxSuppressionWithOverlaps, ResizeArea, ResizeBilinearV2, ExtractGlimpse,
+                        NonMaxSuppressionWithOverlaps, ResizeArea, ExtractGlimpse,
                         CombinedNonMaxSuppression, RGBToHSV, ScaleAndTranslate, ResizeLinear1D, ResizeBicubic)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
@@ -139,7 +139,8 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
 from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
                              GatherD, GatherNd, HSigmoid, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
-                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal, MaskedFill,)
+                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal, MaskedFill, ResizeBilinearV2,
+                             ResizeBilinearGrad, ReverseV2, Roll,)
 
 
 __all__ = [
@@ -605,6 +606,7 @@ __all__ = [
     "NonZero",
     "ResizeArea",
     "ResizeBilinearV2",
+    "ResizeBilinearGrad",
     "Qr",
     "ParameterizedTruncatedNormal",
     "RandomGamma",

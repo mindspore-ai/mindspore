@@ -73,11 +73,10 @@ class SGDGpuKernelMod : public NativeGpuKernelMod {
                     << outputs.size();
       return false;
     }
-    auto sgd_op = std::dynamic_pointer_cast<ops::SGD>(primitive_);
 
-    dampening_ = sgd_op->get_dampening();
-    weight_decay_ = sgd_op->get_weight_decay();
-    nesterov_ = sgd_op->get_nesterov();
+    dampening_ = GetValue<float>(primitive_->GetAttr(ops::kDampening));
+    weight_decay_ = GetValue<float>(primitive_->GetAttr(ops::kWeightDecay));
+    nesterov_ = GetValue<bool>(primitive_->GetAttr(ops::kNesterov));
     return true;
   }
 
