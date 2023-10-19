@@ -63,13 +63,13 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     input_shape_ = inputs[0]->GetShapeVector();
-    outputs_[0]->SetShapeVector(input_shape_);
+    outputs[0]->SetShapeVector(input_shape_);
     input_size_ = 1;
     for (const auto &e : input_shape_) {
       input_size_ *= e;
     }
     InitSizeLists();
-    return ret;
+    return KRET_OK;
   }
 
   void ResetResource() noexcept {

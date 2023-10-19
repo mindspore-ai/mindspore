@@ -385,7 +385,7 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const Nod
   MS_EXCEPTION_IF_NULL(params);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(axis);
-  return Emit(kGatherOpName, {params, indices, axis}, {{kAttrBatchDims, MakeValue(batch_dims)}});
+  return Emit(kGatherOpName, {params, indices, axis, this->EmitValue(MakeValue(batch_dims))});
 }
 NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) {
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);

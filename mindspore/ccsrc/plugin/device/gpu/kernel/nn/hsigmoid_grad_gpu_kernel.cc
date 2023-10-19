@@ -67,9 +67,6 @@ std::vector<KernelAttr> HSigmoidGradGpuKernelMod::GetOpSupport() {
 
 bool HSigmoidGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HSigmoidGrad>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.size() != kHSigmoidGradInputsNum || outputs.size() != kHSigmoidGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kHSigmoidGradInputsNum << " and "
                   << kHSigmoidGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();

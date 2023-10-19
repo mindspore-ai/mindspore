@@ -41,8 +41,7 @@ bool KLDivLossGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
 
 bool KLDivLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::KLDivLoss>(primitive_);
-  string reduction = kernel_ptr->get_reduction();
+  string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   reduction_ = kReductionModeMap[reduction];
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

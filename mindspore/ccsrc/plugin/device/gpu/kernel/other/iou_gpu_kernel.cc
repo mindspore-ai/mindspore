@@ -63,8 +63,8 @@ int IOUGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std
   }
 
   size_t type_size = GetTypeByte(TypeIdToType(inputs[ANCHOR_BOXES]->dtype_id()));
-  const size_t anchor_boxes_size_ = input_size_list_[ANCHOR_BOXES] / type_size;
-  const size_t gt_boxes_size_ = input_size_list_[GT_BOXES] / type_size;
+  const size_t anchor_boxes_size_ = inputs[ANCHOR_BOXES]->size() / type_size;
+  const size_t gt_boxes_size_ = inputs[GT_BOXES]->size() / type_size;
   if ((anchor_boxes_size_ % kBoxCoordinateLen) != 0 || (gt_boxes_size_ % kBoxCoordinateLen) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the size of the box should be a multiple of 4.";
     return false;

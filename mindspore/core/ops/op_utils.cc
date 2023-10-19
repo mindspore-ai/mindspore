@@ -558,6 +558,8 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
     } else if (CheckAndConvertUtils::IsSequence(arg)) {
       return CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", arg, prim_name);
     }
+  } else if (CheckAndConvertUtils::IsTensor(arg)) {
+    return {abstract::Shape::kShapeRankAny};
   } else if (arg->isa<abstract::AbstractSequence>()) {
     return GetSequenceValue("input[shape]", arg, prim_name);
   }

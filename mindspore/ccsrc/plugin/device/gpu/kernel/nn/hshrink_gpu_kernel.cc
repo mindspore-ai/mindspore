@@ -35,13 +35,7 @@ bool HShrinkGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
                   << kHShrinkOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrink>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast HShrink ops failed!";
-    return false;
-  }
-  lambd_ = kernel_ptr->get_lambd();
+  lambd_ = GetValue<float>(primitive_->GetAttr(ops::kLambd));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

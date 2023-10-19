@@ -38,7 +38,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr FillsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (input_args[kInputIndex1]->GetType()->object_type() == kObjectTypeTensorType) {
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
     auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto value_rank = SizeToLong(value_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, 0, primitive->name());

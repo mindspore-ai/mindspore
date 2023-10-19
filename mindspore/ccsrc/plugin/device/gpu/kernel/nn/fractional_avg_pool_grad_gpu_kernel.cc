@@ -79,14 +79,12 @@ bool FractionalAvgPoolGradGpuKernelMod::Launch(const std::vector<KernelTensor *>
 
 bool FractionalAvgPoolGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalAvgPoolGrad>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->overlapping = kernel_ptr->get_overlapping();
+  attr_ptr_->overlapping = GetValue<bool>(primitive_->GetAttr("overlapping"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 

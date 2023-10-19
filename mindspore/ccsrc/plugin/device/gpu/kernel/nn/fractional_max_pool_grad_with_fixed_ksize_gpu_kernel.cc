@@ -83,14 +83,12 @@ bool FractionalMaxPoolGradWithFixedKsizeGpuKernelMod::Launch(const std::vector<K
 
 bool FractionalMaxPoolGradWithFixedKsizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                            const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPoolGradWithFixedKsize>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->data_format = kernel_ptr->get_data_format();
+  attr_ptr_->data_format = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 

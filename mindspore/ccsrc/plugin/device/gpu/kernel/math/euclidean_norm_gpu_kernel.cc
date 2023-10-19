@@ -68,10 +68,7 @@ int EuclideanNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::EuclideanNorm>(primitive_);
-
-  keep_dims_ = kernel_ptr->get_keep_dims();
+  keep_dims_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
   axes_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);

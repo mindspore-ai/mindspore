@@ -74,19 +74,17 @@ bool FractionalAvgPoolGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
 
 bool FractionalAvgPoolGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalAvgPool>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->pooling_ratio = kernel_ptr->get_pooling_ratio();
-  attr_ptr_->pseudo_random = kernel_ptr->get_pseudo_random();
-  attr_ptr_->overlapping = kernel_ptr->get_overlapping();
-  attr_ptr_->deterministic = kernel_ptr->get_deterministic();
-  attr_ptr_->seed = kernel_ptr->get_seed();
-  attr_ptr_->seed2 = kernel_ptr->get_seed2();
+  attr_ptr_->pooling_ratio = GetValue<std::vector<float>>(primitive_->GetAttr("pooling_ratio"));
+  attr_ptr_->pseudo_random = GetValue<bool>(primitive_->GetAttr("pseudo_random"));
+  attr_ptr_->overlapping = GetValue<bool>(primitive_->GetAttr("overlapping"));
+  attr_ptr_->deterministic = GetValue<bool>(primitive_->GetAttr("deterministic"));
+  attr_ptr_->seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  attr_ptr_->seed2 = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed2));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 

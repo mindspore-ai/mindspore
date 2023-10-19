@@ -34,7 +34,7 @@ constexpr size_t kFormatNCDHWIndexW = 4;
 bool ExtractVolumePatchesGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
   kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
-  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kstrides"));
+  strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   padding_ = GetValue<std::string>(primitive_->GetAttr("padding"));
   size_t kernel_size_dims = kernel_size_.size();
   size_t strides_dims = strides_.size();

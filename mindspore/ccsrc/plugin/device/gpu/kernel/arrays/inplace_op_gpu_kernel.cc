@@ -46,15 +46,11 @@ bool InplaceOpGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(inputs[0]->dtype_id());
   if (kernel_name_ == "InplaceUpdate") {
-    auto prim = std::dynamic_pointer_cast<ops::InplaceUpdate>(primitive_);
-    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   } else if (kernel_name_ == "InplaceAdd") {
-    auto prim = std::dynamic_pointer_cast<ops::InplaceAdd>(primitive_);
-    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
-
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   } else {
-    auto prim = std::dynamic_pointer_cast<ops::InplaceSub>(primitive_);
-    indices_ = GetValue<std::vector<int64_t>>(prim->GetAttr("indices"));
+    indices_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("indices"));
   }
   return true;
 }

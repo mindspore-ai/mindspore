@@ -231,16 +231,15 @@ bool FractionalMaxPool3DWithFixedKsizeGpuKernelMod::Launch(const std::vector<Ker
 
 bool FractionalMaxPool3DWithFixedKsizeGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::FractionalMaxPool3DWithFixedKsize>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->ksize = kernel_ptr->get_ksize();
-  attr_ptr_->output_shape = kernel_ptr->get_output_shape();
-  attr_ptr_->data_format = kernel_ptr->get_data_format();
+
+  attr_ptr_->output_shape = GetValue<std::vector<int64_t>>(primitive_->GetAttr("output_shape"));
+  attr_ptr_->ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
+  attr_ptr_->data_format = GetValue<std::string>(primitive_->GetAttr(ops::kFormat));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 
