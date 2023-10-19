@@ -833,7 +833,7 @@ class Baddbmm(Primitive):
     def __init__(self):
         cls_name = self.name
     def __call__(self, *args):
-        return pyboost_baddbmm(args)
+        return pyboost_baddbmm(self, args)
 
 
 class AddN(Primitive):
