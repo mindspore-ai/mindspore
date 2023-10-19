@@ -701,6 +701,8 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     if (ignore_list.empty() || ignore_list.find(op_compiler_info->inputs_[i]) == ignore_list.end()) {
       skip_sync = false;
     }
+    common::AnfAlgo::SetOutputInferTypeAndShape({input_tensor->data_type()}, {input_tensor->shape()},
+                                                op_compiler_info->graph_->inputs()[i].get());
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
       UpdateTensorCache(device_context, device_address, op_compiler_info->inputs_[i], input_tensor,
