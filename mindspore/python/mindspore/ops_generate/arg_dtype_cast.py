@@ -79,7 +79,7 @@ def is_tuple(type_id):
     """
     Check type id is tuple.
     """
-    return type_id in (PY_DT_TUPLE_BOOL, PY_DT_TUPLE_INT, PY_DT_TUPLE_FLOAT, type_id == PY_DT_TUPLE_NUMBER,
+    return type_id in (PY_DT_TUPLE_BOOL, PY_DT_TUPLE_INT, PY_DT_TUPLE_FLOAT, PY_DT_TUPLE_NUMBER,
                        PY_DT_TUPLE_TENSOR, PY_DT_TUPLE_STR, PY_DT_TUPLE_ANY)
 
 
@@ -91,7 +91,7 @@ def is_list(type_id):
                        PY_DT_LIST_STR, PY_DT_LIST_ANY)
 
 
-def is_numer(type_id):
+def is_number(type_id):
     """
     Check type id is number.
     """
@@ -108,7 +108,7 @@ def is_instance_of(data, type_id):
         return isinstance(data, float)
     if type_id == PY_DT_BOOL:
         return isinstance(data, bool)
-    if is_numer(type_id):
+    if is_number(type_id):
         return isinstance(data, (int, float, bool))
     if is_tuple(type_id):
         return isinstance(data, tuple)
@@ -137,8 +137,9 @@ def type_it(data, src_type, dst_type):
     """
     if is_instance_of(data, dst_type):
         return data
-    if not is_instance_in(data, src_type):
-        raise TypeError(f"For type_it, the {data} should be {src_type}, but got {type(data)}")
+    # Temporarily remove this judgment.
+    # if not is_instance_in(data, src_type):
+    #     raise TypeError(f"For type_it, the {data} should be {src_type}, but got {type(data)}")
     if dst_type == PY_DT_FLOAT:
         if isinstance(data, int):
             return int_to_float(data)
@@ -156,8 +157,7 @@ def type_it(data, src_type, dst_type):
             return tuple_to_tensor(data)
         if isinstance(data, list):
             return list_to_tensor(data)
-    # is dst_type is number:
-    elif is_numer(dst_type):
+    elif is_number(dst_type):
         if isinstance(data, Tensor):
             ret = TensorToScalar()(data)
             return ret
