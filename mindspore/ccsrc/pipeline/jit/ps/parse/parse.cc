@@ -786,6 +786,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   ScopeGuard scope_guard(scope);
   TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
   FunctionBlockPtr func_block = MakeFunctionBlock();
+  MS_EXCEPTION_IF_NULL(func_block);
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
   } else {
@@ -1574,6 +1575,7 @@ ValuePtr Parser::GetParameterValue(const AnfNodePtr &parameter) const {
 
 bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const {
   MS_EXCEPTION_IF_NULL(bool_res);
+  MS_EXCEPTION_IF_NULL(block);
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() != 1) {
     return false;
@@ -2687,6 +2689,7 @@ bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::ob
 bool Parser::GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
                                              bool *is_true_cond) const {
   auto location = GetLocation(if_node);
+  MS_EXCEPTION_IF_NULL(location);
   const auto &comments = location->comments();
   if (comments.empty()) {
     return false;
@@ -3077,6 +3080,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func_graph);
   bool interpret_without_internal =
     IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
   CNodePtr target_var = nullptr;
