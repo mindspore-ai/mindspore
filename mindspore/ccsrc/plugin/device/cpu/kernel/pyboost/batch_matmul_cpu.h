@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/op/baddbmm.h"
-#include "kernel/pyboost/op/add.h"
-#include "kernel/pyboost/op/mul.h"
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_BATCH_MATMUL_CPU_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_BATCH_MATMUL_CPU_H_
+
 #include "kernel/pyboost/op/batch_matmul.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
-}
+class BatchMatmulCPU : public pyboost::BatchMatmul {
+ public:
+  BatchMatmulCPU() = default;
+  ~BatchMatmulCPU() = default;
 
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
-  }
-  return iter->second();
-}
-template class OpFactory<Baddbmm>;
-template class OpFactory<Add>;
-template class OpFactory<Mul>;
-template class OpFactory<BatchMatmul>;
+  tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) override;
+};
+MS_REG_PYBOOST_OP(CPU, BatchMatmul);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_BATCH_MATMUL_CPU_H_

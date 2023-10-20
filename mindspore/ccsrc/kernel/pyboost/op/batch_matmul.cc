@@ -14,33 +14,17 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/op/baddbmm.h"
-#include "kernel/pyboost/op/add.h"
-#include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
+void BatchMatmul::CastInput() {}
+void BatchMatmul::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {}
+tensor::TensorPtr BatchMatmul::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+  // TODO: kernel_mod->launch
+  return mindspore::tensor::TensorPtr();
 }
-
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
-  }
-  return iter->second();
-}
-template class OpFactory<Baddbmm>;
-template class OpFactory<Add>;
-template class OpFactory<Mul>;
-template class OpFactory<BatchMatmul>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

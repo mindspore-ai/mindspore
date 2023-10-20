@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/op/baddbmm.h"
+#include "plugin/device/cpu/kernel/pyboost/baddbmm_cpu.h"
 #include "kernel/pyboost/op/add.h"
 #include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
@@ -23,24 +22,15 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-OpFactory<T> &OpFactory<T>::Get() {
-  static OpFactory<T> instance;
-  return instance;
-}
+tensor::TensorPtr BaddbmmCPU::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
+                                   const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
+  // input * beta + alpha * (batch1 @ batch2)
+  auto add = CREATE_PYBOOST_OP(Add, "CPU");
+  auto mul = CREATE_PYBOOST_OP(Mul, "CPU");
+  auto bmm = CREATE_PYBOOST_OP(BatchMatmul, "CPU");
 
-template <typename T>
-std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
-  auto iter = op_creater_.find(device);
-  if (iter == op_creater_.end()) {
-    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
-  }
-  return iter->second();
+  return add->Call(mul->Call(input, beta), mul->Call(bmm->Call(batch1, batch2), alpha));
 }
-template class OpFactory<Baddbmm>;
-template class OpFactory<Add>;
-template class OpFactory<Mul>;
-template class OpFactory<BatchMatmul>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
