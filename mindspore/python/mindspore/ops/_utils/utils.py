@@ -77,6 +77,7 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, arg_name1="x", arg_name2="y
     broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
     return broadcast_shape
 
+
 def dim_not_equal(dim1, dim2):
     """Compare dim in shape"""
     return dim1 != dim2 and dim1 >= 0 and dim2 >= 0

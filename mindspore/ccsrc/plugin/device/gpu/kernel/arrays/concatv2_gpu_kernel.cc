@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <utility>
-#include <map>
 #include "plugin/device/gpu/kernel/arrays/concatv2_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 namespace mindspore {
