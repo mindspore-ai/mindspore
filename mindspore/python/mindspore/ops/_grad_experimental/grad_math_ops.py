@@ -375,7 +375,7 @@ def get_bprop_nan_to_num(self):
 @bprop_getters.register(Polar)
 def get_bprop_polar(self):
     """Grad definition for `Polar` operation."""
-    complex_op = Complex()
+    complex_op = P.Complex()
     conj = P.Conj()
     real = P.Real()
     sig = P.Sign()
