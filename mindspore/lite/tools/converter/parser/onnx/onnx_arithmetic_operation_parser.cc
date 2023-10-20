@@ -26,7 +26,6 @@
 #include "ops/less.h"
 #include "ops/tan.h"
 #include "ops/fusion/pow_fusion.h"
-#include "ops/minimum.h"
 #include "ops/maximum.h"
 #include "ops/eltwise.h"
 #include "ops/mod.h"

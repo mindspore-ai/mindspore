@@ -22,7 +22,6 @@
 #include "ops/fusion/exp_fusion.h"
 #include "ops/round.h"
 #include "ops/tan.h"
-#include "ops/minimum.h"
 #include "ops/maximum.h"
 #include "ops/eltwise.h"
 #include "nnacl/op_base.h"

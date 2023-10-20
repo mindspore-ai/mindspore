@@ -37,7 +37,7 @@
 // #include "ops/gather_nd.h"
 #include "ops/maximum.h"
 #include "ops/max_pool.h"
-#include "ops/minimum.h"
+// #include "ops/minimum.h"
 // #include "ops/mul.h"
 #include "ops/pad.h"
 // #include "ops/prelu.h"

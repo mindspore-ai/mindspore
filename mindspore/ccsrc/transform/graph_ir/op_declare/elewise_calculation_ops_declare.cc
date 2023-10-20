@@ -503,8 +503,8 @@ REG_ADPT_DESC(MaximumGrad, prim::kPrimMaximumGrad->name(), ADPT_DESC(MaximumGrad
 
 // MinimumGrad
 INPUT_MAP(MinimumGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(grads)}};
-ATTR_MAP(MinimumGrad) = {{"grad_x", ATTR_DESC(grad_x, AnyTraits<bool>())},
-                         {"grad_y", ATTR_DESC(grad_y, AnyTraits<bool>())}};
+ATTR_MAP(MinimumGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(MinimumGrad) = {{4, ATTR_DESC(grad_x, AnyTraits<bool>())}, {5, ATTR_DESC(grad_y, AnyTraits<bool>())}};
 OUTPUT_MAP(MinimumGrad) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
 REG_ADPT_DESC(MinimumGrad, prim::kPrimMinimumGrad->name(), ADPT_DESC(MinimumGrad))
 

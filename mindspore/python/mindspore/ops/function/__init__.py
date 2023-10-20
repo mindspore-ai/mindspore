@@ -282,7 +282,6 @@ from .math_func import (
     inv,
     inverse,
     invert,
-    minimum,
     renorm,
     floor,
     logical_not,
@@ -711,11 +710,12 @@ from .other_func import (
     partial,
 )
 from ..operations.manually_defined import (rank,)
-from ..auto_generate import (assign, masked_fill, prelu, randperm, real, sin, sinc, sinh, roll_,)
+from ..auto_generate import (assign, masked_fill, minimum, prelu, randperm, real, sin, sinc, sinh, roll_,)
 
 __all__ = [
     'assign',
     'masked_fill',
+    'minimum',
     'prelu',
     'rank',
     'randperm',

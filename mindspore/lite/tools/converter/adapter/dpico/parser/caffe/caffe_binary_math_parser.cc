@@ -23,7 +23,6 @@
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/div_fusion.h"
 #include "ops/maximum.h"
-#include "ops/minimum.h"
 #include "ops/squared_difference.h"
 
 namespace mindspore {

@@ -1827,7 +1827,7 @@ test_case_math_ops = [
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('MinimumGrad', {
-        'block': G.MinimumGrad(),
+        'block': ops.auto_generate.MinimumGrad(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5], [2, 3, 3, 5]],
         'skip': ['backward']}),
     ('MaximumGradGrad', {

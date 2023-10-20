@@ -1354,15 +1354,6 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
         return grad_dtype
 
 
-class MinimumGrad(Primitive):
-    """Grad for minimum."""
-
-    @prim_attr_register
-    def __init__(self, grad_x=True, grad_y=True):
-        """Initialize MinimumGrad"""
-        self.init_prim_io_names(inputs=['x1', 'x2', 'grads'], outputs=['y1', 'y2'])
-
-
 class MinimumGradGrad(Primitive):
     """Grad for minimum_grad."""
     @prim_attr_register

@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import auto_generate as gen
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, \
     _handle_broadcasting, get_unary_grad_vmap_rule, _get_broadcasting_with_front_axis_additional_axis
@@ -29,7 +30,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
 def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
     """VmapRule for grad of binary operations with broadcasting"""
     broadcast_binary_op_grad_map = {
-        "MinimumGrad": G.MinimumGrad,
+        "MinimumGrad": gen.MinimumGrad,
         "MaximumGrad": G.MaximumGrad
     }
 
@@ -49,14 +50,17 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
                 return y_shape
         return g_shape
 
-    def vmap_rule(x_bdim, y_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, grad_bdim)
+    def vmap_rule(x_bdim, y_bdim, grad_bdim, grad_x_bdim, grad_y_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, grad_bdim, grad_x_bdim,
+                                                      grad_y_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         y, y_dim = y_bdim
         g, g_dim = grad_bdim
+        g_x, _ = grad_x_bdim
+        g_y, _ = grad_y_bdim
 
         x_shape = F.shape(x)
         y_shape = F.shape(y)
@@ -65,7 +69,7 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
         is_dim_ok = x_dim == y_dim and x_dim == g_dim
         is_shape_ok = x_shape == y_shape and x_shape == g_shape
         if is_dim_ok and is_shape_ok:
-            dx, dy = prim(x, y, g)
+            dx, dy = prim(x, y, g, g_x, g_y)
             return (dx, x_dim), (dy, y_dim)
 
         x = _bdim_at_front(x, x_dim, axis_size)
@@ -84,7 +88,7 @@ def get_broadcast_binary_op_grad_vmap_rule(prim, axis_size):
         x_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(x_shape, longest_shape)
         y_axis_for_reduce = _get_broadcasting_with_front_axis_additional_axis(y_shape, longest_shape)
 
-        dx, dy = prim(x, y, g)
+        dx, dy = prim(x, y, g, g_x, g_y)
         if x_axis_for_reduce:
             dx = F.reduce_sum(dx, x_axis_for_reduce)
 

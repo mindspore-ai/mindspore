@@ -75,7 +75,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Cos, Cross, Div, DivNoNan, EqualCount,
                        Ceil, Acosh, Greater, GreaterEqual, Lerp, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,
                        LogicalNot, LogicalOr, LogicalXor, LpNorm, MatMul, Maximum, MulNoNan,
-                       MatrixDeterminant, LogMatrixDeterminant, Minimum, Neg, NMSWithMask, NotEqual,
+                       MatrixDeterminant, LogMatrixDeterminant, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus, LinSpace, Einsum, Renorm,
                        NPUGetFloatStatus, Pow, IsNan, IsInf, IsFinite, FloatStatus,
                        CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
@@ -140,7 +140,7 @@ from .manually_defined import (Rank,)
 from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
                              GatherD, GatherNd, HSigmoid, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
                              Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal, MaskedFill, ResizeBilinearV2,
-                             ResizeBilinearGrad, ReverseV2, Roll,)
+                             ResizeBilinearGrad, ReverseV2, Roll, Minimum)
 
 
 __all__ = [
