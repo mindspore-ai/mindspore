@@ -15,12 +15,13 @@
  */
 
 #include "kernel/pyboost/op/batch_matmul.h"
+#include "kernel/pyboost/py_boost_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 void BatchMatmul::CastInput() {}
-void BatchMatmul::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {}
 tensor::TensorPtr BatchMatmul::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

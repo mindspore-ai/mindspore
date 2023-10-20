@@ -15,12 +15,14 @@
  */
 
 #include "kernel/pyboost/op/mul.h"
+#include "kernel/pyboost/py_boost_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
 void Mul::CastInput() {}
-void Mul::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

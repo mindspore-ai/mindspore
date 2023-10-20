@@ -28,11 +28,7 @@ class BACKEND_EXPORT Add : public pyboost::Op {
   ~Add() = default;
 
   void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
-
- protected:
-  tensor::TensorPtr output_;
 };
 }  // namespace pyboost
 }  // namespace kernel

@@ -37,8 +37,9 @@ void BACKEND_EXPORT InferOutput(const PrimitivePtr &primitive, std::vector<tenso
   outputs->clear();
   PyBoostUtils::CreateOutputTensor(output_abs, outputs);
 }
-KernelTensorPtr TensorToKernelTensor(const ValuePtr &value);
-KernelTensorPtr ScalarToKernelTensor(const ValuePtr &value);
+KernelTensorPtr TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
+KernelTensorPtr ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);
+tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,6 +21,9 @@
 #include <iterator>
 #include <numeric>
 #include "kernel/format_utils.h"
+#include "kernel/common_utils.h"
+#include "include/backend/device_address.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -437,6 +440,32 @@ TypeId GetSeqElementsDtype(const abstract::AbstractBasePtr &abs) {
     return elem->type_id();
   }
   return type_ptr->type_id();
+}
+
+KernelTensor::KernelTensor(const tensor::TensorPtr &tensor) {
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  auto &shape = tensor->shape();
+  auto dtype = tensor->Dtype();
+  auto kernel_tensor = std::make_shared<KernelTensor>();
+  auto new_abstract = std::make_shared<abstract::AbstractTensor>(dtype, shape);
+  TensorInfo tensor_info{GetFormatFromStrToEnum(device_address->format()), new_abstract,
+                         AnfAlgo::GetDeviceShapeAdaptively(shape)};
+  SetTensorInfo(tensor_info);
+  auto data = std::make_shared<Address>(tensor->device_address()->GetMutablePtr(), tensor->Size());
+  data_ = data;
+  host_data_ = data;
+}
+
+KernelTensor::KernelTensor(const ScalarPtr &scalar) {
+  ShapeVector shape = {};
+  auto dtype = scalar->type();
+  auto kernel_tensor = std::make_shared<KernelTensor>();
+  auto new_abstract = std::make_shared<abstract::AbstractScalar>(scalar);
+  ScalarInfo scalar_info{new_abstract};
+  SetScalarInfo(scalar_info);
+  auto data = std::make_shared<Address>(nullptr, GetDataTypeSize(dtype->type_id()));
+  data_ = data;
+  host_data_ = data;
 }
 
 TypeId KernelTensor::GetDtype() const {

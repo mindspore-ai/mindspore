@@ -28,7 +28,6 @@ class BACKEND_EXPORT Mul : public pyboost::Op {
   ~Mul() = default;
 
   void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) = 0;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const ScalarPtr &y) = 0;
 };

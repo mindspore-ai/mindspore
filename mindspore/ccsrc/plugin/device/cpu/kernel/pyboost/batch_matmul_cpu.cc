@@ -15,13 +15,54 @@
  */
 
 #include "plugin/device/cpu/kernel/pyboost/batch_matmul_cpu.h"
+#include "matmul_cpu_kernel.h"
+#include "runtime/device/device_address_utils.h"
+#include "kernel/pyboost/py_boost_utils.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "mindapi/ir/primitive.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr BatchMatmulCPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  // TODO: launch cpu add kernel
-  return std::make_shared<tensor::Tensor>();
+  Infer(primitive_, x, y);
+  auto kernel = std::make_shared<MatMulCpuKernelMod>("BatchMatMul");
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {kCPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out", false);
+  auto input_x = TensorToKernelTensor(x, device_context);
+  auto input_y = TensorToKernelTensor(y, device_context);
+  auto output = TensorToKernelTensor(outputs_[0], device_context);
+
+  std::unordered_map<std::string, api::ValuePtr> attrs{{"transpose_a", api::MakeValue(false)},
+                                                       {"transpose_b", api::MakeValue(false)}};
+  auto base_op = std::make_shared<ops::MatMul>("BatchMatMul");
+  base_op->SetAttrs(attrs);
+  kernel->Init(base_op, {input_x, input_y}, {output});
+  kernel->Resize(base_op, {input_x, input_y}, {output}, {});
+  auto workspace_sizes = kernel->GetWorkspaceSizeList();
+  kernel::AddressPtrList workspaces;
+  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+    auto workspace_device_address =
+      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_sizes[i]);
+    (void)workspaces.emplace_back(std::make_shared<kernel::Address>(workspace_device_address->GetMutablePtr(),
+                                                                    workspace_device_address->GetSize()));
+  }
+  vector<AddressPtr> inputs;
+  vector<AddressPtr> outputs;
+  (void)inputs.emplace_back(input_x->GetData());
+  (void)inputs.emplace_back(input_y->GetData());
+  (void)outputs.emplace_back(output->GetData());
+  kernel->Launch(inputs, {workspaces}, outputs);
+  return outputs_[0];
 }
 }  // namespace pyboost
 }  // namespace kernel
