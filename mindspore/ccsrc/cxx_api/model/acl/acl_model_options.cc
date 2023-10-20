@@ -131,7 +131,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
       continue;
     }
     MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
-    init_options.emplace(acl_option_key, *ms_option);
+    (void)init_options.emplace(acl_option_key, *ms_option);
   }
 
   for (auto [ms_option, acl_option_key] : build_options_map) {
@@ -139,7 +139,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
       continue;
     }
     MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
-    build_options.emplace(acl_option_key, *ms_option);
+    (void)build_options.emplace(acl_option_key, *ms_option);
   }
 
   // init by config file param
@@ -159,7 +159,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
                       << "] have been set through the API and do not need to be repeated.";
       continue;
     }
-    init_options.emplace(item.first, item.second);
+    (void)init_options.emplace(item.first, item.second);
   }
 
   for (auto item : build_options_map_) {
@@ -169,18 +169,18 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
                       << "] have been set through the API and do not need to be repeated.";
       continue;
     }
-    build_options.emplace(item.first, item.second);
+    (void)build_options.emplace(item.first, item.second);
   }
 
   // first_graph_flag has value means being multi graph mode
   if (first_graph_flag_.has_value()) {
     for (const auto &option : multi_graph_unsupported_options) {
-      build_options.erase(option);
+      (void)build_options.erase(option);
     }
     // non-input graph
     if (!first_graph_flag_) {
       for (const auto &option : first_graph_options) {
-        build_options.erase(option);
+        (void)build_options.erase(option);
       }
     }
   }
