@@ -75,6 +75,7 @@ void CommonDeduplicate(const std::vector<AnfNodePtr> &node_vector, std::vector<A
 PipelinePair GetForwardEndBeforePair(const PipelinePair &forward_end_pair);
 int64_t GetMicroMax(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &forward_end);
 int64_t GetSegment(const AnfNodePtr &node);
+std::string GetWorldGroup();
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -62,7 +62,6 @@ class PipelineTransformer {
   void ElimGraphStage();
   void ModifyParameterList();
 
-  void CreateForwardGroup();
   AnfNodePtr GetArgumentsByParameter(const AnfNodePtr &parameter);
   void RemoveMonadNode();
   AnfNodePtr CreateTupleZeroTensor(const AnfNodePtr &node, size_t index);
@@ -129,11 +128,11 @@ class PipelineTransformer {
   ValueListPtr shape_;
   AnfNodePtr virtual_param_;
   int64_t micro_size_ = 0;
-  std::vector<std::string> group_ = {};
   mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
   bool is_train_{true};
   std::vector<AnfNodePtr> shared_cell_users_;
   bool enable_share_cell_ = false;
+  std::string world_group_;
 };
 
 bool IsInWhiteList(const CNodePtr &cnode);
