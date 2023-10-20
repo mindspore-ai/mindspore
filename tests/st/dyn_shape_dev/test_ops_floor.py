@@ -30,12 +30,16 @@ def floor_backward_func(x):
     return ops.grad(floor_forward_func, (0,))(x)
 
 
+def floor_dyn_shape_func(x):
+    return ops.auto_generate.floor(x)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_floor_forward(mode):
     """
     Feature: Ops.
@@ -54,7 +58,7 @@ def test_floor_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_floor_backward(mode):
     """
     Feature: Auto grad.
@@ -73,7 +77,7 @@ def test_floor_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_floor_vmap(mode):
     """
     Feature: test vmap function.
@@ -86,3 +90,59 @@ def test_floor_vmap(mode):
     output = nest_vmap(x)
     expect = [[[1., 2.], [-2, 1.]]]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_floor_dynamic(mode):
+    """
+    Feature: test dynamic tensor of floor.
+    Description: test dynamic tensor of floor.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(floor_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.floor(np_x)
+    assert np.allclose(output.asnumpy(), expect)
+    np_x1 = np.arange(1 * 2 * 3 * 4).reshape(4, 3, 2, 1)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.floor(np_x1)
+    assert np.allclose(output1.asnumpy(), expect1)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_floor_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of floor.
+    Description: test dynamic rank tensor of floor.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(floor_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.arange(1 * 3).reshape(1, 3)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.floor(np_x)
+    assert np.allclose(output.asnumpy(), expect)
+    np_x1 = np.arange(1 * 2 * 3 * 4).reshape(4, 3, 2, 1)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.floor(np_x1)
+    assert np.allclose(output1.asnumpy(), expect1)

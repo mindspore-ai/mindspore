@@ -52,6 +52,7 @@ class CeluGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Cel
  private:
   size_t unit_size_{1};
   size_t input_elements_{};
+  double alpha_{1.0};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

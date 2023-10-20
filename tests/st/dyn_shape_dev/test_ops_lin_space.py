@@ -31,12 +31,16 @@ def lin_space_backward_func(start, stop, num=5):
     return ops.grad(lin_space_forward_func, (0,))(start, stop, num)
 
 
+def lin_sapce_dyn_shape_func(start, stop, num=5):
+    return ops.auto_generate.lin_space_(start, stop, num)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_lin_space_forward(mode):
     """
     Feature: Ops.
@@ -55,7 +59,7 @@ def test_lin_space_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_lin_space_backward(mode):
     """
     Feature: Auto grad.
@@ -72,7 +76,8 @@ def test_lin_space_backward(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+#@pytest.mark.platform_arm_ascend_training   # Not support.
 def test_lin_space_vmap(mode):
     """
     Feature: test vmap function.
@@ -90,3 +95,36 @@ def test_lin_space_vmap(mode):
     start_np = np.moveaxis(start_np, 1, 0)
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms.asnumpy(), result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+#@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_lin_sapce_dynamic(mode):
+    """
+    Feature: test dynamic tensor of lin_sapce.
+    Description: test dynamic tensor of lin_sapce.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    num_np = 5
+    place_holder = ms. Tensor(shape=[None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(lin_sapce_dyn_shape_func)
+    test_cell.set_inputs(place_holder, place_holder)
+    start_np = 5
+    stop_np = 25
+    start = ms.Tensor(start_np, dtype=ms.float32)
+    stop = ms.Tensor(stop_np, dtype=ms.float32)
+    output = test_cell(start, stop)
+    expect = np.linspace(start_np, stop_np, num_np)
+    assert np.allclose(output.asnumpy(), expect)
+    start_np1 = 15
+    stop_np1 = 35
+    start1 = ms.Tensor(start_np1, dtype=ms.float32)
+    stop1 = ms.Tensor(stop_np1, dtype=ms.float32)
+    output1 = test_cell(start1, stop1)
+    expect1 = np.linspace(start_np1, stop_np1, num_np)
+    assert np.allclose(output1.asnumpy(), expect1)

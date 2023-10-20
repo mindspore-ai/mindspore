@@ -31,6 +31,10 @@ def celu_backward_func(x, alpha=1.0):
     return ops.grad(celu_forward_func, (0,))(x, alpha)
 
 
+def celu_dyn_shape_func(x, alpha=1.0):
+    return ops.auto_generate.celu_(x, alpha)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -93,3 +97,61 @@ def test_celu_vmap(mode):
     vmap_out = nest_vmap(x)
     expect = np.array([[[-0.86468, -0.63212, 1., 2.]]]).astype(np.float32)
     np.testing.assert_allclose(vmap_out.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_celu_dynamic(mode):
+    """
+    Feature: test dynamic tensor of celu.
+    Description: test dynamic tensor of celu.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    error = 1e-4
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(celu_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.array([[-0.86468, -0.63212], [1., 2.]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+    np_x1 = np.array([[-2.0, -1.0, 1.0, 2.0]]).astype(np.float32)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.array([[-0.86468, -0.63212, 1., 2.]]).astype(np.float32)
+    np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_celu_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of celu.
+    Description: test dynamic rank tensor of celu.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    error = 1e-4
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(celu_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.array([[-0.86468, -0.63212], [1., 2.]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+    np_x1 = np.array([-2.0, -1.0, 1.0, 2.0]).astype(np.float32)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.array([-0.86468, -0.63212, 1., 2.]).astype(np.float32)
+    np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=error)

@@ -45,6 +45,7 @@ int CeluGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
     return ret;
   }
   input_elements_ = output_size_list_[0] / unit_size_;
+  alpha_ = static_cast<double>(inputs[kIndex1]->GetValueWithCheck<float>());
   return KRET_OK;
 }
 
@@ -52,10 +53,9 @@ template <typename T>
 bool CeluGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  double alpha = static_cast<double>(inputs[kIndex1]->GetValueWithCheck<float>());
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
-    CalculateCelu(input, input_elements_, alpha, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CalculateCelu(input, input_elements_, alpha_, output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }

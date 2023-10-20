@@ -2,22 +2,22 @@ cos:
     description: |
         Computes cosine of input element-wise.
 
-        Refer to :func:`mindspore.ops.cos` for more details.
+            Refer to :func:`mindspore.ops.cos` for more details.
 
-        Inputs:
-            - **x** (Tensor) - The input Tensor.
+            Inputs:
+                - **x** (Tensor) - The input Tensor.
 
-        Outputs:
-            Tensor, has the same shape as `x`.
+            Outputs:
+                Tensor, has the same shape as `x`.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-            >>> output = ops.cos(x)
-            >>> print(output)
-            [0.971338 0.6748758 0.95233357 0.9959527]
+            Examples:
+                >>> import mindspore
+                >>> import numpy as np
+                >>> from mindspore import Tensor, ops
+                >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+                >>> output = ops.cos(x)
+                >>> print(output)
+                [0.971338 0.6748758 0.95233357 0.9959527]

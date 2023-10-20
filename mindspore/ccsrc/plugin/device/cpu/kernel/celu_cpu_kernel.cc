@@ -37,7 +37,6 @@ bool CeluCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
     return false;
   }
   unit_size_ = sizeof(float);
-
   return true;
 }
 
@@ -48,6 +47,7 @@ int CeluCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   }
 
   input_elements_ = output_size_list_[0] / unit_size_;
+  alpha_ = static_cast<float>(inputs[kIndex1]->GetValueWithCheck<float>());
   return KRET_OK;
 }
 
@@ -56,15 +56,13 @@ std::vector<KernelAttr> CeluCpuKernelMod::GetOpSupport() { return kernel_attr; }
 bool CeluCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs) {
   auto in_data = static_cast<float *>(inputs[0]->device_ptr());
-  auto alpha_data = inputs[kIndex1]->GetValueWithCheck<float>();
   auto out_data = static_cast<float *>(outputs[0]->device_ptr());
-
-  auto task = [this, in_data, alpha_data, out_data](size_t start, size_t end) {
+  auto task = [this, in_data, out_data](size_t start, size_t end) {
     auto src = in_data + start;
     auto dst = out_data + start;
     auto length = end - start;
     for (size_t i = 0; i < length; ++i) {
-      dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / alpha_data) * alpha_data);
+      dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / alpha_) * alpha_);
     }
   };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);

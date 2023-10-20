@@ -31,12 +31,16 @@ def ceil_backward_func(x):
     return ops.grad(ceil_forward_func, (0,))(x)
 
 
+def ceil_dyn_shape_func(x):
+    return ops.auto_generate.ceil(x)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_ceil_forward(mode):
     """
     Feature: Ops.
@@ -56,7 +60,7 @@ def test_ceil_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_ceil_backward(mode):
     """
     Feature: Auto grad.
@@ -76,7 +80,7 @@ def test_ceil_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_ceil_vmap(mode):
     """
     Feature: test vmap function.
@@ -94,3 +98,59 @@ def test_ceil_vmap(mode):
     nest_vmap = ops.vmap(ops.vmap(ceil_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     vmap_out = nest_vmap(x)
     assert np.allclose(vmap_out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_ceil_dynamic(mode):
+    """
+    Feature: test dynamic tensor of ceil.
+    Description: test dynamic tensor of ceil.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ceil_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.ceil(np_x)
+    assert np.allclose(output.asnumpy(), expect)
+    np_x1 = np.arange(1 * 2 * 3 * 4).reshape(4, 3, 2, 1)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.ceil(np_x1)
+    assert np.allclose(output1.asnumpy(), expect1)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_ceil_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of ceil.
+    Description: test dynamic rank tensor of ceil.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ceil_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.arange(1 * 3).reshape(1, 3)
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.ceil(np_x)
+    assert np.allclose(output.asnumpy(), expect)
+    np_x1 = np.arange(1 * 2 * 3 * 4).reshape(4, 3, 2, 1)
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.ceil(np_x1)
+    assert np.allclose(output1.asnumpy(), expect1)

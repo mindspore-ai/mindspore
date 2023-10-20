@@ -43,6 +43,7 @@ class CeluCpuKernelMod : public NativeCpuKernelMod {
  private:
   size_t unit_size_;
   size_t input_elements_;
+  double alpha_{1.0};
 };
 }  // namespace kernel
 }  // namespace mindspore
