@@ -29,10 +29,10 @@
 namespace mindspore {
 namespace opt {
 namespace {
-const char kSeparator[] = ", ";
-const char kShapePrefix[] = "[";
-const char kShapeSuffix[] = "]";
-const char kEmptyShape[] = "[]";
+constexpr char kSeparator[] = ", ";
+constexpr char kShapePrefix[] = "[";
+constexpr char kShapeSuffix[] = "]";
+constexpr char kEmptyShape[] = "[]";
 
 std::string GetTensorShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
