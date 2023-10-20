@@ -627,10 +627,13 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
   auto [name_space, symbol] = GetNamespaceAndSymbol(object_node);
   MS_EXCEPTION_IF_NULL(name_space);
   MS_EXCEPTION_IF_NULL(symbol);
-  auto module_name = name_space->module();
   constexpr std::string_view parse_super_name = "namespace";
-  if (module_name == RESOLVE_NAMESPACE_NAME_CLASS_MEMBER && symbol->symbol() != parse_super_name) {
-    auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
+  if (symbol->symbol() == parse_super_name) {
+    return nullptr;
+  }
+  const auto &module_name = name_space->module();
+  auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
+  if (module_name == RESOLVE_NAMESPACE_NAME_CLASS_MEMBER || data_converter::IsCellInstance(symbol_obj)) {
     return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
   }
   return nullptr;
