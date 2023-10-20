@@ -22,7 +22,7 @@
               self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
               self.param_b = Parameter(Tensor([2], ms.float32))
 
-          2) 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是**Parameter$1** and **Parameter$2**。
+          2) 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是 **Parameter$1** and **Parameter$2**。
 
           .. code-block::
 
