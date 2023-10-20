@@ -37,12 +37,15 @@ class BACKEND_EXPORT Op {
   virtual void CastInput() = 0;
   void set_grad_func(const std::function<void()> &grad_func) { grad_func_ = grad_func; }
   void DoGrad() { grad_func_(); }
+  void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
+  const PrimitivePtr &primitive() const { return primitive_; }
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;
   std::function<void()> grad_func_;
+  PrimitivePtr primitive_;
 };
 
 template <typename T>

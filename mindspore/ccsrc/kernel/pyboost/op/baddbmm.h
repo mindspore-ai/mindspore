@@ -32,7 +32,7 @@ class BACKEND_EXPORT Baddbmm : public pyboost::Op {
                    const ScalarPtr &beta, const ScalarPtr &alpha);
 
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                                 const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha);
+                                 const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) = 0;
 
  protected:
   AbstractBasePtr output_abstract_;

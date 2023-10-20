@@ -16,6 +16,7 @@
 
 #include "kernel/pyboost/op/baddbmm.h"
 #include "kernel/pyboost/py_boost_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,22 +30,20 @@ void Baddbmm::InferOutput(const tensor::TensorPtr &input, const tensor::TensorPt
   // todo: DoInfer and get AbstractBasePtr.
   // output_abstract_ = Infer();
   // same shape with input
+  auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
+  if (!eval_impl.has_value()) {
+    MS_LOG(EXCEPTION) << "Not found infer func for Baddbmm";
+  }
+  std::vector<AbstractBasePtr> input_abs = {input->ToAbstract(), batch1->ToAbstract(), batch2->ToAbstract(),
+                                            beta->ToAbstract(), alpha->ToAbstract()};
+  auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
 
-  auto create_tensor = [](const TypeId &type, const ShapeVector &shape_vector) {
-    auto output_tensor = std::make_shared<tensor::Tensor>(type, shape_vector);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
-    return output_tensor;
-  };
-
-  MS_EXCEPTION_IF_NULL(input);
-  output_ = create_tensor(input->data_type(), input->shape());
-}
-
-tensor::TensorPtr Baddbmm::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                                const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
-  // TODO: For cpu/gpu, split and run Mul/Add/BatchMatmul.
-  return nullptr;
+  std::vector<TensorPtr> outputs;
+  PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
+  if (outputs.empty()) {
+    MS_LOG(EXCEPTION) << "Cannot create output tensor for Baddbmm";
+  }
+  output_ = outputs[0];
 }
 }  // namespace pyboost
 }  // namespace kernel

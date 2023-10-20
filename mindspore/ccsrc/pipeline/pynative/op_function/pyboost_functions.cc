@@ -92,6 +92,7 @@ py::object Pyboost_Baddbmm(const py::args &args) {
   //    forward_executor()->DispatchAnyFrontendTask(dispatch_baddbmm);
 
   auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
+  op->set_primitive(std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim));
   auto output = op->Call(input, batch1, batch2, beta, alpha);
   return parser.Wrap(output);
 }
