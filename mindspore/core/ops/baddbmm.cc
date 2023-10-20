@@ -38,7 +38,7 @@ namespace ops {
 namespace {
 constexpr size_t kMatSize = 3;
 
-abstract::ShapePtr BaddBmmInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr BaddbmmInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   auto input_shape_ptr = input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
@@ -71,7 +71,7 @@ abstract::ShapePtr BaddBmmInferShape(const PrimitivePtr &primitive, const std::v
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
-TypePtr BaddBmmInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr BaddbmmInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   TypePtr input_type = input_args[0]->BuildType();
@@ -96,36 +96,36 @@ TypePtr BaddBmmInferType(const PrimitivePtr &primitive, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(BaddBmm, BaseOperator);
+MIND_API_OPERATOR_IMPL(Baddbmm, BaseOperator);
 
-AbstractBasePtr BaddBmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr BaddbmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = BaddBmmInferType(primitive, input_args);
-  auto infer_shape = BaddBmmInferShape(primitive, input_args);
+  auto infer_type = BaddbmmInferType(primitive, input_args);
+  auto infer_shape = BaddbmmInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
 // AG means auto generated
-class MIND_API AGBaddBmmInfer : public abstract::OpInferBase {
+class MIND_API AGBaddbmmInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return BaddBmmInferShape(primitive, input_args);
+    return BaddbmmInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return BaddBmmInferType(primitive, input_args);
+    return BaddbmmInferType(primitive, input_args);
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return BaddBmmInfer(engine, primitive, input_args);
+    return BaddbmmInfer(engine, primitive, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(BaddBmm, prim::kPrimBaddBmm, AGBaddBmmInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Baddbmm, prim::kPrimBaddbmm, AGBaddbmmInfer, false);
 }  // namespace ops
 }  // namespace mindspore

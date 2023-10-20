@@ -24,19 +24,19 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBaddBmm = "BaddBmm";
+constexpr auto kNameBaddbmm = "Baddbmm";
 
 /// \brief Computes matrix multiplication between two tensors by batch.
-/// Refer to Python API @ref mindspore.ops.BaddBmm for more details.
-class MIND_API BaddBmm : public BaseOperator {
+/// Refer to Python API @ref mindspore.ops.Baddbmm for more details.
+class MIND_API Baddbmm : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(BaddBmm);
+  MIND_API_BASE_MEMBER(Baddbmm);
   /// \brief Constructor.
-  BaddBmm() : BaseOperator(kNameBaddBmm) { InitIOName({"input", "batch1", "batch2", "alpha", "beta"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BaddBmm for the inputs.
+  Baddbmm() : BaseOperator(kNameBaddbmm) { InitIOName({"input", "batch1", "batch2", "alpha", "beta"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Baddbmm for the inputs.
   void Init() const {}
 };
-MIND_API abstract::AbstractBasePtr BaddBmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+MIND_API abstract::AbstractBasePtr BaddbmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
