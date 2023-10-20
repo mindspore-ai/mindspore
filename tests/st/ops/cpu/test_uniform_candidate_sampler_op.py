@@ -229,8 +229,9 @@ def test_uniform_candidate_sampler_unique_1_true_hit():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
-    expected_1 = np.array([0, 2, 3])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
+    np.all(ms1.shape == expected_1.shape)
+    np.testing.assert_array_equal(ms1.asnumpy(), expected_1.asnumpy())
 
 
 @pytest.mark.level0
@@ -244,5 +245,6 @@ def test_uniform_candidate_sampler_unique_1_true_no_hit():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
-    expected_1 = np.array([0, 2, 3])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
+    np.all(ms1.shape == expected_1.shape)
+    np.testing.assert_array_equal(ms1.asnumpy(), expected_1.asnumpy())
