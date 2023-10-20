@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+from parallel.utils.utils import ParallelValidator
 
 
 def setup_function():
@@ -66,11 +68,28 @@ class Net(nn.Cell):
         return out
 
 
+class Net2(nn.Cell):
+    def __init__(self, axis=0, strategy1=None, strategy2=None, shape=None, gather_out_strategy=None):
+        super().__init__()
+        if shape is None:
+            shape = [64, 64]
+        self.gatherv2 = P.Gather().shard(strategy1, gather_out_strategy)
+        self.sub = P.Sub().shard(strategy2)
+        self.index = Parameter(Tensor(np.ones(shape), dtype=ms.float32), "w")
+        self.axis = axis
+
+    def construct(self, x, y):
+        out = self.gatherv2(self.index, x, self.axis)
+        out = self.sub(out, y)
+        return out
+
+
 def compile_graph(net, device_num, parallel_mode, x, y, search_mode="dynamic_programming"):
     context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode,
                                       search_mode=search_mode)
     net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    phase, _ = _cell_graph_executor.compile(net, x, y)
+    return phase
 
 
 def test_gatherv2_semi_auto0():
@@ -386,3 +405,71 @@ def test_gatherv2_target_cpu_allreduce():
     x = Tensor(np.ones([64 // 8, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64 // 8, 64, 64]), dtype=ms.float32)
     compile_graph(net, 8, "semi_auto_parallel", x, y)
+
+
+def test_gatherv2_bs_1_and_set_out_strategy_allreduce():
+    """
+    Feature: distribute operator gather in semi auto parallel.
+    Description: bs is 1, and set out strategy.
+    Expectation: compile done without error.
+    """
+    strategy1 = ((8, 1), (1, 1))
+    out_strategy = ((1, 1, 1),)
+    strategy2 = ((1, 8, 1), (1, 8, 1))
+    net = Net2(0, strategy1, strategy2, shape=(64, 64), gather_out_strategy=out_strategy)
+    x = Tensor(np.ones([1, 64]), dtype=ms.int32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    phase = compile_graph(net, 8, "semi_auto_parallel", x, y)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('AllReduce-0', ['Mul-0'])
+
+
+def test_gatherv2_bs_1_and_set_out_strategy_reduce_scatter():
+    """
+    Feature: distribute operator gather in semi auto parallel.
+    Description: bs is 1, and set out strategy with reduce scatter.
+    Expectation: compile done without error.
+    """
+    strategy1 = ((8, 1), (1, 1))
+    out_strategy = ((8, 1, 1),)
+    strategy2 = ((1, 8, 1), (1, 8, 1))
+    net = Net2(0, strategy1, strategy2, shape=(64, 64), gather_out_strategy=out_strategy)
+    x = Tensor(np.ones([1, 64]), dtype=ms.int32)
+    y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    with pytest.raises(RuntimeError):
+        compile_graph(net, 8, "semi_auto_parallel", x, y)
+
+
+def test_gatherv2_no_shard_axis_and_set_out_strategy():
+    """
+    Feature: distribute operator gather in semi auto parallel.
+    Description: no shard axis
+    Expectation: compile done without error.
+    """
+    strategy1 = ((1, 1), (8, 1))
+    out_strategy = ((8, 1, 1),)
+    strategy2 = ((8, 1, 1), (8, 1, 1))
+    net = Net2(0, strategy1, strategy2, shape=(64, 64), gather_out_strategy=out_strategy)
+    x = Tensor(np.ones([8, 64]), dtype=ms.int32)
+    y = Tensor(np.ones([8, 64, 64]), dtype=ms.float32)
+    phase = compile_graph(net, 8, "semi_auto_parallel", x, y)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('Sub-0', ['Gather-0'])
+
+
+def test_gatherv2_dynamic_shape_and_set_out_strategy():
+    """
+    Feature: distribute operator gather in semi auto parallel.
+    Description: no shard axis
+    Expectation: compile done without error.
+    """
+    strategy1 = ((8, 1), (1, 1))
+    out_strategy = ((1, 1, 1),)
+    strategy2 = ((1, 1, 1), (1, 1))
+    net = Net2(0, strategy1, strategy2, shape=(64, 64), gather_out_strategy=out_strategy)
+    x = Tensor(shape=[None, 64], dtype=ms.int32)
+    y = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    net.set_inputs(x, y)
+    phase = compile_graph(net, 8, "semi_auto_parallel", x, y)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('AllReduce-0', ['Mul-0'])
