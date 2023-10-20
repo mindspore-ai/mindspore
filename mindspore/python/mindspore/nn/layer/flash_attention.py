@@ -249,7 +249,7 @@ class FlashAttention(Cell):
             query = self.reshape(self.transpose_4d_pre(query, (0, 2, 1, 3)), (bsz, seq_len, -1))
             key = self.reshape(self.transpose_4d_pre(key, (0, 2, 1, 3)), (bsz, seq_len, -1))
             value = self.reshape(self.transpose_4d_pre(value, (0, 2, 1, 3)), (bsz, seq_len, -1))
-            attn_mask = self.attn_expand_dims(ops.cast(attn_mask, mstype.uint8), 1)
+            attn_mask = self.attn_expand_dims(attn_mask, 1)
             output, _, _ = self.flash_attention(query,
                                                 key,
                                                 value,
