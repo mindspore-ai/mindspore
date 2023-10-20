@@ -62,9 +62,9 @@ abstract::ShapePtr BaddbmmInferShape(const PrimitivePtr &primitive, const std::v
                       << "', input 'batch2' must be a 3D Tensor, but got:" << batch2_shape.size();
   }
 
-  if (batch1_shape[0] != batch2_shape[1]) {
+  if (batch1_shape[2] != batch2_shape[1]) {
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', first dimension of 'batch2' must be equal to 'batch1' "
-                      << batch1_shape[0] << " , but got:" << batch2_shape[0];
+                      << batch1_shape[2] << " , but got:" << batch2_shape[1];
   }
 
   ShapeVector ret_shape{batch1_shape[0], batch1_shape[1], batch2_shape[2]};
@@ -81,17 +81,10 @@ TypePtr BaddbmmInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   MS_EXCEPTION_IF_NULL(batch1_type);
   MS_EXCEPTION_IF_NULL(batch2_type);
 
-  if (input_type->type_id() != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', input type must be float32, but got:" << input_type->ToString();
-  }
-
-  if (batch1_type->type_id() != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', batch1 type must be float32, but got:" << batch1_type->ToString();
-  }
-
-  if (batch2_type->type_id() != kNumberTypeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', batch2 type must be float32, but got:" << batch2_type->ToString();
-  }
+  const std::set<TypePtr> valid_types = {kFloat32};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", batch1_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", batch2_type, valid_types, prim_name);
   return input_type;
 }
 }  // namespace
