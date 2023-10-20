@@ -59,7 +59,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     return std::make_shared<abstract::Shape>(ShapeVector{unknown_shape});
   }
   if (IsEmptyTensor(x_shape)) {
-    return std::make_shared<abstract::Shape>(x_shape);
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'x' can not be an empty Tensor.";
   }
   constexpr int64_t number_one = 1;
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual,
