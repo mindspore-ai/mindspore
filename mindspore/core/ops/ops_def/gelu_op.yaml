@@ -8,3 +8,5 @@ gelu:
             dtype: tensor
     class:
         name: GeLU
+    function:
+    name: gelu_
