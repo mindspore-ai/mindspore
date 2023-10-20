@@ -16,8 +16,6 @@
 Generate operator definition from ops.yaml
 """
 import os
-import re
-import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
@@ -55,13 +53,13 @@ def signature_get_rw_label(rw_op_name, write_list, read_list, ref_list):
     """
     for op in write_list:
         if op == rw_op_name:
-            return ', sig.sig_rw.RW_WRITE'
+            return 'sig.sig_rw.RW_WRITE'
     for op in read_list:
         if op == rw_op_name:
-            return ', sig.sig_rw.RW_READ'
+            return 'sig.sig_rw.RW_READ'
     for op in ref_list:
         if op == rw_op_name:
-            return ', sig.sig_rw.RW_REF'
+            return 'sig.sig_rw.RW_REF'
     return ''
 
 
@@ -75,82 +73,70 @@ def signature_get_dtype_label(index):
     return f"""dtype=sig.sig_dtype.T{dtype_index}"""
 
 
-def get_same_dtype_groups(args_signature, args_name):
-    """
-    Get same dtype groups
-    """
-    same_dtype_groups = {}
-    dtype_conut = 0
-    if args_signature is None:
-        return same_dtype_groups, dtype_conut
-
-    dtype_group = args_signature.get('dtype_group')
-    if dtype_group is not None:
-        args_list = []
-        match = re.findall(r'\((.*?)\)', dtype_group)
-        for item in match:
-            args_list.append(item.replace(' ', '').split(","))
-        for arg_name in args_name:
-            if arg_name in same_dtype_groups:
-                continue
-            is_match = False
-            for group in args_list:
-                if arg_name in group:
-                    is_match = True
-                    for item in group:
-                        same_dtype_groups[item] = dtype_conut
-                    break
-            if not is_match:
-                same_dtype_groups[arg_name] = dtype_conut
-            dtype_conut = dtype_conut + 1
-    return same_dtype_groups, dtype_conut
-
-
-def generate_py_op_signature(args_signature, args_name, args_default):
+def generate_py_op_signature(args_signature):
     """
     Generate __mindspore_signature__
     """
-    if args_signature is None and not args_default:
+    if args_signature is None:
         return ''
 
     signature_code = f"""    __mindspore_signature__ = """
 
-    # Init rw.
-    write_list = []
-    read_list = []
-    ref_list = []
-    if args_signature is not None:
-        rw_write = args_signature.get('rw_write')
-        rw_read = args_signature.get('rw_read')
-        rw_ref = args_signature.get('rw_ref')
-        if rw_write is not None:
-            write_list = rw_write.replace(' ', '').split(",")
-        if rw_read is not None:
-            read_list = rw_read.replace(' ', '').split(",")
-        if rw_ref is not None:
-            ref_list = rw_ref.replace(' ', '').split(",")
-    # Init dtype group.
-    same_dtype_groups, dtype_conut = get_same_dtype_groups(args_signature, args_name)
+    rw_write = args_signature.get('rw_write')
+    rw_read = args_signature.get('rw_read')
+    rw_ref = args_signature.get('rw_ref')
+    dtype_group = args_signature.get('dtype_group')
 
-    # Only one dtype_group is set.
-    if dtype_conut == 1 and not any([write_list, read_list, ref_list, args_default]):
-        signature_code += '('
-        for _ in range(len(args_name) - 1):
-            signature_code += 'sig.sig_dtype.T, '
-        signature_code += 'sig.sig_dtype.T)\n\n'
+    if rw_write is None and rw_read is None and rw_ref is None:
+        signature_code += '(sig.sig_dtype.T, sig.sig_dtype.T)\n'
         return signature_code
 
-    # Set sig.make_sig.
+    # init rw
+    rw_write = rw_write.replace(' ', '')
+    rw_read = rw_read.replace(' ', '')
+    rw_ref = rw_ref.replace(' ', '')
+    dtype_group = dtype_group.replace(' ', '')
+
+    write_list = rw_write.split(",")
+    read_list = rw_read.split(",")
+    ref_list = rw_ref.split(",")
+    rw_list = write_list + read_list + ref_list
+    rw_items_used = [False for i in range(len(rw_list))]
+
+    # init dtype group
+    group_list = []
+    same_type_parsed = dtype_group.split("(")
+    for item in same_type_parsed:
+        if ')' in item:
+            parsed = item.split(")")
+            group_list.append(parsed[0])
+
     signature_code += f""" (\n"""
-    for arg_name in args_name:
-        signature_code += f"""        sig.make_sig('{arg_name}'"""
-        signature_code += signature_get_rw_label(arg_name, write_list, read_list, ref_list)
-        if arg_name in same_dtype_groups:
-            signature_code += f""", """ + signature_get_dtype_label(same_dtype_groups[arg_name])
-        if arg_name in args_default:
-            signature_code += f""", default=""" + args_default[arg_name]
-        signature_code += f"""),\n"""
-    signature_code += f"""    )\n\n"""
+    i = 0
+    for dtype_group in group_list:
+        dtype = signature_get_dtype_label(i)
+        i = i + 1
+
+        group_item = dtype_group.split(",")
+        for same_type_op in group_item:
+            find_writable = False
+            for rw_index, rw_op in enumerate(rw_list):
+                if rw_op == same_type_op:
+                    find_writable = True
+                    rw_items_used[rw_index] = True
+                    rw_code = signature_get_rw_label(rw_op, write_list, read_list, ref_list)
+                    signature_code += f"""     sig.make_sig('{rw_op}', {rw_code}, {dtype}),\n"""
+            if not find_writable:
+                signature_code += f"""     sig.make_sig('{same_type_op}', {dtype}),\n"""
+
+    # item has writable but do not has same_type
+    for used_index, used_item in enumerate(rw_items_used):
+        if not used_item:
+            item_name = rw_list[used_index]
+            rw_code = signature_get_rw_label(item_name, write_list, read_list, ref_list)
+            signature_code += f"""     sig.make_sig('{item_name}', {rw_code}),\n"""
+
+    signature_code += f"""    )\n"""
     return signature_code
 
 
@@ -208,9 +194,7 @@ def generate_py_op_func(yaml_data, doc_data):
             init_value = arg_info.get('init')
 
             if init_value is None:
-                default_value = arg_info.get('default')
-                default_value = '=' + default_value if default_value else ''
-                func_args.append(arg_name + default_value)
+                func_args.append(arg_name)
                 input_args.append(arg_name)
             else:
                 if init_value == 'NO_VALUE':
@@ -237,29 +221,23 @@ def process_args(args):
     Process arg for yaml, get arg_name, init value, type cast, arg_handler, etc.
     """
     inputs_name = []
+    inputs_assign = []
     args_name = []
     args_assign = []
-    inputs_default = {}
     init_args_with_default = []
-    args_handlers = {}
     for arg_name, arg_info in args.items():
         dtype = arg_info.get('dtype')
 
         init_value = arg_info.get('init')
         if init_value is None:
             inputs_name.append(arg_name)
-            default_value = arg_info.get('default')
-            if default_value:
-                inputs_default[arg_name] = default_value
-
-            arg_handler = arg_info.get('arg_handler')
-            if arg_handler:
-                args_handlers[arg_name] = arg_handler
-
+            input_assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
+            inputs_assign.append(input_assign_str)
             continue
-
         if init_value == 'NO_VALUE':
             init_args_with_default.append(f"""{arg_name}""")
+        elif init_value == 'None':
+            init_args_with_default.append(f"""{arg_name}={init_value}""")
         else:
             init_args_with_default.append(f"""{arg_name}={init_value}""")
         args_name.append(arg_name)
@@ -272,7 +250,7 @@ def process_args(args):
 
         assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
         args_assign.append(assign_str)
-    return inputs_name, inputs_default, args_name, args_assign, init_args_with_default, args_handlers
+    return inputs_name, inputs_assign, args_name, args_assign, init_args_with_default
 
 
 def generate_py_primitive(yaml_data):
@@ -286,12 +264,13 @@ def generate_py_primitive(yaml_data):
         if class_disable:
             continue
 
+        signature_code = generate_py_op_signature(operator_data.get('args_signature'))
+        deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
+
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
-        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
+        inputs_args, inputs_assign, init_args, args_assign, init_args_with_default = process_args(args)
         init_code = '\n'.join(args_assign)
-        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args, inputs_default)
-        deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
 
         labels = operator_data.get('labels')
         if labels is not None:
@@ -309,28 +288,22 @@ class {class_name}(Primitive):\n"""
         if deprecated_code != "":
             primitive_code += deprecated_code
         primitive_code += f"""    @prim_arg_register
-    def __init__(self"""
+    def __init__(self,"""
         if init_args_with_default:
-            primitive_code += ", " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
-        call_args = []
-        for name in inputs_args:
-            call_args.append(f"""{name}={inputs_default[name]}""" if name in inputs_default else name)
+            primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
         primitive_code += f"""):
 {init_code}
 
-    def __call__(self, {', '.join(call_args)}):
+    def __call__(self, {', '.join(inputs_args) if inputs_args else ''}):
         return super().__call__("""
-        if inputs_args:
-            args_with_handler = []
-            for arg in inputs_args:
-                if arg in args_handlers:
-                    args_with_handler.append(f"""{args_handlers[arg]}({arg})""")
-                else:
-                    args_with_handler.append(arg)
-            primitive_code += ', '.join(args_with_handler)
+        # if inputs_args:
+        #     primitive_code += ', '.join(inputs_args)
+        #     primitive_code += ', '
 
-        if init_args:
+        if inputs_assign:
+            primitive_code += ', '.join(inputs_assign)
             primitive_code += ', '
+        if init_args:
             primitive_code += ', '.join([f'self.{arg}' for arg in init_args])
         primitive_code += """)
 """
@@ -401,45 +374,30 @@ def generate_lite_ops(yaml_data):
     """
     Generate BaseOperator parameter set and get func
     """
-    lite_ops_h_head = f"""
+    lite_ops_head = f"""
 #ifndef MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 #define MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 
 #include <vector>
 #include "ops/base_operator.h"
 #include "ops/auto_generate/gen_ops_name.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore::ops {{
 """
 
-    lite_ops_h_end = f"""}}  // namespace mindspore::ops
+    lite_ops_end = f"""}}  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 """
 
-    lite_ops_cc_head = """
-#include "ops/auto_generate/gen_lite_ops.h"
-#include "mindapi/src/helper.h"
-#include "ops/primitive_c.h"
-#include "ops/base_operator.h"
-#include "abstract/abstract_value.h"
-
-namespace mindspore::ops {
-"""
-
-    lite_ops_cc_end = f"""}}  // namespace mindspore::ops
-    """
-
-    lite_ops_h_gen = ''
-    lite_ops_cc_gen = ''
-
-    lite_ops_h_gen += lite_ops_h_head
-    lite_ops_cc_gen += lite_ops_cc_head
+    lite_ops_gen = ''
+    lite_ops_gen += lite_ops_head
     for operator_name, operator_data in yaml_data.items():
-        op_name = get_op_name(operator_name, operator_data.get('class'))
-        lite_ops_h_gen += f"""class MIND_API {op_name} : public BaseOperator {{
+        OpName = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_gen += f"""class MIND_API {OpName} : public BaseOperator {{
  public:
-  MIND_API_BASE_MEMBER({op_name});
-  {op_name}() : BaseOperator(kName{op_name}) {{}}\n"""
+  MIND_API_BASE_MEMBER({OpName});
+  {OpName}() : BaseOperator(kName{OpName}) {{}}\n"""
         args = operator_data.get('args')
         for _, (arg_name, arg_info) in enumerate(args.items()):
             init = arg_info.get('init')
@@ -451,21 +409,35 @@ namespace mindspore::ops {
                 dtype = "std::string"
             if dtype == "tuple[int]":
                 dtype = "std::vector<int64_t>"
-            if dtype == "int":
-                dtype = "int64_t"
-            lite_ops_h_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name});\n"""
-            lite_ops_h_gen += f"""  {dtype} get_{arg_name}() const;\n"""
+            lite_ops_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n"""
+            lite_ops_gen += f"""  {dtype} get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n"""
 
-            lite_ops_cc_gen += f"""void {op_name}::set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n\n"""
-            lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
+        lite_ops_gen += f"""}};\n\n"""
+    lite_ops_gen += lite_ops_end
+    return lite_ops_gen
 
-            op_name = get_op_name(operator_name, operator_data.get('class'))
-        lite_ops_cc_gen += f"""REGISTER_PRIMITIVE_C(kName{op_name}, {op_name});\n"""
-        lite_ops_cc_gen += f"""MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n\n"""
-        lite_ops_h_gen += f"""}};\n\n"""
-    lite_ops_h_gen += lite_ops_h_end
-    lite_ops_cc_gen += lite_ops_cc_end
-    return lite_ops_h_gen, lite_ops_cc_gen
+
+def generate_cc_lite_ops(yaml_data):
+    """
+    Generate BaseOperator register cc file content.
+    """
+    lite_ops_head = """
+#include "mindapi/src/helper.h"
+#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+    
+namespace mindspore::ops {
+"""
+
+    lite_ops_end = f"""}}  // namespace mindspore::ops
+    """
+    lite_ops_gen = ''
+    for operator_name, operator_data in yaml_data.items():
+        op_name = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_gen += f"""
+  MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n"""
+    return lite_ops_head + lite_ops_gen + lite_ops_end
 
 
 def generate_cc_opdef(yaml_data):
@@ -485,14 +457,16 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         class_name = get_op_name(operator_name, operator_data.get('class'))
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-                   f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
-                   f"""\n  /*.args_=*/ {{"""
-        cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
+                   f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
+                   f"""\n  .args_ =
+    {{"""
+        cc_index_str = f"""\n  .indexes_ =
+    {{"""
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
 
-        # Process inputs.
         for i, (arg_name, arg_info) in enumerate(args.items()):
-            cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
+            cc_index_str += f"""
+      {{"{arg_name}", {i}}},"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
@@ -506,23 +480,23 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                 ', '.join('DT_' + type.replace('[', '_').replace(']', '').upper() for type in
                           (ct.strip() for ct in type_cast.split(",")))
 
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
-                        f"""/*.as_init_arg_=*/{init_flag}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
-                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}}},"""
-        opdef_cc += f"""\n  }},"""
-        opdef_cc += f"""\n  /* .returns_ = */ {{"""
+            opdef_cc += f"""
+      {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{type_cast_str}}}}},"""
+        opdef_cc += f"""\n    }},"""
+        opdef_cc += f"""\n  .returns_ =
+    {{"""
 
-        # Process outputs.
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}}},"""
-        opdef_cc += f"""\n  }},"""
+            opdef_cc += f"""
+      {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}}},"""
+        opdef_cc += f"""\n    }},"""
 
-        cc_index_str += f"""\n  }},"""
+        cc_index_str += f"""\n    }},"""
         opdef_cc += cc_index_str
 
-        cc_func_impl_str = f"""\n  /*.func_impl_=*/g{class_name}FuncImpl,"""
+        cc_func_impl_str = f"""\n  .func_impl_ = &g{class_name}FuncImpl,"""
         opdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
@@ -535,7 +509,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 
 
 ops_py_header = f"""
-\"\"\"Operators definition generated by gen_ops.py, includes functions and primitive classes.\"\"\"
+\"\"\"Operators definition generated by gen_os.py, includes functions and primitive classes.\"\"\"
 
 from mindspore.ops.primitive import Primitive, prim_arg_register
 from mindspore.ops import signature as sig
@@ -583,20 +557,21 @@ def generate_ops_cc_files(work_path, yaml_str):
         op_prim_file.write(cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
-    # lite_h_ops
-    lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
-    tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
-    lite_ops_h_code, lite_ops_cc_code = generate_lite_ops(yaml_str)
-    with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
-        lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
-    check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
-
-    # lite_cc_ops
-    lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
-    tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
-    with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
-        lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
-    check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)
+    # # lite_h_ops
+    # lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
+    # tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
+    # lite_ops_h_code = generate_lite_ops(yaml_str)
+    # with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
+    #     lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
+    # check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
+    #
+    # # lite_cc_ops
+    # lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
+    # tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
+    # lite_ops_cc_code = generate_cc_lite_ops(yaml_str)
+    # with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
+    #     lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
+    # check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)
 
     # ops_names
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_name.h')
@@ -650,10 +625,10 @@ eum_cc_header = f"""
 
 #include <cstdint>
 
-namespace mindspore::MsPyEnum {{
+namespace mindspore::ops {{
 """
 
-eum_cc_end = f"""}}  // namespace mindspore::MsPyEnum
+eum_cc_end = f"""}}  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
 """
 
@@ -700,12 +675,10 @@ def generate_enum_files(work_path):
     py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
 
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
-    dst_arg_handler_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
-    dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'gen_arg_handler.py')
-    tmp_dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'tmp_gen_arg_handler.py')
-    if not os.path.exists(dst_arg_handler_dir):
-        os.makedirs(dst_arg_handler_dir)
-    shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
+    dst_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py')
+    tmp_dst_arg_handler_path = os.path.join(work_path,
+                                            'mindspore/python/mindspore/ops/auto_generate/tmp_gen_arg_handler.py')
+    os.system(f'cp {src_arg_handler_path} {tmp_dst_arg_handler_path}')
     with open(tmp_dst_arg_handler_path, 'a') as py_file:
         py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
@@ -750,10 +723,11 @@ def main():
 
     # generate ops python files
     generate_ops_py_files(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path), "gen")
-    generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
-                          "gen_inner")
+    #generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
+    #                     "gen_inner")
 
-    all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
+    #all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
+    all_ops_str = {**safe_load_yaml(ops_yaml_path)}
     # generate ops c++ files
     generate_ops_cc_files(work_path, all_ops_str)
     # generate ops label python files
@@ -761,9 +735,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-
-    except Exception as e:
-        print("Auto generate failed, err info:", e)
-        raise e
+    main()
