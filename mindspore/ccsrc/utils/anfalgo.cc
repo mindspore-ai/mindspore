@@ -2297,5 +2297,14 @@ std::string AnfAlgo::GetInputName(const CNodePtr &origin_op, size_t input_index)
   }
   return input_names_vec[input_index];
 }
+
+bool AnfAlgo::IsNoOuputNode(const AnfNodePtr &node) {
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> no_output_prims = {
+    prim::kPrimSend, prim::kPrimNPUClearFloatStatusV2};
+  if (IsOneOfPrimitiveCNode(node, no_output_prims)) {
+    return true;
+  }
+  return false;
+}
 }  // namespace common
 }  // namespace mindspore
