@@ -75,8 +75,7 @@ void AffineGridCpuKernelMod::LaunchKernel_3D(const std::vector<kernel::KernelTen
   std::vector<int64_t> out_shape;
   auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
-  MS_EXCEPTION_IF_NULL(output_size_data);
+  auto output_size_data = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
   auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
@@ -145,8 +144,7 @@ void AffineGridCpuKernelMod::LaunchKernel_4D(const std::vector<kernel::KernelTen
   std::vector<int64_t> out_shape;
   auto data_theta = reinterpret_cast<T *>(inputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(data_theta);
-  auto output_size_data = reinterpret_cast<int32_t *>(inputs[1]->device_ptr());
-  MS_EXCEPTION_IF_NULL(output_size_data);
+  auto output_size_data = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
   auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_y);
   size_t N = static_cast<size_t>(output_size_data[0]);
@@ -244,9 +242,15 @@ bool AffineGridCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor
 }
 
 std::vector<std::pair<KernelAttr, AffineGridCpuKernelMod::AffineGridFunc>> AffineGridCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
    &AffineGridCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
    &AffineGridCpuKernelMod::LaunchKernel<float16>}};
 
 std::vector<KernelAttr> AffineGridCpuKernelMod::GetOpSupport() {

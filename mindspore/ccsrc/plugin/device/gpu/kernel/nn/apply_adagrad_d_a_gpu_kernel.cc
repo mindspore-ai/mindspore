@@ -54,11 +54,6 @@ std::map<size_t, std::string> OutputNames = {
 
 bool ApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradDA>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast ApplyAdagradDA ops failed!";
-    return false;
-  }
   batch_rank_ = ops::get_batch_rank(primitive_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";

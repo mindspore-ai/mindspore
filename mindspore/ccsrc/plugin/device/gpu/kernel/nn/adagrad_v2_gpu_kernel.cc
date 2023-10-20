@@ -68,10 +68,8 @@ void AdagradV2GpuKernelMod::InOutputResize(const std::vector<KernelTensor *> &in
 
 bool AdagradV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(primitive_);
-
-  epsilon_ = kernel_ptr->get_epsilon();
-  update_slots_ = kernel_ptr->get_update_slots();
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr(ops::kUpdateSlots));
   constexpr int INPUT_NUM = 4;
   if (inputs.size() != INPUT_NUM) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 4, but got " << inputs.size();
