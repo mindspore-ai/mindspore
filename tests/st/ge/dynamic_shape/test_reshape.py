@@ -50,4 +50,4 @@ def test_reshape():
     net = ReshapeNet()
     net.set_inputs(dyn_x)
     y = net(x)
-    assert np.allclose(y.asnumpy(). np.array([[1], [2], [3]]).astype(np.float32))
+    assert np.allclose(y.asnumpy(), np.array([[1], [2], [3]]).astype(np.float32))

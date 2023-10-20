@@ -23,7 +23,9 @@ namespace mindspore {
 namespace opt {
 class ScalarUnifyMindIR : public PatternProcessPass {
  public:
-  explicit ScalarUnifyMindIR(bool multigraph = true) : PatternProcessPass("scalar_unify_mindir", multigraph) {}
+  explicit ScalarUnifyMindIR(bool multigraph = true) : PatternProcessPass("scalar_unify_mindir", multigraph) {
+    is_add_ = false;
+  }
   ~ScalarUnifyMindIR() override = default;
 
   const BaseRef DefinePattern() const override;

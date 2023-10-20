@@ -23,7 +23,9 @@ namespace mindspore {
 namespace opt {
 class ShapeUnifyMindIR : public PatternProcessPass {
  public:
-  explicit ShapeUnifyMindIR(bool multigraph = true) : PatternProcessPass("shape_unify_mindir", multigraph) {}
+  explicit ShapeUnifyMindIR(bool multigraph = true) : PatternProcessPass("shape_unify_mindir", multigraph) {
+    is_add_ = false;
+  }
   ~ShapeUnifyMindIR() override = default;
 
   const BaseRef DefinePattern() const override;

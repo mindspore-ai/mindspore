@@ -24,7 +24,9 @@ namespace mindspore {
 namespace opt {
 class MakeTupleUnifyMindIR : public PatternProcessPass {
  public:
-  explicit MakeTupleUnifyMindIR(bool multigraph = true) : PatternProcessPass("maketuple_unify_mindir", multigraph) {}
+  explicit MakeTupleUnifyMindIR(bool multigraph = true) : PatternProcessPass("maketuple_unify_mindir", multigraph) {
+    is_add_ = false;
+  }
   ~MakeTupleUnifyMindIR() override = default;
 
   const BaseRef DefinePattern() const override;
