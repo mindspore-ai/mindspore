@@ -32,6 +32,9 @@ namespace {
 const char *kCropAndResize = "CropAndResize";
 const size_t kInputNum = 4;
 const size_t kOutputNum = 1;
+const size_t kXDim = 4;
+const size_t kBoxesDim = 2;
+const size_t kBoxIndexDim = 1;
 
 inline int FloatToInt(float u) {
   if (u > static_cast<float>((std::numeric_limits<int>::max)())) {
@@ -119,19 +122,21 @@ uint32_t CropAndResizeCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *image = ctx.Input(0);
   Tensor *out = ctx.Output(0);
   in_shape_ = image->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((in_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of x must be 4, but got[%zu].",
+  KERNEL_CHECK_FALSE((in_shape_.size() == kXDim), KERNEL_STATUS_PARAM_INVALID, "Dim of x must be 4, but got[%zu].",
                      in_shape_.size());
   auto boxes_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((boxes_shape.size() == 2), KERNEL_STATUS_PARAM_INVALID, "Dim of boxes must be 2, but got[%zu].",
-                     boxes_shape.size());
+  KERNEL_CHECK_FALSE((boxes_shape.size() == kBoxesDim), KERNEL_STATUS_PARAM_INVALID,
+                     "Dim of boxes must be 2, but got[%zu].", boxes_shape.size());
   auto box_index_shape = ctx.Input(2)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((box_index_shape.size() == 1), KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE((box_index_shape.size() == kBoxIndexDim), KERNEL_STATUS_PARAM_INVALID,
                      "Dim of box_index must be 1, but got[%zu].", box_index_shape.size());
   out_shape_ = out->GetTensorShape()->GetDimSizes();
   auto out_h = out_shape_[1];
   auto out_w = out_shape_[2];
-  KERNEL_CHECK_FALSE(out_h > 0 && out_w > 0, KERNEL_STATUS_PARAM_INVALID,
-                     "output dimensions must be positive but got height %lld, width %lld.", out_h, out_w);
+  auto out_channel = out_shape_[3];
+  KERNEL_CHECK_FALSE(out_h > 0 && out_w > 0 && out_channel > 0, KERNEL_STATUS_PARAM_INVALID,
+                     "output dimensions and channel must be positive but got height %lld, width %lld, channel %lld.",
+                     out_h, out_w, out_channel);
   dtype_ = DataType(image->GetDataType());
   return KERNEL_STATUS_OK;
 }
