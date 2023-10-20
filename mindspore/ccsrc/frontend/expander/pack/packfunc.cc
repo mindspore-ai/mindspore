@@ -44,13 +44,24 @@ using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraph
 bool IsPackGraph(const FuncGraphPtr &fg) { return fg->ToString().find("pack_wrap") != std::string::npos; }
 
 PrimitivePyPtr GetPackFuncPrimitive(const FuncGraphPtr &fg) {
-  auto prim = GetValueNode<PrimitivePtr>(fg->get_return()->input(1)->cast_ptr<CNode>()->input(0));
+  auto return_node = fg->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  auto cnode = return_node->input(1)->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
   auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
-  return do_signature->function()->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(do_signature);
+  auto res = do_signature->function()->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(res);
+  return res;
 }
 
 FuncGraphPtr UpdateReusingGraphForPack(const FuncGraphPtr &reusing_graph, const std::vector<AnfNodePtr> &parameters) {
-  auto pack_node = reusing_graph->get_return()->input(1)->cast_ptr<CNode>();
+  auto return_node = reusing_graph->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+  auto pack_node = return_node->input(1)->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(pack_node);
   for (size_t i = 0; i < parameters.size(); i++) {
     auto param = reusing_graph->add_parameter();
     pack_node->add_input(param);
@@ -92,8 +103,11 @@ void GetSubPackGraphParams(const FuncGraphPtr &fg, const FuncGraphPtr &g, std::v
   GetPackGraphParams(g, &p);
   for (auto &item : p) {
     if (item->cast<ParameterPtr>()->has_default()) {
-      auto node = g->get_return()->input(kIndex1);
+      auto return_node = g->get_return();
+      MS_EXCEPTION_IF_NULL(return_node);
+      auto node = return_node->input(kIndex1);
       auto pack_node = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(pack_node);
       pack_node->add_input(item);
       if (memo->emplace(item.get()).second) {
         g->add_parameter_obj_node(item);
