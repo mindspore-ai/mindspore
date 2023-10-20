@@ -25,14 +25,11 @@
 #include "transform/graph_ir/op_adapter_util.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "include/common/utils/utils.h"
-<<<<<<< HEAD
 #include "include/common/utils/anfalgo.h"
 #include "ops/other_ops.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
-=======
 #include "ops/op_utils.h"
->>>>>>> Adapt new KernelMod for ACL
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {
@@ -436,7 +433,7 @@ class OpAdapter : public BaseOpAdapter {
 
   // specialization for reverse bool
   static bool ConvertAny(const ValuePtr &value, const AnyTraits<bool> &, bool reverse) {
-    return reverse != GetValue<bool>(value);
+    return reverse != ops::GetValueWithCheck<bool>(value);
   }
 
   template <typename P, typename Q>
@@ -456,12 +453,7 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   // specialization for float
-  static float ConvertAny(const ValuePtr &value, const AnyTraits<float>) {
-    if (value->isa<FP64Imm>()) {
-      return static_cast<float>(GetValue<double>(value));
-    }
-    return ops::GetValueWithCheck<float>(value);
-  }
+  static float ConvertAny(const ValuePtr &value, const AnyTraits<float>) { return GetCastFloatValue<float>(value); }
 
   // specialization for int or tuple broadcast to Vector
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &name,
@@ -497,12 +489,12 @@ class OpAdapter : public BaseOpAdapter {
         }
         auto sub_vector = it->cast<ValueListPtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
         }
       } else {
         auto sub_vector = it->cast<ValueTuplePtr>();
         for (auto &item : sub_vector->value()) {
-          sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+          sublist.push_back(ops::GetValueWithCheck<int64_t>(item));
         }
       }
       list.push_back(sublist);
@@ -526,7 +518,7 @@ class OpAdapter : public BaseOpAdapter {
       }
       auto sub_vector = it->cast<ValueSequencePtr>();
       for (auto &item : sub_vector->value()) {
-        list.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
+        list.push_back(ops::GetValueWithCheck<int64_t>(item));
       }
     }
     return list;
@@ -541,20 +533,12 @@ class OpAdapter : public BaseOpAdapter {
       auto vec = value->cast<ValueSequencePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
-        if (it->type()->type_id() == TypeId::kNumberTypeInt32) {
-          list.push_back(static_cast<int64_t>(GetValue<int32_t>(it)));
-        } else {
-          list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
-        }
+        list.push_back(GetCastIntegralValue<int64_t>(it));
       }
       return list;
     }
     if (value->isa<Scalar>()) {
-      if (value->type()->type_id() == TypeId::kNumberTypeInt32) {
-        list.push_back(static_cast<int64_t>(GetValue<int32_t>(value)));
-      } else {
-        list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
-      }
+      list.push_back(GetCastIntegralValue<int64_t>(value));
       return list;
     }
     if (value->isa<MeTensor>()) {
