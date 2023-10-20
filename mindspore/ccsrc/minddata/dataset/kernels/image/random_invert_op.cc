@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomInvertOp::kDefProbability = 0.5;
-
 Status RandomInvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // check input
@@ -37,8 +35,8 @@ Status RandomInvertOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().AsCVType() != kCVInvalidType,
                                "RandomInvert: Cannot convert from OpenCV type, unknown CV type. Currently "
                                "supported data type: [int8, uint8, int16, uint16, int32, float16, float32, float64].");
-  if (distribution_(rnd_)) {
-    return InvertOp::Compute(input, output);
+  if (distribution_(random_generator_)) {
+    return Invert(input, output);
   }
   *output = input;
   return Status::OK();

@@ -430,13 +430,13 @@ Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode nor
 }
 
 Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
-                           float mask_value, int axis, std::mt19937 rnd) {
+                           float mask_value, int axis, std::mt19937 *rnd) {
   std::uniform_int_distribution<int32_t> mask_width_value(0, mask_param);
   TensorShape input_shape = input->shape();
   int32_t mask_dim_size = axis == 1 ? input_shape[-2] : input_shape[-1];
-  int32_t mask_width = mask_width_value(rnd);
+  int32_t mask_width = mask_width_value(*rnd);
   std::uniform_int_distribution<int32_t> min_freq_value(0, mask_dim_size - mask_width);
-  int32_t mask_start = min_freq_value(rnd);
+  int32_t mask_start = min_freq_value(*rnd);
 
   return MaskAlongAxis(input, output, mask_width, mask_start, mask_value, axis);
 }
@@ -2027,7 +2027,7 @@ Status InverseSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<
 template <typename T>
 Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
                       int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
-                      float momentum, int32_t length, bool rand_init, std::mt19937 rnd) {
+                      float momentum, int32_t length, bool rand_init, std::mt19937 *rnd) {
   // pack
   TensorShape shape = input->shape();
   TensorShape new_shape({input->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
@@ -2053,7 +2053,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
       // static std::default_random_engine e;
       std::uniform_real_distribution<double> dist(0, 1);
       angles = angles.unaryExpr(
-        [&dist, &rnd](std::complex<double> value) { return std::complex<double>(dist(rnd), dist(rnd)); });
+        [&dist, &rnd](std::complex<double> value) { return std::complex<double>(dist(*rnd), dist(*rnd)); });
     } else {
       angles = angles.unaryExpr([](std::complex<double> value) { return std::complex<double>(1, 0); });
     }
@@ -2132,7 +2132,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 
 Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft, int32_t n_iter,
                   int32_t win_length, int32_t hop_length, WindowType window_type, float power, float momentum,
-                  int32_t length, bool rand_init, std::mt19937 rnd) {
+                  int32_t length, bool rand_init, std::mt19937 *rnd) {
   std::shared_ptr<Tensor> input_tensor;
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
@@ -2149,7 +2149,7 @@ template <typename T>
 Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
                            int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                            float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum,
-                           NormType norm, MelType mel_type, std::mt19937 rnd) {
+                           NormType norm, MelType mel_type, std::mt19937 *rnd) {
   constexpr int32_t sample_rate_factor = 2;
   f_max = std::fabs(f_max) <= std::numeric_limits<float>::epsilon()
             ? static_cast<T>(std::floor(sample_rate / sample_rate_factor))
@@ -2180,7 +2180,7 @@ Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr
                                                                                n_mels);
     // init specgram at n=channel
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_channel =
-      Eigen::MatrixXd::Zero(time, freq).unaryExpr([&rnd, &dist](double dummy) { return dist(rnd); });
+      Eigen::MatrixXd::Zero(time, freq).unaryExpr([&rnd, &dist](double dummy) { return dist(*rnd); });
     std::vector<T> vec_channel(mat_channel.data(), mat_channel.data() + mat_channel.size());
     std::shared_ptr<Tensor> param_channel;
     TensorShape output_shape = TensorShape({freq, time});
@@ -2236,7 +2236,7 @@ Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
                        int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                        float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
-                       MelType mel_type, std::mt19937 rnd) {
+                       MelType mel_type, std::mt19937 *rnd) {
   std::shared_ptr<Tensor> input_tensor;
   if (input->type() != DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));

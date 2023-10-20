@@ -94,5 +94,12 @@ Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<Dat
 Status TensorOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
   RETURN_STATUS_UNEXPECTED("This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
 }
+
+RandomTensorOp::RandomTensorOp() {
+  is_deterministic_ = false;
+  random_generator_.seed(GetSeed());
+}
+
+void RandomTensorOp::SetSeed(uint32_t seed) { random_generator_.seed(seed); }
 }  // namespace dataset
 }  // namespace mindspore

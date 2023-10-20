@@ -309,6 +309,13 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 /// \param output: Adjusted image of same shape and type.
 Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha);
 
+/// \brief Adjust the sharpness of the input image.
+/// \param[in] input: Tensor of input image.
+/// \param[out] output: Tensor of output image.
+/// \param[in] alpha: How much to adjust the sharpness.
+/// \return Status code.
+Status AdjustSharpness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha);
+
 /// \brief Returns image with adjusted hue.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
 /// \param hue: Hue value to adjust by, should be within range [-0.5, 0.5]. 0.5 and - 0.5 will reverse the hue channel
@@ -349,6 +356,12 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
              int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace);
 
+/// \brief Invert the colors of the input image.
+/// \param[in] input: Tensor of input image.
+/// \param[out] output: Tensor of output image.
+/// \return Status code.
+Status Invert(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
 /// \brief Pads the input image and puts the padded image in the output
 /// \param input: input Tensor
 /// \param output: padded Tensor
@@ -363,6 +376,13 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+
+/// \brief Posterize the input image by reducing the number of bits for ecah color channel.
+/// \param[in] input: Tensor of input image.
+/// \param[out] output: Tensor of output image.
+/// \param[in] bits: The number of bits to keep for each channel.
+/// \return Status code.
+Status Posterize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, uint8_t bits);
 
 /// \brief Add AlexNet-style PCA-based noise to an image.
 /// \param[in] input The input image.

@@ -20,20 +20,17 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/kernels/image/sharpness_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-class RandomSharpnessOp : public SharpnessOp {
+class RandomSharpnessOp : public RandomTensorOp {
  public:
-  static const float kDefStartDegree;
-  static const float kDefEndDegree;
-
   /// Adjust the sharpness of the input image by a random degree within the given range.
   /// \@param[in] start_degree A float indicating the beginning of the range.
   /// \@param[in] end_degree A float indicating the end of the range.
-  explicit RandomSharpnessOp(float start_degree = kDefStartDegree, float end_degree = kDefEndDegree);
+  explicit RandomSharpnessOp(float start_degree, float end_degree);
 
   ~RandomSharpnessOp() override = default;
 
@@ -47,7 +44,6 @@ class RandomSharpnessOp : public SharpnessOp {
   float start_degree_;
   float end_degree_;
   std::uniform_real_distribution<float> distribution_{-1.0, 1.0};
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

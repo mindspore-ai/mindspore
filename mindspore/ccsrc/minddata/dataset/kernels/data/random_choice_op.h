@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomChoiceOp : public TensorOp {
+class RandomChoiceOp : public RandomTensorOp {
  public:
   /// constructor
   /// \param[in] ops list of TensorOps to randomly choose 1 from
@@ -68,7 +68,6 @@ class RandomChoiceOp : public TensorOp {
 
  private:
   std::vector<std::shared_ptr<TensorOp>> ops_;
-  std::mt19937 gen_;  // mersenne_twister_engine
   std::uniform_int_distribution<size_t> rand_int_;
 };
 }  // namespace dataset

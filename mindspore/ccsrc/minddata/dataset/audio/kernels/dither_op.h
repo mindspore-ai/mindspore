@@ -29,12 +29,10 @@
 
 namespace mindspore {
 namespace dataset {
-class DitherOp : public TensorOp {
+class DitherOp : public RandomTensorOp {
  public:
   DitherOp(DensityFunction density_function, bool noise_shaping)
-      : density_function_(density_function), noise_shaping_(noise_shaping) {
-    rnd_.seed(GetSeed());
-  }
+      : density_function_(density_function), noise_shaping_(noise_shaping) {}
 
   ~DitherOp() override = default;
 
@@ -51,7 +49,6 @@ class DitherOp : public TensorOp {
  private:
   DensityFunction density_function_;
   bool noise_shaping_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

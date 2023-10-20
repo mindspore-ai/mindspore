@@ -3099,7 +3099,7 @@ def _main_process_already_exit():
     return False
 
 
-def _worker_loop(operations, pipe, seed=get_seed()):
+def _worker_loop(operations, pipe, worker_id):
     """
     Multiprocess worker process loop.
     """
@@ -3112,9 +3112,11 @@ def _worker_loop(operations, pipe, seed=get_seed()):
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    # We set the seed here so the main process will have the same seed, while the child process
-    # will have different seed depending on what is being passed
-    set_seed(seed)
+    # If the default random seed has not been changed, there is no need to fix the randomness.
+    # Otherwise, set the random seed for each child process to "base_seed + worker_id" to ensure
+    # that the random results of each process are different.
+    if get_seed() != 5489:
+        set_seed(get_seed() + worker_id)
     while not _main_process_already_exit():
         _ignore_sigint()
 
@@ -3137,8 +3139,8 @@ def _worker_loop(operations, pipe, seed=get_seed()):
     del pipe.res_queue
 
 
-def worker_target(operations, seed=get_seed()):
-    return lambda pipe: _worker_loop(operations, pipe, seed)
+def worker_target(operations, worker_id):
+    return lambda pipe: _worker_loop(operations, pipe, worker_id)
 
 
 class _MPWorker(multiprocessing.Process):
@@ -3146,11 +3148,11 @@ class _MPWorker(multiprocessing.Process):
     Worker process for multiprocessing.
     """
 
-    def __init__(self, operations, warning_ctl, max_rowsize=16, seed=get_seed()):
+    def __init__(self, operations, warning_ctl, max_rowsize=16, worker_id=0):
         shared_memory = get_enable_shared_mem()
         self.pipe = Pipe(warning_ctl, shared_memory=shared_memory, max_rowsize=max_rowsize)
         self.check_interval = get_multiprocessing_timeout_interval()
-        super().__init__(target=worker_target(operations, seed), args=(self.pipe,), daemon=True)
+        super().__init__(target=worker_target(operations, worker_id), args=(self.pipe,), daemon=True)
 
     def execute(self, idx, *args):
         """Acquiring data from a worker in an infinite loop"""
@@ -3446,8 +3448,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         # Construct python worker processes
         self.workers = []
         self.warning_ctl = multiprocessing.Value('i', 0)
-        for i in range(self.num_parallel_workers):
-            worker = _MPWorker(self.operations, self.warning_ctl, self.max_rowsize, i + get_seed())
+        for worker_id in range(self.num_parallel_workers):
+            worker = _MPWorker(self.operations, self.warning_ctl, self.max_rowsize, worker_id)
             worker.start()
             self.workers.append(worker)
 

@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-class CutOutOp : public TensorOp {
+class CutOutOp : public RandomTensorOp {
  public:
   // Default values, also used by python_bindings.cc
   static const bool kDefRandomColor;
@@ -60,7 +60,6 @@ class CutOutOp : public TensorOp {
   std::string Name() const override { return kCutOutOp; }
 
  private:
-  std::mt19937 rnd_;
   int32_t box_height_;
   int32_t box_width_;
   int32_t num_patches_;

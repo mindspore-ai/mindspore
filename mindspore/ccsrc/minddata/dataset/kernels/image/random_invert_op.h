@@ -28,14 +28,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomInvertOp : public InvertOp {
+class RandomInvertOp : public RandomTensorOp {
  public:
-  static const float kDefProbability;
-
-  explicit RandomInvertOp(float prob = kDefProbability) : distribution_(prob) {
-    is_deterministic_ = false;
-    rnd_.seed(GetSeed());
-  }
+  explicit RandomInvertOp(float prob) : distribution_(prob) {}
 
   ~RandomInvertOp() override = default;
 
@@ -50,7 +45,6 @@ class RandomInvertOp : public InvertOp {
   std::string Name() const override { return kRandomInvertOp; }
 
  private:
-  std::mt19937 rnd_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

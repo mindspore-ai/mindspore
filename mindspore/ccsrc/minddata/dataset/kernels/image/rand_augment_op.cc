@@ -26,9 +26,7 @@ RandAugmentOp::RandAugmentOp(int32_t num_ops, int32_t magnitude, int32_t num_mag
       magnitude_(magnitude),
       num_magnitude_bins_(num_magnitude_bins),
       interpolation_(interpolation),
-      fill_value_(std::move(fill_value)) {
-  rnd_.seed(GetSeed());
-}
+      fill_value_(std::move(fill_value)) {}
 
 Status RandAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   // Input correctness judgment
@@ -89,7 +87,7 @@ Space RandAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &imag
 
 int32_t RandAugmentOp::RandInt(int32_t low, int32_t high) {
   std::uniform_int_distribution<int32_t> dis(low, high);
-  return dis(rnd_) % (high - low) + low;
+  return dis(random_generator_) % (high - low) + low;
 }
 }  // namespace dataset
 }  // namespace mindspore

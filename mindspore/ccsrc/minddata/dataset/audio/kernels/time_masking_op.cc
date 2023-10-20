@@ -24,9 +24,7 @@ namespace mindspore {
 namespace dataset {
 // constructor
 TimeMaskingOp::TimeMaskingOp(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
-    : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {
-  rnd_.seed(GetSeed());
-}
+    : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
 
 // main function
 Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -53,7 +51,7 @@ Status TimeMaskingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   if (!iid_masks_) {
     return MaskAlongAxis(input_tensor, output, time_mask_param_, mask_start_, mask_value_, 2);
   } else {
-    return RandomMaskAlongAxis(input_tensor, output, time_mask_param_, mask_value_, 2, rnd_);
+    return RandomMaskAlongAxis(input_tensor, output, time_mask_param_, mask_value_, 2, &random_generator_);
   }
 }
 

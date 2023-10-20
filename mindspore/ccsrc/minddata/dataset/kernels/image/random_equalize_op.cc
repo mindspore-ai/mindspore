@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomEqualizeOp::kDefProbability = 0.5;
-
 Status RandomEqualizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // Check input
@@ -36,7 +34,7 @@ Status RandomEqualizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   CHECK_FAIL_RETURN_UNEXPECTED(
     input->type() == DataType(DataType::DE_UINT8),
     "RandomEqualize: input image is not in type of uint8, but got: " + input->type().ToString());
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     return Equalize(input, output);
   }
   *output = input;

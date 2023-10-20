@@ -28,13 +28,10 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomSolarizeOp : public TensorOp {
+class RandomSolarizeOp : public RandomTensorOp {
  public:
   // Pick a random threshold value to solarize the image with
-  explicit RandomSolarizeOp(const std::vector<uint8_t> &threshold) : threshold_(threshold) {
-    rnd_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  explicit RandomSolarizeOp(const std::vector<uint8_t> &threshold) : threshold_(threshold) {}
 
   ~RandomSolarizeOp() override = default;
 
@@ -44,7 +41,6 @@ class RandomSolarizeOp : public TensorOp {
 
  private:
   std::vector<uint8_t> threshold_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

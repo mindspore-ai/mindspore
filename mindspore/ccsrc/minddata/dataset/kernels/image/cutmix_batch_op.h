@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-class CutMixBatchOp : public TensorOp {
+class CutMixBatchOp : public RandomTensorOp {
  public:
   explicit CutMixBatchOp(ImageBatchFormat image_batch_format, float alpha, float prob);
 
@@ -74,7 +74,6 @@ class CutMixBatchOp : public TensorOp {
   float alpha_;
   float prob_;
   ImageBatchFormat image_batch_format_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

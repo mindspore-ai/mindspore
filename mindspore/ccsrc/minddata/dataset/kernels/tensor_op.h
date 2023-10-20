@@ -30,6 +30,7 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/perf/info_collector.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 
 #define IO_CHECK(input, output)                             \
@@ -99,6 +100,7 @@ constexpr char kNormalizePadOp[] = "NormalizePadOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kPadToSizeOp[] = "PadToSizeOp";
 constexpr char kPerspectiveOp[] = "PerspectiveOp";
+constexpr char kPosterizeOp[] = "PosterizeOp";
 constexpr char kRandAugmentOp[] = "RandAugmentOp";
 constexpr char kRandomAdjustSharpnessOp[] = "RandomAdjustSharpnessOp";
 constexpr char kRandomAffineOp[] = "RandomAffineOp";
@@ -115,6 +117,7 @@ constexpr char kRandomHorizontalFlipWithBBoxOp[] = "RandomHorizontalFlipWithBBox
 constexpr char kRandomHorizontalFlipOp[] = "RandomHorizontalFlipOp";
 constexpr char kRandomInvertOp[] = "RandomInvertOp";
 constexpr char kRandomLightingOp[] = "RandomLightingOp";
+constexpr char kRandomPosterizeOp[] = "RandomPosterizeOp";
 constexpr char kRandomResizeOp[] = "RandomResizeOp";
 constexpr char kRandomResizeWithBBoxOp[] = "RandomResizeWithBBoxOp";
 constexpr char kRandomRotationOp[] = "RandomRotationOp";
@@ -337,8 +340,22 @@ class TensorOp {
   // Currently, it's used by PyFuncOp which can release global executor when map with thread/process mode
   virtual Status ReleaseResource() { return Status::OK(); }
 
+  virtual void SetSeed(uint32_t seed) {}
+
  protected:
   bool is_deterministic_{true};
+};
+
+class RandomTensorOp : public TensorOp {
+ public:
+  RandomTensorOp();
+
+  ~RandomTensorOp() override = default;
+
+ protected:
+  void SetSeed(uint32_t seed) override;
+
+  std::mt19937 random_generator_;
 };
 }  // namespace dataset
 }  // namespace mindspore
