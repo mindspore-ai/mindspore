@@ -200,8 +200,6 @@ void AscendGmemAdapter::UnloadGMemLib() noexcept {
       MS_LOG(ERROR) << "Close GMem lib failed, detail : " << dlerror() << ".";
     }
     gmem_handle_ = nullptr;
-  } else {
-    MS_LOG(WARNING) << "GMem handle is nullptr : " << gmem_handle_ << ".";
   }
 }
 }  // namespace ascend
