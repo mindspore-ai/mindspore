@@ -56,7 +56,7 @@ int MeshgridGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
   input_shapes_.clear();
   input_size_ = 1;
-  input_count_ = static_cast<size_t>(input_size_list_.size());
+  input_count_ = static_cast<size_t>(inputs.size());
   for (size_t i = 0; i < input_count_; i++) {
     auto input_shape = inputs[i]->GetShapeVector();
     if (input_shape.size() < 1) {
@@ -70,7 +70,7 @@ int MeshgridGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
 
   output_size_ = 1;
-  output_count_ = static_cast<size_t>(output_size_list_.size());
+  output_count_ = static_cast<size_t>(outputs.size());
 
   // inferred shape swaps output shape for us if needed
   output_shape_ = outputs[kIndex0]->GetShapeVector();

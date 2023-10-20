@@ -32,7 +32,7 @@ bool MvlgammaGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = GetValue<int64_t>(primitive_->GetAttr("P"));
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   if (p_ < 1) {
     MS_LOG(ERROR) << "For " << kernel_name_ << ", the attr 'p' has to be greater than or equal to 1, "
                   << "but got " << p_ << ".";

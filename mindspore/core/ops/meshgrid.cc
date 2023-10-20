@@ -42,14 +42,19 @@ std::string Meshgrid::get_indexing() const {
 namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->GetShape()->cast<abstract::TupleShapePtr>()->shape();
+  AbstractBasePtrList elements = input_args;
+  if (input_args.size() == 1 && input_args[0]->isa<abstract::AbstractSequence>()) {
+    elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
+  }
   (void)CheckAndConvertUtils::CheckInteger("number of input tensors", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
   for (size_t i = 0; i < elements.size(); ++i) {
-    auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]);
-
-    auto input_shape = shape_map[kShape];
+    auto shape = elements[i]->GetShape();
+    ShapeVector input_shape;
+    if (shape->isa<abstract::TensorShape>()) {
+      input_shape = shape->GetShapeVector();
+    }
     if (IsDynamicRank(input_shape)) {
       auto shape_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
       return std::make_shared<abstract::TupleShape>(

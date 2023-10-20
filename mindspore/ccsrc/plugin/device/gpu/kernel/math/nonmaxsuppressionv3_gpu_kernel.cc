@@ -148,11 +148,14 @@ int NonMaxSuppressionV3GpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   return KRET_OK;
 }
 
-void NonMaxSuppressionV3GpuKernelMod::SyncOutputShape() {
+void NonMaxSuppressionV3GpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> shape = {-1};
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   shape[0] = dyn_out.shapes[0][0];
-  outputs_[0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  outputs[0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  size_t size = LongToSize(std::accumulate(shape.begin(), shape.end(), sizeof(int64_t), std::multiplies<int64_t>()));
+  outputs[0]->set_size(size);
 }
 
 std::vector<KernelAttr> NonMaxSuppressionV3GpuKernelMod::GetOpSupport() {

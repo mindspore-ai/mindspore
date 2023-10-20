@@ -101,8 +101,6 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(primitive_);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
 
     size_t input_num = inputs.size();
     const size_t kRandomCategoricalInputSize = 3;

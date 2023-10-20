@@ -32,7 +32,7 @@ bool MvlgammaGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   kernel_func_ = func_list_[index].second;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = GetValue<int64_t>(primitive_->GetAttr("p"));
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   return true;
 }
 
