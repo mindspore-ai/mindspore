@@ -687,6 +687,9 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     if (HasAbstractMonad(output_node)) {
       continue;
     }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
+      continue;
+    }
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
     auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
@@ -1002,6 +1005,9 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
     MS_EXCEPTION_IF_NULL(output_node);
     if (HasAbstractMonad(output_node)) {
+      continue;
+    }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
       continue;
     }
     real_output_size++;
