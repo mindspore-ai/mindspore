@@ -586,6 +586,16 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] release_device_mem If release_device_mem is ture, the device memory will to be released.
   void set_need_release_device_mem(bool release_device_mem) { need_release_device_mem_ = release_device_mem; }
 
+  /// \brief Set the padding type of this Tensor.
+  /// 
+  /// \param[in] padding_type The input padding type.
+  void set_padding_type(const std::string padding_type) {padding_type_ = padding_type; }
+
+  /// \brief Get the padding type of this Tensor.
+  ///
+  /// \return The padding type.
+  std::string padding_type() const {return padding_type_; }
+
   /// \brief Get the id of this Tensor.
   ///
   /// \return The id of this Tensor.
@@ -906,6 +916,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
+  std::string padding_type_{""};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
