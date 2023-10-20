@@ -1401,7 +1401,7 @@ EvalResultPtr PrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engi
   prim_func_->BeginRecordAddAttr();
   if (need_infer_value && frontend_func_impl_ != nullptr) {
     auto value = frontend_func_impl_->InferValue(prim_func_, args);
-    if (value != nullptr) {
+    if (value != nullptr && !value->ContainsValueAny()) {
       abs_base = value->ToAbstract();
       prim_func_->EndRecordAddAttr();
       auto added_attrs = prim_func_->evaluate_added_attrs();
