@@ -259,7 +259,10 @@ Status FlashAttentionScoreInfo::InferTensorMap() {
 void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
+    auto clone_prim = prim->Clone();
+    MS_EXCEPTION_IF_NULL(prim);
+    clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
+    cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
 
     // If DropoutGenMask -> Reshape -> FlashAttentionScore, replace its.
     auto reshape_node = cnode->input(ops::kFlashAttentionScoreInputDropMaskIndex + 1);
