@@ -136,6 +136,11 @@ abstract::ShapePtr Resize2DInferShape(const PrimitivePtr &primitive, const std::
   }
 
   auto size_value = GetShapeValue(primitive, input_args[kInputIndex1]);
+  if (IsValueKnown(input_args[kInputIndex1]->BuildValue()) &&
+      std::any_of(size_value.begin(), size_value.end(), [](auto x) { return x < 0; })) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the value of 'size' must not be negative, but got ["
+                             << size_value[kIndex0] << ", " << size_value[kIndex1] << "].";
+  }
   if (IsDynamicRank(size_value)) {
     size_value = {abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny};
   }
