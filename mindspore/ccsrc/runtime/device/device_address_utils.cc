@@ -753,8 +753,9 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   return new_device_address;
 }
 
-void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                                  const std::string &input_name) {
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context,
+                                                                      const tensor::TensorPtr &tensor,
+                                                                      const std::string &input_name) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
@@ -770,7 +771,7 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   }
 
   if (device_address->GetPtr() != nullptr) {
-    return;
+    return device_address;
   }
 
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
@@ -783,10 +784,13 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "input_name:" << input_name << " ptr:" << device_address->GetPtr();
+  return device_address;
 }
 
-void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                                   const std::string &output_name, bool is_gradient_out) {
+device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
+                                                                       const tensor::TensorPtr &tensor,
+                                                                       const std::string &output_name,
+                                                                       bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
@@ -802,13 +806,14 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
   }
 
   if (device_address->GetPtr() != nullptr) {
-    return;
+    return device_address;
   }
 
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   MS_LOG(DEBUG) << "output_name:" << output_name << " ptr:" << device_address->GetPtr();
+  return device_address;
 }
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,

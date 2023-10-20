@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/baddbmm_ascend.h"
-#include <algorithm>
-#include <functional>
-#include <memory>
-#include "ir/tensor.h"
+#include "plugin/device/ascend/kernel/pyboost/add_ascend.h"
 #include "runtime/device/device_address_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -26,9 +22,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                           const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
-                           const tensor::TensorPtr &output) {
+bool AddAscend::Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, const tensor::TensorPtr &output) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
@@ -37,33 +31,30 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch1, "batch1");
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch2, "batch2");
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
   // is_gradient_out 暂时不考虑
   runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output", false);
 
   // 910A not support 0
   int8_t cube_math_type = 0;
-  auto [workspace_size, executor, after_launch_func] =
-    GEN_EXECUTOR(aclnnBaddbmm, input, batch1, batch2, beta, alpha, output, cube_math_type);
+  auto [workspace_size, executor, after_launch_func] = GEN_EXECUTOR(aclnnAdd, x, y, output, cube_math_type);
 
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
   if (workspace_size == 0) {
-    RUN_OP_API(aclnnBaddbmm, stream_ptr, nullptr, 0, executor, after_launch_func);
+    RUN_OP_API(aclnnAdd, stream_ptr, nullptr, 0, executor, after_launch_func);
   } else {
     auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_size);
-    RUN_OP_API(aclnnBaddbmm, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,
+    RUN_OP_API(aclnnAdd, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,
                after_launch_func);
   }
 
   return true;
 }
 
-tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                                      const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
-  InferOutput(input, batch1, batch2, beta, alpha);
-  Launch(input, batch1, batch2, beta, alpha, output_);
+tensor::TensorPtr AddAscend::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+  InferOutput(x, y);
+  Launch(x, y, output_);
   return output_;
 }
 }  // namespace pyboost

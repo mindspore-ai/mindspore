@@ -50,10 +50,12 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                           const DeviceContext *device_context);
   static void CreateGraphOutputDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
 
-  static void CreateInputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                       const std::string &input_name);
-  static void CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                        const std::string &output_name, bool is_gradient_out);
+  static device::DeviceAddressPtr CreateInputTensorAddress(const DeviceContext *device_context,
+                                                           const tensor::TensorPtr &tensor,
+                                                           const std::string &input_name);
+  static device::DeviceAddressPtr CreateOutputTensorAddress(const DeviceContext *device_context,
+                                                            const tensor::TensorPtr &tensor,
+                                                            const std::string &output_name, bool is_gradient_out);
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
   static device::DeviceAddressPtr CreateScalarAddress(const DeviceContext *device_context,

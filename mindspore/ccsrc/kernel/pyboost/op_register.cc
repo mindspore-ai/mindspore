@@ -41,6 +41,9 @@ template class OpFactory<Baddbmm>;
 template class OpFactory<Add>;
 template class OpFactory<Mul>;
 template class OpFactory<BatchMatmul>;
+template class OpFactory<BiasAdd>;
+template class OpFactory<Matmul>;
+template class OpFactory<Linear>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

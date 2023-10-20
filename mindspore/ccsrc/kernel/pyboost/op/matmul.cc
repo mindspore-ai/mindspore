@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op/add.h"
+#include "kernel/pyboost/op/matmul.h"
 #include "kernel/pyboost/py_boost_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Add::CastInput() {}
+void Matmul::CastInput() {}
 
-void Add::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+void Matmul::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
   if (!eval_impl.has_value()) {
-    MS_LOG(EXCEPTION) << "Not found infer func for Baddbmm";
+    MS_LOG(EXCEPTION) << "Not found infer func for Matmul";
   }
   std::vector<AbstractBasePtr> input_abs = {x->ToAbstract(), y->ToAbstract()};
   auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
 
-  std::vector<tensor::TensorPtr> outputs;
+  std::vector<TensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Cannot create output tensor for Baddbmm";
+    MS_LOG(EXCEPTION) << "Cannot create output tensor for Matmul";
   }
   output_ = outputs[0];
 }
 
-tensor::TensorPtr Add::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+tensor::TensorPtr Matmul::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();
 }

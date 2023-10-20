@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_
 
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Add : public pyboost::Op {
+class BACKEND_EXPORT Matmul : public pyboost::Op {
  public:
-  Add() = default;
-  ~Add() = default;
+  Matmul() = default;
+  ~Matmul() = default;
 
   void CastInput() override;
   void InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
@@ -37,4 +37,4 @@ class BACKEND_EXPORT Add : public pyboost::Op {
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_

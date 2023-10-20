@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_
-#include <vector>
-#include "ops/base_operator.h"
-#include "kernel/pyboost/op/baddbmm.h"
+
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
+
+#include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
-class BaddbmmAclnn : public pyboost::Baddbmm {
+namespace pyboost {
+class BACKEND_EXPORT BiasAdd : public pyboost::Op {
  public:
-  BaddbmmAclnn() = default;
-  ~BaddbmmAclnn() = default;
+  BiasAdd() = default;
+  ~BiasAdd() = default;
 
-  bool Call(const tensor::TensorPtr &self, const tensor::TensorPtr &batch1, const tensor::TensorPtr &batch2,
-            const ScalarPtr &beta, const ScalarPtr &alpha, const tensor::TensorPtr &out);
+  void CastInput() override;
+  void InferOutput(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias);
+  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias);
+
+ protected:
+  tensor::TensorPtr output_;
 };
-
+}  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_BADDBMM_ACLNN_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_

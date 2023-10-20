@@ -38,7 +38,7 @@ void Baddbmm::InferOutput(const tensor::TensorPtr &input, const tensor::TensorPt
                                             beta->ToAbstract(), alpha->ToAbstract()};
   auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
 
-  std::vector<TensorPtr> outputs;
+  std::vector<tensor::TensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "Cannot create output tensor for Baddbmm";

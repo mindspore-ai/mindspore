@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_LINEAR_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_LINEAR_H_
 
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Add : public pyboost::Op {
+class BACKEND_EXPORT Linear : public pyboost::Op {
  public:
-  Add() = default;
-  ~Add() = default;
+  Linear() = default;
+  ~Linear() = default;
 
   void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
+  void InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &weight, const ValuePtr &bias_opt);
+  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
+                                 const ValuePtr &bias_opt);
 
  protected:
   tensor::TensorPtr output_;
@@ -37,4 +38,4 @@ class BACKEND_EXPORT Add : public pyboost::Op {
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_LINEAR_H_

@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_MATMUL_ASCEND_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_MATMUL_ASCEND_H_
 
-#include "kernel/pyboost/op_register.h"
+#include "kernel/pyboost/op/matmul.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Add : public pyboost::Op {
+class MatmulAscend : public pyboost::Matmul {
  public:
-  Add() = default;
-  ~Add() = default;
+  MatmulAscend() = default;
+  ~MatmulAscend() = default;
+  bool Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, const tensor::TensorPtr &output);
 
-  void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
-
- protected:
-  tensor::TensorPtr output_;
+  tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) override;
 };
+MS_REG_PYBOOST_OP(Ascend, Matmul);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_MATMUL_ASCEND_H_
