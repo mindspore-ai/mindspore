@@ -12,4 +12,4 @@ mindspore.dataset.Dataset.repeat
         - **count** (int) - 数据集重复的次数。默认值： ``None`` 。
 
     返回：
-        RepeatDataset，repeat操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

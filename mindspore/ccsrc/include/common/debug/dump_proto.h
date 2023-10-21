@@ -49,6 +49,7 @@
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
+using BFloatPtr = std::shared_ptr<BFloat>;
 using IntPtr = std::shared_ptr<Int>;
 using UIntPtr = std::shared_ptr<UInt>;
 using ComplexPtr = std::shared_ptr<Complex>;
@@ -73,6 +74,7 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = 
   {kNumberTypeFloat, mind_ir::TensorProto_DataType_FLOAT},
   {kNumberTypeFloat32, mind_ir::TensorProto_DataType_FLOAT},
   {kNumberTypeFloat64, mind_ir::TensorProto_DataType_DOUBLE},
+  {kNumberTypeBFloat16, mind_ir::TensorProto_DataType_BFLOAT16},
   {kObjectTypeString, mind_ir::TensorProto_DataType_STRING},
   {kNumberTypeComplex64, mind_ir::TensorProto_DataType_COMPLEX64},
   {kNumberTypeComplex128, mind_ir::TensorProto_DataType_COMPLEX128}};
@@ -95,6 +97,10 @@ static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_float_
   {16, mind_ir::TensorProto_DataType_FLOAT16},
   {32, mind_ir::TensorProto_DataType_FLOAT},
   {64, mind_ir::TensorProto_DataType_FLOAT64},
+};
+
+static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_bfloat_map = {
+  {16, mind_ir::TensorProto_DataType_BFLOAT16},
 };
 
 static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_complex_map = {
@@ -175,6 +181,7 @@ class IrExportBuilder {
   mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits) const;
+  mind_ir::TensorProto_DataType GetMindirDataBitsBFloatType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits) const;
   mind_ir::TensorProto_DataType GetMindirDataBitsComplexType(int bits) const;
   std::string GetNodeName(const AnfNodePtr &node) const;

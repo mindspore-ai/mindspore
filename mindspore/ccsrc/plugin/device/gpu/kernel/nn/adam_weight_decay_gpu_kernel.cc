@@ -26,8 +26,10 @@ bool AdamWeightDecayGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   constexpr size_t output_num = 3;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto var_data_type = inputs.at(kIndex0)->GetDtype();
   s_type_id_size_ = abstract::TypeIdSize(var_data_type);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
   auto m_data_type = inputs.at(kIndex1)->GetDtype();
   t_type_id_size_ = abstract::TypeIdSize(m_data_type);
   return MatchKernelFunc(base_operator, inputs, outputs);
@@ -68,6 +70,11 @@ int AdamWeightDecayGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   decay_size_ = sizeof(float);
   gradient_size_ = s_type_id_size_;
 
+  constexpr size_t input_num = 9;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex1]);
+  MS_EXCEPTION_IF_NULL(inputs[kIndex2]);
   auto variable_shape = inputs[kIndex0]->GetShapeVector();
   auto m_shape = inputs[kIndex1]->GetShapeVector();
   auto v_shape = inputs[kIndex2]->GetShapeVector();

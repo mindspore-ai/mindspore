@@ -223,6 +223,9 @@ std::vector<Format> ModelProcess::GetInputFormat() {
     auto iter = acl_format_map.find(format);
     if (iter != acl_format_map.end()) {
       input_formats.emplace_back(iter->second);
+    } else {
+      MS_LOG(INFO) << "aclFormat " << format << " not found in map, please double check and add...using default format";
+      input_formats.emplace_back(DEFAULT_FORMAT);
     }
     MS_LOG(DEBUG) << "Format of Input " << i << " is " << static_cast<int32_t>(format);
   }
@@ -242,6 +245,9 @@ std::vector<Format> ModelProcess::GetOutputFormat() {
     auto iter = acl_format_map.find(format);
     if (iter != acl_format_map.end()) {
       output_formats.emplace_back(iter->second);
+    } else {
+      MS_LOG(INFO) << "aclFormat " << format << " not found in map, please double check and add...using default format";
+      output_formats.emplace_back(DEFAULT_FORMAT);
     }
     MS_LOG(DEBUG) << "Format of Output " << i << " is " << static_cast<int32_t>(format);
   }
@@ -480,10 +486,12 @@ bool ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, 
 
 void ModelProcess::DestroyInputsBuffer() {
   for (const auto &item : input_infos_) {
-    if (!is_run_on_device_) {
-      aclrtFree(item.device_data);
-    } else {
-      aclrtFreeHost(item.device_data);
+    if (item.device_data != nullptr) {
+      if (!is_run_on_device_) {
+        aclrtFree(item.device_data);
+      } else {
+        aclrtFreeHost(item.device_data);
+      }
     }
     if (item.dynamic_acl_tensor_desc != nullptr) {
       aclDestroyTensorDesc(item.dynamic_acl_tensor_desc);
@@ -505,10 +513,12 @@ void ModelProcess::DestroyInputsBuffer() {
 void ModelProcess::DestroyOutputsBuffer() {
   if (!is_dynamic_output_) {
     for (const auto &item : output_infos_) {
-      if (!is_run_on_device_) {
-        aclrtFree(item.device_data);
-      } else {
-        aclrtFreeHost(item.device_data);
+      if (item.device_data != nullptr) {
+        if (!is_run_on_device_) {
+          aclrtFree(item.device_data);
+        } else {
+          aclrtFreeHost(item.device_data);
+        }
       }
     }
   }
@@ -970,8 +980,10 @@ bool ModelProcess::CheckAndInitInput(const std::vector<KernelTensorPtr> &inputs)
         input_buffer = device_data->addr;
       } else {
         // memcpy device data from src device to current device.
-        if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
-              device_data->addr, info.device_data, info.buffer_size, input_device_id, device_id_) != kSuccess) {
+        auto data_copy_size = inputs[i]->GetSizeInBytes();
+        if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(device_data->addr, info.device_data,
+                                                                        data_copy_size, info.buffer_size,
+                                                                        input_device_id, device_id_) != kSuccess) {
           MS_LOG(ERROR) << "Copy input data from device to current device failed.";
           return false;
         }
@@ -1107,11 +1119,13 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
       }
     } else {
       if (!user_defined_output_buf_[i]) {
-        output->SetDynOutput(std::unique_ptr<uint8_t[]>(new uint8_t[output_desc_size]));
-        output->SetHostData(std::make_shared<kernel::Address>(output->GetDynOutput(), output_desc_size));
+        // data_buf_ptr is passed to tensor ref data and will be freed in destructor
+        void *data_buf_ptr = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(output_desc_size);
+        output->SetHostData(std::make_shared<kernel::Address>(data_buf_ptr, output_desc_size));
         output->SetData(nullptr);
         dyn_out_sys_buf_addr_ = output->GetHostData()->addr;
-        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_;
+        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_
+                      << ", size: " << output_desc_size;
       } else {
         if (host_data == nullptr) {
           MS_LOG(ERROR) << "critical error! found user defined buffer nullptr";
@@ -1163,7 +1177,8 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   aclError acl_ret;
   struct timeval start_time;
   auto env = std::getenv("GLOG_v");
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  bool output_timecost = (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel));
+  if (output_timecost) {
     (void)gettimeofday(&start_time, nullptr);
   }
 
@@ -1176,7 +1191,7 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
     MS_LOG(DEBUG) << "Unlock after aclmdlExecute.";
     AclMemManager::GetInstance().Unlock();
   }
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  if (output_timecost) {
     struct timeval end_time;
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;
@@ -1287,9 +1302,9 @@ bool ModelProcess::GetOutputs(const std::vector<KernelTensorPtr> &outputs) {
       }
     } else if (output_device_id != device_id_) {
       // memcpy output data from current device to output device.
-      if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(output_info.cur_device_data,
-                                                                      output->GetData()->addr, output_info.buffer_size,
-                                                                      device_id_, output_device_id) != kSuccess) {
+      if (AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
+            output_info.cur_device_data, output->GetData()->addr, output->GetSizeInBytes(), output_info.buffer_size,
+            device_id_, output_device_id) != kSuccess) {
         MS_LOG(ERROR) << "Copy output data from device to current device failed.";
         return false;
       }

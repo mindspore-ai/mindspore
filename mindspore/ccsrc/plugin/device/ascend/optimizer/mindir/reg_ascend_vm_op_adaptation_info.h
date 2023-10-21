@@ -441,11 +441,6 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kStridedSliceOpName)
   .set_input_attr_info(2, "listInt")
   .set_input_attr_info(3, "listInt");
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kTileOpName)
-  .set_target_op_name(kTileDOpName)
-  .set_need_tbe_check_supported(true)
-  .set_input_attr_info(1, "listInt");
-
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kTransposeOpName)
   .set_target_op_name(kTransposeDOpName)
   .set_need_tbe_check_supported(true)

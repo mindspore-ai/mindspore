@@ -23,7 +23,6 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/map_tensor/map_tensor_gpu_kernel.h"
-#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
 
 namespace mindspore {
 namespace kernel {

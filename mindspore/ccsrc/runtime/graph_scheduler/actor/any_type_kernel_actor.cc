@@ -47,14 +47,16 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
                       << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
                       << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
-                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
+                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                      << " origin ref count:" << input_data->data_->original_ref_count();
   }
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data:" << input_data->data_
                 << " index:" << input_data->index_ << ", size:" << input_data->data_->GetSize()
-                << " user data:" << input_data->data_->user_data() << " input num:" << input_datas_num_
-                << " input device tensor size:" << input_device_tensors_.size()
+                << " ptr:" << input_data->data_->GetPtr() << " user data:" << input_data->data_->user_data()
+                << " input num:" << input_datas_num_ << " input device tensor size:" << input_device_tensors_.size()
                 << " ref count:" << input_data->data_->ref_count()
                 << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                << " origin ref count:" << input_data->data_->original_ref_count()
                 << " user data:" << input_data->data_->user_data();
   if (input_data->index_ < SizeToLong(graph()->input_nodes().size())) {
     // Collect graph input data.
@@ -395,6 +397,19 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
       actors = transform_func_(graph(), new_graph, device_contexts()[0]);
       actors_[current_data_type_] = actors;
       schedule_func_(actors);
+
+      for (const auto &node_pair : new_graph->front_backend_anf_map()) {
+        MS_EXCEPTION_IF_NULL(node_pair.first);
+        if (!node_pair.first->isa<CNode>()) {
+          continue;
+        }
+        const auto &cnode = node_pair.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
+          MS_LOG(DEBUG) << "Erase flag for node:" << node_pair.first->DebugString();
+          cnode->EraseAttr(kAttrReplaceRealKernelInBackend);
+        }
+      }
     } catch (const std::exception &e) {
       MsException::Instance().SetException();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
@@ -583,6 +598,20 @@ void AnyTypeKernelActor::Init() {
   fallback_device_tensors_.resize(graph_ouput_device_tensors_.size());
 }
 
+namespace {
+void FreeMemory(DeviceTensor *device_tensor) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_tensor->device_name(), device_tensor->device_id()});
+  if (device_context == nullptr || device_context->device_res_manager_ == nullptr) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Device tensor:" << device_tensor << " release memory:" << device_tensor->GetMutablePtr();
+  device_context->device_res_manager_->FreeMemory(device_tensor->GetMutablePtr());
+  device_tensor->set_ptr(nullptr);
+}
+}  // namespace
+
 void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
@@ -644,6 +673,11 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
         }
         graph_ouput_device_tensors_[index] = fallback_device_tensors_[index].get();
       }
+      if (graph_ouput_device_tensors_[index]->GetPtr() != nullptr) {
+        // As the from memory pool flag of any type kernel graph is false, the memory cannot be released automatically,
+        // and the memory needs to be released before overwriting.
+        FreeMemory(graph_ouput_device_tensors_[index]);
+      }
       graph_ouput_device_tensors_[index]->set_ptr(graph_output_data->data_->GetMutablePtr());
       graph_ouput_device_tensors_[index]->set_sync_user_data_handler(
         graph_output_data->data_->sync_user_data_handler());
@@ -651,7 +685,7 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
       graph_ouput_device_tensors_[index]->SetSize(graph_output_data->data_->GetSize());
       auto node_with_index = graph_output_data->data_->node_index();
       graph_ouput_device_tensors_[index]->SetNodeIndex(node_with_index.first.lock(), node_with_index.second);
-      MS_LOG(DEBUG) << "src device address:" << graph_output_data->data_
+      MS_LOG(DEBUG) << "Actor:" << GetAID() << "src device address:" << graph_output_data->data_
                     << " shape:" << graph_output_data->data_->host_shape()
                     << " type:" << graph_output_data->data_->type_id()
                     << "dst device address:" << graph_ouput_device_tensors_[index]

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     }
     auto size_of_this = msg->size_of_this();
     auto column_hdr = msg->column();
+    RETURN_UNEXPECTED_IF_NULL(column_hdr);
     // Number of tensor buffer should match the number of columns plus one.
     if (buf.size() != column_hdr->size() + 1) {
       std::string errMsg = "Column count does not match. Expect " + std::to_string(column_hdr->size() + 1) +

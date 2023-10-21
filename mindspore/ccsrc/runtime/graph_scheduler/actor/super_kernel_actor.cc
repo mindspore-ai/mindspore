@@ -24,6 +24,15 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+bool InputDataNoNeedCopy(DeviceTensor *input_device_tensor, DeviceTensorPtr node_device_tensor) {
+  if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) || (input_device_tensor == nullptr) ||
+      (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
 void SuperKernelActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_);
   // Check device contexts number.
@@ -247,6 +256,8 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     } else if (common::IsNeedProfileMemory()) {
       auto memory_size = device_contexts_[0]->graph_executor_->GetGraphFeatureMemory(graph_);
       MS_LOG(WARNING) << "Need Profile Memory, graph: " << graph_->ToString() << ", feature memory: " << memory_size;
+      MS_LOG(WARNING) << "Need Profile Memory, max used static memory: "
+                      << device_contexts_[0]->device_res_manager_->GetMaxUsedMemorySize();
     }
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
@@ -309,12 +320,16 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     auto &node_device_tensor = node_device_tensors_[i];
     MS_EXCEPTION_IF_NULL(node_device_tensor);
     auto &input_device_tensor = input_device_tensors_[i];
-    if (TEST_FLAG(node_device_tensor->flag(), device::kDeviceAddressFlagNotUsed) || (input_device_tensor == nullptr) ||
-        (input_device_tensor->GetPtr() == node_device_tensor->GetPtr())) {
+    if (InputDataNoNeedCopy(input_device_tensor, node_device_tensor)) {
       continue;
     }
-    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
-    node_device_tensor->SetSize(input_device_tensor->GetSize());
+    if (type_ != KernelTransformType::kSuperKernelActor || node_device_tensor->GetSize() == 0) {
+      // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
+      node_device_tensor->SetSize(input_device_tensor->GetSize());
+    }
+    node_device_tensor->set_user_data(input_device_tensor->user_data());
+    node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
+
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
@@ -327,8 +342,6 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
         // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for supporting
         // zero copy.
         node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
-        node_device_tensor->set_user_data(input_device_tensor->user_data());
-        node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
         MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
                       << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
         node_device_tensor->set_from_mem_pool(false);
@@ -350,6 +363,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       }
       copy_device_tensor = copy_input_device_tensors_[i];
       MS_EXCEPTION_IF_NULL(copy_device_tensor);
+      copy_device_tensor->set_user_data(node_device_tensor->user_data());
+      copy_device_tensor->set_sync_user_data_handler(node_device_tensor->sync_user_data_handler());
       if ((copy_device_tensor->GetPtr() == nullptr) &&
           (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
         MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
@@ -363,6 +378,11 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
       node_device_tensor->set_from_mem_pool(false);
     } else {
+      if (node_device_tensor->GetPtr() == nullptr) {
+        MS_LOG(INFO)
+          << "The node device tensor, which shared with another graph, has no device memory and will skip copy.";
+        continue;
+      }
       copy_device_tensor = node_device_tensor;
     }
     MS_EXCEPTION_IF_NULL(copy_device_tensor);

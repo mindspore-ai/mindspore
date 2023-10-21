@@ -26,6 +26,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -145,8 +146,18 @@ Status ReshapeInfo::ComputeReplaceOpForDynamicShape() {
   // replace -1 shape to 1
   Shape replace_shape_in = input_layout_.tensor_shape_origin().array();
   Shape replace_shape_out = output_layout_.tensor_shape_origin().array();
-  (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, 1);
-  (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, 1);
+  int64_t replace_value = 1;
+  auto accumulate_shape_in = AccumulateShape(replace_shape_in);
+  auto accumulate_shape_out = AccumulateShape(replace_shape_out);
+  if (accumulate_shape_in < accumulate_shape_out) {
+    replace_value = accumulate_shape_in / accumulate_shape_out;
+    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, 1);
+    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, LongToInt(replace_value));
+  } else {
+    replace_value = accumulate_shape_out / accumulate_shape_in;
+    (void)std::replace(replace_shape_in.begin(), replace_shape_in.end(), -1, LongToInt(replace_value));
+    (void)std::replace(replace_shape_out.begin(), replace_shape_out.end(), -1, 1);
+  }
 
   if (fake_in.InitFromVector(input_layout_.device_arrangement_origin().array(),
                              input_layout_.origin_tensor_map().array(), replace_shape_in) != SUCCESS) {
@@ -320,11 +331,16 @@ Status ReshapeInfo::ComputeReplaceOp() {
       ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
     }
   } else {
+    if (AccumulateShape(input_layout_.shard_strategy()) == 1 && AccumulateShape(output_layout_.shard_strategy()) == 1) {
+      // input and output have not shard
+      replace_op_.clear();
+      replace_op_info_.clear();
+      return SUCCESS;
+    }
     // handle dynamic shape, now the dynamic dimension can not be split
     auto input_shape = input_layout_.tensor_shape_origin().array();
     auto output_shape = output_layout_.tensor_shape_origin().array();
-    if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape) &&
-        (AccumulateShape(input_shape) == AccumulateShape(output_shape))) {
+    if (OnlyOneDimDynamicShape(input_shape) && OnlyOneDimDynamicShape(output_shape)) {
       return ComputeReplaceOpForDynamicShape();
     }
 
@@ -344,6 +360,10 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
 
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+    if (!is_generating_costs_) {
+      redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+        redistribution_oplist_ptr, tensor_redistribution.input_shape());
+    }
     if (redistribution_oplist_ptr == nullptr) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << "InferTensorRedistribution failed.";

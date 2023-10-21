@@ -127,6 +127,8 @@ cast_ = P.Cast()
 #####################################
 # Private Operation Functions.
 #####################################
+addcdiv_ = P.Addcdiv()
+addcuml_ = P.Addcmul()
 addn_ = P.AddN()
 angle_ = Angle()
 log_ = P.Log()
@@ -142,6 +144,7 @@ asin_ = P.Asin()
 polar_ = Polar()
 acos_ = P.ACos()
 atan_ = P.Atan()
+atan2_ = P.Atan2()
 sinh_ = P.Sinh()
 cosh_ = P.Cosh()
 tanh_ = P.Tanh()
@@ -177,6 +180,7 @@ tensor_round_ = P.Round()
 linspace_ = P.LinSpace()
 matrix_exp_ = MatrixExp()
 exp2_ = P.Pow()
+trunc_ = P.Trunc()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
 sparse_segment_mean_ = SparseSegmentMean()
@@ -189,6 +193,36 @@ shape_ = P.Shape()
 reshape_ = P.Reshape()
 dtype_ = P.DType()
 eps_ = P.Eps()
+rank_ = P.Rank()
+expand_dims_ = P.ExpandDims()
+sign_ = P.Sign()
+nextafter_ = P.NextAfter()
+matrix_inverse_ = P.MatrixInverse()
+matrix_determinant_ = P.MatrixDeterminant()
+log_matrix_determinant_ = P.LogMatrixDeterminant()
+trace_ = P.Trace()
+real_ = P.Real()
+rsqrt_ = P.Rsqrt()
+reciprocal_ = P.Reciprocal()
+tile_ = P.Tile()
+batch_matmul_ = P.BatchMatMul()
+fill_v2_ = P.FillV2()
+imag_ = P.Imag()
+log1p_ = P.Log1p()
+accumulate_ = P.AccumulateNV2()
+conj_ = P.Conj()
+erfinv_ = P.Erfinv()
+cumprod_ = P.CumProd()
+lgamma_ = P.Lgamma()
+digamma_ = P.Digamma()
+poly_gamma_ = P.Polygamma()
+isinf_ = P.IsInf()
+zeros_ = P.Zeros()
+ones_ = P.Ones()
+logical_xor_ = P.LogicalXor()
+zeta_ = P.Zeta()
+div_ = P.Div()
+matmul_ = P.MatMul()
 
 
 #####################################
@@ -327,7 +361,7 @@ def add(input, other):
         >>> print(output.dtype)
         Float32
     """
-    return _get_cache_prim(P.Add)()(input, other)
+    return tensor_add(input, other)
 
 
 def addcdiv(input, tensor1, tensor2, value=1):
@@ -368,7 +402,7 @@ def addcdiv(input, tensor1, tensor2, value=1):
         >>> print(y)
         [1.25      1.6666667 2.5       5.       ]
     """
-    return _get_cache_prim(P.Addcdiv)()(input, tensor1, tensor2, Tensor(value))
+    return addcdiv_(input, tensor1, tensor2, Tensor(value))
 
 
 def addcmul(input, tensor1, tensor2, value=1):
@@ -414,7 +448,7 @@ def addcmul(input, tensor1, tensor2, value=1):
          [ 3.  5.  7.]
          [ 4.  7. 10.]]
     """
-    return _get_cache_prim(P.Addcmul)()(input, tensor1, tensor2, Tensor(value))
+    return addcuml_(input, tensor1, tensor2, Tensor(value))
 
 
 def angle(input):
@@ -492,8 +526,7 @@ def bincount(input, weights=None, minlength=0):
         raise TypeError(f"For math function 'bincount', 'weights' must be Tensor, but got {type(weights)}.")
     if not isinstance(minlength, int) or isinstance(minlength, bool):
         raise TypeError(f"For math function 'bincount', 'minlength' must be int but got {type(minlength)}.")
-    rank_op = _get_cache_prim(P.Rank)()
-    if rank_op(input) != 1:
+    if rank_(input) != 1:
         raise ValueError(f"For math function 'bincount', 'input' should be one-dimensional tensor.")
     if not (input >= 0).all():
         raise ValueError(f"For 'bincount', elements of 'input' should be non-negative.")
@@ -631,12 +664,12 @@ def argmin(input, axis=None, keepdims=False):
         return Tensor(0)
     is_axis_none = False
     if axis is None:
-        input = _get_cache_prim(P.Reshape)()(input, (-1,))
+        input = reshape_(input, (-1,))
         axis = 0
         is_axis_none = True
     out = _get_cache_prim(P.Argmin)(axis)(input)
     if keepdims and not is_axis_none:
-        out = _get_cache_prim(P.ExpandDims)()(out, axis)
+        out = expand_dims_(out, axis)
     return out
 
 
@@ -669,7 +702,7 @@ def neg(input):
         >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
     """
-    return _get_cache_prim(P.Neg)()(input)
+    return neg_tensor(input)
 
 
 def negative(input):
@@ -679,7 +712,7 @@ def negative(input):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return _get_cache_prim(P.Neg)()(input)
+    return neg_tensor(input)
 
 
 def positive(input):
@@ -979,8 +1012,7 @@ def mul(input, other):
         >>> print(output)
         [ 4. 10. 18.]
     """
-    _multi = _get_cache_prim(P.Mul)()
-    return _multi(input, other)
+    return tensor_mul(input, other)
 
 
 def multiply(input, other):
@@ -1051,10 +1083,10 @@ def div(input, other, *, rounding_mode=None):
         raise ValueError("For ops.div, rounding_mode value should be None, 'floor' or 'trunc'.")
 
     if rounding_mode == 'floor':
-        return _get_cache_prim(P.FloorDiv)()(input, other)
-    output = _get_cache_prim(P.Div)()(input, other)
+        return tensor_floordiv(input, other)
+    output = div_(input, other)
     if rounding_mode == 'trunc':
-        output = _get_cache_prim(P.Trunc)()(output)
+        output = trunc_(output)
     return output
 
 
@@ -1275,7 +1307,7 @@ def pow(input, exponent):
         >>> print(output)
         [ 1. 16. 64.]
     """
-    return _get_cache_prim(P.Pow)()(input, exponent)
+    return tensor_pow(input, exponent)
 
 
 def floor_mod(x, y):
@@ -1429,8 +1461,7 @@ def log(input):
         >>> print(output)
         [0.        0.6931472 1.3862944]
     """
-    log_op = _get_cache_prim(P.Log)()
-    return log_op(input)
+    return log_(input)
 
 
 def logdet(input):
@@ -1493,8 +1524,7 @@ def floor(input):
         >>> print(output)
         [ 1.  2. -2.]
     """
-    _floor = _get_cache_prim(P.Floor)()
-    return _floor(input)
+    return floor_(input)
 
 
 def i0(input):
@@ -1851,7 +1881,7 @@ def logical_and(input, other):
         input = input.astype(mstype.bool_)
     if isinstance(other, Tensor) and other.dtype != mstype.bool_:
         other = other.astype(mstype.bool_)
-    return _get_cache_prim(P.LogicalAnd)()(input, other)
+    return logical_and_(input, other)
 
 
 def sign(input):
@@ -1894,7 +1924,7 @@ def sign(input):
     """
     if not isinstance(input, Tensor):
         raise TypeError(f"For sign, the input must be a Tensor, but got {type(input)}")
-    return _get_cache_prim(ops.Sign)()(input)
+    return sign_(input)
 
 
 def signbit(input):
@@ -2005,8 +2035,7 @@ def sin(input):
         >>> print(output)
         [0.5810352 0.27635565 0.41687083 0.5810352]
     """
-    _sin = _get_cache_prim(P.Sin)()
-    return _sin(input)
+    return sin_(input)
 
 
 def sinc(input):
@@ -2077,8 +2106,7 @@ def cos(input):
         >>> print(output)
         [0.971338 0.6748758 0.95233357 0.9959527]
     """
-    cos_op = _get_cache_prim(P.Cos)()
-    return cos_op(input)
+    return cos_(input)
 
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-08):
@@ -2300,7 +2328,7 @@ def t(input):
     if input.ndim > 2:
         raise ValueError(f"For t(), the dimension of tensor should be less than 3, but got {input.ndim}.")
     if input.ndim == 2:
-        return _get_cache_prim(P.Transpose)()(input, (1, 0))
+        return transpose_(input, (1, 0))
     return input
 
 
@@ -2457,8 +2485,7 @@ def arctan2(input, other):
         >>> print(output)
         [0.        0.7853982]
     """
-    _atan2 = _get_cache_prim(P.Atan2)()
-    return _atan2(input, other)
+    return atan2_(input, other)
 
 
 def polar(abs, angle):  # pylint: disable=redefined-outer-name
@@ -2617,8 +2644,7 @@ def atan(input):
         >>> print(output)
         [0.7853982 0.       ]
     """
-    atan_op = _get_cache_prim(P.Atan)()
-    return atan_op(input)
+    return atan_(input)
 
 
 def sinh(input):
@@ -2890,8 +2916,7 @@ def atan2(input, other):
         >>> print(output)
         [0.        0.7853982]
     """
-    _atan2 = _get_cache_prim(P.Atan2)()
-    return _atan2(input, other)
+    return atan2_(input, other)
 
 
 def bitwise_and(input, other):
@@ -3161,7 +3186,6 @@ def nextafter(input, other):
         >>> print(output_)
         [1.e-45]
     """
-    nextafter_ = _get_cache_prim(P.NextAfter)()
     return nextafter_(input, other)
 
 
@@ -3225,7 +3249,7 @@ def inverse(input):
          [ 1.5 -0.5]]
     """
     _check_is_tensor("input", input, "inverse")
-    return _get_cache_prim(P.MatrixInverse)()(input)
+    return matrix_inverse_(input)
 
 
 def invert(x):
@@ -3293,8 +3317,7 @@ def erf(input):
         >>> print(output)
         [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
     """
-    erf_op = _get_cache_prim(P.Erf)()
-    return erf_op(input)
+    return erf_(input)
 
 
 def erfc(input):
@@ -3749,7 +3772,7 @@ def det(input):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return _get_cache_prim(P.MatrixDeterminant)()(input)
+    return matrix_determinant_(input)
 
 
 def matrix_determinant(input):
@@ -3757,7 +3780,7 @@ def matrix_determinant(input):
     `matrix_determinant` is deprecated, please use `det` instead.
     """
     logger.warning("matrix_determinant is deprecated, please use `det` instead.")
-    return _get_cache_prim(P.MatrixDeterminant)()(input)
+    return matrix_determinant_(input)
 
 
 def log_matrix_determinant(input):
@@ -3765,7 +3788,7 @@ def log_matrix_determinant(input):
     `log_matrix_determinant` is deprecated, please use `matrix_solve` instead.
     """
     logger.warning("`log_matrix_determinant` is deprecated, please use `matrix_solve` instead.")
-    return _get_cache_prim(P.LogMatrixDeterminant)()(input)
+    return log_matrix_determinant_(input)
 
 
 def matrix_exp(input):
@@ -3946,7 +3969,7 @@ def slogdet(input):
         >>> print(output)
         [2.80336046e+00    3.04452229e+00]
     """
-    return _get_cache_prim(P.LogMatrixDeterminant)()(input)
+    return log_matrix_determinant_(input)
 
 
 def trace(input):
@@ -3986,7 +4009,6 @@ def trace(input):
         >>> print(output)
         24.0
     """
-    trace_ = _get_cache_prim(P.Trace)()
     return trace_(input)
 
 
@@ -4108,7 +4130,7 @@ def trunc(input):
         >>> print(output)
         [3. 0. 0. -3.]
     """
-    return _get_cache_prim(P.Trunc)()(input)
+    return trunc_(input)
 
 
 def ldexp(x, other):
@@ -4159,11 +4181,7 @@ def ldexp(x, other):
         [[2.]
          [8.]]
     """
-
-    pow_ops = _get_cache_prim(P.Pow)()
-    mul_ops = _get_cache_prim(P.Mul)()
-
-    out = mul_ops(x, pow_ops(2.0, other))
+    out = tensor_mul(x, tensor_pow(2.0, other))
     return out
 
 
@@ -4259,8 +4277,7 @@ def less(input, other):
         >>> print(output)
         [False False True]
     """
-    tensor_lt_op = _get_cache_prim(P.Less)()
-    return tensor_lt_op(input, other)
+    return tensor_lt(input, other)
 
 
 def lt(input, other):
@@ -4371,8 +4388,7 @@ def gt(input, other):
         >>> print(output)
         [False True False]
     """
-    _greater = _get_cache_prim(P.Greater)()
-    return _greater(input, other)
+    return tensor_gt(input, other)
 
 
 def ge(input, other):
@@ -4422,8 +4438,7 @@ def ge(input, other):
         >>> print(output)
         [True True False]
     """
-    _greater_equal = _get_cache_prim(P.GreaterEqual)()
-    return _greater_equal(input, other)
+    return tensor_ge(input, other)
 
 
 def eq(input, other):
@@ -4792,14 +4807,11 @@ def isreal(input):
     _check_is_tensor("input", input, "isreal")
 
     # Note: Integral and Floating tensor values are always real
-    fillv2_op = _get_cache_prim(P.FillV2)()
     value = Tensor(1, mstype.bool_)
     real_dtype = mstype.int_type + mstype.uint_type + mstype.float_type + (mstype.bool_,)
     if input.dtype in real_dtype:
-        return fillv2_op(input.shape, value)
-
-    imag_op = _get_cache_prim(P.Imag)()
-    return imag_op(input) == 0
+        return fill_v2_(input.shape, value)
+    return imag_(input) == 0
 
 
 def is_complex(input):
@@ -5801,10 +5813,10 @@ def var_mean(input, axis=None, ddof=0, keepdims=False):
     axis = _check_var_std_input(input, ddof, keepdims, axis, "var_mean")
     if ddof in (0, 1):
         output = _get_cache_prim(P.ReduceStd)(axis=axis, unbiased=bool(ddof), keep_dims=keepdims)(input)
-        return _get_cache_prim(P.Pow)()(output[0], 2), output[1]
+        return tensor_pow(output[0], 2), output[1]
     x_mean = mean(input, axis, True)
-    x_sub = _get_cache_prim(P.Sub)()(input, x_mean)
-    x_pow = _get_cache_prim(P.Pow)()(x_sub, 2)
+    x_sub = tensor_sub(input, x_mean)
+    x_pow = tensor_pow(x_sub, 2)
     x_sum = sum(x_pow, axis, keepdims)
     res_mean = mean(input, axis, keepdims)
     nums = 1
@@ -5934,7 +5946,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
     if ddof in (0, 1):
         return _get_cache_prim(P.ReduceStd)(axis=axis, unbiased=bool(ddof), keep_dims=keepdims)(input)
     output = var_mean(input, axis, ddof, keepdims)
-    return _get_cache_prim(P.Pow)()(output[0], 0.5), output[1]
+    return tensor_pow(output[0], 0.5), output[1]
 
 
 def real(input):
@@ -5963,7 +5975,7 @@ def real(input):
         >>> print(output)
         1.3
     """
-    return _get_cache_prim(ops.Real)()(input)
+    return real_(input)
 
 
 def reciprocal(input):
@@ -6000,7 +6012,7 @@ def reciprocal(input):
         raise TypeError(f"For reciprocal, the input must be a Tensor, but got {type(input)}.")
     if not is_complex(input) and not ops.is_floating_point(input):
         input = ops.cast(input, mstype.float32)
-    return _get_cache_prim(ops.Reciprocal)()(input)
+    return reciprocal_(input)
 
 
 def rsqrt(input):
@@ -6032,7 +6044,7 @@ def rsqrt(input):
         >>> print(output)
         [       nan 1.8349396  0.80530024        nan]
     """
-    return _get_cache_prim(ops.Rsqrt)()(input)
+    return rsqrt_(input)
 
 
 def sqrt(x):
@@ -6063,8 +6075,7 @@ def sqrt(x):
         >>> print(output)
         [1. 2. 3.]
     """
-    sqrt_op = _get_cache_prim(P.Sqrt)()
-    return sqrt_op(x)
+    return sqrt_(x)
 
 
 def square(input):
@@ -6144,8 +6155,7 @@ def outer(input, vec2):
     if len(vec2.shape) != 1:
         raise ValueError("the input vec2 must be a 1-D vector!")
     input = input.reshape(-1, 1)
-    mul_ops = _get_cache_prim(P.Mul)()
-    y = mul_ops(input, vec2)
+    y = tensor_mul(input, vec2)
     return y
 
 
@@ -6179,10 +6189,6 @@ def mv(mat, vec):
         >>> print(output)
         [11. 13. 7.]
     """
-
-    matmul_op = _get_cache_prim(P.MatMul)()
-    reshape_op = _get_cache_prim(P.Reshape)()
-
     if not isinstance(mat, (Tensor, Tensor_)):
         raise TypeError("The input mat must be Tensor.")
     if not isinstance(vec, (Tensor, Tensor_)):
@@ -6193,9 +6199,9 @@ def mv(mat, vec):
         raise ValueError("The input vec must be 1-D Tensor.")
 
     length_vec = get_x_shape(vec.shape)
-    vec = reshape_op(vec, (length_vec[0], 1))
+    vec = reshape_(vec, (length_vec[0], 1))
 
-    out = matmul_op(mat, vec)
+    out = matmul_(mat, vec)
     out = out.T
     out = out[0]
     return out
@@ -6253,8 +6259,7 @@ def addbmm(input, batch1, batch2, *, beta=1, alpha=1):
         raise TypeError(f"For 'addbmm', parameter 'alpha' must be an int or float, but got {type(alpha)}.")
     if not isinstance(beta, (int, float)):
         raise TypeError(f"For 'addbmm', parameter 'beta' must be an int or float, but got {type(beta)}.")
-    bmm_op = _get_cache_prim(P.BatchMatMul)()
-    bmm_res = bmm_op(batch1, batch2)
+    bmm_res = batch_matmul_(batch1, batch2)
     return beta * input + alpha * (bmm_res.sum(axis=0))
 
 
@@ -6302,8 +6307,7 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
         raise TypeError(f"For 'addmm', parameter 'alpha' must be an int or float, but got {type(alpha)}.")
     if not isinstance(beta, (int, float)):
         raise TypeError(f"For 'addmm', parameter 'beta' must be an int or float, but got {type(beta)}.")
-    matmul_op = _get_cache_prim(P.MatMul)()
-    return beta * input + alpha * (matmul_op(mat1, mat2))
+    return beta * input + alpha * (matmul_(mat1, mat2))
 
 
 def addmv(input, mat, vec, *, beta=1, alpha=1):
@@ -6353,11 +6357,10 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
         [30. 27.]
     """
 
-    dtypeop = P.DType()
-    input_dtype = dtypeop(input)
+    input_dtype = dtype_(input)
     if not (isinstance(input, Tensor) and isinstance(mat, Tensor) and isinstance(vec, Tensor)):
         raise TypeError("For Addmv, inputs must be all tensors.")
-    if dtypeop(mat) != dtypeop(vec):
+    if dtype_(mat) != dtype_(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
     _check_input_1d(vec.shape, "vec", "Addmv")
     _check_input_2d(mat.shape, "mat", "Addmv")
@@ -6451,11 +6454,10 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
          [ 9. 12.]]
     """
 
-    dtypeop = P.DType()
-    input_dtype = dtypeop(x)
+    input_dtype = dtype_(x)
     if not (isinstance(x, Tensor) and isinstance(vec1, Tensor) and isinstance(vec2, Tensor)):
         raise TypeError("For Addr, inputs must be all tensors.")
-    if dtypeop(vec1) != dtypeop(vec2):
+    if dtype_(vec1) != dtype_(vec2):
         raise TypeError("For Addr, the vec1 and vec2 should be the same dtype.")
     _check_input_1d(vec1.shape, "vec1", "Addr")
     _check_input_1d(vec2.shape, "vec2", "Addr")
@@ -6469,12 +6471,11 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
         alpha = scalar_cast(alpha, mstype.int32)
         beta = scalar_cast(beta, mstype.int32)
     matmul_op = P.MatMul()
-    reshape_op = P.Reshape()
 
     length_vec1 = get_x_shape(vec1.shape)
-    vec1 = reshape_op(vec1, (length_vec1[0], 1))
+    vec1 = reshape_(vec1, (length_vec1[0], 1))
     length_vec2 = get_x_shape(vec2.shape)
-    vec2 = reshape_op(vec2, (1, length_vec2[0]))
+    vec2 = reshape_(vec2, (1, length_vec2[0]))
 
     out = beta * x + alpha * matmul_op(vec1, vec2)
     return out
@@ -6887,8 +6888,7 @@ def deg2rad(x):
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
-    dtype_op = _get_cache_prim(P.DType)()
-    x_dtype = dtype_op(x)
+    x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
     if x_dtype == mstype.float16:
         out = x * (Tensor(math.pi / 180.0).astype(mstype.float16))
@@ -6928,8 +6928,7 @@ def rad2deg(x):
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
-    dtype_op = _get_cache_prim(P.DType)()
-    x_dtype = dtype_op(x)
+    x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
     if x_dtype == mstype.float16:
         out = x * (Tensor(180.0 / math.pi).astype(mstype.float16))
@@ -7034,14 +7033,12 @@ def cummin(input, axis):
     if axis == 0:
         out1, out2 = cummin_op(input)
     else:
-        transpose = _get_cache_prim(P.Transpose)()
-        _shape_op = _get_cache_prim(P.Shape)()
-        x_shape = _shape_op(input)
+        x_shape = shape_(input)
         prem = _create_cummin_perm(axis, x_shape)
-        input = transpose(input, prem)
+        input = transpose_(input, prem)
         out1, out2 = cummin_op(input)
-        out1 = transpose(out1, prem)
-        out2 = transpose(out2, prem)
+        out1 = transpose_(out1, prem)
+        out2 = transpose_(out2, prem)
     return [out1, out2]
 
 
@@ -7357,7 +7354,7 @@ def dstack(inputs):
         if tensor.ndim <= 1:
             tensor = _expand(tensor, 2)
         if tensor.ndim == 2:
-            tensor = P.ExpandDims()(tensor, 2)
+            tensor = expand_dims_(tensor, 2)
         trans_inputs += (tensor,)
     if not trans_inputs:
         raise ValueError("For 'dstack', at least one tensor is needed to concatenate.")
@@ -7622,8 +7619,7 @@ def cartesian_prod(*inputs):
     meshgrid_output = meshgrid(inputs)
     stack = P.Stack(axis=-1)
     stack_output = stack(meshgrid_output)
-    reshape = P.Reshape()
-    return reshape(stack_output, (-1, len(inputs)))
+    return reshape_(stack_output, (-1, len(inputs)))
 
 
 def atleast_3d(inputs):
@@ -7673,13 +7669,13 @@ def atleast_3d(inputs):
     """
 
     def _expand3(arr):
-        ndim = P.Rank()(arr)
+        ndim = rank_(arr)
         if ndim == 0:
-            return P.Reshape()(arr, (1, 1, 1))
+            return reshape_(arr, (1, 1, 1))
         if ndim == 1:
-            return P.Reshape()(arr, (1, P.Size()(arr), 1))
+            return reshape_(arr, (1, P.Size()(arr), 1))
         if ndim == 2:
-            return P.Reshape()(arr, P.Shape()(arr) + (1,))
+            return reshape_(arr, P.Shape()(arr) + (1,))
         return arr
 
     if isinstance(inputs, Tensor):
@@ -7777,7 +7773,7 @@ def vstack(inputs):
             ndim_diff = 2 - len(shape)
             if ndim_diff > 0:
                 shape = [1] * ndim_diff + [i for i in shape]
-            tensor = P.Reshape()(tensor, tuple(shape))
+            tensor = reshape_(tensor, tuple(shape))
         trans_tup += (tensor,)
     if not trans_tup:
         raise ValueError("For 'vstack', need at least one tensor to concatenate.")
@@ -7990,17 +7986,17 @@ def copysign(x, other):
         other = _type_convert(Tensor, other)
     other = _broadcast_to_shape(other, P.Shape()(x))
 
-    if _check_same_type(P.DType()(x), mstype.bool_):
+    if _check_same_type(dtype_(x), mstype.bool_):
         raise TypeError("copysign does not accept dtype bool.")
 
-    if _check_same_type(P.DType()(x), mstype.complex64):
+    if _check_same_type(dtype_(x), mstype.complex64):
         raise TypeError("copysign does not accept dtype complex64.")
-    if _check_same_type(P.DType()(other), mstype.complex64):
+    if _check_same_type(dtype_(other), mstype.complex64):
         raise TypeError("copysign does not accept dtype complex64.")
 
-    if _check_same_type(P.DType()(x), mstype.complex128):
+    if _check_same_type(dtype_(x), mstype.complex128):
         raise TypeError("copysign does not accept dtype complex128.")
-    if _check_same_type(P.DType()(other), mstype.complex128):
+    if _check_same_type(dtype_(other), mstype.complex128):
         raise TypeError("copysign does not accept dtype complex128.")
 
     x_float = (
@@ -8010,7 +8006,7 @@ def copysign(x, other):
     )
     pos_tensor = P.Abs()(x_float)
     less_zero = P.Less()(other, 0)
-    return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
+    return P.Select()(less_zero, neg_tensor(pos_tensor), pos_tensor)
 
 
 def hann_window(window_length, periodic=True, *, dtype=None):
@@ -8162,14 +8158,12 @@ def logsumexp(input, axis, keep_dims=False):
         >>> print(output.shape)
         (3, 1, 5, 6)
     """
-    _exp = _get_cache_prim(P.Exp)()
     _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
-    _log = _get_cache_prim(P.Log)()
 
     input_max = ops.ReduceMax(keep_dims=True)(input, axis)
-    input_exp = _exp(input - input_max)
+    input_exp = tensor_exp(input - input_max)
     input_sumexp = _reduce_sum(input_exp, axis)
-    input_logsumexp = _log(input_sumexp)
+    input_logsumexp = log_(input_sumexp)
     if not keep_dims:
         input_max = input_max.squeeze(axis=axis)
     return input_logsumexp + input_max
@@ -8681,50 +8675,53 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Note:
-        - Currently, complex numbers are not supported.
-        - Running on ``Ascend`` platform is not supported when ord is `2` , `-2` or `nuc` .
+        Currently, complex numbers are not supported.
 
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.ops as ops
-        >>> x = ops.arange(-12, 13, dtype=ms.float32)
+        >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
+        >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
+        >>> x = data_range[data_range != 0]
         >>> y = x.reshape(5, 5)
         >>> print(ops.norm(x))
-        36.05551
+        38.327538
         >>> print(ops.norm(x, float('inf')))
-        12.0
+        13.0
         >>> print(ops.norm(x, float('-inf')))
-        0.0
+        1.0
         >>> print(ops.norm(x, 0))
-        24.0
+        25.0
         >>> print(ops.norm(x, 1))
-        156.0
+        169.0
         >>> print(ops.norm(x, -1))
-        0.0
+        0.15915091
         >>> print(ops.norm(x, 2))
-        36.05551
+        38.327538
         >>> print(ops.norm(x, -2))
-        0.0
+        0.5647041
         >>> print(ops.norm(x, 3))
-        23.000631
+        24.309084
         >>> print(ops.norm(x, -3))
-        0.0
+        0.74708974
         >>> print(ops.norm(y))
-        36.05551
+        38.327538
         >>> print(ops.norm(y, 'fro'))
-        36.05551
+        38.327538
         >>> print(ops.norm(y, 'nuc'))
-        42.42641
+        45.56681
         >>> print(ops.norm(y, float('inf')))
-        50.0
+        55.0
         >>> print(ops.norm(y, float('-inf')))
-        6.0
+        9.0
         >>> print(ops.norm(y, 1))
-        32.0
+        35.0
         >>> print(ops.norm(y, -1))
-        30.0
+        33.0
         >>> print(ops.norm(y, 2))
-        35.355343
+        37.57774
+        >>> print(ops.norm(y, -2))
+        1.590545e-07
         >>> m = ms.Tensor([[1., -1., 2.], [-2., 3., -4.]])
         >>> print(ops.norm(m, dim=0))
         [2.236068  3.1622777 4.472136 ]
@@ -8732,6 +8729,10 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         [2.4494898 5.3851647]
         >>> print(ops.norm(m, ord=1, dim=1))
         [4. 9.]
+        >>> print(ops.norm(m, ord=-2, dim=0))
+        [0.8944272  0.94868326 1.7888544 ]
+        >>> print(ops.norm(m, ord=2, dim=1))
+        [2.4494898 5.3851647]
         >>> n = ops.arange(27, dtype=ms.float32).reshape(3, 3, 3)
         >>> print(ops.norm(n, dim=(1, 2)))
         [14.282857 39.76179  66.45299 ]
@@ -9287,7 +9288,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     """
     _check_logits_tensor(logits)
     _check_logits_shape(logits)
-    logits_dtype = _get_cache_prim(P.DType)()(logits)
+    logits_dtype = dtype_(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
     _check_attr_dtype("hard", hard, [bool], "gumbel_softmax")
@@ -9299,14 +9300,13 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         _check_int_range(dim, -len(logits.shape),
                          len(logits.shape), 'dim', "gumbel_softmax")
 
-    log_op = _get_cache_prim(P.Log)()
     const_op = _get_cache_prim(P.ScalarToTensor)()
 
-    sample_shape = _get_cache_prim(P.Shape)()(logits)
+    sample_shape = shape_(logits)
     uniform = C.uniform(sample_shape, const_op(
         0.0, mstype.float32), const_op(1.0, mstype.float32))
-    uniform = _get_cache_prim(P.Cast)()(uniform, logits_dtype)
-    gumbel = neg_tensor(log_op(neg_tensor(log_op(uniform))))
+    uniform = cast_(uniform, logits_dtype)
+    gumbel = neg_tensor(log_(neg_tensor(log_(uniform))))
     gumbel = (logits + gumbel) / tau
     y_soft = _get_cache_prim(P.Softmax)(dim)(gumbel)
     if hard:
@@ -9476,8 +9476,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         window = ops.ones(win_length, mstype.float32)
 
     def _is_complex(x):
-        dtype = P.DType()
-        return dtype(x) in [mstype.complex64, mstype.complex128]
+        return dtype_(x) in [mstype.complex64, mstype.complex128]
 
     if onesided is None:
         onesided = (not _is_complex(x)) and (not _is_complex(window))
@@ -9586,20 +9585,17 @@ def _check_input_2d(input_shape, param_name, func_name):
 @_primexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
-    rank_op = _get_cache_prim(P.Rank)()
-    expand_dims_op = _get_cache_prim(P.ExpandDims)()
-    while rank_op(x) < ndim:
-        x = expand_dims_op(x, 0)
+    while rank_(x) < ndim:
+        x = expand_dims_(x, 0)
     return x
 
 
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
-    tile_op = _get_cache_prim(P.Tile)()
     tile_size_op = _get_cache_prim(TileSize)()
     size = tile_size_op(shape_cur, shape_to, ndim_to)
     F.stop_gradient(size)
-    return tile_op(x, size)
+    return tile_(x, size)
 
 
 def matmul(input, other):
@@ -9663,17 +9659,13 @@ def matmul(input, other):
     if not (isinstance(input, Tensor) and isinstance(other, Tensor)):
         raise TypeError("For matmul op, inputs must be all tensors.")
 
-    rank_op = _get_cache_prim(P.Rank)()
-    input_rank, other_rank = rank_op(input), rank_op(other)
+    input_rank, other_rank = rank_(input), rank_(other)
     if input_rank == 2 and other_rank == 2:
         _matmul = _get_cache_prim(P.MatMul)(False, False)
         return _matmul(input, other)
 
-    shape_op = _get_cache_prim(P.Shape)()
-    reshape_op = _get_cache_prim(P.Reshape)()
-
-    ndim1_orig, ndim2_orig = rank_op(input), rank_op(other)
-    shape1_orig, shape2_orig = shape_op(input), shape_op(other)
+    ndim1_orig, ndim2_orig = rank_(input), rank_(other)
+    shape1_orig, shape2_orig = shape_(input), shape_(other)
     transpose_b = ndim2_orig == 1
     shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, 'matmul')
     # infers the shape of the output
@@ -9685,21 +9677,21 @@ def matmul(input, other):
 
     input = _expand(input, 2)
     other = _expand(other, 2)
-    if rank_op(other) == 2:
-        if rank_op(input) > 2:
-            input = reshape_op(input, (-1, shape1_orig[-1]))
+    if rank_(other) == 2:
+        if rank_(input) > 2:
+            input = reshape_(input, (-1, shape1_orig[-1]))
         res = _matmul(input, other)
     else:
         # broadcasts input.shape[:-2] with other.shape[:-2]
         ndim_aligned = _max(ndim1_orig, ndim2_orig)
         input = _expand(input, ndim_aligned)
         other = _expand(other, ndim_aligned)
-        shape1_aligned, shape2_aligned = shape_op(input), shape_op(other)
+        shape1_aligned, shape2_aligned = shape_(input), shape_(other)
         input = _broadcast_to(input, shape1_aligned[:-2], shape_backbone, ndim_aligned)
         other = _broadcast_to(other, shape2_aligned[:-2], shape_backbone, ndim_aligned)
         res = _batch_matmul(input, other)
 
-    return reshape_op(res, shape_out)
+    return reshape_(res, shape_out)
 
 
 def inner(input, other):
@@ -9819,8 +9811,7 @@ def bmm(input_x, mat2):
     if not (isinstance(input_x, Tensor) and isinstance(mat2, Tensor)):
         raise TypeError("For bmm op, inputs input_x and mat2 must be all tensors.")
 
-    bmm_op = _get_cache_prim(P.BatchMatMul)()
-    return bmm_op(input_x, mat2)
+    return batch_matmul_(input_x, mat2)
 
 
 def quantile(input, q, axis=None, keepdims=False):
@@ -9984,15 +9975,14 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
           [5. 5. 5.]
           [5. 5. 5.]]]
     """
-    dtypeop = _get_cache_prim(P.DType)()
     bmmop = _get_cache_prim(P.BatchMatMul)(False, False)
     if not (isinstance(input, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
         raise TypeError("For Baddbmm, inputs must be all tensors.")
     if len(batch1.shape) != 3 or len(batch2.shape) != 3:
         raise ValueError("For batch1 and batch2 must be 3-D tensors each containing the same number of matrices, "
                          f"but got length of batch1:'{len(batch1.shape)}', length of batch2:'{len(batch2.shape)}'.")
-    input_dtype = dtypeop(input)
-    if not (input_dtype == dtypeop(batch1) and input_dtype == dtypeop(batch2)):
+    input_dtype = dtype_(input)
+    if not (input_dtype == dtype_(batch1) and input_dtype == dtype_(batch2)):
         raise TypeError("For Baddbmm, the inputs should be the same dtype.")
     if input_dtype in (mstype.float16, mstype.float32, mstype.float64):
         if not (isinstance(alpha, (int, float)) and isinstance(beta, (int, float))):
@@ -10040,10 +10030,7 @@ def log2(input):
         >>> print(output)
         [1. 2. 3.]
     """
-
-    dtype_op = _get_cache_prim(P.DType)()
-
-    x_dtype = dtype_op(input)
+    x_dtype = dtype_(input)
     denominator = log_(_make_tensor(2, x_dtype))
     frac_log = log_(input)
     output = frac_log / denominator
@@ -10259,10 +10246,7 @@ def log10(input):
         >>> print(output)
         [0.301 0.602 1.   ]
     """
-
-    dtype_op = P.DType()
-
-    x_dtype = dtype_op(input)
+    x_dtype = dtype_(input)
     denominator = log_(_make_tensor(10, x_dtype))
     frac_log = log_(input)
     output = frac_log / denominator
@@ -10297,8 +10281,7 @@ def log1p(input):
         >>> print(output)
         [0.6931472 1.0986123 1.609438 ]
     """
-    _log1p = _get_cache_prim(P.Log1p)()
-    return _log1p(input)
+    return log1p_(input)
 
 
 def kron(input, other):
@@ -10449,7 +10432,7 @@ def all(input, axis=None, keep_dims=False):
     if axis is None:
         axis = ()
     if input.dtype != mstype.bool_:
-        input = _get_cache_prim(P.Cast)()(input, mstype.bool_)
+        input = cast_(input, mstype.bool_)
     return _get_cache_prim(P.ReduceAll)(keep_dims)(input, axis)
 
 
@@ -10508,7 +10491,7 @@ def any(input, axis=None, keep_dims=False):
     if axis is None:
         axis = ()
     if input.dtype != mstype.bool_:
-        input = _get_cache_prim(P.Cast)()(input, mstype.bool_)
+        input = cast_(input, mstype.bool_)
     return _get_cache_prim(P.ReduceAny)(keep_dims)(input, axis)
 
 
@@ -10583,7 +10566,7 @@ def accumulate_n(x):
         ValueError: If there is an input element with a different shape.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -10595,8 +10578,6 @@ def accumulate_n(x):
         >>> print(output)
         [10. 14. 18.]
     """
-
-    accumulate_ = _get_cache_prim(P.AccumulateNV2)()
     return accumulate_(x)
 
 
@@ -11030,7 +11011,7 @@ def conj(input):
     """
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For conj op, input must be Tensor.")
-    return _get_cache_prim(P.Conj)()(input)
+    return conj_(input)
 
 
 def cross(input, other, dim=None):
@@ -11237,7 +11218,7 @@ def erfinv(input):
         >>> print(output)
         [ 0.          0.47695306 -1.1630805 ]
     """
-    return _get_cache_prim(P.Erfinv)()(input)
+    return erfinv_(input)
 
 
 def less_equal(input, other):
@@ -11284,7 +11265,7 @@ def less_equal(input, other):
         >>> print(output)
         [ True False  True]
     """
-    return _get_cache_prim(P.LessEqual)()(input, other)
+    return tensor_le(input, other)
 
 
 def cumprod(input, dim, dtype=None):
@@ -11322,10 +11303,9 @@ def cumprod(input, dim, dtype=None):
         >>> print(output)
         [1. 2. 6.]
     """
-    cumprod_op = _get_cache_prim(P.CumProd)()
-    output = cumprod_op(input, dim)
+    output = cumprod_(input, dim)
     if dtype:
-        output = _get_cache_prim(P.Cast)()(output, dtype)
+        output = cast_(output, dtype)
     return output
 
 
@@ -11358,8 +11338,7 @@ def greater(input, other):
         >>> print(output)
         [False True False]
     """
-    greater_op = _get_cache_prim(P.Greater)()
-    return greater_op(input, other)
+    return tensor_gt(input, other)
 
 
 def greater_equal(input, other):
@@ -11391,8 +11370,7 @@ def greater_equal(input, other):
         >>> print(output)
         [True True False]
     """
-    greater_equal_op = _get_cache_prim(P.GreaterEqual)()
-    return greater_equal_op(input, other)
+    return tensor_ge(input, other)
 
 
 def igamma(input, other):
@@ -11530,8 +11508,7 @@ def lgamma(input):
         >>> print(output)
         0.045437694
     """
-    lgamma_op = _get_cache_prim(P.Lgamma)()
-    return lgamma_op(input)
+    return lgamma_(input)
 
 
 def digamma(input):
@@ -11565,8 +11542,7 @@ def digamma(input):
         >>> print(output)
         [ 0.0365 -1.964   2.14  ]
     """
-    digamma_op = _get_cache_prim(P.Digamma)()
-    return digamma_op(input)
+    return digamma_(input)
 
 
 def polygamma(n, input):
@@ -11605,8 +11581,7 @@ def polygamma(n, input):
         >>> print(output)
         [ 0.37446456 15.49884838]
     """
-    polygamma_op = _get_cache_prim(P.Polygamma)()
-    return polygamma_op(n, input)
+    return poly_gamma_(n, input)
 
 
 def isinf(input):
@@ -11647,20 +11622,19 @@ def isinf(input):
         >>> print(output)
         False
     """
-    isinf_op = _get_cache_prim(P.IsInf)()
-    return isinf_op(input)
+    return isinf_(input)
 
 
 def _is_sign_inf(x, fn):
     """Tests element-wise for infinity with sign."""
     shape = x.shape
-    zeros_tensor = _get_cache_prim(P.Zeros)()(shape, mstype.float32)
-    ones_tensor = _get_cache_prim(P.Ones)()(shape, mstype.float32)
-    is_inf = _get_cache_prim(P.IsInf)()(x)
+    zeros_tensor = zeros_(shape, mstype.float32)
+    ones_tensor = ones_(shape, mstype.float32)
+    is_inf = isinf_(x)
     is_sign = fn(x, zeros_tensor)
     res = ops.select(is_inf, ones_tensor, zeros_tensor)
     res = ops.select(is_sign, res, zeros_tensor)
-    return _get_cache_prim(P.Cast)()(res, mstype.bool_)
+    return cast_(res, mstype.bool_)
 
 
 def isposinf(input):
@@ -11771,8 +11745,7 @@ def logical_xor(input, other):
         input = input.astype(mstype.bool_)
     if isinstance(other, Tensor) and other.dtype != mstype.bool_:
         other = other.astype(mstype.bool_)
-    logical_xor_op = _get_cache_prim(P.LogicalXor)()
-    return logical_xor_op(input, other)
+    return logical_xor_(input, other)
 
 
 def imag(input):
@@ -11801,7 +11774,7 @@ def imag(input):
         >>> print(output)
         0.4
     """
-    return _get_cache_prim(P.Imag)()(input)
+    return imag_(input)
 
 
 @_primexpr
@@ -11868,7 +11841,7 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
         axis = ()
     if input.dtype == mstype.bool_:
         input = input.astype(mstype.int64)
-    is_nan = _get_cache_prim(P.IsNan)()(input)
+    is_nan = isnan_(input)
     input = ops.masked_fill(input, is_nan, 0)
     input = _get_cache_prim(P.ReduceSum)(keepdims)(input, axis)
     if dtype is not None and input.dtype != dtype:
@@ -11926,8 +11899,8 @@ def diag_embed(input, offset=0, dim1=-2, dim2=-1):
     zeros = ops.Zeros()
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For 'diag_embed', 'input' must be Tensor.")
-    dtypeop = P.DType()
-    input_dtype = dtypeop(input)
+
+    input_dtype = dtype_(input)
     if not (input_dtype in (mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16,
                             mstype.uint32, mstype.uint64, mstype.float16, mstype.float32, mstype.float64)):
         raise TypeError("For 'diag_embed', the dtype of 'input' must be int8, int16, int32, int64, "
@@ -12076,9 +12049,7 @@ def tanhshrink(input):
 
     if input.dtype in mstype.int_type + mstype.uint_type:
         input = input.astype(mstype.float64)
-
-    tanh_op = _get_cache_prim(P.Tanh)()
-    return input - tanh_op(input)
+    return input - tanh_(input)
 
 
 def zeta(input, other):
@@ -12123,17 +12094,17 @@ def zeta(input, other):
         if not isinstance(other, Tensor):
             raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
         _dtype = other.dtype
-        input = _get_cache_prim(P.Cast)()(input, _dtype)
+        input = cast_(input, _dtype)
     if isinstance(other, (int, float)):
         if not isinstance(input, Tensor):
             raise TypeError(f"For 'zeta', at least one of the inputs should be Tensor.")
         _dtype = input.dtype
-        other = _get_cache_prim(P.Cast)()(other, _dtype)
+        other = cast_(other, _dtype)
     if input.size < other.size:
         input = _get_cache_prim(P.BroadcastTo)(other.shape)(input)
     elif input.size > other.size:
         other = _get_cache_prim(P.BroadcastTo)(input.shape)(other)
-    output = _get_cache_prim(P.Zeta)()(input, other)
+    output = zeta_(input, other)
     return output
 
 
@@ -12329,7 +12300,7 @@ def _permute_input(input, input_dim, ret_dim):
     dim_permute = dim_permute_a + dim_permute_b
 
     # permute
-    input = P.Transpose()(input, tuple(dim_permute))
+    input = transpose_(input, tuple(dim_permute))
 
     return input, dim_permute
 
@@ -12347,7 +12318,7 @@ def _reshape_input(input, signal_ndim, batch_dims):
         i += 1
         if j >= len(batched_sizes):
             break
-    input = P.Reshape()(input, tuple(batched_sizes))
+    input = reshape_(input, tuple(batched_sizes))
     return input
 
 
@@ -12355,8 +12326,8 @@ def _check_fftwithsize_input(input, s, dim, norm, fft_func_name):  # pylint: dis
     """Check the input of fftwithsize"""
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For '{fft_func_name}', 'input' must be Tensor.")
-    dtypeop = P.DType()
-    input_dtype = dtypeop(input)
+
+    input_dtype = dtype_(input)
     if fft_func_name in ('FFTN', 'IFFTN'):
         if not input_dtype in (mstype.complex64, mstype.complex128):
             raise TypeError("For '{fft_func_name}', the dtype of 'input' must be complex64, complex128, "
@@ -12464,8 +12435,8 @@ def fft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-na
     """
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For 'FFT', 'input' must be Tensor.")
-    dtypeop = P.DType()
-    input_dtype = dtypeop(input)
+
+    input_dtype = dtype_(input)
     if not input_dtype in (mstype.complex64, mstype.complex128):
         raise TypeError("For 'FFT', the dtype of 'input' must be complex64, complex128, "
                         f"but got '{input_dtype}'.")
@@ -12635,8 +12606,8 @@ def ifft(input, n=None, dim=-1, norm=None):  # pylint: disable=redefined-outer-n
     """
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError("For 'IFFT', 'input' must be Tensor.")
-    dtypeop = P.DType()
-    input_dtype = dtypeop(input)
+
+    input_dtype = dtype_(input)
     if not input_dtype in (mstype.complex64, mstype.complex128):
         raise TypeError("For 'IFFT', the dtype of 'input' must be complex64, complex128, "
                         f"but got '{input_dtype}'.")
@@ -13049,7 +13020,6 @@ def tensor_dot(x1, x2, axes):
          [2. 2. 2]
          [2. 2. 2]]
     """
-    transpose_op = _get_cache_prim(P.Transpose)()
     matmul_op = _get_cache_prim(P.MatMul)(False, False)
     # input validity checks
     x1_shape = shape_(x1)
@@ -13062,8 +13032,8 @@ def tensor_dot(x1, x2, axes):
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
     output_shape = x1_ret + x2_ret  # combine free axes from both inputs
     # run tensor_dot op
-    x1_transposed = transpose_op(x1, x1_transpose_fwd)
-    x2_transposed = transpose_op(x2, x2_transpose_fwd)
+    x1_transposed = transpose_(x1, x1_transpose_fwd)
+    x2_transposed = transpose_(x2, x2_transpose_fwd)
     x1_reshaped = reshape_(x1_transposed, x1_reshape_fwd)
     x2_reshaped = reshape_(x2_transposed, x2_reshape_fwd)
     mul_result = matmul_op(x1_reshaped, x2_reshaped)
@@ -13231,7 +13201,6 @@ def dot(input, other):
         >>> print(output.shape)
         (3, 2, 2, 1, 2)
     """
-    transpose_op = _get_cache_prim(P.Transpose)()
     matmul_op = _get_cache_prim(P.MatMul)(False, False)
     input_shape = shape_(input)
     other_shape = shape_(other)
@@ -13242,7 +13211,7 @@ def dot(input, other):
 
     if len(input_shape) > 2 or len(other_shape) > 2:
         other_shape_transpose = _get_transpose_shape(other_shape)
-        other_transpose = transpose_op(other, other_shape_transpose)
+        other_transpose = transpose_(other, other_shape_transpose)
         input_reshape = reshape_(input, (-1, input_shape[-1]))
         other_reshape = reshape_(other_transpose, (other_shape[-2], -1))
         mul_result = matmul_op(input_reshape, other_reshape)
@@ -13455,8 +13424,6 @@ def batch_dot(x1, x2, axes=None):
         (2, 2, 5, 5)
 
     """
-    transpose_op = _get_cache_prim(P.Transpose)()
-    batch_matmul_op = _get_cache_prim(P.BatchMatMul)()
     squeeze_one_op = _get_cache_prim(P.Squeeze)(1)
     squeeze_minus_one_op = _get_cache_prim(P.Squeeze)(-1)
     # input validity checks
@@ -13486,13 +13453,13 @@ def batch_dot(x1, x2, axes=None):
     x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape_batchdot(x2_shape, axes, 1)
     output_shape = _get_output_shape(x1_batch_size, x1_ret, x2_ret)
 
-    x1_transposed = transpose_op(x1, x1_transpose_fwd)
-    x2_transposed = transpose_op(x2, x2_transpose_fwd)
+    x1_transposed = transpose_(x1, x1_transpose_fwd)
+    x2_transposed = transpose_(x2, x2_transpose_fwd)
     x1_reshaped = reshape_(x1_transposed, x1_reshape_fwd)
     x2_reshaped = reshape_(x2_transposed, x2_reshape_fwd)
 
     # Batch matmal op part
-    mul_result = batch_matmul_op(x1_reshaped, x2_reshaped)
+    mul_result = batch_matmul_(x1_reshaped, x2_reshaped)
 
     final_result = reshape_(mul_result, output_shape)
 

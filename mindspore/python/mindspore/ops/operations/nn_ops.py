@@ -3757,26 +3757,28 @@ class LayerNorm(Primitive):
 
     Args:
         begin_norm_axis (int): The begin axis of the `input_x` to apply LayerNorm,
-            the value must be in [-1, rank(input)). Default: ``1`` .
+            the value must be in [-1, rank(input_x)). Default: ``1`` .
         begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
-            apply LayerNorm, the value must be in [-1, rank(input)). Default: ``1`` .
-        epsilon (float): A value added to the denominator for numerical stability. Default: ``1e-7`` .
+            apply LayerNorm, the value must be in [-1, rank(input_x)). Default: ``1`` .
+        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
           The input of LayerNorm. Supported dtypes: float16, float32, float64.
-        - **gamma** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
+        - **gamma** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
           The learnable parameter :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
-        - **beta** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
+        - **beta** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
           The learnable parameter :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
 
         - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
-          The shape is :math:`(N, C)`.
-        - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **mean** (Tensor) - The first `begin_norm_axis` dimensions of `mean` shape is the same as `input_x`,
+          and the remaining dimensions are 1. Suppose the shape of the `input_x` is :math:`(x_1, x_2, \ldots, x_R)`,
+          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)`
+          (when `begin_params_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
+        - **variance** (Tensor) - Shape is the same as `mean` .
 
     Raises:
         TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
@@ -3916,6 +3918,7 @@ class ResizeBilinear(PrimitiveWithInfer):
     def infer_dtype(self, input_dtype):
         validator.check_tensor_dtype_valid('input_dtype', input_dtype, [mstype.float16, mstype.float32],
                                            self.name)
+        self.add_prim_attr("dtype", input_dtype)
         return input_dtype
 
 
@@ -7385,6 +7388,9 @@ class CTCGreedyDecoder(Primitive):
 
     Refer to :func:`mindspore.ops.ctc_greedy_decoder` for more details.
 
+    Note:
+        On Ascend, 'merge_repeated' can not be set to false.
+
     Args:
         merge_repeated (bool, optional): If ``True`` , merge repeated classes in output. Default: ``True`` .
 
@@ -7807,6 +7813,10 @@ class LRN(Primitive):
     r"""
     Local Response Normalization.
 
+    .. warning::
+        LRN is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.ops.BatchNorm`.
+
     .. math::
 
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
@@ -7837,7 +7847,7 @@ class LRN(Primitive):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -8249,12 +8259,8 @@ class Conv3D(Primitive):
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         validator.check_value_type("group", group, (int,), self.name)
-        validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
-        device_target = context.get_context("device_target")
         if self.out_channel % group != 0:
             raise ValueError("The argument 'group' should be divisible by 'out_channel'")
-        if device_target == "Ascend" and group != 1:
-            raise ValueError("On Ascend platform, group = 1 must be satisfied.")
 
         self.group = group
         self.add_prim_attr('groups', self.group)
@@ -11310,3 +11316,120 @@ class WKV(Primitive):
         """Initialize WKV."""
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "sp", "sq", "sm"],
                                 outputs=["output", "out_sp", "out_sq", "out_sm"])
+
+
+class PromptFlashAttention(Primitive):
+    r"""
+    The interface for fully inference.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **key** (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **value** (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
+        - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int.
+        - **num_heads**  (int): The number of heads.
+        - **scale_value** (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        - **pre_tokens** (int): Previous tokens. Default: 2147483547.
+        - **next_tokens** (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        - **input_layout** (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        - **num_key_value_heads** (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+
+    Outputs:
+        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
+
+    Supported Platforms:
+        ``Ascend910B``
+    """
+    @prim_attr_register
+    def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
+                 num_key_value_heads=0):
+        """Initialize PromptFlashAttention."""
+        validator.check_value_type('num_heads', num_heads, [int], self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name)
+        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
+        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
+        validator.check_value_type('input_layout', input_layout, [str], self.name)
+        validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "padding_mask", "actual_seq_lengths"],
+                                outputs=["attention_out"])
+
+
+class FlashAttentionScore(Primitive):
+    r"""
+    FlashAttentionScore.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+    B -- Batch size
+    S -- Sequence length
+    H -- Hidden size
+    N -- Num heads
+    D -- Dim size
+    Args:
+        head_num (int): The number of the heads.
+        keep_prob (float): The keep probability of dropout. Default: 1.0.
+        scale_value (float): The scale value. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 65536.
+        next_tokens (int): Next tokens. Default: 65536.
+        inner_precise (int): Specify the execution mode, where 0 indicates high precision mode and 1 indicates high
+        performance mode. Default: 0.
+        input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
+        Currently, only BSH is supported. Default: "BSH".
+
+    Inputs:
+        - **query** (Tensor) - The query tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **key** (Tensor) - The key tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **value** (Tensor) - The value tensor with data type of float16 or float32.
+          Input tensor of shape :math:`(B, S, H)`.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
+          For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
+        - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
+          Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
+        - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
+        - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+
+    Outputs:
+        - **attention_out** (Tensor) - (B, S, H)
+        - **softmax_max** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
+        - **softmax_sum** (Tensor) - (B, N, S, 16)/(B, N, S, 8) when fp16/fp32
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
+                 input_layout="BSH"):
+        """Initialize FlashAttentionScore"""
+        validator.check_value_type('head_num', head_num, [int], self.name)
+        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
+        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
+        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
+        validator.check_value_type('scale_value', scale_value, [float], self.name)
+        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
+        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
+        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        if inner_precise not in [0, 1]:
+            raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
+        validator.check_value_type('input_layout', input_layout, [str], self.name)
+        if input_layout not in ["BSH"]:
+            raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
+        self.init_prim_io_names(
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            outputs=['attention_out', 'softmax_max', 'softmax_sum'])

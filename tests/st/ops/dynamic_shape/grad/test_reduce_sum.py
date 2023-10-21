@@ -32,6 +32,15 @@ class NetReduceSum(nn.Cell):
         return self.reducesum(x, self.axis)
 
 
+class NetReduceSumOther(nn.Cell):
+    def __init__(self):
+        super(NetReduceSumOther, self).__init__()
+        self.reducesum = P.ReduceSum()
+
+    def construct(self, x, axis):
+        return self.reducesum(x, axis)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
@@ -62,3 +71,21 @@ def test_dynamic_reducesum_rank():
     test_dynamic = TestDynamicGrad(NetReduceSum())
     x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
     test_dynamic.test_dynamic_grad_net(x, True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dynamic_reducesum_shape_for_dynamic_axis():
+    """
+    Feature: ReduceSum Grad DynamicShape.
+    Description: Test case of dynamic shape for ReduceSum grad operator on CPU and GPU.
+    Expectation: success.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    test_dynamic = TestDynamicGrad(NetReduceSumOther())
+    x = Tensor(np.random.randn(3, 4, 5).astype(np.float32))
+    axis = Tensor([1, 2])
+    test_dynamic.test_dynamic_grad_net((x, axis))
+    

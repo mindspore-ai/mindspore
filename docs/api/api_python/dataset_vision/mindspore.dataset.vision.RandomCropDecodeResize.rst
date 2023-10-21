@@ -11,14 +11,8 @@ mindspore.dataset.vision.RandomCropDecodeResize
           如果 size 是一个长度为 2 的序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
         - **scale** (Union[list, tuple], 可选) - 要裁剪的原始尺寸大小的各个尺寸的范围[min, max)，必须为非负数。默认值： ``(0.08, 1.0)`` 。
         - **ratio** (Union[list, tuple], 可选) - 宽高比的范围 [min, max) 裁剪，必须为非负数。默认值： ``(3. / 4., 4. / 3.)``。
-        - **interpolation** (:class:`~.vision.Inter`, 可选) - 图像插值方式。它可以是 ``Inter.BILINEAR`` 、 ``Inter.NEAREST`` 、 ``Inter.BICUBIC`` 、 ``Inter.AREA`` 、 ``Inter.PILCUBIC`` 。默认值： ``Inter.BILINEAR``。
-
-          - ``**Inter.BILINEAR**``: 双线性插值。
-          - ``**Inter.NEAREST**``: 最近邻插值。
-          - ``**Inter.BICUBIC**``: 双三次插值。
-          - ``**Inter.AREA**``: 像素区域插值。
-          - ``**Inter.PILCUBIC**``: Pillow库中实现的双三次插值，输入需为3通道格式。
-
+        - **interpolation** (:class:`~.vision.Inter`, 可选) - 图像插值方法。可选值详见 :class:`mindspore.dataset.vision.Inter` 。
+          默认值： ``Inter.BILINEAR``。
         - **max_attempts** (int, 可选) - 生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪， `max_attempts` 值必须为正数。默认值： ``10`` 。
 
     异常：

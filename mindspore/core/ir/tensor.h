@@ -587,14 +587,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   void set_need_release_device_mem(bool release_device_mem) { need_release_device_mem_ = release_device_mem; }
 
   /// \brief Set the padding type of this Tensor.
-  ///
+  /// 
   /// \param[in] padding_type The input padding type.
-  void set_padding_type(const std::string padding_type) { padding_type_ = padding_type; }
+  void set_padding_type(const std::string padding_type) {padding_type_ = padding_type; }
 
   /// \brief Get the padding type of this Tensor.
   ///
   /// \return The padding type.
-  std::string padding_type() const { return padding_type_; }
+  std::string padding_type() const {return padding_type_; }
 
   /// \brief Get the id of this Tensor.
   ///
@@ -759,8 +759,8 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Set contiguous callback function to this Tensor
   ///
   /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
-  void set_contiguous_callback(
-    const std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> &contiguous_callback) {
+  void set_contiguous_callback(const std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &,
+                                                                 const TensorStorageInfoPtr &)> &contiguous_callback) {
     contiguous_callback_ = contiguous_callback;
   }
 
@@ -887,6 +887,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief unpin tensor memory.
   void UnPinMemory();
 
+  /// \brief Convert tensor into contiguous memory.
+  void contiguous();
+
+  /// \brief Determines whether the memory of tensor is contiguous.
+  ///
+  /// \return True if tensor memory is contiguous, false otherwise.
+  bool is_contiguous() const;
+
  private:
   void ExecuteLazyTask() const;
 
@@ -912,7 +920,8 @@ class MS_CORE_API Tensor : public MetaTensor {
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
-  std::function<DeviceSyncPtr(const DeviceSyncPtr &, const TensorStorageInfoPtr &)> contiguous_callback_{nullptr};
+  std::function<DeviceSyncPtr(const tensor::TensorPtr &, const DeviceSyncPtr &, const TensorStorageInfoPtr &)>
+    contiguous_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
   AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};

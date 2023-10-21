@@ -159,6 +159,7 @@ class BACKEND_EXPORT KernelAttr {
                             const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddAllSameAttr(const bool &all_same);
   KernelAttr &AddSkipCheckAttr(const bool &skip_check);
+  KernelAttr &AddRealTuple(const bool &is_real_tuple);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
   KernelAttr &AddAllOutInRef(const bool &all_out_in_ref);
 
@@ -166,6 +167,7 @@ class BACKEND_EXPORT KernelAttr {
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
   const bool &GetAllSame() const { return all_same_; }
   const bool &GetSkipCheck() const { return skip_check_; }
+  const bool &GetRealTuple() const { return is_real_tuple_; }
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
@@ -185,6 +187,7 @@ class BACKEND_EXPORT KernelAttr {
   std::vector<DataType> output_type_;
   bool all_same_{false};
   bool skip_check_{false};
+  bool is_real_tuple_{false};
 
   // The map between kernel's output and input ref relationship.
   OutputInputRefMap out_in_ref_map_;

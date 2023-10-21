@@ -24,9 +24,8 @@
 #include <map>
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
-#include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
 #include "plugin/device/ascend/hal/hardware/ge_graph_executor.h"
 
 namespace mindspore {

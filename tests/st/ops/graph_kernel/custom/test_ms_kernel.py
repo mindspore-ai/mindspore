@@ -190,7 +190,7 @@ def ms_kernel_grid_cpu():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -208,7 +208,7 @@ def test_ms_kernel_ascend_graph_mode():
     ms_kernel_grid()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -226,7 +226,7 @@ def test_ms_kernel_ascend_pynative_mode():
     ms_kernel_grid()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ms_kernel_gpu_graph_mode():
@@ -243,7 +243,7 @@ def test_ms_kernel_gpu_graph_mode():
     ms_kernel_grid()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ms_kernel_gpu_pynative_mode():
@@ -278,7 +278,7 @@ def test_ms_kernel_cpu_graph_mode():
         ms_kernel_grid_cpu()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ms_kernel_cpu_pynative_mode():

@@ -28,4 +28,4 @@ mindspore.dataset.Dataset.split
         - **ValueError** - `sizes` 是list[float]，且并非所有float数值都在0和1之间，或者float数值的总和不等于1。
 
     返回：
-        tuple(Dataset)，split操作后子数据集对象的元组。
+        Tuple[Dataset]，从原数据集拆分出的新数据集构成的元组。

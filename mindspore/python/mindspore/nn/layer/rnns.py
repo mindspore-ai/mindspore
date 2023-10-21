@@ -601,13 +601,13 @@ class RNN(_RNNBase):
             RNN layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional RNN,
             num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(seq\_len, batch\_size, input\_size)` or :math:`(batch\_size, seq\_len, input\_size)` .
         - **hx** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` .
-          The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(batch\_size)` . Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
@@ -702,14 +702,13 @@ class GRU(_RNNBase):
             GRU layer except the last layer. Default ``0.0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional GRU,
             num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape (seq\_len, batch\_size, `input\_size`) or :math:`(batch\_size, seq\_len, input\_size)`.
         - **hx** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
-          The data type of `hx` must be the same as
-          `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements
@@ -803,13 +802,13 @@ class LSTM(_RNNBase):
             LSTM layer except the last layer. Default ``0`` . The range of dropout is [0.0, 1.0).
         bidirectional (bool): Specifies whether it is a bidirectional LSTM,
             num_directions=2 if bidirectional=True otherwise 1. Default: ``False`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(seq\_len, batch\_size, input\_size)` or :math:`(batch\_size, seq\_len, input\_size)` .
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
           or mindspore.float16 and shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` .
-          The data type of `hx` must be the same as `x`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.
           Tensor of shape :math:`(batch\_size)`. Default: ``None`` .
           This input indicates the real sequence length before padding to avoid padded elements

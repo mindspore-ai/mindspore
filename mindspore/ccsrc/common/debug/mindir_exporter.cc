@@ -282,7 +282,11 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &root_graph, const std::vect
   if (!BuildNodes(root_graph, root_graph_proto)) {
     return false;
   }
-  for (const auto &graph : child_graphs) {
+  std::map<std::string, FuncGraphPtr> sorted_graphs;
+  std::for_each(child_graphs.begin(), child_graphs.end(),
+                [&sorted_graphs](const auto &iter) { sorted_graphs[iter->ToString()] = iter; });
+  for (const auto &iter : sorted_graphs) {
+    const auto &graph = iter.second;
     if (!BuildNodes(graph, graph_protos_[graph])) {
       return false;
     }
@@ -456,6 +460,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
         (param_counter >= param_size - func_graph->fv_param_count() || (is_kernel_graph_ && param->has_default()))) {
       if (!ExportWeight(param, param_name, graph_proto)) {
         MS_LOG(ERROR) << "Failed to export parameter weight:" << param->DebugString();
+        return false;
       }
     } else {
       // export graph input
@@ -543,6 +548,15 @@ mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsFloatType(int bi
   auto iter = g_data_bits_float_map.find(bits);
   if (iter == g_data_bits_float_map.end()) {
     MS_LOG(ERROR) << "Convert bits float error, unsupported bits! " << bits;
+    return mind_ir::TensorProto_DataType_UNDEFINED;
+  }
+  return iter->second;
+}
+
+mind_ir::TensorProto_DataType IrExportBuilder::GetMindirDataBitsBFloatType(int bits) const {
+  auto iter = g_data_bits_bfloat_map.find(bits);
+  if (iter == g_data_bits_bfloat_map.end()) {
+    MS_LOG(ERROR) << "Convert bits bfloat error, unsupported bits! " << bits;
     return mind_ir::TensorProto_DataType_UNDEFINED;
   }
   return iter->second;
@@ -690,14 +704,14 @@ bool IrExportBuilder::SetParamToTensorProto(const ParameterPtr &param, mind_ir::
   auto tensor = param->default_param()->cast<tensor::TensorPtr>();
   if (tensor != nullptr) {
     tensor_proto->set_compression_type(static_cast<mind_ir::TensorProto_CompressionType>(tensor->compression_type()));
-  }
-  auto quant_params = tensor->quant_params();
-  for (const auto &quant_param : quant_params) {
-    auto quant_param_proto = tensor_proto->add_quant_params();
-    auto ret = SetQuantizationParamToAttrProto(quant_param, quant_param_proto);
-    if (ret != true) {
-      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
-      return false;
+    auto quant_params = tensor->quant_params();
+    for (const auto &quant_param : quant_params) {
+      auto quant_param_proto = tensor_proto->add_quant_params();
+      auto ret = SetQuantizationParamToAttrProto(quant_param, quant_param_proto);
+      if (ret != true) {
+        MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+        return false;
+      }
     }
   }
   return true;
@@ -1276,6 +1290,14 @@ bool IrExportBuilder::SetTypeToAttributeProto(const ValuePtr &value, mind_ir::At
     tensor_proto->set_name("value0");
     auto float_value = value->cast<FloatPtr>();
     auto data_type = GetMindirDataBitsFloatType(float_value->nbits());
+    if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
+      return false;
+    }
+    tensor_proto->set_data_type(data_type);
+  } else if (value->isa<BFloat>()) {
+    tensor_proto->set_name("value0");
+    auto bfloat_value = value->cast<BFloatPtr>();
+    auto data_type = GetMindirDataBitsBFloatType(bfloat_value->nbits());
     if (data_type == mind_ir::TensorProto_DataType_UNDEFINED) {
       return false;
     }

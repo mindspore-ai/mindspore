@@ -24,7 +24,7 @@ class Shard(Shard_):
 
     def __init__(self):
         """Initialize Shard."""
-        Shard_.__init__(self, 'Shard')
+        super().__init__('Shard')
         self.shard_fn = None
         self.fn = None
         self.in_strategy = None
@@ -224,7 +224,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
 
     Tutorial Examples:
         - `Functional Operator Sharding
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/mindspore/pynative_shard_function_parallel.html>`_
+          <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_
     """
     if not isinstance(fn, (ms.nn.Cell)):
         logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "

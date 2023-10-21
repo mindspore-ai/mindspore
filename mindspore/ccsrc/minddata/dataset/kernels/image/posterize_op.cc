@@ -25,6 +25,7 @@ const uint8_t PosterizeOp::kBit = 8;
 PosterizeOp::PosterizeOp(uint8_t bit) : bit_(bit) {}
 
 Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   uint8_t mask_value = ~((uint8_t)(1 << (8 - bit_)) - 1);
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {

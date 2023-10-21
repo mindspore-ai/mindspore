@@ -15,6 +15,7 @@
  */
 
 #include <vector>
+#include <memory>
 #include "tools/converter/adapter/acl/mapper/im2col_mapper.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"
@@ -24,20 +25,25 @@ namespace mindspore {
 namespace lite {
 constexpr size_t kDimension2D = 2;
 STATUS Im2ColMapper::Mapper(const CNodePtr &cnode) {
-  auto func_graph = cnode->func_graph();
-  CHECK_NULL_RETURN(func_graph);
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  CHECK_NULL_RETURN(prim);
+  CHECK_NULL_RETURN(cnode);
+  // get src prim
+  ValueNodePtr value_node = nullptr;
+  PrimitivePtr src_prim = nullptr;
+  if (GetValueNodeAndPrimFromCnode(cnode, &value_node, &src_prim) != lite::RET_OK) {
+    MS_LOG(ERROR) << "get value node and primitive from cnode failed.";
+    return lite::RET_ERROR;
+  }
+  CHECK_NULL_RETURN(value_node);
+  CHECK_NULL_RETURN(src_prim);
 
-  auto pads = prim->GetAttr("pads");
+  // make dst prim
+  auto dst_prim = std::make_shared<acl::Im2col>();
+  dst_prim->SetAttrs(src_prim->attrs());
+  value_node->set_value(dst_prim);
+
+  auto pads = src_prim->GetAttr("pads");
   CHECK_NULL_RETURN(pads);
   auto pads_vec = GetValue<std::vector<int64_t>>(pads);
-  ops::Im2Col im2col;
-  PrimitivePtr dst_prim = im2col.GetPrim();
-  if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
-    MS_LOG(ERROR) << "Im2Col mapper failed.";
-    return RET_ERROR;
-  }
   // acl: pads is 4D, meaning (top, bottom, left, right)
   if (pads_vec.size() == kDimension2D) {
     std::vector<int64_t> pads_mapped = {pads_vec[0], pads_vec[0], pads_vec[1], pads_vec[1]};
@@ -46,6 +52,6 @@ STATUS Im2ColMapper::Mapper(const CNodePtr &cnode) {
   return RET_OK;
 }
 
-REGISTER_PRIMITIVE_MAPPER(kNameIm2Col, Im2ColMapper)
+REGISTER_PRIMITIVE_MAPPER(kNameIm2col, Im2ColMapper)
 }  // namespace lite
 }  // namespace mindspore

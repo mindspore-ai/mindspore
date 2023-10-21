@@ -1276,6 +1276,8 @@ class AscendAutoMonadConverter {
     // For single call: we directly assign output to the output parameter of the call site;
     // For multi call: we assign output to a temp parameter, and let caller assign the
     // temp parameter to a output parameter after returned.
+    MS_EXCEPTION_IF_CHECK_FAIL((!return_points.empty()), "Graph has no output.");
+
     auto call_site = return_points.front().call_site;
     MS_EXCEPTION_IF_NULL(call_site);
     const bool is_single_call = (return_points.size() == 1 && call_site->label_indexes.empty());
@@ -1379,6 +1381,8 @@ class AscendAutoMonadConverter {
 
   // Make a assign cnode.
   CNodePtr Assign(const AnfNodePtr &target, const AnfNodePtr &source, bool link, bool keep, bool output) {
+    MS_EXCEPTION_IF_NULL(target);
+    MS_EXCEPTION_IF_NULL(source);
     auto monad = (link ? GetLinkMonad() : GetMonad());
     auto assign_prim = std::make_shared<Primitive>(prim::kPrimAssign->name());
     MS_EXCEPTION_IF_NULL(assign_prim);
@@ -1867,6 +1871,7 @@ class ExecuteOrderGenerator {
   }
 
   static void RemoveSameInputsAssigns(std::vector<CNodePtr> *exec_order) {
+    MS_EXCEPTION_IF_NULL(exec_order);
     for (auto iter = exec_order->begin(); iter != exec_order->end();) {
       auto &node = *iter;
       auto &inputs = node->inputs();
@@ -1905,7 +1910,9 @@ class ExecuteOrderGenerator {
       // We only try to erase argument link assign nodes,
       // other assign nodes are skipped.
       if (IsOptimizableAssign(node)) {
-        auto &target = node->inputs().at(kAssignTargetIndex);
+        // NOTE: here variable `target` can not declared as reference, since the statements below may change inputs of
+        // `node`, which may lead to `target` to be an invalid reference
+        auto target = node->inputs().at(kAssignTargetIndex);
         MS_EXCEPTION_IF_NULL(target);
         auto para = param_write_times.find(target);
         if (para != param_write_times.end() && para->second.first == 1) {

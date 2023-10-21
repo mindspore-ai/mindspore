@@ -138,7 +138,7 @@ def dynamic_rank_impl(input_x, input_n, axis):
     return res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_shape_float32():
@@ -158,7 +158,7 @@ def test_seq_tensor_unstack_dynamic_shape_float32():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_shape_float64():
@@ -178,7 +178,7 @@ def test_seq_tensor_unstack_dynamic_shape_float64():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_shape_int32():
@@ -198,7 +198,7 @@ def test_seq_tensor_unstack_dynamic_shape_int32():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_rank_int32():
@@ -221,7 +221,7 @@ def test_seq_tensor_unstack_dynamic_rank_int32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_rank_float32():
@@ -244,7 +244,7 @@ def test_seq_tensor_unstack_dynamic_rank_float32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack_dynamic_rank_float64():
@@ -267,7 +267,7 @@ def test_seq_tensor_unstack_dynamic_rank_float64():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_seq_tensor_unstack0():
@@ -309,7 +309,7 @@ def test_seq_tensor_unstack1():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_in_seq_grad_other():

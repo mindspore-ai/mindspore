@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,13 +18,23 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
-import mindspore.ops.operations._grad_ops as G
+from mindspore.ops import operations as P
+from tests.st.pynative.utils import GradOfAllInputs
+
+
+class Maximum(Cell):
+    def __init__(self):
+        super(Maximum, self).__init__()
+        self.max = P.Maximum()
+
+    def construct(self, inputa, inputb):
+        return self.max(inputa, inputb)
 
 
 class MaxmumGradNet(Cell):
     def __init__(self):
         super(MaxmumGradNet, self).__init__()
-        self.maximum_grad = G.MaximumGrad()
+        self.maximum_grad = GradOfAllInputs(Maximum())
 
     def construct(self, x, y, dy):
         return self.maximum_grad(x, y, dy)

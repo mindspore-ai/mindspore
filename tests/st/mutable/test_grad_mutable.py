@@ -38,7 +38,7 @@ def compare(a, b):
     return np.allclose(a.asnumpy(), b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_tensor():
@@ -84,7 +84,7 @@ def test_grad_mutable_tuple_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_list_tensor():
@@ -130,7 +130,7 @@ def test_grad_mutable_list_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dict_tensor():
@@ -178,7 +178,7 @@ def test_grad_mutable_dict_tensor():
     assert compare(output['b'], expect[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_tuple_tensor():
@@ -226,7 +226,7 @@ def test_grad_mutable_tuple_tuple_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_list_tensor():
@@ -274,7 +274,7 @@ def test_grad_mutable_tuple_list_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_list_tuple_tensor():
@@ -322,7 +322,7 @@ def test_grad_mutable_list_tuple_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_dict_tensor():
@@ -375,7 +375,7 @@ def test_grad_mutable_tuple_dict_tensor():
     assert compare(output[1], expect[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dict_tuple_tensor():
@@ -479,7 +479,7 @@ def test_grad_mutable_list_dict_tensor():
     assert compare(output[1], expect[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dict_list_tensor():
@@ -560,7 +560,7 @@ def test_grad_mutable_tuple_tensor_jit_function():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_list_tensor_jit_function():
@@ -591,7 +591,7 @@ def test_grad_mutable_list_tensor_jit_function():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -638,7 +638,7 @@ def test_grad_mutable_unused_tuple_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -686,7 +686,7 @@ def test_grad_mutable_unused_list_tensor():
     assert compare(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -737,7 +737,7 @@ def test_grad_mutable_unused_dict_tensor():
     assert compare(output['x3'], expect[2])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_single_element_dict_tensor():
@@ -786,7 +786,7 @@ def test_grad_mutable_single_element_dict_tensor():
     assert compare(output[1]['a'], expect[1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dynamic_len_sequence():

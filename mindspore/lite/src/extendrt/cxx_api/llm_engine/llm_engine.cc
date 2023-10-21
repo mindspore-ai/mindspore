@@ -195,6 +195,14 @@ Status LLMEngine::Init(const std::vector<std::string> &model_paths, LLMRole role
   return plugin_->Init(infos, role, cluster_id, options);
 }
 
+void LLMEngine::Finalize() {
+  if (plugin_ == nullptr) {
+    MS_LOG(INFO) << "LLMEngine plugin has not been created";
+    return;
+  }
+  plugin_->Finalize();
+}
+
 Status LLMEngine::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   if (plugin_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine plugin has not been created";

@@ -284,23 +284,6 @@ std::vector<std::string> LiteInferSession::ConvertToTensorNames(
   return tensor_names;
 }
 
-std::vector<tensor::TensorPtr> LiteInferSession::ConvertToTensors(
-  const std::vector<mindspore::lite::Tensor *> &lite_tensors) {
-  std::vector<tensor::TensorPtr> tensors;
-  for (auto lite_tensor : lite_tensors) {
-    auto type_id = lite_tensor->data_type();
-    auto shape = lite_tensor->shape();
-    ShapeVector shape_vec;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vec),
-                   [](int s) { return static_cast<int64_t>(s); });
-    auto data = lite_tensor->data();
-    auto data_size = lite_tensor->Size();
-    auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape_vec, data, data_size);
-    tensors.emplace_back(tensor_ptr);
-  }
-  return tensors;
-}
-
 static std::shared_ptr<InferSession> LiteInferSessionCreator(const std::shared_ptr<Context> &ctx,
                                                              const ConfigInfos &config_infos) {
   auto session = std::make_shared<LiteInferSession>();

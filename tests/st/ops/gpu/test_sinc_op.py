@@ -30,7 +30,7 @@ class SincNet(nn.Cell):
         return self.sinc(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sinc_input_float32_output_float32():

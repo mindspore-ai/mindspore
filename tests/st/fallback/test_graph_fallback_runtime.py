@@ -27,7 +27,7 @@ from mindspore import mutable, jit
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,7 +71,7 @@ def test_getattr_list_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_getattr_tuple_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -115,7 +115,7 @@ def test_getattr_dict_with_wrong_attr():
     assert "object has no attribute" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -218,7 +218,7 @@ def test_pyexecute_with_scalar_input_4():
     assert ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -260,7 +260,7 @@ def reduce_user_mul(x):
     return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -319,7 +319,7 @@ class CreateDynTensor(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -376,7 +376,7 @@ class CreateDynTensorWithInputDtype(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -403,7 +403,7 @@ class MakeTensorAsConstant(ms.nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -431,7 +431,7 @@ class MakeTensorWithShapeDtype(nn.Cell):
         return output1 + output2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -492,7 +492,7 @@ def test_gelu():
     assert np.all(res1.asnumpy() == res3.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -515,7 +515,7 @@ def test_np_save():
     os.remove("x_data.npy")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -544,7 +544,7 @@ def test_np_save_with_args():
     os.remove("data_from_args.npy")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -601,7 +601,7 @@ def test_np_save_with_call_kw2():
     os.remove("data_from_kw_with_if.npy")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -664,7 +664,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     assert "does not match the shape" in str(err.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -753,3 +753,24 @@ def test_fallback_self_variable_as_func_args():
     net = Network()
     out = net(Tensor([1], dtype=ms.float32), Tensor([2], dtype=ms.float32))
     assert np.allclose(out.asnumpy(), np.array([3], dtype=np.float32))
+
+
+@pytest.mark.skip(reason="ParseCall convert whole script to pyexecute")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_with_variable_input():
+    """
+    Feature: JIT Fallback
+    Description: Generate Tensor with graph.
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x):
+        return Tensor([0], dtype=x.dtype)
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    ret = foo(Tensor([1, 2, 3]))
+    assert ret == Tensor([0])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

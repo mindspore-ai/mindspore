@@ -193,7 +193,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   MS_EXCEPTION_IF_NULL(prim_);
@@ -402,7 +402,7 @@ EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList
   AbstractBasePtrList args_abs_list;
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();
@@ -472,7 +472,7 @@ EvalResultPtr SwitchLayerEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AbstractBasePtrList args_abs_list;
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();
@@ -1507,7 +1507,8 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto data_args = args_abs_list[0];
   MS_EXCEPTION_IF_NULL(data_args);
   // Not check if the data is from PyExecute CNode.
-  if (!IsPyExecuteData(data_args)) {
+  // Do not check the validity of the attribute in the variable scenario.
+  if (!IsPyExecuteData(data_args) && !raiseutils::HasVariableCondition(fg)) {
     TypePtr data_type = data_args->BuildType();
     MS_EXCEPTION_IF_NULL(data_type);
     auto item_args = args_abs_list[1];
@@ -1540,8 +1541,13 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   if (point_pos != std::string::npos && getattr_pos == std::string::npos) {
     constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
     std::stringstream script_buffer;
-    script_buffer << internal_getattr_owner_str;
-    script_buffer << expr.substr(point_pos);
+    if (expr.substr(point_pos) == ".__ms_iter__") {
+      // Convert iterable object to tuple.
+      script_buffer << "tuple(" << internal_getattr_owner_str << ")";
+    } else {
+      script_buffer << internal_getattr_owner_str;
+      script_buffer << expr.substr(point_pos);
+    }
     const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
     std::vector<ValuePtr> key_list;
     const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);
@@ -2037,22 +2043,20 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                            const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
-
   constexpr size_t data_index = 0;
   constexpr size_t item_index = 1;
   auto data_args = args_abs_list[data_index];
   auto item_args = args_abs_list[item_index];
   MS_EXCEPTION_IF_NULL(data_args);
   MS_EXCEPTION_IF_NULL(item_args);
-  MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString();
-  ValuePtr item_value = item_args->BuildValue();
-
-  ScopePtr scope = kDefaultScope;
-  if (out_conf != nullptr) {
-    MS_EXCEPTION_IF_NULL(out_conf->node());
-    scope = out_conf->node()->scope();
-  }
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString()
+                << ", node: " << out_conf->node()->DebugString(recursive_level);
+  ScopePtr scope = out_conf->node()->scope();
   ScopeGuard scope_guard(scope);
+  ValuePtr item_value = item_args->BuildValue();
   MS_EXCEPTION_IF_NULL(item_value);
   if (item_value->isa<ValueAny>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
@@ -2579,9 +2583,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                        << "' to be nonconstant. To convert to PyExecute() afterwards";
           non_const_err_ = true;
         } else {
-          MS_EXCEPTION(ValueError) << "When using JIT Fallback to handle script '" << script
+          MS_EXCEPTION(ValueError) << "When handling script '" << script << " in graph mode"
                                    << "', the inputs should be constant, but found variable '" << py_data_name
-                                   << "' to be nonconstant.";
+                                   << "' to be nonconstant. Try to set jit_syntax_level to LAX.";
         }
       }
     }

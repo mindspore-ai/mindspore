@@ -24,32 +24,28 @@
 #include <utility>
 #include <vector>
 #include <tuple>
-#include <algorithm>
 #include <functional>
+#include "include/backend/optimizer/helper.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "ops/ascend_op_name.h"
-#include "ops/nn_optimizer_op_name.h"
 #include "ops/math_op_name.h"
 #include "ops/conv_pool_ops.h"
 #include "ops/other_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
-#include "plugin/device/ascend/kernel/kernel_query.h"
-#include "kernel/oplib/oplib.h"
-#include "kernel/oplib/super_bar.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/debug/anf_ir_dump.h"
-#include "frontend/operator/ops.h"
-#include "utils/trace_base.h"
 #include "ops/op_name.h"
 #include "kernel/common_utils.h"
-#include "kernel/kernel_build_info.h"
+#include "kernel/oplib/oplib.h"
+#include "kernel/oplib/super_bar.h"
+#include "plugin/device/ascend/kernel/kernel_query.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
-#include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.h"
+#include "frontend/operator/ops.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace device {
@@ -621,7 +617,8 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   }
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
-  static std::unordered_map<tensor::Tensor *, TypeId> format_type;
+  // tensor id -> type id
+  static std::unordered_map<std::string, TypeId> format_type;
   if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || force_fresh) {
     if (IsValueNode<tensor::Tensor>(real_input_node)) {
       auto host_tensor_ptr = GetValueNode<tensor::TensorPtr>(real_input_node);
@@ -629,7 +626,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
       std::vector<string> format = {host_tensor_ptr->device_info().host_format_};
       output_format = format[0] == kOpFormat_DEFAULT ? output_format : format;
       builder->SetOutputsFormat(output_format);
-      auto iter = format_type.find(host_tensor_ptr.get());
+      auto iter = format_type.find(host_tensor_ptr->id());
       if (iter != format_type.end()) {
         std::vector<TypeId> output_type = {iter->second};
         builder->SetOutputsDeviceType(output_type);
@@ -638,7 +635,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
         std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
         builder->SetOutputsDeviceType(output_type);
         AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
-        format_type[host_tensor_ptr.get()] = output_type[0];
+        format_type[host_tensor_ptr->id()] = output_type[0];
       }
     } else {
       builder->SetOutputsFormat(output_format);
@@ -1335,7 +1332,7 @@ std::tuple<KernelSelectStatus, std::string, ExceptionType> SelectKernelInfoWithM
                    << kernel_node->fullname_with_scope() << " in aicpu kernel select.";
     }
 
-    opt::ConvertAttrAndInputBeforeAicpuKernelSelect(kernel_node);
+    kernel::ConvertAttrAndInputBeforeAicpuKernelSelect(kernel_node);
     FallbackOps(kernel_node);
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);

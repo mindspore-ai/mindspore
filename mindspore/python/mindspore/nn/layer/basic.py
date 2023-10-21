@@ -230,7 +230,7 @@ class Dropout1d(Cell):
           int64, float16, float32 or float64.
 
     Outputs:
-        Tensor, output, with the same shape and data type as `x`.
+        Tensor, has the same shape and data type as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.

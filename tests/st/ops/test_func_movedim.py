@@ -25,7 +25,7 @@ class Net(nn.Cell):
         return F.movedim(x, source=y, destination=z)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

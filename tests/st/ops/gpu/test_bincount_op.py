@@ -52,7 +52,7 @@ def test_bincount_graph():
         assert np.allclose(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bincount_pynative():

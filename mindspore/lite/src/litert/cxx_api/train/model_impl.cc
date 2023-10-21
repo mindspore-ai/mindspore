@@ -20,7 +20,6 @@
 #include "include/api/serialization.h"
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/metrics.h"
-#include "src/litert/cxx_api/expression/net_impl.h"
 #include "src/litert/cxx_api/converters.h"
 #include "src/litert/cxx_api/metrics/metrics_adapter.h"
 #include "src/litert/cxx_api/metrics/metrics_impl.h"

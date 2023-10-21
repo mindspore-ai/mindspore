@@ -54,7 +54,7 @@ def test_list_diff_int32():
     assert np.allclose(res_idx, idx.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_list_diff_fp32():

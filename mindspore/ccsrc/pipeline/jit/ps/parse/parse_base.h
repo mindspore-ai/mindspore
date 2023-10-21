@@ -74,7 +74,6 @@ const char PYTHON_MOD_IS_ADAPTER_TENSOR_CLASS[] = "is_adapter_tensor_class";
 const char PYTHON_MOD_IS_ADAPTER_PARAMETER_CLASS[] = "is_adapter_parameter_class";
 const char PYTHON_MOD_GET_MS_CLASS_NAME[] = "get_ms_class_name";
 const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
-const char PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL[] = "get_class_attr_namespace_symbol";
 const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespace_symbol";
 const char PYTHON_MOD_GET_OBJ_DEFINED[] = "get_obj_defined_from_obj_type";
 const char PYTHON_MOD_GET_ATTR_FROM_OBJ[] = "get_attr_from_object";
@@ -87,6 +86,7 @@ const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 const char PYTHON_MOD_CONVERT_TO_MS_CSRTENSOR[] = "convert_to_ms_csrtensor";
 const char PYTHON_MOD_CONVERT_TO_MS_COOTENSOR[] = "convert_to_ms_cootensor";
+const char PYTHON_MOD_CONVERT_TO_NAMEDTUPLE[] = "convert_to_namedtuple";
 const char PYTHON_MOD_EVAL_PY_SCRIPT[] = "eval_script";
 const char PYTHON_MOD_GET_SCRIPT_ID_ATTRS[] = "get_script_id_attrs";
 const char PYTHON_MOD_PYTHON_ISINSTANCE[] = "python_isinstance";
@@ -180,6 +180,7 @@ const char SEGMENT_NAME[] = "_pipeline_segment";
 
 // Define the Namespace name.
 const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // For ast type namespace.
+const char RESOLVE_NAMESPACE_NAME_CLASS_OBJECT[] = "ClassObject";  // For class object itself namespace.
 const char RESOLVE_NAMESPACE_NAME_CLASS_MEMBER[] = "ClassMember";  // For class member namespace.
 const char RESOLVE_NAMESPACE_NAME_SYMBOL_STR[] = "SymbolStr";      // For symbol str namespace.
 const char RESOLVE_NAMESPACE_NAME_COMMON_OPS[] = "CommonOPS";      // For common ops, eg: hasnext, next.

@@ -33,7 +33,7 @@ def test_net_float16():
     assert np.allclose(output.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_float32():

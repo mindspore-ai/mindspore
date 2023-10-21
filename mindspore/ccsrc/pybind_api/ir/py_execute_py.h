@@ -86,24 +86,6 @@ bool ContainStubTensor(const py::object &obj) {
   return IsStubTensor(obj);
 }
 
-abstract::AbstractBasePtr GenerateAbstractFromPyObject(const py::object &obj) {
-  // This function will be moved to runtime compile pass later.
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
-  if (!allow_inplace_ops) {
-    return nullptr;
-  }
-  // obj is tuple will add later.
-  if (py::isinstance<py::list>(obj)) {
-    ValuePtr converted_res = nullptr;
-    bool converted = parse::ConvertData(obj, &converted_res);
-    if (converted) {
-      auto ret_list = converted_res->ToAbstract();
-      return fallback::GenerateAbstractSequence(ret_list->BuildShape(), ret_list->BuildType(), false);
-    }
-  }
-  return nullptr;
-}
-
 class PyExecuteInitializer {
  public:
   PyExecuteInitializer() {
@@ -184,13 +166,6 @@ class PyExecuteInitializer {
         const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return tensor->ToAbstract();
-      }
-      static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-      if (!allow_runtime_compile) {
-        auto ret = GenerateAbstractFromPyObject(output);
-        if (ret != nullptr) {
-          return ret;
-        }
       }
     } catch (const py::error_already_set &e) {
       auto error_type_name = py::cast<std::string>(python_adapter::GetPyObjAttr(e.type(), "__name__"));

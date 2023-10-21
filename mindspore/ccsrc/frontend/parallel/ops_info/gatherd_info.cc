@@ -24,6 +24,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
 
@@ -70,16 +71,32 @@ Status GatherDInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Dimensions input_strategy = stra[0];
-  Dimensions index_strategy = stra[1];
-  if (input_strategy[dim_] != 1 || index_strategy[dim_] != 1) {
-    MS_LOG(ERROR) << name_ << ": The dimension of dim can not be split";
+  const Dimensions &input_strategy = stra[0];
+  const Dimensions &index_strategy = stra[1];
+  if (input_strategy.size() != index_strategy.size()) {
+    MS_LOG(ERROR) << name_ << ": The dimension of X and Index strategy should be same, but got "
+                  << input_strategy.size() << " and " << index_strategy.size();
     return FAILED;
   }
 
-  if (input_strategy != index_strategy) {
-    MS_LOG(ERROR) << name_ << ": The dimension of dim can not be split";
-    return FAILED;
+  for (size_t i = 0; i < input_strategy.size(); i++) {
+    if (i != dim_) {
+      if (input_strategy[i] != index_strategy[i]) {
+        MS_LOG(ERROR) << name_ << ": The dimension " << i << "of X and Index should be same, but got "
+                      << input_strategy[i] << " and " << index_strategy[i];
+        return FAILED;
+      }
+      continue;
+    }
+
+    if (index_strategy[i] != 1) {
+      MS_LOG(ERROR) << name_ << ": Index dimension dim can not be splited.";
+      return FAILED;
+    }
+  }
+
+  if (input_strategy[dim_] != 1) {
+    axis_shard_ = true;
   }
 
   return SUCCESS;
@@ -104,9 +121,12 @@ Status GatherDInfo::InferTensorMap() {
     input_tensor_map.push_back(SizeToLong(size - i - 1));
   }
 
+  Shape index_tensor_map = input_tensor_map;
+  index_tensor_map[dim_] = -1;
+
   inputs_tensor_map_.push_back(input_tensor_map);   // input
-  inputs_tensor_map_.push_back(input_tensor_map);   // index
-  outputs_tensor_map_.push_back(input_tensor_map);  // output
+  inputs_tensor_map_.push_back(index_tensor_map);   // index
+  outputs_tensor_map_.push_back(index_tensor_map);  // output
   return SUCCESS;
 }
 
@@ -215,6 +235,75 @@ std::vector<StrategyPtr> GatherDInfo::GenerateOpStrategies(int64_t stage_id) {
     sp->ResetInputs(tmp_strategy);
   }
   return sp_vector;
+}
+
+Status GatherDInfo::InferBias() {
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->rank_index_in_stage();
+  const auto &input_shape = inputs_shape_.at(0);
+  int64_t slice_num = dev_matrix_shape_.at(dim_);
+  slice_size_ = input_shape.at(dim_) / slice_num;
+  bias_ = rank % slice_num * slice_size_;
+  return SUCCESS;
+}
+
+Status GatherDInfo::InferGroup() {
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, g_device_manager->GetDeviceListInThisStage(), dev_matrix_shape_);
+
+  RankList group_devices;
+  if (dev_matrix.GetDevicesAlongDim(SizeToUlong(dim_), &group_devices) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Create group failed.";
+    return FAILED;
+  }
+
+  MS_LOG(INFO) << name_ << ": The group ranks is " << group_devices;
+  if (g_device_manager->CreateGroup(group_devices, &group_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": create reduce group failed in table row split.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+ReplaceGraphPtr GatherDInfo::replace_graph(const CNodePtr &cnode) {
+  if (!axis_shard_) {
+    return replace_graph_;
+  }
+
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << "GenerateGraph Init failed";
+  }
+
+  if (InferBias() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer Bias failed.";
+  }
+
+  // Split along `dim` logic of gatherd(x, dim, index):
+  // Divide the x into N segments. Each rank keep a segment of x and full index, and responsible for gatherd a segment.
+  // Then aggregate all segments with AllReduce.
+  MS_LOG(INFO) << name_ << ": The rank is " << g_device_manager->rank_index_in_stage() << ", the bias is " << bias_;
+  auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(bias_)});
+  auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
+  auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
+  auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
+  auto gatherd = gen_g.PushBack({gen_g.NewOpInst(GATHERD), gen_g.virtual_input_node(), CreatInt64Imm(dim_), minimum});
+  auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gatherd});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), gatherd, cast});
+
+  if (InferGroup() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer Group failed.";
+  }
+  Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
+  Attr attr_group = std::make_pair(GROUP, MakeValue(group_.name()));
+  OperatorAttrs attrs = {attr_op, attr_group};
+  AnfNodePtr reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 3), std::make_pair(gatherd, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, reduce_op));
+
+  return replace_graph_;
 }
 
 REGISTER(GatherDInfo);

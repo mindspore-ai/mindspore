@@ -17,7 +17,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_PIN_MEM_POOL_H_
 
 #include "runtime/device/gsm/pin_mem_pool.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include "runtime/device/kernel_runtime.h"
 
 namespace mindspore {
 namespace device {
@@ -33,7 +33,7 @@ class AscendPinMemPool : public PinMemPool {
   AscendPinMemPool &operator=(const AscendPinMemPool &) = delete;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   void PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) override;
-  AscendKernelRuntime *runtime_instance_{nullptr};
+  KernelRuntime *runtime_instance_{nullptr};
 };
 }  // namespace ascend
 }  // namespace device

@@ -92,8 +92,9 @@ namespace dataset {
 PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustBrightnessOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustBrightnessOperation>>(*m, "AdjustBrightnessOperation")
-                    .def(py::init([](float brightness_factor) {
-                      auto adjust_brightness = std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor);
+                    .def(py::init([](float brightness_factor, std::string device_target) {
+                      auto adjust_brightness =
+                        std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor, device_target);
                       THROW_IF_ERROR(adjust_brightness->ValidateParams());
                       return adjust_brightness;
                     }));
@@ -102,8 +103,9 @@ PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(AdjustContrastOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustContrastOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustContrastOperation>>(*m, "AdjustContrastOperation")
-                    .def(py::init([](float contrast_factor) {
-                      auto adjust_contrast = std::make_shared<vision::AdjustContrastOperation>(contrast_factor);
+                    .def(py::init([](float contrast_factor, std::string device_target) {
+                      auto adjust_contrast =
+                        std::make_shared<vision::AdjustContrastOperation>(contrast_factor, device_target);
                       THROW_IF_ERROR(adjust_contrast->ValidateParams());
                       return adjust_contrast;
                     }));
@@ -124,8 +126,8 @@ PYBIND_REGISTER(
   AdjustHueOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AdjustHueOperation, TensorOperation, std::shared_ptr<vision::AdjustHueOperation>>(
       *m, "AdjustHueOperation")
-      .def(py::init([](float hue_factor) {
-        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor);
+      .def(py::init([](float hue_factor, std::string device_target) {
+        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor, device_target);
         THROW_IF_ERROR(adjust_hue->ValidateParams());
         return adjust_hue;
       }));
@@ -134,8 +136,9 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::AdjustSaturationOperation, TensorOperation,
                                    std::shared_ptr<vision::AdjustSaturationOperation>>(*m, "AdjustSaturationOperation")
-                    .def(py::init([](float saturation_factor) {
-                      auto ajust_saturation = std::make_shared<vision::AdjustSaturationOperation>(saturation_factor);
+                    .def(py::init([](float saturation_factor, std::string device_target) {
+                      auto ajust_saturation =
+                        std::make_shared<vision::AdjustSaturationOperation>(saturation_factor, device_target);
                       THROW_IF_ERROR(ajust_saturation->ValidateParams());
                       return ajust_saturation;
                     }));
@@ -259,13 +262,8 @@ PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::DecodeOperation, TensorOperation, std::shared_ptr<vision::DecodeOperation>>(
                     *m, "DecodeOperation")
-                    .def(py::init([](bool rgb) {
-                      auto decode = std::make_shared<vision::DecodeOperation>(rgb);
-                      THROW_IF_ERROR(decode->ValidateParams());
-                      return decode;
-                    }))
-                    .def(py::init([](bool rgb) {
-                      auto decode = std::make_shared<vision::DecodeOperation>(rgb);
+                    .def(py::init([](bool rgb, std::string device_target) {
+                      auto decode = std::make_shared<vision::DecodeOperation>(rgb, device_target);
                       THROW_IF_ERROR(decode->ValidateParams());
                       return decode;
                     }));
@@ -385,11 +383,12 @@ PYBIND_REGISTER(
   NormalizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::NormalizeOperation, TensorOperation, std::shared_ptr<vision::NormalizeOperation>>(
       *m, "NormalizeOperation")
-      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc) {
-        auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc);
-        THROW_IF_ERROR(normalize->ValidateParams());
-        return normalize;
-      }));
+      .def(py::init(
+        [](const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc, std::string device_target) {
+          auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc, device_target);
+          THROW_IF_ERROR(normalize->ValidateParams());
+          return normalize;
+        }));
   }));
 
 PYBIND_REGISTER(
@@ -803,8 +802,9 @@ PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(ResizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::ResizeOperation, TensorOperation, std::shared_ptr<vision::ResizeOperation>>(
                     *m, "ResizeOperation")
-                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode) {
-                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode);
+                    .def(py::init([](const std::vector<int32_t> &size, InterpolationMode interpolation_mode,
+                                     std::string device_target) {
+                      auto resize = std::make_shared<vision::ResizeOperation>(size, interpolation_mode, device_target);
                       THROW_IF_ERROR(resize->ValidateParams());
                       return resize;
                     }));

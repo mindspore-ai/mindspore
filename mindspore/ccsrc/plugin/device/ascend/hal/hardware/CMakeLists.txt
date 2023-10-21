@@ -14,8 +14,19 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
 endif()
 
-set_property(SOURCE ${HARDWARE_ASCEND_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+file(GLOB_RECURSE MS_HARDWARE_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "ascend_deprecated_interface.cc"
+        "ge_device_context.cc"
+        "ge_device_res_manager.cc"
+        "ge_graph_executor.cc"
+        "ge_kernel_executor.cc"
+        "ge_utils.cc"
+        "ge_graph_optimization.cc"
+        )
+
+set_property(SOURCE ${HARDWARE_ASCEND_SRC_LIST} ${MS_HARDWARE_910B} PROPERTY COMPILE_DEFINITIONS
         SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 if(ENABLE_D)
     add_library(_mindspore_plugin_device_ascend_hal_hardware_obj OBJECT ${HARDWARE_ASCEND_SRC_LIST})
+    add_library(_mindspore_plugin_device_ascend_hal_hardware_910b_obj OBJECT ${MS_HARDWARE_910B})
 endif()

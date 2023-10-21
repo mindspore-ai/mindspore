@@ -24,6 +24,9 @@
 
 #include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/device_tensor.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/core/device_tensor_ascend910b.h"
+#endif
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/perf/info_collector.h"
@@ -69,13 +72,21 @@ constexpr char kConvertColorOp[] = "ConvertColorOp";
 constexpr char kCutMixBatchOp[] = "CutMixBatchOp";
 constexpr char kCutOutOp[] = "CutOutOp";
 constexpr char kCropOp[] = "CropOp";
+// Ascend310 DVPP just support C++ Interface API
 constexpr char kDvppCropJpegOp[] = "DvppCropJpegOp";
 constexpr char kDvppDecodeResizeCropJpegOp[] = "DvppDecodeResizeCropJpegOp";
 constexpr char kDvppDecodeResizeJpegOp[] = "DvppDecodeResizeJpegOp";
 constexpr char kDvppDecodeJpegOp[] = "DvppDecodeJpegOp";
 constexpr char kDvppDecodePngOp[] = "DvppDecodePngOp";
-constexpr char kDvppNormalizeOp[] = "DvppNormalizeOp";
+constexpr char kDvppNormalizeOp[] = "DvppNormalizeOp";  // used by Ascend310 and Ascend910B
 constexpr char kDvppResizeJpegOp[] = "DvppResizeJpegOp";
+// Ascend910B DVPP used for Python Interface API
+constexpr char kDvppAdjustBrightnessOp[] = "DvppAdjustBrightnessOp";
+constexpr char kDvppAdjustContrastOp[] = "DvppAdjustContrastOp";
+constexpr char kDvppAdjustHueOp[] = "DvppAdjustHueOp";
+constexpr char kDvppAdjustSaturationOp[] = "DvppAdjustSaturationOp";
+constexpr char kDvppDecodeOp[] = "DvppDecodeOp";
+constexpr char kDvppResizeOp[] = "DvppResizeOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kEraseOp[] = "EraseOp";
 constexpr char kGaussianBlurOp[] = "GaussianBlurOp";
@@ -265,10 +276,23 @@ class TensorOp {
   virtual Status Compute(const TensorRow &input, TensorRow *output);
 
   // Perform an operation on one DeviceTensor and produce one DeviceTensor. This is for 1-to-1 column MapOp
-  // @param input shares the ownership of the Tensor (increase the ref count).
+  // @param input shares the ownership of the DeviceTensor (increase the ref count).
   // @param output the address to a shared_ptr where the result will be placed.
   // @return Status
   virtual Status Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output);
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  virtual Status Compute(const std::vector<std::shared_ptr<DeviceTensorAscend910B>> &input,
+                         std::vector<std::shared_ptr<DeviceTensorAscend910B>> *output);
+
+  // Perform an operation on one DeviceTensorAscend910B and produce one DeviceTensorAscend910B. This is for 1-to-1
+  // column MapOp
+  // @param input shares the ownership of the DeviceTensorAscned910B (increase the ref count).
+  // @param output the address to a shared_ptr where the result will be placed.
+  // @return Status
+  virtual Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                         std::shared_ptr<DeviceTensorAscend910B> *output);
+#endif
 
   // Returns true oif the TensorOp takes one input and returns one output.
   // @return true/false
@@ -305,6 +329,13 @@ class TensorOp {
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 
   virtual Status SetAscendResource(const std::shared_ptr<DeviceResource> &resource);
+
+  virtual bool IsDvppOp() { return false; }
+
+  virtual bool IsHWC() { return true; }  // the input of the op is HWC in default
+
+  // Currently, it's used by PyFuncOp which can release global executor when map with thread/process mode
+  virtual Status ReleaseResource() { return Status::OK(); }
 
  protected:
   bool is_deterministic_{true};

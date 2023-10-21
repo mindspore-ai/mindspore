@@ -21,12 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import Polar
-from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops.operations.math_ops import Lgamma
-from mindspore.ops.operations.math_ops import Digamma
-from mindspore.ops.operations.math_ops import Polygamma
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixSolveLs
@@ -34,14 +29,11 @@ from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Cholesky
-from mindspore.ops.operations.math_ops import Fmin
 from mindspore.ops.operations.math_ops import CholeskySolve
-from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import EuclideanNorm
 from mindspore.ops.operations.array_ops import Transpose, MatrixSetDiagV3
-from mindspore.ops.operations.math_ops import Fmax
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.primitive import _primexpr
@@ -380,27 +372,6 @@ def get_bprop_nan_to_num(self):
     return bprop
 
 
-@bprop_getters.register(Angle)
-def get_bprop_angle(self):
-    """Grad definition for `Angle` operation."""
-    real_op = Real()
-    imag_op = Imag()
-    reciprocal_op = P.Reciprocal()
-    complex_op = Complex()
-    neg_op = P.Neg()
-
-    def bprop(x, out, dout):
-        re = real_op(x)
-        im = imag_op(x)
-        re = complex_op(im, re)
-        z = reciprocal_op(re)
-        zero = zeros_like(dout)
-        complex_dout = complex_op(dout, zero)
-        return (neg_op(complex_dout * z),)
-
-    return bprop
-
-
 @bprop_getters.register(Polar)
 def get_bprop_polar(self):
     """Grad definition for `Polar` operation."""
@@ -420,115 +391,6 @@ def get_bprop_polar(self):
         result_mul_1_j = out * i
         grad_angle = real(grad_conj * result_mul_1_j)
         return (grad_abs, grad_angle)
-
-    return bprop
-
-
-@bprop_getters.register(Fmin)
-def get_bprop_fmin(self):
-    """Grad definition for 'Fmin' operation"""
-    shape_ = P.Shape()
-    masked_fill_op = P.MaskedFill()
-    logical_or_op = P.LogicalOr()
-    logical_not_op = P.LogicalNot()
-    logical_and_op = P.LogicalAnd()
-    mul_op = P.Mul()
-    is_nan_op = P.IsNan()
-    reshape_ = P.Reshape()
-
-    def bprop(x1, x2, out, dout):
-        x1_dtype = F.dtype(x1)
-        x2_dtype = F.dtype(x2)
-        x1 = F.cast(x1, mstype.float32)
-        x2 = F.cast(x2, mstype.float32)
-        dout = F.cast(dout, mstype.float32)
-        b1 = logical_or_op((x1 <= x2), is_nan_op(x2))
-        b2 = logical_or_op((x2 < x1), logical_and_op(is_nan_op(x1), logical_not_op(is_nan_op(x2))))
-        rx1 = masked_fill_op(x1, b1, 1.)
-        rx1 = masked_fill_op(rx1, logical_not_op(b1), 0.)
-        rx2 = masked_fill_op(x2, b2, 1.)
-        rx2 = masked_fill_op(rx2, logical_not_op(b2), 0.)
-        rrx1 = mul_op(rx1, dout)
-        rrx2 = mul_op(rx2, dout)
-        shape_of_x1 = shape_(x1)
-        shape_of_x2 = shape_(x2)
-        x1_dim = len(shape_of_x1)
-        x2_dim = len(shape_of_x2)
-        if x1_dim == 0 and x2_dim != 0:
-            sum_r1 = rrx1.sum()
-            sum_r2 = rrx2
-        elif x1_dim == 0 and x2_dim == 0:
-            sum_r1 = rrx1.sum()
-            sum_r2 = rrx2.sum()
-        elif x1_dim != 0 and x2_dim == 0:
-            sum_r2 = rrx2.sum()
-            sum_r1 = rrx1
-        else:
-            rx, ry = DynamicBroadcastGradientArgs()(shape_of_x1, shape_of_x2)
-            sum_r1 = sum_grad_reduce_axis(rrx1, rx)
-            sum_r2 = sum_grad_reduce_axis(rrx2, ry)
-        brrx1 = reshape_(sum_r1, shape_of_x1)
-        brrx2 = reshape_(sum_r2, shape_of_x2)
-        brrx1 = F.cast(brrx1, x1_dtype)
-        brrx2 = F.cast(brrx2, x2_dtype)
-        return brrx1, brrx2
-
-    return bprop
-
-
-@bprop_getters.register(Fmax)
-def get_bprop_fmax(self):
-    """Grad definition for 'Fmax' operation"""
-    shape_ = P.Shape()
-    masked_fill_op = P.MaskedFill()
-    logical_or_op = P.LogicalOr()
-    logical_not_op = P.LogicalNot()
-    logical_and_op = P.LogicalAnd()
-    mul_op = P.Mul()
-    is_nan_op = P.IsNan()
-    reshape_ = P.Reshape()
-
-    def bprop(x1, x2, out, dout):
-        x1_dtype = F.dtype(x1)
-        x2_dtype = F.dtype(x2)
-        if x1_dtype != mstype.float32:
-            x1 = F.cast(x1, mstype.float32)
-            dout = F.cast(dout, mstype.float32)
-        if x2_dtype != mstype.float32:
-            x2 = F.cast(x2, mstype.float32)
-            dout = F.cast(dout, mstype.float32)
-        b1 = logical_or_op(logical_and_op((x1 >= x2), logical_not_op(is_nan_op(x1))), is_nan_op(x2))
-        b2 = logical_or_op(logical_and_op(x2 > x1, logical_not_op(is_nan_op(x2))),
-                           logical_and_op(is_nan_op(x1), logical_not_op(is_nan_op(x2))))
-        rx1 = masked_fill_op(x1, b1, 1.)
-        rx1 = masked_fill_op(rx1, logical_not_op(b1), 0.)
-        rx2 = masked_fill_op(x2, b2, 1.)
-        rx2 = masked_fill_op(rx2, logical_not_op(b2), 0.)
-        rrx1 = mul_op(rx1, dout)
-        rrx2 = mul_op(rx2, dout)
-        shape_of_x1 = shape_(x1)
-        shape_of_x2 = shape_(x2)
-        x1_dim = len(shape_of_x1)
-        x2_dim = len(shape_of_x2)
-        if x1_dim == 0 and x2_dim != 0:
-            sum_r1 = rrx1.sum()
-            sum_r2 = rrx2
-        elif x1_dim == 0 and x2_dim == 0:
-            sum_r1 = rrx1.sum()
-            sum_r2 = rrx2.sum()
-        elif x1_dim != 0 and x2_dim == 0:
-            sum_r2 = rrx2.sum()
-            sum_r1 = rrx1
-        else:
-            rx, ry = DynamicBroadcastGradientArgs()(shape_of_x1, shape_of_x2)
-            sum_r1 = sum_grad_reduce_axis(rrx1, rx)
-            sum_r2 = sum_grad_reduce_axis(rrx2, ry)
-        brrx1 = reshape_(sum_r1, shape_of_x1)
-        brrx2 = reshape_(sum_r2, shape_of_x2)
-        brrx1 = F.cast(brrx1, x1_dtype)
-        brrx2 = F.cast(brrx2, x2_dtype)
-        return brrx1, brrx2
-
 
     return bprop
 
@@ -553,63 +415,6 @@ def get_bprop_tridiagonalsolve(self):
         a = (P.Stack(-2)([superdiag2, diag2, subdiag2]))
         grad_diags = 0 - a
         return grad_diags, grad_rhs
-
-    return bprop
-
-
-@bprop_getters.register(Lgamma)
-def get_bprop_lgamma(self):
-    """Grad definition for `Lgamma` operation."""
-    digamma = Digamma()
-
-    def bprop(x, out, dout):
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * digamma(x)
-            dx = F.cast(dx, mstype.float16)
-        elif x.dtype in (mstype.int32,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * digamma(x)
-        else:
-            dx = dout * digamma(x)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Digamma)
-def get_bprop_digamma(self):
-    """Grad definition for `Digamma` operation."""
-    polygamma = Polygamma()
-    a = Tensor(1)
-
-    def bprop(x, out, dout):
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * polygamma(a, x)
-            dx = F.cast(dx, mstype.float16)
-        else:
-            dx = dout * polygamma(a, x)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Polygamma)
-def get_bprop_polygamma(self):
-    """Grad definition for `Polygamma` operation."""
-    polygamma = Polygamma()
-
-    def bprop(a, x, out, dout):
-        one = Tensor(1)
-        a = a + one
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float64)
-            dx = dout * polygamma(a, x)
-            dx = F.cast(dx, mstype.float16)
-        else:
-            dx = dout * polygamma(a, x)
-        return zeros_like(a), dx
 
     return bprop
 
@@ -703,45 +508,6 @@ def get_bprop_diagonal(self):
         else:
             dx = zeros_like(x)
         return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Cholesky)
-def get_bprop_cholesky(self):
-    """Grad definition for `Cholesky` operation."""
-    upper = self.upper
-    choleskygrad = G.CholeskyGrad()
-
-    def bprop(x, out, dout):
-        out = cholesky_transpose(out) if upper else out
-        dout = cholesky_transpose(dout) if upper else dout
-        dx = choleskygrad(out, dout)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(InplaceIndexAdd)
-def get_bprop_inplace_index_add(self):
-    """Generate bprop for InplaceIndexAdd"""
-    gather = P.Gather()
-    _axis = self.axis
-
-    def bprop(var, indices, updates, out, dout):
-        return dout, zeros_like(indices), gather(dout, indices, _axis)
-
-    return bprop
-
-
-@bprop_getters.register(P.Zeta)
-def get_bprop_zeta(self):
-    """Generate bprop for Zeta"""
-    zeta = P.Zeta()
-
-    def bprop(x, q, out, dout):
-        dq = -x * zeta(x + 1, q) * dout
-        return zeros_like(x), dq
 
     return bprop
 

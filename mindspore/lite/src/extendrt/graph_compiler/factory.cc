@@ -24,6 +24,9 @@ GraphCompilerRegistry &GraphCompilerRegistry::GetInstance() {
 }
 
 void GraphCompilerRegistry::RegCompiler(const mindspore::GraphCompilerType &type, const GraphCompilerRegFunc &creator) {
+  if (creator == nullptr) {
+    return;
+  }
   graph_compiler_map_[type] = creator;
 }
 

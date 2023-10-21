@@ -19,14 +19,18 @@
         - **font_size** (int, float) - 指定类别文本字体大小。默认值： ``0.8`` 。
         - **show** (bool) - 是否显示图像。默认值： ``True`` 。
         - **win_name** (str) - 指定窗口名称。默认值： ``"win"`` 。
-        - **wait_time** (int) - 指定cv2.waitKey的时延，单位为ms，即图像显示的自动切换间隔。默认值： ``2000`` ，表示间隔为2000ms。
+        - **wait_time** (int) - 等待按键输入的时延，单位为ms。在图像显示过程中，若无按键输入，则等待该时延后跳转到下一图像；
+          若输入ESC，则立刻结束显示；若输入其他按键，则停止等待直接跳转下一图像。默认值： ``2000`` ，等待2000ms跳转下一图像。
         - **out_file** (str, 可选) - 输出图像的文件路径，用于在绘制后将结果存储到本地。默认值： ``None`` ，不保存。
 
     返回：
         numpy.ndarray，带边界框和类别置信度的图像。
 
+    .. note::
+        该接口依赖 `opencv-python` 库。
+
     异常：
-        - **ImportError** - 当未安装opencv-python库。
+        - **ImportError** - 当未安装 `opencv-python` 库。
         - **AssertionError** - 当 `image` 的格式不为<H, W, C>或<C, H, W>。
         - **AssertionError** - 当 `bboxes` 的格式不为<N, 4>或<N, 5>。
         - **AssertionError** - 当 `labels` 的格式不为<N, 1>。

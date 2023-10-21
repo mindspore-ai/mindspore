@@ -48,6 +48,8 @@ abstract::TupleShapePtr QrInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kDimLeastNum = 2;
   const int64_t kDimPenultimateNum = 2;
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
   // support dynamic rank
@@ -87,6 +89,9 @@ abstract::TupleShapePtr QrInferShape(const PrimitivePtr &primitive, const std::v
 
 TuplePtr QrInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  MS_EXCEPTION_IF_NULL(prim);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   auto out_type =
     CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{out_type, out_type});
@@ -108,9 +113,6 @@ bool Qr::get_full_matrices() const {
 
 AbstractBasePtr QrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = QrInferType(primitive, input_args);
   auto infer_shape = QrInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

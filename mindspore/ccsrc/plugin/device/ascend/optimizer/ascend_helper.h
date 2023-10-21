@@ -43,8 +43,6 @@ bool CheckAICoreSupported(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedAny(const AnfNodePtr &anf_node);
 bool CheckAICoreSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
 bool CheckAICPUSupportedSpec(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info);
-std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
-ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
 
 class KernelQuery {
  public:
@@ -92,18 +90,11 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
 
 ValueNodePtr CreatePermValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &perm);
 
-CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
-                              const std::string &format, const TypeId &input_type, const TypeId &output_type,
-                              const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
-                              const std::string &reshape_type = std::string{});
-
 AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select);
 
 AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node, const AnfNodePtr &node,
                                   const KernelSelectPtr &kernel_select);
-
-CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select, size_t insert_index, bool is_insert_input);
@@ -128,8 +119,6 @@ inline bool NeedInsertTransData(const ShapeVector &origin_shape, const std::stri
 }
 
 void NormalizeReduceAttrAxis(const CNodePtr &cnode);
-
-void ConvertAttrAndInputBeforeAicpuKernelSelect(const CNodePtr &kernel_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_HELPER_H_

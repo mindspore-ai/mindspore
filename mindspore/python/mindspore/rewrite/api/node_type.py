@@ -33,6 +33,7 @@ class NodeType(Enum):
     - CellContainer: `CellContainer` node represents invoking method :class:`mindspore.nn.SequentialCell` in
       forward method.
     - MathOps: `MathOps` node represents a mathematical operation, such as adding or comparing in forward method.
+    - ControlFlow: `ControlFlow` node represents a control flow statement, such as if statement.
 
     """
     Unknown = 0
@@ -49,3 +50,4 @@ class NodeType(Enum):
     Tree = 9
     CellContainer = 10
     MathOps = 11
+    ControlFlow = 12

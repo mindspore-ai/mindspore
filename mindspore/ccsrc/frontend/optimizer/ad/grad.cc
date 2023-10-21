@@ -15,6 +15,9 @@
  */
 
 #include "frontend/optimizer/ad/grad.h"
+#include <memory>
+#include <unordered_map>
+#include <vector>
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph_cloner.h"
@@ -114,6 +117,33 @@ FuncGraphVector LiftFvMulti(const pipeline::ResourceBasePtr &resource, const Fun
   }
 #endif
   return PartialEliminateMulti(resource, new_fgs);
+}
+
+bool ForwardInputsEqual(const std::vector<AnfNodePtr> &first_inputs, const std::vector<AnfNodePtr> &second_inputs) {
+  if (first_inputs.size() != second_inputs.size()) {
+    return false;
+  }
+  for (size_t i = 1; i < first_inputs.size(); ++i) {
+    if (HasAbstractMonad(first_inputs[i]) && HasAbstractMonad(second_inputs[i])) {
+      continue;
+    }
+    if (first_inputs[i] != second_inputs[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+AnfNodePtr GetJUser(const FuncGraphManagerPtr &manager, const AnfNodePtr &j_node) {
+  auto iter = manager->node_users().find(j_node);
+  if (iter == manager->node_users().end()) {
+    return nullptr;
+  }
+  auto users = iter->second;
+  if (users.size() != 1) {
+    MS_LOG(EXCEPTION) << "The size of J users should be 1, but got " << users.size();
+  }
+  return users.begin()->first;
 }
 }  // namespace
 
@@ -229,5 +259,52 @@ MetaFuncGraphPtr Kmeta(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
 }
 
 void CleanRes() { DFunctor::Clear(); }
+
+bool MergeForward(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
+  auto manager = opt->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  std::unordered_map<FuncGraphPtr, std::vector<AnfNodePtr>> forward_fg_to_j_nodes;
+  auto all_nodes = TopoSort(root->get_return(), SuccDeeperSimple, AlwaysInclude);
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimJ)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto merge_forward = cnode->user_data<bool>("merge_forward");
+    if (merge_forward == nullptr || !(*merge_forward)) {
+      continue;
+    }
+    auto forward_fg = GetValueNode<FuncGraphPtr>(cnode->input(1));
+    if (forward_fg == nullptr) {
+      continue;
+    }
+    (void)forward_fg_to_j_nodes[forward_fg].emplace_back(node);
+  }
+  bool change = false;
+  for (const auto &iter : forward_fg_to_j_nodes) {
+    auto &j_nodes = iter.second;
+    MS_LOG(DEBUG) << "J nodes size is " << j_nodes.size();
+    if (j_nodes.size() <= 1) {
+      continue;
+    }
+    auto first_j_user = GetJUser(manager, j_nodes[0]);
+    if (first_j_user == nullptr) {
+      continue;
+    }
+    const auto &first_forward_inputs = first_j_user->cast<CNodePtr>()->inputs();
+    for (size_t i = 1; i < j_nodes.size(); ++i) {
+      auto j_user = GetJUser(manager, j_nodes[i]);
+      const auto &forward_inputs = j_user->cast<CNodePtr>()->inputs();
+      if (!ForwardInputsEqual(first_forward_inputs, forward_inputs)) {
+        continue;
+      }
+      manager->Replace(j_user, first_j_user);
+      MS_LOG(DEBUG) << "Replace J user " << j_user->DebugString() << " with the first J user "
+                    << first_j_user->DebugString();
+      change = true;
+    }
+  }
+  return change;
+}
 }  // namespace ad
 }  // namespace mindspore

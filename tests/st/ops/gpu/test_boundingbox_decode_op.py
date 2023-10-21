@@ -92,7 +92,7 @@ def test_bounding_box_decode_functional_modes():
     test_bounding_box_decode_functional()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_boundingbox_decode():

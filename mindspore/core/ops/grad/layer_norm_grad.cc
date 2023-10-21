@@ -56,6 +56,10 @@ int64_t LayerNormGrad::get_begin_params_axis() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
+float LayerNormGrad::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(LayerNormGrad, BaseOperator);
 class MIND_API LayerNormGradInfer : public abstract::OpInferBase {

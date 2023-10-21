@@ -25,6 +25,7 @@ import importlib
 import numpy as np
 
 import mindspore
+import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.train.serialization import save_checkpoint, load_checkpoint
 from mindspore.train.callback._checkpoint import ModelCheckpoint, _chg_ckpt_file_name_if_same_exist
@@ -237,7 +238,7 @@ class Model:
         self._lite_incremental_predictor = None
         self._mindspore_lite = None
         self._lite_infer = True  # if backend lite infer fails, set False
-        self._mindspore_lite_model_group_id = id(self)
+        self._mindspore_lite_model_group_id = id(self) & 0xFFFF
 
 
     def _check_for_graph_cell(self, kwargs):
@@ -833,7 +834,7 @@ class Model:
                 os.remove(cb_params.latest_ckpt_file)
                 raise RuntimeError(e.__str__() + ", load ckpt failed and remove the ckpt: "\
                                    + cb_params.latest_ckpt_file) from e
-            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+            _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             self.need_load_ckpt = False
 
     def _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
@@ -862,9 +863,9 @@ class Model:
                 self.epoch_iter = recovery_epoch_num
                 cb_params.cur_epoch_num = self.epoch_iter + 1
                 cb_params.last_save_ckpt_step = cb_params.cur_step_num
-                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.sink_size())
+                _reset_training_dataset(cb_params.cur_step_num, dataset_helper.iter.dataset.get_dataset_size())
             else:
-                _reset_training_dataset(0, dataset_helper.sink_size())
+                _reset_training_dataset(0, dataset_helper.iter.dataset.get_dataset_size())
 
             _set_recovery_context(need_reset=False)
 
@@ -1019,6 +1020,8 @@ class Model:
             ...                  loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
+        # prepare dataset for obfuscated model
+        train_dataset = self._prepare_obf_dataset(train_dataset)
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
             logger.info("For PS mode, reset datasink mode to False when using Ascend or CPU backend.")
@@ -1171,7 +1174,7 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
         device_target = context.get_context("device_target")
         if _is_ps_mode() and not _cache_enable() and (device_target in ["Ascend", "CPU"]) and dataset_sink_mode:
@@ -1438,8 +1441,9 @@ class Model:
 
         Tutorial Examples:
             - `Advanced Encapsulation: Model - Train and Save Model
-              <https://mindspore.cn/tutorials/en/master/advanced/model.html#train-and-save-model>`_
+              <https://www.mindspore.cn/tutorials/en/master/advanced/model.html#training-and-saving-model>`_
         """
+        valid_dataset = self._prepare_obf_dataset(valid_dataset)
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
 
         _device_number_check(self._parallel_mode, self._device_number)
@@ -1914,6 +1918,17 @@ class Model:
             Object, the instance of evaluate network.
         """
         return self._eval_network
+
+    def _prepare_obf_dataset(self, dataset):
+        if not hasattr(self._network, 'obf_ratios'):
+            return dataset
+        data_size = dataset.get_dataset_size()
+        obf_ratio_dataset = []
+        for _ in range(data_size):
+            obf_ratio_dataset.append(self._network.obf_ratios)
+        obf_ratio_dataset = ds.NumpySlicesDataset(data=obf_ratio_dataset, column_names=["y_obf"])
+        dataset = ds.zip((dataset, obf_ratio_dataset))
+        return dataset
 
 
 __all__ = ["Model"]

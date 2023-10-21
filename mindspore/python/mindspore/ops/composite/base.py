@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from functools import partial
 
 from types import FunctionType, MethodType
+import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -29,7 +30,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
-    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_
+    HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
 from mindspore.common.api import _add_flags, _core
@@ -38,7 +39,7 @@ from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, ListAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_,
            ListSliceSetItem_, ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_,
-           HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_]
+           HandleBoolTensor_, HandleEmptySlice_, PreSetitemByTuple_, HandleScalarTensorIndex_]
 
 
 def add_flags(fn=None, **flags):
@@ -336,7 +337,7 @@ class GradOperation(GradOperation_):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
-        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False, False)
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False, False, False, False, False)
         self.grad_fn = None
         self.fn = None
         self.weights_id = None
@@ -513,8 +514,8 @@ class _Grad(GradOperation_):
     A higher-order function which is used to generate the gradient function by position for the input function.
     """
 
-    def __init__(self, get_by_list=False, sens_param=False, get_by_position=False, has_aux=False, get_value=False,
-                 return_ids=False):
+    def __init__(self, get_all=False, get_by_list=False, sens_param=False, get_by_position=False, has_aux=False,
+                 get_value=False, return_ids=False, merge_forward=False):
         """Initialize _Grad."""
         if not isinstance(get_by_position, bool):
             raise TypeError(f"For '_Grad', the 'get_by_position' should be bool, "
@@ -534,14 +535,16 @@ class _Grad(GradOperation_):
         if not isinstance(return_ids, bool):
             raise TypeError(f"For '_Grad', the 'return_ids' should be bool, "
                             f"but got {type(return_ids).__name__}")
+        self.get_all = get_all
         self.get_by_position = get_by_position
         self.get_by_list = get_by_list
         self.sens_param = sens_param
         self.has_aux = has_aux
         self.get_value = get_value
         self.return_ids = return_ids
-        GradOperation_.__init__(self, 'grad', False, get_by_list, sens_param, get_by_position, has_aux, get_value,
-                                return_ids)
+        self.merge_forward = merge_forward
+        GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, get_by_position, has_aux, get_value,
+                                return_ids, merge_forward)
         self.grad_fn = None
         self.fn = None
         self.pynative_ = False
@@ -564,8 +567,8 @@ class _Grad(GradOperation_):
                 res += (stop_gradient(item),)
             return res
 
-        grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position, self.has_aux, self.get_value,
-                      self.return_ids)
+        grad_ = _Grad(self.get_all, self.get_by_list, self.sens_param, self.get_by_position, self.has_aux,
+                      self.get_value, self.return_ids, self.merge_forward)
         # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
         #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
@@ -740,6 +743,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        for arg in args:
+            if isinstance(arg, np.ndarray):
+                raise TypeError("For 'MultitypeFuncGraph', the input can not be numpy.ndarray")
         if len(self.entries) == 1:
             output = self.entries[0][1](*args)
             return output

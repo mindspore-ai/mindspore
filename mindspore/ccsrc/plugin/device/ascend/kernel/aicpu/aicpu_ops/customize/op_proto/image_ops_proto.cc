@@ -17,9 +17,9 @@
 #include <graph/utils/type_utils.h>
 #include "inc/ops/image_ops.h"
 #include "register/op_impl_registry.h"
-#include "utils/util.h"
-#include "utils/op_const.h"
 #include "utils/image_ops_shape_fns.h"
+#include "utils/op_const.h"
+#include "utils/util.h"
 namespace ge {
 // ----------------AdjustHue Start-------------------
 IMPLEMT_INFERFUNC(AdjustHue, AdjustHueInfer) {
@@ -157,18 +157,12 @@ INFER_FUNC_REG(ResizeArea, ResizeAreaInfer);
 
 // ----------------ResizeBicubic-------------------
 IMPLEMT_INFERFUNC(ResizeBicubic, ResizeBicubicInfer) {
-  TensorDesc desc = op.GetOutputDescByName("y");
+  TensorDesc x_desc = op.GetInputDescByName("images");
+  TensorDesc y_desc = op.GetOutputDescByName("y");
 
-  DataType data_type = DT_FLOAT;
-  // Update DataType when Attr "dtype" is set
-  if (op.GetAttr("dtype", data_type) == GRAPH_SUCCESS) {
-    CHECK(((data_type != DT_FLOAT) && (data_type != DT_UINT8)),
-          OP_LOGE(TbeGetName(op), "Attr dtype should only be DT_FLOAT or DT_UNIT8"), return GRAPH_FAILED);
-    OP_LOGI(TbeGetName(op), "Update Bicubic DataType from attr, which is %d", data_type);
-  }
-
-  desc.SetDataType(data_type);
-  if (op.UpdateOutputDesc("y", desc) != GRAPH_SUCCESS) {
+  DataType data_type = x_desc.GetDataType();
+  y_desc.SetDataType(data_type);
+  if (op.UpdateOutputDesc("y", y_desc) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   return ResizeShapeFn(op, "images", "size", "y");
@@ -561,4 +555,140 @@ IMPLEMT_INFERFUNC(ResizeBicubicGrad, ResizeBicubicGradInfer) {
 
 INFER_FUNC_REG(ResizeBicubicGrad, ResizeBicubicGradInfer);
 // ----------------ResizeBicubicGrad END-------------------
+
+graphStatus CropAndResizeInputRankCheck(const ge::Operator &op, const GeTensorDescPtr &x_desc, GeShape &x_shape,
+                                        const GeTensorDescPtr &boxes_desc, GeShape &boxes_shape,
+                                        const GeTensorDescPtr &box_index_desc, GeShape &box_index_shape,
+                                        const GeTensorDescPtr &crop_size_desc, GeShape &crop_size_shape) {
+  if (WithRank(x_desc, 4, x_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(0, DebugString(x_desc->GetShape().GetDims()), "4D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRank(boxes_desc, 2, boxes_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(1, DebugString(boxes_desc->GetShape().GetDims()), "2D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRank(box_index_desc, 1, box_index_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(2, DebugString(box_index_desc->GetShape().GetDims()), "1D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (WithRank(crop_size_desc, 1, crop_size_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(3, DebugString(crop_size_desc->GetShape().GetDims()), "1D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  auto x_dims = x_shape.GetDims();
+  auto boxes_dims = boxes_shape.GetDims();
+  auto box_index_dims = box_index_shape.GetDims();
+  auto crop_size_dims = crop_size_shape.GetDims();
+  CHECK(
+    boxes_dims.empty() || box_index_dims.empty(),
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("the 0th input[x]'s shape and 1st input[boxes]'s shape"
+                                                              " should not be empty.")),
+    return GRAPH_FAILED);
+  if (boxes_dims[0] != UNKNOWN_DIM && box_index_dims[0] != UNKNOWN_DIM && boxes_dims[0] != box_index_dims[0]) {
+    std::string err_msg =
+      ConcatString("the 0th dimension of the 1th input[boxes] and the 2nd input[box_index] must be equal. ",
+                   boxes_dims[0], " and ", box_index_dims[0]);
+    AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  CHECK(crop_size_dims.empty(), AICPU_INFER_SHAPE_CALL_ERR_REPORT(TbeGetName(op), string("empty crop_size dim.")),
+        return GRAPH_FAILED);
+  if (crop_size_dims[0] != 2 && crop_size_dims[0] != UNKNOWN_DIM) {
+    std::string err_msg = ConcatString(
+      "the 3rd input[crop_size] must be a 1-D tensor containing 2 elements,"
+      " current shape is ",
+      DebugString(crop_size_dims));
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+// ---------------CropAndResize Op Start-------------------
+IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
+  auto op_desc = OpDescUtils::GetOpDescFromOperator(op);
+  // unknown shape support
+  op_desc->SetOpInferDepends({"crop_size"});
+  auto x_desc = op_desc->MutableInputDesc(0);
+  GeShape x_shape;
+  auto boxes_desc = op_desc->MutableInputDesc(1);
+  GeShape boxes_shape;
+  auto box_index_desc = op_desc->MutableInputDesc(2);
+  GeShape box_index_shape;
+  auto crop_size_desc = op_desc->MutableInputDesc(3);
+  GeShape crop_size_shape;
+  if (CropAndResizeInputRankCheck(op, x_desc, x_shape, boxes_desc, boxes_shape, box_index_desc, box_index_shape,
+                                  crop_size_desc, crop_size_shape) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  auto x_dims = x_shape.GetDims();
+  auto boxes_dims = boxes_shape.GetDims();
+  int64_t crop_height = UNKNOWN_DIM;
+  int64_t crop_width = UNKNOWN_DIM;
+  Tensor crop_size_tensor;
+  if (op.GetInputConstData("crop_size", crop_size_tensor) == GRAPH_SUCCESS) {
+    auto size_data = reinterpret_cast<const int32_t *>(crop_size_tensor.GetData());
+    crop_height = static_cast<int64_t>(size_data[0]);
+    crop_width = static_cast<int64_t>(size_data[1]);
+  }
+  std::vector<int64_t> y_dims;
+  Format input_format = static_cast<ge::Format>(ge::GetPrimaryFormat(op.GetInputDesc(0).GetFormat()));
+  if (input_format == FORMAT_NHWC && x_dims.size() > 3) {
+    y_dims.push_back(boxes_dims[0]);
+    y_dims.push_back(crop_height);
+    y_dims.push_back(crop_width);
+    y_dims.push_back(x_dims[3]);
+  } else if (input_format == FORMAT_NCHW && x_dims.size() > 1) {
+    y_dims.push_back(boxes_dims[0]);
+    y_dims.push_back(x_dims[1]);
+    y_dims.push_back(crop_height);
+    y_dims.push_back(crop_width);
+  } else {
+    std::string str_input_format = ge::TypeUtils::FormatToSerialString(input_format);
+    std::string err_msg = ConcatString(
+      "only supporting NCHW and NHWC, "
+      "current format is [",
+      str_input_format, "]");
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  auto y_desc = op_desc->MutableOutputDesc(0);
+  GeShape y_shape(y_dims);
+  if (!ShapeFullyDefined(y_shape)) {
+    std::vector<std::pair<int64_t, int64_t>> y_range;
+    MakeUpShapeRange(y_dims, y_range);
+    // boxes_dims[0] UNKNOWN_DIM
+    if (y_dims[0] == UNKNOWN_DIM) {
+      std::vector<std::pair<int64_t, int64_t>> boxes_range;
+      boxes_desc->GetShapeRange(boxes_range);
+      y_range[0] = boxes_range[0];
+    }
+    // NCHW x_dims[1] UNKNOWN_DIM
+    if (input_format == FORMAT_NCHW && y_dims[AXIS_NCHW_DIM_C] == UNKNOWN_DIM) {
+      std::vector<std::pair<int64_t, int64_t>> x_range;
+      x_desc->GetShapeRange(x_range);
+      y_range[AXIS_NCHW_DIM_C] = x_range[AXIS_NCHW_DIM_C];
+    }
+    // NHWC x_dims[3] UNKNOWN_DIM
+    if (input_format == FORMAT_NHWC && y_dims[AXIS_NHWC_DIM_C] == UNKNOWN_DIM) {
+      std::vector<std::pair<int64_t, int64_t>> x_range;
+      x_desc->GetShapeRange(x_range);
+      y_range[AXIS_NHWC_DIM_C] = x_range[AXIS_NHWC_DIM_C];
+    }
+    y_desc->SetShapeRange(y_range);
+  }
+  y_desc->SetShape(y_shape);
+  y_desc->SetDataType(boxes_desc->GetDataType());
+  return GRAPH_SUCCESS;
+}
+
+INFER_FUNC_REG(CropAndResize, CropAndResizeInfer);
+// ----------------CropAndResize END-------------------
 }  // namespace ge

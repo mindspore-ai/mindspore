@@ -53,6 +53,9 @@ abstract::ShapePtr SoftMarginLossInferShape(const PrimitivePtr &primitive,
   auto label = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("logits shape", SizeToLong(predict.size()), kEqual, SizeToLong(label.size()), op_name,
                               ValueError);
+  if (!IsDynamic(predict) && !IsDynamic(label)) {
+    (void)CheckAndConvertUtils::Check("label_shape", predict, kEqual, label, op_name);
+  }
   auto out_shape = predict;
   int64_t reduction;
   CheckAndConvertUtils::GetReductionEnumValue(primitive->GetAttr(kReduction), &reduction);

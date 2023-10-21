@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph JIT Fallback runtime feature """
+import os
 import pytest
 import numpy as np
 
@@ -24,7 +25,7 @@ from mindspore import Tensor, Parameter, jit, jit_class
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -48,6 +49,36 @@ def test_setattr_self_non_param():
     ret = test_net()
     assert ret == 2
     assert test_net.data == 2
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_self_non_param_in_strict():
+    """
+    Feature: Enable setattr for class non-param attribute.
+    Description: Support self.attr=target when self.attr is not parameter.
+    Expectation: No exception.
+    """
+    class TestNet(nn.Cell):
+        def __init__(self, origin_input):
+            super(TestNet, self).__init__()
+            self.data = origin_input
+
+        def construct(self):
+            self.data = 2
+            return self.data
+
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
+    with pytest.raises(TypeError) as error_info:
+        test_net = TestNet(1)
+        ret = test_net()
+        assert ret == 2
+        assert test_net.data == 2
+    assert "In JIT strict mode, if need to modify a member attribute of a class with" in str(error_info.value)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -102,7 +133,7 @@ def test_setattr_self_non_param_3():
     assert np.all(test_net.data == np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -131,7 +162,7 @@ def test_setattr_self_repeat():
     assert test_net.data == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -157,7 +188,7 @@ def test_setattr_self_non_param_not_used():
     assert test_net.data == 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -214,7 +245,7 @@ class AssignTarget:
         self.x = 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -298,7 +329,7 @@ class OuterAssignTarget:
         self.a = NestedAssignTarget()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -371,7 +402,7 @@ def test_setattr_local_object_attr():
     assert np.all(res[1] == np.array([[1, 2], [3, 4]]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -458,7 +489,7 @@ def test_setattr_run_multiple_times_3():
     assert np.all(ret3 == np.array([4, 5, 6]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -492,7 +523,7 @@ def test_setattr_with_augassign():
     assert ret == 13
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -547,7 +578,7 @@ def test_setattr_in_control_flow_2():
     assert ret == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -828,3 +859,97 @@ def test_setattr_for_attribute_no_exist_3():
     foo()
     assert hasattr(obj, "y")
     assert obj.y == 2
+
+
+class _Plain:
+    def __init__(self):
+        self.x = 1
+
+
+@ms.jit_class
+class _SubJitClass:
+    def __init__(self):
+        self.x = 1
+
+
+class _SubCell(ms.nn.Cell):
+    def __init__(self):
+        super(_SubCell, self).__init__()
+        self.x = 1
+
+    def construct(self):
+        return self.x
+
+
+class _Test(ms.nn.Cell):
+    def __init__(self, choice):
+        super(_Test, self).__init__()
+        if choice == 0:
+            self.attr = _Plain()
+        elif choice == 1:
+            self.attr = _SubJitClass()
+        else:
+            self.attr = _SubCell()
+
+    def construct(self):
+        return self.attr.x
+
+
+@pytest.mark.skip(reason="Unsupported setattr test cases")
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('class_type_choice', [0, 1, 2])
+def test_getattr_assign(class_type_choice):
+    """
+    Feature: Feature setattr.
+    Description: Support "obj.attr.x = value" or "getattr(obj, 'attr').x = value"
+    Expectation: No exception.
+    """
+    test_obj = _Test(class_type_choice)
+
+    @ms.jit
+    def func1():
+        test_obj.attr.x = 2
+        return test_obj.attr.x
+
+    @ms.jit
+    def func2():
+        getattr(test_obj, 'attr').x = 2
+        return getattr(test_obj, 'attr').x
+
+    res1 = func1()
+    print('res1: {res1}')
+    res2 = func2()
+    print('res2: {res2}')
+
+    assert res1 == 2
+    assert res2 == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_in_loop():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+
+    class Inner:
+        def __init__(self):
+            self.x = 1
+
+    @jit
+    def foo():
+        for _ in range(5):
+            obj.x = obj.x + 1
+        return obj.x
+
+    obj = Inner()
+    res = foo()
+    assert res == 6

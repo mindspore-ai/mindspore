@@ -62,8 +62,8 @@ abstract::ShapePtr RollInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = primitive->name();
   auto axis = GetRollAttr(primitive, kAxis);
   auto shift = GetRollAttr(primitive, kShift);
-  if (axis.empty() || shift.empty()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'axis' and 'shift' must be not empty.";
+  if (axis.size() != shift.size() || shift.empty()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'axis' and 'shift' must be not empty and have same size.";
   }
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,

@@ -134,7 +134,9 @@ void GatherGradGpuKernelMod::CalculateDim(int axis) {
 int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
   index_shapes_ = inputs.at(index_idx_)->GetShapeVector();
   output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
   grad_shapes_ = inputs.at(grad_idx_)->GetShapeVector();
@@ -142,16 +144,14 @@ int GatherGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     int64_t dim = 0;
     if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &dim)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
-      return KRET_RESIZE_FAILED;
     }
     CalculateDim(dim);
     dim_shapes_ = inputs.at(dim_idx_)->GetShapeVector();
-  }
-  if (ret == KRET_OK && !is_v2_) {
+  } else {
     auto dim = GetGatherDGradDimValue(base_operator);
     CalculateDim(dim);
   }
-  return static_cast<int>(ret);
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> GatherGradGpuKernelMod::GetOpSupport() {

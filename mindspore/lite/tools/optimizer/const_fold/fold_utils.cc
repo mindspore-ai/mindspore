@@ -222,7 +222,9 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
     }
   }
   auto output_quant_params = quant_param_holder->get_output_quant_params();
-  for (size_t m = 0; m < output_quant_params.size(); m++) {
+  // for fuzz model
+  auto output_size = outputs.size() > output_quant_params.size() ? output_quant_params.size() : outputs.size();
+  for (size_t m = 0; m < output_size; m++) {
     for (auto outputQuantParam : output_quant_params[m]) {
       lite::LiteQuantParam quant_arg{};
       quant_arg.scale = outputQuantParam.scale;

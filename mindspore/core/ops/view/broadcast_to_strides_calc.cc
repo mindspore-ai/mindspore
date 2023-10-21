@@ -48,9 +48,10 @@ bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int
 }
 
 TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kBroadCastToInputsNum) {
+  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
     return {};
   }
+
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto value_ptr = prim->GetAttr(kShape);
@@ -63,8 +64,8 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
   if (!BroadcastToCheck(input_x, old_shape)) {
     return {};
   }
-  auto ndim = input_x.size();
-  auto tensor_ndim = old_shape.size();
+  int64_t ndim = SizeToInt(input_x.size());
+  int64_t tensor_ndim = SizeToInt(old_shape.size());
   std::vector<int64_t> new_strides(ndim);
   if (tensor_ndim == 0) {
     auto new_storage_info =
@@ -73,9 +74,9 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
     return {new_storage_info};
   }
   std::vector<int64_t> new_shape(ndim);
-  for (int i = ndim - 1; i >= 0; --i) {
-    auto offset = ndim - 1 - i;
-    auto dim = tensor_ndim - 1 - offset;
+  for (int64_t i = ndim - 1; i >= 0; --i) {
+    int64_t offset = ndim - 1 - i;
+    int64_t dim = tensor_ndim - 1 - offset;
     auto size = (dim >= 0) ? old_shape[dim] : 1;
     auto stride = (dim >= 0) ? old_strides[dim] : new_shape[i + 1] * new_strides[i + 1];
     auto target_size = input_x[i];

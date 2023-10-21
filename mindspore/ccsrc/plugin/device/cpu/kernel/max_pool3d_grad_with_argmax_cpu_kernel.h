@@ -59,9 +59,6 @@ class MaxPool3DGradWithArgmaxCpuKernelMod : public NativeCpuKernelMod {
   void CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height, size_t k_depth,
                       size_t p_depth) const;
 
-  void CheckDilationValue(size_t d_width, size_t in_width, size_t d_height, size_t in_height, size_t d_depth,
-                          size_t in_depth) const;
-
   template <typename DATA_T, typename INDICES_T>
   void MaxPool3DGradWithArgmaxSingleCompute(DATA_T *input_grad, INDICES_T *input_argmax, DATA_T *output_y, size_t iD,
                                             size_t iH, size_t iW, size_t oD, size_t oH, size_t oW, size_t kD, size_t kH,

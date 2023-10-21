@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_OUTPUT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DEAL_REF_OUTPUT_H_
 #include <memory>
+#include <unordered_map>
 #include "ir/anf.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/pattern_engine.h"
@@ -36,9 +37,9 @@ class DealRefOutput : public PatternProcessPass {
                           const FuncGraphPtr &func_graph) const;
   void DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   AnfNodePtr DealRefSingleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                 const std::shared_ptr<kernel::OpInfo> &op_info) const;
+                                 const std::unordered_map<size_t, size_t> &ref_infos) const;
   AnfNodePtr DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode,
-                                      const std::shared_ptr<kernel::OpInfo> &op_info) const;
+                                      const std::unordered_map<size_t, size_t> &ref_infos) const;
   AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t output_index,
                                       size_t input_index, const AnfNodePtr &get_item) const;
   void AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &get_item,
@@ -46,7 +47,6 @@ class DealRefOutput : public PatternProcessPass {
                                const session::KernelWithIndex &origin_pair) const;
   void AddRefNodePairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const size_t output_index,
                                    const size_t input_index) const;
-  session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

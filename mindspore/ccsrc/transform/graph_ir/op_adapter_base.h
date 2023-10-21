@@ -63,6 +63,7 @@ using OutputFunc = std::function<OutHandler(OperatorPtr)>;
 using InputOpFunc = std::function<void(OperatorPtr, OperatorPtr)>;
 using InputHandleFunc = std::function<void(OperatorPtr, OutHandler)>;
 using CreateDynInputOpFunc = std::function<void(OperatorPtr, unsigned int)>;
+using CreateDynInputOpByIndexFunc = std::function<void(OperatorPtr, unsigned int, size_t)>;
 using DynInputOpFunc = std::function<void(OperatorPtr, unsigned int, OperatorPtr)>;
 using DynInputHandleFunc = std::function<void(OperatorPtr, unsigned int, OutHandler)>;
 using UpdateOutputDescFunc = std::function<void(OperatorPtr, GeTensorDesc)>;
@@ -102,6 +103,7 @@ struct DynInputDesc {
   std::string name;
   size_t index;
   CreateDynInputOpFunc create_dyn_input;
+  CreateDynInputOpByIndexFunc create_dyn_input_by_index;
   DynInputOpFunc set_op;
   DynInputHandleFunc set_handle;
   std::vector<enum ::ge::DataType> supported_dtypes;
@@ -144,8 +146,8 @@ class BaseOpAdapter {
   virtual void setSubgraph(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
   virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
-  virtual int setInput(const OperatorPtr &op, int index,
-                       const std::shared_ptr<std::vector<OutHandler>> &handler_vec) = 0;
+  virtual int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec,
+                       bool use_create_byindex_func = false, size_t dyn_index = 0) = 0;
   virtual int setAttr(const OperatorPtr &op, const std::string &attrKey, const ValuePtr &attrValue) = 0;
   virtual int setAttr(const OperatorPtr &op, const PrimitivePtr &prim) = 0;
   virtual int setAttr(const OperatorPtr &op, const AnfNodePtr &node) = 0;
@@ -181,6 +183,7 @@ class BaseOpAdapter {
   virtual bool IsDynInputOp(uint64_t index) = 0;
   virtual bool IsDyOutputOp(uint64_t index) = 0;
   virtual bool IsMultipleOutputOp(const AnfNodePtr &anf) = 0;
+  virtual bool GetDynamicShapeSupport() = 0;
   void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
   const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }

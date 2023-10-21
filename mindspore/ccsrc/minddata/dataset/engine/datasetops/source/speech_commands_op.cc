@@ -107,6 +107,8 @@ Status SpeechCommandsOp::WalkAllFiles(const std::string &walk_path) {
     Path folder_path(folder_names[i]);
     if (folder_path.IsDirectory()) {
       auto folder_it = Path::DirIterator::OpenDirectory(&folder_path);
+      CHECK_FAIL_RETURN_UNEXPECTED(folder_it != nullptr, "Invalid path, failed to open dir: " + folder_path.ToString() +
+                                                           ", not exists or permission denied.");
       while (folder_it->HasNext()) {
         Path file = folder_it->Next();
         if (file.Extension() == kExtension) {

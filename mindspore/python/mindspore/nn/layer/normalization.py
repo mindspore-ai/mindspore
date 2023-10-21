@@ -216,6 +216,7 @@ class BatchNorm1d(_BatchNorm):
             evaluation process will use the running mean and variance. Default: ``None`` .
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C)` or :math:`(N, C, L)` ,
@@ -316,6 +317,7 @@ class BatchNorm2d(_BatchNorm):
 
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Supported types: float16, float32.
@@ -397,6 +399,7 @@ class BatchNorm3d(Cell):
             ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
             will use the mean and variance of current batch data and track the running mean and variance, the
             evaluation process will use the running mean and variance. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -492,6 +495,7 @@ class SyncBatchNorm(_BatchNorm):
 
     Note:
         Currently, SyncBatchNorm only supports 2D and 4D inputs.
+        :math:`\gamma` and :math:`\beta` are trainable scale and shift.
 
     Args:
         num_features (int): `C` from an expected input of size :math:`(N, C, H, W)`.
@@ -520,6 +524,7 @@ class SyncBatchNorm(_BatchNorm):
             Each subtraction list contains int numbers identifying rank ids which need to be synchronized in the same
             group. All int values must be in [0, rank_size) and different from each other. Default: ``None`` ,
             indicating synchronization across all devices.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -544,11 +549,14 @@ class SyncBatchNorm(_BatchNorm):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_ascend.html#preparations>`_
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
             for more details.
 
-            For the GPU devices, users need to prepare the host file and mpi, please see the `GPU tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#preparation>`_ .
+            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
+            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+
+            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
+            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -669,27 +677,28 @@ class LayerNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_. Unlike Batch
     Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It is applied across all channels
-    and pixel but only one batch size. It can be described using the following formula:
+    testing time. It is applied across all channels and pixel but only one batch size.
+    :math:`\gamma` and :math:`\beta` are trainable scale and shift.
+    It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
     Args:
         normalized_shape (Union(tuple[int], list[int])): The normalization is performed over axis
-            `begin_norm_axis ... R - 1`.
+            `begin_norm_axis ... R - 1`. R is the dimension size of input `x`.
         begin_norm_axis (int): The first normalization dimension: normalization will be performed along dimensions
-            `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: ``-1`` .
-        begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters
-            will have dimensions `begin_params_axis: rank(inputs)` and will be broadcast with
-            the normalized inputs accordingly, the value should be in [-1, rank(input)). Default: ``-1`` .
+            `begin_norm_axis: R`, the value should be in [-1, R). Default: ``-1`` .
+        begin_params_axis (int): The begin axis of the parameter input :math:`(\gamma, \beta)` to
+            apply LayerNorm, the value should be in [-1, R). Default: ``-1`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` .
-        epsilon (float): :math:`\epsilon` added to the denominator for numerical stability. Default: ``1e-7`` .
+        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - The shape of `x` is :math:`(x_1, x_2, ..., x_R)`,
@@ -731,6 +740,11 @@ class LayerNorm(Cell):
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
                             f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
+        if not normalized_shape:
+            raise ValueError(
+                f"Expected normalized_shape to be at least 1-dimensional, i.e., containing at "
+                f"least one element, but got normalized_shape = {normalized_shape}"
+            )
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
@@ -849,6 +863,7 @@ class InstanceNorm1d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, L)`. Data type: float16 or float32.
@@ -926,6 +941,7 @@ class InstanceNorm2d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
@@ -1002,6 +1018,7 @@ class InstanceNorm3d(_InstanceNorm):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` , etc.
             When initialized with Tensor, the shape should be :math:`(C)`. Default: ``'zeros'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D, H, W)`. Data type: float16 or float32.
@@ -1051,7 +1068,9 @@ class GroupNorm(Cell):
     normalization on a mini-batch of inputs for each single training case as described
     in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
     divides the channels into groups and computes within each group the mean and variance for normalization,
-    and it performs very stable over a wide range of batch size. It can be described using the following formula:
+    and it performs very stable over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
+    and shift.
+    It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -1070,6 +1089,7 @@ class GroupNorm(Cell):
             The values of str refer to the function `initializer` including ``'zeros'`` , ``'ones'`` ,
             ``'xavier_uniform'`` , ``'he_uniform'`` , etc. Default: ``'zeros'`` . If beta_init is a Tensor, the shape
             must be :math:`(num\_channels)`.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - The input feature with shape :math:`(N, C, H, W)` .

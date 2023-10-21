@@ -23,6 +23,7 @@
 #include "nlohmann/json.hpp"
 #include "transform/graph_ir/transform_util.h"
 #include "backend/common/graph_kernel/model/op_register.h"
+#include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 #endif
 #include "utils/log_adapter.h"
 #include "graph/operator.h"
@@ -88,6 +89,7 @@ std::string GetCustomOpKey(const ge::Operator &op) {
 }  // namespace
 
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
+using mindspore::graphkernel::inner::ConstTensorNode;
 using mindspore::graphkernel::inner::DAttrs;
 using mindspore::graphkernel::inner::Node;
 using mindspore::graphkernel::inner::NodeBase;
@@ -111,7 +113,56 @@ TypeId ConvertGeDataType(const ge::DataType &type) {
   return TypeId::kTypeUnknown;
 }
 
-NodePtrList GetOpInputs(const nlohmann::json &op_desc, const std::unordered_map<std::string, NodePtr> &all_tensors) {
+using ConvertFunc = std::function<tensor::TensorPtr(const nlohmann::json &)>;
+
+template <typename T, TypeId type_id>
+tensor::TensorPtr ConvertSingleValueHelper(const nlohmann::json &value) {
+  T v = value;
+  ShapeVector shape = {1};
+  return std::make_shared<tensor::Tensor>(type_id, shape, &v, type_id);
+}
+
+tensor::TensorPtr ConvertSingleValue(const nlohmann::json &value, const std::string &type) {
+  // reverse function of SetSingleValue
+  static std::unordered_map<std::string, ConvertFunc> convertTable = {
+    {"bool", ConvertSingleValueHelper<bool, TypeId::kNumberTypeBool>},
+    {"int8", ConvertSingleValueHelper<int8_t, TypeId::kNumberTypeInt8>},
+    {"int16", ConvertSingleValueHelper<int16_t, TypeId::kNumberTypeInt16>},
+    {"int32", ConvertSingleValueHelper<int32_t, TypeId::kNumberTypeInt32>},
+    {"int64", ConvertSingleValueHelper<int64_t, TypeId::kNumberTypeInt64>},
+    {"uint8", ConvertSingleValueHelper<uint8_t, TypeId::kNumberTypeUInt8>},
+    {"uint16", ConvertSingleValueHelper<uint16_t, TypeId::kNumberTypeUInt16>},
+    {"uint32", ConvertSingleValueHelper<uint32_t, TypeId::kNumberTypeUInt32>},
+    {"uint64", ConvertSingleValueHelper<uint64_t, TypeId::kNumberTypeUInt64>},
+    {"float16", ConvertSingleValueHelper<float, TypeId::kNumberTypeFloat16>},
+    {"float32", ConvertSingleValueHelper<float, TypeId::kNumberTypeFloat32>},
+    {"float64", ConvertSingleValueHelper<double, TypeId::kNumberTypeFloat64>}};
+  if (convertTable.count(type) > 0) {
+    ConvertFunc convertFunc = convertTable[type];
+    return convertFunc(value);
+  }
+  MS_LOG(WARNING) << "Fail to convert the single value: " << value << ". type is: " << type;
+  return nullptr;
+}
+
+tensor::TensorPtr ConvertListValue(const nlohmann::json &value, const std::string &type, const ShapeVector &shape) {
+  // reverse function of SetValueList
+  tensor::TensorPtr res = nullptr;
+  if (type == "int32") {
+    std::vector<int32_t> v = value;
+    res = std::make_shared<tensor::Tensor>(TypeId::kNumberTypeInt32, shape, &v[0], TypeId::kNumberTypeInt32);
+  } else if (type == "int64") {
+    std::vector<int64_t> v = value;
+    res = std::make_shared<tensor::Tensor>(TypeId::kNumberTypeInt64, shape, &v[0], TypeId::kNumberTypeInt64);
+  }
+  MS_LOG(WARNING) << "Fail to convert the list value: " << value << ". type is: " << type;
+  return res;
+}
+
+NodePtrList GetOpInputs(const nlohmann::json &op_desc, const std::unordered_map<std::string, NodePtr> &all_tensors,
+                        const std::string &op_name) {
+  const auto &value_depend_op_info = graphkernel::ValueDependOpUtils::GetOpIndexInfo();
+  bool is_depend_value = value_depend_op_info.find(op_name) != value_depend_op_info.end();
   NodePtrList res;
   for (const auto &input_desc : op_desc["input_desc"]) {
     for (const auto &item : input_desc) {
@@ -121,6 +172,17 @@ NodePtrList GetOpInputs(const nlohmann::json &op_desc, const std::unordered_map<
         res.push_back(iter->second);
       } else {
         // const value input
+        if (is_depend_value && item.find("value") != item.end()) {
+          auto value = item["value"];
+          std::string type = item["data_type"];
+          ShapeVector shape = item["shape"];
+          auto tensor = value.is_array() ? ConvertListValue(value, type, shape) : ConvertSingleValue(value, type);
+          if (tensor != nullptr) {
+            res.push_back(std::make_shared<ConstTensorNode>(tensor));
+            continue;
+          }
+          MS_LOG(WARNING) << "Fail to parse the const value of tensor [" << name << "]. tensor json is: " << item;
+        }
         std::string format = item["format"];
         NodeBase n{ShapeVector(item["shape"]), StringToTypeId(item["data_type"]), format};
         res.push_back(std::make_shared<Node>(n));
@@ -190,7 +252,7 @@ bool InferOnline(const ge::Operator &op, const nlohmann::json &js, std::vector<g
   for (const auto &op_desc : js["op_desc"]) {
     std::string op_name = op_desc["name"];
     auto op_ptr = mindspore::graphkernel::inner::OpRegistry::Instance().NewOp(op_name);
-    auto op_inputs = GetOpInputs(op_desc, all_tensors);
+    auto op_inputs = GetOpInputs(op_desc, all_tensors, op_name);
     auto op_attr = GetOpAttr(op_desc);
     auto infer_res = op_ptr->Infer(op_inputs, op_attr);
     std::vector<nlohmann::json> op_output_desc = op_desc["output_desc"];

@@ -31,8 +31,8 @@ namespace {
 const uint32_t kGammaShapeIndex = 0;
 const uint32_t kGammaAlphaIndex = 1;
 const uint32_t kGammaBetaIndex = 2;
-const uint32_t kGammaCountsIndex = 3;
-const uint32_t kGammaStatesIndex = 4;
+const uint32_t kGammaSeedIndex = 3;
+const uint32_t kGammaSeed2Index = 4;
 const uint32_t kGammaOutputIndex = 5;
 }  // namespace
 uint32_t GammaKernel::DoCompute() {
@@ -72,12 +72,7 @@ uint32_t GammaKernel::DoCompute() {
     }
   }
   // get random generator seed
-  uint32_t kernel_ret = kAicpuKernelStateSucess;
-  uint64_t rng_seed = random::GetKernelBaseRandomStates(io_addrs_, kGammaCountsIndex, kGammaStatesIndex, seed_, seed2_,
-                                                        "Gamma", &kernel_ret);
-  if (kernel_ret != kAicpuKernelStateSucess) {
-    return kAicpuKernelStateFailed;
-  }
+  uint64_t rng_seed = random::GetRNG(seed_, seed2_);
   std::mt19937 gen(rng_seed);
   for (uint64_t i = 0; i < out_count_; ++i) {
     std::gamma_distribution<float> gamma(alpha_[a_idx[i]], beta_[b_idx[i]]);
@@ -91,10 +86,9 @@ uint32_t GammaKernel::DoCompute() {
 }
 
 uint32_t GammaKernel::ParseKernelParam() {
-  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
   // seed
-  seed_ = static_cast<uint64_t>(attrs["seed"].i());
-  seed2_ = static_cast<uint64_t>(attrs["seed2"].i());
+  seed_ = reinterpret_cast<int64_t *>(io_addrs_[kGammaSeedIndex]);
+  seed2_ = reinterpret_cast<int64_t *>(io_addrs_[kGammaSeed2Index]);
 
   // get inputs
   // shape of one batch

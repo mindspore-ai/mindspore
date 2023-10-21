@@ -108,7 +108,7 @@ def test_greater_op_dtype_3(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, False, True])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

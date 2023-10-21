@@ -264,7 +264,9 @@ CNodePtr FlashAttentionFusionForCustom::CreateFlashAttentionNodePart1(const std:
 }
 
 bool FlashAttentionFusionForCustom::CheckNeedFusion(std::vector<std::string> cnode_names) const {
-  if (plugin_custom_ops_ != "All") {
+  if (find(plugin_custom_ops_.begin(), plugin_custom_ops_.end(), "All") != plugin_custom_ops_.end() &&
+      find(plugin_custom_ops_.begin(), plugin_custom_ops_.end(), "FlashAttention") != plugin_custom_ops_.end()) {
+    MS_LOG(INFO) << "can not find FA in plugin_custom_ops.";
     return false;
   }
   if (enable_pattern_names_.empty() && disable_pattern_names_.empty()) {

@@ -57,8 +57,8 @@ bool AscendAllocatorPlugin::Register() {
     return true;
   }
   MS_LOG(INFO) << "AscendAllocatorPlugin Register.";
-  auto ret =
-    DLSoPath({"libmindspore-lite.so", "_c_lite", "tools/converter/lib"}, kAscendkernelPluginSoNmae, &plugin_path_);
+  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite", "tools/converter/lib", "libmindspore_converter.so"},
+                      kAscendkernelPluginSoNmae, &plugin_path_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "get real path of " << kAscendkernelPluginSoNmae << " failed.";
     return false;
@@ -122,7 +122,7 @@ void *AscendAllocatorPlugin::Malloc(size_t size, int device_id) {
   return nullptr;
 }
 
-void AscendAllocatorPlugin::Free(void *device_data) {
+void AscendAllocatorPlugin::Free(void *device_data, int device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -136,12 +136,48 @@ void AscendAllocatorPlugin::Free(void *device_data) {
     MS_LOG(ERROR) << "device data is nullptr.";
     return;
   }
-  ascend_allocator_plugin_impl_->Free(device_data);
+  ascend_allocator_plugin_impl_->Free(device_data, device_id);
 #endif
   return;
 }
 
-Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size) {
+void *AscendAllocatorPlugin::MallocHost(size_t size) {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return nullptr;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
+    return nullptr;
+  }
+  auto device_data = ascend_allocator_plugin_impl_->MallocHost(size);
+  return device_data;
+#endif
+  return nullptr;
+}
+
+void AscendAllocatorPlugin::FreeHost(void *host_data) {
+#if !defined(_WIN32)
+  if (!is_registered_) {
+    MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
+    return;
+  }
+  if (ascend_allocator_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "ascend_allocator_plugin_impl_ is nullptr.";
+    return;
+  }
+  if (host_data == nullptr) {
+    MS_LOG(ERROR) << "host data is nullptr.";
+    return;
+  }
+  ascend_allocator_plugin_impl_->FreeHost(host_data);
+#endif
+  return;
+}
+
+Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host_data, size_t data_size,
+                                                   int device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -154,13 +190,13 @@ Status AscendAllocatorPlugin::CopyDeviceDataToHost(void *device_data, void *host
   if (ascend_allocator_plugin_impl_ == nullptr) {
     return kLiteMemoryFailed;
   }
-  return ascend_allocator_plugin_impl_->CopyDeviceDataToHost(device_data, host_data, data_size);
+  return ascend_allocator_plugin_impl_->CopyDeviceDataToHost(device_data, host_data, data_size, device_id);
 #endif
   return kSuccess;
 }
 
-Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t data_size,
-                                                     int src_device_id, int dst_device_id) {
+Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst_device, size_t src_data_size,
+                                                     size_t dst_data_size, int src_device_id, int dst_device_id) {
 #if !defined(_WIN32)
   if (!is_registered_) {
     MS_LOG(ERROR) << "AscendAllocatorPlugin is not registered.";
@@ -177,8 +213,8 @@ Status AscendAllocatorPlugin::CopyDeviceDataToDevice(void *src_device, void *dst
   if (ascend_allocator_plugin_impl_ == nullptr) {
     return kLiteMemoryFailed;
   }
-  return ascend_allocator_plugin_impl_->CopyDeviceDataToDevice(src_device, dst_device, data_size, src_device_id,
-                                                               dst_device_id);
+  return ascend_allocator_plugin_impl_->CopyDeviceDataToDevice(src_device, dst_device, src_data_size, dst_data_size,
+                                                               src_device_id, dst_device_id);
 #endif
   return kSuccess;
 }

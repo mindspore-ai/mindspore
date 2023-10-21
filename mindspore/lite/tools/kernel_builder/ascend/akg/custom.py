@@ -21,7 +21,6 @@ import copy
 import functools
 import subprocess
 
-
 from tbe.common.buildcfg import get_current_build_config
 from impl.util.util_select_op_base import gen_param
 from impl.util.util_select_op_base import get_dynamic_param_in_json
@@ -32,10 +31,12 @@ FP16_MAX = 65504
 
 def copy_shape(shape):
     """Deep copy shape"""
-    ret = copy.deepcopy(shape)
-    if isinstance(ret, tuple):
-        ret = list(ret)
-    return ret
+    res = []
+    if isinstance(shape, int):
+        shape = [shape]
+    for _, s in enumerate(shape):
+        res.append(s)
+    return res
 
 
 class OpInfer:
@@ -191,7 +192,7 @@ class ElemwiseBinary(OpInfer):
                 return shape[:-2] + [shape[-1] // BLOCK, 1, 1, BLOCK]
             if shape[-2] % BLOCK == 0 and shape[-1] == 1:
                 return shape[:-2] + [1, shape[-2] // BLOCK, BLOCK, 1]
-        return None
+        return []
 
     def broadcast_shape(self, sh0, sh1):
         """calculate broadcast shape"""
@@ -220,10 +221,12 @@ class ElemwiseBinary(OpInfer):
                                                    "FRACTAL_Z,FRACTAL_Z,FRACTAL_Z"])
         else:
             # note: (1, 640), (640)  "FRACTAL_NZ,ND,FRACTAL_NZ", (1, 640) comes from MatMul
-            if len(sh0) == 2 and len(sh1) == 1 and sh0[-1] == sh1[-1] and sh1[-1] % BLOCK == 0:
-                self.update_format(supported_formats, "FRACTAL_NZ,ND,FRACTAL_NZ")
-            elif len(sh0) == 1 and len(sh1) == 2 and sh0[-1] == sh1[-1] and sh0[-1] % BLOCK == 0:
-                self.update_format(supported_formats, "ND,FRACTAL_NZ,FRACTAL_NZ")
+            if len(sh0) == 2 and len(sh1) == 1:
+                if sh0[-1] == sh1[-1] and sh1[-1] % BLOCK == 0:
+                    self.update_format(supported_formats, "FRACTAL_NZ,ND,FRACTAL_NZ")
+            elif len(sh0) == 1 and len(sh1) == 2:
+                if sh0[-1] == sh1[-1] and sh0[-1] % BLOCK == 0:
+                    self.update_format(supported_formats, "ND,FRACTAL_NZ,FRACTAL_NZ")
             # Broadcast case
             pad_sh0, pad_sh1, _ = self.broadcast_shape(sh0, sh1)
             # 1D with broadcast only supports "ND,ND,ND"
@@ -256,11 +259,11 @@ class ElemwiseBinary(OpInfer):
         if format0 != format1:
             new_sh0 = self.nd2fractal_nz(sh0)
             new_sh1 = self.nd2fractal_nz(sh1)
-            if format0 == "FRACTAL_NZ" and new_sh1 is not None:
+            if format0 == "FRACTAL_NZ" and new_sh1:
                 _, _, out_shape = self.broadcast_shape(sh0, new_sh1)
                 self.output_desc[0]["shape"] = out_shape
                 return
-            if format1 == "FRACTAL_NZ" and new_sh0 is not None:
+            if format1 == "FRACTAL_NZ" and new_sh0:
                 _, _, out_shape = self.broadcast_shape(new_sh0, sh1)
                 self.output_desc[0]["shape"] = out_shape
                 return
@@ -350,31 +353,32 @@ class Reduce(OpInfer):
                 out_shape.append(s)
         return out_shape
 
-    def _get_axis(self, axis, rank):
-        axis_attr = self.get_attr("axis")
+    def _get_axis(self, rank):
+        axis_input = self.input_desc[1]["value"]
         axis = []
-        if isinstance(axis_attr, int):
-            axis = [axis_attr]
+        if isinstance(axis_input, int):
+            axis = [axis_input + rank if axis_input < 0 else axis_input]
         else:
-            axis = [i + rank if i < 0 else i for i in axis_attr]
+            axis = [i + rank if i < 0 else i for i in axis_input]
         return axis
 
     def supported_type(self):
         in_type = self.input_desc[0]["data_type"]
         if in_type == "float16":
-            return ["float16,float16", "float32,float32"]
+            return ["float16,int64,float16", "float32,int64,float32"]
         if in_type == "float32":
-            return ["float32,float32"]
-        return ",".join([in_type, in_type])
+            return ["float32,int64,float32"]
+        io_type = ",".join([in_type, "int64", in_type])
+        return [io_type]
 
     def supported_format(self):
-        supported_formats = ["ND,ND"]
+        supported_formats = ["ND,DefaultFormat,ND"]
         shape = self.input_desc[0]["shape"]
         rank = len(shape)
-        axis = self._get_axis(self.get_attr("axis"), rank)
+        axis = self._get_axis(rank)
         if self.is_nz(shape):
             if self._out_nz(rank, axis):
-                supported_formats.append("FRACTAL_NZ,FRACTAL_NZ")
+                supported_formats.append("FRACTAL_NZ,DefaultFormat,FRACTAL_NZ")
         return supported_formats
 
     def infer_shape(self):
@@ -383,7 +387,7 @@ class Reduce(OpInfer):
             ori_shape, cur_shape = self.input_desc[0]["ori_shape"], self.input_desc[0]["shape"]
             ori_rank = len(ori_shape)
             rank = len(cur_shape)
-            axis = [i + ori_rank if i < 0 else i for i in self.get_attr("axis")]
+            axis = self._get_axis(ori_rank)
             new_axis = []
             for i in axis:
                 if i == ori_rank - 1:
@@ -392,7 +396,8 @@ class Reduce(OpInfer):
                     new_axis.extend([rank - 3, rank - 2])
                 else:
                     new_axis.append(i)
-            self.set_attr("axis", new_axis)
+            self.input_desc[1]["value"] = new_axis
+            self.input_desc[1]["shape"] = [len(new_axis)]
             self.output_desc[0]["shape"] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
         else:
             self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
@@ -400,7 +405,7 @@ class Reduce(OpInfer):
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
         rank = len(shape)
-        axis = self._get_axis(self.get_attr("axis"), rank)
+        axis = self._get_axis(rank)
         self.output_desc[0]["ori_shape"] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
 
 
@@ -408,7 +413,7 @@ class Reshape(OpInfer):
     """Reshape op."""
 
     def supported_format(self):
-        return ["ND,ND"]
+        return ["ND,DefaultFormat,ND"]
 
     def infer_shape(self):
         """Reshape keeps ND format, so the output shape will not be changed"""
@@ -416,7 +421,7 @@ class Reshape(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
-        out_shape = copy_shape(self.get_attr("shape"))
+        out_shape = copy_shape(self.input_desc[1]["value"])
         if -1 in out_shape:
             idx = out_shape.index(-1)
             tmp = []
@@ -425,14 +430,14 @@ class Reshape(OpInfer):
                     tmp.append(s)
             if len(tmp) + 1 != len(out_shape):
                 raise ValueError("Find multiple -1 in attr 'shape' {}".format(out_shape))
-            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape) // functools.reduce(lambda x, y: x * y, tmp)
+            tmp_sz = functools.reduce(lambda x, y: x * y, tmp, 1)
+            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape, 1) // tmp_sz
         self.output_desc[0]["ori_shape"] = out_shape
 
     def post_process(self):
-        for item in self.op_desc["attr"]:
-            if item["name"] == "shape":
-                item["ori_value"] = item["value"]
-                item["value"] = self.output_desc[0]["shape"]
+        self.input_desc[1]["ori_value"] = self.input_desc[1]["value"]
+        self.input_desc[1]["value"] = self.output_desc[0]["shape"]
+
 
 class ExpandDimAndSqueeze(Reshape):
     def copy_axis(self, axis):
@@ -443,9 +448,10 @@ class ExpandDimAndSqueeze(Reshape):
             out_axis = copy.deepcopy(axis)
         return out_axis
 
+
 class Squeeze(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.get_attr("axis"))
+        axis = self.copy_axis(self.input_desc[1]["value"])
         input_shape = copy_shape(self.input_desc[0]["shape"])
         for idx in axis:
             if input_shape[idx] != 1:
@@ -454,13 +460,15 @@ class Squeeze(ExpandDimAndSqueeze):
             input_shape.pop(idx)
         self.output_desc[0]["ori_shape"] = input_shape
 
+
 class ExpandDim(ExpandDimAndSqueeze):
     def infer_ori_shape(self):
-        axis = self.copy_axis(self.get_attr("axis"))
+        axis = self.copy_axis(self.input_desc[1]["value"])
         input_shape = copy_shape(self.input_desc[0]["shape"])
         for idx in axis:
             input_shape.insert(idx, 1)
         self.output_desc[0]["ori_shape"] = input_shape
+
 
 class BroadcastTo(OpInfer):
     """BroadcastTo op."""
@@ -506,7 +514,7 @@ class Tile(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
-        multiples = self.get_attr("multiples")
+        multiples = self.input_desc[1]["value"]
         if len(multiples) < len(shape):
             raise ValueError("The length of attr 'multiples' must be >= the length of input shape, but got attr "
                              "'multiples': {}, input shape: {}".format(multiples, shape))

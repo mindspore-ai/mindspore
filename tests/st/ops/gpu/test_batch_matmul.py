@@ -347,7 +347,7 @@ def test_batchmatmul_type_float16():
     assert str(float16_out.dtype) == "Float16"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float32():
@@ -372,7 +372,7 @@ def test_batchmatmul_type_float32():
     assert str(float32_out.dtype) == "Float32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float64():

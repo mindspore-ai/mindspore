@@ -58,7 +58,6 @@ size_op_ = P.Size()
 _format = Format()
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
-_mean_keepdims = P.ReduceMean(True)
 _csr_mm = _csr_ops.CSRMM()
 
 itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
@@ -92,10 +91,7 @@ def mean(x, axis=None, keep_dims=False):
         >>> print(output)
         2.0
     """
-    if axis is None:
-        axis = ()
-    reduce_mean = P.ReduceMean(keep_dims)
-    return reduce_mean(x, axis)
+    return F.mean(x, axis, keep_dims)
 
 
 def ndimension(x):
@@ -176,11 +172,7 @@ def all_(x, axis=(), keep_dims=False):
     Returns:
         Tensor, has the same data type as x.
     """
-
-    if axis is None:
-        axis = ()
-    reduce_all = P.ReduceAll(keep_dims)
-    return reduce_all(x, axis)
+    return F.all(x, axis, keep_dims)
 
 
 def angle(x):
@@ -851,17 +843,7 @@ def argmax(x, axis=None, keepdims=False):
         >>> print(a.argmax())
         5
     """
-    is_axis_none = False
-    if axis is None:
-        x = ravel(x)
-        axis = 0
-        is_axis_none = True
-    if x.dtype == mstype.bool_:
-        x = x.astype(mstype.int32)
-    out = P.Argmax(axis, mstype.int64)(x)
-    if keepdims and not is_axis_none:
-        out = expand_dims(out, axis)
-    return out
+    return F.argmax(x, axis, keepdims)
 
 
 def argmin(x, axis=None, keepdims=False):
@@ -2021,7 +2003,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
         axis = ()
     else:
         axis = check_and_canonicalize_axes(axis, x.ndim)
-    x_mean = _mean_keepdims(x, axis)
+    x_mean = F.mean(x, axis, True)
     x_sub = F.tensor_sub(x, x_mean)
     x_pow = F.tensor_pow(x_sub, 2)
     if keepdims:
@@ -2362,7 +2344,7 @@ def itemset(data, *args):
 
 def ms_iter(xs):
     """Implementation of `iter`."""
-    return xs.__ms_iter__()
+    return xs.__ms_iter__
 
 
 def ms_next(it):
@@ -2509,17 +2491,15 @@ def tuple_func(*data):
     """Implementation of `tuple`."""
     data_len = len(data)
     if data_len >= 2:
-        const_utils.raise_type_error("tuple() requires 0 or 1 arguments.")
+        raise TypeError("tuple() requires 0 or 1 arguments.")
     if data_len == 0:
         return F.make_tuple()
     data = data[0]
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error(
-            "tuple() does not support single sparse tensor input.")
+        raise TypeError("tuple() does not support single sparse tensor input.")
     if not isinstance(data, Tensor) and not hasattr(data, "__ms_iter__"):
         data_type = F.typeof(data)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
+        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(data, dict):
         data = data.keys()
     if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
@@ -2787,26 +2767,6 @@ def ms_len(data):
     return data.__len__()
 
 
-@constexpr
-def python_len_with_check(data):
-    """Return the result of python built-in len function with iterable check"""
-    if not hasattr(data, "__iter__"):
-        raise TypeError(str(type(data)) +
-                        " object is not iterable in graph mode.")
-    return len(data)
-
-
-def ms_len_with_iterable_check(data):
-    """Implementation of `len` with iterable check, used in len of condition."""
-    if not isinstance(data, Tensor) and F.isconstant(data):
-        return python_len_with_check(data)
-    if not hasattr(data, "__len__"):
-        type_str = str(F.typeof(data))
-        const_utils.raise_type_error(
-            type_str + " object is not iterable in graph mode.")
-    return data.__len__()
-
-
 def floor(x):
     """Rounds a tensor down to the closest integer element-wise."""
     return x.__floor__()
@@ -2859,14 +2819,10 @@ def enumerate_(x, start=0):
     x_type = F.typeof(x)
     ret = ()
     op_name = "enumerate"
-    if check_is_tuple_or_list_or_tensor(x_type, op_name, "first input") and \
-            check_is_const_int(start, op_name, "start"):
+    if check_is_const_int(start, op_name, "start"):
         if check_is_tensor(x_type):
             for i in range(x.shape[0]):
                 ret += ((start + i, x[i]),)
-        elif F.is_sequence_shape_unknown(x):
-            const_utils.raise_value_error(
-                "For 'enumerate', the dynamic length input is unsupported in graph mode")
         else:
             ret = zip(range(start, start + len(x)), x)
     return ret
@@ -3307,7 +3263,6 @@ def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
         f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 
 
-@constexpr
 def check_is_const_int(x, op_name, arg_name):
     """check whether x is const int."""
     if x is None:

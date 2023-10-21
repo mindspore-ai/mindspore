@@ -27,7 +27,7 @@ from mindspore import _checkparam as Validator
 
 __all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler',
            'MultiplicativeLR', 'ConstantLR', 'MultiStepLR', 'LambdaLR', 'SequentialLR', 'ReduceLROnPlateau',
-           'CyclicLR', 'CosineAnnealingWarmRestarts', 'OneCycleLR', 'CosineAnnealingLR']
+           'CyclicLR', 'CosineAnnealingWarmRestarts', 'CosineAnnealingLR']
 
 
 @jit_class
@@ -42,11 +42,13 @@ class LRScheduler:
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): The optimizer instance.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Raises:
         TypeError: If `optimizer` is not an Optimizer.
-        TypeError: If `last_epoch` is not greater than -1.
+        KeyError: If `last_epoch` != -1 and ``'initial_lr'`` not in param groups.
+        ValueError: if `last_epoch` is not int.
+        ValueError: If `last_epoch` is not greater than -1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -61,8 +63,8 @@ class LRScheduler:
         ...         self.total_iters = total_iters
         ...         super(ConstantLR, self).__init__(optimizer, last_epoch)
         ...
-        ...     def _get_lr(self):
-        ...         lrs = [lr.value() for lr in self.last_lrs]
+        ...     def get_lr(self):
+        ...         lrs = [lr.value() for lr in self._last_lr]
         ...         if self.last_epoch == 0:
         ...             return [lr * self.factor for lr in lrs]
         ...         if self.last_epoch != self.total_iters:
@@ -88,7 +90,6 @@ class LRScheduler:
         Validator.check_value_type("last_epoch", last_epoch, [int])
         if last_epoch < -1:
             raise ValueError("Invalid last_epoch: {}".format(last_epoch))
-
         if last_epoch == -1:
             for group in optimizer.param_groups:
                 group.setdefault('initial_lr', group['lr'].value())
@@ -99,7 +100,7 @@ class LRScheduler:
                                    f"in param_groups[{i}] when resuming an optimizer")
         self.base_lrs = [group['initial_lr'] for group in optimizer.param_groups]
         self.optimizer = optimizer
-        self.last_lr = [group['lr'] for group in optimizer.param_groups]
+        self._last_lr = [group['lr'] for group in optimizer.param_groups]
         self.groups_num = len(optimizer.param_groups)
         self.last_epoch = Parameter(Tensor(last_epoch, dtype=mstype.float32),
                                     name='last_epoch_' + self.__class__.__name__)
@@ -107,36 +108,31 @@ class LRScheduler:
         self.step()
 
     @staticmethod
-    def _get_lr():
-        """
-        Compute current lr.
-
-        This method must be overridden by all subclasses.
-        """
+    def get_lr():
         raise NotImplementedError
 
     def get_last_lr(self):
         """
         Return last computed learning rate by current scheduler.
         """
-        return [lr.value() for lr in self.last_lr]
+        return [lr.value() for lr in self._last_lr]
 
     def step(self, epoch=None):
         """
         Get the current learning rate and change the learning rate.
 
         Args:
-            epoch (int, optional): The epoch/step number. Default: ``None``.
+            epoch (int, optional): The index of the last epoch. Default: ``None``.
         """
         if epoch is None:
             ops.assign_add(self.last_epoch, self.increase_tensor)
-            values = self._get_lr()
+            values = self.get_lr()
         else:
             ops.assign(self.last_epoch, epoch)
             if hasattr(self, "_get_closed_form_lr"):
                 values = self._get_closed_form_lr()
             else:
-                values = self._get_lr()
+                values = self.get_lr()
 
         for i in range(self.groups_num):
             lr = values[i]
@@ -161,7 +157,7 @@ class StepLR(LRScheduler):
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
             Default: ``0.5``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -197,13 +193,13 @@ class StepLR(LRScheduler):
         ...     scheduler.step()
         ...     current_lr = scheduler.get_last_lr()
     """
-    def __init__(self, optimizer, step_size, gamma=0.5, last_epoch=-1):
+    def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
         self.step_size = step_size
         self.gamma = gamma
         super(StepLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
             return lrs
         return [lr * self.gamma for lr in lrs]
@@ -234,7 +230,7 @@ class LinearLR(LRScheduler):
             process. Default: ``1.0``.
         total_iters (int, optional): The number of iterations that multiplicative factor reaches to 1.
             Default: ``5``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Raises:
         ValueError: If `start_factor` is not in the range of (0, 1].
@@ -279,7 +275,8 @@ class LinearLR(LRScheduler):
 
     def __init__(self, optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1):
         if start_factor > 1.0 or start_factor <= 0:
-            raise ValueError('Starting multiplicative factor expected to be greater than 0 and less or equal to 1.')
+            raise ValueError('Starting multiplicative factor expected to be greater than 0 and '
+                             'less than or equal to 1.')
 
         if end_factor > 1.0 or end_factor < 0:
             raise ValueError('Ending multiplicative factor expected to be between 0 and 1.')
@@ -289,8 +286,8 @@ class LinearLR(LRScheduler):
         self.total_iters = total_iters
         super(LinearLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
             return [lr * self.start_factor for lr in lrs]
@@ -323,7 +320,7 @@ class ExponentialLR(LRScheduler):
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         gamma (float): Learning rate scaling factor.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -353,8 +350,8 @@ class ExponentialLR(LRScheduler):
         self.gamma = gamma
         super(ExponentialLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
             return lrs
         return [lr * self.gamma for lr in lrs]
@@ -391,7 +388,7 @@ class PolynomialLR(LRScheduler):
         total_iters (int, optional): The number of iterations adjusting learning rate by polynomial fitting.
             Default: ``5``.
         power (float, optional): Power of polynomial. Default: ``1.0``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -426,8 +423,8 @@ class PolynomialLR(LRScheduler):
         self.cast = P.Cast()
         super(PolynomialLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0 or self.last_epoch > self.total_iters:
             return lrs
@@ -487,7 +484,7 @@ class ChainedScheduler:
     def __init__(self, schedulers):
         self._schedulers = list(schedulers)
         self.optimizer = schedulers[0].optimizer
-        self.last_lr = [lr for lr in self._schedulers[-1].last_lr]
+        self._last_lr = [lr for lr in self._schedulers[-1]._last_lr]  # pylint: disable=W0212
 
     def step(self):
         """
@@ -500,7 +497,7 @@ class ChainedScheduler:
         """
         Return last computed learning rate by current scheduler.
         """
-        return [lr.value() for lr in self.last_lr]
+        return [lr.value() for lr in self._last_lr]
 
 
 @jit_class
@@ -516,9 +513,12 @@ class LambdaLR(LRScheduler):
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         lr_lambda (Union(function, list)): A function which computes a multiplicative
-            factor given an integer parameter epoch, or a list of such
+            factor given a parameter `last_epoch`, or a list of such
             functions, one for each group in `optimizer.param_groups`.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+
+    Raises:
+        ValueError: If the length of `lr_lambda` is not equal to the number of param groups.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -548,7 +548,7 @@ class LambdaLR(LRScheduler):
             self.lr_lambdas = list(lr_lambda)
         super(LambdaLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
+    def get_lr(self):
         return [base_lr * lmbda(self.last_epoch)
                 for lmbda, base_lr in zip(self.lr_lambdas, self.base_lrs)]
 
@@ -568,7 +568,7 @@ class MultiplicativeLR(LRScheduler):
         lr_lambda (Union(function, list)): A function which computes a multiplicative
             factor given an integer parameter epoch, or a list of such
             functions, one for each group in optimizer.param_groups.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -598,8 +598,8 @@ class MultiplicativeLR(LRScheduler):
             self.lr_lambdas = list(lr_lambda)
         super(MultiplicativeLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch > 0:
             return [lr * lmbda(self.last_epoch)
                     for lmbda, lr in zip(self.lr_lambdas, lrs)]
@@ -620,11 +620,16 @@ class MultiStepLR(LRScheduler):
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
-        milestones (list): List of epoch indices, must be increasing. When epoch/step reach the milestone,
+        milestones (list): List of epoch indices. When `last_epoch` reach the milestone,
             multiply the learning rate of each parameter group by `gamma`.
         gamma (float, optional): Multiplicative factor of learning rate decay.
             Default: ``0.1``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+
+    Raises:
+        TypeError: If the `milestones` is not list.
+        TypeError: If elements of the `milestones` are not int.
+        TypeError: If the `gamma` is not float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -652,14 +657,20 @@ class MultiStepLR(LRScheduler):
     """
 
     def __init__(self, optimizer, milestones, gamma=0.1, last_epoch=-1):
+        Validator.check_value_type('milestones', milestones, [list])
+        for milestone in milestones:
+            if not isinstance(milestone, int):
+                raise TypeError(f"For 'MultiStepLR', elements of the 'milestones' must be type of int, "
+                                f"but got one element of 'milestones' type: {type(milestone)}.")
+        Validator.check_value_type('gamma', gamma, [float, int])
         self.milestones = Counter(milestones)
         self.milestones_keys = list(self.milestones.keys())
         self.milestones_values = list(self.milestones.values())
         self.gamma = gamma
         super(MultiStepLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
         tmp_epoch = int(self.last_epoch.value())
 
         for i in range(len(self.milestones_keys)):
@@ -688,8 +699,8 @@ class ConstantLR(LRScheduler):
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         factor (float, optional): The factor number multiplied learning rate. Default: ``1./3``.
         total_iters (int, optional): The number of steps that the scheduler decays the learning rate,
-            when the epoch/step reach `total_iters`, restore the learning rate. Default: ``5``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+            when the `last_epoch` reach `total_iters`, restore the learning rate. Default: ``5``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -722,8 +733,8 @@ class ConstantLR(LRScheduler):
         self.total_iters = total_iters
         super(ConstantLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
             return [lr * self.factor for lr in lrs]
         if self.last_epoch != self.total_iters:
@@ -749,9 +760,15 @@ class SequentialLR:
 
     Args:
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
-        schedulers (list[:class:`mindspore.experimental.optim.Optimizer`]): List of learning rate schedulers.
+        schedulers (list[:class:`mindspore.experimental.optim.lr_scheduler.LRScheduler`]):
+            List of learning rate schedulers.
         milestones (list): List of integers that reflects milestone points.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+
+    Raises:
+        ValueError: The optimizer in `schedulers` is different from the `optimizer` passed in.
+        ValueError: The optimizer in `schedulers` is different from the optimizer of `schedulers[0]`.
+        ValueError: Length of `milestones` is not equal to length of `schedulers` minus 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -793,7 +810,7 @@ class SequentialLR:
                 "than the number of milestone points, but got number of schedulers {} and the "
                 "number of milestones {}".format(len(schedulers), len(milestones)))
 
-        self.schedulers = schedulers
+        self._schedulers = schedulers
         self.milestones = milestones
         self.milestones_len = len(milestones)
         self.last_epoch = Parameter(Tensor(last_epoch+1, dtype=mstype.float32),
@@ -804,11 +821,11 @@ class SequentialLR:
         for group in self.optimizer.param_groups:
             ops.assign(group["lr"], group["initial_lr"])
 
-        for scheduler in self.schedulers:
+        for scheduler in self._schedulers:
             ops.assign_sub(scheduler.last_epoch, self.increase_tensor)
 
-        self.schedulers[0].step()
-        self.last_lr = schedulers[0].last_lr
+        self._schedulers[0].step()
+        self._last_lr = schedulers[0]._last_lr  # pylint: disable=W0212
 
 
     def step(self):
@@ -819,7 +836,7 @@ class SequentialLR:
         tmp_epoch = int(self.last_epoch)
 
         cur_idx = bisect_right(self.milestones, tmp_epoch)
-        scheduler = self.schedulers[cur_idx]
+        scheduler = self._schedulers[cur_idx]
         if cur_idx > 0 and self.milestones[cur_idx - 1] == tmp_epoch:
             scheduler.step(0)
         else:
@@ -829,7 +846,7 @@ class SequentialLR:
         """
         Return last computed learning rate by current scheduler.
         """
-        return [lr.value() for lr in self.last_lr]
+        return [lr.value() for lr in self._last_lr]
 
 
 @jit_class
@@ -862,12 +879,12 @@ class ReduceLROnPlateau:
             Default: ``10``.
         threshold (float, optional): Threshold for measuring the new optimum,
             to only focus on significant changes. Default: ``1e-4``.
-        threshold_mode (str, optional): One of `rel`, `abs`. Given dynamic_threshold is the
-        benchmark to define whether the current metric is improvement, in `rel` mode,
-            dynamic_threshold = best * ( 1 + threshold ) in 'max'
-            mode or best * ( 1 - threshold ) in `min` mode.
-            In `abs` mode, dynamic_threshold = best + threshold in
-            `max` mode or best - threshold in `min` mode. Default: ``'rel'``.
+        threshold_mode (str, optional): One of `rel`, `abs`. Given dynamic_threshold is the benchmark to
+            define whether the current metric is improvement,
+            in ``'rel'`` mode, dynamic_threshold = best * ( 1 + threshold ) in ``'max'`` mode
+            or best * ( 1 - threshold ) in ``'min'`` mode.
+            In ``'abs'`` mode, dynamic_threshold = best + threshold in ``'max'`` mode or
+            best - threshold in ``'min'`` mode. Default: ``'rel'``.
         cooldown (int, optional): Number of epochs to wait before resuming
             normal operation after lr has been reduced. Default: ``0``.
         min_lr (Union(float, list), optional): A scalar or a list of scalars. A
@@ -876,6 +893,13 @@ class ReduceLROnPlateau:
         eps (float, optional): Minimal decay applied to lr. If the difference
             between new and old lr is smaller than eps, the update is
             ignored. Default: ``1e-8``.
+
+    Raises:
+        ValueError: `factor` is greater than or equal to 1.0.
+        TypeError: `optimizer` is not an `Optimizer`.
+        ValueError: When `min_lr` is a list or tuple, the length of it is not equal to the number of param groups.
+        ValueError: `mode` is neither ``'min'`` nor ``'max'``.
+        ValueError: `threshold_mode` is neither ``'rel'`` nor ``'abs'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -889,7 +913,7 @@ class ReduceLROnPlateau:
         >>> metrics = [1, 1.5, 1.8, 0.4, 0.5]
         >>> for i in range(5):
         ...     scheduler.step(metrics[i])
-        ...     current_lr = scheduler.last_lr
+        ...     current_lr = scheduler._last_lr
         ...     print(current_lr)
         [Tensor(shape=[], dtype=Float32, value= 0.1)]
         [Tensor(shape=[], dtype=Float32, value= 0.01)]
@@ -944,7 +968,7 @@ class ReduceLROnPlateau:
         self.cooldown_counter = Parameter(Tensor(0, dtype=mstype.float32), name='cooldown_counter')
         self.wait = Parameter(Tensor(0, dtype=mstype.float32), name='wait')
         self.increase_tensor = Tensor(1, mstype.int32)
-        self.last_lr = [group['lr'] for group in self.optimizer.param_groups]
+        self._last_lr = [group['lr'] for group in self.optimizer.param_groups]
 
     def step(self, metrics):
         """
@@ -975,7 +999,7 @@ class ReduceLROnPlateau:
         return True
 
     def _reduce_lr(self, epoch):
-        for i, lr in enumerate(self.last_lr):
+        for i, lr in enumerate(self._last_lr):
             old_lr = lr.value()
             new_lr = ops.maximum(old_lr * self.factor, self.min_lrs[i])
             if old_lr > new_lr + self.eps:
@@ -1010,7 +1034,7 @@ class ReduceLROnPlateau:
         """
         Return last computed learning rate by current scheduler.
         """
-        return [lr.value() for lr in self.last_lr]
+        return [lr.value() for lr in self._last_lr]
 
 
 @jit_class
@@ -1057,10 +1081,15 @@ class CyclicLR(LRScheduler):
             argument lambda function, where 0 <= scale_fn(x) <= 1 for all x >= 0.
             If specified, then 'mode' is ignored. Default: ``None``.
         scale_mode (str, optional): {'cycle', 'iterations'}.
-            Defines whether scale_fn is evaluated on
-            cycle number or cycle iterations (training
-            iterations since start of cycle). Default: ``'cycle'``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+            Defines whether scale_fn is evaluated on cycle number or cycle iterations (training
+            iterations since start of cycle). Illegal inputs will use ``'iterations'`` by defaults.
+            Default: ``'cycle'``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+
+    Raises:
+        ValueError: When `base_lr` is list or tuple, the length of it is not equal to the number of param groups.
+        ValueError: When `max_lr` is list or tuple, the length of it is not equal to the number of param groups.
+        ValueError: `mode` is not in [``'triangular'``, ``'triangular2'``, ``'exp_range'``] and `scale_fn` is None.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1094,11 +1123,6 @@ class CyclicLR(LRScheduler):
                  scale_fn=None,
                  scale_mode='cycle',
                  last_epoch=-1):
-
-        if not isinstance(optimizer, Optimizer):
-            raise TypeError("Expected an `Optimizer`, but got type {}".format(type(optimizer).__name__))
-
-        self.optimizer = optimizer
 
         base_lrs = self._preprocess_input_param(optimizer, base_lr, 'base_lr')
 
@@ -1168,7 +1192,7 @@ class CyclicLR(LRScheduler):
     def _exp_range_scale_fn(self, x):
         return self.gamma ** (x)
 
-    def _get_lr(self):
+    def get_lr(self):
         cycle = self.floor(1 + self.last_epoch / self.total_step_size)
         x = 1. + self.last_epoch / self.total_step_size - cycle
         if x <= self.step_up_ratio:
@@ -1193,8 +1217,8 @@ class CosineAnnealingWarmRestarts(LRScheduler):
     r"""
     Set the learning rate of each parameter group using a cosine annealing warm restarts
     schedule. Where :math:`\eta_{max}` is set to the initial lr, :math:`\eta_{min}` is the minimum value
-    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`\T_{0}` is the number of iterations for the
-    first restar, :math:`\T_{i}` is the current number of iterations between two warm restarts in SGDR,
+    for learning rate, :math:`\eta_{t}` is the current learning rate, :math:`T_{0}` is the number of iterations for the
+    first restar, :math:`T_{i}` is the current number of iterations between two warm restarts in SGDR,
     :math:`T_{cur}` is the number of epochs since the last restart in SGDR.
 
     .. math::
@@ -1216,8 +1240,13 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         T_0 (int): Number of iterations for the first restart.
         T_mult (int, optional): A factor increases :math:`T_{i}` after a restart. Default: ``1``.
-        eta_min (float, optional): Minimum learning rate. Default: ``0``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        eta_min (Union(float, int), optional): Minimum learning rate. Default: ``0``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
+
+    Raises:
+        ValueError: `T_0` is less than or equal than 0 or not an int.
+        ValueError: `T_mult` is less than or equal than 1 or not an int.
+        ValueError: `eta_min` is not int or float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1249,6 +1278,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         self.T_0 = Parameter(Tensor(T_0, dtype=mstype.float32), name='T_0')
         self.T_i = Parameter(Tensor(T_0, dtype=mstype.float32), name='T_i')
         self.T_mult = T_mult
+        Validator.check_value_type('eta_min', eta_min, [float, int])
         self.eta_min = Tensor(eta_min)
         self.T_cur = Parameter(Tensor(last_epoch, dtype=mstype.float32), name='T_cur')
         self.increase_tensor = Tensor(1, mstype.int32)
@@ -1261,10 +1291,10 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         self.cast = P.Cast()
         self.assign = P.Assign()
         self.floor = P.Floor()
-        self.last_lr = [group["lr"] for group in optimizer.param_groups]
+        self._last_lr = [group["lr"] for group in optimizer.param_groups]
         super(CosineAnnealingWarmRestarts, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
+    def get_lr(self):
         pct = self.cast(self.math_pi * self.T_cur / self.T_i, mstype.float32)
         return [self.eta_min + (base_lr - self.eta_min) * (1 + self.cos(pct)) / 2
                 for base_lr in self.base_lrs]
@@ -1274,7 +1304,7 @@ class CosineAnnealingWarmRestarts(LRScheduler):
         Get the current learning rate and change the learning rate.
 
         Args:
-            epoch (int, optional): The epoch/step number. Default: ``None``.
+            epoch (int, optional): The index of the last epoch. Default: ``None``.
         """
         if epoch is None and self.last_epoch < 0:
             epoch = self.zero_tensor
@@ -1307,205 +1337,9 @@ class CosineAnnealingWarmRestarts(LRScheduler):
 
         self.assign(self.last_epoch, self.floor(epoch))
 
-        for i, data in enumerate(zip(self.optimizer.param_groups, self._get_lr())):
+        for i, data in enumerate(zip(self.optimizer.param_groups, self.get_lr())):
             _, lr = data
             F.assign(self.optimizer.param_groups[i]["lr"], lr)
-
-
-@jit_class
-class OneCycleLR(LRScheduler):
-    r"""
-    Sets the learning rate of each parameter group according to the
-    1cycle learning rate policy. The 1cycle policy anneals the learning
-    rate from an initial learning rate to some maximum learning rate and then
-    from that maximum learning rate to some minimum learning rate much lower
-    than the initial learning rate.
-    This policy was initially described in the paper `Super-Convergence:
-    Very Fast Training of Neural Networks Using Large Learning Rates https://arxiv.org/abs/1708.07120`_.
-
-    Note also that the total number of steps in the cycle can be determined in one
-    of two ways (listed in order of precedence):
-
-    - A value for `total_steps` is explicitly provided.
-    - A number of epochs `epochs` and a number of steps per epoch `steps_per_epoch` are provided.
-    In this case, the number of total steps is inferred by `total_steps = epochs * steps_per_epoch`.
-
-    You must either provide a value for `total_steps` or provide a value for both
-    `epochs` and `steps_per_epoch`.
-
-    .. warning::
-        This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
-
-    Args:
-        optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
-        max_lr (Union(float, list)): Upper learning rate boundaries in the cycle
-            for each parameter group.
-        total_steps (int, optional): The total number of steps in the cycle. Note that
-            if a value is not provided here, then it must be inferred by providing
-            a value for epochs and steps_per_epoch. Default: ``None``.
-        epochs (int, optional): The number of epochs to train for. This is used along
-            with steps_per_epoch in order to infer the total number of steps in the cycle
-            if a value for total_steps is not provided. Default: ``None``.
-        steps_per_epoch (int, optional): The number of steps per epoch to train for. This is
-            used along with epochs in order to infer the total number of steps in the
-            cycle if a value for total_steps is not provided. Default: ``None``.
-        pct_start (float, optional): The percentage of the cycle (in number of steps) spent
-            increasing the learning rate. Default: ``0.3``.
-        anneal_strategy (str, optional): Specifies the annealing strategy, can be set as 'cos' or 'linear'.
-            "cos" for cosine annealing, "linear" for linear annealing. Default: ``'cos'``.
-        div_factor (float, optional): The divide factor. Determines the initial learning rate via
-            `initial_lr = max_lr/div_factor`. Default: ``25``.
-        final_div_factor (float, optional): The final divide factor. Determines the minimum learning rate via
-            `min_lr = initial_lr/final_div_factor`. Default: ``1e4``.
-        three_phase (bool, optional): If ``True``, use the three-phase policy to adjust the
-            learning rate, otherwise use the two-phase policy. For algorithm details, please refer to the above paper.
-            Default: ``False``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore.experimental import optim
-        >>> from mindspore import nn
-        >>> net = nn.Dense(3, 2)
-        >>> optimizer = optim.SGD(net.trainable_params(), lr=0.1, momentum=0.9)
-        >>> scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.5, steps_per_epoch=3, epochs=5)
-        >>>
-        >>> for i in range(4):
-        ...     scheduler.step()
-        ...     current_lr = scheduler.get_last_lr()
-        ...     print(current_lr)
-        [Tensor(shape=[], dtype=Float32, value= 0.110362)]
-        [Tensor(shape=[], dtype=Float32, value= 0.313405)]
-        [Tensor(shape=[], dtype=Float32, value= 0.476233)]
-        [Tensor(shape=[], dtype=Float32, value= 0.497208)]
-    """
-    def __init__(self,
-                 optimizer,
-                 max_lr,
-                 total_steps=None,
-                 epochs=None,
-                 steps_per_epoch=None,
-                 pct_start=0.3,
-                 anneal_strategy='cos',
-                 div_factor=25.,
-                 final_div_factor=1e4,
-                 three_phase=False,
-                 last_epoch=-1):
-
-        if not isinstance(optimizer, Optimizer):
-            raise TypeError("Expected an `Optimizer`, but got type {}".format(type(optimizer).__name__))
-
-        self.optimizer = optimizer
-
-        if total_steps is None and epochs is None and steps_per_epoch is None:
-            raise ValueError("You must define either total_steps, or define both epochs and steps_per_epoch.")
-        if total_steps is not None:
-            if not isinstance(total_steps, int) or total_steps <= 0:
-                raise ValueError("total_steps should be a positive integer, but got {}".format(total_steps))
-            self.total_steps = total_steps
-        else:
-            if not isinstance(epochs, int) or epochs <= 0:
-                raise ValueError("epochs should be a positive integer, but got {}".format(epochs))
-            if not isinstance(steps_per_epoch, int) or steps_per_epoch <= 0:
-                raise ValueError("steps_per_epoch should be a positive integer, but got {}".format(steps_per_epoch))
-            self.total_steps = epochs * steps_per_epoch
-
-        if pct_start < 0 or pct_start > 1 or not isinstance(pct_start, float):
-            raise ValueError("pct_start should be a float value between 0 and 1, but got {}".format(pct_start))
-
-        max_lrs = self._preprocess_input_param(self.optimizer, max_lr, 'max_lr')
-
-        if anneal_strategy not in ['cos', 'linear']:
-            raise ValueError("anneal_strategy must by one of 'cos' or 'linear', but got {}".format(anneal_strategy))
-        self.anneal_func = self._annealing_cos if anneal_strategy == 'cos' else self._annealing_linear
-
-        if three_phase:
-            self._schedule_phases = [
-                {
-                    'end_step': float(pct_start * self.total_steps) - 1,
-                    'start_lr': 'initial_lr',
-                    'end_lr': 'max_lr',
-                },
-                {
-                    'end_step': float(2 * pct_start * self.total_steps) - 2,
-                    'start_lr': 'max_lr',
-                    'end_lr': 'initial_lr',
-                },
-                {
-                    'end_step': float(self.total_steps - 1),
-                    'start_lr': 'initial_lr',
-                    'end_lr': 'min_lr',
-                },
-            ]
-        else:
-            self._schedule_phases = [
-                {
-                    'end_step': float(pct_start * self.total_steps) - 1,
-                    'start_lr': 'initial_lr',
-                    'end_lr': 'max_lr',
-                },
-                {
-                    'end_step': float(self.total_steps - 1),
-                    'start_lr': 'max_lr',
-                    'end_lr': 'min_lr',
-                },
-            ]
-        self.phase_len = Tensor(len(self._schedule_phases), mstype.float32)
-        if last_epoch == -1:
-            for idx, group in enumerate(self.optimizer.param_groups):
-                group['initial_lr'] = Tensor(max_lrs[idx] / div_factor)
-                group['max_lr'] = Tensor(max_lrs[idx])
-                group['min_lr'] = group['initial_lr'] / final_div_factor
-        self.math_pi = math.pi
-        self.cos = P.Cos()
-        self.cast = P.Cast()
-        super(OneCycleLR, self).__init__(optimizer, last_epoch)
-
-    def _preprocess_input_param(self, optimizer, param, name):
-        if isinstance(param, (list, tuple)):
-            if len(param) != len(optimizer.param_groups):
-                raise ValueError("expected {} values for {}, got {}".format(
-                    len(optimizer.param_groups), name, len(param)))
-            return param
-        return [param] * len(optimizer.param_groups)
-
-    def _annealing_cos(self, start, end, pct):
-        cos_out = self.cos(self.math_pi * pct) + 1
-        return end + (start - end) / 2.0 * cos_out
-
-    def _annealing_linear(self, start, end, pct):
-        return (end - start) * pct + start
-
-    def _compute_lr(self, group, phase, percentage):
-        start_lr = group[phase['start_lr']]
-        end_lr = group[phase['end_lr']]
-        computed_lr = self.anneal_func(start_lr, end_lr, percentage)
-        return computed_lr
-
-    def _get_lr(self):
-        lrs = []
-        step_num = self.last_epoch.value()
-        if step_num > self.total_steps:
-            raise ValueError("Epoch number should less or equal than total_steps.")
-        computed_lr = Tensor(0, mstype.float32)
-        for group in self.optimizer.param_groups:
-            start_step = 0
-            for i, phase in enumerate(self._schedule_phases):
-                end_step = phase['end_step']
-                start_step = F.depend(start_step, end_step)
-                if step_num <= end_step or i == self.phase_len - 1:
-                    percentage = (step_num - start_step) / (end_step - start_step)
-                    computed_lr = self._compute_lr(group, phase, percentage)
-                    break
-                start_step = phase['end_step']
-            computed_lr = self.cast(computed_lr, mstype.float32)
-            lrs.append(computed_lr)
-
-        return lrs
 
 
 @jit_class
@@ -1538,7 +1372,7 @@ class CosineAnnealingLR(LRScheduler):
         optimizer (:class:`mindspore.experimental.optim.Optimizer`): Wrapped optimizer.
         T_max (int): Maximum number of iterations.
         eta_min (float, optional): Minimum learning rate. Default: ``0``.
-        last_epoch (int, optional): The epoch/step number. Default: ``-1``.
+        last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1569,8 +1403,8 @@ class CosineAnnealingLR(LRScheduler):
         self.cast = P.Cast()
         super(CosineAnnealingLR, self).__init__(optimizer, last_epoch)
 
-    def _get_lr(self):
-        lrs = [lr.value() for lr in self.last_lr]
+    def get_lr(self):
+        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
             return lrs

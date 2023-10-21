@@ -49,7 +49,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_binary_cross_entropy_loss():
@@ -109,7 +109,7 @@ def test_binary_cross_entropy_loss_mean_reduction():
     assert grad[2].asnumpy().shape == weight.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_binary_cross_entropy_loss_sum_reduction():

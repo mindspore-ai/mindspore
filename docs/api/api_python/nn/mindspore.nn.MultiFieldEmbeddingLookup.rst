@@ -1,7 +1,7 @@
 mindspore.nn.MultiFieldEmbeddingLookup
 ========================================
 
-.. py:class:: mindspore.nn.MultiFieldEmbeddingLookup(vocab_size, embedding_size, field_size, param_init='normal', target='CPU', slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM')
+.. py:class:: mindspore.nn.MultiFieldEmbeddingLookup(vocab_size, embedding_size, field_size, param_init='normal', target='CPU', slice_mode='batch_slice', feature_num_list=None, max_norm=None, sparse=True, operator='SUM', dtype=mstype.float32)
 
     根据指定的索引和字段ID，返回输入Tensor的切片。此操作支持同时使用multi hot和one hot查找嵌入。
 
@@ -23,6 +23,7 @@ mindspore.nn.MultiFieldEmbeddingLookup
         - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32。默认值： ``None`` 。
         - **sparse** (bool) - 使用稀疏模式。当'target'设置为'CPU'时，'sparse'必须为 ``true`` 。默认值： ``True`` 。
         - **operator** (str) - 字段特征的池化方法。支持 ``'SUM'`` 、 ``'MEAN'`` 和 ``'MAX'`` 。默认值： ``'SUM'`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **input_indices** (Tensor) - 指定输入Tensor元素的索引，其shape为 :math:`(batch\_size, seq\_length)` 。数据类型为int32、int64。

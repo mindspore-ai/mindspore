@@ -29,6 +29,7 @@ namespace mindspore {
 namespace opt {
 AnfNodePtr KVCacheMgrConcatFusion::GetBatchValidLength(CNodePtr concat_cnode) {
   auto make_tuple_node = concat_cnode->input(kInputIndexOne);
+  MS_CHECK_TRUE_RET(make_tuple_node != nullptr, nullptr);
   auto make_tuple_cnode = make_tuple_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(make_tuple_cnode != nullptr, nullptr);
   const size_t kMakeTupleInputNum = 3;
@@ -54,6 +55,7 @@ bool KVCacheMgrConcatFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto kv_cache_cnode = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(kv_cache_cnode != nullptr, false);
     auto concat_cnode = kv_cache_cnode->input(kInputIndexThree)->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(concat_cnode != nullptr, false);
     if (!CheckPrimitiveType(concat_cnode, prim::kPrimConcat)) {

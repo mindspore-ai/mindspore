@@ -163,6 +163,20 @@ bool IsWhileNode(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsCallNode(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  bool in_kg = graph->type_name() == kKernelGraphTypeName;
+  auto cnode = node->cast<CNodePtr>();
+  if (in_kg && IsPrimitiveCNode(node, prim::kPrimCall) && cnode->input(1)->isa<ValueNode>()) {
+    return true;
+  }
+  return false;
+}
+
 bool CheckSwitchBranch(const AnfNodePtr &node) {
   AnfNodePtr value_node = nullptr;
   if (IsPartialCNode(node)) {
@@ -233,6 +247,9 @@ std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
   }
   if (IsIfNode(cnode)) {
     return string(kNameIf);
+  }
+  if (IsCallNode(cnode)) {
+    return string(kNamePartitionedCall);
   }
   return GetCNodeFuncName(cnode);
 }
@@ -305,8 +322,8 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_train) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, options, is_train);
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
+  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
 }
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
@@ -326,14 +343,20 @@ void EnableAoeOffline() { AoeUtil::GetInstance().SetOfflineEnvDumpGeGraph(); }
 
 // convert
 
-DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix) {
-  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix);
+DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix,
+                                 RefModeFlag ref_mode_type) {
+  auto converter = std::make_shared<transform::DfGraphConvertor>(graph, phase_prefix, ref_mode_type);
   return converter;
 }
 
 void SetTraining(const DfGraphConvertorPtr &converter, bool training) {
   MS_EXCEPTION_IF_NULL(converter);
   converter->set_training(training);
+}
+
+void SetExportAir(const DfGraphConvertorPtr &converter, bool export_air) {
+  MS_EXCEPTION_IF_NULL(converter);
+  converter->set_export_air(export_air);
 }
 
 void BuildGraph(const std::string &name, const DfGraphConvertorPtr &converter,
@@ -424,6 +447,27 @@ bool ConvertCheck(const AnfNodePtr &node) {
   PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(node);
   auto &adapter_map = OpAdapterMap::get();
   return adapter_map.find(prim->name()) != adapter_map.end();
+}
+
+bool DynamicShapeSupportCheck(const AnfNodePtr &node, bool train) {
+  auto adpt = FindAdapter(node, train);
+  MS_EXCEPTION_IF_NULL(adpt);
+  return adpt->GetDynamicShapeSupport();
+}
+
+bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
+  PrimitivePtr prim = common::AnfAlgo::GetCNodePrimitive(node);
+  auto adpt = FindAdapter(prim->name(), train);
+  MS_EXCEPTION_IF_NULL(adpt);
+  auto input_attr_map = adpt->getInputAttrMap();
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (auto &it : input_attr_map) {
+    if (!cnode->input(it.first)->isa<ValueNode>()) {
+      return false;
+    }
+  }
+  return true;
 }
 }  // namespace transform
 }  // namespace mindspore

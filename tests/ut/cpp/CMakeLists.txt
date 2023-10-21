@@ -59,7 +59,7 @@ file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dev
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc)
 # plugin/device/cpu/hal/test_ms_collective_topo.cc will also open 127.0.0.1:8090
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
-file(GLOB_RECURSE UT_CCSRC_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ccsrc/common/*.cc)
+file(GLOB_RECURSE UT_CCSRC_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ccsrc/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./side_effect/*.cc ./utils/*.cc
         ./place/*.cc)
 file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc ./mock/*.cc)
@@ -101,6 +101,7 @@ file(GLOB_RECURSE EXTEND_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/frontend/optimizer/*.cc"
         "../../../mindspore/ccsrc/frontend/parallel/*.cc"
         "../../../mindspore/ccsrc/frontend/operator/*.cc"
+        "../../../mindspore/ccsrc/frontend/expander/*.cc"
         )
 list(REMOVE_ITEM EXTEND_SRC_LIST
         "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
@@ -131,7 +132,9 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_event.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_build_ascend.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_kernel_runtime.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_runtime_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_adapter.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_gmem_adapter.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_memory_manager.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_device_address.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_stream_manager.cc"
@@ -175,6 +178,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/kernel_query.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.cc"

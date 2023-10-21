@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 #include "src/extendrt/infer_session.h"
 #include "mindspore/ccsrc/kernel/framework_utils.h"
 
@@ -67,6 +68,8 @@ class SingleOpInferSession : public InferSession {
   kernel::KernelArgs kernel_args_;
   ConfigInfos config_infos_;
   bool is_multi_model_sharing_mem_prepare_ = false;
+
+  std::unordered_map<MutableTensorImplPtr, size_t> malloced_data_size_;
 };
 }  // namespace mindspore
 

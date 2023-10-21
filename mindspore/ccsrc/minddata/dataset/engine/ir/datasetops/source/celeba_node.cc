@@ -180,7 +180,10 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     }
     if (partition_file.is_open()) {
       while (getline(partition_file, line)) {
-        int start = line.find(' ');
+        std::size_t start = line.find(' ');
+        if (start == std::string::npos) {
+          continue;
+        }
         if (line.at(start + 1) == usage_type) {
           partition_num++;
         }

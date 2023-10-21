@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace kernel {
@@ -246,7 +247,14 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(DEBUG) << this->DebugString();
   MS_LOG(DEBUG) << converter_->DebugString();
-  converter_->Run(stream_ptr);
+  // release gil before run
+  GilReleaseWithCheck release_gil;
+  try {
+    converter_->Run(stream_ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Kernel launch failed, msg: " << e.what();
+    return false;
+  }
   return true;
 }
 
@@ -262,20 +270,30 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
     MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's output size is not equal with format's size:"
                                << output_device_formats.size() << " and type's size:" << output_device_types.size();
   }
+
+  if (primitive_ptr_ == nullptr && op_ != nullptr) {
+    primitive_ptr_ = op_->GetPrim();
+  }
+  auto in_def_flag =
+    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, true);
   input_params_.resize(input_device_formats.size());
   for (size_t i = 0; i < input_device_formats.size(); i++) {
     input_params_[i].data_type = input_device_types[i];
     input_params_[i].dev_format = input_device_formats[i];
-    input_params_[i].is_default = transform::AclHelper::CheckDefaultSupportFormat(input_device_formats[i]);
+    input_params_[i].is_default =
+      in_def_flag && transform::AclHelper::CheckDefaultSupportFormat(input_device_formats[i]);
     input_params_[i].type_size = GetTypeByte(TypeIdToType(input_params_[i].data_type));
   }
   input_size_list_.resize(input_device_formats.size(), 0);
 
+  auto out_def_flag =
+    primitive_ptr_ == nullptr ? true : transform::AclHelper::GetDefaultFormatFlagFromAttr(primitive_ptr_, false);
   output_params_.resize(output_device_formats.size());
   for (size_t i = 0; i < output_device_formats.size(); i++) {
     output_params_[i].data_type = output_device_types[i];
     output_params_[i].dev_format = output_device_formats[i];
-    output_params_[i].is_default = transform::AclHelper::CheckDefaultSupportFormat(output_device_formats[i]);
+    output_params_[i].is_default =
+      out_def_flag && transform::AclHelper::CheckDefaultSupportFormat(output_device_formats[i]);
     output_params_[i].type_size = GetTypeByte(TypeIdToType(output_params_[i].data_type));
   }
   output_size_list_.resize(output_device_formats.size(), 0);

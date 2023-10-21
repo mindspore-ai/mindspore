@@ -40,6 +40,7 @@
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
 #include "include/backend/debug/debugger/debugger.h"
 #endif
+#include "mindspore/ccsrc/debug/summary/summary.h"
 #include "runtime/hardware/device_context.h"
 #include "include/backend/visible.h"
 
@@ -53,8 +54,11 @@ namespace mindspore {
 const char kSessionBasic[] = "SessionBasic";
 
 namespace session {
-using CallBackFunc = uint32_t (*)(uint32_t graph_id,
-                                  const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);
+using mindspore::debug::CallBackFunc;
+#ifndef ENABLE_SECURITY
+using mindspore::debug::Summary;
+#endif
+
 using AnyList = std::vector<Any>;
 using AnyListPtr = std::shared_ptr<AnyList>;
 
@@ -239,9 +243,7 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
                                const std::map<KernelWithIndex, size_t> &cnode_refcount) {}
 #ifndef ENABLE_SECURITY
   virtual void SetSummaryNodes(KernelGraph *graph);
-  void SetSummaryNodesForAllGraphs(KernelGraph *graph, const std::vector<KernelGraphPtr> &all_graphs);
-  void RecurseSetSummaryNodes(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs,
-                              std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
+  void RecurseSetSummaryNodesForAllGraphs(KernelGraph *graph);
 #endif
 
   void LoadInputs(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs_const) const {

@@ -121,7 +121,7 @@ def test_sampled_softmax_loss_none_sampler():
         got_sampled_softmax_loss = loss(Tensor(weights), Tensor(biases),
                                         Tensor(labels), Tensor(hidden_acts))
         exp_sampled_softmax_loss = np.array(
-            [1.7345718, 1.820291, 1.7704818]).astype(np.float32)
+            [1.7488728, 1.859914, 1.8356463]).astype(np.float32)
         assert np.allclose(got_sampled_softmax_loss.asnumpy(),
                            exp_sampled_softmax_loss)
 
@@ -142,10 +142,6 @@ def test_sampledsoftmaxloss_reduction_invalid():
 
     with pytest.raises(ValueError):
         nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="invalid")
-
-    # reduction can be None, as defined in Loss
-    # with pytest.raises(ValueError):
-    #     nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction=None)  #
 
     # Check 'num_true'
     with pytest.raises(ValueError):

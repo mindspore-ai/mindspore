@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,16 @@ class ArgWithValueDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
+class UnfoldMakeTupleDeco : public ExpanderDecorator {
+ public:
+  explicit UnfoldMakeTupleDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~UnfoldMakeTupleDeco() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<UnfoldMakeTupleDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
 class ProcessCustomOpDeco : public ExpanderDecorator {
  public:
   explicit ProcessCustomOpDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
@@ -61,6 +71,11 @@ class SetDynamicShapeAttrDeco : public ExpanderDecorator {
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
+
+/**
+ * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.
+ */
+BACKEND_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr &init);
 
 /**
  * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.

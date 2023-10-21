@@ -39,6 +39,7 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
+#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -46,10 +47,24 @@ namespace ascend {
 namespace {
 constexpr auto kOpDebugConfigFile = "ge_op_debug_config.ini";
 constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
+
+bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return false;
+  }
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  return std::any_of(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) {
+    if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
+      return false;
+    }
+    return common::AnfAlgo::IsDynamicShape(node);
+  });
+}
 }  // namespace
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
-  if (IsDynamicShapeGraph(func_graph)) {
+  if (IsDynamicShapeFuncGraph(func_graph)) {
+    opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
@@ -60,22 +75,29 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       }
       auto nodes = TopoSort(sub_graph->get_return());
       for (const auto &node : nodes) {
-        if (!node->isa<CNode>()) {
+        if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
           continue;
         }
         if (GetCNodeTarget(node) != kAscendDevice) {
           all_support = false;
           continue;
         }
-        auto prim = GetCNodePrimitive(node);
-        if (prim == nullptr) {
+        if (GetCNodePrimitive(node) == nullptr) {
           continue;
         }
         if (!transform::ConvertCheck(node)) {
           all_support = false;
-          auto cnode = node->cast<CNodePtr>();
-          MS_EXCEPTION_IF_NULL(cnode);
-          cnode->set_user_data(kAttrPrimitiveTarget, std::make_shared<std::string>(kCPUDevice));
+          common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
+          continue;
+        }
+        if (!transform::DynamicShapeSupportCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
+          continue;
+        }
+        if (!transform::SinkGraphCheck(node)) {
+          all_support = false;
+          common::AnfAlgo::SetNodeAttr(kAttrGraphSplitGroup, MakeValue<std::string>(kKernelGroup), node);
         }
       }
     }
@@ -86,7 +108,22 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
 
-RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kGraphMode; }
+RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // PyNative is only support ACL now on 910B.
+  if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
+    return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
+  }
+  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+    MS_LOG(INFO) << "RunMode::kKernelMode";
+    return RunMode::kKernelMode;
+  } else {
+    MS_LOG(INFO) << "RunMode::kGraphMode";
+    return RunMode::kGraphMode;
+  }
+}
 
 void GeDeviceContext::Initialize() {
   GilReleaseWithCheck gil_release;
@@ -96,9 +133,23 @@ void GeDeviceContext::Initialize() {
   }
 
   MS_LOG(DEBUG) << "Start initialize...";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  // set overflow mode in ascend910b
+  const auto &soc_version = ms_context->ascend_soc_version();
+  if (soc_version == "ascend910b") {
+    bool is_infnan = (common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE") == "INFNAN_MODE");
+    if (is_infnan) {
+      auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+      auto ret = aclrtSetDeviceSatMode(mode);
+      if (ret != ACL_SUCCESS) {
+        MS_LOG(EXCEPTION) << "aclrtSetDeviceSatMode failed";
+      }
+    }
+  }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
-  if (common::IsEnableRefMode()) {
+  if (IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
     GetKernelExecutor(false)->Initialize();
     // DynamicKernelExecutor and KernenlExecutor should be equal for GE
@@ -108,8 +159,6 @@ void GeDeviceContext::Initialize() {
     GetKernelExecutor(true)->Initialize();
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
   int32_t is_heterogenous = 0;
   (void)rtGetIsHeterogenous(&is_heterogenous);
@@ -170,10 +219,10 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
 void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
   auto op_debug_config = common::GetEnv("MS_COMPILER_OP_DEBUG_CONFIG");
   if (!op_debug_config.empty()) {
-    auto config_path = kernel::tbe::TbeUtils::GetOpDebugPath();
+    auto config_path = Common::GetCompilerCachePath();
     DIR *dir = opendir(config_path.c_str());
     if (dir == nullptr) {
-      auto ret = mkdir(config_path.c_str(), S_IRWXG | S_IRWXU);
+      auto ret = mkdir(config_path.c_str(), S_IRWXU);
       if (ret != 0) {
         MS_LOG(INFO) << "kernel dir: " << config_path << "not exist";
         return;
@@ -281,12 +330,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   (*ge_options)["rank_table_file"] = "";
-  auto env_ddk_version = common::GetEnv("DDK_VERSION");
-  if (!env_ddk_version.empty()) {
-    (*ge_options)["ge.DDK_version"] = env_ddk_version;
-  } else {
-    (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
-  }
   (*ge_options)["graphType"] = "1";
 
   SetDisableReuseMemoryFlag(ge_options);
@@ -299,18 +342,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   } else {
     (*ge_options)["ge.exec.jobId"] = "0";
     MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
-
-  auto env_fe_flag = common::GetEnv("FE_FLAG");
-  if (!env_fe_flag.empty()) {
-    (*ge_options)["ge.feFlag"] = env_fe_flag;
-    MS_LOG(INFO) << "Use FE, make sure fe lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-  }
-
-  auto env_aicpu_flag = common::GetEnv("AICPU_FLAG");
-  if (!env_aicpu_flag.empty()) {
-    (*ge_options)["ge.aicpuFlag"] = env_aicpu_flag;
-    MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
   if (CompileCacheEnable()) {
@@ -415,7 +446,10 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
                                      std::map<std::string, std::string> *ge_options) {
   MS_EXCEPTION_IF_NULL(inst_context);
   MS_EXCEPTION_IF_NULL(ge_options);
-  auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  auto env_table_file = common::GetEnv("MINDSPORE_HCCL_CONFIG_PATH");
+  if (env_table_file.empty()) {
+    env_table_file = common::GetEnv("RANK_TABLE_FILE");
+  }
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
@@ -442,15 +476,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     MS_LOG(INFO) << "No hccl mode. "
-                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
-  }
-
-  auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
-  if (!env_deploy_mode.empty()) {
-    (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
-  } else {
-    (*ge_options)["ge.exec.deployMode"] = "0";
-    MS_LOG(INFO) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
+                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID] all be set in ENV.";
   }
 }
 
@@ -519,6 +545,9 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
 
 constexpr auto kGeDevice = "GE";
 MS_REGISTER_DEVICE(kGeDevice, GeDeviceContext);
+#ifdef ASCEND_910B
+MS_REGISTER_DEVICE(kAscendDevice, GeDeviceContext);
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

@@ -36,12 +36,16 @@ uint32_t ExecArgMinWithValue(const CpuKernelContext &ctx) {
   Tensor *indice_tensor = ctx.Output(kFirstOutputIndex);
   Tensor *values_tensor = ctx.Output(kSecondOutputIndex);
   // Get raw ptrs
+  KERNEL_CHECK_NULLPTR(input_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  KERNEL_CHECK_NULLPTR(indice_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  KERNEL_CHECK_NULLPTR(values_tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed.")
   const T *input = reinterpret_cast<T *>(input_tensor->GetData());
   int32_t *indice = reinterpret_cast<int32_t *>(indice_tensor->GetData());
   T *values = reinterpret_cast<T *>(values_tensor->GetData());
   // Process attrs
   auto input_shape = input_tensor->GetTensorShape()->GetDimSizes();
   int64_t input_shape_size = static_cast<int64_t>(input_shape.size());
+  KERNEL_CHECK_NULLPTR(ctx.GetAttr("dimension"), KERNEL_STATUS_PARAM_INVALID, "Get attr 'dimension' data failed.")
   int64_t dim = ctx.GetAttr("dimension")->GetInt();
   int64_t upper_bound_included = static_cast<int64_t>(input_shape_size - 1);
   int64_t lower_bound_included = static_cast<int64_t>(-input_shape_size);

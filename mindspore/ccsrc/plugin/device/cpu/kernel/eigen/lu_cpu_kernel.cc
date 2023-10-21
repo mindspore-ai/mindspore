@@ -65,7 +65,7 @@ void LUCpuKernelMod::InitPivotVecInfo(const std::vector<size_t> &shape, size_t *
 bool LUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                           const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  kernel_name_ = base_operator->GetPrim()->name();
+  kernel_name_ = base_operator->name();
   dtype_ = inputs[0]->GetDtype();
   size_t input_num = inputs.size();
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
@@ -155,12 +155,18 @@ bool LUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &workspace,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   // input matrix of (m,n) PA = LU
-  T *batch_a_value = reinterpret_cast<T *>(inputs[kLUaIndex]->addr);
-  T *batch_lu_value = reinterpret_cast<T *>(outputs[kLuIndex]->addr);
-  batch_pivots_ = reinterpret_cast<int *>(outputs[kPivotsIndex]->addr);
-  int *batch_permutation_value = reinterpret_cast<int *>(outputs[kPermutationIndex]->addr);
-  T *lu_ori_wk = reinterpret_cast<T *>(workspace[kLuIndex]->addr);
-  T *lu_trans_wk = reinterpret_cast<T *>(workspace[kPivotsIndex]->addr);
+  T *batch_a_value = GetDeviceAddress<T>(inputs, kLUaIndex);
+  T *batch_lu_value = GetDeviceAddress<T>(outputs, kLuIndex);
+  batch_pivots_ = GetDeviceAddress<int>(outputs, kPivotsIndex);
+  int *batch_permutation_value = GetDeviceAddress<int>(outputs, kPermutationIndex);
+  T *lu_ori_wk = GetDeviceAddress<T>(workspace, kLuIndex);
+  T *lu_trans_wk = GetDeviceAddress<T>(workspace, kPivotsIndex);
+  MS_EXCEPTION_IF_NULL(batch_a_value);
+  MS_EXCEPTION_IF_NULL(batch_lu_value);
+  MS_EXCEPTION_IF_NULL(batch_pivots_);
+  MS_EXCEPTION_IF_NULL(batch_permutation_value);
+  MS_EXCEPTION_IF_NULL(lu_ori_wk);
+  MS_EXCEPTION_IF_NULL(lu_trans_wk);
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     T *a_value = batch_a_value + batch * a_row_ * a_col_;
     T *lu_value = batch_lu_value + batch * lu_row_ * lu_col_;

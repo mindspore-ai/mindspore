@@ -1140,7 +1140,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float alpha) {
   try {
-    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustBrightness", {1, 2, 3, 4, 5, 6, 10, 11, 12}, {3}, {3}));
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustBrightness", {1, 2, 3, 4, 5, 6, 10, 11, 12}, {2, 3}, {1, 3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {

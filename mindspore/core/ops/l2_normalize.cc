@@ -86,6 +86,9 @@ class L2NormalizeInfer : public abstract::OpInferBase {
     }
     // failed to get vector<int64_t> axis from infer
     auto axis_vec = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[axis]", primitive->GetAttr("axis"), prim_name);
+    if (axis_vec.size() <= 0) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', axis.shape is empty.";
+    }
     int64_t axis = axis_vec[0];
     CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-input_rank, input_rank}, prim_name);
 
@@ -94,6 +97,7 @@ class L2NormalizeInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
     auto prim_name = prim->name();
     const int64_t kL2NormalizeInputsNum = 1;
     const int64_t input_num = kL2NormalizeInputsNum;

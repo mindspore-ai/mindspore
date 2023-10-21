@@ -53,6 +53,7 @@ static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat
                                                                       {kOpFormat_ND, ACL_FORMAT_ND},
                                                                       {kOpFormat_DEFAULT, ACL_FORMAT_ND},
                                                                       {kOpFormat_NC1HWC0, ACL_FORMAT_NC1HWC0},
+                                                                      {kOpFormat_NDC1HWC0, ACL_FORMAT_NDC1HWC0},
                                                                       {kOpFormat_FRAC_Z, ACL_FORMAT_FRACTAL_Z},
                                                                       {kOpFormat_FRAC_NZ, ACL_FORMAT_FRACTAL_NZ},
                                                                       {kOpFormat_FRACTAL_Z_3D, ACL_FRACTAL_Z_3D},
@@ -457,7 +458,7 @@ void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std
     }
     auto tensor_value = CreateValueFromTensor(input_tensor);
     ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx, tensor_value, &ge_attr_value);
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, tensor_value, &ge_attr_value);
 
     AttrConverter attr_coverter;
     attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
@@ -702,7 +703,6 @@ void AclConverter::SetRunnerSpecialInfo() {
     runner_.SetStaticMode();
   }
   runner_.SetPrecisionMode(precision_mode_);
-  runner_.SetOpPrecisionMode();
 }
 
 void AclConverter::Run(void *stream_ptr) { runner_.Run(stream_ptr, is_need_retrieve_output_shape_); }

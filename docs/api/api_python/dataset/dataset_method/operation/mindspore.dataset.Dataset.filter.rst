@@ -12,4 +12,4 @@ mindspore.dataset.Dataset.filter
         - **num_parallel_workers** (int, 可选) - 指定 `filter` 操作的并发线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
 
     返回：
-        Dataset，执行给定筛选过滤操作的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

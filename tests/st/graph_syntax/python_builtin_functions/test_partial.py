@@ -21,7 +21,7 @@ from mindspore import nn, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_partial_key_ward_arg_and_pos_arg_const_multi_assign_x():

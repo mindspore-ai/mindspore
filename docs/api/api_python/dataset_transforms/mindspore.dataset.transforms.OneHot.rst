@@ -3,15 +3,18 @@ mindspore.dataset.transforms.OneHot
 
 .. py:class:: mindspore.dataset.transforms.OneHot(num_classes, smoothing_rate=0.0)
 
-    将Tensor进行OneHot编码。
+    对输入标签进行OneHot编码。
+
+    对于 shape 为 :math:`(*)` 的 1 维输入，将返回 shape 为 :math:`(*, num_classes)` 的输出，其中输入值对应的索引位置处的元素值为 1 ，其余
+    位置值为 0 。若指定了标签平滑系数，还将进一步平滑各元素值，增强泛化能力。
 
     参数：
-        - **num_classes** (int) - 数据集的类别数，它应该大于数据集中最大的label编号。
-        - **smoothing_rate** (float，可选) - 标签平滑的系数。默认值： ``0.0`` 。
+        - **num_classes** (int) - 标签类别总数。需大于输入标签值的最大值。
+        - **smoothing_rate** (float，可选) - 标签平滑系数。取值需在[0.0, 1.0]之间。默认值： ``0.0`` ，不进行标签平滑。
 
     异常：
-        - **TypeError** - 参数 `num_classes` 类型不为int。
-        - **TypeError** - 参数 `smoothing_rate` 类型不为float。
-        - **ValueError** - 参数 `smoothing_rate` 取值范围不为[0.0, 1.0]。
-        - **RuntimeError** - 输入Tensor的数据类型不为int。
-        - **RuntimeError** - 参数Tensor的shape不是1-D。
+        - **TypeError** - 当 `num_classes` 不为int类型。
+        - **TypeError** - 当 `smoothing_rate` 不为float类型。
+        - **ValueError** - 当 `smoothing_rate` 的取值不在[0.0, 1.0]范围中。
+        - **RuntimeError** - 输入标签不为int类型。
+        - **RuntimeError** - 输入标签的维数不为1。

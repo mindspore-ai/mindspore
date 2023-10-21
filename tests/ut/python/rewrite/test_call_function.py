@@ -127,7 +127,7 @@ def test_call_function():
     assert codes.count("x = self.new_abs(x)") == 1
 
     # erase node in CallFunction nodes
-    assert codes.count("abs = self.abs(x)") == 1
+    assert codes.count("abs_var = self.abs(x)") == 1
 
     internal_func_node.get_handler().get_node("sub_net").set_arg('x', 0)
     stree.erase(Node(internal_func_abs))
@@ -137,7 +137,7 @@ def test_call_function():
     assert not internal_func_node.get_handler().get_node('abs')
 
     codes = stree.get_code()
-    assert codes.count("abs = self.abs(x)") == 0
+    assert codes.count("abs_var = self.abs(x)") == 0
 
 
 def test_create_call_function():

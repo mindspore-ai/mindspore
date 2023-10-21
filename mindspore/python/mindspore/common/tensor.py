@@ -361,7 +361,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __abs__(self):
         self._init_check()
-        return tensor_operator_registry.get('abs')()(self)
+        return tensor_operator_registry.get('abs')(self)
 
     def __add__(self, other):
         return tensor_operator_registry.get('__add__')(self, other)
@@ -488,6 +488,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __str__(self):
         if self.dtype == mstype.type_none:
             return "Unknown Tensor type!"
+        if self.dtype == mstype.bfloat16:
+            return str(self.float().asnumpy())
         return str(self.asnumpy())
 
     def __getstate__(self):
@@ -917,6 +919,26 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         output = tensor_operator_registry.get('itemset')(self, *args)
         return output
 
+    def get_bytes(self):
+        r"""
+        Get raw data of tensor with type of bytes.
+
+        Supported Platforms:
+            ``CPU`` ``GPU`` ``Ascend``
+
+        Returns:
+            Bytes of tensor.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = ms.Tensor([1, 2, 3], ms.int16)
+            >>> print(x.get_bytes())
+            b'\x01\x00\x02\x00\x03\x00'
+        """
+        self._init_check()
+        return Tensor_.get_bytes(self)
+
     def asnumpy(self):
         """
         Convert tensor to numpy array. Returns self tensor as a NumPy ndarray. This tensor and the returned ndarray
@@ -937,6 +959,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [11.  2.]
         """
         self._init_check()
+        if self.dtype == mstype.bfloat16:
+            raise TypeError(f"For asnumpy, the type of tensor cannot be BFloat16, but got {self.dtype}.")
         return Tensor_.asnumpy(self)
 
     def numpy(self):
@@ -1031,6 +1055,46 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             [1.  2.]
         """
         return self
+
+    def contiguous(self):
+        """
+        Converts a Tensor into a continuous-memory Tensor that contains the same data as the original Tensor.
+
+        Returns:
+            A contiguous in memory tensor containing the same data as self tensor.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
+            >>> y = ops.transpose(x, (1, 0))
+            >>> y.contiguous()
+            >>> y[:, 1] = 1
+            >>> print(x)
+            [[1. 2. 3.]
+             [4. 5. 6.]]
+        """
+        Tensor_.contiguous(self)
+        return self
+
+    def is_contiguous(self):
+        """
+        Determines whether the memory of tensor is contiguous.
+
+        Returns:
+            Bool, True if tensor memory is contiguous, False otherwise.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6]], dtype=ms.float32)
+            >>> y = ops.transpose(x, (1, 0))
+            >>> print(y.is_contiguous())
+            False
+        """
+        return Tensor_.is_contiguous(self)
 
     def flush_from_cache(self):
         """
@@ -1128,9 +1192,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.all`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
-        return tensor_operator_registry.get('all')(keep_dims)(self, axis)
+        return tensor_operator_registry.get('all')(self, axis, keep_dims)
 
     def angle(self):
         r"""
@@ -1190,7 +1252,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             if len(shape) != 1:
                 raise ValueError(f"Only one tuple is needed, but got {shape}")
             shape = shape[0]
-        return tensor_operator_registry.get('reshape')()(self, shape)
+        return tensor_operator_registry.get('reshape')(self, shape)
 
     def view_as(self, other):
         r"""
@@ -1345,7 +1407,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.exp`.
         """
         self._init_check()
-        return tensor_operator_registry.get('exp')()(self)
+        return tensor_operator_registry.get('exp')(self)
 
     def real(self):
         r"""
@@ -1456,7 +1518,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.abs`.
         """
         self._init_check()
-        return tensor_operator_registry.get('abs')()(self)
+        return tensor_operator_registry.get('abs')(self)
 
     def absolute(self):
         """
@@ -1527,7 +1589,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         input_x = self.copy() if self.dtype == mstype.float32 else self.astype(mstype.float16)
         input_y = other.copy() if other.dtype == mstype.float32 else other.astype(mstype.float16)
-        return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')()(
+        return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')(
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
 
@@ -1689,9 +1751,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         For details, please refer to :func:`mindspore.ops.mean`.
         """
         self._init_check()
-        if axis is None:
-            axis = ()
-        return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
+        return tensor_operator_registry.get('mean')(self, axis, keep_dims)
 
     def amin(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
@@ -1786,7 +1846,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         new_shape = validator.check_reshape_shp(shape)
-        return tensor_operator_registry.get('reshape')()(self, new_shape)
+        return tensor_operator_registry.get('reshape')(self, new_shape)
 
     def reshape_as(self, other):
         """
@@ -1814,7 +1874,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
              [ 0.5 -3.2]]
         """
         self._init_check()
-        return tensor_operator_registry.get('reshape')()(self, other.shape)
+        return tensor_operator_registry.get('reshape')(self, other.shape)
 
     def ravel(self):
         """
@@ -1840,7 +1900,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             (24,)
         """
         self._init_check()
-        reshape_op = tensor_operator_registry.get('reshape')()
+        reshape_op = tensor_operator_registry.get('reshape')
         return reshape_op(self, (-1,))
 
     def round(self):
@@ -2076,20 +2136,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.argmin`.
         """
-        if self.shape == ():
-            return Tensor(0)
-        # P.Argmin only supports float
-        is_axis_none = False
-        a = self.astype(mstype.float32)
-        if axis is None:
-            a = a.ravel()
-            axis = 0
-        else:
-            axis = validator.check_axis_in_range(axis, a.ndim)
-        # P.Argmin is currently not supported
-        out = tensor_operator_registry.get('argmin')(axis)(a)
-        if keepdims and not is_axis_none:
-            out = out.expand_dims(axis)
+        self._init_check()
+        out = tensor_operator_registry.get('argmin')(self, axis, keepdims)
         return out
 
     def argmax_with_value(self, axis=0, keep_dims=False):
@@ -2856,55 +2904,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         For details, please refer to :func:`mindspore.ops.diagonal`.
         """
-        ndim = self.ndim
-        if ndim < 2:
-            raise ValueError("For 'Tensor.diagonal', the original tensor requires at least two dimensions, "
-                             "but got {}.".format(ndim))
-        dtype = self.dtype
-
-        axes = validator.check_axis_valid((axis1, axis2), ndim)
-        perm = ()
-        for i in range(ndim):
-            if i not in axes:
-                perm += (i,)
-        perm += axes
-        a = self.transpose(perm)
-
-        shape = a.shape
-        n, m = shape[-2:]
-
-        e = tensor_operator_registry.get('eye')(n, m, dtype)
-        if offset >= m or offset <= -n:
-            zero_shape = shape[:-2] + (0,)
-            return tensor_operator_registry.get("zeros")(zero_shape, dtype)
-        if offset != 0:
-            e = e.astype(mstype.float32)
-            if offset > 0:
-                e_left = tensor_operator_registry.get('fill')(mstype.float32, (n, offset), 0)
-                e_right = e[..., 0:m - offset:1]
-                e = tensor_operator_registry.get('concatenate')(1)((e_left, e_right)).astype(dtype)
-            elif offset < 0:
-                e_upper = tensor_operator_registry.get('fill')(mstype.float32, (-offset, m), 0)
-                e_lower = e[0:n + offset:1, ...]
-                e = tensor_operator_registry.get('concatenate')(0)((e_upper, e_lower)).astype(dtype)
-        e = tensor_operator_registry.get('broadcast_to')(shape)(e)
-
-        prod = tensor_operator_registry.get('__mul__')(a, e)
-        res = tensor_operator_registry.get('reduce_sum')(prod.astype(mstype.float32), -1)
-
-        begin = ()
-        for _ in range(ndim - 2):
-            begin += (0,)
-        last_dim_begin = max(0, -offset)
-        begin += (last_dim_begin,)
-        size = res.shape[:-1]
-        last_dim_end = min(
-            shape[-2], max(0, shape[-1] - offset)) - last_dim_begin
-        if last_dim_end <= 0:
-            return Tensor([])
-        size += (last_dim_end,)
-        res = tensor_operator_registry.get('tensor_slice')(res, begin, size)
-        return res.astype(dtype)
+        self._init_check()
+        return tensor_operator_registry.get('diagonal')(self, offset, axis1, axis2)
 
     def diagonal_scatter(self, src, offset=0, dim1=0, dim2=1):
         r"""
@@ -3233,7 +3234,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             axis = ()
         else:
             axis = validator.check_and_canonicalize_axes(axis, self.ndim)
-        x_mean = tensor_operator_registry.get('mean')(True)(self, axis)
+        x_mean = tensor_operator_registry.get('mean')(self, axis, True)
         x_sub = tensor_operator_registry.get('__sub__')(self, x_mean)
         x_pow = tensor_operator_registry.get('__pow__')(x_sub, 2)
         x_sum = tensor_operator_registry.get('reducesum')(bool(keepdims))(x_pow, axis)
@@ -3774,7 +3775,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         r"""
         For details, please refer to :func:`mindspore.ops.tile`.
         """
-        return tensor_operator_registry.get('tile')()(self, reps)
+        return tensor_operator_registry.get('tile')(self, reps)
 
     def topk(self, k, dim=None, largest=True, sorted=True):
         r"""
@@ -4630,23 +4631,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def imag(self):
         r"""
-        Returns a new tensor containing imaginary value of the input tensor.
-        If input tensor is real, it will return zeros.
-
-        Returns:
-            Tensor, the shape is the same as the input tensor.
-
-        Supported Platforms:
-            ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
-            >>> output = x.imag()
-            >>> print(output)
-            0.4
+        For details, please refer to :func:`mindspore.ops.imag`.
         """
         self._init_check()
         return tensor_operator_registry.get('imag')(self)

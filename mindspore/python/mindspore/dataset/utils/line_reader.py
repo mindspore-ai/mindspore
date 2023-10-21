@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Efficient line based file reading.
+"""Efficient line-based file reading.
 """
 import os
 
@@ -22,22 +22,16 @@ from ..core.validator_helpers import check_filename, check_uint64, check_value
 
 class LineReader:
     """
-    Efficient file line reader.
+    Line-based file reader.
 
-    This class is used to hold the line offsets of line based file.
-
-    The following functionality is provided:
-
-    - len(): return the number of lines in the file
-    - readline(line): open file handle (if not opened yet), and read a line in the file
-    - close(): close the file handle opened in readline
+    Cache the line-based meta data of the file in advance to achieve random-access reading of each file line.
 
     Args:
-        filename (str): line based file to be loaded.
+        filename (str): Filename to be read.
 
     Raises:
-        TypeError: Parameter `filename` is wrong.
-        RuntimeError: The input file does not exist or is not a regular file.
+        TypeError: If `filename` is not of type int.
+        RuntimeError: If `filename` does not exist or is not a regular file.
 
     Examples:
         >>> from mindspore.dataset import LineReader
@@ -88,22 +82,22 @@ class LineReader:
         self.close()
 
     def len(self):
-        """Get the total number of lines in the file"""
+        """Get the total number of lines in the current file."""
         return len(self.offsets)
 
     def readline(self, line):
         """
-        Read specified line content.
+        Reads the contents of the specified line.
 
         Args:
-            line (int): the line number to be read, starting at 1.
+            line (int): The line number to be read, with a starting line number of 1.
 
         Returns:
-            str, line content (until line break character).
+            str, the contents of the corresponding line, without line break characters.
 
         Raises:
-            TypeError: Parameter `line` is the wrong type.
-            ValueError: Parameter `line` exceeds the file range.
+            TypeError: If `line` is not of type int.
+            ValueError: If `line` exceeds the total number of lines in the file.
         """
         check_uint64(line, "line")
         check_value(line, [1, len(self.offsets)], "line")
@@ -123,7 +117,7 @@ class LineReader:
         return content
 
     def close(self):
-        """Close the file"""
+        """Close the file handle."""
         if self.fo_handle is None:
             return
         self.fo_handle.close()

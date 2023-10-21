@@ -71,9 +71,12 @@ int OrgqrCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
 template <typename T>
 bool OrgqrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  T *tau = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
-  T *y = reinterpret_cast<T *>(outputs[kOutputIndex0]->addr);
+  T *x = GetDeviceAddress<T>(inputs, kIndex0);
+  T *tau = GetDeviceAddress<T>(inputs, kIndex1);
+  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(tau);
+  MS_EXCEPTION_IF_NULL(y);
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartrixXd;
   typedef Eigen::Matrix<T, Eigen::Dynamic, 1> VectorXd;
   for (int64_t i = 0; i < martrix_num_; i++) {
@@ -95,9 +98,12 @@ bool OrgqrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
 template <typename T>
 bool OrgqrCpuKernelMod::LaunchComplexKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  T *x = reinterpret_cast<T *>(inputs[kInputIndex0]->addr);
-  T *tau = reinterpret_cast<T *>(inputs[kInputIndex1]->addr);
-  T *y = reinterpret_cast<T *>(outputs[kOutputIndex0]->addr);
+  T *x = GetDeviceAddress<T>(inputs, kIndex0);
+  T *tau = GetDeviceAddress<T>(inputs, kIndex1);
+  T *y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(tau);
+  MS_EXCEPTION_IF_NULL(y);
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartrixXd;
   typedef Eigen::Matrix<T, Eigen::Dynamic, 1> VectorXd;
   for (int64_t i = 0; i < martrix_num_; i++) {

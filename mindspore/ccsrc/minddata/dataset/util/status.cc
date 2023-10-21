@@ -49,6 +49,11 @@ float GetMemoryUsage() {
     // get title
     std::string line(buf);
     std::string::size_type position = line.find(":");
+    if (position == std::string::npos) {
+      MS_LOG(WARNING) << "Parse content of /proc/meminfo failed, delimiter is not found.";
+      fclose(fd);
+      return 0.0;
+    }
     std::string title = line.substr(0, position);
 
     // get the value when MemTotal or MemAvailable

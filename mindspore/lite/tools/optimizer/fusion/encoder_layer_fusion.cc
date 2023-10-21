@@ -398,7 +398,7 @@ VectorRef EncoderLayerFusion::DefineDependKV(VectorRef input, VectorRef deppend_
   return VectorRef({is_depend_kv_mul, depend_v_mul, assign_v});
 }
 
-VectorRef EncoderLayerFusion::DefinePatternSigmaFfn(BaseRef input, bool gelu = false) const {
+VectorRef EncoderLayerFusion::DefinePatternSigmaFfn(BaseRef input, bool gelu = false, bool distributed = false) const {
   auto is_reshape2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "reshape-encoder2");
   MS_CHECK_TRUE_RET(is_reshape2 != nullptr, {});
   auto var2 = std::make_shared<Var>("var2");
@@ -413,6 +413,7 @@ VectorRef EncoderLayerFusion::DefinePatternSigmaFfn(BaseRef input, bool gelu = f
   auto is_matmul2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "is_matmul2");
   MS_CHECK_TRUE_RET(is_matmul2 != nullptr, {});
   auto matmul2 = VectorRef({is_matmul2, act, weight_p_});
+  if (!distributed) matmul2.push_back(bias_p_);
   auto is_all_reduce = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAllReduce), "is_all_reduce");
   auto all_reduce = VectorRef({is_all_reduce, matmul2});
   auto is_add2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is_add2");
@@ -421,7 +422,7 @@ VectorRef EncoderLayerFusion::DefinePatternSigmaFfn(BaseRef input, bool gelu = f
   MS_CHECK_TRUE_RET(is_reshape5 != nullptr, {});
   auto var5 = std::make_shared<Var>("var5");
   MS_CHECK_TRUE_RET(var5 != nullptr, {});
-  auto reshape5 = VectorRef({is_reshape5, add2, var5});
+  auto reshape5 = (distributed) ? VectorRef({is_reshape5, add2, var5}) : VectorRef({is_reshape5, matmul2, var5});
   return reshape5;
 }
 
@@ -431,7 +432,7 @@ VectorRef EncoderLayerFusion::DefinePatternEncoderSigma(bool moe = false, bool u
                                                         bool first_encoder = false, bool gelu = false) const {
   VectorRef input, q_input;
   if (first_encoder) {
-    input = DefineFirstEncoder();
+    input = DefineFirstEncoder(false);
   }
   auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "reshape-encoder");
   MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
@@ -463,21 +464,20 @@ VectorRef EncoderLayerFusion::DefinePatternEncoderSigma(bool moe = false, bool u
   auto is_add = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is_add");
   auto add = (first_encoder) ? VectorRef({is_add, input, tuple}) : VectorRef({is_add, input_, tuple});
   auto layer_norm2 = DefineLayerNorm(false, add, gamma2_, beta2_, eps2_);
-  auto ffn_output = (moe) ? DefinePatternMoE(layer_norm2, multi_batch, gelu) : DefinePatternSigmaFfn(layer_norm2, gelu);
+  auto ffn_output =
+    (moe) ? DefinePatternMoE(layer_norm2, multi_batch, gelu) : DefinePatternSigmaFfn(layer_norm2, gelu, distributed);
   auto depend_kv_mul = DefineDependKV(attention, ffn_output, moe);
 
   auto is_add3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAddFusion), "is_add3");
   auto add3 = VectorRef({is_add3, add, depend_kv_mul});
   if (is_layer_norm) return DefineLayerNorm(false, add3, gamma3_, beta3_, eps3_);
   if (query_layer) {
-    if (moe) {
-      auto is_reshape7 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "reshape-encoder7");
-      MS_CHECK_TRUE_RET(is_reshape7 != nullptr, {});
-      auto var7 = std::make_shared<Var>("var7");
-      MS_CHECK_TRUE_RET(var7 != nullptr, {});
-      auto reshape7 = VectorRef({is_reshape7, add3, var7});
-      add3 = reshape7;
-    }
+    auto is_reshape7 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "reshape-encoder7");
+    MS_CHECK_TRUE_RET(is_reshape7 != nullptr, {});
+    auto var7 = std::make_shared<Var>("var7");
+    MS_CHECK_TRUE_RET(var7 != nullptr, {});
+    auto reshape7 = VectorRef({is_reshape7, add3, var7});
+    add3 = reshape7;
     auto is_gather = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimGather), "is_gather");
     MS_CHECK_TRUE_RET(is_gather != nullptr, {});
     auto var_gather2 = std::make_shared<Var>("var_gather2");
@@ -579,14 +579,15 @@ VectorRef EncoderLayerFusion::DefinePatternEncoderAlpha(bool moe = false, bool d
   return add3;
 }
 
-VectorRef EncoderLayerFusion::DefineFirstEncoder() const {
+VectorRef EncoderLayerFusion::DefineFirstEncoder(bool distributed = false) const {
   auto is_depend = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimDepend), "depend");
   auto depend = VectorRef({is_depend, input_, expert_ids_});
   auto var1 = std::make_shared<Var>("var1");
   MS_CHECK_TRUE_RET(var1 != nullptr, {});
   auto is_gather = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimGather), "is_gather");
   MS_CHECK_TRUE_RET(is_gather != nullptr, {});
-  auto gather = VectorRef({is_gather, embedding_table_input_, depend, var1});
+  auto gather = (distributed) ? VectorRef({is_gather, embedding_table_input_, depend, var1})
+                              : VectorRef({is_gather, embedding_table_input_, input_, var1});
   auto is_gather2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimGather), "is_gather2");
   MS_CHECK_TRUE_RET(is_gather2 != nullptr, {});
   auto gather2 = VectorRef({is_gather2, embedding_table_pos_, position_ids_, var1});
@@ -694,60 +695,69 @@ std::unordered_map<std::string, VectorRef> EncoderLayerFusion::DefinePatterns() 
     MS_LOG(ERROR) << "initial member failed.";
     return patterns;
   }
-  // pangu sigma
+  if (embedding_layer_) {
+    patterns[kPatternSigmaEmbedding] = DefinePatternEncoderSigma(false, true, false, false, false, false, true);
+    patterns[kPatternSigmaEmbeddingDistributed] =
+      DefinePatternEncoderSigma(false, true, true, false, false, false, true);
+    patterns[kPatternSigmaDistributedEmbedding] =
+      DefinePatternEncoderSigma(false, true, true, false, false, false, true);
+    patterns[kPatternSigmaDistributedEmbeddingMB] =
+      DefinePatternEncoderSigma(false, true, true, false, false, true, true);
+  } else {
+    // pangu sigma
+    patterns[kPatternSigmaDistributedEmbeddingMBGELU] =
+      DefinePatternEncoderSigma(false, true, true, false, false, true, true, true);
+    patterns[kPatternSigmaDistributed] = DefinePatternEncoderSigma(false, true, true, false, false);
+    patterns[kPatternSigmaMoeDistributed] = DefinePatternEncoderSigma(true, true, true, false, false);
+    patterns[kPatternSigmaMoeWithLastLayerNormDistributed] = DefinePatternEncoderSigma(true, true, true, true, false);
+    patterns[kPatternSigmaQueryLayerDistributed] = DefinePatternEncoderSigma(false, true, true, false, true);
+    patterns[kPatternSigmaQueryLayerDistributedMoe] = DefinePatternEncoderSigma(true, true, true, false, true);
 
-  patterns[kPatternSigmaDistributedEmbedding] = DefinePatternEncoderSigma(false, true, true, false, false, false, true);
-  patterns[kPatternSigmaDistributedEmbeddingMB] =
-    DefinePatternEncoderSigma(false, true, true, false, false, true, true);
-  patterns[kPatternSigmaDistributedEmbeddingMBGELU] =
-    DefinePatternEncoderSigma(false, true, true, false, false, true, true, true);
-  patterns[kPatternSigmaDistributed] = DefinePatternEncoderSigma(false, true, true, false, false);
-  patterns[kPatternSigmaMoeDistributed] = DefinePatternEncoderSigma(true, true, true, false, false);
-  patterns[kPatternSigmaMoeWithLastLayerNormDistributed] = DefinePatternEncoderSigma(true, true, true, true, false);
-  patterns[kPatternSigmaQueryLayerDistributed] = DefinePatternEncoderSigma(true, true, true, false, true);
+    patterns[kPatternSigma] = DefinePatternEncoderSigma(false, true, false, false, false);
+    patterns[kPatternSigmaWithLastLayerNorm] = DefinePatternEncoderSigma(false, true, false, true, false);
+    patterns[kPatternSigmaQuery] = DefinePatternEncoderSigma(false, true, false, false, true);
+    patterns[kPatternSigmaMoe] = DefinePatternEncoderSigma(true, true, false, false, false);
+    patterns[kPatternSigmaWithLastLayerNormDistributed] = DefinePatternEncoderSigma(false, true, true, true, false);
 
-  patterns[kPatternSigma] = DefinePatternEncoderSigma(false, true, false, false, false);
-  patterns[kPatternSigmaMoe] = DefinePatternEncoderSigma(true, true, false, false, false);
-  patterns[kPatternSigmaWithLastLayerNormDistributed] = DefinePatternEncoderSigma(false, true, true, true, false);
+    patterns[kPatternSigmaMoeWithLastLayerNorm] = DefinePatternEncoderSigma(true, true, true, true, false);
 
-  patterns[kPatternSigmaMoeWithLastLayerNorm] = DefinePatternEncoderSigma(true, true, true, true, false);
-
-  patterns[kPatternSigmaQueryLayerMoe] = DefinePatternEncoderSigma(true, true, false, false, true);
-  // multi batch-
-  // fast-gelu
-  patterns[kPatternSigmaMoeWithLastLayerNormDistributedMB] =
-    DefinePatternEncoderSigma(true, true, true, true, false, true);
-  patterns[kPatternSigmaWithLastLayerNormDistributedMB] =
-    DefinePatternEncoderSigma(false, true, true, true, false, true);
-  patterns[kPatternSigmaDistributedMB] = DefinePatternEncoderSigma(false, true, true, false, false, true);
-  patterns[kPatternSigmaQueryLayerDistributedMB] = DefinePatternEncoderSigma(true, true, true, false, true, true);
-  patterns[kPatternSigmaMoeDistributedMB] = DefinePatternEncoderSigma(true, true, true, false, false, true);
-  // gelu
-  patterns[kPatternSigmaMoeWithLastLayerNormDistributedMBGELU] =
-    DefinePatternEncoderSigma(true, true, true, true, false, true, false, true);
-  patterns[kPatternSigmaWithLastLayerNormDistributedMBGELU] =
-    DefinePatternEncoderSigma(false, true, true, true, false, true, false, true);
-  patterns[kPatternSigmaDistributedMBGELU] =
-    DefinePatternEncoderSigma(false, true, true, false, false, true, false, true);
-  patterns[kPatternSigmaQueryLayerDistributedMBGELU] =
-    DefinePatternEncoderSigma(true, true, true, false, true, true, false, true);
-  patterns[kPatternSigmaMoeDistributedMBGELU] =
-    DefinePatternEncoderSigma(true, true, true, false, false, true, false, true);
-  // pangu alpha
-  patterns[kPatternDistributedAlpha] = DefinePatternEncoderAlpha(false, true, false, false, true);
-  patterns[kPatternDistributedAlphaWithLastLayerNorm] = DefinePatternEncoderAlpha(false, true, true, false, true);
-  patterns[kPatternQueryLayerUsePastDistributed] = DefinePatternEncoderAlpha(false, true, false, true, true);
-  patterns[kPatternQueryLayerUsePast] = DefinePatternEncoderAlpha(false, false, false, true, true);
-  patterns[kPatternEncoderLayerPreNormUsePast] = DefinePatternEncoderAlpha(false, false, false, false, true);
-  patterns[kPatternEncoderLayerUsePastWithLastNorm] = DefinePatternEncoderAlpha(false, false, true, false, true);
-  patterns[kPatternEncoderLayerNormT5Pre] = DefinePatternEncoderLayer(false, false, true, true, true);
-  patterns[kPatternEncoderLayerPre] = DefinePatternEncoderLayer(false);
-  patterns[kPatternEncoderLayerPost] = DefinePatternEncoderLayer(true);
-  patterns[kPatternEncoderLayerPostNorm] = DefinePatternEncoderLayer(true, true);
-  patterns[kPatternEncoderLayerPreNorm] = DefinePatternEncoderLayer(false, true);
-  patterns[kPatternEncoderLayerT5Pre] = DefinePatternEncoderLayer(false, false, true, true);
-  patterns[kPatternEncoderLayerT5Post] = DefinePatternEncoderLayer(true, false, true, true);
-  // }
+    patterns[kPatternSigmaQueryLayerMoe] = DefinePatternEncoderSigma(true, true, false, false, true);
+    // multi batch-
+    // fast-gelu
+    patterns[kPatternSigmaMoeWithLastLayerNormDistributedMB] =
+      DefinePatternEncoderSigma(true, true, true, true, false, true);
+    patterns[kPatternSigmaWithLastLayerNormDistributedMB] =
+      DefinePatternEncoderSigma(false, true, true, true, false, true);
+    patterns[kPatternSigmaDistributedMB] = DefinePatternEncoderSigma(false, true, true, false, false, true);
+    patterns[kPatternSigmaQueryLayerDistributedMB] = DefinePatternEncoderSigma(false, true, true, false, true, true);
+    patterns[kPatternSigmaQueryLayerDistributedMBMoe] = DefinePatternEncoderSigma(true, true, true, false, true, true);
+    patterns[kPatternSigmaMoeDistributedMB] = DefinePatternEncoderSigma(true, true, true, false, false, true);
+    // gelu
+    patterns[kPatternSigmaMoeWithLastLayerNormDistributedMBGELU] =
+      DefinePatternEncoderSigma(true, true, true, true, false, true, false, true);
+    patterns[kPatternSigmaWithLastLayerNormDistributedMBGELU] =
+      DefinePatternEncoderSigma(false, true, true, true, false, true, false, true);
+    patterns[kPatternSigmaDistributedMBGELU] =
+      DefinePatternEncoderSigma(false, true, true, false, false, true, false, true);
+    patterns[kPatternSigmaQueryLayerDistributedMBGELU] =
+      DefinePatternEncoderSigma(true, true, true, false, true, true, false, true);
+    patterns[kPatternSigmaMoeDistributedMBGELU] =
+      DefinePatternEncoderSigma(true, true, true, false, false, true, false, true);
+    // pangu alpha
+    patterns[kPatternDistributedAlpha] = DefinePatternEncoderAlpha(false, true, false, false, true);
+    patterns[kPatternDistributedAlphaWithLastLayerNorm] = DefinePatternEncoderAlpha(false, true, true, false, true);
+    patterns[kPatternQueryLayerUsePastDistributed] = DefinePatternEncoderAlpha(false, true, false, true, true);
+    patterns[kPatternQueryLayerUsePast] = DefinePatternEncoderAlpha(false, false, false, true, true);
+    patterns[kPatternEncoderLayerPreNormUsePast] = DefinePatternEncoderAlpha(false, false, false, false, true);
+    patterns[kPatternEncoderLayerUsePastWithLastNorm] = DefinePatternEncoderAlpha(false, false, true, false, true);
+    patterns[kPatternEncoderLayerNormT5Pre] = DefinePatternEncoderLayer(false, false, true, true, true);
+    patterns[kPatternEncoderLayerPre] = DefinePatternEncoderLayer(false);
+    patterns[kPatternEncoderLayerPost] = DefinePatternEncoderLayer(true);
+    patterns[kPatternEncoderLayerPostNorm] = DefinePatternEncoderLayer(true, true);
+    patterns[kPatternEncoderLayerPreNorm] = DefinePatternEncoderLayer(false, true);
+    patterns[kPatternEncoderLayerT5Pre] = DefinePatternEncoderLayer(false, false, true, true);
+    patterns[kPatternEncoderLayerT5Post] = DefinePatternEncoderLayer(true, false, true, true);
+  }
   return patterns;
 }
 
@@ -762,7 +772,7 @@ bool EncoderLayerFusion::IsUsePastAlpha(const std::string &pattern_name) const {
 bool EncoderLayerFusion::IsUsePastMB(const std::string &pattern_name) const {
   if (pattern_name == kPatternSigmaWithLastLayerNormDistributedMB ||
       pattern_name == kPatternSigmaWithLastLayerNormDistributedMBGELU ||
-      pattern_name == kPatternSigmaQueryLayerDistributedMB ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMB || pattern_name == kPatternSigmaQueryLayerDistributedMBMoe ||
       pattern_name == kPatternSigmaQueryLayerDistributedMBGELU ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMB ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMBGELU ||
@@ -775,10 +785,12 @@ bool EncoderLayerFusion::IsUsePastMB(const std::string &pattern_name) const {
 bool EncoderLayerFusion::IsUsePast(const std::string &pattern_name) const {
   if (pattern_name == kPatternSigmaDistributed || pattern_name == kPatternSigmaDistributedEmbedding ||
       pattern_name == kPatternSigmaMoeDistributed || pattern_name == kPatternSigmaWithLastLayerNormDistributed ||
-      pattern_name == kPatternSigmaQueryLayerDistributed ||
+      pattern_name == kPatternSigmaQueryLayerDistributed || pattern_name == kPatternSigmaQueryLayerDistributedMoe ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed || pattern_name == kPatternSigma ||
+      pattern_name == kPatternSigmaQuery || pattern_name == kPatternSigmaWithLastLayerNorm ||
       pattern_name == kPatternSigmaMoe || pattern_name == kPatternSigmaMoeWithLastLayerNorm ||
-      pattern_name == kPatternSigmaWithLastLayerNorm || pattern_name == kPatternSigmaQueryLayerMoe)
+      pattern_name == kPatternSigmaWithLastLayerNorm || pattern_name == kPatternSigmaQueryLayerMoe ||
+      pattern_name == kPatternSigmaEmbedding || pattern_name == kPatternSigmaEmbeddingDistributed)
     return true;
   return false;
 }
@@ -792,6 +804,7 @@ bool EncoderLayerFusion::IsLastLayerNorm(const std::string &pattern_name) const 
       pattern_name == kPatternSigmaWithLastLayerNormDistributedMB ||
       pattern_name == kPatternSigmaWithLastLayerNormDistributedMBGELU ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMB ||
+      pattern_name == kPatternSigmaWithLastLayerNorm ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMBGELU)
     return true;
   return false;
@@ -807,27 +820,25 @@ bool EncoderLayerFusion::IsLayerNormFusion(const std::string &pattern_name) cons
 }
 
 bool EncoderLayerFusion::IsMoe(const std::string &pattern_name) const {
-  if (pattern_name == kPatternSigmaQueryLayerDistributed || pattern_name == kPatternSigmaMoeDistributed ||
-      pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed || pattern_name == kPatternSigmaMoe ||
-      pattern_name == kPatternSigmaMoeWithLastLayerNorm || pattern_name == kPatternSigmaQueryLayerMoe ||
-      pattern_name == kPatternSigmaQueryLayerDistributedMB ||
-      pattern_name == kPatternSigmaQueryLayerDistributedMBGELU ||
+  if (pattern_name == kPatternSigmaMoeDistributed || pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed ||
+      pattern_name == kPatternSigmaMoe || pattern_name == kPatternSigmaMoeWithLastLayerNorm ||
+      pattern_name == kPatternSigmaQueryLayerMoe || pattern_name == kPatternSigmaQueryLayerDistributedMBGELU ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMoe ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMBMoe ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMB ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMBGELU ||
       pattern_name == kPatternSigmaMoeDistributedMB || pattern_name == kPatternSigmaMoeDistributedMBGELU)
     return true;
   return false;
 }
-
-bool EncoderLayerFusion::IsFastGelu(const std::string &pattern_name) const {
+bool EncoderLayerFusion::IsFastGeluDistributed(const std::string &pattern_name) const {
   if (pattern_name == kPatternSigmaDistributed || pattern_name == kPatternSigmaDistributedEmbedding ||
       pattern_name == kPatternSigmaMoeDistributed || pattern_name == kPatternSigmaWithLastLayerNormDistributed ||
-      pattern_name == kPatternSigmaQueryLayerDistributed ||
-      pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed || pattern_name == kPatternSigma ||
-      pattern_name == kPatternSigmaMoe || pattern_name == kPatternSigmaMoeWithLastLayerNorm ||
-      pattern_name == kPatternSigmaWithLastLayerNorm || pattern_name == kPatternSigmaQueryLayerMoe ||
+      pattern_name == kPatternSigmaQueryLayerDistributed || pattern_name == kPatternSigmaQueryLayerDistributedMoe ||
+      pattern_name == kPatternSigmaMoeWithLastLayerNormDistributed ||
+      pattern_name == kPatternSigmaEmbeddingDistributed ||
       pattern_name == kPatternSigmaWithLastLayerNormDistributedMB ||
-      pattern_name == kPatternSigmaQueryLayerDistributedMB ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMB || pattern_name == kPatternSigmaQueryLayerDistributedMBMoe ||
       pattern_name == kPatternSigmaMoeWithLastLayerNormDistributedMB ||
       pattern_name == kPatternSigmaDistributedEmbeddingMB || pattern_name == kPatternSigmaDistributedMB ||
       pattern_name == kPatternSigmaMoeDistributedMB)
@@ -835,10 +846,21 @@ bool EncoderLayerFusion::IsFastGelu(const std::string &pattern_name) const {
   return false;
 }
 
+bool EncoderLayerFusion::IsFastGelu(const std::string &pattern_name) const {
+  if (pattern_name == kPatternSigma || pattern_name == kPatternSigmaQuery ||
+      pattern_name == kPatternSigmaWithLastLayerNorm || pattern_name == kPatternSigmaEmbedding ||
+      pattern_name == kPatternSigmaMoe || pattern_name == kPatternSigmaMoeWithLastLayerNorm ||
+      pattern_name == kPatternSigmaWithLastLayerNorm || pattern_name == kPatternSigmaQueryLayerMoe)
+    return true;
+  return false;
+}
+
 bool EncoderLayerFusion::IsQueryLayer(const std::string &pattern_name) const {
   if (pattern_name == kPatternQueryLayerUsePast || pattern_name == kPatternQueryLayerUsePastDistributed ||
       pattern_name == kPatternSigmaQueryLayerDistributed || pattern_name == kPatternSigmaQueryLayerMoe ||
-      pattern_name == kPatternSigmaQueryLayerDistributedMB || pattern_name == kPatternSigmaQueryLayerDistributedMBGELU)
+      pattern_name == kPatternSigmaQueryLayerDistributedMoe || pattern_name == kPatternSigmaQueryLayerDistributedMB ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMBMoe ||
+      pattern_name == kPatternSigmaQueryLayerDistributedMBGELU || pattern_name == kPatternSigmaQuery)
     return true;
   return false;
 }
@@ -852,9 +874,10 @@ AnfNodePtr EncoderLayerFusion::Process(const std::string &pattern_name, const mi
   is_layernorm_fusion_ = IsLayerNormFusion(pattern_name);
   is_use_past_ = IsUsePast(pattern_name) || IsUsePastMB(pattern_name) || IsUsePastAlpha(pattern_name);
   is_moe_ = IsMoe(pattern_name);
-  is_fast_gelu_ = IsFastGelu(pattern_name);
+  is_fast_gelu_ = IsFastGelu(pattern_name) || IsFastGeluDistributed(pattern_name);
   if (pattern_name == kPatternSigmaDistributedEmbeddingMB || pattern_name == kPatternSigmaDistributedEmbedding ||
-      pattern_name == kPatternSigmaDistributedEmbeddingMBGELU)
+      pattern_name == kPatternSigmaDistributedEmbeddingMBGELU || pattern_name == kPatternSigmaEmbedding ||
+      pattern_name == kPatternSigmaEmbeddingDistributed)
     is_embedding_layer_ = true;
   if (pattern_name == kPatternEncoderLayerT5Pre || pattern_name == kPatternEncoderLayerT5Post ||
       pattern_name == kPatternEncoderLayerNormT5Pre)
@@ -994,8 +1017,11 @@ STATUS EncoderLayerFusion::InitAttributes(AnfNodePtr k_past, AnfNodePtr begin_ex
                                           AnfNodePtr expert_capacity_node, int *ffn_hidden_size, int *expert_num,
                                           int *expert_offset, float *capacity_factor) const {
   auto base_shape_ptr = weight_m->Shape();
+  MS_CHECK_TRUE_RET(base_shape_ptr != nullptr, RET_ERROR);
   auto input_shape_ptr = base_shape_ptr->cast<abstract::ShapePtr>();
+  MS_CHECK_TRUE_RET(input_shape_ptr != nullptr, RET_ERROR);
   auto input_shape = input_shape_ptr->shape();
+  MS_CHECK_TRUE_RET(input_shape.size() >= C2NUM, RET_ERROR);
   if (is_moe_) {
     auto begin_expert_ids_node = begin_expert_ids->cast<ValueNodePtr>();
     *expert_num = (int64_t)input_shape[0];

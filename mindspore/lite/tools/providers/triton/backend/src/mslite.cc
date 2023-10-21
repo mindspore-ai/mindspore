@@ -43,7 +43,8 @@ TRITONSERVER_Error *TRITONBACKEND_Initialize(TRITONBACKEND_Backend *backend) {
   // backend was compiled against. Make sure that the Triton major
   // version is the same and the minor version is >= what this backend
   // uses.
-  uint32_t api_version_major, api_version_minor;
+  uint32_t api_version_major;
+  uint32_t api_version_minor;
   RETURN_IF_ERROR(TRITONBACKEND_ApiVersion(&api_version_major, &api_version_minor));
 
   LOG_MESSAGE(TRITONSERVER_LOG_INFO, (std::string("Triton TRITONBACKEND API version: ") +

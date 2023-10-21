@@ -158,6 +158,7 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
   auto device_context = op_compiler_info->device_context_;
   const auto &nodes = graph->execution_order();
   for (auto const &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     ExecuteKernelInfo exe_kernel_info;
     exe_kernel_info.kernel_ = node;
 
@@ -271,6 +272,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   // Check if the graph cache exists.
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (iter != op_compiler_infos_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
     if (op_executor.BuildInQueue(iter->second->graph_id_)) {
       op_executor.Wait();
     }
@@ -351,6 +353,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
 void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
                             bool is_dynamic) const {
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   // The compilation task may be in a child thread that has not yet set rt_context,
   // but the AICPU.so loading needs to use rt_context
   if (!device_context->device_res_manager_->BindDeviceToCurrentThread(true)) {
@@ -358,6 +361,7 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
   }
   std::vector<CNodePtr> node_to_build;
   for (const auto &graph : graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
     const auto &nodes = graph->execution_order();
     (void)std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   }
@@ -403,9 +407,10 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
       }
 
       auto out_func = acl_info.output_selector();
-      MS_EXCEPTION_IF_NULL(out_func);
-      auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
-      ascend_special_info += out_format;
+      if (out_func != nullptr) {
+        auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
+        ascend_special_info += out_format;
+      }
     }
   }
   return ascend_special_info;
@@ -478,13 +483,13 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
     }
 
     graph_info += GetNumString(input_tensor->data_type());
-    graph_info += input_tensor->padding_type();
     // In the case of the same shape, but dtype and format are inconsistent
     auto tensor_addr = input_tensor->device_address();
     if (tensor_addr != nullptr && !has_hidden_side_effect) {
       auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_addr);
       MS_EXCEPTION_IF_NULL(p_address);
       graph_info += p_address->format();
+      graph_info += p_address->padding_type();
     }
     // For constant input or op depend input value
     const auto &depend_list = GetInputDependValueList(op_prim);

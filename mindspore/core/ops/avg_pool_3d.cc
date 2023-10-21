@@ -155,6 +155,17 @@ void GetPadsByPadding(const PrimitivePtr &primitive, int64_t in_d, int64_t in_h,
     pad_list->push_back(static_cast<int64_t>(std::floor(pad_w / twice)));
     pad_list->push_back(pad_w - pad_list->at(kInputIndex4));
   } else if (pad_mode == PadMode::PAD) {
+    const auto padding_d = padding[kInputIndex0] + padding[kInputIndex1];
+    const auto padding_h = padding[kInputIndex2] + padding[kInputIndex3];
+    const auto padding_w = padding[kInputIndex4] + padding[kInputIndex5];
+    if (padding_d > kernel_d || padding_h > kernel_h || padding_w > kernel_w) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << " the sum of the pads in the two directions should be less than or equal to"
+                               << " the corresponding kernel size, but got pads: (" << padding[kInputIndex0] << ","
+                               << padding[kInputIndex1] << "," << padding[kInputIndex2] << "," << padding[kInputIndex3]
+                               << "," << padding[kInputIndex4] << "," << padding[kInputIndex5] << ")"
+                               << " and kernel: (" << kernel_d << ", " << kernel_h << ", " << kernel_w << ")";
+    }
     pad_list->assign(padding.begin(), padding.end());
   }
 }

@@ -106,7 +106,26 @@ _tuple_get_item_tensor = _TupleGetItemTensor('tuple_get_item_tensor')
 """_tuple_get_item_tensor is an metafuncgraph object which will select indexed item."""
 
 
-@getitem.register("Tuple", "Number")
+@getitem.register("Tuple", "Bool")
+def _tuple_getitem_by_bool(data, number_index):
+    """
+    Getting item of tuple by bool index.
+
+    Inputs:
+        data (tuple): A tuple to be sliced.
+        number_index (Number): Index in scalar.
+
+    Outputs:
+        Type, is the same as the element type of data.
+    """
+    if number_index:
+        return F.tuple_getitem(data, 1)
+    return F.tuple_getitem(data, 0)
+
+
+@getitem.register("Tuple", "Int")
+@getitem.register("Tuple", "UInt")
+@getitem.register("Tuple", "Float")
 def _tuple_getitem_by_number(data, number_index):
     """
     Getting item of tuple by number index.
@@ -162,7 +181,26 @@ def _tuple_getitem_by_tensor(data, tensor_index):
     return _tuple_get_item_tensor(data, tensor_index)
 
 
-@getitem.register("List", "Number")
+@getitem.register("List", "Bool")
+def _list_getitem_by_bool(data, number_index):
+    """
+    Getting item of list by bool index.
+
+    Inputs:
+        data (tuple): A list to be sliced.
+        number_index (Bool): Index in scalar.
+
+    Outputs:
+        Type, is the same as the element type of data.
+    """
+    if number_index:
+        return F.list_getitem(data, 1)
+    return F.list_getitem(data, 0)
+
+
+@getitem.register("List", "Int")
+@getitem.register("List", "UInt")
+@getitem.register("List", "Float")
 def _list_getitem_by_number(data, number_index):
     """
     Getting item of list by number index.

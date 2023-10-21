@@ -30,7 +30,7 @@ class AdjustContrastV2(Cell):
         return self.adjustcontrastv2(images, contrast_factor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adjust_contrast_v2():

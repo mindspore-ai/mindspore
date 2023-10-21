@@ -29,32 +29,37 @@ from .validators import check_vocab, check_from_file, check_from_list, check_fro
 
 class CharNGram(cde.CharNGram):
     """
-    CharNGram object that is used to map tokens into pre-trained vectors.
+    CharNGram pre-trained word embeddings.
+
+    A word or sentence is represented using a character n-gram count vector, followed by a single
+    nonlinear transformation to yield a low-dimensional embedding.
     """
 
     @classmethod
     @check_from_file_vectors
     def from_file(cls, file_path, max_vectors=None):
         """
-        Build a `CharNGram` vector from a file.
+        Load the CharNGram pre-training vector set file.
 
         Args:
-            file_path (str): Path of the file that contains the `CharNGram` vectors.
-            max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
+            file_path (str): Path to the CharNGram pre-training vector set file.
+            max_vectors (int, optional): The upper limit on the number of pre-trained vectors to load.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set. Default: ``None``, no limit.
+                this value can limit the size of the loaded set. Default: ``None``, no upper limit.
 
         Returns:
-            CharNGram, CharNGram vector build from a file.
+            CharNGram, CharNGram pre-training vectors.
 
         Raises:
-            RuntimeError: If `file_path` contains invalid data.
-            ValueError: If `max_vectors` is invalid.
-            TypeError: If `max_vectors` is not type of integer.
+            TypeError: If `file_path` is not of type str.
+            RuntimeError: If `file_path` does not exist or is not accessible.
+            TypeError: If `max_vectors` is not of type int.
+            ValueError: If `max_vectors` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text
+            >>>
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
             >>> to_vectors = text.ToVectors(char_n_gram)
             >>> # Look up a token into vectors according CharNGram model.
@@ -67,30 +72,33 @@ class CharNGram(cde.CharNGram):
 
 class FastText(cde.FastText):
     """
-    FastText object that is used to map tokens into vectors.
+    FastText pre-trained word embeddings.
+
+    FastText allows one to create an unsupervised learning or supervised learning algorithm vector
+    representations for words.
     """
 
     @classmethod
     @check_from_file_vectors
     def from_file(cls, file_path, max_vectors=None):
         """
-        Build a FastText vector from a file.
+        Load the FastText pre-training vector set file.
 
         Args:
-            file_path (str): Path of the file that contains the vectors. The shuffix of pre-trained vector sets
-                must be `*.vec` .
-            max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
+            file_path (str): Path to the FastText pre-trained vector set file. File suffix should be `*.vec`.
+            max_vectors (int, optional): The upper limit on the number of pre-trained vectors to load.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set. Default: ``None``, no limit.
+                this value can limit the size of the loaded set. Default: ``None``, no upper limit.
 
         Returns:
-            FastText, FastText vector build from a file.
+            FastText, FastText pre-training vectors.
 
         Raises:
-            RuntimeError: If `file_path` contains invalid data.
-            ValueError: If `max_vectors` is invalid.
-            TypeError: If `max_vectors` is not type of integer.
+            TypeError: If `file_path` is not of type str.
+            RuntimeError: If `file_path` does not exist or is not accessible.
+            TypeError: If `max_vectors` is not of type int.
+            ValueError: If `max_vectors` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -106,30 +114,32 @@ class FastText(cde.FastText):
 
 class GloVe(cde.GloVe):
     """
-    GloVe object that is used to map tokens into vectors.
+    Global Vectors (GloVe) pre-trained word embeddings.
+
+    GloVe is an unsupervised learning algorithm for obtaining vector representations for word.
     """
 
     @classmethod
     @check_from_file_vectors
     def from_file(cls, file_path, max_vectors=None):
         """
-        Build a GloVe vector from a file.
+        Load the GloVe pre-training vector set file.
 
         Args:
-            file_path (str): Path of the file that contains the vectors. The format of pre-trained vector sets
-                must be `glove.6B.*.txt` .
-            max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
+            file_path (str): Path to the GloVe pre-training vector set file. File name is similar to `glove.*.txt`.
+            max_vectors (int, optional): The upper limit on the number of pre-trained vectors to load.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set. Default: ``None``, no limit.
+                this value can limit the size of the loaded set. Default: ``None``, no upper limit.
 
         Returns:
-            GloVe, GloVe vector build from a file.
+            GloVe, GloVe pre-training vectors.
 
         Raises:
-            RuntimeError: If `file_path` contains invalid data.
-            ValueError: If `max_vectors` is invalid.
-            TypeError: If `max_vectors` is not type of integer.
+            TypeError: If `file_path` is not of type str.
+            RuntimeError: If `file_path` does not exist or is not accessible.
+            TypeError: If `max_vectors` is not of type int.
+            ValueError: If `max_vectors` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -161,12 +171,11 @@ class JiebaMode(IntEnum):
 
 class NormalizeForm(IntEnum):
     """
-    Enumeration class for `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ .
+    `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ .
 
-    Possible enumeration values are: ``NormalizeForm.NONE``, ``NormalizeForm.NFC``, ``NormalizeForm.NFKC``,
-    ``NormalizeForm.NFD`` and ``NormalizeForm.NFKD``.
+    Available values are as follows:
 
-    - NormalizeForm.NONE: no normalization.
+    - NormalizeForm.NONE: No normalization.
     - NormalizeForm.NFC: Canonical Decomposition, followed by Canonical Composition.
     - NormalizeForm.NFKC: Compatibility Decomposition, followed by Canonical Composition.
     - NormalizeForm.NFD: Canonical Decomposition.
@@ -182,17 +191,14 @@ class NormalizeForm(IntEnum):
 
 class SentencePieceModel(IntEnum):
     """
-    An enumeration for SentencePieceModel.
+    Subword algorithms for SentencePiece.
 
-    Possible enumeration values are: ``SentencePieceModel.UNIGRAM``, ``SentencePieceModel.BPE``,
-    ``SentencePieceModel.CHAR``, ``SentencePieceModel.WORD``.
+    Available values are as follows:
 
-    - SentencePieceModel.UNIGRAM: Unigram Language Model means the next word in the sentence is assumed to be
-      independent of the previous words generated by the model.
-    - SentencePieceModel.BPE: refers to byte pair encoding algorithm, which replaces the most frequent pair of bytes in
-      a sentence with a single, unused byte.
-    - SentencePieceModel.CHAR: refers to char based sentencePiece Model type.
-    - SentencePieceModel.WORD: refers to word based sentencePiece Model type.
+    - SentencePieceModel.UNIGRAM: `Unigram Language Model <https://arxiv.org/abs/1804.10959>`_ subword algorithm.
+    - SentencePieceModel.BPE: `Byte-Pair-Encoding <https://arxiv.org/abs/1508.07909>`_ subword algorithm.
+    - SentencePieceModel.CHAR: Character-based subword algorithm.
+    - SentencePieceModel.WORD: Word-based subword algorithm.
     """
 
     UNIGRAM = 0
@@ -230,17 +236,8 @@ class SentencePieceVocab:
             character_coverage (float): Amount of characters covered by the model. Recommend ``0.9995`` for
                 languages with rich character set like Japanese or Chinese and ``1.0`` for other languages with small
                 character set.
-            model_type (SentencePieceModel): It can be ``SentencePieceModel.UNIGRAM``, ``SentencePieceModel.BPE``,
-                ``SentencePieceModel.CHAR``, ``SentencePieceModel.WORD``.
-                The input sentence must be pre-tokenized when using ``SentencePieceModel.WORD type``.
-
-                - ``SentencePieceModel.UNIGRAM``, Unigram Language Model means the next word in the sentence
-                  is assumed to be independent of the previous words generated by the model.
-                - ``SentencePieceModel.BPE``, refers to byte pair encoding algorithm, which replaces the most
-                  frequent pair of bytes in a sentence with a single, unused byte.
-                - ``SentencePieceModel.CHAR``, refers to char based sentencePiece Model type.
-                - ``SentencePieceModel.WORD``, refers to word based sentencePiece Model type.
-
+            model_type (SentencePieceModel): The desired subword algorithm. See :class:`~.text.SentencePieceModel`
+                for details on optional values.
             params (dict): A dictionary with no incoming parameters.
 
         Returns:
@@ -279,17 +276,8 @@ class SentencePieceVocab:
             character_coverage (float): Amount of characters covered by the model. Recommend ``0.9995`` for
                 languages with rich character set like Japanese or Chinese and ``1.0`` for other languages with small
                 character set.
-            model_type (SentencePieceModel): It can be ``SentencePieceModel.UNIGRAM``, ``SentencePieceModel.BPE``,
-                ``SentencePieceModel.CHAR``, ``SentencePieceModel.WORD``.
-                The input sentence must be pre-tokenized when using ``SentencePieceModel.WORD`` type.
-
-                - ``SentencePieceModel.UNIGRAM``, Unigram Language Model means the next word in the sentence
-                  is assumed to be independent of the previous words generated by the model.
-                - ``SentencePieceModel.BPE``, refers to byte pair encoding algorithm, which replaces the most
-                  frequent pair of bytes in a sentence with a single, unused byte.
-                - ``SentencePieceModel.CHAR``, refers to char based sentencePiece Model type.
-                - ``SentencePieceModel.WORD``, refers to word based sentencePiece Model type.
-
+            model_type (SentencePieceModel): The desired subword algorithm. See :class:`~.text.SentencePieceModel`
+                for details on optional values.
             params (dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
                 library).
 
@@ -334,12 +322,12 @@ class SentencePieceVocab:
 
 class SPieceTokenizerLoadType(IntEnum):
     """
-    An enumeration for loading type of :class:`mindspore.dataset.text.SentencePieceTokenizer` .
+    Model input type for the SentencePiece tokenizer.
 
-    Possible enumeration values are: ``SPieceTokenizerLoadType.FILE``, ``SPieceTokenizerLoadType.MODEL``.
+    Available values are as follows:
 
-    - SPieceTokenizerLoadType.FILE: Load SentencePiece tokenizer from a Vocab file.
-    - SPieceTokenizerLoadType.MODEL: Load SentencePiece tokenizer from a SentencePieceVocab object.
+    - SPieceTokenizerLoadType.FILE: Load model from specified file path.
+    - SPieceTokenizerLoadType.MODEL: Load model from specified vocab object.
     """
 
     FILE = 0
@@ -362,29 +350,30 @@ class SPieceTokenizerOutType(IntEnum):
 
 class Vectors(cde.Vectors):
     """
-    Vectors object that is used to map tokens into vectors.
+    Pre-trained word embeddings.
     """
 
     @classmethod
     @check_from_file_vectors
     def from_file(cls, file_path, max_vectors=None):
         """
-        Build a vector from a file.
+        Load a pre-training vector set file.
 
         Args:
-            file_path (str): Path of the file that contains the vectors.
-            max_vectors (int, optional): This can be used to limit the number of pre-trained vectors loaded.
+            file_path (str): Path to the pre-training vector set file.
+            max_vectors (int, optional): The upper limit on the number of pre-trained vectors to load.
                 Most pre-trained vector sets are sorted in the descending order of word frequency. Thus, in
                 situations where the entire set doesn't fit in memory, or is not needed for another reason,
-                passing `max_vectors` can limit the size of the loaded set. Default: ``None``, no limit.
+                this value can limit the size of the loaded set. Default: ``None``, no upper limit.
 
         Returns:
-            Vectors, Vectors build from a file.
+            Vectors, pre-training vectors.
 
         Raises:
-            RuntimeError: If `file_path` contains invalid data.
-            ValueError: If `max_vectors` is invalid.
-            TypeError: If `max_vectors` is not type of integer.
+            TypeError: If `file_path` is not of type str.
+            RuntimeError: If `file_path` does not exist or is not accessible.
+            TypeError: If `max_vectors` is not of type int.
+            ValueError: If `max_vectors` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -400,9 +389,9 @@ class Vectors(cde.Vectors):
 
 class Vocab:
     """
-    Vocab object that is used to save pairs of words and ids.
+    Create Vocab for training NLP models.
 
-    It contains a map that maps each word(str) to an id(int) or reverse.
+    Vocab is a collection of all possible Tokens in the data, preserving the mapping between each Token and its ID.
     """
 
     def __init__(self):
@@ -412,37 +401,45 @@ class Vocab:
     @check_from_dataset
     def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None, special_first=True):
         """
-        Build a Vocab from a dataset.
+        Build a Vocab from a given dataset.
 
-        This would collect all unique words in a dataset and return a vocab within
-        the frequency range specified by user in freq_range. User would be warned if no words fall into the frequency.
-        Words in vocab are ordered from the highest frequency to the lowest frequency. Words with the same frequency
-        would be ordered lexicographically.
+        The samples in the dataset are used as a corpus to create Vocab, in which the Token is arranged in ascending
+        order of Token frequency, and Tokens with the same frequency are arranged in alphabetical order.
 
         Args:
-            dataset (Dataset): dataset to build vocab from.
-            columns (list[str], optional): column names to get words from. It can be a list of column names.
-                Default: ``None``.
-            freq_range (tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-                range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
-                min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
-                min_frequency/max_frequency can be ``None``, which corresponds to 0/total_words separately.
-                Default: ``None``, all words are included.
-            top_k (int, optional): top_k is greater than 0. Number of words to be built into vocab. top_k means most
-                frequent words are taken. top_k is taken after freq_range. If not enough top_k, all words will be taken.
-                Default: ``None``, all words are included.
-            special_tokens (list, optional):  A list of strings, each one is a special token. For example
-                special_tokens=["<pad>","<unk>"]. Default: ``None``, no special tokens will be added.
-            special_first (bool, optional): Whether `special_tokens` will be prepended/appended to vocab. If
-                `special_tokens` is specified and `special_first` is set to ``True``, special_tokens will be prepended.
-                Default: ``True``.
+            dataset (Dataset): The dataset to build the Vocab from.
+            columns (list[str], optional): The name of the data columns used to create the Vocab.
+                Default: ``None`` , use all columns.
+            freq_range (tuple[int, int], optional): The Token frequency range used to create the Vocab. Must contain
+                two elements representing the minimum and maximum frequencies, within which the Token will be retained.
+                When the minimum or maximum frequency is None, it means there is no minimum or maximum frequency limit.
+                Default: ``None`` , no Token frequency range restriction.
+            top_k (int, optional): Only the first specified number of Tokens with the highest Token frequency are
+                selected to build the Vocab. This operation will be performed after Token frequency filtering. If
+                the value is greater than the total number of Tokens, all Tokens will be retained. Default: ``None`` ,
+                there is no limit to the number of Tokens.
+            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
+                no special Token is appended.
+            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+                the bottom of the Vocab. Default: ``True``.
 
         Returns:
-            Vocab, Vocab object built from the dataset.
+            Vocab, Vocab built from the dataset.
+
+        Raises:
+            TypeError: If `columns` is not of type list[str].
+            TypeError: If `freq_range` is not of type tuple[int, int]l.
+            ValueError: If element of `freq_range` is negative.
+            TypeError: If `top_k` is not of type int.
+            ValueError: If `top_k` is not positive.
+            TypeError: If `special_tokens` is not of type list[str].
+            ValueError: If there are duplicate elements in `special_tokens`.
+            TypeError: If `special_first` is not of type bool.
 
         Examples:
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
+            >>>
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
             ...                                 special_tokens=["<pad>", "<unk>"],
@@ -461,18 +458,24 @@ class Vocab:
     @check_from_list
     def from_list(cls, word_list, special_tokens=None, special_first=True):
         """
-        Build a vocab object from a list of word.
+        Build a Vocab from a given Token list.
 
         Args:
-            word_list (list): A list of string where each element is a word of type string.
-            special_tokens (list, optional):  A list of strings, each one is a special token. For example,
-                special_tokens is ``"<pad>"``, ``"<unk>"``. Default: ``None``, no special tokens will be added.
-            special_first (bool, optional): Whether `special_tokens` is prepended or appended to vocab.
-                If `special_tokens` is specified and special_first is set to ``True``,
-                `special_tokens` will be prepended. Default: ``True``.
+            word_list (list[str]): The Token list to build the Vocab from.
+            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
+                no special Token is appended.
+            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+                the bottom of the Vocab. Default: ``True``.
 
         Returns:
-            Vocab, Vocab object built from the list.
+            Vocab, Vocab built from the list.
+
+        Raises:
+            TypeError: If `word_list` is not of type list[str].
+            ValueError: If there are duplicate elements in `word_list`.
+            TypeError: If `special_tokens` is not of type list[str].
+            ValueError: If there are duplicate elements in `special_tokens`.
+            TypeError: If `special_first` is not of type bool.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -491,21 +494,29 @@ class Vocab:
     @check_from_file
     def from_file(cls, file_path, delimiter="", vocab_size=None, special_tokens=None, special_first=True):
         """
-        Build a vocab object from a file.
+        Build a Vocab from a file.
 
         Args:
-            file_path (str): Path to the file which contains the vocab list.
-            delimiter (str, optional): A delimiter to break up each line in file, the first element is taken to be
-                the word. Default: ``''``, the whole line will be treated as a word.
-            vocab_size (int, optional): Number of words to read from file_path. Default: ``None``, all words are taken.
-            special_tokens (list, optional):  A list of strings, each one is a special token. For example
-                special_tokens=["<pad>","<unk>"]. Default: ``None``, no special tokens will be added.
-            special_first (bool, optional): Whether `special_tokens` will be prepended/appended to vocab,
-                If special_tokens is specified and `special_first` is set to ``True``,
-                special_tokens will be prepended. Default: ``True``.
+            file_path (str): The path of the file to build the Vocab from.
+            delimiter (str, optional): The separator for the Token in the file line. The string before the separator
+                will be treated as a Token. Default: ``''``, the whole line will be treated as a Token.
+            vocab_size (int, optional): The upper limit on the number of Tokens that Vocab can contain.
+                Default: ``None`` , no upper limit on the number of Token.
+            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
+                no special Token is appended.
+            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+                the bottom of the Vocab. Default: ``True``.
 
         Returns:
-            Vocab, Vocab object built from the file.
+            Vocab, Vocab built from the file.
+
+        Raises:
+            TypeError: If `file_path` is not of type str.
+            TypeError: If `delimiter` is not of type str.
+            ValueError: If `vocab_size` is not positive.
+            TypeError: If `special_tokens` is not of type list[str].
+            ValueError: If there are duplicate elements in `special_tokens`.
+            TypeError: If `special_first` is not of type bool.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -539,14 +550,17 @@ class Vocab:
     @check_from_dict
     def from_dict(cls, word_dict):
         """
-        Build a vocab object from a dict.
+        Build a Vocab from a given dictionary.
 
         Args:
-            word_dict (dict): Dict contains word and id pairs, where word should be str and id be int. id is recommended
-                to start from 0 and be continuous. ValueError will be raised if id is negative.
+            word_dict (dict[str, int]): A dictionary storing the mappings between each Token and its ID.
 
         Returns:
-            Vocab, Vocab object built from the dict.
+            Vocab, Vocab built from the dictionary.
+
+        Raises:
+            TypeError: If `word_dict` is not of type dict[str, int].
+            ValueError: If key value of `word_dict` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -564,10 +578,10 @@ class Vocab:
 
     def vocab(self):
         """
-        Get the vocabory table in dict type.
+        Get the dictionary of the mappings between Tokens and its IDs.
 
         Returns:
-            A vocabulary consisting of word and id pairs.
+            dict[str, int], the dictionary of mappings between Tokens and IDs.
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -582,14 +596,17 @@ class Vocab:
     @check_tokens_to_ids
     def tokens_to_ids(self, tokens):
         """
-        Converts a token string or a sequence of tokens in a single integer id or a sequence of ids.
-        If token does not exist, return id with value -1.
+        Look up the ID corresponding to the specified Token.
 
         Args:
-            tokens (Union[str, list[str]]): One or several token(s) to convert to token id(s).
+            tokens (Union[str, list[str], numpy.ndarray]): The Token or list of Tokens to be looked up.
+                If the Token does not exist, -1 is returned.
 
         Returns:
-            The token id or list of token ids.
+            Union[int, list[int]], the ID(s) corresponding to the Token(s).
+
+        Raises:
+            TypeError: If `tokens` is not of type Union[str, list[str], numpy.ndarray].
 
         Examples:
             >>> import mindspore.dataset.text as text
@@ -608,14 +625,18 @@ class Vocab:
     @check_ids_to_tokens
     def ids_to_tokens(self, ids):
         """
-        Converts a single index or a sequence of indices in a token or a sequence of tokens.
-        If id does not exist, return empty string.
+        Look up the Token corresponding to the specified ID.
 
         Args:
-            ids (Union[int, list[int]]): The token id (or token ids) to convert to tokens.
+            ids (Union[int, list[int], numpy.ndarray]): The ID or list of IDs to be looked up.
+                If the ID does not exist, an empty string is returned.
 
         Returns:
-            The decoded token(s).
+            Union[str, list[str]], the Token(s) corresponding to the ID(s).
+
+        Raises:
+            TypeError: If `ids` is not of type Union[int, list[int], numpy.ndarray].
+            ValueError: If element of `ids` is negative.
 
         Examples:
             >>> import mindspore.dataset.text as text

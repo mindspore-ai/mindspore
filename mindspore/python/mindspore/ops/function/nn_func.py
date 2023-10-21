@@ -233,7 +233,7 @@ def adaptive_avg_pool3d(input, output_size):
 def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
     """Checks the type of avgpool1d input"""
     validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
-    validator.check_value_type('stride', stride, [int], 'avg_pool1d')
+    validator.check_value_type('stride', stride, (int, tuple), 'avg_pool1d')
     validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool1d')
     validator.check_value_type('count_include_pad', count_include_pad, bool, 'avg_pool1d')
     validator.check_int(kernel_size, 1, validator.GE, "kernel_size", 'avg_pool1d')
@@ -264,12 +264,10 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     Args:
         input_x (Tensor): Tensor of shape :math:`(N, C_{in}, L_{in})`.
         kernel_size (int): The size of kernel window used to take the average value. Default: ``1`` .
-        stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents the height and
-            width of movement are both strides, or a tuple of two int numbers that represent height and width of
-            movement respectively. Default: ``1`` .
-        padding (Union(int, tuple[int])): The pad value to be filled. If `padding` is an integer, the paddings of left
-            and right are the same, equal to pad. If `padding` is a tuple of `2` integers, the padding of left and right
-            equal to `padding[0]` and `padding[1]` correspondingly. Default: ``0`` .
+        stride (Union(int, tuple[int])): The distance of kernel moving. `stride` can either be an int
+            number or a tuple of one int number. Default: ``1`` .
+        padding (Union(int, tuple[int])): The pad value to be filled. `padding` can either be an integer
+            or a tuple of one integer. Default: ``0`` .
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
 
@@ -308,13 +306,18 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         check_non_negative_int(padding, 'padding', 'avg_pool1d')
         padding = (0, 0, 0, 0, padding, padding)
     elif isinstance(padding, tuple):
-        if len(padding) != 2:
-            raise ValueError("For avg_pool1d, padding should be int or tuple of length 2.")
+        if len(padding) != 1:
+            raise ValueError("For avg_pool1d, padding should be int or tuple of length 1.")
         for item in padding:
             check_non_negative_int(item, 'padding', 'avg_pool1d')
-        padding = (0, 0, 0, 0, padding[0], padding[1])
+        padding = (0, 0, 0, 0, padding[0], padding[0])
     else:
-        raise TypeError("For avg_pool1d, padding should be int or tuple of length 2.")
+        raise TypeError("For avg_pool1d, padding should be int or tuple of length 1.")
+
+    if isinstance(stride, tuple):
+        if len(stride) != 1:
+            raise ValueError("For avg_pool1d, stride should be int or tuple of length 1.")
+        stride = stride[0]
 
     expand_op = _get_cache_prim(P.ExpandDims)()
     squeeze_op = _get_cache_prim(P.Squeeze)((2, 3))
@@ -420,7 +423,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
         count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
         divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
-            `kernel_size` will be used. Default: ``0`` .
+            `kernel_size` will be used. Default: ``0``, which means not specified.
 
     Returns:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -528,7 +531,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         count_include_pad (bool, optional): If ``True`` , averaging calculation
             will include the zero-padding. Default: ``True`` .
         divisor_override (int, optional): If specified, it will be used as divisor in the averaging calculation,
-            otherwise `kernel_size` will be used. Default: ``0`` .
+            otherwise `kernel_size` will be used. Default: ``0`` , which means not specified.
 
     Returns:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
@@ -2232,7 +2235,8 @@ def interpolate(input,
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
         mode (str): The sampling algorithm.
             One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'trilinear' (5D only), 'bicubic' (4D only),
-            'area', 'nearest-exact'(3D and 4D). Default: ``"nearest"`` .
+            'area', 'nearest-exact'(matches Scikit-Image and PIL nearest neighbours interpolation algorithms and fixes
+            knows issues with `nearest`, 3D and 4D). Default: ``"nearest"`` .
 
         align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
@@ -3037,7 +3041,10 @@ def bidense(input1, input2, weight, bias=None):
     Applies bilinear dense connected layer for `input1` and `input2`. The bilinear dense function is defined as:
 
     .. math::
-        output = input1^{T} weight input2 + bias
+        output = x_{1}^{T}Ax_{2} + b
+
+    :math:`x_{1}` represents `input1` , :math:`x_{2}` represents `input2` , :math:`A` represents `weight` ,
+    :math:`b` represents `bias` .
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -4161,6 +4168,7 @@ def leaky_relu(input, alpha=0.2):
     select_op = _get_cache_prim(P.Maximum)()
     if alpha > 1:
         select_op = _get_cache_prim(P.Minimum)()
+    alpha = _get_cache_prim(P.Cast)()(F.scalar_to_tensor(alpha), input.dtype)
     return select_op(alpha * input, input)
 
 
@@ -4247,6 +4255,10 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     r"""
     Local Response Normalization.
 
+    .. warning::
+        lrn is deprecated on Ascend due to potential accuracy problem. It's recommended to use other
+        normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
+
     .. math::
 
         b_{c} = a_{c}\left(k + \frac{\alpha}{n}
@@ -4275,7 +4287,7 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -4413,10 +4425,40 @@ def _check_type_and_shape_same(param_name1, input_data1, param_name2, input_data
 
 
 def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
-    """
+    r"""
     MarginRankingLoss creates a criterion that measures the loss.
 
-    For details, please refer to :class:`mindspore.nn.MarginRankingLoss`.
+    Given two tensors :math:`input1`, :math:`input2` and a Tensor label :math:`target` with values 1 or -1,
+    the operation is as follows:
+
+    .. math::
+        \text{loss}(input1, input2, target) = \max(0, -target * (input1 - input2) + \text{margin})
+
+    Args:
+        input1 (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
+        target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
+          :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
+        margin (float, optional): Specify the adjustment factor of the operation. Default: ``0.0`` .
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+
+    Returns:
+        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `margin` is not a float.
+        TypeError: If `input1`, `input2` or `target` is not a Tensor.
+        TypeError: If the types of `input1` and `input2` are inconsistent.
+        TypeError: If the types of `input1` and `target` are inconsistent.
+        ValueError: If the shape of `input1` and `input2` are inconsistent.
+        ValueError: If the shape of `input1` and `target` are inconsistent.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` , ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5003,6 +5045,9 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
 def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     r"""
     Performs greedy decoding on the logits given in inputs.
+
+    Note:
+        On Ascend, 'merge_repeated' can not be set to false.
 
     Args:
         inputs (Tensor): The input Tensor must be a 3-D tensor whose shape is
@@ -5992,20 +6037,20 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+                D_{out} = \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
         `pad_mode` is ``"valid"``:
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -6013,11 +6058,11 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 

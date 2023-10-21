@@ -58,7 +58,7 @@ def choleskyinverse_pynative(upper, loss):
     assert np.allclose(choleskyinverse_output.asnumpy(), choleskyinverse_expect.numpy(), loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_choleskyinverse_graph_float():

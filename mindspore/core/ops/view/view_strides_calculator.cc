@@ -34,16 +34,26 @@ bool HasZero(const std::vector<int64_t> &value) {
   return false;
 }
 
+bool CheckInputsNull(const std::vector<ValuePtr> &inputs, const size_t &input_num) {
+  if (inputs.size() != input_num) {
+    MS_LOG(DEBUG) << "inputs.size() is not equal to input_num, inputs.size():" << inputs.size()
+                  << " input_num:" << input_num;
+    return true;
+  }
+
+  return std::any_of(inputs.cbegin(), inputs.cend(), [](const ValuePtr &v) { return v == nullptr; });
+}
+
 std::vector<int64_t> GetOriStrides(const std::vector<int64_t> &shape) {
   if (shape.empty()) {
     return {};
   }
 
-  std::vector<int64_t> ret{1};
+  std::vector<int64_t> ret(shape.size(), 1);
   int64_t strides = 1;
-  for (int64_t i = shape.size() - 1; i > 0; i--) {
+  for (size_t i = shape.size() - 1; i > 0; --i) {
     strides *= shape[i];
-    (void)ret.emplace(ret.begin(), strides);
+    ret[i - 1] = strides;
   }
   return ret;
 }
@@ -56,7 +66,7 @@ bool IsContiguous(const ShapeVector &shape, const std::vector<int64_t> &strides)
     MS_LOG(EXCEPTION) << "shape.size() != strides.size()";
   }
   int64_t expected_strides = 1;
-  for (int64_t i = strides.size() - 1; i >= 0; i--) {
+  for (int64_t i = SizeToLong(strides.size() - 1); i >= 0; --i) {
     if (expected_strides != strides[i]) {
       return false;
     }
@@ -72,27 +82,17 @@ int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr) {
     }
     return dim;
   }
-  MS_LOG(EXCEPTION) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
+  MS_EXCEPTION(ValueError) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
 }
 
 OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor) {
-  OldTensorInfo old_tensor_info;
   if (tensor->storage_info() == nullptr) {
-    auto shape = tensor->shape();
-    auto strides = GetOriStrides(tensor->shape());
-    old_tensor_info.old_shape = shape;
-    old_tensor_info.ori_shape = shape;
-    old_tensor_info.ori_strides = strides;
-    old_tensor_info.old_strides = strides;
-    old_tensor_info.old_offset = 0;
+    auto old_strides = GetOriStrides(tensor->shape());
+    return std::make_shared<OldTensorInfo>(tensor->shape(), old_strides, tensor->shape(), old_strides, 0);
   } else {
     auto storage_info = tensor->storage_info();
-    old_tensor_info.old_shape = storage_info->shape;
-    old_tensor_info.old_strides = storage_info->strides;
-    old_tensor_info.ori_shape = storage_info->ori_shape;
-    old_tensor_info.ori_strides = storage_info->ori_strides;
-    old_tensor_info.old_offset = storage_info->storage_offset;
+    return std::make_shared<OldTensorInfo>(storage_info->shape, storage_info->strides, storage_info->ori_shape,
+                                           storage_info->ori_strides, storage_info->storage_offset);
   }
-  return std::make_shared<OldTensorInfo>(old_tensor_info);
 }
 }  // namespace mindspore::ops

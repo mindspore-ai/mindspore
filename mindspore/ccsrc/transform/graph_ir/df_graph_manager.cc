@@ -26,8 +26,36 @@
 #endif
 #include "include/common/utils/compile_cache_context.h"
 
+namespace {
+// normalize name for ge regex check
+std::string NormalizeString(const std::string &name) {
+  std::string norm_str;
+  std::for_each(name.begin(), name.end(), [&norm_str](const auto &a) {
+    if (isalpha(a) || isalnum(a) || a == '_' || a == '-') {
+      norm_str += a;
+    }
+  });
+  const size_t limit_len = 128;
+  if (norm_str.size() > limit_len) {
+    norm_str = norm_str.substr(norm_str.size() - limit_len);
+  }
+  return norm_str;
+}
+};  // namespace
+
 namespace mindspore {
 namespace transform {
+namespace {
+bool IsTrain() {
+  const std::string &phase = PhaseManager::GetInstance().phase();
+  bool enable_training = false;
+  if (!phase.empty()) {
+    enable_training = pipeline::GetPhasePrefix(phase) == "train";
+  }
+  return enable_training;
+}
+}  // namespace
+
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
                                const OptionMap &options)
     : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
@@ -62,8 +90,7 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options,
-                                const bool &is_train) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
@@ -79,12 +106,13 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   OptionMap new_options = options;
   auto ms_context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
+  bool is_train = IsTrain();
+  auto soc_version = ms_context_ptr->ascend_soc_version();
   if (ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE) != "") {
     (new_options)["ge.exec.precision_mode"] = ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE);
     MS_LOG(INFO) << "Set precision_mode " << ms_context_ptr->get_param<std::string>(MS_CTX_PRECISION_MODE)
                  << " by user.";
   } else if (is_train) {
-    auto soc_version = ms_context_ptr->ascend_soc_version();
     if (soc_version == "ascend910b") {
       (new_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
       MS_LOG(INFO) << "Set precision_mode must_keep_origin_dtype, soc_version is " << soc_version << ".";
@@ -93,13 +121,20 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
       MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
     }
   } else {
-    (new_options)["ge.exec.precision_mode"] = "force_fp16";
-    MS_LOG(INFO) << "Set precision_mode force_fp16.";
+    if (soc_version == "ascend910b") {
+      (new_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
+      MS_LOG(INFO) << "Set precision_mode allow_fp32_to_fp16, soc_version is " << soc_version << ".";
+    } else {
+      (new_options)["ge.exec.precision_mode"] = "force_fp16";
+      MS_LOG(INFO) << "Set precision_mode force_fp16, soc_version is " << soc_version << ".";
+    }
   }
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto compile_cache_dep_files_hash = compile_cache_context.CompileCacheDepFilesHash();
   if (CompileCacheEnable() && !compile_cache_dep_files_hash.empty()) {
-    auto ge_graph_key = compile_cache_dep_files_hash + "_" + std::to_string(id);
+    auto suffix = IsEnableRefMode() ? name : std::to_string(id);
+    auto ge_graph_key = compile_cache_dep_files_hash + "_" + suffix;
+    ge_graph_key = NormalizeString(ge_graph_key);
     new_options.insert_or_assign(kGeGraphKey, ge_graph_key);
   }
 
@@ -259,6 +294,7 @@ void DfGraphManager::AoeGeGraph() {
 
   for (auto &graph_name : wait_optimize_graphs_) {
     auto wrapper = GetGraphByName(graph_name);
+    MS_EXCEPTION_IF_NULL(wrapper);
     if (AoeUtil::GetInstance().IsSaveOptimizedGraph(wrapper->id_)) {
       continue;
     }

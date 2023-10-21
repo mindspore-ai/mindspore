@@ -35,7 +35,7 @@ class ReluNet(nn.Cell):
         return y, dx
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64,
@@ -68,7 +68,7 @@ def test_reluv2(dtype, mode):
     assert np.allclose(dx.asnumpy(), expect_dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.uint64])

@@ -73,7 +73,7 @@ def train(net, data):
     return res_list
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -144,7 +144,7 @@ px = np.ones([2, 4, 2, 2]).astype(np.int32)
 py = np.array([0.5]).astype(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -168,7 +168,7 @@ def test_diff_seed():
            (np.allclose(net0_out1.asnumpy(), net2_out1.asnumpy(), 0, 0) is False)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -17,8 +17,8 @@ import numpy as np
 import pytest
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore import Tensor
-from mindspore import jit
+from mindspore import Tensor, Parameter
+from mindspore import jit, ops
 from mindspore.ops.functional import vjp
 
 
@@ -32,7 +32,7 @@ class MultipleInputsOutputNet(nn.Cell):
         return 2 * x, y ** 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -170,7 +170,7 @@ def test_vjp_construct_single_input_single_output_default_v_graph(mode):
     assert np.allclose(gradient[0].asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -181,6 +181,7 @@ def test_vjp_multiple_outputs_with_has_aux_graph(mode):
     Expectation: No exception.
     """
     context.set_context(mode=mode)
+
     def fn(x, y):
         return 2 * x + y, y ** 3
 
@@ -202,3 +203,73 @@ def test_vjp_multiple_outputs_with_has_aux_graph(mode):
     assert len(gradient) == 2
     assert np.allclose(gradient[0].asnumpy(), expect_grad_0.asnumpy())
     assert np.allclose(gradient[1].asnumpy(), expect_grad_1.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_vjp_multiple_outputs_with_weight(mode):
+    """
+    Features: Function vjp
+    Description: Test vjp with multiple outputs network and get gradients for weights.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
+    net = nn.Dense(10, 1)
+    inputs = Tensor(np.random.randn(16, 10).astype(np.float32))
+    weights = net.trainable_params()
+
+    grad_fn = ops.grad(net, grad_position=None, weights=weights)
+    params_gradient_grad = grad_fn(inputs)
+
+    forward_res, vjp_fn = vjp(net, inputs, weights=weights)
+    _, params_gradient_vjp = vjp_fn(ops.ones_like(forward_res))
+    assert np.allclose(params_gradient_vjp[0].asnumpy(), params_gradient_grad[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_vjp_multiple_outputs_merge_forward(mode):
+    """
+    Features: Function vjp
+    Description: Test vjp with multiple outputs network and get gradients with each output.
+    Expectation: No exception.
+    """
+    context.set_context(mode=mode)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = ops.ReLU()
+            self.scale = Parameter(Tensor(np.ones([2]).astype(np.float32)))
+            self.bias = Parameter(Tensor(np.ones([2]).astype(np.float32)))
+            self.mean = Parameter(Tensor(np.ones([2]).astype(np.float32)))
+            self.variance = Parameter(Tensor(np.ones([2]).astype(np.float32)))
+            self.batch_norm = ops.BatchNorm(is_training=True)
+
+        def construct(self, x):
+            # self.scale += Tensor(np.ones([2]).astype(np.float32))
+            out1 = self.batch_norm(x, self.scale, self.bias, self.mean, self.variance)
+            out2 = self.relu(out1[0])
+            out3 = self.relu(out2)
+            return out1[0], out2, out3
+
+    class Grad(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+
+        def construct(self, x):
+            outputs, vjp_fn = ops.vjp(self.net, x)
+            out1 = vjp_fn((ops.ones_like(outputs[0]), ops.zeros_like(outputs[1]), ops.zeros_like(outputs[2])))
+            out2 = vjp_fn((ops.zeros_like(outputs[0]), ops.ones_like(outputs[1]), ops.zeros_like(outputs[2])))
+            out3 = vjp_fn((ops.zeros_like(outputs[0]), ops.zeros_like(outputs[1]), ops.ones_like(outputs[2])))
+            return outputs, out1, out2, out3
+
+    net = Net()
+    x = Tensor(np.ones([2, 2]).astype(np.float32))
+    Grad(net)(x)
+    assert np.allclose(net.variance.value().asnumpy(), np.array([0.9, 0.9]))

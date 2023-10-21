@@ -284,7 +284,7 @@ class Optimizer(Cell):
         self.cache_enable = tuple(cache_filter(x) for x in self._parameters)
         self.reciprocal_scale = Tensor(1.0 / self.loss_scale, mstype.float32)
         self.need_scale = self.loss_scale != 1.0
-        self.global_step_increase_tensor = Tensor(1, mstype.int32)
+        self.global_step_increase_tensor = Tensor([1], mstype.int32)
         self.param_length = len(self._parameters)
         self.map_ = C.Map()
         self.map_reverse = C.Map(None, True)

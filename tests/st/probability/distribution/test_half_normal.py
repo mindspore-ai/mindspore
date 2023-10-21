@@ -47,7 +47,7 @@ class LogProb2(nn.Cell):
         return self.n.log_prob(x_, loc, scale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_log_likelihood():
@@ -83,7 +83,7 @@ def test_log_likelihood():
     assert (np.abs(output2[~np.isinf(output2)] - expected[~np.isinf(expected)]) < tol).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_log_likelyhood_pynative():

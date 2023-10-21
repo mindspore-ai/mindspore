@@ -328,7 +328,7 @@ class Node:
             func_name = ScopedValue.create_naming_value(node_name)
         else:
             func_name = node_name
-        if is_sub_net and is_subtree(type(op).__name__):
+        if is_sub_net and is_subtree(op):
             from ..symbol_tree_builder import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()
@@ -1019,18 +1019,36 @@ class Node:
     def get_arg_providers(self) -> dict:
         """
         Getter of _arg_providers.
+
+        Return:
+            dict, key is type of int indicating the index of args, and value is type of tuple, which includes
+                the node and the index of node's targets who provides the argument.
         """
         return self._arg_providers
 
     def set_arg_providers(self, index: int, provider: tuple):
         """
         Setter of _arg_providers.
+
+        Args:
+            index (int): Indicating provider of which argument need to be set.
+            provider (tuple): A tuple includes the node and the index of node's targets who provides the argument.
         """
         self._arg_providers[index] = provider
 
     def get_target_users(self, index=-1) -> Union[dict, list]:
         """
         Getter of _target_users.
+
+        Args:
+            index (int): Indicating users of which target need to be got. Default: -1, means all targets's users will
+                be returned.
+
+        Return:
+            Union[dict, list]. When index is not -1, a list of users of specified target will be returned.
+                The type of elements in list is tuple, which includes the user node and the index of node's arguments
+                who uses the target. When index is -1, a dict will be returned. The key is index of targets, and the
+                value is list of users of corresponding target.
         """
         if index == -1:
             return self._target_users
@@ -1041,6 +1059,11 @@ class Node:
     def append_target_users(self, index: int, provider: tuple):
         """
         Setter of _target_users.
+
+        Args:
+            index (int): Indicating users of which target need to be append.
+            provider (tuple): A tuple includes the node and the index of node's argument who uses the target.
+
         """
         if index not in self._target_users.keys():
             self._target_users[index] = []

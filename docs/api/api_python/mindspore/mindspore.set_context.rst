@@ -94,7 +94,7 @@ mindspore.set_context
         - **max_device_memory** (str) - 设置设备可用的最大内存。格式为"xxGB"。默认值： ``1024GB`` 。实际使用的内存大小是设备的可用内存和 `max_device_memory` 值中的最小值。 `max_device_memory` 需要在程序运行之前设置。
         - **variable_memory_max_size** (str) - 此参数已弃用，将被删除。请使用 `max_device_memory` 。
         - **mempool_block_size** (str) - 设置设备内存池的块大小。格式为"xxGB"。默认值： ``1GB`` 。最小值是1GB。实际使用的内存池块大小是设备的可用内存和 `mempool_block_size` 值中的最小值。
-        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着无限等待。默认值： ``1900`` 。
+        - **op_timeout** (int) - 设置一个算子的最大执行时间，以秒为单位。如果执行时间超过这个值，系统将终止该任务。0意味着使用默认值， AI Core和AICPU算子在不同硬件上的默认值有差异， 详细信息请查看 `昇腾社区 <https://hiascend.com/document/detail/zh/CANNCommunityEdition/70RC1alpha003/infacldevg/aclcppdevg/aclcppdevg_03_0606.html>`。MindSpore默认设置值： ``900`` 。
         - **save_graphs** (bool 或 int) - 表示是否保存中间编译图。默认值： ``0`` 。可用的选项为：
 
           - False或0：不保存中间编译图。
@@ -124,7 +124,7 @@ mindspore.set_context
           内存重用：
 
           - **mem_Reuse**：表示内存复用功能是否打开。设置为 ``True`` 时，将打开内存复用功能。设置为 ``False`` 时，将关闭内存复用功能。
-            
+
           配置详细信息，请查看 `Running Data Recorder <https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/rdr.html>`_ 和 `内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/optimize/mem_reuse.html>`_ 。
 
         - **precompile_only** (bool) - 表示是否仅预编译网络。默认值： ``False`` 。设置为 ``True`` 时，仅编译网络，而不执行网络。
@@ -137,7 +137,13 @@ mindspore.set_context
         - **pynative_synchronize** (bool) - 表示是否在PyNative模式下启动设备同步执行。默认值： ``False`` 。设置为 ``False`` 时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为 ``True`` 时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
         - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中运行，两种模式都支持所有后端。默认值： ``PYNATIVE_MODE`` 。
         - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值： ``False`` 。如果 `enable_graph_kernel` 设置为 ``True`` ，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/optimize/graph_fusion_engine.html>`_ 。
-        - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如， :code:`mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")` 。一些常用选项：
+        - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如：
+
+          .. code-block::
+
+              mindspore.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
+
+          一些常用选项：
 
           - **opt_level**：设置优化级别。默认值：2。当opt_level的值大于0时，启动图算融合。可选值包括：
 
@@ -147,8 +153,6 @@ mindspore.set_context
             - 3：包括级别2的所有优化，并打开更多的优化，如SitchingFusion、ParallelFusion等。在某些场景下，该级别的优化激进且不稳定。使用此级别时要小心。
 
           - **dump_as_text**：将关键过程的详细信息生成文本文件保存到"graph_kernel_dump"目录里。默认值： ``False`` 。
-
-          有关更多选项，可以参考实现代码。
 
         - **enable_reduce_precision** (bool) - 表示是否开启降低精度计算。默认值： ``True`` 。设置为 ``True`` 时，不支持用户指定的精度，且精度将自动更改。设置为 ``False`` 时，如果未指定用例的精度，则会报错并退出。
         - **aoe_tune_mode** (str) - 表示启动AOE调优，默认不设置。设置为 ``online`` 时，将启动在线调优，设置为 ``offline`` 时，将为离线调优保存GE图 。
@@ -196,9 +200,9 @@ mindspore.set_context
             - 0：集中清理网络中所有atomic算子占用的内存。
             - 1：不集中清理内存，对网络中每一个atomic算子进行单独清零。当网络中内存超限时，可以尝试此种清理方式，但可能会导致一定的性能损耗。
 
-          - **matmul_allow_hf32** (bool): 是否为Matmul类算子使能FP32转换为HF32。默认值： ``False``。如果您想了解更多详细信息，
+          - **matmul_allow_hf32** (bool): 是否为Matmul类算子使能FP32转换为HF32。默认值： ``False``。这是一个实验特性，可能会被更改或者删除。如果您想了解更多详细信息，
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
-          - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。如果您想了解更多详细信息，
+          - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。这是一个实验特性，可能会被更改或者删除。如果您想了解更多详细信息，
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **op_precision_mode** (str): 算子精度模式配置文件的所在路径。如果您想了解更多详细信息, 请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。

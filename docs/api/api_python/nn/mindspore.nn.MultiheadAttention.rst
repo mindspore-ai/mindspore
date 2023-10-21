@@ -8,7 +8,7 @@ mindspore.nn.MultiheadAttention
     .. math::
         MultiHeadAttention(query, key, value) = Concat(head_1, \dots, head_h)W^O
 
-    其中， :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)` 。注意：输出层的投影计算中带有偏置参数。
+    其中， :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)` ， :math:`W^O` 、 :math:`W_i^Q` 、 :math:`W_i^K` 、 :math:`W_i^V` 是权重矩阵。注意：默认输入、输出投影层中带有偏置参数。
 
     如果query、key和value相同，则上述即为自注意力机制的计算过程。
 

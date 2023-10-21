@@ -476,11 +476,20 @@ constexpr const char kNameConv2DTransposeV2[] = "Conv2DTransposeV2";
 constexpr const char kNameGridSampler3D[] = "GridSampler3D";
 constexpr const char kNameResizeArea[] = "ResizeArea";
 constexpr const char kNameResizeBicubic[] = "ResizeBicubic";
-constexpr const char kNameIm2Col[] = "Im2Col";
+constexpr const char kNameIm2col[] = "Im2col";
 constexpr const char kNameAffineGrid[] = "AffineGrid";
 constexpr const char kNameMoeFFN[] = "MoeFFN";
 constexpr const char kNameBlendFaceBgPartOne[] = "BlendFaceBgPartOne";
 constexpr const char kNameNonZeroV2[] = "NonZeroV2";
+constexpr const char kNameResize[] = "Resize";
+constexpr const char kNameAdaptiveAvgPool[] = "AdaptiveAvgPool";
+constexpr const char kNamePromptFlashAttention[] = "PromptFlashAttention";
+constexpr const char kNameFlashAttentionScore[] = "FlashAttentionScore";
+constexpr const char kNameFlashAttentionScoreGrad[] = "FlashAttentionScoreGrad";
+constexpr const char kNameEnvironCreate[] = "EnvironCreate";
+constexpr const char kNameEnvironDestroyAll[] = "EnvironDestroyAll";
+constexpr const char kNameEnvironGet[] = "EnvironGet";
+constexpr const char kNameEnvironSet[] = "EnvironSet";
 
 class OpAdapterDesc;
 

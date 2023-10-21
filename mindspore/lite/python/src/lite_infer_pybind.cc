@@ -23,8 +23,8 @@
 namespace mindspore::lite {
 namespace py = pybind11;
 
-std::vector<MSTensor> PyPredictModelImpl(ModelImpl *model, const std::vector<MSTensor> &inputs) {
-  std::vector<MSTensor> outputs;
+std::vector<MSTensor> PyPredictModelImpl(ModelImpl *model, const std::vector<MSTensor> &inputs,
+                                         std::vector<MSTensor> &outputs) {
   if (!model->Predict(inputs, &outputs).IsOk()) {
     return {};
   }

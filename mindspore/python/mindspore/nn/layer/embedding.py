@@ -70,6 +70,7 @@ class Embedding(Cell):
         dtype (:class:`mindspore.dtype`): Data type of `x`. Default: ``mstype.float32`` .
         padding_idx (int, None): When the padding_idx encounters index, the output embedding vector of this index
                                  will be initialized to zero. Default: ``None`` . The feature is inactivated.
+
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(\text{batch_size}, \text{x_length})`. The elements of
           the Tensor must be integer and not larger than vocab_size. Otherwise the corresponding embedding vector will
@@ -100,7 +101,7 @@ class Embedding(Cell):
     """
 
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal',
-                 dtype=mstype.float32, padding_idx=None, para_dytpe=mstype.float32):
+                 dtype=mstype.float32, padding_idx=None):
         """Initialize Embedding."""
         super(Embedding, self).__init__()
         self.vocab_size = Validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
@@ -109,7 +110,7 @@ class Embedding(Cell):
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.use_one_hot = use_one_hot
         self.dtype = dtype
-        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size], dtype=para_dytpe)
+        self.init_tensor = initializer(embedding_table, [vocab_size, embedding_size])
         self.padding_idx = padding_idx
         if padding_idx is not None:
             self.padding_idx = Validator.check_int_range(padding_idx, 0, vocab_size, Validator.INC_LEFT,
@@ -190,6 +191,7 @@ class EmbeddingLookup(Cell):
             parameter server trainning mode and 'DEVICE' target. And the moment parameter of corresponding
             optimizer will also be set to the cache size. In addition, it should be noted that it will cost the 'DEVICE'
             memory, so suggests setting a reasonable value to avoid insufficient memory.
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
@@ -512,6 +514,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             Default: ``True`` .
         operator (str): The pooling method for the features in one field. Support ``'SUM'`` , ``'MEAN'`` and
             ``'MAX'`` . Default: ``'SUM'`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.

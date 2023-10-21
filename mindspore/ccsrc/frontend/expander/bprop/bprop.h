@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include "ir/anf.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 
@@ -30,7 +31,7 @@ namespace expander {
 namespace bprop {
 bool HasBpropExpander(const std::string &prim_name);
 void ClearBpropOpGraphMap();
-using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+using UserType = std::unordered_map<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
 struct UserMap {
   UserType dout_user_;
   UserType tuple_getitem_user_;

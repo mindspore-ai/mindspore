@@ -1578,6 +1578,8 @@ void ShardReader::ConsumerByRow(int consumer_id) {
     }
     if (ConsumerOneTask(task_id, consumer_id, &task_content_ptr).IsError()) {
       MS_LOG(ERROR) << "[Internal ERROR] Error raised in ConsumerOneTask function.";
+      interrupt_ = true;
+      cv_iterator_.notify_one();
       return;
     }
     const auto &batch = (*task_content_ptr).second;

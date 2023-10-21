@@ -139,6 +139,10 @@ int CropAndResizeCompute(struct KernelBase *self) {
   int32_t *box_idx = (int32_t *)boxidx_tensor->data_;
   NNACL_CHECK_NULL_RETURN_ERR(box_idx);
 
+  if (CheckCropAndResizeBoxIdx(box_idx, boxes_tensor->shape_[Index0], GetBatch(input_tensor)) != NNACL_OK) {
+    return NNACL_CROP_AND_RESIZE_BOX_IDX_INVALID;
+  }
+
   ret = PrepareCropAndResizeBilinear(input_tensor->shape_, boxes, box_idx, output_tensor->shape_,
                                      crop_and_resize->y_bottoms_, crop_and_resize->y_tops_, crop_and_resize->x_lefts_,
                                      crop_and_resize->x_rights_, crop_and_resize->y_bottom_weights_,

@@ -40,6 +40,7 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "utils/ms_context.h"
 #include "tools/graph_kernel/converter/preprocess_weight.h"
+#include "tools/graph_kernel/common/utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindspore/ccsrc/kernel/kernel_build_info.h"
 #include "include/backend/kernel_info.h"
@@ -48,12 +49,11 @@ namespace mindspore::graphkernel {
 AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   std::vector<std::string> format = GetFixedFormat(node);
-  auto current_kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  if (current_kernel_info == nullptr) {
+  auto current_kernel_build_info = GetKernelInfo(node);
+  if (current_kernel_build_info == nullptr) {
     MS_LOG(ERROR) << "Kernel info from " << cnode->fullname_with_scope() << "is nullptr";
     return nullptr;
   }
-  auto current_kernel_build_info = current_kernel_info->GetMutableSelectKernelBuildInfo();
   auto ori_format = current_kernel_build_info->GetAllOutputFormats();
   current_kernel_build_info->SetOutputsFormat(format);
   auto ret = decorated_->Run(cnode);
@@ -62,29 +62,11 @@ AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
   }
   auto fg = GetCNodeFuncGraph(ret);
   for (auto sub_cnode : fg->GetOrderedCnodes()) {
-    std::shared_ptr<device::KernelInfo> kernel_info = nullptr;
-    auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
-    kernel_info_builder.SetOutputsFormat(ori_format);
-    if (!node->kernel_info_ptr()) {
-      kernel_info = std::make_shared<device::KernelInfo>();
-    } else {
-      kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-    }
-    kernel_info->set_select_kernel_build_info(kernel_info_builder.Build());
-    sub_cnode->set_kernel_info(kernel_info);
+    SetAnfKernelInfoFormatFromAToB(node, sub_cnode, ori_format);
   }
-  auto ret_cnode = ret->cast<CNodePtr>();
-  std::shared_ptr<device::KernelInfo> kernel_info_ret_cnode = nullptr;
-  auto kernel_info_builder = kernel::KernelBuildInfo::KernelBuildInfoBuilder();
-  kernel_info_builder.SetOutputsFormat(ori_format);
-  if (!node->kernel_info_ptr()) {
-    kernel_info_ret_cnode = std::make_shared<device::KernelInfo>();
-  } else {
-    kernel_info_ret_cnode = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  }
-  kernel_info_ret_cnode->set_select_kernel_build_info(kernel_info_builder.Build());
-  ret_cnode->set_kernel_info(current_kernel_info);
-  return ret_cnode;
+  auto ret_node = ret->cast<CNodePtr>();
+  SetAnfKernelInfoFormatFromAToB(node, ret_node, ori_format);
+  return ret;
 }
 
 std::vector<std::string> FixFormatDeco::GetFixedFormat(const AnfNodePtr &node) const {
@@ -103,10 +85,9 @@ std::vector<std::string> UseInputFormatDeco::GetFixedFormat(const AnfNodePtr &no
     if (cnode->input(i)->isa<CNode>()) {
       auto kernel_with_index = AnfUtils::VisitKernel(cnode->input(i), 0);
       auto input_cnode = kernel_with_index.first->cast<CNodePtr>();
-      if (input_cnode != nullptr && input_cnode->kernel_info_ptr() != nullptr) {
-        auto kernel_info_ret_cnode = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-        auto input_format =
-          kernel_info_ret_cnode->select_kernel_build_info()->GetOutputFormat(kernel_with_index.second);
+      auto input_kernel_build_info = GetKernelInfo(input_cnode);
+      if (input_cnode != nullptr && input_kernel_build_info != nullptr) {
+        auto input_format = input_kernel_build_info->GetOutputFormat(kernel_with_index.second);
         format.push_back(input_format);
         break;
       }
@@ -209,8 +190,6 @@ bool GraphKernelExpanderLite::DisableConvTuning() {
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
-    {kAllTarget, OpLevel_0, prim::kPrimAddN},
-    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
     {kAllTarget, OpLevel_0, prim::kPrimGeLU},
     {kAllTarget, OpLevel_0, prim::kPrimSquare},
     {kAllTarget, OpLevel_0, prim::kPrimSquaredDifference},
@@ -218,9 +197,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
     // ascend device
     {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
     {kAscendDevice, OpLevel_0, prim::kPrimTile},
-    {kAscendDevice, OpLevel_1, prim::kPrimBatchMatMul},
     {kAscendDevice, OpLevel_1, prim::kPrimLayerNorm},
-    {kAscendDevice, OpLevel_1, prim::kPrimMatMul},
     {kAscendDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogits},
     {kAscendDevice, OpLevel_0, prim::kPrimSquaredDifference},
     {kAscendDevice, OpLevel_0, prim::kPrimSquareSumAll},

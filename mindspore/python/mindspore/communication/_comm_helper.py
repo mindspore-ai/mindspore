@@ -37,8 +37,8 @@ def hccl_load_lib():
         base_dir = os.path.dirname(os.path.realpath(__file__))
         lib_path = os.path.join(base_dir, "../lib/plugin/ascend", HCCL_LIB)
         ctypes.CDLL(lib_path)
-    except Exception:
-        raise RuntimeError('Get hccl lib error.')
+    except Exception as exc:
+        raise RuntimeError('Get hccl lib error.') from exc
 
 _HCCL_TEST_AVAILABLE = False
 

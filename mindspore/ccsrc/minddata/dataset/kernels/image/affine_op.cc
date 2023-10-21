@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include <random>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/kernels/image/affine_op.h"

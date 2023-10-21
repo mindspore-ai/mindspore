@@ -46,9 +46,9 @@ def exec_cp_command(src, dst):
 
 
 def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context):
-    exec_shell = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; "\
-                 + "export MS_COMPILER_CACHE_PATH={}; cd resnet/scripts; bash run_distribute_train.sh {} {} {}"\
-                 .format(cache_path, utils.rank_table_path, dataset_path, config_path)
+    exec_shell = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+                 + "export MS_COMPILER_CACHE_PATH={}; cd resnet/scripts; bash run_distribute_train.sh {} {} {}" \
+                     .format(cache_path, utils.rank_table_path, dataset_path, config_path)
     os.system(exec_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
@@ -86,8 +86,9 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     # First run without compile cache
     cmd_first = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     if use_ge:
-        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + file_name + " '" +\
-                    cache_path + "' > " + log_file_name_first + " 2>&1"
+        # TODO export MS_DISABLE_REF_MODE=1;
+        cmd_first = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+                    file_name + " '" + cache_path + "' > " + log_file_name_first + " 2>&1"
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
     assert os.path.exists(cache_path)
@@ -102,14 +103,15 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_first = np.array([float(x) for x in nums_first])
     shape_first = re.findall(match_num, match_output_first[1])
     array_shape_first = np.array([int(x) for x in shape_first])
-    exec_shell = f"unset_MS_ENABLE_GE"
+    exec_shell = f"unset MS_ENABLE_GE"
     os.system(exec_shell)
 
     # Second run with compile cache
     cmd_second = f"export GLOG_v=2; python " + file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     if use_ge:
-        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; python " + file_name + " '" +\
-                     cache_path + "' > " + log_file_name_second + " 2>&1"
+        # TODO export MS_DISABLE_REF_MODE=1;
+        cmd_second = f"export GLOG_v=2; export MS_ENABLE_GE=1; export MS_DISABLE_REF_MODE=1; python " + \
+                     file_name + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
     with open(log_file_name_second, "r") as f_second:
@@ -124,7 +126,7 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     array_second = np.array([float(x) for x in nums_second])
     shape_second = re.findall(match_num, match_output_second[1])
     array_shape_second = np.array([int(x) for x in shape_second])
-    exec_shell = f"unset_MS_ENABLE_GE"
+    exec_shell = f"unset MS_ENABLE_GE"
     os.system(exec_shell)
 
     assert np.allclose(array_first, array_second, 0.0001, 0.0001)
@@ -269,7 +271,7 @@ def run_lenet_ps_twice(file_name, cache_path, log_file_name_first, log_file_name
     shutil.rmtree(cache_path, ignore_errors=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -309,7 +311,7 @@ def test_compile_cache_net_with_control_flow():
                                 "control_net_second.txt")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

@@ -32,8 +32,11 @@ namespace mindspore {
 namespace opt {
 class EncoderLayerFusion : public MultiplePatternProcessPass {
  public:
-  explicit EncoderLayerFusion(const std::string &name = "EncoderLayerFusion", bool multigraph = true)
-      : MultiplePatternProcessPass(name, multigraph) {}
+  explicit EncoderLayerFusion(bool embedding_layer = false, const std::string &name = "EncoderLayerFusion",
+                              bool multigraph = true)
+      : MultiplePatternProcessPass(name, multigraph) {
+    embedding_layer_ = embedding_layer;
+  }
 
   ~EncoderLayerFusion() override = default;
 
@@ -65,6 +68,8 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternDistributedAlphaWithLastLayerNorm = "PatternDistributedAlphaWithLastLayerNorm";
   const std::string kPatternQueryLayerUsePastDistributed = "PatternQueryLayerUsePastDistributed";
   const std::string kPatternSigma = "kPatternSigma";
+  const std::string kPatternSigmaEmbedding = "kPatternSigmaEmbedding";
+  const std::string kPatternSigmaQuery = "kPatternSigmaQuery";
   const std::string kPatternSigmaMoe = "kPatternSigmaMoe";
   const std::string kPatternSigmaMoeWithLastLayerNorm = "PatternSigmaMoeWithLastLayerNorm";
   const std::string kPatternSigmaWithLastLayerNorm = "PatternSigmaWithLastLayerNorm";
@@ -84,6 +89,9 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   const std::string kPatternSigmaMoeDistributedMBGELU = "PatternSigmaMoeDistributedMBGELU";
   const std::string kPatternSigmaDistributedMBFirst = "PatternSigmaMoeDistributedMBFirst";
   const std::string kPatternSigmaFirst = "kPatternSigmaFirsts";
+  const std::string kPatternSigmaQueryLayerDistributedMBMoe = "kPatternSigmaQueryLayerDistributedMBMoe";
+  const std::string kPatternSigmaQueryLayerDistributedMoe = "kPatternSigmaQueryLayerDistributedMoe";
+  const std::string kPatternSigmaEmbeddingDistributed = "kPatternSigmaEmbeddingDistributed";
 
   VectorRef DefinePatternEncoderLayer(bool post_layernorm, bool layernorm_fusion, bool is_position_bias_, bool mask,
                                       bool is_layer_norm) const;
@@ -109,12 +117,12 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   BaseRef DefineBatchValidLength(const BaseRef &input) const;
   VectorRef DefinePatternMoERouter(VectorRef input_layernorm) const;
   VectorRef DefinePatternMoE(VectorRef input_layernorm, bool multi_batch, bool gelu) const;
-  VectorRef DefinePatternSigmaFfn(BaseRef input, bool gelu) const;
+  VectorRef DefinePatternSigmaFfn(BaseRef input, bool gelu, bool distributed) const;
   VectorRef DefinePatternMoETopKRouter(VectorRef input) const;
   VectorRef DefinePatternMoEFfn(VectorRef input_reshape, bool gelu) const;
   VectorRef DefineDependKV(VectorRef input_layernorm, VectorRef deppend_v_input, bool moe) const;
   VectorRef DefineFfn(VectorRef input) const;
-  VectorRef DefineFirstEncoder() const;
+  VectorRef DefineFirstEncoder(bool distributed) const;
   lite::STATUS InitAttributes(AnfNodePtr k_past, AnfNodePtr begin_expert_ids, AnfNodePtr weight_m,
                               AnfNodePtr expert_capacity_node, int *ffn_hidden_size, int *expert_num,
                               int *expert_offset, float *capacity_factor) const;
@@ -127,6 +135,7 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   bool IsLayerNormFusion(const std::string &pattern_name) const;
   bool IsMoe(const std::string &pattern_name) const;
   bool IsFastGelu(const std::string &pattern_name) const;
+  bool IsFastGeluDistributed(const std::string &pattern_name) const;
   bool IsQueryLayer(const std::string &pattern_name) const;
 
  protected:
@@ -185,6 +194,8 @@ class EncoderLayerFusion : public MultiplePatternProcessPass {
   mutable bool is_distributed_{false};
   mutable bool is_fast_gelu_{false};
   mutable bool is_embedding_layer_{false};
+
+  mutable bool embedding_layer_{false};
 };
 }  // namespace opt
 }  // namespace mindspore

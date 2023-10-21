@@ -111,6 +111,7 @@ Status ScatterMathOpsInfo::InferBias() {
     return SUCCESS;
   }
 
+  MS_EXCEPTION_IF_ZERO("input_strategy.at(0)", input_strategy.at(0));
   slice_size_ = input_shape.at(0) / input_strategy.at(0);
   int64_t input_shard_num =
     std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int64_t>());
@@ -120,10 +121,12 @@ Status ScatterMathOpsInfo::InferBias() {
     if (repeated_num_in_dev_matrix_right_) {
       rank = rank / repeated_calc_num_;
     } else {
+      MS_EXCEPTION_IF_ZERO("input_shard_num", input_shard_num);
       rank = rank % input_shard_num;
     }
   }
 
+  MS_EXCEPTION_IF_ZERO("input_column_shard_num", input_column_shard_num);
   bias_ = rank / input_column_shard_num * slice_size_;
   return SUCCESS;
 }

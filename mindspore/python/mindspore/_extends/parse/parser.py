@@ -24,6 +24,7 @@ import re
 import hashlib
 import inspect
 import types
+from collections import namedtuple
 from typing import NamedTuple
 from textwrap import dedent
 import numpy
@@ -43,7 +44,7 @@ from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore._checkparam import is_stub_tensor
 from mindspore.ops._tracefunc import _PackSourceBuilder
-from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
+from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE
 from ...common.api import _convert_python_data
@@ -130,7 +131,7 @@ _modules_from_mindspore = (
     "mindspore_rl", "mindformers", "mindpet", "mindpose", "mindface", "mindsearch", "mindinsight", "mindelec",
     "mindflow", "mindsponge", "mindearth", "sciai", "mindquantum", "mindarmour", "mindpandas", "mindvision",
     "mindspore_gl", "mindspore_federated", "mindspore_gs", "mindspore_serving", "mindspore_xai", "mindspore_hub",
-    "ringmo_framework",
+    "ringmo_framework", "troubleshooter", "mindtorch",
 )
 
 _global_params = {}
@@ -521,14 +522,6 @@ def get_module_namespace(obj):
     return mod_namespace
 
 
-def get_class_attr_namespace_symbol(obj):
-    """Get class namespace."""
-    logger.debug("get class namespace, object: %r", obj)
-    class_namespace = ClassAttrNamespace(obj)
-    logger.debug("class namespace: %r", class_namespace)
-    return class_namespace
-
-
 def get_class_member_namespace_symbol(obj):
     """Get obj class member type."""
     logger.debug("get class instance namespace, object: %r", obj)
@@ -612,6 +605,12 @@ def convert_to_ms_csrtensor(data):
 def convert_to_ms_cootensor(data):
     """Convert C++ cootensor to mindspore cootensor."""
     return COOTensor(coo_tensor=data)
+
+
+def convert_to_namedtuple(type_name, key_sequeue, value_sequeue):
+    """Convert C++ namedtuple to python object namedtuple."""
+    logger.debug(f"type_name: {type_name}, key_sequeue: {key_sequeue}, value_sequeue: {value_sequeue}")
+    return namedtuple(type_name, [*key_sequeue])(*value_sequeue)
 
 
 def get_object_description(obj, fname, fline):
@@ -770,6 +769,12 @@ def _convert_stub_tensor(data):
     if is_stub_tensor(data):
         return data.stub_sync()
     if isinstance(data, tuple):
+        # Handle namedtuple since its type is tuple.
+        if hasattr(data, "_fields"):
+            type_name = data.__class__.__name__
+            data_dict = data._asdict()
+            fields = data_dict.keys()
+            return namedtuple(type_name, fields)(**_convert_stub_tensor(data_dict))
         return tuple(_convert_stub_tensor(x) for x in data)
     if isinstance(data, list):
         # Keep the list object not change.
@@ -940,9 +945,8 @@ class ThirdPartyLibraryChecker:
         """Check if value is from a third-party library."""
         if inspect.ismodule(value):
             module = value
-        elif inspect.isfunction(value) or inspect.ismethod(value):
-            if hasattr(value, "__jit_function__"):
-                return False
+        elif (isinstance(value, types.FunctionType) and not hasattr(value, "__jit_function__")) or \
+            (isinstance(value, types.MethodType) and not hasattr(value.__func__, "__jit_function__")):
             if value in _convert_map():
                 return False
             module = inspect.getmodule(value)

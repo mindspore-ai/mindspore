@@ -246,7 +246,7 @@ class Conv2d(_Conv):
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
@@ -462,10 +462,10 @@ class Conv1d(_Conv):
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'``.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})` .
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
@@ -704,7 +704,7 @@ class Conv3d(_Conv):
             `Initializer <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_,
             for more details. Default: ``None`` , bias will be initialized using ``'Uniform'`` .
         data_format (str, optional): The optional value for data format. Currently only support ``'NCDHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
 
     Inputs:
@@ -718,9 +718,9 @@ class Conv3d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+                D_{out} = \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
 
@@ -728,11 +728,11 @@ class Conv3d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -740,11 +740,11 @@ class Conv3d(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -812,7 +812,7 @@ class Conv3d(_Conv):
             bias_init,
             data_format,
             dtype=dtype)
-        out_channels = self.out_channels // group
+        out_channels = self.out_channels
         self.conv3d = P.Conv3D(out_channel=out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -820,33 +820,17 @@ class Conv3d(_Conv):
                                pad=self.padding,
                                stride=self.stride,
                                dilation=self.dilation,
-                               group=1,
+                               group=group,
                                data_format=self.data_format)
         self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
-        self.concat = P.Concat(1)
-        self.split_0 = P.Split(0, self.group)
-        self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
         x_shape = self.shape(x)
         _check_input_5dims(x_shape, self.cls_name)
-        if self.group == 1:
-            out = self.conv3d(x, self.weight)
-            if self.has_bias:
-                out = self.bias_add(out, self.bias)
-        else:
-            features = self.split_1(x)
-            weights = self.split_0(self.weight)
-            outputs = ()
-            for i in range(self.group):
-                output = self.conv3d(features[i], weights[i])
-                outputs = outputs + (output,)
-            out = self.concat(outputs)
-            if self.bias is not None:
-                new_shape = [1 for _ in range(out.ndim)]
-                new_shape[1] = self.out_channels
-                out = out + self.bias.reshape(new_shape)
+        out = self.conv3d(x, self.weight)
+        if self.has_bias:
+            out = self.bias_add(out, self.bias)
         return out
 
 
@@ -924,11 +908,11 @@ class Conv3dTranspose(_Conv):
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
             Default: ``'NCDHW'`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
-          Currently input data type only support float16 and float32.
+          Currently input data dtype only support float16 and float32.
 
     Outputs:
         Tensor, the shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -937,9 +921,9 @@ class Conv3dTranspose(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in}}{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in}}{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in}}{\text{stride[2]}} + 1} \right \rfloor \\
+                D_{out} = \left \lfloor{\frac{D_{in}}{\text{stride[0]}} + 1} \right \rfloor \\
+                H_{out} = \left \lfloor{\frac{H_{in}}{\text{stride[1]}} + 1} \right \rfloor \\
+                W_{out} = \left \lfloor{\frac{W_{in}}{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
 
@@ -947,11 +931,11 @@ class Conv3dTranspose(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -959,11 +943,11 @@ class Conv3dTranspose(_Conv):
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -1147,7 +1131,7 @@ class Conv2dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1363,7 +1347,7 @@ class Conv1dTranspose(_Conv):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.

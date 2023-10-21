@@ -16,12 +16,18 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_UTIL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_DEVICE_GPU_HASH_TABLE_UTIL_H_
 
-#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
 #include <map>
 #include <tuple>
 #include <utility>
 #include <string>
 #include <memory>
+
+#ifndef ENABLE_ASAN
+#include "plugin/device/gpu/hal/device/gpu_hash_table.h"
+#else
+#include "plugin/device/gpu/hal/device/gpu_hash_table_dummy.h"
+#endif
+
 #include "include/backend/distributed/ps/ps_context.h"
 #if CUDA_VERSION > 11000 && defined(__linux__)
 

@@ -21,13 +21,221 @@ import inspect
 import json
 import os
 import functools
+import platform
+import hashlib
+import shutil
 
 from mindspore._c_expression import Oplib
 from mindspore import _checkparam as validator
+from mindspore import log as logger
+
+if platform.system() == "Linux":
+    import fcntl
 
 # path of built-in op info register.
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
 BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
+
+
+def _get_reg_info_attr(op_info, attr_name, default_value=None):
+    """get attr value"""
+    for _, item in enumerate(op_info.get("attr", [])):
+        if item.get("name") == attr_name:
+            return item.get("defaultValue")
+    return default_value
+
+
+class _CustomInstaller:
+    """save custom op registration information to a json file which will be used by GE"""
+    reg_info_hash = []  # used to avoid writing the same reg info to file multiple times
+    copied_paths = []  # used to avoid copying the same file multiple times
+
+    def __init__(self, op_info, func=None):
+        self.op_info = op_info
+        self.func = func
+        self.op_type = op_info.get("op_name") if not func else func.__name__
+        vendor_name = "ms"
+        custom_dir = os.path.join(os.path.realpath("./"), "vendors", vendor_name)
+        self._set_env(custom_dir)
+        op_impl_dir = os.path.join(custom_dir, "op_impl")
+        self.ai_core_config_dir = os.path.join(op_impl_dir, "ai_core", "tbe", "config")
+        self.ai_core_impl_dir = os.path.join(op_impl_dir, "ai_core", "tbe", vendor_name + "_impl")
+        self.ai_cpu_config_dir = os.path.join(op_impl_dir, "cpu", "config")
+        self.ai_cpu_impl_dir = os.path.join(op_impl_dir, "cpu", "aicpu_kernel", "impl")
+
+    @staticmethod
+    def _set_env(custom_opp_path):
+        """set custom file path to env"""
+        if not os.environ.get("ASCEND_CUSTOM_OPP_PATH"):
+            os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path
+        else:
+            paths = os.environ["ASCEND_CUSTOM_OPP_PATH"].split(':')
+            if custom_opp_path not in paths:
+                os.environ["ASCEND_CUSTOM_OPP_PATH"] = custom_opp_path + ':' + os.environ["ASCEND_CUSTOM_OPP_PATH"]
+
+    @staticmethod
+    def _create_dir(*dir_names):
+        """create directory"""
+        for dir_name in dir_names:
+            if not os.path.isdir(dir_name):
+                try:
+                    os.makedirs(dir_name, exist_ok=True)
+                except OSError as err:
+                    if err.errno == 17:  # File exists
+                        pass
+                    else:
+                        raise err
+
+    @staticmethod
+    def _copy_file(src_path, dst_dir):
+        """copy file"""
+        if not os.path.exists(src_path) or src_path in _CustomInstaller.copied_paths:
+            return
+        _CustomInstaller.copied_paths.append(src_path)
+        if os.path.isfile(src_path):
+            lock_file = os.path.join(dst_dir, "file.lock")
+            with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                shutil.copy(src_path, dst_dir)
+
+    def check(self):
+        """check if the reg info need written"""
+        if platform.system() != "Linux":
+            return False
+        if not os.environ.get("MS_DEV_CUSTOM_OPP_PATH"):
+            # only process the first time import the mindspore module
+            return False
+        if self.op_info.get("target") in ["GPU", "CPU"]:
+            return False
+        sha256 = hashlib.sha256()
+        value = json.dumps(self.op_info, sort_keys=True).encode()
+        sha256.update(value)
+        hash_value = sha256.hexdigest()
+        if hash_value in _CustomInstaller.reg_info_hash:
+            return False
+        _CustomInstaller.reg_info_hash.append(hash_value)
+        return True
+
+    def _find_ai_cpu_so_path(self, so_file):
+        """find the absolute path of so"""
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        search_paths = [current_path + "/../lib", current_path + "/../lib/plugin/ascend"]
+        for path in search_paths:
+            so_path = os.path.join(path, so_file)
+            if os.path.exists(so_path):
+                return so_path
+        logger.warning("For Custom op '{}', can not find the aicpu so file '{}' in the following directories:\n{}"
+                       .format(self.op_type, so_file, "\n".join(search_paths)))
+        return ""
+
+    def _gen_ai_core_reg_info(self, imply_path, func_name):
+        """generate reg info"""
+
+        def _get_dtype_format(idx):
+            data_type = []
+            data_format = []
+            for _, dtype_format in enumerate(self.op_info.get("dtype_format", [])):
+                if not dtype_format[idx][0]:
+                    data_type = None
+                else:
+                    data_type.append(dtype_format[idx][0])
+                if not dtype_format[idx][1]:
+                    data_format = None
+                else:
+                    if dtype_format[idx][1] == "DefaultFormat":
+                        data_format.append("ND")
+                    else:
+                        data_format.append(dtype_format[idx][1])
+            return data_type, data_format
+
+        op_info = {"opFile": {"value": os.path.splitext(os.path.basename(imply_path))[0]},
+                   "opInterface": {"value": func_name}}
+        # attr
+        attrs_name = []
+        for _, item in enumerate(self.op_info.get("attr", [])):
+            attr_name = item.get("name")
+            attrs_name.append(attr_name)
+            key = "attr_" + attr_name
+            op_info[key] = {}
+            for k, v in item.items():
+                if k != "name":
+                    op_info[key][k] = v
+        if attrs_name:
+            op_info["attr"] = {"list": ",".join(attrs_name)}
+        # input and output
+        inputs = self.op_info.get("inputs", [])
+        outputs = self.op_info.get("outputs", [])
+        input_num = len(inputs)
+        output_num = len(outputs)
+        for i in range(input_num + output_num):
+            item = inputs[i] if i < input_num else outputs[i - input_num]
+            key = "input" if i < input_num else "output"
+            key += str(item.get("index"))
+            op_info[key] = {"name": item.get("name"),
+                            "paramType": item.get("paramType", "required"),
+                            "shape": item.get("shape", "all")}
+            dtype, formats = _get_dtype_format(i)
+            if dtype:
+                op_info[key]["dtype"] = ",".join(dtype)
+            if formats:
+                op_info[key]["format"] = ",".join(formats)
+        return op_info
+
+    @staticmethod
+    def _gen_ai_cpu_reg_info(so_file):
+        """generate reg info"""
+        op_info = {"opInfo": {"computeCost": "100",
+                              "engine": "DNN_VM_AICPU",
+                              "flagAsync": "False",
+                              "flagPartial": "False",
+                              "functionName": "RunCpuKernel",
+                              "kernelSo": so_file,
+                              "opKernelLib": "CUSTAICPUKernel",
+                              "userDefined": "True"}}
+        return op_info
+
+    def _save_op_info(self, dst_dir, file_name, op_info):
+        """save op info file"""
+        repo = {}
+        save_path = os.path.join(dst_dir, file_name)
+        lock_file = os.path.join(dst_dir, "file.lock")
+        with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            if os.path.isfile(save_path):
+                with open(save_path, 'r') as fr:
+                    json_str = fr.read()
+                json_str = "{}" if json_str == "" else json_str
+                repo = json.loads(json_str)
+            repo.update({self.op_type: op_info})
+            with os.fdopen(os.open(save_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as fw:
+                json.dump(repo, fw, sort_keys=True, indent=4, separators=(',', ':'))
+
+    def run(self):
+        """save reg info to file"""
+        if not self.check():
+            return
+        so_name = _get_reg_info_attr(self.op_info, "cust_aicpu")
+        if so_name:
+            _CustomInstaller._create_dir(self.ai_cpu_config_dir, self.ai_cpu_impl_dir)
+            # copy so file
+            so_file = "lib" + so_name + ".so"
+            imply_path = self._find_ai_cpu_so_path(so_file)
+            self._copy_file(imply_path, self.ai_cpu_impl_dir)
+            # generate and copy reg info file
+            op_info = self._gen_ai_cpu_reg_info(so_file)
+            self._save_op_info(self.ai_cpu_config_dir, "cust_aicpu_kernel.json", op_info)
+        else:
+            _CustomInstaller._create_dir(self.ai_core_config_dir, self.ai_core_impl_dir)
+            # copy dsl file
+            imply_path = os.path.realpath(inspect.getfile(self.func))
+            self._copy_file(imply_path, self.ai_core_impl_dir)
+            # generate and copy reg info file
+            op_info = self._gen_ai_core_reg_info(imply_path, self.func.__name__)
+            self._copy_file(imply_path, self.ai_core_impl_dir)
+            for arc_name in ["ascend910", "ascend910b"]:
+                arc_dir = os.path.join(self.ai_core_config_dir, arc_name)
+                _CustomInstaller._create_dir(arc_dir)
+                self._save_op_info(arc_dir, "aic-{}-ops-info.json".format(arc_name), op_info)
 
 
 def op_info_register(op_info):
@@ -125,6 +333,12 @@ def custom_info_register(*reg_info):
 
     def decorator(func):
         setattr(func, "reg_info", reg_info)
+        if reg_info:
+            used_reg_info = reg_info[0]
+            if isinstance(used_reg_info, dict):
+                # ai_cpu should be parsed inside CustomRegOp, skip it here
+                if not _get_reg_info_attr(used_reg_info, "cust_aicpu"):
+                    _CustomInstaller(used_reg_info, func).run()
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -1005,6 +1219,8 @@ class CustomRegOp(RegOp):
             if isinstance(k, str) and k.endswith('_'):
                 k = k.rstrip('_')
             op_info[k] = v
+        if _get_reg_info_attr(op_info, "cust_aicpu"):
+            _CustomInstaller(op_info).run()
         return op_info
 
 

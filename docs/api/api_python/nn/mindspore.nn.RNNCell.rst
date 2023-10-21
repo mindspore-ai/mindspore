@@ -1,7 +1,7 @@
 mindspore.nn.RNNCell
 =====================
 
-.. py:class:: mindspore.nn.RNNCell(input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = 'tanh', dtype: mindspore.dtype = mstype.float32)
+.. py:class:: mindspore.nn.RNNCell(input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = 'tanh', dtype=mstype.float32)
 
     循环神经网络单元，激活函数是tanh或relu。
 
@@ -15,11 +15,11 @@ mindspore.nn.RNNCell
         - **hidden_size** (int) - 隐藏层输出的特征向量维度。
         - **has_bias** (bool) - Cell是否有偏置项 :math:`b_{ih}` 和 :math:`b_{hh}` 。默认值： ``True`` 。
         - **nonlinearity** (str) - 用于选择非线性激活函数。取值可以是'tanh'或'relu'。默认值： ``'tanh'`` 。
-        - **dtype** (:class:`mindspore.dtype`) - Parameter的数据类型。默认值： ``mstype.float32`` 。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor，其shape为 :math:`(batch\_size, input\_size)` 。
-        - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为 :math:`(batch\_size, hidden\_size)` 。 `hx` 的数据类型与 `x` 相同。
+        - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为 :math:`(batch\_size, hidden\_size)` 。
 
     输出：
         - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。

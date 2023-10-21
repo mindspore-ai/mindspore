@@ -20,25 +20,22 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
+constexpr size_t kTransposeCalcInputsNum = 2;
+
 TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != 2) {
-    return {};
-  }
-
-  if (inputs[0] == nullptr || inputs[1] == nullptr) {
-    return {};
-  }
-
-  if (!inputs[0]->isa<tensor::Tensor>()) {
-    return {};
-  }
-
-  if (!inputs[1]->isa<ValueSequence>()) {
+  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
+      !inputs[1]->isa<ValueSequence>()) {
     return {};
   }
 
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
+
+  const auto &x_shape = tensor->shape();
+  (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, "Transpose");
+  if (x_shape[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
+  }
 
   auto old_tensor_info = GetOldTensorInfo(tensor);
   auto old_shape = old_tensor_info->old_shape;

@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <queue>
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -34,6 +35,7 @@
 #include "ops/nn_ops.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "utils/log_adapter.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
@@ -329,11 +331,11 @@ void MindRTBackendBase::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
     }
 
     auto cnode = node->cast<CNodePtr>();
-    if (!common::AnfAlgo::HasNodeAttr(kAttrNotSupportOpForDevice, cnode)) {
+    if (!common::AnfAlgo::HasNodeAttr(mindspore::kAttrNotSupportOpForDevice, cnode)) {
       continue;
     }
 
-    auto not_support_device = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrNotSupportOpForDevice);
+    auto not_support_device = common::AnfAlgo::GetNodeAttr<std::string>(node, mindspore::kAttrNotSupportOpForDevice);
     if (device::GetDeviceTypeByName(not_support_device) != old_target) {
       continue;
     }
@@ -417,49 +419,7 @@ DWORD WINAPI WinThreadFunction(PVOID para) {
   nodes_ptr->insert(nodes_ptr->end(), inputs.begin(), inputs.end());
   return 0;
 }
-
-void GetInputs(const AnfNodePtr &anf_node, size_t input_idx, std::vector<KernelWithIndex> *nodes_ptr) {
-  constexpr size_t stack_size = 1024 * 1024 * 8;
-  MS_LOG(INFO) << "Do GetRealPrevNodesOutput in windows os start";
-  WinThreadParam param;
-  param.anf_node_ = &anf_node;
-  param.input_idx_ = input_idx;
-  param.nodes_ptr_ = nodes_ptr;
-  auto handle = CreateThread(NULL, stack_size, WinThreadFunction, &param, 0, NULL);
-  WaitForSingleObject(handle, INFINITE);
-  MS_LOG(INFO) << "Do GetRealPrevNodesOutput in windows os end";
-}
-#else
-void GetInputs(const AnfNodePtr &anf_node, size_t input_idx, std::vector<KernelWithIndex> *nodes_ptr) {
-  auto inputs = common::AnfAlgo::GetRealPrevNodesOutput(anf_node, input_idx);
-  nodes_ptr->insert(nodes_ptr->end(), inputs.begin(), inputs.end());
-}
 #endif
-
-void SetPyExecuteSyncAttr(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!AnfUtils::IsRealKernel(cnode)) {
-    return;
-  }
-  if (IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
-    return;
-  }
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    std::vector<KernelWithIndex> inputs;
-    GetInputs(cnode, i - 1, &inputs);
-    for (const auto &input_with_idx : inputs) {
-      auto input = input_with_idx.first;
-      if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
-        // Frontend PyExecute Primitive is all same pointer
-        auto prim = std::make_shared<Primitive>(*common::AnfAlgo::GetCNodePrimitive(input));
-        prim->set_attr(kAttrCopyData, MakeValue(true));
-        prim->set_attr(kAttrNeedCast, MakeValue(true));
-        auto input_node = input->cast_ptr<CNode>();
-        input_node->set_input(0, std::make_shared<ValueNode>(prim));
-      }
-    }
-  }
-}
 
 void CheckNodeValid(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -490,30 +450,26 @@ bool AddKernelGraphCompileInfo(const KernelGraphPtr &kernel_graph, const session
       kernel_graph->SetKernelInfoForNode(p);
     }
   }
-  // Run by single op will create kernel info in single op graph, so no need do this here;
-  // But, run by Actor need kernel info, so do this here
-  bool run_by_single_op = kernel_graph->has_flag(kFlagEnableRunGraphBySingleOp);
-  if (!run_by_single_op) {
-    const auto &nodes = TopoSort(kernel_graph->get_return());
-    for (const auto &node : nodes) {
-      if (node->isa<CNode>()) {
-        const auto &cnode = node->cast<CNodePtr>();
-        if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0)); prim != nullptr) {
-          // Bprop cut use prim_py
-          if (!IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
-            auto new_prim = std::make_shared<Primitive>(*prim);
-            cnode->set_input(kIndex0, NewValueNode(new_prim));
-          }
+
+  const auto &nodes = TopoSort(kernel_graph->get_return());
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      const auto &cnode = node->cast<CNodePtr>();
+      if (auto prim = GetValueNode<PrimitivePtr>(cnode->input(kIndex0)); prim != nullptr) {
+        // Bprop cut use prim_py
+        if (!IsPrimitiveEquals(prim, prim::kPrimBpropCut)) {
+          auto new_prim = std::make_shared<Primitive>(*prim);
+          cnode->set_input(kIndex0, NewValueNode(new_prim));
         }
-        kernel_graph->PostNewCNode(cnode);
-      } else {
-        if (node->isa<ValueNode>()) {
-          session_ptr->CreateNewValueNode(node, kernel_graph.get());
-        }
-        // Kernel graph new value node will create kernel info
-        if (node->kernel_info() == nullptr) {
-          kernel_graph->SetKernelInfoForNode(node);
-        }
+      }
+      kernel_graph->PostNewCNode(cnode);
+    } else {
+      if (node->isa<ValueNode>()) {
+        session_ptr->CreateNewValueNode(node, kernel_graph.get());
+      }
+      // Kernel graph new value node will create kernel info
+      if (node->kernel_info() == nullptr) {
+        kernel_graph->SetKernelInfoForNode(node);
       }
     }
   }
@@ -678,7 +634,6 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
     if (!output->isa<CNode>()) {
       continue;
     }
-    bool is_pynative_kernel_graph = graph->has_flag(kFlagIsPyNativeBpropKernelGraph);
     auto seen = NewSeenGeneration();
     std::queue<AnfNodePtr> to_visit;
     to_visit.emplace(output);
@@ -691,9 +646,6 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       UnifyIR(cnode);
-      if (!is_pynative_kernel_graph && common::GetEnv("MS_RUNTIME_COMPILE") == "1") {
-        SetPyExecuteSyncAttr(cnode);
-      }
       for (auto &input : cnode->inputs()) {
         MS_EXCEPTION_IF_NULL(input);
         if (input->seen_ == seen || !input->isa<CNode>()) {
@@ -786,11 +738,22 @@ void MindRTBackendBase::CompileGraphFromSegment(const GraphSegmentPtr &segment, 
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
 
+    // Get segment run mode.
+    auto seg_run_mode = run_mode;
+    for (auto &node : outputs) {
+      if (node->isa<CNode>()) {
+        if (common::AnfAlgo::GetGraphSplitGroup(node) == kKernelGroup) {
+          seg_run_mode = device::RunMode::kKernelMode;
+          break;
+        }
+      }
+    }
+
     GraphId graph_id;
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
       graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
     } else {
-      graph_id = graph_compiler_->CompileGraph(segment, std::make_pair(inputs, outputs), device_context, run_mode,
+      graph_id = graph_compiler_->CompileGraph(segment, std::make_pair(inputs, outputs), device_context, seg_run_mode,
                                                ms_execution_mode_ == kPynativeMode);
       if (graph_compiler_->Fetch(graph_id)->has_flag(kFlagEnableRunGraphBySingleOp)) {
         MS_LOG(INFO)
@@ -965,11 +928,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args) {
       return;
     }
 
-    const auto &storage_info = t->storage_info();
-    if (storage_info->shape == storage_info->ori_shape && storage_info->is_contiguous) {
-      MS_LOG(DEBUG) << "Tensor is already contiguous.";
-      return;
-    }
+    GilReleaseWithCheck release_gil;
     MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
     RunContiguousTask(t, false);
   };
@@ -1058,6 +1017,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     ConstructOutputs(actor_set, outputs, root_graph_);
     (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 1);
 
+    actor_set->output_actor_->FreeSummaryNodeMem();
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   }
   // Close abstract_lock for dynamic_shape

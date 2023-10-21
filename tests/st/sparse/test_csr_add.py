@@ -50,7 +50,7 @@ def create_csr_tensor():
     return csra, csrb
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -121,7 +121,7 @@ def test_graph_csr_add():
     assert np.allclose(c[4].asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -185,7 +185,7 @@ def test_tensor_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_csr_add_3d():

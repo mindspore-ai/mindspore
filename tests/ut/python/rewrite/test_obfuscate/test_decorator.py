@@ -63,7 +63,7 @@ def _args_type_validator_check(*type_args, **type_kwargs):
 def register_denied_func_decorators(fn):
     """user deny certain decorators"""
     from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
-    name = "denied_funciton_decorator_list"
+    name = "denied_function_decorator_list"
     setattr(ClassDefParser, name, fn)
 
 

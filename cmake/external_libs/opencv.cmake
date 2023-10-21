@@ -69,6 +69,7 @@ if(MSVC)
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
             PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
             PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 elseif(WIN32)
     mindspore_add_pkg(opencv
@@ -99,6 +100,7 @@ elseif(WIN32)
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 else()
     mindspore_add_pkg(opencv
@@ -127,6 +129,7 @@ else()
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-3970.patch
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2023-3316.patch
                 PATCHES ${TOP_DIR}/third_party/patch/opencv/Fix_Binary.patch)
 endif()
 

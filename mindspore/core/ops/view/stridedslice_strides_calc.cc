@@ -18,7 +18,7 @@
 #include <memory>
 
 namespace mindspore::ops {
-constexpr size_t kStridedSliceInputsNum = 4;
+constexpr size_t kStridedSliceCalcInputsNum = 4;
 void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, const std::vector<int64_t> &tensor_shape) {
   if (begin->size() != tensor_shape.size()) {
     MS_EXCEPTION(ValueError) << "Convert shape size is not equal";
@@ -42,6 +42,10 @@ void ConvertNegToPos(std::vector<int64_t> *begin, std::vector<int64_t> *end, con
       (*end)[i] = (*begin)[i];
     } else if ((*end)[i] >= tensor_shape[i]) {
       (*end)[i] = tensor_shape[i];
+    }
+    if ((*begin)[i] == (*end)[i]) {
+      (*begin)[i] = 0;
+      (*end)[i] = 0;
     }
   }
 }
@@ -93,27 +97,24 @@ bool CheckAttrIsNull(const PrimitivePtr &primitive) {
 }
 
 TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (!CheckAttrIsNull(prim) || inputs.size() != kStridedSliceInputsNum) {
+  if (!CheckAttrIsNull(prim) || CheckInputsNull(inputs, kStridedSliceCalcInputsNum)) {
     return {};
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(inputs[1]);
-  MS_EXCEPTION_IF_NULL(inputs[2]);
-  MS_EXCEPTION_IF_NULL(inputs[3]);
 
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto size = input_tensor->shape().size();
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
-  if (inputs[1]->isa<tensor::Tensor>() || inputs[2]->isa<tensor::Tensor>() || inputs[3]->isa<tensor::Tensor>()) {
+  if (inputs[kInputIndex1]->isa<tensor::Tensor>() || inputs[kInputIndex2]->isa<tensor::Tensor>() ||
+      inputs[kInputIndex3]->isa<tensor::Tensor>()) {
     return {};
   }
-  auto begin = GetValue<std::vector<int64_t>>(inputs[1]);
-  auto end = GetValue<std::vector<int64_t>>(inputs[2]);
-  auto step = GetValue<std::vector<int64_t>>(inputs[3]);
+  auto begin = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
+  auto end = GetValue<std::vector<int64_t>>(inputs[kInputIndex2]);
+  auto step = GetValue<std::vector<int64_t>>(inputs[kInputIndex3]);
   if (IsDynamic(step) || begin.size() != end.size() || begin.size() != step.size() || HasZero(step)) {
     return {};
   }
@@ -124,7 +125,7 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
   ConvertNegToPos(&begin, &end, old_shape);
 
   for (size_t i = 0; i < begin.size(); ++i) {
-    old_storage_offset += begin[i] * old_strides[i];
+    old_storage_offset += LongToSize(begin[i] * old_strides[i]);
   }
   ShapeVector new_shape;
   auto new_strides = old_strides;

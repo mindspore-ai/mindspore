@@ -56,7 +56,7 @@ def generate_test_cases(dtype, mode, reduction):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -72,7 +72,7 @@ def test_kl_div_loss_grad_with_static_input(data_type, run_mode, reduction):
     generate_test_cases(data_type, run_mode, reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

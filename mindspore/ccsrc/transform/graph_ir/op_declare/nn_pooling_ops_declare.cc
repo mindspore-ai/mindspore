@@ -296,11 +296,20 @@ CUST_ATTR_MAP(AdaptiveMaxPool2dGrad) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(AdaptiveMaxPool2dGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(AdaptiveMaxPool2dGrad, prim::kPrimAdaptiveMaxPool2DGrad->name(), CUST_ADPT_DESC(AdaptiveMaxPool2dGrad));
 
+// hotfix only for lite
+// AdaptiveAvgPool2D
+INPUT_MAP(AdaptiveAvgPool2d) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(AdaptiveAvgPool2d) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(AdaptiveAvgPool2d) = {{0, OUTPUT_DESC(y)}};
 // AdaptiveAvgPool2D
 CUST_INPUT_MAP(AdaptiveAvgPool2D) = {{1, INPUT_DESC(x)}};
 CUST_ATTR_MAP(AdaptiveAvgPool2D) = {{"output_size", ATTR_DESC(output_size, AnyTraits<std::vector<int64_t>>())}};
 CUST_OUTPUT_MAP(AdaptiveAvgPool2D) = {{0, OUTPUT_DESC(y)}};
+#ifdef BUILD_LITE
+REG_ADPT_DESC(AdaptiveAvgPool2d, kAdaptiveAvgPool2DOpName, ADPT_DESC(AdaptiveAvgPool2d))
+#else
 REG_ADPT_DESC(AdaptiveAvgPool2D, prim::kPrimAdaptiveAvgPool2D->name(), CUST_ADPT_DESC(AdaptiveAvgPool2D));
+#endif
 
 // AdaptiveAvgPool3D
 CUST_INPUT_MAP(AdaptiveAvgPool3d) = {{1, INPUT_DESC(x)}};
@@ -382,4 +391,10 @@ INPUT_MAP(NthElement) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(n)}};
 ATTR_MAP(NthElement) = {{"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(NthElement) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(NthElement, prim::kPrimNthElement->name(), ADPT_DESC(NthElement));
+
+// AdaptiveAvgPool
+INPUT_MAP(AdaptiveAvgPool) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(AdaptiveAvgPool) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AdaptiveAvgPool) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AdaptiveAvgPool, kNameAdaptiveAvgPool, ADPT_DESC(AdaptiveAvgPool));
 }  // namespace mindspore::transform

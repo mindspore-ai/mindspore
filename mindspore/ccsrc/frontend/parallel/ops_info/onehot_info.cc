@@ -242,6 +242,7 @@ Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return Se
 
 std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
   Dimensions strategy(inputs_shape_[0].size() + 1, 1);
+  MS_EXCEPTION_IF_ZERO("stage_device_size_", stage_device_size_);
   if (inputs_shape_[0].front() % stage_device_size_ == 0) {
     strategy[0] = {stage_device_size_};
   }

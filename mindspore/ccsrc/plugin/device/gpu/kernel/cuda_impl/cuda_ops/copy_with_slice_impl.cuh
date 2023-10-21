@@ -22,9 +22,10 @@
 #include "ir/tensor_storage_info.h"
 
 template <typename DataType>
-CUDA_LIB_EXPORT void CalCopyWithSlice(const size_t &input_size,
-                                      const DataType *src_addr, const mindspore::TensorStorageInfoPtr &src_storage_info,
-                                      DataType *self_addr, const mindspore::TensorStorageInfoPtr &dst_storage_info,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCopyWithSlice(const size_t &input_size, const DataType *src_addr,
+                                             const mindspore::TensorStorageInfoPtr &src_storage_info,
+                                             DataType *self_addr,
+                                             const mindspore::TensorStorageInfoPtr &dst_storage_info,
+                                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_COPY_WITH_SLICE_IMPL_CUH_

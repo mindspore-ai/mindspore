@@ -49,6 +49,11 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
   // Inputs: a tuple or list and a scalar whose value is an int32 number.
   constexpr int args_spec_size = 2;
   abstract::CheckArgsSize(op_name, input_args, args_spec_size);
+  auto data_abs = input_args[0];
+  MS_EXCEPTION_IF_NULL(data_abs);
+  if (data_abs->isa<abstract::AbstractAny>()) {
+    return std::make_shared<abstract::AbstractAny>();
+  }
   auto queue = abstract::CheckArg<abstract::AbstractSequence>(op_name, input_args, 0);
   abstract::AbstractScalarPtr index = abstract::CheckArg<abstract::AbstractScalar>(op_name, input_args, 1);
 

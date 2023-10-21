@@ -9,4 +9,4 @@ mindspore.dataset.Dataset.skip
         - **count** (int) - 要跳过数据的条数。
 
     返回：
-        SkipDataset，跳过指定条数据后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

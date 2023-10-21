@@ -17,13 +17,13 @@
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 
 #include <algorithm>
-#include <vector>
 #include <limits>
-#include "ops/sequence_op_name.h"
-#include "ops/array_ops.h"
-#include "include/common/utils/utils.h"
-#include "utils/ms_context.h"
+#include <vector>
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
+#include "include/common/utils/utils.h"
+#include "ops/array_ops.h"
+#include "ops/sequence_op_name.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace expander {
@@ -67,8 +67,7 @@ REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
 NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) {
   auto check_shp_valid_func = [shift](size_t, const ShapeVector &shape) -> bool {
-    ShapeVector broadcast_shape{shape.begin(), shape.end() - shift};
-    return !IsDynamic(broadcast_shape);
+    return !(IsDynamicRank(shape) || IsDynamic(ShapeVector{shape.begin(), shape.end() - shift}));
   };
 
   return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1}, {}, check_shp_valid_func);
@@ -209,7 +208,7 @@ NodePtr BpropIRBuilder::TensorToSequence(const NodePtr &node, const AbstractBase
       if (node->isa<ValueNode>()) {
         return EmitValue(MakeValue(GetIntList(node)));
       }
-      return Emit(kTupleToTensorOpName, {node, Value(dtype)});
+      return Emit(kTensorToTupleOpName, {node});
     } else {
       if (node->isa<ValueNode>()) {
         auto vec = GetIntList(node);
@@ -218,7 +217,7 @@ NodePtr BpropIRBuilder::TensorToSequence(const NodePtr &node, const AbstractBase
                              [](int64_t ele) { return MakeValue(ele); });
         return EmitValue(std::make_shared<ValueList>(value_list));
       }
-      return Emit(kListToTensorOpName, {node, Value(dtype)});
+      return Emit(kTensorToListOpName, {node});
     }
   }
   return node;

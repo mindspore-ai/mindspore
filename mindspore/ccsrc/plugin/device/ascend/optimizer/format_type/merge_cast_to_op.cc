@@ -23,6 +23,7 @@
 
 #include "ops/ascend_op_name.h"
 #include "ops/structure_op_name.h"
+#include "ops/math_op_name.h"
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
 #include "ops/framework_ops.h"
@@ -169,7 +170,8 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
   }
   auto next_cnode = next_node->cast<CNodePtr>();
   auto next_op_name = common::AnfAlgo::GetCNodeName(next_cnode);
-  if (next_op_name == prim::kPrimSend->name() || next_op_name == kStackPushOpName) {
+  // Avoid compile failure caused by selecting to LinSpace instead of LinSpaceD.
+  if (next_op_name == prim::kPrimSend->name() || next_op_name == kStackPushOpName || next_op_name == kLinSpaceOpName) {
     return nullptr;
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrAclHighPrecision, next_cnode) && IsCastFp16ToFp32(node)) {

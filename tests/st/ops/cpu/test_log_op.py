@@ -118,3 +118,22 @@ def test_tensor(data_type):
 
     assert out.shape == y_expect.shape
     np.allclose(out.asnumpy(), y_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_log_with_exception_value():
+    """
+    Feature: Log
+    Description: test cases for Log with exception value input.
+    Expectation: the result match to numpy
+    """
+    x_np = np.array([np.nan, np.inf, -np.inf, 0.4]).astype(np.float32)
+    x = Tensor(x_np)
+    expect = np.log(x_np)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    log = NetLog()
+    output = log(x)
+    np.allclose(output.asnumpy(), expect)

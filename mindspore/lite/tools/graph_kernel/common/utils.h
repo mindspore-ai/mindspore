@@ -35,5 +35,9 @@ int CalculateDynamicBatchSize(const TensorC *const *inputs, size_t inputs_size,
 void GetCustomIndex(const std::string &dynamic_input_index, std::vector<size_t> *index);
 int GetCustomShape(const std::string &attr, std::vector<std::vector<int>> *shapes);
 void SetKernelInfoWithFormatToAnfNode(const AnfNodePtr &node, const std::vector<std::string> &format);
+kernel::KernelBuildInfoPtr GetKernelInfo(const AnfNodePtr &node);
+void SetAnfKernelInfoFormatFromAToB(const AnfNodePtr &node_a, const CNodePtr &node_b,
+                                    const std::vector<std::string> &formats);
+std::string GetOutputFormatFromAnfNode(const AnfNodePtr &node, size_t output_idx);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_COMMON_UTILS_H_

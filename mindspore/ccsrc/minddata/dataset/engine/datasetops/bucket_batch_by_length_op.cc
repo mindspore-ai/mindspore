@@ -73,7 +73,9 @@ Status BucketBatchByLengthOp::operator()() {
       buckets_[bucket_index]->push_back(current_row);
 
       if (buckets_[bucket_index]->size() == bucket_batch_sizes_[bucket_index]) {
-        RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index));
+        TensorRow batched_bucket;
+        RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index, &batched_bucket));
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket)));
       }
 
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
@@ -83,7 +85,9 @@ Status BucketBatchByLengthOp::operator()() {
     if (!drop_remainder_) {
       for (int i = 0; i < bucket_boundaries_.size(); i++) {
         if (!buckets_[i]->empty()) {
-          RETURN_IF_NOT_OK(PadAndBatchBucket(i));
+          TensorRow batched_bucket;
+          RETURN_IF_NOT_OK(PadAndBatchBucket(i, &batched_bucket));
+          RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket)));
         }
       }
     }
@@ -128,7 +132,7 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
   return Status::OK();
 }
 
-Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index) {
+Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, TensorRow *batched_bucket) {
   std::unique_ptr<TensorQTable> *bucket = &buckets_[bucket_index];
 
   PadInfo pad_info_copy = pad_info_;
@@ -156,11 +160,8 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index) {
   // PadColumns will change the data in bucket
   RETURN_IF_NOT_OK(BatchOp::PadColumns(bucket, pad_info_copy, column_name_id_map_));
 
-  TensorRow batched_bucket;
-  RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, &batched_bucket));
+  RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, batched_bucket));
   (*bucket)->clear();
-
-  RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket)));
 
   batch_count_++;
 
@@ -177,6 +178,51 @@ Status BucketBatchByLengthOp::ComputeColMap() {
       std::string err_msg = "Invalid parameter, input column name: " + inCol + " doesn't exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
+  }
+  return Status::OK();
+}
+
+Status BucketBatchByLengthOp::GetNextRowPullMode(TensorRow *const row) {
+  row->clear();
+  if (eoe_received_) {
+    if (!drop_remainder_) {
+      for (int i = 0; i < bucket_boundaries_.size(); i++) {
+        if (!buckets_[i]->empty()) {
+          RETURN_IF_NOT_OK(PadAndBatchBucket(i, row));
+          return Status::OK();
+        }
+      }
+    }
+    eoe_received_ = false;
+  }
+
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+  while (!new_row.eoe() && !new_row.eof()) {
+    int32_t element_length = 0;
+    RETURN_IF_NOT_OK(ObtainElementLength(&element_length, new_row));
+
+    int bucket_index = bucket_boundaries_.size() - 1;
+    while (element_length < bucket_boundaries_[bucket_index]) {
+      bucket_index--;
+    }
+
+    buckets_[bucket_index]->push_back(new_row);
+
+    if (buckets_[bucket_index]->size() == bucket_batch_sizes_[bucket_index]) {
+      RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index, row));
+      return Status::OK();
+    }
+
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
+  }
+
+  eoe_received_ = true;
+
+  auto curr_epoch = op_current_epochs_;
+  UpdateRepeatAndEpochCounter();
+  if (curr_epoch == op_current_epochs_) {
+    RETURN_IF_NOT_OK(GetNextRowPullMode(row));
   }
   return Status::OK();
 }

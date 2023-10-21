@@ -11,7 +11,7 @@ mindspore.dataset.Dataset.sync_wait
         - **callback** (function) - `sync_update` 操作中将调用的回调函数。默认值： ``None`` 。
 
     返回：
-        SyncWaitDataset，添加了阻塞条件的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。
 
     异常：
         - **RuntimeError** - 条件名称已存在。

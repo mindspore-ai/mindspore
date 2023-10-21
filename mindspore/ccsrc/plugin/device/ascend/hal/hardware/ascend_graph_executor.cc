@@ -26,6 +26,7 @@
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "ir/anf.h"
 #include "kernel/oplib/oplib.h"

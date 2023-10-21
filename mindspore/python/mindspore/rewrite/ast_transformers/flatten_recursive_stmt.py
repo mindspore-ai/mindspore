@@ -15,10 +15,9 @@
 """Ast optimizer for flatten recursive call."""
 
 import sys
-from typing import Any, Tuple
+from typing import Any, Tuple, List
 import keyword
 import ast
-from ast import FunctionDef
 
 from mindspore import log as logger
 from ..common import error_str
@@ -50,16 +49,32 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             ast.If: ["test"]
         }
         self._transform_functions = []
+        self._transform_if = False
+        self._symbol_tree = None # Used to get unique name
 
     @staticmethod
-    def _generate_target_name(node: ast.AST, target_names):
+    def _check_flatten_black_list(node: ast.AST):
+        """Check whether node in flatten black list"""
+        func_name = ""
+        # Get func name of node
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+        # Check func name of node
+        if func_name and func_name in FLATTEN_BLACK_LIST:
+            return True
+        return False
+
+    def _generate_target_name(self, node: ast.AST, target_names):
         """Generate unique target name."""
         if isinstance(node, ast.Call):
             func = node.func
             if isinstance(func, ast.Name):
-                target_name = func.id
+                target_name = func.id + "_var"
             elif isinstance(func, ast.Attribute):
-                target_name = func.attr
+                target_name = func.attr + "_var"
             else:
                 logger.info("unhandled type of func of ast.Call while generating new target name: %s ", type(func))
                 target_name = "function"
@@ -84,45 +99,30 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         while result in target_names:
             suffix += 1
             result = f"{target_name}_{suffix}"
+        if self._symbol_tree:
+            result = self._symbol_tree.unique_name(result)
         target_names.append(result)
         return result
 
-    @staticmethod
-    def _create_new_assign_node(node: ast.AST, target_names) -> Tuple[str, ast.AST]:
+    def _create_new_assign_node(self, node: ast.AST, target_names) -> Tuple[str, ast.AST]:
         """Create new assign node to be inserted into ast.FunctionDef."""
         if isinstance(node, (ast.Name, ast.Constant, ast.Num, ast.Str, ast.NameConstant, ast.Bytes, ast.Ellipsis)):
             return "", node
-        new_target_name = FlattenRecursiveStmt._generate_target_name(node, target_names)
+        new_target_name = self._generate_target_name(node, target_names)
         return new_target_name, ast.Assign(targets=[ast.Name(id=new_target_name, ctx=ast.Store())], value=node)
 
-    @staticmethod
-    def _flatten_list(node_list, target_names):
+    def _flatten_list(self, node_list, target_names):
         """Flatten a list of node."""
         results = list()
         new_list = list()
         for node in node_list:
             if isinstance(node, ast.Call):
-                new_target, new_node = FlattenRecursiveStmt._create_new_assign_node(node, target_names)
+                new_target, new_node = self._create_new_assign_node(node, target_names)
                 results.append(new_node)
                 new_list.append(ast.Name(id=new_target, ctx=ast.Load()))
             else:
                 new_list.append(node)
         return results, new_list
-
-    @staticmethod
-    def _check_flatten_black_list(node: ast.AST):
-        """Check whether node in flatten black list"""
-        func_name = ""
-        # Get func name of node
-        if isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name):
-                func_name = node.func.id
-            elif isinstance(node.func, ast.Attribute):
-                func_name = node.func.attr
-        # Check func name of node
-        if func_name and func_name in FLATTEN_BLACK_LIST:
-            return True
-        return False
 
     def _flatten_statement(self, node: ast.AST, target_names) -> [ast.AST]:
         """Flatten recursive statement according to different node type."""
@@ -141,21 +141,21 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                     if isinstance(todo, ast.Starred):
                         new_list.append(todo)
                         continue
-                    new_target_name, new_node = FlattenRecursiveStmt._create_new_assign_node(todo, target_names)
+                    new_target_name, new_node = self._create_new_assign_node(todo, target_names)
                     if id(new_node) == id(todo):
                         new_list.append(todo)
                     else:
                         new_list.append(ast.Name(id=new_target_name, ctx=ast.Load()))
                         results.append(new_node)
                     if isinstance(todo, (ast.Tuple, tuple)):
-                        _res, _new_list = FlattenRecursiveStmt._flatten_list(new_node.value.elts, [new_target_name])
+                        _res, _new_list = self._flatten_list(new_node.value.elts, [new_target_name])
                         new_node.value.elts = _new_list
                         results.extend(_res)
                 setattr(node, todo_name, new_list)
             elif isinstance(todos, dict):
                 new_dict = []
                 for key, value in todos:
-                    new_target_name, new_node = FlattenRecursiveStmt._create_new_assign_node(value, target_names)
+                    new_target_name, new_node = self._create_new_assign_node(value, target_names)
                     if id(new_node) == id(value):
                         new_dict[key] = value
                     else:
@@ -163,16 +163,15 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                         results.append(new_node)
                 setattr(node, todo_name, new_dict)
             else:
-                new_target_name, new_node = FlattenRecursiveStmt._create_new_assign_node(todos, target_names)
+                new_target_name, new_node = self._create_new_assign_node(todos, target_names)
                 if id(new_node) != id(todos):
                     setattr(node, todo_name, ast.Name(id=new_target_name, ctx=ast.Load()))
                     results.append(new_node)
         return results
 
-    def _fill_in_original_target_names(self, target_names, node):
-        """Fill in original target names before getting unique names."""
-        for function_index in range(len(node.body)):
-            child = node.body[function_index]
+    def _save_target_names(self, target_names, ast_body: List[ast.AST]):
+        """Saving target names in ast_body before getting unique names."""
+        for child in ast_body:
             if isinstance(child, (ast.Assign, ast.Expr)):
                 child_value = child.value
             else:
@@ -203,48 +202,66 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                         if target_name not in target_names:
                             target_names.append(target_name)
 
-    def visit_FunctionDef(self, node: FunctionDef) -> Any:
-        """Traverse construct node and flatten recursive nodes."""
-        if node.name not in self._transform_functions:
-            return node
-
+    def _visit_ast_bodies(self, ast_body: List[ast.AST]):
+        """Traverse nodes in ast_body and flatten nodes recursive."""
         target_names = []
-        self._fill_in_original_target_names(target_names, node)
-        index = len(node.body) - 1
+        self._save_target_names(target_names, ast_body)
+        index = len(ast_body) - 1
         while index >= 0:
-            child = node.body[index]
+            child = ast_body[index]
             if isinstance(child, ast.Assign):
                 stmt = child.value
             elif isinstance(child, ast.If):
                 if isinstance(child.body[0], ast.Return) and not isinstance(child.test, ast.UnaryOp):
-                    if isinstance(child.body[0].value, ast.Call):
-                        if_body = child.body
-                        if_func = if_body[0].value
-                        expr = "x = " + astunparse.unparse(if_func)
-                        if_body = ast.parse(expr)
-                        if_body = if_body.body+ast.parse("return x").body
-                        child.body = if_body
-                        stmt = child
-                    else:
-                        stmt = child
-                else:
-                    stmt = child
+                    if not isinstance(child.body[0].value, (ast.Name, ast.Constant)):
+                        return_val_ast = child.body[0].value
+                        return_name = self._generate_target_name(return_val_ast, target_names)
+                        new_assign_code = f"{return_name} = {astunparse.unparse(return_val_ast)}"
+                        new_assign_ast = ast.parse(new_assign_code).body[0]
+                        new_return_ast = ast.parse(f"return {return_name}").body[0]
+                        child.body = [new_assign_ast, new_return_ast]
+                stmt = child
             elif isinstance(child, ast.Expr):
                 stmt = child.value
             else:
                 stmt = child
             results = self._flatten_statement(stmt, target_names)
             if results:
-                results.reverse()
-                for result in results:
-                    node.body.insert(index, result)
+                for result in reversed(results):
+                    ast_body.insert(index, result)
                     index += 1
             index -= 1
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> Any: # pylint: disable=invalid-name
+        """Traverse nodes in _transform_functions and flatten recursive nodes."""
+        if node.name not in self._transform_functions:
+            return node
+        self._visit_ast_bodies(node.body)
         return node
 
-    def transform(self, ast_root, transform_functions=None):
+    def visit_If(self, node: ast.If) -> Any: # pylint: disable=invalid-name
+        """Traverse nodes in if node and flatten recursive nodes."""
+        if not self._transform_if:
+            return node
+        self._visit_ast_bodies(node.body)
+        if node.orelse:
+            self._visit_ast_bodies(node.orelse)
+        return node
+
+    def transform(self, ast_root, transform_functions=None, stree=None):
         """Interface of FlattenRecursiveStmt."""
         self._transform_functions = transform_functions if transform_functions else ["construct"]
+        self._transform_if = False
+        self._symbol_tree = stree
         ast_root = self.visit(ast_root)
         ast_root = ast.fix_missing_locations(ast_root)
         return ast_root
+
+    def transform_if(self, ast_if, stree=None):
+        """Interface of FlattenRecursiveStmt."""
+        self._transform_functions = []
+        self._transform_if = True
+        self._symbol_tree = stree
+        ast_if = self.visit(ast_if)
+        ast_if = ast.fix_missing_locations(ast_if)
+        return ast_if

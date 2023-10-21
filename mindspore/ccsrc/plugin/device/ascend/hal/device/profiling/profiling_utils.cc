@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include <sys/syscall.h>
 #include <algorithm>
+#include <mutex>
 #include "kernel/kernel.h"
 #include "ops/structure_op_name.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
@@ -26,6 +27,10 @@
 #include "nlohmann/json.hpp"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#ifndef ASCEND_910B
+#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+using mindspore::ge::model_runner::ModelRunner;
+#endif
 
 namespace mindspore {
 namespace device {
@@ -37,6 +42,7 @@ constexpr uint64_t kProfilingFpStartLogId = 2;
 constexpr uint64_t kProfilingBpEndLogId = 3;
 constexpr uint64_t kProfilingIterEndLogId = 4;
 constexpr auto kDouble = 2;
+std::mutex ProfilingUtils::profiler_mutex;
 
 const std::unordered_map<std::string, GeProfInfoType> kNamesToProfTypes = {
   {"ModelExecute", GeProfInfoType::kModelExecute},
@@ -406,40 +412,40 @@ bool ProfilingUtils::ValidComputeGraph(const session::KernelGraph &kernel_graph)
 }
 
 void ProfilingUtils::ReportAllGraphProfilingData() {
-  MS_LOG(INFO) << "report event: " << report_event.size();
-  for (auto data : report_event) {
+  MS_LOG(INFO) << "report event: " << report_event_.size();
+  for (auto data : report_event_) {
     auto ret = MsprofReportEvent(static_cast<uint32_t>(false), &data);
     if (ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "RecordModelLoad failed.";
     }
   }
-  MS_LOG(INFO) << "report event: " << report_compact_info.size();
-  for (auto data : report_compact_info) {
+  MS_LOG(INFO) << "report event: " << report_compact_info_.size();
+  for (auto data : report_compact_info_) {
     auto compact_ret = MsprofReportCompactInfo(false, &data, sizeof(MsprofCompactInfo));
     if (compact_ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
     }
   }
 
-  MS_LOG(INFO) << "report event: " << report_additional_info.size();
-  for (auto data : report_additional_info) {
+  MS_LOG(INFO) << "report event: " << report_additional_info_.size();
+  for (auto data : report_additional_info_) {
     auto addition_ret = MsprofReportAdditionalInfo(false, &data, sizeof(MsprofAdditionalInfo));
     if (addition_ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
     }
   }
 
-  MS_LOG(INFO) << "report event: " << report_api.size();
-  for (auto data : report_api) {
+  MS_LOG(INFO) << "report event: " << report_api_.size();
+  for (auto data : report_api_) {
     auto api_ret = MsprofReportApi(false, &data);
     if (api_ret != MSPROF_ERROR_NONE) {
       MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
     }
   }
-  report_event.clear();
-  report_compact_info.clear();
-  report_additional_info.clear();
-  report_api.clear();
+  report_event_.clear();
+  report_compact_info_.clear();
+  report_additional_info_.clear();
+  report_api_.clear();
 }
 
 void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
@@ -560,6 +566,7 @@ void ProfilingUtils::InitProfTensorData(const CNodePtr &node, const size_t index
 }
 
 void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
+#ifndef ASCEND_910B
   uint32_t rt_model_id = 0;
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
   if (rt_model_ret != RT_ERROR_NONE) {
@@ -583,11 +590,13 @@ void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
       MS_LOG(ERROR) << "RecordModelLoad failed.";
     }
   } else {
-    report_event.emplace_back(model_load_event_);
+    report_event_.emplace_back(model_load_event_);
   }
+#endif
 }
 
 void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
+#ifndef ASCEND_910B
   uint32_t rt_model_id = 0;
   rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(kernel_graph->graph_id());
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
@@ -614,8 +623,9 @@ void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
       MS_LOG(ERROR) << "RecordModelLoad failed.";
     }
   } else {
-    report_event.emplace_back(model_execute);
+    report_event_.emplace_back(model_execute);
   }
+#endif
 }
 
 std::string ProfilingUtils::GetFullScopeName(const std::string &op_name, const bool is_op_name) {
@@ -685,7 +695,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
       MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
     }
   } else {
-    report_compact_info.emplace_back(addition_info.node_basic_info);
+    report_compact_info_.emplace_back(addition_info.node_basic_info);
   }
   MS_LOG(DEBUG) << "MsprofReportCompactInfo：op_name: " << op_name
                 << ", tensors: " << addition_info.tensor_info_wrappers.size();
@@ -700,7 +710,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
         MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
       }
     } else {
-      report_additional_info.emplace_back(tensor_info_wrapper.tensor_info);
+      report_additional_info_.emplace_back(tensor_info_wrapper.tensor_info);
     }
   }
 
@@ -712,7 +722,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
       MS_LOG(ERROR) << "MsprofReportAdditionalInfo failed.";
     }
   } else {
-    report_api.emplace_back(addition_info.api);
+    report_api_.emplace_back(addition_info.api);
   }
 }
 
@@ -730,9 +740,13 @@ uint32_t ProfilingUtils::GetBlockDim(const CNodePtr &node) {
   return ascend_kernel_mod->block_dim();
 }
 
-void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
+void ProfilingUtils::InitReportNode(const CNodePtr &cnode, bool init_begin_time) {
+  std::lock_guard<std::mutex> lock(profiler_mutex);
   MS_EXCEPTION_IF_NULL(cnode);
   ProfNodeAdditionInfo addition_info{};
+  if (init_begin_time) {
+    addition_info.api.beginTime = MsprofSysCycleTime();
+  }
   MsprofCompactInfo &basic_info = addition_info.node_basic_info;
   basic_info.level = MSPROF_REPORT_NODE_LEVEL;
   basic_info.type = MSPROF_REPORT_NODE_BASIC_INFO_TYPE;

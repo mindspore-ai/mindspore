@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,34 @@
 
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#ifndef ENABLE_SECURITY
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#endif
 #include "external/acl/error_codes/rt_error_codes.h"
 #include "runtime/event.h"
 #include "runtime/stream.h"
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
+namespace {
+bool HasOverflowCheck() {
+  // Check if overflow check is on. If overflow check is on, cannot use "stop when error" function
+  // (rtStreamSetMode(stream, 1)). Because device take overflow as an error while host not, it will cause
+  // stuck. Can be deleted after driver solve above problem.
+  bool ret = false;
+#ifndef ENABLE_SECURITY
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  dump_json_parser.Parse();
+  ret = dump_json_parser.async_dump_enabled() && dump_json_parser.op_debug_mode() > 0;
+#endif
+  return ret;
+}
+}  // namespace
+
 AscendStreamMng &AscendStreamMng::GetInstance() {
   static AscendStreamMng instance{};
   return instance;
@@ -105,11 +124,14 @@ void AscendStreamMng::CreateStream(rtStream_t *stream, int32_t priority) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = rtStreamSetMode(*stream, 1);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+  if (!HasOverflowCheck()) {
+    ret = rtStreamSetMode(*stream, 1);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+    }
   }
   (void)streams_.emplace_back(*stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
 }
 
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
@@ -119,12 +141,15 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = rtStreamSetMode(stream, 1);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+  if (!HasOverflowCheck()) {
+    ret = rtStreamSetMode(stream, 1);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+    }
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, int32_t priority) {
@@ -133,11 +158,14 @@ void AscendStreamMng::CreateStreamWithFlags(rtStream_t *stream, uint32_t flags, 
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = rtStreamSetMode(*stream, 1);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+  if (!HasOverflowCheck()) {
+    ret = rtStreamSetMode(*stream, 1);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+    }
   }
   (void)streams_.emplace_back(*stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(*stream);
 }
 
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
@@ -147,12 +175,15 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = rtStreamSetMode(stream, 1);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+  if (!HasOverflowCheck()) {
+    ret = rtStreamSetMode(stream, 1);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtStreamSetMode failed, ret:" << ret;
+    }
   }
   *stream_id = streams_.size();
   (void)streams_.emplace_back(stream);
+  AscendGmemAdapter::GetInstance().AddCallbackThread(stream);
 }
 
 bool AscendStreamMng::DestroyStream(size_t stream_id) {
@@ -169,6 +200,7 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
+  AscendGmemAdapter::GetInstance().RemoveCallbackThread(streams_.at(stream_id));
   streams_[stream_id] = nullptr;
   return true;
 }
@@ -176,10 +208,14 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
 bool AscendStreamMng::DestroyAllStreams() {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   for (const auto &stream : streams_) {
+    if (stream == nullptr) {
+      continue;
+    }
     const auto ret = aclrtDestroyStream(stream);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
+    AscendGmemAdapter::GetInstance().RemoveCallbackThread(stream);
   }
   streams_.clear();
   return true;

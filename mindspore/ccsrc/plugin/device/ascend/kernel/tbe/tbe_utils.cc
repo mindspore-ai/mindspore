@@ -419,7 +419,7 @@ KernelMeta *KernelMeta::GetInstance() {
 bool KernelMeta::ReadIndex(const std::string &bin_dir) {
   DIR *dir = opendir(bin_dir.c_str());
   if (dir == nullptr) {
-    auto ret = mkdir(bin_dir.c_str(), S_IRWXG | S_IRWXU);
+    auto ret = mkdir(bin_dir.c_str(), S_IRWXU);
     if (ret != 0) {
       MS_LOG(INFO) << "kernel dir: " << bin_dir << "not exist";
       return false;

@@ -37,6 +37,9 @@ class BACKEND_EXPORT NodePass : public Pass {
   virtual AnfNodePtr Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) = 0;
   virtual std::vector<std::string> MustExistPrimitiveName() const { return {}; }
 
+ protected:
+  bool is_add_ = true;
+
  private:
   bool ProcessFastPassNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph,
                            const FuncGraphIndexPtr &func_graph_index, const FuncGraphManagerPtr &manager);

@@ -358,7 +358,7 @@ def test_gpu_dynamic_sort3d(descending, nptype):
     dynamic_sort_3d(descending, nptype)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

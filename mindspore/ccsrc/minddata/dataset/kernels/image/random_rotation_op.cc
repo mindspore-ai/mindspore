@@ -65,10 +65,13 @@ Status RandomRotationOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
 Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
-  int32_t outputH = -1, outputW = -1;
+  int32_t outputH = -1;
+  int32_t outputW = -1;
+  constexpr int32_t kDimensionTwo = 2;
+  constexpr int32_t kDimensionThree = 3;
   // if expand_, then we cannot know the shape. We need the input image to find the output shape --> set it to
   // <-1,-1[,3]>
-  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty() && inputs[0].Size() >= 2,
+  CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty() && inputs[0].Size() >= kDimensionTwo,
                                "RandomRotationOp: invalid input shape, expected 2D or 3D input, but got input"
                                " dimension is: " +
                                  std::to_string(inputs[0].Rank()));
@@ -77,10 +80,10 @@ Status RandomRotationOp::OutputShape(const std::vector<TensorShape> &inputs, std
     outputW = static_cast<int32_t>(inputs[0][1]);
   }
   TensorShape out = TensorShape{outputH, outputW};
-  if (inputs[0].Rank() == 2) {
+  if (inputs[0].Rank() == kDimensionTwo) {
     (void)outputs.emplace_back(out);
   }
-  if (inputs[0].Rank() == 3) {
+  if (inputs[0].Rank() == kDimensionThree) {
     (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(

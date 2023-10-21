@@ -37,6 +37,7 @@ from tests.security_utils import security_off_wrap
 
 
 os.environ['MS_ENABLE_GE'] = '1'
+os.environ['MS_DISABLE_REF_MODE'] = '1'
 
 
 class Net(nn.Cell):
@@ -58,7 +59,7 @@ def check_saved_data(iteration_path, saved_data):
     if saved_data in ('statistic', 'full'):
         check_statistic_dump(iteration_path)
     if saved_data in ('tensor', 'full'):
-        check_data_dump(iteration_path)
+        check_data_dump(iteration_path, True)
     if saved_data == 'statistic':
         # assert only file is statistic.csv, tensor data is not saved
         assert len(os.listdir(iteration_path)) == 1
@@ -128,8 +129,24 @@ def run_ge_dump(test_name):
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
-        add(Tensor(x), Tensor(y))
+        output = add(Tensor(x), Tensor(y))
         check_ge_dump_structure(dump_path, 1, 1)
+        if test_name == "test_ge_dump_npy":
+            find_x_cmd = 'find {0} -name "Data.x*.output.*.npy"'.format(dump_path)
+            x_file_path = os.popen(find_x_cmd).read()
+            x_file_path = x_file_path.replace('\n', '')
+            find_y_cmd = 'find {0} -name "Data.y*.output.*.npy"'.format(dump_path)
+            y_file_path = os.popen(find_y_cmd).read()
+            y_file_path = y_file_path.replace('\n', '')
+            find_add_cmd = 'find {0} -name "Add.*.output.*.npy"'.format(dump_path)
+            add_file_path = os.popen(find_add_cmd).read()
+            add_file_path = add_file_path.replace('\n', '')
+            x_output = np.load(x_file_path)
+            y_output = np.load(y_file_path)
+            add_output = np.load(add_file_path)
+            assert (x_output == x).all()
+            assert (y_output == y).all()
+            assert (add_output == output.asnumpy()).all()
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
@@ -319,3 +336,16 @@ def test_ge_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_ge_dump', 'full')
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ge_dump_npy():
+    """
+    Feature: async dump on Ascend on GE backend.
+    Description: test async dump with file_format set to npy
+    Expectation: dump data are generated as npy files, and the value is correct
+    """
+    run_ge_dump("test_ge_dump_npy")

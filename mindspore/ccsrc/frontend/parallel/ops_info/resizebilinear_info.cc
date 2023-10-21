@@ -108,6 +108,8 @@ Status ResizeBilinearInfo::InferDevMatrixShape() {
 
   dev_matrix_shape_ = stra[0];
   slice_size_ = size_;
+  MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[2]", dev_matrix_shape_[2]);
+  MS_EXCEPTION_IF_ZERO("dev_matrix_shape_[3]", dev_matrix_shape_[3]);
   slice_size_[0] = slice_size_[0] / dev_matrix_shape_[2];
   slice_size_[1] = slice_size_[1] / dev_matrix_shape_[3];
   w_dimension_shard_num_ = dev_matrix_shape_[3];
@@ -231,8 +233,10 @@ void ResizeBilinearInfo::InferScale() {
   }
 
   if (align_corners_) {
+    MS_EXCEPTION_IF_ZERO("origin_out_w_shape_ - 1", origin_out_w_shape_ - 1);
     w_scale_ = LongToDouble(origin_in_w_shape_ - 1) / LongToDouble(origin_out_w_shape_ - 1);
   } else {
+    MS_EXCEPTION_IF_ZERO("origin_out_w_shape_", origin_out_w_shape_);
     w_scale_ = LongToDouble(origin_in_w_shape_) / LongToDouble(origin_out_w_shape_);
   }
 
@@ -242,6 +246,7 @@ void ResizeBilinearInfo::InferScale() {
 int64_t ResizeBilinearInfo::InferOverlapLeftSizeByRankBias(int64_t rank_bias) {
   // left_overlap_size = (rank * ori_in_w / w_shard) - floor(scale * rank * slice_w)
   int64_t map_left_boundary = DoubleToLong(std::floor(w_scale_ * rank_bias * slice_size_[1]));
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num_", w_dimension_shard_num_);
   int64_t local_left_boundary = rank_bias * origin_in_w_shape_ / w_dimension_shard_num_;
 
   if (map_left_boundary > local_left_boundary) {
@@ -254,6 +259,7 @@ int64_t ResizeBilinearInfo::InferOverlapLeftSizeByRankBias(int64_t rank_bias) {
 int64_t ResizeBilinearInfo::InferOverlapRightSizeByRankBias(int64_t rank_bias) {
   // right_overlap_size = ceil(scale * (rank + 1) * slice_w - 1) - ((rank + 1) * ori_in_w / w_shard - 1)
   int64_t map_right_boundary = DoubleToLong(std::ceil(w_scale_ * ((rank_bias + 1) * slice_size_[1] - 1)));
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num_", w_dimension_shard_num_);
   int64_t local_right_boundary = (rank_bias + 1) * origin_in_w_shape_ / w_dimension_shard_num_ - 1;
 
   // need to handle this special condition

@@ -85,9 +85,6 @@ class AutoBoost:
                         "freeze_p": 0.7,
                         "total_steps": 65536
                     }
-                    "grad_accumulation": {
-                        "grad_accumulation_step": 1
-                    },
                     "dim_reduce": {
                         "rho": 0.55,
                         "gamma": 0.9,
@@ -138,10 +135,6 @@ class AutoBoost:
               - freeze_type (int): Gradient freeze grouping strategy, select from [0, 1]. Default: ``1`` .
               - freeze_p (float): Gradient freezing probability. Default: ``0.7`` .
               - total_steps (int): Total training steps. Default: ``65536`` .
-
-            - grad_accumulation:
-
-              - grad_accumulation_step (int): Steps to accumulate gradients. Default: ``1`` .
 
             - dim_reduce:
 

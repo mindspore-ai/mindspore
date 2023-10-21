@@ -26,12 +26,18 @@ def lazy_inline(fn=None, attrs=None):
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
+    .. warning::
+        This feature is only supported on Ascend and is not supported on other hardwares.
+
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
 
     Returns:
         function, original function.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -158,7 +164,7 @@ def lazy_inline(fn=None, attrs=None):
                 arguments = arguments.values()
             fn(self, *args, **kwargs)
             if attrs is None:
-                self.cell_init_args = type(self).__name__ + str(arguments)
+                self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
                 return
 
             if isinstance(attrs, list):
@@ -172,7 +178,7 @@ def lazy_inline(fn=None, attrs=None):
                     arguments = getattr(self, attrs)
             else:
                 raise ValueError(f"attrs must be list or string")
-            self.cell_init_args = type(self).__name__ + str(arguments)
+            self.cell_init_args = "lazy_inline_" + type(self).__name__ + str(arguments)
 
         return deco
 

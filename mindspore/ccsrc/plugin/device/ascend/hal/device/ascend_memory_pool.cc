@@ -17,6 +17,8 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "runtime/mem.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
@@ -61,7 +63,7 @@ void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   }
 }
 
-size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem) {
+size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size && common::IsNeedProfileMemory()) {
     device_free_mem_size = size;
@@ -80,6 +82,9 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   size_t alloc_mem_size;
   SetMemPoolBlockSize(device_free_mem_size);
   auto alloc_mem_unit_size = MemAllocUnitSize(from_persistent_mem);
+  if (need_recycle) {
+    alloc_mem_unit_size = kDynamicMemAllocUnitSize;
+  }
   MS_LOG(DEBUG) << "Get unit block size " << alloc_mem_unit_size;
   alloc_mem_size = alloc_mem_unit_size;
 
@@ -103,7 +108,7 @@ size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size, bool from_persistent_
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const auto is_cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
-  if (is_cell_reuse) {
+  if (is_cell_reuse && !need_recycle) {
     alloc_mem_size = std::min(alloc_mem_size, size);
   }
   return alloc_mem_size;
@@ -138,6 +143,30 @@ DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_per
   return overflow_memory_ptr;
 }
 
+size_t AscendMemoryPool::GetMaxUsedMemSize() const {
+  void *min_used_addr = GetMinUsedMemoryAddr();
+  if (min_used_addr == nullptr) {
+    return 0;
+  }
+  auto max_used_hbm = AscendMemAdapter::GetInstance().GetMsUsedHbmSize();
+  size_t static_offset = reinterpret_cast<uint8_t *>(min_used_addr) - AscendMemAdapter::GetInstance().GetBaseAddr();
+  return max_used_hbm - static_offset;
+}
+
+const bool AscendMemoryPool::IsEnableEagerFree() const {
+  return AscendGmemAdapter::GetInstance().is_eager_free_enabled();
+}
+
+const bool AscendMemoryPool::SyncAllStreams() { return AscendStreamMng::GetInstance().SyncAllStreams(); }
+
+size_t AscendMemoryPool::AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) {
+  return AscendGmemAdapter::GetInstance().AllocDeviceMem(size, addr);
+}
+
+size_t AscendMemoryPool::FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) {
+  return AscendGmemAdapter::GetInstance().EagerFreeDeviceMem(addr, size);
+}
+
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
   return AscendMemAdapter::GetInstance().FreeStaticDevMem(addr);
@@ -159,6 +188,8 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
 }
 
 size_t AscendMemoryPool::free_mem_size() { return AscendMemAdapter::GetInstance().FreeDevMemSize(); }
+
+uint64_t AscendMemoryPool::total_mem_size() const { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

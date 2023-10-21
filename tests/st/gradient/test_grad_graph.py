@@ -79,7 +79,7 @@ def grad_wrap_with_msfunction_get_grad(x, y, z):
     return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_single_input_single_output_cell_graph():
@@ -95,7 +95,7 @@ def test_grad_single_input_single_output_cell_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_single_input_multiple_outputs_cell_graph():
@@ -111,7 +111,7 @@ def test_grad_single_input_multiple_outputs_cell_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_multiple_inputs_single_output_cell_graph():
@@ -133,7 +133,7 @@ def test_grad_multiple_inputs_single_output_cell_graph():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_multiple_inputs_multiple_outputs_cell_graph():
@@ -155,7 +155,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_iteration_function_graph():
@@ -169,14 +169,15 @@ def test_grad_iteration_function_graph():
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
     expect_grad1 = Tensor(np.array([[0, 12], [30, -8]]).astype(np.float32))
     expect_grad2 = Tensor(np.array([[-4, 12], [-6, 16]]).astype(np.float32))
-    real_grad = grad(grad(iteration_grad_function), grad_position=(1, 2))(x, y, z)
+    real_grad = grad(grad(iteration_grad_function),
+                     grad_position=(1, 2))(x, y, z)
     assert isinstance(real_grad, tuple)
     assert len(real_grad) == 2
     assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_wrap_with_msfunction_graph():
@@ -193,7 +194,7 @@ def test_grad_wrap_with_msfunction_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_with_grad_position_twice_graph():
@@ -212,7 +213,7 @@ def test_grad_with_grad_position_twice_graph():
     assert isinstance(out2, tuple)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_with_weights_twice_graph():
@@ -234,7 +235,7 @@ def test_grad_with_weights_twice_graph():
     assert np.allclose(out2[0].asnumpy(), expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_with_weights_has_aux_graph():
@@ -310,7 +311,7 @@ def test_jit_function_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_grad_with_weights_has_aux_graph():
@@ -354,8 +355,7 @@ def test_construct_grad_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_if_with_weights_has_aux_graph():
@@ -394,7 +394,7 @@ def test_grad_if_with_weights_has_aux_graph():
     assert np.allclose(aux[1].asnumpy(), expect_aux2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -438,7 +438,7 @@ def test_grad_nest_with_weights_has_aux_graph():
     assert np.allclose(aux[0].asnumpy(), expect_aux)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_if_ith_train_one_step():
@@ -500,7 +500,7 @@ def test_grad_if_ith_train_one_step():
     train_one_if_net(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_net_d_net_g():
@@ -594,7 +594,7 @@ def test_grad_net_d_net_g():
     train_one_net(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_with_weights_has_aux_graph():
@@ -632,7 +632,7 @@ def test_value_and_grad_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_value_and_grad_with_weights_has_aux_graph():
@@ -658,7 +658,8 @@ def test_construct_value_and_grad_with_weights_has_aux_graph():
             self.weights = net.trainable_params()
 
         def construct(self, x, y):
-            value, gradient = value_and_grad(self.net, 0, self.weights, True)(x, y)
+            value, gradient = value_and_grad(
+                self.net, 0, self.weights, True)(x, y)
             return value, gradient
 
     x = Tensor(np.array([1, 2]).astype(np.float32))
@@ -678,7 +679,7 @@ def test_construct_value_and_grad_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_value_and_grad_nest_with_weights_graph():
@@ -767,7 +768,7 @@ def test_value_and_grad_nest_with_weights_has_aux_graph():
     assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_grad_single_position_with_return_ids():
@@ -848,7 +849,7 @@ def test_construct_grad_multiplt_positions_with_return_ids():
     assert np.allclose(res[1][0], expect_grad_input2[0])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_grad_with_weights_with_return_ids():
@@ -890,7 +891,7 @@ def test_construct_grad_with_weights_with_return_ids():
     assert res[1][0][0] == inner_net.w.name
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_get_grad_by_position():
@@ -968,7 +969,7 @@ def test_construct_get_grad_by_weight():
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_construct_get_grad_not_found():
@@ -1044,7 +1045,7 @@ def test_construct_get_grad_not_found_from_empty_tuple():
         grad_net(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_get_grad_wrap_with_msfunction_graph():
@@ -1061,7 +1062,7 @@ def test_get_grad_wrap_with_msfunction_graph():
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_primal_graph_call_others():
@@ -1089,7 +1090,7 @@ def test_grad_primal_graph_call_others():
     assert np.allclose(output.asnumpy(), expected.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_get_grad_outer_list_weight():
@@ -1168,3 +1169,116 @@ def test_grad_of_pyexecute_with_more_than_three_inputs():
 
     ms_grad = GradNet3(ModifyNet())(Tensor([2]))
     assert ms_grad == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_graph_return_ids():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad when setting return_ids to true in graph mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = net.trainable_params()
+
+        def construct(self, x):
+            value, gradient = value_and_grad(net, 0, self.weights, False, True)(x)
+            return value, gradient
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    grad_net = GradNet(net)
+    value, gradient = grad_net(x)
+    expect_grad_input = np.array([24, 24]).astype(np.float32)
+    expect_grad_weight1 = np.array([12, 24]).astype(np.float32)
+    expect_grad_weight2 = np.array([8, 16]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(gradient[0][1].asnumpy(), expect_grad_input)
+    assert np.allclose(gradient[1][0][1].asnumpy(), expect_grad_weight1)
+    assert np.allclose(gradient[1][1][1].asnumpy(), expect_grad_weight2)
+    assert gradient[0][0] == 0
+    assert gradient[1][0][0] == net.w.name
+    assert gradient[1][1][0] == net.z.name
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_graph_get_grad():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad and getgrad from the result in graph mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = net.trainable_params()
+
+        def construct(self, x):
+            value, gradient = value_and_grad(
+                net, 0, self.weights, False, True)(x)
+            res1 = get_grad(gradient, 0)
+            res2 = get_grad(gradient, self.net.w)
+            res3 = get_grad(gradient, self.net.z)
+            return value, res1, res2, res3
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    grad_net = GradNet(net)
+    value, res1, res2, res3 = grad_net(x)
+    expect_grad_input = np.array([24, 24]).astype(np.float32)
+    expect_grad_weight1 = np.array([12, 24]).astype(np.float32)
+    expect_grad_weight2 = np.array([8, 16]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(res1.asnumpy(), expect_grad_input)
+    assert np.allclose(res2.asnumpy(), expect_grad_weight1)
+    assert np.allclose(res3.asnumpy(), expect_grad_weight2)

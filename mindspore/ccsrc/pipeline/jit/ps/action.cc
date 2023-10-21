@@ -90,6 +90,24 @@ bool EnableTupleBroaden(const abstract::AbstractBasePtr &abs) {
   return abs->isa<abstract::AbstractTuple>() && abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors();
 }
 
+bool ContainsAbstractFunction(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractFunction>()) {
+    return true;
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    const auto &abs_list = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    return std::any_of(abs_list.cbegin(), abs_list.cend(),
+                       [](const auto &elem) { return ContainsAbstractFunction(elem); });
+  }
+  if (abs->isa<abstract::AbstractDictionary>()) {
+    const auto &abs_pair_list = abs->cast<abstract::AbstractDictionaryPtr>()->elements();
+    return std::any_of(abs_pair_list.cbegin(), abs_pair_list.cend(),
+                       [](const auto &pair) { return ContainsAbstractFunction(pair.second); });
+  }
+  return false;
+}
+
 void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<ValuePtr> &arguments) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_paras;
@@ -112,7 +130,8 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if (param_abs->BuildValue() == kValueAny || EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
+    if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
+        EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
       MS_LOG(INFO) << "Remove the " << i << "th parameter, since it's passed a constant argument.";
@@ -571,12 +590,15 @@ bool GraphReusingAction(const ResourcePtr &resource) {
     const auto &fg = graphs[0];
     // fg->parameter_obj_nodes().empty() have been handled by combine like.
     if (!fg->parameter_obj_nodes().empty()) {
-      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+      MS_LOG(INFO) << "Finish handling the reusable graph: " << cell_key;
+      continue;
+    }
+    if (cell_key.find("lazy_inline") == cell_key.npos) {
       continue;
     }
     auto reusing_graph = GenerateReusingGraph(fg);
     if (reusing_graph == nullptr) {
-      MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+      MS_LOG(WARNING) << "Failed to generate reused graph for cell_key: " << cell_key;
       continue;
     }
     // Let the original cell graph call the reusable graph.
@@ -588,9 +610,10 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  static const bool enable_ge = context->backend_policy() == "ge";
+  const bool enable_ge = context->backend_policy() == "ge";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   if (cell_reused) {
+    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
     const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
     context->SetCellReuseLevel(cell_reuse_level);
   }
@@ -1023,7 +1046,7 @@ bool HasIncorporateCallNode(const CNodePtr &cnode) {
     auto input0 = cnode->input(0);
     if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
         IsValueNode<FuncGraph>(input0)) {
-      if (IsCellReuse(input0) && common::IsEnableRefMode()) {
+      if (IsCellReuse(input0) && IsEnableRefMode()) {
         MS_LOG(INFO) << "Use cell reuse when enable ge mode: " << cnode->DebugString();
         return true;
       }
@@ -1292,7 +1315,7 @@ void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     SetRunMode(resource->func_graph(), resource->GetBackend().get());
   } else {
     OriginSetRunMode(resource);

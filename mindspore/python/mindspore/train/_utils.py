@@ -67,6 +67,8 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
     send_epoch_end = bool(dataset_size == -1)
     queue_name = _cell_graph_executor.get_queue_name(phase)
+    if queue_name is None:
+        queue_name = str("")
     exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end,
                                            create_data_info_queue=create_data_info_queue, queue_name=queue_name)
     _cell_graph_executor.init_dataset(exec_dataset.queue_name,
@@ -171,9 +173,9 @@ def check_summary_param(summary_name, tag, tensor):
                             f'but got {type(tensor).__name__}')
         _check_to_numpy(plugin, tensor, prim=True)
     except TypeError as err:
-        raise TypeError(err)
+        raise TypeError(err) from err
     except ValueError as err:
-        raise ValueError(err)
+        raise ValueError(err) from err
     finally:
         debug_ops.SUMMARY_TENSOR_CACHE = []
 

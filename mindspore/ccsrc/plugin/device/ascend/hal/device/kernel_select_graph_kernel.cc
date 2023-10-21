@@ -526,6 +526,19 @@ void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func
   auto output_index = kernel::GetOutputIndex(node_list, input_list, output_list);
   SetGraphKernelInfo(kernel_node, output_index, graph_input_format, graph_input_type);
 }
+
+class AscendGraphKernelInfo : public GraphKernelInfo {
+ public:
+  AscendGraphKernelInfo() = default;
+  virtual ~AscendGraphKernelInfo() = default;
+  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override {
+#ifndef ENABLE_ACL
+    SetAscendKernelInfo(kernel_node, kernel_type);
+#endif
+  }
+};
+
+REG_GRAPH_KERNEL_INFO(kAscendDevice, AscendGraphKernelInfo);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

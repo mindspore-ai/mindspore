@@ -188,12 +188,11 @@ class RNNCell(RNNCellBase):
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
         nonlinearity (str): The non-linearity to use. Can be either ``"tanh"`` or ``"relu"`` .
             Default: ``"tanh"`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape :math:`(batch\_size, hidden\_size)` .
-          Data type of `hx` must be the same as `x`.
 
     Outputs:
         - **hx'** (Tensor) - Tensor of shape :math:`(batch\_size, hidden\_size)` .
@@ -273,12 +272,12 @@ class LSTMCell(RNNCellBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32
-          and shape :math:`(batch\_size, hidden\_size)` . The data type of `hx` must be the same as `x`.
+          and shape :math:`(batch\_size, hidden\_size)` .
 
     Outputs:
         - **hx'** (Tensor) - A tuple of two Tensors (h', c') both of data shape :math:`(batch\_size, hidden\_size)` .
@@ -357,12 +356,11 @@ class GRUCell(RNNCellBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         has_bias (bool): Whether the cell has bias `b_in` and `b_hn`. Default: ``True`` .
-        dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
+        dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape :math:`(batch\_size, hidden\_size)` .
-          Data type of `hx` must be the same as `x`.
 
     Outputs:
         - **hx'** (Tensor) - Tensor of shape :math:`(batch\_size, hidden\_size)` .

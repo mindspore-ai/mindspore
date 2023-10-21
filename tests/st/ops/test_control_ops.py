@@ -26,7 +26,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_switch_layer_with_single_prim():
@@ -54,7 +54,7 @@ def test_switch_layer_with_single_prim():
     grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_switch_layer_with_index_out_of_range():

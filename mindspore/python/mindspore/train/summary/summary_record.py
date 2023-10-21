@@ -143,6 +143,8 @@ class SummaryRecord:
         log_dir (str): The log_dir is a directory location to save the summary.
         file_prefix (str): The prefix of file. Default: ``"events"`` .
         file_suffix (str): The suffix of file. Default: ``"_MS"`` .
+        num_process (int): Number of processes saving summary data. The more processes there are, the better the
+            performance, but there may be host memory overflow issues. Default: ``32`` .
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: ``None`` .
         max_file_size (int, optional): The maximum size of each file that can be written to disk (in bytes).
             For example, to write not larger than 4GB, specify `max_file_size=4*1024**3`.
@@ -181,7 +183,7 @@ class SummaryRecord:
 
     count = 0
 
-    def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
+    def __init__(self, log_dir, file_prefix="events", file_suffix="_MS", num_process=32,
                  network=None, max_file_size=None, raise_exception=False, export_options=None):
         self._check_count()
         with _instance_lock:
@@ -204,6 +206,7 @@ class SummaryRecord:
         self.file_suffix = file_suffix
         self.network = network
         self.max_file_size = max_file_size
+        self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
         try:
@@ -435,6 +438,7 @@ class SummaryRecord:
                              exporter=export_dir)
         self._event_writer = WriterPool(self.base_log_dir,
                                         self.max_file_size,
+                                        self._num_process,
                                         self.raise_exception,
                                         **filename_dict)
         _get_summary_tensor_data()

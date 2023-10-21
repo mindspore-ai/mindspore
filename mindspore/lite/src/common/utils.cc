@@ -133,9 +133,11 @@ bool ParseShapeStr(const std::string &shape_str, std::vector<ShapeDim> *shape_pt
   }
   auto &shape = *shape_ptr;
   shape.resize(str_dims.size());
+  constexpr size_t range_value_size = 1;
+  constexpr size_t range_min_max_size = 2;
   for (size_t i = 0; i != str_dims.size(); ++i) {
     auto dim_range = lite::StrSplit(str_dims[i], "~");
-    if (dim_range.size() == 1) {
+    if (dim_range.size() == range_value_size) {
       int32_t dim = 0;
       if (!ConvertStrToInt(str_dims[i], &dim)) {
         MS_LOG_ERROR << "Invalid input shape dim, dim value range or format is invalid: " << shape_str;
@@ -148,7 +150,7 @@ bool ParseShapeStr(const std::string &shape_str, std::vector<ShapeDim> *shape_pt
       shape[i].dim = dim;
       shape[i].min = dim;
       shape[i].max = dim;
-    } else if (dim_range.size() == 2) {
+    } else if (dim_range.size() == range_min_max_size) {
       int32_t left = 0;
       if (!ConvertStrToInt(dim_range[0], &left)) {
         MS_LOG_ERROR << "Invalid input shape dim range, dim value range or format is invalid: " << shape_str;

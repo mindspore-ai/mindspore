@@ -127,11 +127,6 @@ def test_reduce_dimension():
     assert np.all(output4.asnumpy() == input_np[1] + np.ones([8, 10]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 class NetWorkSliceStep(Cell):
     def __init__(self):
         super(NetWorkSliceStep, self).__init__()
@@ -272,7 +267,7 @@ class TensorItemByItem(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -308,7 +303,7 @@ def test_item_by_int():
         net(input_3d_ms, index_np_4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -380,11 +375,6 @@ def test_setitem_by_mixed_tensors_0():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 class TensorSetItemByMixedTensors_1(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_1, self).__init__()
@@ -420,11 +410,6 @@ def test_setitem_by_mixed_tensors_1():
     assert np.all(out.asnumpy() == (input_np + const))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 class TensorSetItemByMixedTensors_2(Cell):
     def __init__(self, value):
         super(TensorSetItemByMixedTensors_2, self).__init__()
@@ -466,7 +451,7 @@ class TensorGetItemByMixedTensorsIndexError(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -622,7 +607,6 @@ class TensorSetItemByTensorsWithNumber(Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.level0
 def test_setitem_by_tensors_with_number():
     value = 0.0
     net = TensorSetItemByTensorsWithNumber(value)
@@ -1006,7 +990,7 @@ def test_tensor_assign_exception():
         net(Ta4d, b, Ta4d_ck)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

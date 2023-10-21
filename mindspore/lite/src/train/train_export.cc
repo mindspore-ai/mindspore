@@ -151,11 +151,18 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
   return RET_OK;
 }
 
-std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite::Tensor *tensor,
-                                                           schema::Tensor *scTensor, int preferred_dim,
-                                                           const int tensor_quant_type) {
+std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(
+  const mindspore::lite::Tensor *tensor, const std::vector<mindspore::lite::Tensor *> const_folded_output,
+  schema::Tensor *scTensor, int preferred_dim, const int tensor_quant_type) {
   auto tensorT = std::make_unique<schema::TensorT>();
-  tensorT->nodeType = scTensor->nodeType();
+  bool const_fold = false;
+  if (quant_type_ == QT_NONE && !const_folded_output.empty() &&
+      std::find(const_folded_output.begin(), const_folded_output.end(), tensor) != const_folded_output.end()) {
+    tensorT->nodeType = NodeType_ValueNode;
+    const_fold = true;
+  } else {
+    tensorT->nodeType = scTensor->nodeType();
+  }
   tensorT->dims = tensor->shape();
   tensorT->format = static_cast<schema::Format>(tensor->format());
   tensorT->name = tensor->tensor_name();
@@ -163,7 +170,8 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   tensorT->offset = 0;
   tensorT->dataType = tensor->data_type();
   tensorT->enableHuffmanCode = false;
-  if ((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) {
+  if (((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) ||
+      const_fold) {
     if (NeedQuantization(tensor, tensor_quant_type)) {
       auto ret = QuantTensorData(tensorT.get(), tensor, preferred_dim);
       if (ret != RET_OK) {
@@ -385,13 +393,12 @@ int TrainExport::KeepGraphInputsInOrder(const Model *model) {
   }
   meta_graph_->inputIndex = origin_inputs_order;
   if (!meta_graph_->subGraph.empty()) {
-    MS_CHECK_TRUE_MSG(meta_graph_->subGraph[0]->inputIndices.size() == origin_inputs_order.size(), RET_ERROR,
-                      "metagraph's subgraph input indices size is invalid.");
     meta_graph_->subGraph[0]->inputIndices = origin_inputs_order;
   }
   return RET_OK;
 }
 int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
+                              const std::vector<mindspore::lite::Tensor *> const_folded_output,
                               const std::vector<std::pair<size_t, tensor_info>> &map_index,
                               const std::vector<std::string> &output_names, const std::set<size_t> &out_set) {
   std::vector<mindspore::lite::Tensor *> in_tensors;
@@ -408,7 +415,8 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     schema::Tensor *scTensor = model->graph_.all_tensors_.at(pid);
     auto preferred_dim = WeightDecoder::GetPreferredDim(in_tensors, index.second.op_parameter, index.second.input_index,
                                                         tensor->shape(), model->graph_.version_);
-    auto tensorT = CreateTensor(tensor, scTensor, preferred_dim, index.second.op_parameter->quant_type_);
+    auto tensorT =
+      CreateTensor(tensor, const_folded_output, scTensor, preferred_dim, index.second.op_parameter->quant_type_);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in tensor creation";
       return RET_ERROR;
@@ -438,6 +446,7 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
 
 int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &kernels,
                            const std::vector<mindspore::lite::Tensor *> &tensors,
+                           const std::vector<mindspore::lite::Tensor *> const_folded_output,
                            const std::vector<std::string> &output_names, const Model *model,
                            QuantizationType quant_type, const Model *bb_model) {
   std::vector<std::pair<size_t, tensor_info>> map_index;
@@ -498,7 +507,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &k
     }
   }
 
-  auto status = ExportTensor(model, tensors, offset, map_index, output_names, out_set);
+  auto status = ExportTensor(model, tensors, offset, const_folded_output, map_index, output_names, out_set);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ExportTensor failed.";
     return RET_ERROR;

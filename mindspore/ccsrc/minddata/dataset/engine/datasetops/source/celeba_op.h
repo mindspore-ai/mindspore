@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@
 
 #define CLOSE_FILE(attr_file, partition_file) \
   do {                                        \
-    attr_file.close();                        \
-    if (partition_file.is_open()) {           \
-      partition_file.close();                 \
+    (attr_file).close();                      \
+    if ((partition_file).is_open()) {         \
+      (partition_file).close();               \
     }                                         \
   } while (false)
 

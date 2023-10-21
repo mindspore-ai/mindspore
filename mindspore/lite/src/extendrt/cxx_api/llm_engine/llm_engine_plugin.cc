@@ -19,7 +19,7 @@
 #include "mindspore/ccsrc/transform/graph_ir/transform_util.h"
 #include "mindspore/lite/src/extendrt/utils/tensor_utils.h"
 #include "mindspore/lite/src/common/common.h"
-#include "external/llm_engine.h"
+#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
 
 #define LLM_RUN_ASYNC
 
@@ -30,6 +30,7 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   ~LLMEnginePlugin();
   Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
               const std::map<std::string, std::string> &options) override;
+  void Finalize() override;
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
   Status CompleteRequest(const LLMReq &req) override;
   LLMEngineStatus FetchStatus() override;
@@ -43,13 +44,14 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
   Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
   Status InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos);
+  void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
 };
 
 LLMEnginePluginBase *CreateLLMEnginePlugin() { return new LLMEnginePlugin(); }
 
 LLMEnginePlugin::LLMEnginePlugin() {}
 
-LLMEnginePlugin::~LLMEnginePlugin() {}
+LLMEnginePlugin::~LLMEnginePlugin() { LLMEnginePlugin::Finalize(); }
 
 Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos) {
   for (size_t i = 1; i < model_infos.size(); i++) {
@@ -105,11 +107,11 @@ Status LLMEnginePlugin::InitInputOptions(const std::vector<LLMEngineModelInfo> &
     ref_input_dtypes += dtype_as_string(item) + ";";
   }
   auto erase_comma = [](const std::string &str) { return str.empty() ? str : str.substr(0, str.size() - 1); };
-  options_["InputShapes"] = erase_comma(input_shapes);
-  options_["InputDtypes"] = erase_comma(input_dtypes);
-  options_["RefInputShapes"] = erase_comma(ref_input_shapes);
-  options_["RefInputDtypes"] = erase_comma(ref_input_dtypes);
-  options_["OutputNums"] = std::to_string(model_infos[0].output_count);
+  options_["llm.InputShapes"] = erase_comma(input_shapes);
+  options_["llm.InputDtypes"] = erase_comma(input_dtypes);
+  options_["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
+  options_["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
+  options_["llm.OutputNums"] = std::to_string(model_infos[0].output_count);
   return kSuccess;
 }
 
@@ -130,8 +132,8 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
   if (InitInputOptions(model_infos) != kSuccess) {
     return kLiteError;
   }
-  options_["LLM_ROLE"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
-  auto option_it = options_.find("LLM_OM_CACHE_PATH");
+  options_["llm.Role"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
+  auto option_it = options_.find("llm.OmCachePath");
   if (option_it == options_.end()) {
     std::string cache_path;
     for (size_t i = 0; i < model_infos.size(); i++) {
@@ -140,15 +142,15 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
         cache_path += ";";
       }
     }
-    MS_LOG(INFO) << "Add option LLM_OM_CACHE_PATH to " << cache_path;
-    options_["LLM_OM_CACHE_PATH"] = cache_path;
+    MS_LOG(INFO) << "Add option llm.OmCachePath to " << cache_path;
+    options_["llm.OmCachePath"] = cache_path;
   }
-  std::map<ge::AscendString, ge::ModelBufferData> model_buffers;
+  std::vector<ge::ModelBufferData> model_buffers;
   for (auto &item : model_infos) {
     ge::ModelBufferData buff;
     buff.data = std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(item.om_data->data_c()), [](uint8_t *) {});
     buff.length = item.om_data->Size();
-    model_buffers[ge::AscendString(item.name.c_str())] = buff;
+    model_buffers.push_back(buff);
     MS_LOG(INFO) << "Model " << item.name << ", model buffer size " << item.om_data->Size();
   }
   std::map<ge::AscendString, ge::AscendString> init_options;
@@ -166,6 +168,19 @@ Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos,
   llm_engine_ = llm_engine;
   MS_LOG(INFO) << "LLMEngine Init end";
   return kSuccess;
+}
+
+void LLMEnginePlugin::Finalize() {
+  if (llm_engine_ != nullptr) {
+    MS_LOG(INFO) << "Start to call LLMEngineFinalize";
+    auto ge_status = llm_engine_->LLMEngineFinalize();
+    llm_engine_ = nullptr;
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineFinalize";
+      return;
+    }
+    MS_LOG(INFO) << "End to call LLMEngineFinalize";
+  }
 }
 
 #ifndef LLM_RUN_ASYNC
@@ -239,6 +254,18 @@ Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor
 }
 #endif
 
+void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) const {
+  if (llm_req_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input argument llm_req_ptr is nullptr";
+    return;
+  }
+  llm::LLMReq &llm_req = *llm_req_ptr;
+  llm_req.SetReqId(req.req_id);
+  llm_req.SetPromptLength(req.prompt_length);
+  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  llm_req.SetDecoderClusterId(req.decoder_cluster_id);
+}
+
 Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
                                 std::vector<MSTensor> *outputs) {
   if (llm_engine_ == nullptr) {
@@ -265,12 +292,11 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
     }
     ge_inputs.emplace_back(tensor);
   }
-  MS_LOG(INFO) << "Start to call predict, req_id " << req.req_id << ", prompt_length " << req.prompt_length
-               << ", prompt_cluster_id: " << req.prompt_cluster_id;
   llm::LLMReq llm_req;
-  llm_req.SetReqId(req.req_id);
-  llm_req.SetPromptLength(req.prompt_length);
-  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  TransLLMReq(req, &llm_req);
+  MS_LOG(INFO) << "Start to call predict, req_id " << llm_req.GetReqId() << ", prompt_length "
+               << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
+               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId();
   std::vector<::ge::Tensor> ge_outputs;
   auto ret = Run(&llm_req, ge_inputs, &ge_outputs);
   if (ret != kSuccess) {
@@ -297,9 +323,7 @@ Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
   MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMReqComplete, req_id " << req.req_id << ", prompt_length "
                << req.prompt_length << ", prompt_cluster_id: " << req.prompt_cluster_id;
   llm::LLMReq llm_req;
-  llm_req.SetReqId(req.req_id);
-  llm_req.SetPromptLength(req.prompt_length);
-  llm_req.SetPromptClusterId(req.prompt_cluster_id);
+  TransLLMReq(req, &llm_req);
   auto ret = llm_engine_->LLMReqComplete(llm_req);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::LLMReqComplete";
@@ -314,8 +338,8 @@ LLMEngineStatus LLMEnginePlugin::FetchStatus() {
     return LLMEngineStatus();
   }
   LLMEngineStatus status;
-  // llm::LLMEngineStatus llm_status = llm_engine_->fetchLLMEngineStatus();
-  // status.empty_max_prompt_kv = llm_status.empty_max_prompt_kv;
+  // When llm_engine_->fetchLLMEngineStatus() is implemented, it will be replaced by return of fetchLLMEngineStatus.
+  status.empty_max_prompt_kv = 0;
   return status;
 }
 

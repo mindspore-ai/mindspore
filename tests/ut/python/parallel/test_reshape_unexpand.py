@@ -22,6 +22,7 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from parallel.utils.utils import ParallelValidator
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
@@ -56,7 +57,39 @@ def compile_net(net, input_data, dev_num=8, parallel_mode="semi_auto_parallel", 
     context.set_auto_parallel_context(device_num=dev_num, global_rank=0)
     context.set_auto_parallel_context(parallel_mode=parallel_mode, search_mode=search_mode)
     net.set_train()
-    _cell_graph_executor.compile(net, input_data)
+    phase, _ = _cell_graph_executor.compile(net, input_data)
+    return phase
+
+
+def test_reshape_opt_redistribution():
+    """
+    Feature: distribute operator reshape which cannot do normal redistribution in semi auto parallel.
+    Description: reshape-weight net in auto parallel.
+    Expectation: compile done without error.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.reshape = P.Reshape()
+            self.relu = P.ReLU().shard(((2, 4, 1),))
+            self.matmul = P.MatMul().shard(((2, 1), (1, 4)))
+            self.matmul_weight = Parameter(Tensor(np.ones([5120, 5120]), dtype=ms.float32), name="weight")
+
+        def construct(self, x):
+            x = self.relu(x)
+            x = self.reshape(x, (-1, 5120))
+            out = self.matmul(x, self.matmul_weight)
+            return out
+
+    x = Tensor(np.ones([2, 8192, 5120]), dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net()))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    sub_graph = {
+        'AllGather-0': ['Reshape-0'],
+    }
+    assert validator.check_graph_structure(sub_graph)
 
 
 def test_reshape_unexpand():

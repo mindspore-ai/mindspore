@@ -595,6 +595,9 @@ class SymbolTree(Observer, Observable, NodeManager):
                 raise RuntimeError("node_manager and base_node cannot both be None when inserting a node.")
             node_manager = base_node.get_node_manager()
 
+        # set node's _belong_symbol_tree
+        new_node.set_belong_symbol_tree(self)
+
         if node_manager is self:
             NodeManager.insert_node(self, new_node, base_node, before_node)
             if insert_to_ast:
@@ -608,9 +611,6 @@ class SymbolTree(Observer, Observable, NodeManager):
             new_node.symbol_tree.reg_observer(self)
         elif isinstance(new_node, NodeManager):
             new_node.reg_observer(self)
-
-        # set node's _belong_symbol_tree
-        new_node.set_belong_symbol_tree(self)
 
         return new_node
 
@@ -881,6 +881,15 @@ class SymbolTree(Observer, Observable, NodeManager):
     def unique_name(self, name: str):
         """Get a unique name in the symboltree"""
         return self._target_namer.get_name(name)
+
+    def unique_func_name(self, name: str):
+        """Get a unique function name in the symboltree"""
+        if not hasattr(self._origin_network, name):
+            return name
+        suffix = 1
+        while hasattr(self._origin_network, f"{name}_{suffix}"):
+            suffix += 1
+        return f"{name}_{suffix}"
 
     def set_node_target(self, node: Union[Node, str], index: int, target: Union[ScopedValue, str]):
         """
@@ -1154,16 +1163,24 @@ class SymbolTree(Observer, Observable, NodeManager):
     def insert_to_ast_while_insert_node(self, new_node: Node, base_node: Node, before_node: bool,
                                         node_manager: NodeManager):
         """ insert_to_ast_while_insert_node. """
-        new_node_ast = new_node.get_ast()
-        if new_node_ast is None:
-            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
-            new_node_ast = new_node.update_ast_node()
-        if not isinstance(new_node_ast, (ast.Assign, ast.arg)):
-            raise RuntimeError(f"Only support insert ast.Assign or Input now, but get {type(new_node_ast)}")
-        # Save instance into _origin_network.
-        setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
-        if isinstance(new_node_ast, ast.Assign):
-            new_node.set_func_name(ScopedValue.create_naming_value(new_node.get_name(), "self"))
+        if new_node.get_node_type() == NodeType.Input:
+            # insert a new input
+            self._inputs.append(new_node)
+            ast_construct = self.get_ast_root()
+            arg: str = new_node.get_targets()[0].value
+            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
+            AstModifier.append_arg_to_function(ast_construct, ast_arg)
+        else:
+            # insert a new assign statement
+            ast_assign = new_node.get_ast()
+            if ast_assign is None:
+                func_name = new_node.get_belong_symbol_tree().unique_func_name(new_node.get_name())
+                new_node.set_func_name(ScopedValue.create_naming_value(func_name, "self"))
+                ast_assign = new_node.update_ast_node()
+            if not isinstance(ast_assign, ast.Assign):
+                raise ValueError(f"Only support insert ast.Assign or Input now, but get {type(ast_assign)}")
+            # Save instance into _origin_network.
+            setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
             # Insert ast to __init__ function
             if isinstance(new_node, TreeNode):
                 init_code = f"self.{new_node.get_name()} = " \
@@ -1178,13 +1195,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             if not ast_functiondef:
                 raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
                                    "when inserting the ast.")
-            AstModifier.insert_assign_ast_to_function(ast_functiondef, new_node_ast, ast_base_node, before_node)
-        elif isinstance(new_node_ast, ast.arg):
-            self._inputs.append(new_node)
-            ast_construct = self.get_ast_root()
-            arg: str = new_node.get_targets()[0].value
-            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
-            AstModifier.append_arg_to_function(ast_construct, ast_arg)
+            AstModifier.insert_assign_ast_to_function(ast_functiondef, ast_assign, ast_base_node, before_node)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):
@@ -1228,7 +1239,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         file_path = os.getcwd()
         file_path = os.path.join(file_path, "rewritten_network")
         if not os.path.exists(file_path):
-            os.mkdir(file_path)
+            try:
+                os.mkdir(file_path, mode=0o700)
+            except FileExistsError:
+                pass
         file_name = f"{self._opt_cls_name}_{id(self)}.py"
         network_file = os.path.join(file_path, file_name)
         with os.fdopen(os.open(network_file, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:

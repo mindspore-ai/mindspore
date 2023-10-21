@@ -162,12 +162,13 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     - **CallPrimitive**： `CallPrimitive` 节点代表在前向计算中调用Primitive对象。
     - **CallFunction**： `CallFunction` 节点代表在前向计算中调用了一个函数。
     - **CallMethod**： `CallMethod` 不能对应到Cell或者Primitive的节点。
-    - **Python**： `Python` 节点包含不支持的 `ast` 的节点类型或不必要的解析 `ast` 节点。
-    - **Input**：输入节点代表SymbolTree的输入，对应方法的参数。
-    - **Output**: 输出节点代表SymbolTree的输出，对应方法的 `return` 语句。
-    - **Tree**: 树节点代表前向计算中调用了别的网络。
+    - **Python**： `Python` 节点代表不支持的 `ast` 节点或无需解析的 `ast` 节点。
+    - **Input**： `Input` 节点代表SymbolTree的输入，对应方法的参数。
+    - **Output**： `Output` 节点代表SymbolTree的输出，对应方法的 `return` 语句。
+    - **Tree**： `Tree` 节点代表前向计算中调用了别的网络。
     - **CellContainer**: `CellContainer` 节点代表在前向计算中调用 :class:`mindspore.nn.SequentialCell` 函数。
-    - **MathOps**： 运算符节点代表在前向计算中的一个运算操作，如加法运算或比较运算。
+    - **MathOps**： `MathOps` 节点代表在前向计算中的一个运算操作，如加法运算或比较运算。
+    - **ControlFlow**： `ControlFlow` 节点代表一个控制流语句，如 `if` 语句。
 
 .. py:class:: mindspore.rewrite.ScopedValue(arg_type: ValueType, scope: str = "", value=None)
 
@@ -263,7 +264,44 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         通过传入网络实例 `network` ，创建一个SymbolTree对象。
 
-        该接口会解析传入的网络实例，将前向计算过程的每一条源码语句展开，并解析为节点，存储在SymbolTree中。
+        该接口会解析传入的网络实例，将前向计算过程的每一条源码语句展开，并解析为节点，存储在SymbolTree中。具体流程如下：
+
+        1. 获取网络实例对应的源码代码
+        2. 对网络进行AST解析，获取网络里各个语句的AST节点（抽象语法树）
+        3. 将网络前向计算过程里的复杂语句展开为多个简单语句
+        4. 创建SymbolTree对象，每个SymbolTree对应一个网络实例
+        5. 使用rewrite节点存储网络前向计算过程的每条语句，节点记录了语句的输入、输出等信息
+        6. 将rewrite节点保存到SymbolTree里，同时更新和维护节点间的拓扑连接关系
+        7. 返回网络实例对应的SymbolTree对象
+
+        如果网络的前向计算过程里调用了类型为 :class:`mindspore.nn.Cell` 的用户自定义网络，rewrite会为对应语句生成类型
+        为 `NodeType.Tree` 的节点，这类节点内部保存了一个新的SymbolTree，这个SymbolTree解析并维护着自定义网络的节点信息。
+
+        如果网络的前向计算过程里调用了以下类型的语句，rewrite会将该语句所对应的内部语句进行解析，并生成对应节点：
+
+        - :class:`mindspore.nn.SequentialCell`
+        - 类内函数
+        - 控制流语句，如 `if` 语句
+
+        .. note::
+            由于网络在rewrite操作期间，控制流的具体执行分支还处于未知状态，因此控制流内部的节点和外部的节点之间不会建立拓扑信息。
+            用户在控制流外部使用 :func:`mindspore.rewrite.Node.get_inputs` 和 :func:`mindspore.rewrite.Node.get_users` 接口获取节点时，
+            无法获取控制流内部的节点。用户在控制流内部使用这些接口，也无法获取控制流外部的节点。
+            因此用户在进行网络修改时，需要手动处理好控制流内部和外部的节点信息。
+
+        当前rewrite模块存在以下语法限制：
+
+        - 仅支持类型为 :class:`mindspore.nn.Cell` 的网络作为rewrite模块的输入。
+        - 暂不支持对存在多个输出值的赋值语句进行解析。
+        - 暂不支持对循环语句进行解析。
+        - 暂不支持对装饰器语法进行解析。
+        - 暂不支持对类变量语法进行解析。如果类变量使用了外部数据，可能导致rewrite后的网络出现数据缺失。
+        - 暂不支持对局部类和内嵌类进行解析，即类的定义需要放在最外层。
+        - 暂不支持对闭包语法进行解析，即类外函数的定义需要放在最外层。
+        - 暂不支持对lambda表达式语法进行解析。
+
+        对于不支持解析的语句，rewrite会为对应语句生成类型为 `NodeType.Python` 的节点，以确保rewrite后的网络可以正常运行。
+        `Python` 节点不支持对语句的输入和输出进行修改，且可能出现变量名与rewrite生成的变量名的问题，此时用户需要手动对变量名进行调整。
 
         参数：
             - **network** (Cell) - 待修改的网络实例。
@@ -297,6 +335,11 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     .. py:method:: mindspore.rewrite.SymbolTree.get_network()
 
         获取基于SymbolTree生成的网络对象。源码会保存到文件中，文件保存在当前目录的 `rewritten_network` 文件夹里。
+
+        .. note::
+            - rewrite模块对网络的修改基于对原有网络实例的AST树的修改实现，且新的网络实例会从原有网络实例里获取属性信息，
+              因此，新网络实例和原有网络实例存在数据关联，原有网络不应该再被使用。
+            - 由于新网络和原有网络实例存在数据关联，暂不支持使用rewrite生成的源码文件手动创建网络实例。
 
         返回：
             根据SymbolTree生成的网络对象。
@@ -344,7 +387,14 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate(all_nodes: bool = False)
 
         打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
-        信息通过print接口输出到屏幕上。
+
+        信息通过print接口输出到屏幕上，包括以下信息：
+
+        - **node type** (str)：节点类型，具体类型参考 :class:`mindspore.rewrite.NodeType` 。
+        - **name** (str)： 节点名称。
+        - **codes** (str)： 节点对应的源代码语句。
+        - **arg providers** (Dict[int, Tuple[str, int]])： 格式为 `{[idx, (n, k)]}` ，代表该节点的第 `idx` 个参数是节点 `n` 的第 `k` 个输出提供的。
+        - **target users** (Dict[int, List[Tuple[str, int]]])： 格式为 `{[idx, [(n, k)]]}` ，代表该节点的第 `idx` 个输出被用作节点 `n` 的第 `k` 个参数。
 
         参数：
             - **all_nodes** (bool) - 打印所有节点的信息，包括在 `CallFunction` 节点、 `CellContainer` 节点和

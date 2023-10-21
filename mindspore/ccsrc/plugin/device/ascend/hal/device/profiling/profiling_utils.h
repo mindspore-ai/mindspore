@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "toolchain/prof_api.h"
 #include "runtime/rt_model.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
-using mindspore::ge::model_runner::ModelRunner;
 
 namespace mindspore {
 namespace device {
@@ -144,12 +142,13 @@ class ProfilingUtils {
   static void RecordModelLoad(const rtModel_t rt_model_handle);
   static void RecordModelExecute(const KernelGraphPtr kernel_graph);
   static void RegisterProfType();
-  static void InitReportNode(const CNodePtr &cnode);
+  static void InitReportNode(const CNodePtr &cnode, bool init_begin_time = false);
 
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
   inline static constexpr char kProfilerTraceId[] = "profiler_trace_id";
   inline static constexpr char kFlags[] = "flags";
+  static std::mutex profiler_mutex;
 
  private:
   static NotNull<CNodePtr> CreateProfilingCNode(const ProfilingContent &profiling_content,
@@ -181,10 +180,10 @@ class ProfilingUtils {
   inline static std::map<std::string, uint64_t> task_launch_begin_;
   inline static bool is_prof_type_registered_ = False;
 
-  inline static std::vector<MsprofEvent> report_event;
-  inline static std::vector<MsprofCompactInfo> report_compact_info;
-  inline static std::vector<MsprofAdditionalInfo> report_additional_info;
-  inline static std::vector<MsprofApi> report_api;
+  inline static std::vector<MsprofEvent> report_event_;
+  inline static std::vector<MsprofCompactInfo> report_compact_info_;
+  inline static std::vector<MsprofAdditionalInfo> report_additional_info_;
+  inline static std::vector<MsprofApi> report_api_;
 };
 }  // namespace ascend
 }  // namespace device

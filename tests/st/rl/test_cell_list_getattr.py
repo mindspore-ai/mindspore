@@ -104,7 +104,7 @@ def test_cell_list_getattr():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -140,7 +140,7 @@ class Trainer2(nn.Cell):
         return sum_value
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -160,7 +160,7 @@ def test_list_item_getattr2():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -182,7 +182,7 @@ def test_cell_list_getattr2():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -244,7 +244,7 @@ def verify_list_item_getattr2(trainer, expect_res, expect_grad_res):
     assert np.array_equal(res2.asnumpy(), expect_grad_res.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -268,7 +268,7 @@ def test_list_item_getattr3():
     verify_list_item_getattr2(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

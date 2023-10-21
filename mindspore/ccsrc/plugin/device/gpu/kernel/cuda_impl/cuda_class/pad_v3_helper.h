@@ -123,20 +123,22 @@ class PadV3HelperGpuKernel : public GpuKernelHelperBase {
       if (flag != 0) {
         return flag;
       }
-      status =
-        CalConstantPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                         input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                         output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
-                         constant_value, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
+      status = CalConstantPad3d(output_size_, input_ptr, input_shape_5d_[kIndex0], input_shape_5d_[kIndex1],
+                                input_shape_5d_[kIndex2], input_shape_5d_[kIndex3], input_shape_5d_[kIndex4],
+                                output_shape_5d_[kIndex2], output_shape_5d_[kIndex3], output_shape_5d_[kIndex4],
+                                paddings_3d_[kIndex0].first, paddings_3d_[kIndex1].first, paddings_3d_[kIndex2].first,
+                                constant_value, output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kReflect) {
-      status = CalReflectPad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                               input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                               output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
+      status = CalReflectPad3d(output_size_, input_ptr, input_shape_5d_[kIndex0], input_shape_5d_[kIndex1],
+                               input_shape_5d_[kIndex2], input_shape_5d_[kIndex3], input_shape_5d_[kIndex4],
+                               output_shape_5d_[kIndex2], output_shape_5d_[kIndex3], output_shape_5d_[kIndex4],
+                               paddings_3d_[kIndex0].first, paddings_3d_[kIndex1].first, paddings_3d_[kIndex2].first,
                                output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kEdge) {
-      status = CalEdgePad3d(output_size_, input_ptr, input_shape_5d_[0], input_shape_5d_[1], input_shape_5d_[2],
-                            input_shape_5d_[3], input_shape_5d_[4], output_shape_5d_[2], output_shape_5d_[3],
-                            output_shape_5d_[4], paddings_3d_[0].first, paddings_3d_[1].first, paddings_3d_[2].first,
+      status = CalEdgePad3d(output_size_, input_ptr, input_shape_5d_[kIndex0], input_shape_5d_[kIndex1],
+                            input_shape_5d_[kIndex2], input_shape_5d_[kIndex3], input_shape_5d_[kIndex4],
+                            output_shape_5d_[kIndex2], output_shape_5d_[kIndex3], output_shape_5d_[kIndex4],
+                            paddings_3d_[kIndex0].first, paddings_3d_[kIndex1].first, paddings_3d_[kIndex2].first,
                             output_ptr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     } else if (mode_ == ops::kCircular) {
       status = CalCircularPad3d(output_size_, input_ptr, input_shape_5d_[kIndex2], input_shape_5d_[kIndex3],

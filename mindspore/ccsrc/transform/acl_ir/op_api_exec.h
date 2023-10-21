@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include "acl/acl_base.h"
+#include "acl/acl.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "transform/acl_ir/acl_allocator.h"
 
@@ -126,7 +127,7 @@ auto GenerateExecutor(const std::string &aclnn_api, Args &... args) {
   auto workspace_func_name = aclnn_api + "GetWorkspaceSize";
   static const auto get_workspace_size_func_ptr = GetOpApiFunc(workspace_func_name.c_str());
   if (get_workspace_size_func_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << get_workspace_size_func_ptr << " not in " << GetOpApiLibName() << ", please check!";
+    MS_LOG(EXCEPTION) << aclnn_api << " get_workspace_size func not in " << GetOpApiLibName() << ", please check!";
   }
   uint64_t workspace_size = 0;
   uint64_t *workspace_size_addr = &workspace_size;
@@ -227,7 +228,7 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
     auto converted_params = transform::ConvertTypes(__VA_ARGS__, workspace_size_addr, executor_addr);       \
     static auto get_workspace_size_func =                                                                   \
       transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                         \
-    auto workspace_status = call(get_workspace_size_func, converted_params);                                \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                     \
     if (workspace_status != 0) {                                                                            \
       MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
     }                                                                                                       \

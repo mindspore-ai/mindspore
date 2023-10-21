@@ -22,8 +22,6 @@ mindspore.train.CheckpointConfig
         - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
         - **kwargs** (dict) - 配置选项字典。
 
-          - incremental (bool): 是否可以增量导出MapParameter的检查点。
-
     异常：
         - **ValueError** - 输入参数的类型不正确。
 

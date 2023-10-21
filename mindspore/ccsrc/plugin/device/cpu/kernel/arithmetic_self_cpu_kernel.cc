@@ -1165,6 +1165,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
 
 bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
@@ -1220,6 +1221,7 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
 
 bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (kernel_name_ != mindspore::kIdentityOpName) {
     MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;

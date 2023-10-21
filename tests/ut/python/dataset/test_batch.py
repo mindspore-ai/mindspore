@@ -580,7 +580,7 @@ def test_batch_exception_16():
         result = data1.batch(batch_size=batch_size, per_batch_map=swap_col)
         for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    assert "Inconsistent batch type, batch operation expects same type for each data row" in str(raise_info.value)
+    assert "Cannot batch tensors with different types" in str(raise_info.value)
 
 
 def test_batch_exception_17():
@@ -602,7 +602,7 @@ def test_batch_exception_17():
         result = data1.batch(batch_size=batch_size)
         for _ in result.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    assert "Inconsistent batch shapes, batch operation expects same shape for each data row" in str(raise_info.value)
+    assert "Cannot batch tensors with different shapes" in str(raise_info.value)
 
 
 def test_no_input_columns_01():

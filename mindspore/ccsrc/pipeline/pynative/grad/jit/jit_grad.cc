@@ -303,6 +303,7 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   // Connect grad graph of jit to context.
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, TensorGradType::kOpOutput);
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
+  MS_EXCEPTION_IF_NULL(jit_forward_graph->output()->abstract());
   if (grad_executor->dynamic_shape()->enable_unknown_shape() &&
       jit_forward_graph->output()->abstract()->BuildShape()->IsDynamic()) {
     MS_LOG(DEBUG) << "Set jit unknown shape out to abs cache";
@@ -313,10 +314,13 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   op_grad_info->input_value = op_run_info->op_grad_info->input_value;
   op_grad_info->input_abs = op_run_info->op_grad_info->input_abs;
   op_grad_info->out_value = op_run_info->real_out;
-  op_grad_info->out_abs = jit_forward_graph->output()->abstract();
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
-  auto grad_param = std::make_shared<GradParam>(op_grad_info, !top_cell->is_high_order_top_cell(),
-                                                grad_executor->use_dynamic_shape_process());
+  if (jit_forward_graph->output()->abstract()->isa<abstract::AbstractAny>()) {
+    op_grad_info->out_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_grad_info->out_value->ToAbstract());
+  } else {
+    op_grad_info->out_abs = jit_forward_graph->output()->abstract();
+  }
+  auto grad_param = std::make_shared<GradParam>(op_grad_info, grad_executor->use_dynamic_shape_process());
   grad_param->is_control_flow = compile_info_.is_control_flow_;
 
   grad_param->has_added_v = has_added_v;
@@ -337,10 +341,7 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
 
 void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
                              const GradParamPtr &grad_param) const {
-  {
-    py::gil_scoped_release gil_release;
-    grad_executor->bprop_queue()->Wait();
-  }
+  grad_executor->WaitBpropTask();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for jit cnode";
@@ -521,7 +522,8 @@ FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_gr
   }
   if (node_list.empty()) {
     MS_LOG(DEBUG) << "No need do replace";
-    return jit_forward_graph;
+    // Make sure forward graph does not change
+    return BasicClone(jit_forward_graph);
   }
   pynative::PyNativeAlgo::GradCommon::SetForward(node_list);
   // jit_forward_graph will be changed output

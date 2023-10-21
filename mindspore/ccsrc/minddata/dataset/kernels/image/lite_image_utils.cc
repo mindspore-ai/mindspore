@@ -381,6 +381,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
                         GetLiteCVDataType(input->type()));
       shape = shape.AppendDim(input_channel);
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_rgb.IsEmpty(), "Crop: Init image tensor failed, return empty tensor.");
 
     std::shared_ptr<Tensor> output_tensor;
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, input->type(), &output_tensor));
@@ -389,6 +390,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     LiteMat lite_mat_cut;
 
     lite_mat_cut.Init(w, h, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_cut.IsEmpty(), "Crop: Init image tensor failed, return empty tensor.");
 
     bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, w, h);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop: image crop failed.");
@@ -524,6 +526,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
                 reinterpret_cast<void *>(buffer), LDataType::UINT8);
     im_in.Init(static_cast<int>(input_cv->shape()[1]), static_cast<int>(input_cv->shape()[0]),
                static_cast<int>(input_cv->shape()[kChannelIndexHWC]), input_cv->mat().data, LDataType::UINT8);
+    CHECK_FAIL_RETURN_UNEXPECTED(!im_out.IsEmpty(), "Resize: Init image tensor failed, return empty tensor.");
+    CHECK_FAIL_RETURN_UNEXPECTED(!im_in.IsEmpty(), "Resize: Init image tensor failed, return empty tensor.");
     if (ResizeCubic(im_in, im_out, output_width, output_height) == false) {
       RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
     }
@@ -583,6 +587,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       int num_channels = input->shape()[2];
       shape = shape.AppendDim(num_channels);
     }
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_rgb.IsEmpty(), "Resize: Init image tensor failed, return empty tensor.");
 
     LiteMat lite_mat_resize;
     std::shared_ptr<Tensor> output_tensor;
@@ -592,6 +597,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
     lite_mat_resize.Init(output_width, output_height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                          GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_resize.IsEmpty(), "Resize: Init image tensor failed, return empty tensor.");
 
     bool ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize: bilinear resize failed.");
@@ -625,6 +631,7 @@ Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, in
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, DataType(DataType::DE_FLOAT32), &image_tensor));
   uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*image_tensor->begin<uint8_t>()));
   lite_mat_dst.Init(width, height, input_channel, reinterpret_cast<void *>(buffer), LDataType::FLOAT32);
+  CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_dst.IsEmpty(), "Resize: Init image tensor failed, return empty tensor.");
 
   float ratioShiftWShiftH[3] = {0};
   float invM[2][3] = {{0, 0, 0}, {0, 0, 0}};
@@ -665,11 +672,14 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_convert;
     std::shared_ptr<Tensor> output_tensor;
-    TensorShape new_shape = TensorShape({input_height, input_width, 3});
+    constexpr auto kInputChannel = 3;
+    TensorShape new_shape = TensorShape({input_height, input_width, kInputChannel});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    lite_mat_convert.Init(input_width, input_height, 3, reinterpret_cast<void *>(buffer),
+    lite_mat_convert.Init(input_width, input_height, kInputChannel, reinterpret_cast<void *>(buffer),
                           GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_convert.IsEmpty(),
+                                 "RgbToBgr: Init image tensor failed, return empty tensor.");
 
     bool ret =
       ConvertRgbToBgr(lite_mat_rgb, GetLiteCVDataType(input->type()), input_width, input_height, lite_mat_convert);
@@ -704,6 +714,8 @@ Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     lite_mat_convert.Init(input_width, input_height, 1, reinterpret_cast<void *>(buffer),
                           GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_convert.IsEmpty(),
+                                 "RgbToBgr: Init image tensor failed, return empty tensor.");
 
     bool ret =
       ConvertRgbToGray(lite_mat_rgb, GetLiteCVDataType(input->type()), input_width, input_height, lite_mat_convert);
@@ -761,6 +773,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
     lite_mat_pad.Init(pad_width, pad_height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                       GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_pad.IsEmpty(), "Pad: Init image tensor failed, return empty tensor.");
 
     bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
                    PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
@@ -787,6 +800,8 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
+    // The 2D affine transformation matrix consists of 6 parameters (a, b, c, d, e, f)
+    // 0, 1, 2, 3, 4, 5 is the 6 parameters
     if (orientation == 3) {
       height = lite_mat_rgb.height_;
       width = lite_mat_rgb.width_;
@@ -827,6 +842,7 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                          GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_affine.IsEmpty(), "Rotate: Init image tensor failed, return empty tensor.");
 
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
@@ -851,6 +867,8 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
+    // The 2D affine transformation matrix consists of 6 parameters (a, b, c, d, e, f)
+    // 0, 1, 2, 3, 4, 5 is the 6 parameters
     if (orientation == 2) {
       height = lite_mat_rgb.height_;
       width = lite_mat_rgb.width_;
@@ -899,6 +917,7 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                          GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_affine.IsEmpty(), "Rotate: Init image tensor failed, return empty tensor.");
 
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
@@ -1018,6 +1037,7 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
                          GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_affine.IsEmpty(), "Affine: Init image tensor failed, return empty tensor.");
 
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize,
                       UINT8_C3(fill_value[kRIndex], fill_value[kGIndex], fill_value[kBIndex]));
@@ -1058,6 +1078,9 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     LiteMat lite_mat_output;
     lite_mat_output.Init(lite_mat_input.width_, lite_mat_input.height_, lite_mat_input.channel_,
                          reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
+    CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_output.IsEmpty(),
+                                 "GaussianBlur: Init image tensor failed, return empty tensor.");
+
     bool ret = GaussianBlur(lite_mat_input, lite_mat_output, {kernel_x, kernel_y}, static_cast<double>(sigma_x),
                             static_cast<double>(sigma_y));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "GaussianBlur: GaussianBlur failed.");
@@ -1179,6 +1202,8 @@ Status HwcToChw(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
       lite_mat_chw.Init(input_height, input_channel, input_width, reinterpret_cast<void *>(buffer),
                         GetLiteCVDataType(input->type()));
+      CHECK_FAIL_RETURN_UNEXPECTED(!lite_mat_chw.IsEmpty(), "HwcToChw: Init image tensor failed, return empty tensor.");
+
       bool ret = HWC2CHW(lite_mat_hwc, lite_mat_chw);
       CHECK_FAIL_RETURN_UNEXPECTED(ret, "HwcToChw: HwcToChw failed.");
       *output = output_tensor;

@@ -191,6 +191,14 @@ else
     exit ${RET}
   fi
 
+  # run LLMEngine Python-API ut test
+  echo "run LLMEngine Python API ut test"
+  pytest ${CUR_DIR}/ut/python/test_lite_llm_engine_api.py -s
+  RET=$?
+  if [ ${RET} -ne 0 ]; then
+    exit ${RET}
+  fi
+
   # run inference CPU Python-API st test
   echo "run inference CPU Python API st test"
   pytest ${CUR_DIR}/st/python/test_inference.py::test_cpu_inference_01 -s

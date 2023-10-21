@@ -110,7 +110,6 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  MS_EXCEPTION_IF_NULL(inputs[kIndex0]);
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   if (x_shape[0] == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -139,14 +138,25 @@ int RandomChoiceWithMaskCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &workspace,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  auto *input_dim = reinterpret_cast<int *>(workspace[0]->addr);
-  auto *tmp_output = reinterpret_cast<int *>(workspace[1]->addr);
-  auto *mask_dim = reinterpret_cast<int *>(workspace[2]->addr);
-  auto *output = reinterpret_cast<int *>(workspace[3]->addr);
+  auto *input_dim = GetDeviceAddress<int>(workspace, kIndex0);
+  auto *tmp_output = GetDeviceAddress<int>(workspace, kIndex1);
+  auto *mask_dim = GetDeviceAddress<int>(workspace, kIndex2);
+  auto *output = GetDeviceAddress<int>(workspace, kIndex3);
+
+  auto *input_ptr = GetDeviceAddress<bool>(inputs, kIndex0);
+  auto *output_coordinate_ptr = GetDeviceAddress<int32_t>(outputs, kIndex0);
+  auto *output_ptr = GetDeviceAddress<bool>(outputs, kIndex1);
+  MS_EXCEPTION_IF_NULL(input_dim);
+  MS_EXCEPTION_IF_NULL(tmp_output);
+  MS_EXCEPTION_IF_NULL(mask_dim);
+  MS_EXCEPTION_IF_NULL(output);
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  MS_EXCEPTION_IF_NULL(output_coordinate_ptr);
+  MS_EXCEPTION_IF_NULL(output_ptr);
   for (size_t b = 0; b < batch_size_; b++) {
-    auto *input = reinterpret_cast<bool *>(inputs[0]->addr) + b * input_total_count_;
-    auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr) + b * count_ * input_dim_size_;
-    auto *mask = reinterpret_cast<bool *>(outputs[1]->addr) + b * count_;
+    auto *input = input_ptr + b * input_total_count_;
+    auto *output_coordinate = output_coordinate_ptr + b * count_ * input_dim_size_;
+    auto *mask = output_ptr + b * count_;
 
     int32_t non_zero_num = 0;
     for (int32_t i = 0; i < input_total_count_; i++) {

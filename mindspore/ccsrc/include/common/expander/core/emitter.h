@@ -64,6 +64,10 @@ class COMMON_EXPORT Emitter {
   NodePtr Len(const NodePtr &input) { return Emit(kSequenceLenOpName, {input}); }
   NodePtr ScalarAdd(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarAddOpName, {lhs, rhs}); }
   NodePtr ScalarSub(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarSubOpName, {lhs, rhs}); }
+  NodePtr ScalarMul(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarMulOpName, {lhs, rhs}); }
+  NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarDivOpName, {lhs, rhs}); }
+  NodePtr ScalarFloordiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarFloordivOpName, {lhs, rhs}); }
+  NodePtr ScalarNeg(const NodePtr &node) { return Emit(kScalarUsubOpName, {node}); }
 
   NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
@@ -130,6 +134,7 @@ class COMMON_EXPORT Emitter {
   }
   NodePtr LogicalAnd(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalAnd", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) { return Emit("LogicalOr", {lhs, rhs}); }
+  NodePtr LogicalNot(const NodePtr &x) { return Emit("LogicalNot", {x}); }
 
   NodePtr OnesLike(const NodePtr &x) { return Emit("OnesLike", {x}); }
   NodePtr UnsortedSegmentSum(const NodePtr &x, const NodePtr &segment_ids, const NodePtr &num_segments) {
@@ -170,6 +175,8 @@ class COMMON_EXPORT Emitter {
     return input;
   }
   NodePtr Complex(const NodePtr &real, const NodePtr &imag) { return Emit("Complex", {real, imag}); }
+  NodePtr Real(const NodePtr &x) { return Emit(kRealOpName, {x}); }
+  NodePtr Imag(const NodePtr &x) { return Emit(kImagOpName, {x}); }
 
   NodePtr CumProd(const NodePtr &x, const NodePtr &axis, const ValuePtr &exclusive, const ValuePtr &reverse) {
     return Emit("CumProd", {x, axis}, {{"exclusive", exclusive}, {"reverse", reverse}});
@@ -190,6 +197,7 @@ class COMMON_EXPORT Emitter {
   std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim, bool skip_mode = false);
   NodePtr ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims = false, bool skip_mode = false);
   NodePtr ReduceSum(const NodePtr &x, const ShapeVector &axis = {}, bool keep_dims = false);
+  NodePtr BroadcastTo(const NodePtr &x, const NodePtr &y);
 
   NodePtr ZerosLike(const NodePtr &node);
   NodePtr Depend(const NodePtr &value, const NodePtr &expr) {
@@ -255,6 +263,7 @@ class COMMON_EXPORT Emitter {
   /// \param[in] inputs The input tensors.
   /// \param[in] value_depend If index i exists in 'value_depend', the value of inputs[i] is sent to 'functor'.
   ///                         otherwise the shape of inputs[i] is sent.
+  /// \param[in] valid_func The function to check whether the index and input shape is valid.
   /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
   /// otherwise CNode tensors are returned.
   NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,

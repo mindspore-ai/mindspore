@@ -33,7 +33,7 @@ class Net(nn.Cell):
         return self.ctc(inputs, sequence_length)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctc_greedy_deocder_float32():
@@ -87,3 +87,19 @@ def test_ctc_greedy_deocder_float64():
     assert np.array_equal(output[1].asnumpy(), out_expect1)
     assert np.array_equal(output[2].asnumpy(), out_expect2)
     assert np.array_equal(output[3].asnumpy(), out_expect3)
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_ctc_greedy_deocder_float64_with_sequence_length_out_range():
+    """
+    Feature: CTCGreedyDecoder gpu op
+    Description: Test output for fp64 dtype with sequence_length out range
+    Expectation: Raise RunTimeError
+    """
+    inputs_np = np.random.randn(2, 2, 3).astype(np.float64)
+    sequence_length_np = np.array([3, 3]).astype(np.int32)
+    net = Net()
+    with pytest.raises(RuntimeError) as raise_info:
+        net(Tensor(inputs_np), Tensor(sequence_length_np))
+    assert "should be less than" in str(raise_info.value)

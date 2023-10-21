@@ -483,8 +483,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
   try {
     infer_ret = OpsInferShape(anf_prim, abs_list, &result, invalid);
   } catch (const std::exception &e) {
-    std::cout << e.what() << std::endl;
-    MS_LOG(WARNING) << "InferShapeByOps for op: " << cnode->fullname_with_scope() << " failed.";
+    MS_LOG(WARNING) << "InferShapeByOps for op: " << cnode->fullname_with_scope() << " failed. " << e.what();
     throw;
   }
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(ori_format)));

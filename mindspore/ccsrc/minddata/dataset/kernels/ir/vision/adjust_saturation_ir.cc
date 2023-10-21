@@ -18,6 +18,9 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/adjust_saturation_op.h"
 #endif
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_saturation.h"
+#endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -26,23 +29,39 @@ namespace dataset {
 namespace vision {
 #ifndef ENABLE_ANDROID
 // AdjustSaturationOperation
-AdjustSaturationOperation::AdjustSaturationOperation(float saturation_factor) : saturation_factor_(saturation_factor) {}
+AdjustSaturationOperation::AdjustSaturationOperation(float saturation_factor, const std::string &device_target)
+    : saturation_factor_(saturation_factor), device_target_(device_target) {}
 
 Status AdjustSaturationOperation::ValidateParams() {
   // saturation_factor
   RETURN_IF_NOT_OK(ValidateFloatScalarNonNegative("AdjustSaturation", "saturation_factor", saturation_factor_));
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "AdjustSaturation: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> AdjustSaturationOperation::Build() {
-  std::shared_ptr<AdjustSaturationOp> tensor_op = std::make_shared<AdjustSaturationOp>(saturation_factor_);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<AdjustSaturationOp> tensor_op = std::make_shared<AdjustSaturationOp>(saturation_factor_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    return std::make_shared<DvppAdjustSaturationOp>(saturation_factor_);
+#endif
+  } else {
+    MS_LOG(ERROR) << "AdjustSaturation: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status AdjustSaturationOperation::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["saturation_factor"] = saturation_factor_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -50,9 +69,22 @@ Status AdjustSaturationOperation::to_json(nlohmann::json *out_json) {
 Status AdjustSaturationOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
   RETURN_UNEXPECTED_IF_NULL(operation);
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "saturation_factor", kAdjustSaturationOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kAdjustSaturationOperation));
   float saturation_factor = op_params["saturation_factor"];
-  *operation = std::make_shared<vision::AdjustSaturationOperation>(saturation_factor);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<vision::AdjustSaturationOperation>(saturation_factor, device_target);
   return Status::OK();
+}
+
+MapTargetDevice AdjustSaturationOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "AdjustSaturation: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 #endif
 }  // namespace vision

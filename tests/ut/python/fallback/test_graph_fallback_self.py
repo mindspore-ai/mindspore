@@ -113,6 +113,29 @@ def test_fallback_self_method():
     assert np.all(out.asnumpy() == expect)
 
 
+def test_fallback_self_method_2():
+    """
+    Feature: JIT Fallback
+    Description: Add with numpy array should be converted to PyInterpret node first.
+    Expectation: No exception.
+    """
+    class Network(nn.Cell):
+        def construct(self):
+            x = np.array([1, 2, 3])
+            y = np.array([3, 4, 5])
+            z = self.fn(x, y)
+            out = Tensor(z)
+            return out
+
+        def fn(self, x, y):
+            return x + y
+
+    net = Network()
+    out = net()
+    expect = np.array([4, 6, 8])
+    assert np.all(out.asnumpy() == expect)
+
+
 def test_fallback_self_variable():
     """
     Feature: JIT Fallback

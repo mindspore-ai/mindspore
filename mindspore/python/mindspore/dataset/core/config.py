@@ -104,19 +104,21 @@ def _init_device_info():
 
 def set_seed(seed):
     """
-    Set the seed so the random generated number will be fixed for deterministic results.
+    Set the seed for the random number generator in data pipeline.
+
+    The seed can be set to control the initial state of the random generator
+    for the purpose of fixing the result of random number generation.
 
     Note:
-        This set_seed function sets the seed in the Python random library and numpy.random library
-        for deterministic Python augmentations using randomness. This set_seed function should
-        be called when iterator is created to reset the random seed.
+        This interface will set the random seed of the `random`, `numpy.random`
+        and `mindspore.dataset` modules to the specified value at the same time.
 
     Args:
-        seed(int): Random number seed. It is used to generate deterministic random numbers.
+        seed (int): The desired seed. Must be non-negative.
 
     Raises:
-        TypeError: If `seed` isn't of type int.
-        ValueError: If `seed` < 0 or `seed` > UINT32_MAX(4294967295).
+        TypeError: If `seed` is not of type int.
+        ValueError: If `seed` is a negative value.
 
     Examples:
         >>> # Set a new global configuration value for the seed value.
@@ -155,20 +157,28 @@ def get_seed():
 
 def set_prefetch_size(size):
     """
-    Set the queue capacity of the thread in pipeline.
+    Set the buffer queue size between dataset operations in the pipeline.
+
+    The presence of a buffer queue allows the current operation to start
+    processing subsequent data before the next operation fetches it, so the
+    operations can execute asynchronously and concurrently.
+
+    A larger buffer queue size reduces the overall processing latency when
+    neighboring operations have unbalanced throughput rates, but also consumes
+    more system memory.
 
     Args:
-        size (int): The length of the cache queue. The `size` must be greater than 0, otherwise the queue capacity of
-            the thread is invalid.
+        size (int): The size of the buffer queue, must be greater than 0.
 
     Raises:
         TypeError: If `size` is not of type int.
         ValueError: If `size` is not a positive number.
 
     Note:
-        Since total memory used for prefetch can grow very large with high number of workers,
-        when the number of workers is greater than 4, the per worker prefetch size will be reduced.
-        The actual prefetch size at runtime per-worker will be prefetchsize * (4 / num_parallel_workers).
+        The total memory consumed by the buffer queue is proportional to the number
+        of worker threads. To avoid overuse of memory, when the number of worker
+        threads is greater than 4, the actual buffer queue size used will be adjusted
+        to the greater of (`size` * 4 / number of worker threads) and 1.
 
     Examples:
         >>> # Set a new global configuration value for the prefetch size.
@@ -472,43 +482,40 @@ def load(file):
 
 def set_enable_autotune(enable, filepath_prefix=None):
     """
-    Set whether to enable AutoTune. AutoTune is disabled by default.
+    Set whether to enable AutoTune for data pipeline parameters.
 
-    AutoTune is used to automatically adjust the global configuration of the data pipeline
-    according to the workload of environmental resources during the training process to
-    improve the speed of data processing.
+    It can be used to automatically adjust the parameter configurations
+    of each operation in the data processing pipeline, such as parallelism
+    and buffer queue size, according to the load of the environment resources
+    during training, so as to improve the overall processing speed.
 
-    The optimized global configuration can be saved as a JSON file by setting `json_filepath`
-    for subsequent reuse.
+    AutoTune is not enabled by default.
 
     Args:
         enable (bool): Whether to enable AutoTune.
-        filepath_prefix (str, optional): The prefix filepath to save the optimized global configuration.
-            The rank id and the json extension will be appended to the filepath_prefix string in multi-device training,
-            rank id will be set to 0 in standalone training.
-            For example, if filepath_prefix="/path/to/some/dir/prefixname" and rank_id is 1, then the path
-            of the generated file will be "/path/to/some/dir/prefixname_1.json"
-            If the file already exists, it will be automatically overwritten. Default: ``None``,
-            means not to save the configuration file, but the tuned result still can be checked through INFO log.
+        filepath_prefix (str, optional): The path where the optimized parameter configuration will be saved.
+            Effective only if `enable` is `True`. The parameter configuration file on each Device will be
+            saved separately, and the final file name will be `filepath_prefix + RANK_ID + ".json"`,
+            where RANK_ID is the Device ID corresponding to the file. Default: ``None`` , no configuration
+            file is saved.
 
     Raises:
         TypeError: If `enable` is not of type boolean.
-        TypeError: If `json_filepath` is not of type str.
-        RuntimeError: If `json_filepath` is an empty string.
-        RuntimeError: If `json_filepath` is a directory.
-        RuntimeError: If `json_filepath` does not exist.
-        RuntimeError: If `json_filepath` does not have write permission.
+        TypeError: If `filepath_prefix` is not of type str.
+        RuntimeError: If `filepath_prefix` is an empty string.
+        RuntimeError: If `filepath_prefix` is a directory.
+        RuntimeError: If `filepath_prefix` does not exist.
+        RuntimeError: If `filepath_prefix` does not have write permission.
 
     Note:
-        - When `enable` is ``False``, `json_filepath` will be ignored.
-        - The JSON file can be loaded by API `mindspore.dataset.deserialize` to build a tuned pipeline.
-        - In distributed training scenario, set_enable_autotune() must be called after cluster communication has been
-          initialized (mindspore.communication.management.init()), otherwise the AutoTune file will always suffix with
-          rank id 0.
+        - Saved parameter profiles can be loaded via the `mindspore.dataset.deserialize` interface to
+          directly obtain a data processing pipeline object configured with optimal parameters.
+        - The parameter tuning process can be viewed by turning on INFO level logging.
 
-    An example of the generated JSON file is as follows. "remark" file will conclude that if the dataset has been
-    tuned or not. "summary" filed will show the tuned configuration of dataset pipeline. Users can modify scripts
-    based on the tuned result.
+    An example of the generated configuration file is as follows, the "remark" field describes whether or not data
+    processing parameter tuning has been performed, the "summary" field briefly shows each operation in the data
+    processing pipeline and its corresponding optimal configuration, and the "tree" field provides complete
+    information about the structure of the data processing pipeline.
 
     .. code-block::
 
@@ -642,18 +649,20 @@ def get_enable_shared_mem():
 
 def set_enable_shared_mem(enable):
     """
-    Set the default state of shared memory flag. If set to ``True``, will use shared memory queues
-    to pass data to processes that are created for operations that set `python_multiprocessing` to ``True``.
-    It is enabled by default.
+    Set whether to use shared memory for interprocess communication when data processing multiprocessing is turned on.
+
+    Using shared memory can speed up the efficiency of data transfer between processes.
+
+    Shared memory is used by default.
 
     Note:
-        `set_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
+        Windows and MacOS systems are not supported yet.
 
     Args:
-        enable (bool): Whether to use shared memory in operations when `python_multiprocessing` is ``True``.
+        enable (bool): Whether to use shared memory for interprocess communication.
 
     Raises:
-        TypeError: If `enable` is not a boolean data type.
+        TypeError: If `enable` is not of type bool.
 
     Examples:
         >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
@@ -674,11 +683,19 @@ def set_enable_shared_mem(enable):
 
 def set_sending_batches(batch_num):
     """
-    Set the default sending batches when training with sink_mode=True in Ascend device.
+    Set the upper limit on the number of batches of data that the Host can send to the Device.
+
+    Can be used to implement customized data sending control logic to solve the problem of
+    Device out of memory. In each epoch, when the actual number of batches sent to the Device
+    reaches this value, the Host will stop continuing to send until the user increases this
+    upper limit again through this interface.
+
+    Currently, it is only supported when training in sink mode with Ascend backend, which can
+    be enabled via the :class:`mindspore.train.Model.train` interface.
 
     Args:
-        batch_num (int): the total sending batches, when batch_num is set, it will wait unless sending batches
-         increase, ``0`` means will send all batches in dataset.
+        batch_num (int): The upper limit on the number of batches of data that the Host can
+            send to the Device. ``0`` indicates that there is no upper limit for sending.
 
     Raises:
         TypeError: If `batch_num` is not of type int.
@@ -773,7 +790,7 @@ def set_multiprocessing_timeout_interval(interval):
 
     Args:
         interval (int): Interval (in seconds) to be used for multiprocessing/multithreading timeout when main
-          process/thread gets data from subprocess/child threads.
+            process/thread gets data from subprocess/child threads.
 
     Raises:
         TypeError: If `interval` is not of type int.
@@ -965,10 +982,10 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
 def get_debug_mode():
     """
-    Get the debug_mode flag of the dataset pipeline, it is set to False by default.
+    Get whether debug mode is currently enabled for the data pipeline.
 
     Returns:
-        bool, whether dataset pipeline debug mode is enabled
+        bool, whether data pipeline debug mode is enabled.
 
     Examples:
         >>> import mindspore.dataset as ds

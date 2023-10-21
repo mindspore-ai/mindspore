@@ -362,8 +362,13 @@ MutableTensorImplPtr GraphSinkSession::GetInputByTensorName(uint32_t graph_id, c
 }
 static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_ptr<Context> &ctx,
                                                             const ConfigInfos &config_infos) {
+  if (ctx == nullptr) {
+    MS_LOG(ERROR) << "context is nullptr!";
+    return nullptr;
+  }
   auto &device_contexts = ctx->MutableDeviceInfo();
   if (device_contexts.empty()) {
+    MS_LOG(ERROR) << "device context is empty!";
     return nullptr;
   }
   auto device_type = device_contexts.at(0)->GetDeviceType();
@@ -372,6 +377,7 @@ static std::shared_ptr<InferSession> DelegateSessionCreator(const std::shared_pt
   auto delegate = DelegateRegistry<std::shared_ptr<GraphExecutor>>::GetInstance().GetDelegate(device_type, provider,
                                                                                               ctx, config_infos);
   if (delegate == nullptr) {
+    MS_LOG(ERROR) << "delegate is nullptr!";
     return nullptr;
   }
   auto session = std::make_shared<GraphSinkSession>(delegate);

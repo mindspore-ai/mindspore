@@ -326,8 +326,7 @@ GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const To
   }
 
   op_run_info->op_grad_info->out_abs = op_run_info->base_op_run_info.abstract;
-  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(),
-                                                top_cell->use_dynamic_shape_process());
+  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
   grad_param->out_used_in_bporp_graph = out_used_in_bporp_graph;
   return grad_param;
 }
@@ -343,8 +342,7 @@ GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopC
     PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
   // original output abs
   op_run_info->op_grad_info->out_abs = graph_grad_info->ori_output_abs;
-  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, !top_cell->is_high_order_top_cell(),
-                                                top_cell->use_dynamic_shape_process());
+  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
   MS_LOG_DEBUG << "end CreateGradParam";
   return grad_param;
 }
@@ -480,7 +478,8 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
     RecordForwardGraphForInput(v, input_args_info->input_arg_id_vec[i], param_i_abs);
   }
   top_cell()->set_auto_grad_cell_ptr(std::make_shared<autograd::AutoGradCellImpl>(
-    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async()));
+    input_param_values, abs_list, op_num_in_bprop_graph_ * kContainerRatio, assist_queue_, forward()->enable_async(),
+    !top_cell()->is_high_order_top_cell()));
 }
 
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
@@ -503,6 +502,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
   } else if (input_args_info->grad_is_running && top_cell()->grad_order() != input_args_info->grad_order) {
     MS_LOG(DEBUG) << "Nested grad graph existed in custom bprop";
+    SaveInputTensorGradInfo(input_args_info);
     MakeNewTopGraph(input_args_info);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, true));
   } else if (input_args_info->is_high_order_top_cell) {
@@ -1297,8 +1297,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   op_grad_info->out_value = out_value;
   op_grad_info->out_abs = first_grad_fg->output()->abstract();
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
-  auto grad_param =
-    std::make_shared<GradParam>(op_grad_info, !top_cell()->is_high_order_top_cell(), use_dynamic_shape_process);
+  auto grad_param = std::make_shared<GradParam>(op_grad_info, use_dynamic_shape_process);
   grad_param->fg = grad_fg;
   grad_param->source_fg = first_grad_fg;
   grad_param->is_control_flow = has_call_graph;
@@ -1402,6 +1401,7 @@ void GradExecutor::ClearGradRes() {
 
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
+  WaitBpropTask();
   grad_flag_ = false;
   grad_is_running_ = false;
   custom_bprop_cell_count_ = 0;
@@ -1411,6 +1411,7 @@ void GradExecutor::ClearRes() {
   bprop_cell_list_.clear();
   grad_operation_.clear();
   already_run_top_cell_.clear();
+  need_gc_top_cell_list_.clear();
   dynamic_shape()->Clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);

@@ -57,6 +57,7 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
     auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
     // node_address can't be null
     MS_EXCEPTION_IF_NULL(node_address);
+    MS_EXCEPTION_IF_NULL(device_context);
     if (tensor_address != nullptr) {
       if (tensor_address->GetDeviceType() != device_context->GetDeviceType() ||
           tensor_address->format() != node_address->format()) {
@@ -147,6 +148,7 @@ void UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
     auto &input_node = input_pair.first;
     auto input_node_output_index = input_pair.second;
     if (!AnfAlgo::OutputAddrExist(input_node, input_node_output_index, false)) {
+      MS_EXCEPTION_IF_NULL(input_node);
       MS_LOG(WARNING) << "Output address not exist, node " << input_node->fullname_with_scope() << " index "
                       << input_node_output_index;
       continue;
@@ -326,6 +328,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
   auto input_size = runtime_info->GetInputSize();
   for (size_t i = 0; i < input_size; ++i) {
     if (common::AnfAlgo::IsNoneInput(node, i)) {
+      MS_EXCEPTION_IF_NULL(node);
       MS_LOG(DEBUG) << "Input [" << i << "] of " << node->fullname_with_scope() << " is None.";
       continue;
     }
@@ -400,7 +403,6 @@ kernel::AddressPtrList CreateKernelInputAddress(const std::shared_ptr<OpRuntimeI
     MS_EXCEPTION_IF_NULL(device_address);
     (void)inputs.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_EXCEPTION_IF_NULL(inputs.back());
     MS_LOG(DEBUG) << "input[" << i << "]:" << inputs.back()->addr << " size:" << inputs.back()->size;
   }
   return inputs;
@@ -450,7 +452,6 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     }
     (void)workspaces.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
-    MS_EXCEPTION_IF_NULL(workspaces.back());
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
   }
 
@@ -534,9 +535,9 @@ kernel::KernelArgs InferNodeRealShape(const CNodePtr &kernel, const pynative::Ex
 }
 
 void ResizeNodeInput(const CNodePtr &kernel, const kernel::KernelArgs &args) {
+  MS_EXCEPTION_IF_NULL(kernel);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelResize,
                                      kernel->fullname_with_scope(), false);
-  MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   kernel_mod->set_use_kernel_tensor(true);
@@ -589,6 +590,7 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   const OpCompilerInfoPtr &op_compiler_info, const TensorPtr &tensor,
   const device::DeviceAddressPtr &cached_device_address, const AnfNodePtr &node, bool skip_sync) {
   MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(cached_device_address);
   auto &device_context = op_compiler_info->device_context_;
   MS_EXCEPTION_IF_NULL(device_context);
@@ -699,6 +701,8 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     if (ignore_list.empty() || ignore_list.find(op_compiler_info->inputs_[i]) == ignore_list.end()) {
       skip_sync = false;
     }
+    common::AnfAlgo::SetOutputInferTypeAndShape({input_tensor->data_type()}, {input_tensor->shape()},
+                                                op_compiler_info->graph_->inputs()[i].get());
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
       UpdateTensorCache(device_context, device_address, op_compiler_info->inputs_[i], input_tensor,
@@ -793,6 +797,7 @@ void SyncCacheInfoToOutput(const pynative::OpCompilerInfoPtr &op_compiler_info,
     if (output_address == nullptr) {
       output_address =
         runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(op_compiler_info->outputs_[j], device_context);
+      MS_EXCEPTION_IF_NULL(output_address);
       output_address->set_ptr(op_compiler_info->outputs_[j]->GetMutablePtr());
       output_address->set_from_mem_pool(op_compiler_info->outputs_[j]->from_mem_pool());
       output_address->set_from_persistent_mem(op_compiler_info->outputs_[j]->from_persistent_mem());
@@ -877,6 +882,7 @@ std::vector<tensor::TensorPtr> GetAllInputTensor(
 
 void UpdateOutputShapeForCompileInfo(const std::vector<device::DeviceAddressPtr> &outputs_device_address,
                                      const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   auto out_abstract = node->abstract();
   MS_EXCEPTION_IF_NULL(out_abstract);
   auto kernel_mod = AnfAlgo::GetKernelMod(node);

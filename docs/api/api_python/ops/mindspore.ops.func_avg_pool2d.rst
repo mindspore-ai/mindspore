@@ -21,7 +21,7 @@ mindspore.ops.avg_pool2d
         - **padding** (Union(int, tuple[int])) - 池化填充长度。可以是一个整数表示在上下左右方向的填充长度，或者包含四个整数的tuple，分别表示在上下左右方向的填充长度。默认值： ``0`` 。
         - **ceil_mode** (bool) - 如果为 ``True`` ，用ceil代替floor来计算输出的shape。默认值： ``False`` 。
         - **count_include_pad** (bool) - 如果为 ``True`` ，平均计算将包括零填充。默认值： ``True`` 。
-        - **divisor_override** (int) - 如果指定了该值，它将在平均计算中用作除数，否则将使用 `kernel_size` 作为除数。默认值： ``0`` 。
+        - **divisor_override** (int) - 如果指定了该值，它将在平均计算中用作除数，否则将使用 `kernel_size` 作为除数。默认值： ``0`` ，表示未指定该值。
 
     返回：
         Tensor，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。

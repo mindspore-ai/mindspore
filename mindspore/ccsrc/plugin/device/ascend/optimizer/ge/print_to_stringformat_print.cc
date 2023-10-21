@@ -23,6 +23,7 @@
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
 
@@ -63,6 +64,7 @@ std::string GetTensorDtype(const AnfNodePtr &node) {
   std::string type_str = "dtype=";
   auto type = node->Type();
   MS_EXCEPTION_IF_NULL(type);
+  MS_EXCEPTION_IF_NULL(dyn_cast<TensorType>(type));
   auto type_ptr = dyn_cast<TensorType>(type)->element();
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_id = type_ptr->type_id();
@@ -86,12 +88,19 @@ CNodePtr CreateNewMakeTuple(const FuncGraphPtr &graph, const std::vector<AnfNode
   return new_make_tuple_node;
 }
 
-CNodePtr CreateNewPrint(const FuncGraphPtr &graph, const CNodePtr &string_format_node) {
+CNodePtr CreateNewPrint(const FuncGraphPtr &graph, const CNodePtr &string_format_node, const CNodePtr &print_node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(string_format_node);
+  MS_EXCEPTION_IF_NULL(print_node);
 
   std::vector<AnfNodePtr> new_print_inputs{NewValueNode(std::make_shared<Primitive>(kPrintOpName))};
   (void)new_print_inputs.emplace_back(string_format_node);
+  // Add IOMonad.
+  const CNodePtr &make_tuple_node = print_node->input(1)->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple_node);
+  const std::vector<AnfNodePtr> &inputs = make_tuple_node->inputs();
+  new_print_inputs.emplace_back(inputs.at(inputs.size() - 1));
+
   auto new_print_node = graph->NewCNode(new_print_inputs);
   MS_EXCEPTION_IF_NULL(new_print_node);
   new_print_node->set_abstract(string_format_node->abstract());
@@ -157,10 +166,16 @@ CNodePtr CreateStringFormat(const FuncGraphPtr &graph, const CNodePtr &print_nod
       auto valut_ptr = GetValueNode(input_node);
       str_template = str_template + GetValue<std::string>(valut_ptr) + "\n";
     } else {
+      if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+        new_make_tuple_node = input_node->cast<CNodePtr>();
+        break;
+      }
       std::string str_dtype;
       auto abstract = input_node->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      auto shape = abstract->GetShapeTrack()->cast<abstract::ShapePtr>()->shape();
+      auto shape_ptr = abstract->GetShapeTrack()->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto shape = shape_ptr->shape();
       // For dynamic shape input tensor, insert TensorShape ops to get real shape.
       if (IsDynamic(shape)) {
         auto shape_node = CreateShape(graph, input_node);
@@ -178,9 +193,9 @@ CNodePtr CreateStringFormat(const FuncGraphPtr &graph, const CNodePtr &print_nod
   if (!str_template.empty()) {
     str_template.pop_back();
   }
-  // Add IOMonad.
-  make_tuple_inputs.emplace_back(inputs.at(inputs.size() - 1));
-  new_make_tuple_node = CreateNewMakeTuple(graph, make_tuple_inputs);
+  if (new_make_tuple_node == nullptr) {
+    new_make_tuple_node = CreateNewMakeTuple(graph, make_tuple_inputs);
+  }
   std::vector<AnfNodePtr> string_format_inputs{NewValueNode(std::make_shared<Primitive>("StringFormat"))};
   string_format_inputs.emplace_back(new_make_tuple_node);
   auto string_format_node = graph->NewCNode(string_format_inputs);
@@ -211,7 +226,7 @@ const AnfNodePtr PrintToStringFormatPrint::Process(const FuncGraphPtr &func_grap
   MS_EXCEPTION_IF_NULL(cnode);
   // convert Print to StringFormat and PrintV2 to adapt CANN
   auto string_format_node = CreateStringFormat(func_graph, cnode);
-  auto new_print_node = CreateNewPrint(func_graph, string_format_node);
+  auto new_print_node = CreateNewPrint(func_graph, string_format_node, cnode);
   return new_print_node;
 }
 }  // namespace opt

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <map>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <utility>
@@ -34,7 +35,7 @@
 namespace mindspore {
 namespace device {
 // The status of memory buf.
-enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed };
+enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree };
 // Memory allocator type is used to record the memory classification statistics information.
 enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kOther };
 constexpr int kAllocatorTypeNum = 4;
@@ -73,7 +74,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   virtual ~DynamicMemPoolBestFit();
 
   // The main program entry of memory alloc.
-  DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false);
+  DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false, bool need_recycle = false);
   // The main program entry of continuous memory alloc.
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list);
   // The main program entry of memory free.
@@ -90,6 +91,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // The statistics information.
   size_t TotalMemStatistics() const;
   size_t TotalUsedMemStatistics() const;
+  size_t TotalIdleMemStatistics() const;
+  size_t TotalEagerFreeMemStatistics() const;
   size_t UsedMemPeakStatistics() const;
 
   // Display the brief state information of memory block and memory buf.
@@ -101,22 +104,44 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
   virtual bool FreeDeviceMem(const DeviceMemPtr &addr) = 0;
   virtual size_t free_mem_size() = 0;
+  virtual uint64_t total_mem_size() const { return 0; }
   // Set mem pool block size
   virtual void SetMemPoolBlockSize(size_t available_device_mem_size);
+  virtual size_t GetMaxUsedMemSize() const { return 0; }
+#ifdef WITH_BACKEND
 
  protected:
+#endif
   const MemStatusManagerPtr &common_mem() const { return common_mem_; }
   const MemStatusManagerPtr &persistent_mem() const { return persistent_mem_; }
+  void *GetMinUsedMemoryAddr() const;
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
   // Calculate memory block required alloc size when adding the memory block.
-  virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem);
+  virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle = false);
+  std::set<DeviceMemPtr> mem_bufs_;
+
+  // The related interface of device memory eager free.
+  virtual const bool IsEnableEagerFree() const { return false; }
+  virtual const bool SyncAllStreams() { return false; }
+  virtual size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) { return 0; }
+  virtual size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) { return 0; }
+  const size_t FreeIdleMemsByEagerFree();
 
  private:
-  // Find the idle memory buf by aligned size when memory alloc.
-  DeviceMemPtr FindIdleMemBuf(size_t size, bool from_persistent_mem);
-  // Add the memory block and memory buf when memory alloc not find the idle memory buf.
-  DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem);
+  // Find available memory buf from total pools by status, which contains idle and eager free.
+  DeviceMemPtr FindAvailableMemBuf(size_t size, bool from_persistent_mem);
+  // Find the target status memory buf from total pools by aligned size when memory alloc.
+  DeviceMemPtr FindMemBufByStatus(size_t size, bool from_persistent_mem, DynamicMemBufStatus target_status);
+  // Find the target status memory buf from specific pool by aligned size when memory alloc.
+  DeviceMemPtr FindMemBufInSpecifiedMng(size_t size, bool from_persistent_mem, DynamicMemBufStatus target_status);
+  // Add memory block and memory.
+  DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem, bool need_recycle);
+  // Add memory block and memory buf with eager free api.
+  DeviceMemPtr AddMemBlockAndMemBufByEagerFree(size_t size, bool from_persistent_mem);
+  // Add the memory block and memory buf when memory alloc not find the available memory buf.
+  DeviceMemPtr CreateMemBlockAndMemBuf(size_t size, bool from_persistent_mem, DeviceMemPtr source_addr,
+                                       size_t source_size, DynamicMemBufStatus mem_buf_status);
   // Judge whether need split the memory buf by alloc size and memory buf size.
   bool IsSplit(size_t tensor_size, size_t mem_buf_size) const;
   // Split the memory buf by alloc size.
@@ -127,9 +152,11 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
   void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
-                     const MemStatusManagerPtr &mem_mng);
-  // Erase the idle memory buf by size and device address when idle memory buf is combined.
-  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng) const;
+                     const MemStatusManagerPtr &mem_mng, DynamicMemBufStatus origin_status,
+                     DynamicMemBufStatus target_status);
+  // Erase memory buf by size and device address when memory buf is combined.
+  void EraseMemBufByStatus(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng,
+                           DynamicMemBufStatus target_status) const;
 
 #ifdef __APPLE__
   // There are some problems with using mutex on Mac, use spinlocks instead.
@@ -143,6 +170,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // In the graph mode, the unit size set in the context will be modified through the FetchMemUnitSize function, so it
   // needs to be changed back after that
   size_t config_unit_size_{kDynamicMemAllocUnitSize};
+  // Flag for eager free routine. This flag set to false when initializing, and set to true when triggering oom.
+  bool is_trigger_eager_free_{false};
 };
 
 // Recording information for debugging the memory allocator.
@@ -198,7 +227,9 @@ class DynamicMemBlock {
   const DeviceMemPtr &device_addr() const { return device_addr_base_; }
   size_t size() const { return mem_block_size_; }
 
+#ifdef WITH_BACKEND
  private:
+#endif
   friend class DynamicMemPoolBestFit;
 
   // The map of all memory buf in this memory block by device address.
@@ -213,6 +244,10 @@ struct DeviceState {
   size_t total_mem_size_{0};
   // Memory in use
   size_t total_used_mem_size_{0};
+  // Memory in idle.
+  size_t total_idle_mem_size_{0};
+  // Memory in eager free.
+  size_t total_eager_free_mem_size_{0};
   // Maximum peak memory usage
   size_t used_mem_peak_size_{0};
 };
@@ -224,9 +259,12 @@ struct MemStatusManager {
   std::vector<DynamicMemBlockPtr> mem_block_list_;
   // The map of all idle memory buf by size.
   SizeMapMemBuf idle_mem_buf_map_;
+  // The map of all eager free memory buf by size.
+  SizeMapMemBuf eager_free_mem_buf_map_;
   void clear() noexcept {
     mem_block_list_.clear();
     idle_mem_buf_map_.clear();
+    eager_free_mem_buf_map_.clear();
   }
 };
 }  // namespace device

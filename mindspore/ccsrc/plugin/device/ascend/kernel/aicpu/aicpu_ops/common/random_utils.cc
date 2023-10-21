@@ -24,6 +24,24 @@
 
 namespace aicpu {
 namespace random {
+uint64_t GetRNG(int64_t *seed, int64_t *seed2) {
+  if (seed == nullptr || seed2 == nullptr) {
+    KERNEL_LOG_ERROR("seed and seed2 cannot be null.");
+  }
+  AICPU_LOGD("Before compute, seed, seed2: [%lld], [%lld]", *seed, *seed2);
+  std::random_device rd;
+  uint64_t rng_seed = 0;
+  if (*seed2 != 0) {
+    rng_seed = (*seed2)++;
+  } else if (*seed != 0) {
+    rng_seed = (*seed)++;
+  } else {
+    rng_seed = rd();
+  }
+  AICPU_LOGD("After compute, seed, seed2, rng_seed: [%lld], [%lld], [%llu]", *seed, *seed2, rng_seed);
+  return rng_seed;
+}
+
 uint64_t GetSeed(const uint64_t &global_seed, const uint64_t &ops_seed) {
   uint64_t seed = 0;
   if (global_seed == 0 && ops_seed == 0) {

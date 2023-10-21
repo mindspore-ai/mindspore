@@ -19,13 +19,7 @@
 #include <vector>
 #include <utility>
 #include "mindspore/core/ops/sequence_ops.h"
-#include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "include/backend/optimizer/helper.h"
-#include "kernel/kernel_build_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
-#include "include/common/utils/utils.h"
+#include "plugin/device/ascend/optimizer/format_type/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -122,6 +116,73 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &o
   }
   // Multiple output
   return InsertCastForMultipleOutput(func_graph, orig_cnode, cnode);
+}
+
+CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
+  size_t in_num = common::AnfAlgo::GetInputNum(cnode);  // include monads.
+  for (size_t input_index = 0; input_index < in_num; ++input_index) {
+    auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_index);
+    MS_EXCEPTION_IF_NULL(cur_input);
+
+    if (HasAbstractMonad(cur_input)) {
+      // No cast for monad inputs.
+      new_inputs.push_back(cur_input);
+      continue;
+    }
+    // If input is TUPLE, skip insert cast
+    if (AnfUtils::IsRealKernel(cnode) &&
+        AnfAlgo::GetInputKernelObjectType(cnode, input_index) == kernel::KernelObjectType::TUPLE) {
+      MS_LOG(INFO) << "The node's InputObjectType is TUPLE, can not insert cast yet, skip it. Node: "
+                   << cnode->fullname_with_scope();
+      new_inputs.push_back(cur_input);
+      continue;
+    }
+
+    auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
+    const auto infer_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
+    TypeId origin_type(kTypeUnknown);
+
+    auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
+    auto real_input_node = kernel_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_input_node);
+    if (real_input_node->isa<Parameter>() || real_input_node->isa<ValueNode>()) {
+      origin_type = common::AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);
+      if (origin_type == kTypeUnknown) {
+        origin_type = AnfAlgo::GetOutputDeviceDataType(prev_node.first, prev_node.second);
+      }
+    } else {
+      // feature map
+      origin_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
+    }
+    const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
+    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
+    // In graph kernel, we check parameter,
+    // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
+    if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
+      auto cast =
+        AddCastOpNodeToGraph(func_graph, cur_input, cnode, dev_fmt, origin_type, device_type, origin_shape, infer_type);
+      MS_EXCEPTION_IF_NULL(cast);
+      cast->set_scope(cnode->scope());
+      common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);
+      new_inputs.push_back(cast);
+    } else {
+      new_inputs.push_back(cur_input);
+    }
+  }
+  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+  CNodePtr new_node = nullptr;
+  if (kernel_graph == nullptr) {
+    new_node = std::make_shared<CNode>(*cnode);
+    new_node->CloneUserData(cnode);
+  } else {
+    new_node = kernel_graph->NewCNode(cnode);
+  }
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_inputs(new_inputs);
+  return new_node;
 }
 }  // namespace
 

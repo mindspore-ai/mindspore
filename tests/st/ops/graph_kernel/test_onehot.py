@@ -59,7 +59,7 @@ def fusion_net_compare_result():
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 1.e-4, 1.e-7)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_graph_mode():

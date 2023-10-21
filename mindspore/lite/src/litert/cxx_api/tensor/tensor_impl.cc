@@ -87,7 +87,7 @@ void LiteTensorImpl::SetDeviceData(void *data) {
 #ifdef ENABLE_CLOUD_INFERENCE
   if (GetDeviceData() != nullptr && own_data_) {
     MS_LOG(INFO) << "free device data in tensor impl.";
-    kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData());
+    kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData(), GetDeviceId());
   }
 #endif
   lite_tensor_->set_device_data(data);

@@ -214,12 +214,15 @@ std::vector<AnfNodePtr> RunOutputReplace(const CNodePtr &forward_node, const Fun
 
 std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const FuncGraphPtr &fprop_graph,
                                         const CNodePtr &cnode_morph) {
+  MS_EXCEPTION_IF_NULL(cnode_morph);
+  if (!PyNativeAlgo::GradCommon::IsRealOp(cnode_morph)) {
+    return {};
+  }
   // Use manager to get the link relation among nodes.
   MS_EXCEPTION_IF_NULL(bprop_graph);
   MS_EXCEPTION_IF_NULL(fprop_graph);
   auto manager = Manage({fprop_graph, bprop_graph}, false);
 
-  MS_EXCEPTION_IF_NULL(cnode_morph);
   const auto &paras = fprop_graph->parameters();
   if (cnode_morph->size() - 1 != paras.size() && !IsPrimitiveCNode(cnode_morph, prim::kPrimUpdateState)) {
     MS_LOG(EXCEPTION) << "The size of parameters in fprop graph:" << paras.size()

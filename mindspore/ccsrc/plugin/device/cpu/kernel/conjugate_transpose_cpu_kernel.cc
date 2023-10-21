@@ -136,6 +136,9 @@ void ConjugateTransposeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     transpose_param_.perm_[i] = SizeToInt(axes_[i]);
   }
   size_t num_axes = input_shape_.size();
+  if (num_axes == 0) {
+    MS_EXCEPTION(ValueError) << "ConjugateTranspose doesn't support input shape's size as 0.";
+  }
   transpose_param_.perm_size_ = axes_.size();
   transpose_param_.num_axes_ = SizeToInt(num_axes);
   transpose_param_.strides_[num_axes - 1] = 1;
@@ -209,6 +212,9 @@ void ConjugateTransposeCpuKernelMod::LaunchComplexKernel(const std::vector<Addre
     transpose_param_.perm_[i] = SizeToInt(axes_[i]);
   }
   size_t num_axes = input_shape_.size();
+  if (num_axes == 0) {
+    MS_EXCEPTION(ValueError) << "ConjugateTranspose doesn't support input shape's size as 0.";
+  }
   transpose_param_.perm_size_ = axes_.size();
   transpose_param_.num_axes_ = SizeToInt(num_axes);
   transpose_param_.strides_[num_axes - 1] = 1;

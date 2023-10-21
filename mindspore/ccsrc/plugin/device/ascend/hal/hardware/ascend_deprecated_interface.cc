@@ -38,6 +38,7 @@
 #include "graph/utils/graph_utils_ex.h"
 #include "mindspore/core/utils/singleton.h"
 #include "utils/ms_context.h"
+#include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -77,7 +78,8 @@ void ConvertObjectToTensors(const py::dict &dict, transform::TensorOrderMap *con
     if (enable_ge && !is_train) {
       infer = true;
     }
-    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end()) {
+    if (infer && infer_need_update_parameter_names.find(name) == infer_need_update_parameter_names.end() &&
+        !IsEnableRefMode()) {
       continue;
     }
     if (py::isinstance<py::float_>(item.second.attr("data"))) {
@@ -167,7 +169,7 @@ void AscendDeprecatedInterface::DoExecNonInputGraph(const std::string &phase) {
     ScopedLongRunning release;
     Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
     if (ret != Status::SUCCESS) {
-      MS_LOG(ERROR) << "Exec graph:" << run_options.name << " failed";
+      MS_LOG(WARNING) << "Exec graph:" << run_options.name << " failed";
       return;
     }
   }
@@ -327,6 +329,7 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     return std::thread(TensorPrint(path, acl_handle));
   };
   CreateTensorPrintThread(thread_crt);
+  TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
   return true;
 }
 
@@ -342,6 +345,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
+    TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
@@ -400,6 +404,55 @@ void AscendDeprecatedInterface::AclLoadModel(Buffer *om_data) {
     MS_LOG(EXCEPTION) << "Invalid input data cannot parse to om.";
   }
 }
+
+#ifdef WITH_BACKEND
+namespace {
+void SetContextSocVersion(MsContext *ctx) {
+  constexpr auto k910AAscendVersion = "ascend910";
+  constexpr auto k910BAscendVersion = "ascend910b";
+  const std::map<std::string, std::string> kAscendSocVersions = {
+    {"Ascend910A", "ascend910"},    {"Ascend910B", "ascend910"},    {"Ascend910PremiumA", "ascend910"},
+    {"Ascend910ProA", "ascend910"}, {"Ascend910ProB", "ascend910"}, {"Ascend910B1", "ascend910b"},
+    {"Ascend910B2", "ascend910b"},  {"Ascend910B3", "ascend910b"},  {"Ascend910B4", "ascend910b"}};
+  // Get default soc version.
+  static std::string version;
+  if (version.empty()) {
+    const int kSocVersionLen = 50;
+    char soc_version[kSocVersionLen] = {0};
+    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
+    }
+    version = soc_version;
+  }
+  auto iter = kAscendSocVersions.find(version);
+  if (iter == kAscendSocVersions.end()) {
+    MS_LOG(INFO) << "The soc version is not Ascend910 or ascend910b.";
+    return;
+  }
+  if (iter->second == k910BAscendVersion) {
+    ctx->set_ascend_soc_version(k910BAscendVersion);
+  } else if (iter->second == k910AAscendVersion) {
+    ctx->set_ascend_soc_version(k910AAscendVersion);
+  }
+}
+}  // namespace
+
+MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
+  MS_EXCEPTION_IF_NULL(ctx);
+  auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
+  if (enable_ge == "1") {
+    if (ctx->backend_policy() != "ge") {
+      (void)ctx->set_backend_policy("ge");
+    }
+  } else {
+    if (ctx->backend_policy() != "ms") {
+      (void)ctx->set_backend_policy("ms");
+    }
+  }
+  SetContextSocVersion(ctx);
+});
+#endif
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

@@ -82,6 +82,7 @@ static mindspore::HashMap<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_UINT32, kNumberTypeUInt32},
   {mind_ir::TensorProto_DataType_UINT64, kNumberTypeUInt64},
   {mind_ir::TensorProto_DataType_FLOAT16, kNumberTypeFloat16},
+  {mind_ir::TensorProto_DataType_BFLOAT16, kNumberTypeBFloat16},
   {mind_ir::TensorProto_DataType_FLOAT, kNumberTypeFloat32},
   {mind_ir::TensorProto_DataType_FLOAT64, kNumberTypeFloat64},
   {mind_ir::TensorProto_DataType_DOUBLE, kNumberTypeFloat64},
@@ -2026,6 +2027,13 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
     MS_LOG(ERROR) << "Import nodes for graph failed! " << import_proto.has_name();
     return false;
   }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (output_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+    const bool enable_ge = context->backend_policy() == "ge";
+    const auto cell_reuse_level = enable_ge ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+    context->SetCellReuseLevel(cell_reuse_level);
+  }
   return true;
 }
 
@@ -2221,14 +2229,16 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   } else {
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
   }
-  for (int i = 0; i < model_proto.functions_size(); ++i) {
-    const auto &graph_proto = model_proto.functions(i);
-    FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[graph_proto.name()]);
-    if (!ImportNodesForGraph(graph, graph_proto)) {
-      MS_LOG(ERROR) << "Build funcgraph " << graph_proto.name() << " value node and cnode failed.";
+  std::map<std::string, mind_ir::GraphProto> sorted_proto;
+  std::for_each(model_proto.functions().begin(), model_proto.functions().end(),
+                [&sorted_proto](const auto &proto) { sorted_proto[proto.name()] = proto; });
+  for (const auto &[name, proto] : sorted_proto) {
+    FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[name]);
+    if (!ImportNodesForGraph(graph, proto)) {
+      MS_LOG(ERROR) << "Build funcgraph: " << name << "'s value_node and cnode failed.";
       return false;
     } else {
-      MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
+      MS_LOG(INFO) << "Build FuncGraph Success! graph: " << name;
     }
   }
   TrytoBuildCNodeAbstract();
@@ -2360,6 +2370,7 @@ abstract::AbstractBasePtr MSANFModelParser::BuildAbstractFunction(const mind_ir:
         return nullptr;
       }
       auto partial_node = anf_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_node);
       if (!IsPrimitiveCNode(partial_node, prim::kPrimPartial)) {
         MS_LOG(INTERNAL_EXCEPTION) << "Not partial CNode, but got " << partial_node->DebugString();
       }

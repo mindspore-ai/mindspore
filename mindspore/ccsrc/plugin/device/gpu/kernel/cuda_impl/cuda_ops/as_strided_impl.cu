@@ -20,8 +20,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace {
-constexpr size_t kMaxDim = 8;
-}
+// dim will be 9, when op is pixel shuffle
+constexpr size_t kMaxDim = 9;
+}  // namespace
 
 template <size_t N>
 class VectorWrapper {
@@ -54,68 +55,70 @@ __global__ void AsStridedKernel(const size_t input_size, const DataType *input_p
 }
 
 template <typename DataType>
-void CalAsStrided(const size_t &input_size, const DataType *input_ptr, DataType *output_ptr,
-                  const mindspore::TensorStorageInfoPtr &input_storage_info, cudaStream_t cuda_stream) {
+cudaError_t CalAsStrided(const size_t &input_size, const DataType *input_ptr, DataType *output_ptr,
+                         const mindspore::TensorStorageInfoPtr &input_storage_info, cudaStream_t cuda_stream) {
   size_t ndim = input_storage_info->shape.size();
   VectorWrapper<kMaxDim> output_shape(input_storage_info->shape);
   VectorWrapper<kMaxDim> strides(input_storage_info->strides);
 
   AsStridedKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
     input_size, input_ptr, output_ptr, ndim, output_shape, strides, input_storage_info->storage_offset);
+  return GetCudaStatus();
 }
 
-template CUDA_LIB_EXPORT void CalAsStrided<uint8_t>(const size_t &input_size, const uint8_t *input_ptr,
-                                                    uint8_t *output_ptr,
-                                                    const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<uint16_t>(const size_t &input_size, const uint16_t *input_ptr,
-                                                     uint16_t *output_ptr,
-                                                     const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<uint32_t>(const size_t &input_size, const uint32_t *input_ptr,
-                                                     uint32_t *output_ptr,
-                                                     const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                     cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<uint64_t>(const size_t &input_size, const uint64_t *input_ptr,
-                                                     uint64_t *output_ptr,
-                                                     const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                     cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalAsStrided<half>(const size_t &input_size, const half *input_ptr, half *output_ptr,
-                                                 const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<float>(const size_t &input_size, const float *input_ptr, float *output_ptr,
-                                                  const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<double>(const size_t &input_size, const double *input_ptr,
-                                                   double *output_ptr,
-                                                   const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<bool>(const size_t &input_size, const bool *input_ptr, bool *output_ptr,
-                                                 const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<int8_t>(const size_t &input_size, const int8_t *input_ptr,
-                                                   int8_t *output_ptr,
-                                                   const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                   cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<int16_t>(const size_t &input_size, const int16_t *input_ptr,
-                                                    int16_t *output_ptr,
-                                                    const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<int32_t>(const size_t &input_size, const int32_t *input_ptr,
-                                                    int32_t *output_ptr,
-                                                    const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                    cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<int64_t>(const size_t &input_size, const int64_t *input_ptr,
-                                                    int64_t *output_ptr,
-                                                    const mindspore::TensorStorageInfoPtr &input_storage_info,
-                                                    cudaStream_t cuda_stream);
-
-template CUDA_LIB_EXPORT void CalAsStrided<Complex<float>>(const size_t &input_size, const Complex<float> *input_ptr,
-                                                           Complex<float> *output_ptr,
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<uint8_t>(const size_t &input_size, const uint8_t *input_ptr,
+                                                           uint8_t *output_ptr,
                                                            const mindspore::TensorStorageInfoPtr &input_storage_info,
                                                            cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalAsStrided<Complex<double>>(const size_t &input_size, const Complex<double> *input_ptr,
-                                                            Complex<double> *output_ptr,
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<uint16_t>(const size_t &input_size, const uint16_t *input_ptr,
+                                                            uint16_t *output_ptr,
                                                             const mindspore::TensorStorageInfoPtr &input_storage_info,
                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<uint32_t>(const size_t &input_size, const uint32_t *input_ptr,
+                                                            uint32_t *output_ptr,
+                                                            const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<uint64_t>(const size_t &input_size, const uint64_t *input_ptr,
+                                                            uint64_t *output_ptr,
+                                                            const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                            cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<half>(const size_t &input_size, const half *input_ptr,
+                                                        half *output_ptr,
+                                                        const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<float>(const size_t &input_size, const float *input_ptr,
+                                                         float *output_ptr,
+                                                         const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<double>(const size_t &input_size, const double *input_ptr,
+                                                          double *output_ptr,
+                                                          const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<bool>(const size_t &input_size, const bool *input_ptr,
+                                                        bool *output_ptr,
+                                                        const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<int8_t>(const size_t &input_size, const int8_t *input_ptr,
+                                                          int8_t *output_ptr,
+                                                          const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<int16_t>(const size_t &input_size, const int16_t *input_ptr,
+                                                           int16_t *output_ptr,
+                                                           const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<int32_t>(const size_t &input_size, const int32_t *input_ptr,
+                                                           int32_t *output_ptr,
+                                                           const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalAsStrided<int64_t>(const size_t &input_size, const int64_t *input_ptr,
+                                                           int64_t *output_ptr,
+                                                           const mindspore::TensorStorageInfoPtr &input_storage_info,
+                                                           cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t
+CalAsStrided<Complex<float>>(const size_t &input_size, const Complex<float> *input_ptr, Complex<float> *output_ptr,
+                             const mindspore::TensorStorageInfoPtr &input_storage_info, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t
+CalAsStrided<Complex<double>>(const size_t &input_size, const Complex<double> *input_ptr, Complex<double> *output_ptr,
+                              const mindspore::TensorStorageInfoPtr &input_storage_info, cudaStream_t cuda_stream);

@@ -61,6 +61,18 @@ class PyFuncOp : public TensorOp {
   /// \return True if this pyfunc op is random
   bool IsRandom();
 
+  Status ReleaseResource() {
+    {
+      py::gil_scoped_acquire gil_acquire;
+      if (py::hasattr(py_func_ptr_, "release_resource")) {
+        // release the executor which is used in the PyFunc
+        // the PyFunc maybe contains vision/nlp/audio transform
+        (void)py_func_ptr_.attr("release_resource")();
+      }
+    }
+    return Status::OK();
+  }
+
  private:
   py::function py_func_ptr_;
   DataType::Type output_type_;

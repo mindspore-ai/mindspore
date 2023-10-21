@@ -75,9 +75,9 @@ def test_dynamic_sequence_enumerate():
         out = enumerate(x, 3)
         return out
 
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(RuntimeError) as ex:
         foo()
-    assert "For 'enumerate', the dynamic length input is unsupported in graph mode" in str(ex.value)
+    assert "the dynamic length input is unsupported in graph mode" in str(ex.value)
 
 
 def test_dynamic_sequence_zip():

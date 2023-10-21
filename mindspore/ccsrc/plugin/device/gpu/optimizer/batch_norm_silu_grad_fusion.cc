@@ -94,6 +94,7 @@ const AnfNodePtr BatchNormSiluGradFusion::Process(const FuncGraphPtr &graph, con
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_grad_with_silu.get());
   common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_grad_with_silu);
   auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  MS_EXCEPTION_IF_NULL(kernel_info_setter);
   kernel_info_setter->SetKernelInfo(fused_batch_norm_grad_with_silu, KernelType::UNKNOWN_KERNEL_TYPE);
   MS_LOG(INFO) << "Batch norm and silu grad operation fusion is finish.";
   return fused_batch_norm_grad_with_silu;

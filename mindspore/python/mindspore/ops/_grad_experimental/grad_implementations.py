@@ -19,7 +19,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.composite import multitype_ops as C
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.ops._grad_experimental.grad_base import bprops
+from mindspore.ops._grad_experimental.grad_base import bprops, bprop_getters
 from mindspore.common import dtype as mstype
 
 get_dtype = P.DType()
@@ -191,3 +191,13 @@ def bprop_scalar_not(x, out, dout):
 def bprop_tensor_move(x, out, dout):
     """Backpropagator for primitive `TensorMove`."""
     return (dout,)
+
+
+@bprop_getters.register("DictInplaceSetItem")
+def get_bprop_dict_inplace_setitem(self):
+    """Generate bprop for dict inplace pop"""
+
+    def bprop(x, key, target, out, dout):
+        return (zeros_like(x), zeros_like(key), zeros_like(target))
+
+    return bprop

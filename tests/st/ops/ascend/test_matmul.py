@@ -47,7 +47,7 @@ def test_net():
     print(output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -89,8 +89,8 @@ def test_matmul_dtypes():
     y_np = np.random.randn(k * n).astype(np.float32)
     x_np.shape = m, k
     y_np.shape = k, n
-    matmul = P.MatMul()
-    valid_dtypes = (mstype.uint8, mstype.int32, mstype.float16, mstype.float32)  # todo: remove int64, issue I7LSCI
+    matmul = Net()
+    valid_dtypes = (mstype.uint8, mstype.int32, mstype.int64, mstype.float16, mstype.float32)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet

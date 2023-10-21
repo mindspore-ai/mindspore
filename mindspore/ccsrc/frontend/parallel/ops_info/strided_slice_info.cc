@@ -206,11 +206,35 @@ Status StridedSliceInfo::GetAttrs() {
                   << input_value_.size();
     return FAILED;
   }
-  if ((TransValueSequeueToVector(input_value_[STRIDED_SLICE_BEGIN_INDEX], &begin_) != SUCCESS) ||
-      (TransValueSequeueToVector(input_value_[STRIDED_SLICE_END_INDEX], &end_) != SUCCESS) ||
-      (TransValueSequeueToVector(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS)) {
-    return FAILED;
+
+  std::vector<int64_t> unknow_value(inputs_shape_[0].size(), -1);
+  if (input_value_[STRIDED_SLICE_BEGIN_INDEX] != nullptr) {
+    if (TransValueSequeueToVector(input_value_[STRIDED_SLICE_BEGIN_INDEX], &begin_) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": get begin value failed";
+      return FAILED;
+    }
+  } else {
+    begin_ = unknow_value;
   }
+
+  if (input_value_[STRIDED_SLICE_END_INDEX] != nullptr) {
+    if (TransValueSequeueToVector(input_value_[STRIDED_SLICE_END_INDEX], &end_) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": get end value failed";
+      return FAILED;
+    }
+  } else {
+    end_ = unknow_value;
+  }
+
+  if (input_value_[STRIDED_SLICE_STRIDES_INDEX] != nullptr) {
+    if (TransValueSequeueToVector(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": get strides value failed";
+      return FAILED;
+    }
+  } else {
+    strides_ = unknow_value;
+  }
+
   MS_LOG(INFO) << name_ << ": The begin is " << begin_ << ", the end is " << end_ << ", the stride is " << strides_;
 
   // handle the masks, it will modify the begin/end/strides, the new begin/end/strides are only used for CheckStrategy()
@@ -284,7 +308,8 @@ Status StridedSliceInfo::CheckInputStrategy(const Shape &strategy_value) {
 
 Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+  Shapes valid_inputs_shape = {inputs_shape_[0]};
+  if (CheckStrategyValue(strategy, valid_inputs_shape) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }

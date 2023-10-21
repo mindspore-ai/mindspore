@@ -58,15 +58,15 @@ def test_roll_1d():
     """
     x_np = np.array([-1, -5, -3, -14, 64]).astype(np.int8)
     x_grad_np = np.array([-1, -5, -3, -14, 64]).astype(np.int8)
-    except_output = np.array([-5, -3, -14, 64, -1]).astype(np.int8)
     shift = 4
     axis = 0
-    x_ms = Tensor(x_np)
     net = Roll(shift, axis)
+    output_ms = net(Tensor(x_np))
+    except_output = np.array([-5, -3, -14, 64, -1]).astype(np.int8)
+
     grad_net = RollGrad(net)
     output_grad_ms = grad_net(Tensor(x_np), Tensor(x_grad_np))
     except_grad_output = np.array([64, -1, -5, -3, -14]).astype(np.int8)
-    output_ms = net(x_ms)
 
     assert np.allclose(except_output, output_ms.asnumpy())
     assert np.allclose(except_grad_output, output_grad_ms[0].asnumpy())
@@ -74,16 +74,34 @@ def test_roll_1d():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_roll_exception():
+def test_roll_exception_1():
     """
     Feature: exception gpu TEST.
-    Description: exception case
+    Description: Test the case that shift has different size with axis
+    Expectation: throw error info
+    """
+    x_np = np.arange(5).astype(np.float32)
+    shift = 2
+    axis = (0, -1, 0)
+    try:
+        _ = ms.ops.roll(Tensor(x_np), shift, dims=axis)
+    except ValueError:
+        assert True
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_roll_exception_2():
+    """
+    Feature: exception gpu TEST.
+    Description: exception case when shifts is empty
     Expectation: throw error info
     """
     input_x = Tensor(np.random.uniform(-10, 10, size=[5, 5])).astype(ms.float32)
     shifts = ()
-    dims = 0
+    axis = 0
     try:
-        _ = ms.ops.roll(input_x, shifts, dims=dims)
+        _ = ms.ops.roll(input_x, shifts, dims=axis)
     except ValueError:
         assert True

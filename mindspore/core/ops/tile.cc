@@ -57,26 +57,38 @@ std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<i
 abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int INDEX = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, INDEX, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  constexpr int64_t num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, num, prim_name);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = shape_map[kShape];
   std::vector<int64_t> multiples_v;
   auto multiple_value = input_args[1]->BuildValue();
+  auto multiple_shape = input_args[1]->BuildShape();
   MS_EXCEPTION_IF_NULL(multiple_value);
-  if (multiple_value->isa<tensor::Tensor>()) {
-    multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
-    if (IsDynamicRank(multiples_v)) {
-      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+  if (input_args[1]->isa<abstract::AbstractTensor>()) {
+    if (!IsValueKnown(multiple_value)) {
+      auto shape = multiple_shape->cast<abstract::ShapePtr>()->shape();
+      if (IsDynamic(shape)) {
+        return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+      }
+      return std::make_shared<abstract::Shape>(ShapeVector(shape[kIndex0], abstract::Shape::kShapeDimAny));
     }
+    multiples_v = CheckAndConvertUtils::CheckTensorIntValue("multiples", multiple_value, prim_name);
   } else {
-    if (IsValueKnown(multiple_value)) {
-      multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
+    auto tuple_abs = input_args[1]->cast<abstract::AbstractSequencePtr>();
+    if (tuple_abs == nullptr) {
+      MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
+                              << "], the input[multiples] must be a tuple with all Int elements, but got "
+                              << input_args[1]->BuildType()->ToString();
+    }
+    if (!IsValueKnown(multiple_value)) {
+      if (tuple_abs->dynamic_len()) {
+        return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+      }
+      return std::make_shared<abstract::Shape>(
+        ShapeVector(tuple_abs->elements().size(), abstract::Shape::kShapeDimAny));
     } else {
-      return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
+      multiples_v = CheckAndConvertUtils::CheckTupleInt("input[multiples]", multiple_value, prim_name);
     }
   }
 

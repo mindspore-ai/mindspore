@@ -6,7 +6,7 @@ mindspore.ops.coo_acosh
     逐元素计算输入COOTensor的反双曲余弦。
 
     .. math::
-        out_i = \cosh^{-1}(input_i)
+        y_i = \cosh^{-1}(x_i)
 
     .. warning::
         给定一个输入COOTensor `x` ，该函数计算每个元素的反双曲余弦。输入范围为[1, inf]。

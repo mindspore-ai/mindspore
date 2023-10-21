@@ -3,15 +3,19 @@ mindspore.dataset.config.set_prefetch_size
 
 .. py:function:: mindspore.dataset.config.set_prefetch_size(size)
 
-    设置管道中线程的队列容量。
+    设置流水线中各个数据处理操作的缓冲队列大小。
+
+    缓冲队列的存在使得当前操作在下一操作取走数据前就能开始处理后续数据，各操作异步并发地执行。
+
+    更大的缓冲队列大小能够减少相邻操作吞吐速率不平衡时的整体处理时延，但也会消耗更大的系统内存。
 
     参数：
-        - **size** (int) - 表示缓存队列的长度。 `size` 取值必须大于0，否则线程的队列容量无效。
+        - **size** (int) - 缓冲队列的大小，取值必须大于0。
 
     异常：
-        - **TypeError** - `size` 不是int类型。
-        - **ValueError** - 如果 `size` 不为正数。
+        - **TypeError** - 当 `size` 的类型不为int。
+        - **ValueError** - 当 `size` 不为正数。
 
     .. note::
-        用于预取的总内存可能会随着工作线程数量的增加而快速增长，所以当工作线程数量大于4时，每个工作线程的预取大小将减少。
-        每个工作线程在运行时预取大小将是 `prefetchsize` * (4 / `num_parallel_workers` )。
+        缓冲队列消耗的总内存与工作线程数成正比，为了避免内存占用过大，当工作线程数大于4时，
+        实际使用的缓冲队列大小将调整为 (`size` * 4 / 工作线程数) 与 1 中的较大值。

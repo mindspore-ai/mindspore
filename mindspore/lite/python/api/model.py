@@ -149,25 +149,25 @@ class Model(BaseModel):
                 For example, "/home/user/config.txt". Default: ``""``.
 
                 - Usage 1: Set mixed precision inference. The content and description of the configuration file are as
-                      follows:
+                  follows:
 
-                      .. code-block::
+                  .. code-block::
 
-                          [execution_plan]
-                          [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
-                          [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
+                      [execution_plan]
+                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
 
                 - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
-                      configuration file are as follows:
+                  configuration file are as follows:
 
-                      .. code-block::
+                  .. code-block::
 
-                          [ms_cache]
-                          serialize_Path=[serialization model path](storage path of serialization model)
-                          [gpu_context]
-                          input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
-                          dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
-                          opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
+                      [ms_cache]
+                      serialize_Path=[serialization model path](storage path of serialization model)
+                      [gpu_context]
+                      input_shape=input_Name: [input_dim] (Model input dimension, for dynamic shape)
+                      dynamic_Dims=[min_dim~max_dim] (dynamic dimension range of model input, for dynamic shape)
+                      opt_Dims=[opt_dim] (the optimal input dimension of the model, for dynamic shape)
 
             config_dict (dict, optional): When you set config in this dict, the priority is higher than the
                 configuration items in config_path.
@@ -520,6 +520,8 @@ class ModelParallelRunner:
 
         Args:
             inputs (list[Tensor]): A list that includes all input Tensors in order.
+            outputs (list[Tensor], optional): A list that includes all output Tensors in order,
+                this tensor include output data buffer.
 
         Returns:
             list[Tensor], outputs, the model outputs are filled in the container in sequence.

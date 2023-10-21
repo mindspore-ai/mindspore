@@ -429,9 +429,26 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
     if (para_map != nullptr) {
       (*para_map)[param] = para_num++;
     }
+    if (param->func_graph() == nullptr) {
+      MS_LOG(EXCEPTION) << "Get func graph nullptr, node " << param->DebugString();
+    }
     MS_LOG(DEBUG) << "Record param: " << param->ToString() << " graph belong : " << param->func_graph()->ToString();
   }
   return para_num;
+}
+
+void DumpParameterOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub, const AnfNodePtr &op) {
+  if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
+    gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
+  }
+  gsub->buffer << op->ToString();
+  if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
+    gsub->buffer << ")";
+  }
+  std::string func_str = GetNodeFuncStr(op);
+  if (!func_str.empty()) {
+    gsub->buffer << "[@" << func_str << "]";
+  }
 }
 
 void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
@@ -476,17 +493,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     }
   } else {
     // It's Parameter.
-    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
-      gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
-    }
-    gsub->buffer << op->ToString();
-    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
-      gsub->buffer << ")";
-    }
-    std::string func_str = GetNodeFuncStr(op);
-    if (!func_str.empty()) {
-      gsub->buffer << "[@" << func_str << "]";
-    }
+    DumpParameterOperator(node, gsub, op);
   }
 }
 
@@ -542,6 +549,9 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         } else {
           auto input = in->cast<CNodePtr>();
           auto fg = input->func_graph();
+          if (fg == nullptr) {
+            MS_LOG(EXCEPTION) << "Get func graph nullptr, node " << input->DebugString();
+          }
           gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
         }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
@@ -549,6 +559,9 @@ void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> 
         gsub->buffer << GetValueText(GetValueNode(in), gsub);
       } else if (IsValueNode<FuncGraph>(in)) {
         FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(in);
+        if (fg == nullptr) {
+          MS_LOG(EXCEPTION) << "Get func graph nullptr, node " << in->DebugString();
+        }
         gsub->buffer << "@" << fg->ToString();
       } else if (AnfUtils::IsCustomActorNode(in)) {
         gsub->buffer << "%" << AnfUtils::GetCustomActorName(in);

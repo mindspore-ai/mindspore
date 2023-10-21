@@ -194,9 +194,18 @@ class AclRunner {
 
   void SetPrecisionMode(const AclPrecisionMode mode);
 
-  void SetOpPrecisionMode();
-
   void ResizeOpInputs(size_t size) {
+    (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), [](const aclTensorDesc *desc) {
+      if (desc != nullptr) {
+        aclDestroyTensorDesc(desc);
+      }
+    });
+    (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(),
+                        [](const aclDataBuffer *buffer) {
+                          if (buffer != nullptr) {
+                            aclDestroyDataBuffer(buffer);
+                          }
+                        });
     acl_param_.input_desc.clear();
     acl_param_.input_desc.resize(size, nullptr);
     acl_param_.input_buffer.clear();
@@ -206,6 +215,13 @@ class AclRunner {
   void SetInput(size_t i, const aclTensorDesc *desc, const aclDataBuffer *buffer) {
     if (i >= acl_param_.input_desc.size() || i >= acl_param_.input_buffer.size()) {
       MS_LOG(EXCEPTION) << "Index " << i << " is out of bounds " << acl_param_.input_desc.size();
+    }
+
+    if (acl_param_.input_desc[i] != nullptr) {
+      aclDestroyTensorDesc(acl_param_.input_desc[i]);
+    }
+    if (acl_param_.input_buffer[i] != nullptr) {
+      aclDestroyDataBuffer(acl_param_.input_buffer[i]);
     }
 
     acl_param_.input_desc[i] = desc;
@@ -227,6 +243,17 @@ class AclRunner {
   }
 
   void ResizeOpOutputs(size_t size) {
+    (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), [](const aclTensorDesc *desc) {
+      if (desc != nullptr) {
+        aclDestroyTensorDesc(desc);
+      }
+    });
+    (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(),
+                        [](const aclDataBuffer *buffer) {
+                          if (buffer != nullptr) {
+                            aclDestroyDataBuffer(buffer);
+                          }
+                        });
     acl_param_.output_desc.clear();
     acl_param_.output_desc.resize(size, nullptr);
     acl_param_.output_buffer.clear();
@@ -236,6 +263,13 @@ class AclRunner {
   void SetOutput(size_t i, const aclTensorDesc *desc, aclDataBuffer *buffer) {
     if (i >= acl_param_.output_desc.size() || i >= acl_param_.output_buffer.size()) {
       MS_LOG(EXCEPTION) << "Index " << i << " is out of bounds " << acl_param_.output_desc.size();
+    }
+
+    if (acl_param_.output_desc[i] != nullptr) {
+      aclDestroyTensorDesc(acl_param_.output_desc[i]);
+    }
+    if (acl_param_.output_buffer[i] != nullptr) {
+      aclDestroyDataBuffer(acl_param_.output_buffer[i]);
     }
 
     acl_param_.output_desc[i] = desc;

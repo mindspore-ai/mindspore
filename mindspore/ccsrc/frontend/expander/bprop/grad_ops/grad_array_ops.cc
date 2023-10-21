@@ -700,7 +700,7 @@ REG_BPROP_BUILDER("SparseGatherV2").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(i
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shp = ib->GetShape(x);
-  auto axis_int = CheckRange(GetValue<int64_t>(axis->get<ValueNodePtr>()->value()), SizeToLong(x_shp.size()));
+  auto axis_int = CheckRange(GetIntList(axis->BuildValue())[0], SizeToLong(x_shp.size()));
   if (axis_int == 0) {
     ShapeVector values_shape{ib->GetSize(indices)};
     if (x_shp.size() > 1) {
@@ -1519,13 +1519,6 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
     dout = ib->Reshape(dout, out_shp1);
   }
 
-  if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
-    ind_shp = ib->GetShape(indices);
-    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
-    dout = ib->Reshape(dout, out_shp1);
-  }
-
   out_shp = ib->GetShape(dout);
   auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v, batch_dims);
   auto values_transpose = ib->Transpose(dout, perm_1);
@@ -1647,6 +1640,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto mask = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto dmask = ib->OutZeros(mask);
   mask = ib->Cast(mask, kFloat32);
   dout = ib->Cast(dout, kFloat32);
   auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
@@ -1669,7 +1663,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   } else {
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
   }
-  return {dinput, ib->OutZeros(mask), dvalue};
+  return {dinput, dmask, dvalue};
 });
 
 REG_BPROP_BUILDER("Coalesce").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -2077,5 +2071,48 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("ParameterizedTruncatedNormal").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("Ones").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto dims = ib->GetInput(0);
+  return {ib->OutZeros(dims)};
+});
+
+REG_BPROP_BUILDER("Zeros").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto dims = ib->GetInput(0);
+  return {ib->OutZeros(dims)};
+});
+
+REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto kernel_size = GetValue<std::vector<int64_t>>(ib->GetAttr("ksizes"));
+  auto dilation = GetValue<std::vector<int64_t>>(ib->GetAttr("dilations"));
+  auto stride = GetValue<std::vector<int64_t>>(ib->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(ib->GetAttr("pads"));
+  std::vector<int64_t> padding = {pads[0], pads.back()};
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_shape = ib->GetShape(x);
+  NodePtr shape = nullptr;
+  if (IsDynamic(x_shape)) {
+    auto tensor_shape = ib->Emit("TensorShape", {x});
+    // Im2Col only support 4-D input, so we hard-code [2:4] here
+    shape =
+      ib->Emit("StridedSlice",
+               {tensor_shape, ib->Value<ShapeVector>({2}), ib->Value<ShapeVector>({4}), ib->Value<ShapeVector>({1})},
+               {{"begin_mask", MakeValue<int64_t>(0)},
+                {"end_mask", MakeValue<int64_t>(0)},
+                {"ellipsis_mask", MakeValue<int64_t>(0)},
+                {"new_axis_mask", MakeValue<int64_t>(0)},
+                {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+  } else {
+    ShapeVector output_shape(x_shape.begin() + i2, x_shape.end());
+    shape = ib->Tensor(output_shape);
+  }
+  auto dx = ib->Emit("Col2Im", {dout, shape},
+                     {{"kernel_size", MakeValue(kernel_size)},
+                      {"dilation", MakeValue(dilation)},
+                      {"stride", MakeValue(stride)},
+                      {"padding", MakeValue(padding)}});
+  return {dx};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

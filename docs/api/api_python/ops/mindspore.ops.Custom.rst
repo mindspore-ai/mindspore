@@ -8,7 +8,8 @@ mindspore.ops.Custom
     关于自定义算子的详细说明和介绍，包括参数的正确书写，见 `自定义算子教程 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom.html>`_ 。
 
     .. warning::
-        这是一个实验性API，后续可能修改或删除。
+        - 这是一个实验性API，后续可能修改或删除。
+        - 当前自定义算子功能不支持Ascend 910B。
 
     .. note::
         不同自定义算子的函数类型（func_type）支持的平台类型不同。每种类型支持的平台如下：
@@ -20,6 +21,8 @@ mindspore.ops.Custom
         - "pyfunc": ["CPU"].
         - "julia": ["CPU"].
         - "aicpu": ["Ascend"].
+
+        当运行在ge后端时，通过 `CustomRegOp` 生成"aicpu"和"tbe"类型的自定义算子的算子信息，通过 `custom_info_register` 将算子信息绑定到"tbe"类型的自定义算子的 `func` 上，然后将"aicpu"类型的自定义算子的算子信息以及"tbe"类型的自定义算子的 `func` 实现保存在一个或多个文件里，并且将这些文件保存在一个单独的目录里，在网络运行前将此目录的绝对路径设置到环境变量"MS_DEV_CUSTOM_OPP_PATH"。
 
     参数：
         - **func** (Union[function, str]) - 自定义算子的函数表达。

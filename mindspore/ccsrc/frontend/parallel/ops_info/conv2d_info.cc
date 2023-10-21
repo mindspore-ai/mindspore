@@ -145,6 +145,8 @@ void Conv2DInfo::AdjustPadList() {
     return;
   }
 
+  MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[2]);
+  MS_EXCEPTION_IF_ZERO("stride_[3]", stride_[3]);
   int64_t useless_len_2th_dim =
     (inputs_shape_[0][2] + pad_list_[0] + pad_list_[1] - kernel_size_use_dilation_[0]) % stride_[2];
   int64_t useless_len_3th_dim =
@@ -176,6 +178,8 @@ Status Conv2DInfo::GetAttrs() {
 }
 
 Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const {
+  MS_EXCEPTION_IF_ZERO("h_strategy", h_strategy);
+  MS_EXCEPTION_IF_ZERO("w_strategy", w_strategy);
   if (outputs_shape_[0][2] % h_strategy != 0) {
     MS_LOG(WARNING) << name_
                     << ": Do not support to split 2th dimension when out_shape of 2th dimension is not"
@@ -194,6 +198,10 @@ Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) c
 }
 
 Status Conv2DInfo::CheckHWStrategyValidMode(int64_t h_strategy, int64_t w_strategy) {
+  MS_EXCEPTION_IF_ZERO("h_strategy", h_strategy);
+  MS_EXCEPTION_IF_ZERO("h_strategy", w_strategy);
+  MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[2]);
+  MS_EXCEPTION_IF_ZERO("stride_[3]", stride_[3]);
   int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
   int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
 
@@ -255,6 +263,8 @@ Status Conv2DInfo::CheckHWStrategyPadModeByDimension(int64_t strategy, int64_t d
                       << "th dimension when kernel_size <= stride and pad != 0";
       return FAILED;
     }
+    MS_EXCEPTION_IF_ZERO("strategy", strategy);
+    MS_EXCEPTION_IF_ZERO("h_or_w_stride", h_or_w_stride);
     if ((h_or_w_input_shape / strategy) % h_or_w_stride != 0) {
       MS_LOG(WARNING) << name_ << ": The 'pad' or 'same' mode do not support to split " << dimension_id
                       << "th dimension when kernel_size <= stride and input's slice % stride != 0";
@@ -532,7 +542,7 @@ int64_t Conv2DInfo::ComputeOverlapTopSizeByRankBias(int64_t rank_bias) {
   int64_t h_dimension_input_shape = inputs_shape_[0][2];
   int64_t h_dimension_output_shape = outputs_shape_[0][2];
   int64_t h_stride = stride_[2];
-
+  MS_EXCEPTION_IF_ZERO("h_dimension_shard_num", h_dimension_shard_num_);
   return top_pad + (h_dimension_input_shape - h_dimension_output_shape * h_stride) * rank_bias / h_dimension_shard_num_;
 }
 
@@ -542,7 +552,7 @@ int64_t Conv2DInfo::ComputeOverlapBottomSizeByRankBias(int64_t rank_bias) {
   int64_t h_dimension_output_shape = outputs_shape_[0][2];
   int64_t h_kernel_size = kernel_size_use_dilation_[0];
   int64_t h_stride = stride_[2];
-
+  MS_EXCEPTION_IF_ZERO("h_dimension_shard_num", h_dimension_shard_num_);
   return (rank_bias + 1) * (h_dimension_output_shape * h_stride - h_dimension_input_shape) / h_dimension_shard_num_ +
          h_kernel_size - h_stride - top_pad;
 }
@@ -552,7 +562,7 @@ int64_t Conv2DInfo::ComputeOverlapLeftSizeByRankBias(int64_t rank_bias) {
   int64_t w_dimension_input_shape = inputs_shape_[0][3];
   int64_t w_dimension_output_shape = outputs_shape_[0][3];
   int64_t w_stride = stride_[3];
-
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num", h_dimension_shard_num_);
   return left_pad +
          (w_dimension_input_shape - w_dimension_output_shape * w_stride) * rank_bias / w_dimension_shard_num_;
 }
@@ -563,7 +573,7 @@ int64_t Conv2DInfo::ComputeOverlapRightSizeByRankBias(int64_t rank_bias) {
   int64_t w_dimension_output_shape = outputs_shape_[0][3];
   int64_t w_kernel_size = kernel_size_use_dilation_[1];
   int64_t w_stride = stride_[3];
-
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num", h_dimension_shard_num_);
   return (rank_bias + 1) * (w_dimension_output_shape * w_stride - w_dimension_input_shape) / w_dimension_shard_num_ +
          w_kernel_size - w_stride - left_pad;
 }
@@ -1193,6 +1203,7 @@ Status Conv2DBackpropInputInfo::InferDevMatrixShape() {
   }
 
   for (size_t i = 0; i < out_slice_shape_.size(); ++i) {
+    MS_EXCEPTION_IF_ZERO("out_strategy", out_strategy[i]);
     if (out_slice_shape_[i] % out_strategy[i] != 0) {
       MS_LOG(ERROR) << name_ << ": The output can not be split by strategy. The shape of output is " << out_slice_shape_
                     << ", but the strategy of output is " << out_strategy;
@@ -1305,6 +1316,8 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapTopSizeByRankBias(int64_t rank_bi
   int64_t h_kernel_size = kernel_size_use_dilation_[0];
   int64_t h_stride = stride_[2];
   int64_t top_pad = pad_list_[0];
+  MS_EXCEPTION_IF_ZERO("h_dimension_shard_num", h_dimension_shard_num_);
+  MS_EXCEPTION_IF_ZERO("h_stride", h_stride);
   if (rank_bias == h_dimension_shard_num_ - 1) {  // the last rank
     return DoubleToLong(std::ceil(LongToDouble(h_output_shape / h_dimension_shard_num_ + h_kernel_size -
                                                h_output_shape + h_input_shape * h_stride - h_stride - top_pad) /
@@ -1327,6 +1340,8 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapBottomSizeByRankBias(int64_t rank
   int64_t h_input_shape = inputs_shape_[0][2];
   int64_t h_stride = stride_[2];
   int64_t top_pad = pad_list_[0];
+  MS_EXCEPTION_IF_ZERO("h_dimension_shard_num", h_dimension_shard_num_);
+  MS_EXCEPTION_IF_ZERO("h_stride", h_stride);
 
   if (rank_bias == 0) {  // the first rank
     return DoubleToLong(
@@ -1362,6 +1377,9 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapLeftSizeByRankBias(int64_t rank_b
   int64_t w_kernel_size = kernel_size_use_dilation_[1];
   int64_t w_stride = stride_[3];
   int64_t left_pad = pad_list_[2];
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num", w_dimension_shard_num_);
+  MS_EXCEPTION_IF_ZERO("w_stride", w_stride);
+
   if (rank_bias == w_dimension_shard_num_ - 1) {  // the last rank
     return DoubleToLong(std::ceil(LongToDouble(w_output_shape / w_dimension_shard_num_ + w_kernel_size -
                                                w_output_shape + w_input_shape * w_stride - w_stride - left_pad) /
@@ -1384,6 +1402,8 @@ int64_t Conv2DBackpropInputInfo::ComputeOverlapRightSizeByRankBias(int64_t rank_
   int64_t w_input_shape = inputs_shape_[0][3];
   int64_t w_stride = stride_[3];
   int64_t left_pad = pad_list_[2];
+  MS_EXCEPTION_IF_ZERO("w_dimension_shard_num", w_dimension_shard_num_);
+  MS_EXCEPTION_IF_ZERO("w_stride", w_stride);
 
   if (rank_bias == 0) {  // the first rank
     return DoubleToLong(
@@ -1444,6 +1464,9 @@ void Conv2DBackpropInputInfo::InferNewPadListByDimension(const std::string &dime
     h_or_w_rank_bias = w_rank_bias_;
     h_or_w_dim_shard_num = w_dimension_shard_num_;
   }
+
+  MS_EXCEPTION_IF_ZERO("h_or_w_dim_shard_num", h_or_w_dim_shard_num);
+  MS_EXCEPTION_IF_ZERO("h_or_w_stride", h_or_w_stride);
 
   if (h_or_w_rank_bias == 0) {  // the first rank
     current_rank_required_size = DoubleToLong(std::ceil(

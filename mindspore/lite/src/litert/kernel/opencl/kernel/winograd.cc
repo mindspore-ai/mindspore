@@ -186,7 +186,7 @@ int WinogradOpenCLKernel::InitFilter() {
       return RET_ERROR;
     }
   }
-  FreeStoredData(&stored_filter_);
+  FreeStoredData(stored_filter_);
   return RET_OK;
 }
 

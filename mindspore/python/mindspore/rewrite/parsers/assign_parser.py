@@ -41,8 +41,12 @@ if sys.version_info >= (3, 9):
 else:
     import astunparse
 
+
 class AssignParser(Parser):
     """Parse ast.Assign in construct function to node of SymbolTree."""
+
+    # Types for creating Cell Container node
+    types_for_cell_container = [SequentialCell,]
 
     def target(self):
         """Parse target type."""
@@ -335,7 +339,7 @@ class AssignParser(Parser):
         first_node_inputs = AssignParser._create_inputs_for_cell_container(ast_assign)
         for i, cell in enumerate(container_obj):
             cell_name = type(cell).__name__
-            is_sub_tree = is_subtree(cell_name)
+            is_sub_tree = is_subtree(cell)
             if is_sub_tree:
                 stb = SymbolTreeBuilder(cell)
                 new_stree = stb.build()
@@ -376,7 +380,7 @@ class AssignParser(Parser):
                 ast_root: ast.Module = ast.parse(source_code)
                 stree.get_external_ast().append(ast_root.body[0])
                 return func, ast_root.body[0]
-        logger.warning(f"Cannot get ast of function {func_name} from {file_path}.")
+        logger.info(f"Cannot get ast of function {func_name} from {file_path}.")
         return None, None
 
     def _process_internal_function(self, stree: SymbolTree, func_name):
@@ -395,7 +399,7 @@ class AssignParser(Parser):
         node = CallFunction(targets, func_scope_name, args, kwargs, node_name, ast_assign, ast_functiondef,
                             stree, instance)
         # expand ast codes
-        ast_functiondef = FlattenRecursiveStmt().transform(ast_functiondef, [func_scope_name.value])
+        ast_functiondef = FlattenRecursiveStmt().transform(ast_functiondef, [func_scope_name.value], stree)
         # parse ast codes into CallFunction Node
         parser = ParserRegister.instance().get_parser(ast.FunctionDef)
         parser.process(stree, ast_functiondef, node_manager=node)
@@ -453,7 +457,7 @@ class AssignParser(Parser):
                 node = Node.inner_create_call_function(func_name, ast_assign, func_name, func_inst, targets,
                                                        call_args, call_kwargs)
             return node
-        if isinstance(func_inst, SequentialCell):
+        if isinstance(func_inst, tuple(AssignParser.types_for_cell_container)):
             node = AssignParser.cell_container_process(ast_assign, stree, targets, func_scope_name, call_args,
                                                        call_kwargs, func_name, func_inst)
             return node
@@ -461,7 +465,7 @@ class AssignParser(Parser):
             return Node.create_call_buildin_op(func_inst, ast_assign, targets, func_scope_name, call_args, call_kwargs,
                                                func_name)
         if isinstance(func_inst, Cell):
-            if is_subtree(type(func_inst).__name__):
+            if is_subtree(func_inst):
                 # Instance of function is user custom network, create sub-symboltree
                 stb = SymbolTreeBuilder(func_inst)
                 new_stree = stb.build()
@@ -604,8 +608,8 @@ class AssignParser(Parser):
                                                     args, {}, "tuple")
                     stree.append_origin_field(node_, node_manager)
                 else:
-                    logger.warning(f"some elements in Tuple of assign({astunparse.unparse(node)}) are not supported "
-                                   "in rewrite, fallback to python")
+                    logger.info(f"some elements in Tuple of assign({astunparse.unparse(node)}) are not supported "
+                                "in rewrite, fallback to python")
                     stree.try_append_python_node(node, node, node_manager)
             elif isinstance(value, (ast.List, ast.Dict)):
                 # add these as callmethod node if necessary

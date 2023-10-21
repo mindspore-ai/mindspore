@@ -122,7 +122,7 @@ class DynamicShapeTanNet(nn.Cell):
         return self.tan_func(data)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_dy_shape():

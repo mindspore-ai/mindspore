@@ -88,7 +88,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 #ifndef BUILD_LITE
   opt::ReduceOptimization(anf_graph);
 #endif
-  auto converter = transform::NewConverter(anf_graph);
+  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone);
   std::string net_id = "0";
   std::string checkpoint_name = "save." + net_id;
   std::string compute_graph_name = anf_graph->ToString();
@@ -108,7 +108,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
     return nullptr;
   }
   (void)transform::AddGraph(anf_graph->ToString(), transform::GetComputeGraph(converter));
-  if (!common::IsEnableRefMode()) {
+  if (!IsEnableRefMode()) {
     std::string init_graph = "init_subgraph." + net_id;
     (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
   }

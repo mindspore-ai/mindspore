@@ -45,7 +45,8 @@ class MultiheadAttention(Cell):
     .. math::
         MultiHeadAttention(query, key, value) = Concat(head_1, \dots, head_h)W^O
 
-    where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
+    where :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`, and :math:`W^O` , :math:`W_i^Q` , :math:`W_i^K` ,
+    :math:`W_i^V` are weight matrices. The default input / output projection layers is with a bias.
 
     if query, key and value tensor is same, then it will be self attention.
 
@@ -276,7 +277,7 @@ class TransformerEncoderLayer(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor.
+        Tensor. The shape and dtype of Tensor is the same with `src` .
 
     Raises:
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
@@ -423,7 +424,7 @@ class TransformerDecoderLayer(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor.
+        Tensor. The shape and dtype of Tensor is the same with `tgt` .
 
     Raises:
         ValueError: If the init argument `activation` is not str, callable or Cell instance.
@@ -562,7 +563,7 @@ class TransformerEncoder(Cell):
           float64, bool.  Default: ``None``.
 
     Outputs:
-        Tensor.
+        Tensor. The shape and dtype of Tensor is the same with `src` .
 
     Raises:
         AssertionError: If the input argument `src_key_padding_mask` is not bool or floating types.
@@ -637,7 +638,7 @@ class TransformerDecoder(Cell):
           float64, bool. Default: ``None``.
 
     Outputs:
-        Tensor.
+        Tensor. The shape and dtype of Tensor is the same with `tgt` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

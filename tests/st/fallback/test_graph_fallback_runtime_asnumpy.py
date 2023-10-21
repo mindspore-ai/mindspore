@@ -46,7 +46,7 @@ class Net(ms.nn.Cell):
         return self.np_function(a, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -64,7 +64,7 @@ def test_fallback_np():
     np.testing.assert_almost_equal(output, const_output, 3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -126,7 +126,7 @@ def test_fallback_np_asnumpy_grad():
     assert output == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -175,9 +175,9 @@ def test_net_with_class_var(mode):
     stree = SymbolTree.create(net)
     codes = stree.get_code()
     assert codes.count("class NetEOpt(nn.Cell):") == 1
-    assert codes.count("def external_func(x):") == 1
-    assert codes.count("var1 = Tensor(1.0)") == 1
-    assert codes.count("var2 = external_func") == 1
+    assert codes.count("def external_func(x):") == 0
+    assert codes.count("var1 = Tensor(1.0)") == 0
+    assert codes.count("var2 = external_func") == 0
     new_net = stree.get_network()
     y = new_net(Tensor(1))
     assert y == y0
@@ -216,10 +216,72 @@ def test_father_classes_with_class_var(mode):
     assert codes.count("class NoCellNet():") == 1
     assert codes.count("class BaseNet(nn.Cell):") == 1
     assert codes.count("class NetWithClassVar():") == 1
-    assert codes.count("var1 = Tensor(1.0)") == 1
-    assert codes.count("var2 = external_func") == 1
-    assert codes.count("var3 = external_func2") == 1
-    assert codes.count("def external_func(x):") == 1
+    assert codes.count("var1 = Tensor(1.0)") == 0
+    assert codes.count("var2 = external_func") == 0
+    assert codes.count("var3 = external_func2") == 0
+    assert codes.count("def external_func(x):") == 0
     new_net = stree.get_network()
     y = new_net(Tensor(1))
+    assert y == y0
+
+
+G_DEVICE = 'Ascend'
+
+
+def g_func(x):
+    return x
+
+
+class BaseNet1(nn.Cell):
+    def __init__(self, a):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.a = a
+
+    def construct(self, x):
+        return x
+
+    def add_a(self, x):
+        x = x + self.a
+        return x
+
+
+class FatherNet(BaseNet1):
+    def add_x(self, x):
+        x = x + x
+        return x
+
+
+class MyNet(FatherNet):
+    func_var = g_func
+    device_var = G_DEVICE
+    def __init__(self, a, b):
+        super().__init__(a)
+        self.relu = nn.ReLU()
+        self.b = b
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = x + self.b
+        if MyNet.device_var:
+            x = self.add_a(x)
+        x = MyNet.func_var(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_two_level_father_classes_with_class_var(mode):
+    """
+    Feature: Test Rewrite.
+    Description: Test Rewrite with two level of father classes with class variables.
+    Expectation: Success.
+    """
+    ms.set_context(mode=mode)
+    net = MyNet(Tensor(2), Tensor(3))
+    y0 = net(Tensor(1))
+    stree = SymbolTree.create(net)
+    net = stree.get_network()
+    y = net(Tensor(1))
     assert y == y0

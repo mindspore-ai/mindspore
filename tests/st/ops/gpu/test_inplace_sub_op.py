@@ -43,7 +43,7 @@ class NetInplaceSub(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_inplace_sub_fp16():

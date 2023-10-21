@@ -3,11 +3,13 @@ mindspore.dataset.transforms.Relational
 
 .. py:class:: mindspore.dataset.transforms.Relational
 
-    关系操作符。可以取值为 ``Relational.EQ`` 、 ``Relational.NE`` 、 ``Relational.GT`` 、 ``Relational.GE`` 、 ``Relational.LT`` 、 ``Relational.LE`` 。
+    关系运算符。
 
-    - **Relational.EQ** - 相等关系。
-    - **Relational.NE** - 不相等关系。
-    - **Relational.GT** - 大于关系。
-    - **Relational.GE** - 大于等于关系。
-    - **Relational.LT** - 小于关系。
-    - **Relational.LE** - 小于等于关系。
+    可选值如下：
+
+    - **Relational.EQ** - 相等。
+    - **Relational.NE** - 不相等。
+    - **Relational.GT** - 大于。
+    - **Relational.GE** - 大于等于。
+    - **Relational.LT** - 小于。
+    - **Relational.LE** - 小于等于。

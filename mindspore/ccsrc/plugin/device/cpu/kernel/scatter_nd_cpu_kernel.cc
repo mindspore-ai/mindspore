@@ -53,7 +53,7 @@ void ComputeOffset(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *pa
           MS_LOG(EXCEPTION) << "For '" << kKernelName
                             << "', each element in 'indice' must be greater than or equal to 0, but got " << index;
         }
-        if (index > content->out_shape_[j]) {
+        if (index >= content->out_shape_[j]) {
           MS_LOG(EXCEPTION) << "For '" << kKernelName
                             << "', each element in 'indices' should be smaller than the value of shape, but got "
                             << index << " and got the value of shape " << content->out_shape_[j];

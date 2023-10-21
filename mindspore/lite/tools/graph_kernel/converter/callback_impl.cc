@@ -114,29 +114,8 @@ std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) {
 }
 
 std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-    if (!kernel_info) {
-      MS_LOG(EXCEPTION) << "kernel_info is nullptr from which node is: "
-                        << node->cast<ParameterPtr>()->fullname_with_scope();
-    }
-    auto kernel_build_info = kernel_info->select_kernel_build_info();
-    auto vec_size = kernel_build_info->GetOutputNum();
-    if (i >= vec_size) {
-      MS_LOG(EXCEPTION) << "Index " << i << " is out of the range of node output vector, output size is "
-                        << kernel_build_info->GetOutputNum() << ". node is " << node->fullname_with_scope();
-    }
-    return kernel_build_info->GetOutputFormat(i);
-  } else if (node->isa<Parameter>()) {
-    auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-    if (!kernel_info) {
-      MS_LOG(EXCEPTION) << "kernel_info is nullptr from which node is: "
-                        << node->cast<ParameterPtr>()->fullname_with_scope();
-    }
-    auto kernel_build_info = kernel_info->select_kernel_build_info();
-    return kernel_build_info->GetOutputFormat(0);
+  if (node->isa<CNode>() || node->isa<Parameter>()) {
+    return GetOutputFormatFromAnfNode(node, 0);
   } else {
     return GetDefaultFormat();
   }

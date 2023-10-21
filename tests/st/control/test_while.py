@@ -14,6 +14,7 @@
 # ============================================================================
 from mindspore import Tensor, jit
 from mindspore.common import dtype as mstype
+import pytest
 
 
 @jit
@@ -23,6 +24,30 @@ def t1_while(x, y):
         x = x + 1
     x = x + 3
     return x
+
+
+@jit
+def const_branch(y):
+    if y >= 0:
+        while y > 1:
+            y -= 1
+        return y
+    return 2
+
+
+def test_const_branch():
+    """
+    Feature: control flow .
+    Description: Set one branch abstract with the other branch type
+    when all the branches can not be inferred.
+    Expectation: No error raised.
+    """
+    y = Tensor(5)
+    with pytest.raises(TypeError) as exc:
+        with const_branch(y):
+            pass
+
+    assert "join" in str(exc.value)
 
 
 def test_net():

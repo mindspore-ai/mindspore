@@ -18,7 +18,7 @@ import numpy as np
 from mindspore import Tensor
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -40,7 +40,7 @@ def test_tensor_slice_by_bool_broadcast():
     assert np.allclose(data_tensor.asnumpy(), data_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

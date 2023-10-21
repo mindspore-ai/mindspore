@@ -44,9 +44,6 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
                       "freeze_p": 0.7,
                       "total_steps": 65536},
 
-                  "grad_accumulation": {
-                      "grad_accumulation_step": 1},
-
                   "dim_reduce": {
                       "rho": 0.55,
                       "gamma": 0.9,
@@ -95,10 +92,6 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
             - freeze_type (int)：梯度冻结策略，参数选择[0, 1]，默认值： ``1`` 。
             - freeze_p (float)：梯度冻结概率，默认值： ``0.7`` 。
             - total_steps (int)：总训练步数，默认值： ``65536`` 。
-
-          - grad_accumulation：
-
-            - grad_accumulation_step (int)：累加梯度的步数，默认值： ``1`` 。
 
           - dim_reduce：
 
@@ -481,7 +474,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **layer2** (int) - 最后一个网络层的值。
 
     输出：
-        - **x** (Tensor) - _DynamicLossScale operator的输出。
+        - **out** (Tensor) - 带有分组loss scale标记的Tensor，用来标记当前Tensor对应的loss scale组号。
 
     .. py:method:: get_loss_scale()
 

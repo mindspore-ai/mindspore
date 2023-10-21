@@ -31,6 +31,9 @@ bool GraphSinkDelegate::IsDelegateNode(const std::shared_ptr<CNode> &node) {
     return false;
   }
   auto graph = GetCNodeFuncGraph(node);
+  if (graph == nullptr) {
+    return false;
+  }
   if (graph.get() == sink_graph_.get()) {
     return true;
   }

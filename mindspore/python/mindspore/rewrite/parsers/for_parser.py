@@ -53,7 +53,7 @@ class ForParser(Parser):
     def modify_construct_ast(stree, ast_node, old_name, new_name):
         """Modify the ast node in construct function."""
         node_str: str = astunparse.unparse(ast_node)
-        node_str = node_str.replace(old_name, new_name)
+        node_str = node_str.replace(old_name+'(', new_name+'(')
         module_node = ast.parse(node_str)
         new_node = module_node.body[0]
         return new_node
@@ -65,6 +65,11 @@ class ForParser(Parser):
         """ Process ast.For node """
         if isinstance(node.target, ast.Name):
             targets = node.target.id
+        if isinstance(node.iter, ast.Str) or (isinstance(node.iter, ast.Constant) and
+                                              isinstance(node.iter.val, str)):
+            # Ast.For which has iter with type of str is converted to python node to avoid instruction injection
+            stree.try_append_python_node(node, node)
+            return
         iter_code = astunparse.unparse(node.iter)
         if not iter_code.startswith(EVAL_WHITE_LIST):
             logger.warning(
@@ -84,8 +89,10 @@ class ForParser(Parser):
         iter_var_name = iter_code.split(".")[-1]
         ast_functiondef = node_manager.get_ast_functiondef()
         if not ast_functiondef:
-            raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                               "when parsing 'for' statement.")
+            logger.info(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
+                        "when parsing 'for' statement.")
+            stree.try_append_python_node(node, node, node_manager)
+            return
         index = ast_functiondef.body.index(node) + 1
         if isinstance(iter_obj, (list, nn.CellList)):
             for obj in iter_obj:
@@ -100,7 +107,7 @@ class ForParser(Parser):
                     ast_functiondef.body.insert(index, new_node)
                     index += 1
             # Expand "for" statement and replace the body with Pass
-            for body in node.body:
+            for body in node.body[:]:
                 node.body.remove(body)
             node.body.append(ast.Pass())
 

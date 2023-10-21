@@ -27,9 +27,9 @@ const char kNodeTypeConstant[] = "Constant";
 
 AbstractBaseModel *MindirModelLoader::ImportModel(const char *model_buf, size_t size, bool take_buf) {
   this->model_ = new MindirModel();
-  this->model_->model_type_ = mindspore::lite::ModelType_MindIR;
   MS_CHECK_TRUE_MSG(this->model_ != nullptr, nullptr,
                     "MindirModelLoader: Import model failed: new mindir model failed.");
+  this->model_->model_type_ = mindspore::lite::ModelType_MindIR;
   auto ret = this->InitModelBuffer(this->model_, model_buf, size, take_buf);
   MS_CHECK_TRUE_MSG(ret == RET_OK, nullptr,
                     "MindirModelLoader: Import model failed: init model buffer error with " << ret);
@@ -111,6 +111,7 @@ bool MindirModelLoader::ConvertPrimitives(const mind_ir::ModelProto &model_proto
       continue;
     }
     prim = it->second();
+    MS_CHECK_TRUE_MSG(prim != nullptr, false, "MindirModelLoader: Convert primitives failed, the prim is nullptr.");
     prim->set_instance_name(op_type);
     for (int j = 0; j < primitive_proto.attribute_size(); j++) {
       auto attr_proto = primitive_proto.attribute(j);
@@ -267,6 +268,7 @@ std::shared_ptr<void> MindirModelLoader::MakePrimitiveC(const std::string &node_
   if (op_primc_fns.find(node_type) != op_primc_fns.end()) {
     // registered primitive
     auto prim = (op_primc_fns[node_type]());
+    MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "MindirModelLoader: Make primitiveC failed, the prim is nullptr.");
     prim->set_instance_name(node_type);
     static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
     auto op_it = operator_fns.find(node_type);

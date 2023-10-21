@@ -63,17 +63,19 @@ int ConcatFp16Run(void *cdata, int task_id, float l, float r) {
 }
 
 void ConcatF16FreeTmpBuffer(ConcatF16Struct *concat_f16) {
-  for (int i = 0; i < (concat_f16->concat_.base_.in_size_ + concat_f16->concat_.base_.out_size_); i++) {
-    if (concat_f16->tmp_buffer_[i] != NULL) {
-      concat_f16->concat_.base_.env_->Free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_[i]);
-    }
-    concat_f16->tmp_buffer_[i] = NULL;
-  }
-
   if (concat_f16->tmp_buffer_ != NULL) {
+    /* free tmp_buffer_[i] */
+    for (int i = 0; i < (concat_f16->concat_.base_.in_size_ + concat_f16->concat_.base_.out_size_); i++) {
+      if (concat_f16->tmp_buffer_[i] != NULL) {
+        concat_f16->concat_.base_.env_->Free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_[i]);
+      }
+      concat_f16->tmp_buffer_[i] = NULL;
+    }
+
+    /* free tmp_buffer_ */
     concat_f16->concat_.base_.env_->Free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_);
+    concat_f16->tmp_buffer_ = NULL;
   }
-  concat_f16->tmp_buffer_ = NULL;
 }
 
 int ConcatF16Compute(KernelBase *self) {

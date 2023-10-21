@@ -179,5 +179,5 @@ ATTR_MAP(Im2col) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>
                     {"padding_mode", ATTR_DESC(padding_mode, AnyTraits<std::string>())},
                     {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Im2col) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Im2col, kNameIm2Col, ADPT_DESC(Im2col))
+REG_ADPT_DESC(Im2col, kNameIm2col, ADPT_DESC(Im2col))
 }  // namespace mindspore::transform

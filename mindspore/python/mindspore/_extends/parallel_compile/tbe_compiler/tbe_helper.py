@@ -32,7 +32,7 @@ def create_dir(dir_path):
     is_exists = os.path.exists(dir_path)
     if not is_exists:
         try:
-            os.makedirs(dir_path, 0o750, exist_ok=True)
+            os.makedirs(dir_path, 0o700, exist_ok=True)
         except (OSError, TypeError) as excep:
             raise excep
         finally:
@@ -53,7 +53,7 @@ def write_to_file(file_path, content=""):
         return False
 
     with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT, \
-                           stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP), 'w') as file_handler:
+                           stat.S_IWUSR | stat.S_IRUSR), 'w') as file_handler:
         file_handler.write(content)
     return True
 
@@ -66,7 +66,7 @@ class LocalLock:
     def __init__(self, lock_file):
         if not os.path.exists(lock_file):
             write_to_file(lock_file)
-        self.lock_fd = os.open(lock_file, os.O_WRONLY | os.O_CREAT, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP)
+        self.lock_fd = os.open(lock_file, os.O_WRONLY | os.O_CREAT, stat.S_IWUSR | stat.S_IRUSR)
 
     def __del__(self):
         try:

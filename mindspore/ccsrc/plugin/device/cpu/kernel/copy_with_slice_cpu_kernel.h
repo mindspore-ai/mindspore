@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_COPY_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_COPY_CPU_KERNEL_H_
 
-#include <complex>
 #include <unordered_map>
 #include <vector>
 #include <functional>

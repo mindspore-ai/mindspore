@@ -499,12 +499,19 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
   if (node->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
+  if (name_space->module() == RESOLVE_NAMESPACE_NAME_CLASS_OBJECT) {
+    MS_LOG(DEBUG) << "namespace: " << py::str(name_space->namespace_obj()) << ", symbol: " << symbol;
+    return name_space->namespace_obj();
+  }
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto &obj = name_space->namespace_obj();
   if (py::isinstance<py::none>(obj)) {
     MS_EXCEPTION(NameError) << "The name \'" << symbol << "\' is not defined.";
   }
-  return python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_FUNCTION, obj, common::SafeCStr(symbol->symbol()));
+  const auto &res =
+    python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_FUNCTION, obj, common::SafeCStr(symbol->symbol()));
+  MS_LOG(DEBUG) << "namespace: " << py::str(obj) << ", symbol: " << symbol << ", result: " << py::str(res);
+  return res;
 }
 
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
@@ -563,8 +570,9 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   return CreateResolveNode(obj, attr, get_attr_node);
 }
 
-// Get attribute or method from ms_class obj.
-AnfNodePtr ResolveMsClassWithAttr(const py::object &cls_obj, const AnfNodePtr &attr, const AnfNodePtr &get_attr_node) {
+// Get attribute or method from ms_class obj or cell obj.
+AnfNodePtr ResolveClassObjectWithAttr(const py::object &cls_obj, const AnfNodePtr &attr,
+                                      const AnfNodePtr &get_attr_node) {
   MS_EXCEPTION_IF_NULL(get_attr_node);
   MS_LOG(DEBUG) << "Resolve ms_class obj (" << py::str(cls_obj) << ") with attr " << attr->ToString() << ".";
   TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
@@ -597,7 +605,7 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
   } else if (count_msclass == sequence_size) {
     // Resolve MsClass instances.
     for (size_t i = 0; i < sequence_size; ++i) {
-      auto res = ResolveMsClassWithAttr(sequence[i], attr, get_attr_node);
+      auto res = ResolveClassObjectWithAttr(sequence[i], attr, get_attr_node);
       (void)inputs.emplace_back(res);
     }
   } else {
@@ -621,8 +629,7 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
   MS_EXCEPTION_IF_NULL(symbol);
   auto module_name = name_space->module();
   constexpr std::string_view parse_super_name = "namespace";
-  if (module_name.find(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER) != std::string::npos &&
-      symbol->symbol() != parse_super_name) {
+  if (module_name == RESOLVE_NAMESPACE_NAME_CLASS_MEMBER && symbol->symbol() != parse_super_name) {
     auto symbol_obj = GetSymbolObject(name_space, symbol, get_attr_node);
     return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node, get_attr_node);
   }

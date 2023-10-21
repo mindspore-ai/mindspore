@@ -38,6 +38,40 @@ get_version() {
     VERSION_STR=$(cat ${BASEPATH}/version.txt)
 }
 
+get_cpack_dir() {
+    # ${CPACK_PACKAGE_DIR}/${pkg_name} is the output of package_lite.cmake(make package)
+    # ${INSTALL_PREFIX}/${pkg_name} is the output of make install
+    # please use ${CPACK_PACKAGE_DIR}/${pkg_name} instead of ${INSTALL_PREFIX}/${pkg_name}
+    local pack_dir="_CPack_Packages"
+    local ms_pack="mindspore-lite-${VERSION_STR}"
+    local cpack_dir="${INSTALL_PREFIX}/${pack_dir}"
+
+    local linux_x86_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-x64"
+    local linux_cortex_path="${cpack_dir}/Linux/TGZ/${ms_pack}/none-cortex-m7"
+    local linux_aarch64_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-aarch64"
+    local linux_aarch32_path="${cpack_dir}/Linux/TGZ/${ms_pack}/linux-aarch32"
+    local android_aarch64_path="${cpack_dir}/Android/TGZ/${ms_pack}/android-aarch64"
+    local android_aarch32_path="${cpack_dir}/Android/TGZ/${ms_pack}/android-aarch32"
+
+    CPACK_PACKAGE_DIR=""
+    if [ -d "${linux_x86_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_x86_path}
+    elif [ -d "${linux_cortex_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_cortex_path}
+    elif [ -d "${linux_aarch64_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_aarch64_path}
+    elif [ -d "${linux_aarch32_path}" ]; then
+      CPACK_PACKAGE_DIR=${linux_aarch32_path}
+    elif [ -d "${android_aarch64_path}" ]; then
+      CPACK_PACKAGE_DIR=${android_aarch64_path}
+    elif [ -d "${android_aarch32_path}" ]; then
+      CPACK_PACKAGE_DIR=${android_aarch32_path}
+    else
+      echo "Please check cpack path."
+    fi
+    echo "Using cpack output path: ${CPACK_PACKAGE_DIR}"
+}
+
 write_commit_file() {
     COMMIT_STR=$(git log -1 | grep commit)
     echo ${COMMIT_STR} > "${BASEPATH}/mindspore/lite/build/.commit_id"
@@ -312,6 +346,9 @@ build_python_wheel_package() {
       if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so" ]; then
         cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libascend_ge_plugin.so package/mindspore_lite/lib/
       fi
+      if [ -f "${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so" ]; then
+        cp ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/libllm_engine_plugin.so package/mindspore_lite/lib/
+      fi
     else
       if [[ "X${MSLITE_ENABLE_ACL}" == "Xon" ]]; then
         cp src/litert/kernel/ascend/*.so package/mindspore_lite/lib/
@@ -324,8 +361,8 @@ build_python_wheel_package() {
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/dnnl/*.so* package/mindspore_lite/lib/
     fi
-    if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels" ]; then
-      cp -rf ${INSTALL_PREFIX}/${pkg_name}/tools/custom_kernels package/mindspore_lite/
+    if [ -d "${CPACK_PACKAGE_DIR}/${pkg_name}/tools/custom_kernels" ]; then
+      cp -rf ${CPACK_PACKAGE_DIR}/${pkg_name}/tools/custom_kernels package/mindspore_lite/
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib/*.so* package/mindspore_lite/lib/
@@ -347,10 +384,9 @@ build_python_wheel_package() {
     cp .commit_id package/mindspore_lite/
     echo "__version__ = '${VERSION_STR}'" > package/mindspore_lite/version.py
     cp ../python/setup.py  package/
-    export TOP_DIR=${BASEPATH}
     cd package
     rm -rf dist/mindspore_lite-*.whl
-    python3 setup.py bdist_wheel
+    python3 setup.py bdist_wheel ${BASEPATH}
     py_tags=`get_python_tag`
     local whl_name=mindspore_lite-${VERSION_STR}-${py_tags}-linux_$1.whl
     cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}
@@ -580,7 +616,10 @@ build_lite() {
           make install
         fi
       fi
+
       make package
+      get_cpack_dir
+
       local package_wheel=${MSLITE_ENABLE_PACKAGE_WHEEL}
       if [[ ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") || ("${MSLITE_ENABLE_SERVER_INFERENCE}" == "on") ]] && [[ ${MSLITE_ENABLE_PACKAGE_WHEEL} == "" ]]; then
         package_wheel=on

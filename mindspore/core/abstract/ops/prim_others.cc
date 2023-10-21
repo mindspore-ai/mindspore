@@ -433,6 +433,9 @@ AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const Primitive
   const std::string &op_name = primitive->name();
   CheckArgsSize(op_name, args_abs_list, input_size);
   auto abs = args_abs_list[0];
+  if (abs->isa<AbstractAny>()) {
+    return std::make_shared<AbstractAny>();
+  }
   if (!abs->isa<AbstractSequence>()) {
     MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be tuple but got " << abs->ToString();
   }

@@ -194,8 +194,8 @@ int GatherPrepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(gather);
   NNACL_CHECK_FALSE(self->in_size_ < THREE_TENSOR, NNACL_GATHER_INPUT_TENSOR_INVALID);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_GATHER_OUTPUT_TENSOR_INVALID);
-  NNACL_CHECK_NULL_RETURN_ERR(self->in_[THIRD_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(self->in_[THIRD_INPUT]);
+  NNACL_CHECK_NULL_RETURN_ERR(self->in_[THIRD_INPUT]->data_);
   gather->axis_ = *((int *)self->in_[THIRD_INPUT]->data_);
   return NNACL_OK;
 }

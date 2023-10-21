@@ -41,13 +41,14 @@ Flags::Flags() {
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");
   AddFlag(&Flags::inputDataTypeStr, "inputDataType",
-          "Data type of input tensors, default is same with the type defined in model. FLOAT | INT8 | UINT8 | INT32 | "
-          "INT64 | DEFAULT",
+          "Data type of input tensors, default is same with the type defined in model. FLOAT16 | FLOAT | INT8 | UINT8 "
+          "| INT32 | INT64 | DEFAULT",
           "DEFAULT");
-  AddFlag(&Flags::outputDataTypeStr, "outputDataType",
-          "Data type of output and output tensors, default is same with the type defined in model. FLOAT | INT8 | "
-          "UINT8 | DEFAULT",
-          "DEFAULT");
+  AddFlag(
+    &Flags::outputDataTypeStr, "outputDataType",
+    "Data type of output and output tensors, default is same with the type defined in model. FLOAT16 | FLOAT | INT8 | "
+    "UINT8 | DEFAULT",
+    "DEFAULT");
   AddFlag(&Flags::configFile, "configFile",
           "Configuration for post-training, offline split op to parallel,"
           "disable op fusion ability and set plugin so path",
@@ -93,8 +94,6 @@ Flags::Flags() {
           "Whether to do pre-inference after convert. "
           "true | false",
           "false");
-  AddFlag(&Flags::noFusionStr, "NoFusion",
-          "Avoid fusion optimization true|false. NoFusion is true when saveType is MINDIR.", "");
   AddFlag(&Flags::device, "device",
           "Set the target device, support Ascend, Ascend310 and Ascend310P will be deprecated.", "");
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
@@ -110,9 +109,10 @@ Flags::Flags() {
 int Flags::InitInputOutputDataType() {
   // value check not here, it is in converter c++ API's CheckValueParam method.
   std::map<std::string, DataType> StrToEnumDataTypeMap = {
-    {"FLOAT", DataType::kNumberTypeFloat32}, {"INT8", DataType::kNumberTypeInt8},
-    {"UINT8", DataType::kNumberTypeUInt8},   {"INT32", DataType::kNumberTypeInt32},
-    {"INT64", DataType::kNumberTypeInt64},   {"DEFAULT", DataType::kTypeUnknown}};
+    {"FLOAT16", DataType::kNumberTypeFloat16}, {"FLOAT", DataType::kNumberTypeFloat32},
+    {"INT8", DataType::kNumberTypeInt8},       {"UINT8", DataType::kNumberTypeUInt8},
+    {"INT32", DataType::kNumberTypeInt32},     {"INT64", DataType::kNumberTypeInt64},
+    {"DEFAULT", DataType::kTypeUnknown}};
   if (StrToEnumDataTypeMap.find(this->inputDataTypeStr) != StrToEnumDataTypeMap.end()) {
     this->inputDataType = StrToEnumDataTypeMap.at(this->inputDataTypeStr);
   } else {
@@ -261,21 +261,9 @@ int Flags::InitPreInference() {
   return RET_OK;
 }
 
-int Flags::InitNoFusion() {
-  if (this->noFusionStr == "true") {
-    this->disableFusion = true;
-  } else if (this->noFusionStr == "false") {
-    this->disableFusion = false;
-  } else if (!this->noFusionStr.empty()) {
-    std::cerr << "INPUT ILLEGAL: NoFusion must be true|false " << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  return RET_OK;
-}
-
 int Flags::InitOptimize() {
   // For compatibility of interface, the check will be removed when nofusion is deleted
-  if (!this->noFusionStr.empty() || !this->device.empty()) {
+  if (!this->device.empty()) {
     return RET_OK;
   }
   if (this->optimizeStr == "none") {
@@ -424,12 +412,6 @@ int Flags::Init(int argc, const char **argv) {
   ret = InitSaveType();
   if (ret != RET_OK) {
     std::cerr << "Init save type failed." << std::endl;
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  ret = InitNoFusion();
-  if (ret != RET_OK) {
-    std::cerr << "Init no fusion failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 

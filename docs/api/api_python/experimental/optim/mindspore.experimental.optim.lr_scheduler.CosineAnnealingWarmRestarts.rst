@@ -3,7 +3,7 @@ mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts
 
 .. py:class:: mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult=1, eta_min=0, last_epoch=-1)
 
-    使用余弦退火热重启对优化器参数组的学习率进行改变。下述公式中， :math:`\eta_{max}` 为初始学习率，:math:`\eta_{min}` 为学习率变化的最小值，:math:`\eta_{t}` 为当前学习率，:math:`\T_{0}` 为初始周期，:math:`\T_{i}` 为当前周期，即SGDR两次热重启之间的迭代数，:math:`\T_{cur}` 为当前周期内的迭代数。
+    使用余弦退火热重启对优化器参数组的学习率进行改变。下述公式中， :math:`\eta_{max}` 为初始学习率，:math:`\eta_{min}` 为学习率变化的最小值，:math:`\eta_{t}` 为当前学习率，:math:`T_{0}` 为初始周期，:math:`T_{i}` 为当前周期，即SGDR两次热重启之间的迭代数，:math:`T_{cur}` 为当前周期内的迭代数。
 
     .. math::
         \eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})\left(1 +
@@ -20,8 +20,13 @@ mindspore.experimental.optim.lr_scheduler.CosineAnnealingWarmRestarts
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
         - **T_0** (int) - 余弦函数的初始周期数。
         - **T_mult** (int, 可选) - 迭代中对 :math:`T_{i}` 进行增长的乘法系数。默认值：``1``。
-        - **eta_min** (float, 可选) - 学习率的最小值。默认值： ``0``。
-        - **last_epoch** (int，可选) - epoch/step数。默认值： ``-1``。
+        - **eta_min** (Union(float, int), 可选) - 学习率的最小值。默认值： ``0``。
+        - **last_epoch** (int，可选) - 当前scheduler的 `step()` 方法的执行次数。默认值： ``-1``。
+
+    异常：
+        - **ValueError** - `T_0` 小于等于0或不是int类型。
+        - **ValueError** - `T_mult` 小于等于1或不是int类型。
+        - **ValueError** - `eta_min` 不是int或float类型。
 
     .. py:method:: step(epoch=None)
 

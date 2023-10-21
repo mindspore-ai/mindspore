@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <limits>
+
 #include "utils/ms_context.h"
 #include "ir/anf.h"
 
@@ -42,10 +43,13 @@ class AscendMemAdapter {
   uint8_t *MallocStaticDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocDynamicDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocOverflowMem();
+  uint8_t *GetBaseAddr() const;
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
+  void UpdateActualPeakMemory(int64_t memory) { actual_peak_memory_ = std::max(actual_peak_memory_, memory); }
 
   static size_t GetRoundUpAlignSize(size_t input_size);
+  static bool IsMemoryPoolRecycle();
 
   [[nodiscard]] uint64_t FreeDevMemSize() const { return std::max(static_mem_offset_ - max_dynamic_mem_offset_, 0L); }
   [[nodiscard]] uint64_t MaxHbmSizeForMs() const { return max_available_ms_hbm_size_; }
@@ -55,6 +59,7 @@ class AscendMemAdapter {
 
  private:
   AscendMemAdapter() = default;
+
   struct MemoryBlock {
     MemoryBlock(void *ptr, const size_t size, const std::string &tag) {
       mem_ptr = ptr;
@@ -68,9 +73,8 @@ class AscendMemAdapter {
   };
 
   uint8_t *MallocFromRts(size_t size) const;
-  bool FreeToRts(void *devPtr) const;
+  bool FreeToRts(void *devPtr, const size_t size) const;
   size_t GetDeviceMemSizeFromContext() const;
-
   bool initialized_{false};
 
   // Support multi-thread.
@@ -87,10 +91,14 @@ class AscendMemAdapter {
   int64_t cur_dynamic_mem_offset_{0};
   // Maximum dynamic memory have already allocated, dynamically updated
   int64_t max_dynamic_mem_offset_{0};
+  // History maximum dynamic memory (used in memory pool recycle mode)
+  int64_t history_max_dynamic_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> dynamic_memory_block_list_;
 
   // static memory info, from a high address to a low address
   int64_t static_mem_offset_{0};
+  // Actual peak memory usage (used in memory pool recycle mode)
+  int64_t actual_peak_memory_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
   static size_t GetRoundDownAlignSize(size_t input_size);
 };

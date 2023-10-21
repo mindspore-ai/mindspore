@@ -74,9 +74,12 @@ bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectOutputsNum, kernel_name_);
-  auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
-  auto y = reinterpret_cast<T *>(outputs[0]->addr);
+  auto x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto mask = GetDeviceAddress<bool>(inputs, kIndex1);
+  auto y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(mask);
+  MS_EXCEPTION_IF_NULL(y);
   size_t j = 0;
   if (input_shape_a_ == input_shape_b_) {
     for (size_t i = 0; i < tensor_size_; ++i) {

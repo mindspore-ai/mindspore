@@ -611,6 +611,8 @@ Parameter操作算子
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `mpirun启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/mpirun.html>`_ 。
 
+针对CPU设备，用户需要编写动态组网启动脚本，详见 `动态组网启动 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/dynamic_cluster.html>`_ 。
+
 .. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:

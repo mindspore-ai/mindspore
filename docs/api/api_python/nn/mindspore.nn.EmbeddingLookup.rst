@@ -1,7 +1,7 @@
 mindspore.nn.EmbeddingLookup
 =============================
 
-.. py:class:: mindspore.nn.EmbeddingLookup(vocab_size, embedding_size, param_init='normal', target='CPU', slice_mode='batch_slice', manual_shapes=None, max_norm=None, sparse=True, vocab_cache_size=0)
+.. py:class:: mindspore.nn.EmbeddingLookup(vocab_size, embedding_size, param_init='normal', target='CPU', slice_mode='batch_slice', manual_shapes=None, max_norm=None, sparse=True, vocab_cache_size=0, dtype=mstype.float32)
 
     嵌入查找层。
 
@@ -22,6 +22,7 @@ mindspore.nn.EmbeddingLookup
         - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32或None。默认值： ``None`` 。
         - **sparse** (bool) - 使用稀疏模式。当'target'设置为'CPU'时，'sparse'必须为True。默认值： ``True`` 。
         - **vocab_cache_size** (int) - 嵌入字典的缓存大小。默认值： ``0`` 。仅在训练模式和'DEVICE'目标中有效。 相应优化器的力矩参数也将设置为缓存大小。此外需注意，它还会消耗'DEVICE'内存，因此建议合理设置参数值，避免内存不足。
+        - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
         - **input_indices** (Tensor) - shape为 :math:`(y_1, y_2, ..., y_S)` 的Tensor。指定原始Tensor元素的索引。当取值超出embedding_table的范围时，超出部分在输出中填充为0。不支持负值，如果为负值，则结果未定义。在semi auto parallel或auto parallel模式下运行时，Input_indices只能是此接口中的二维Tensor。

@@ -34,7 +34,7 @@
 #include "ops/other_ops.h"
 #include "ops/sequence_ops.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+#include "plugin/device/ascend/hal/device/ascend_runtime_manager.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "utils/ms_context.h"
@@ -44,7 +44,9 @@
 #include "debug/rdr/stream_exec_order_recorder.h"
 #endif
 
-using mindspore::ge::model_runner::ModelRunner;
+#ifndef ENABLE_SECURITY
+#include "include/backend/debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -78,6 +80,16 @@ constexpr size_t kLastGradAndStatusNum = 2;
 
 const std::unordered_set<std::string> kDropoutGenMaskOps = {kDropoutGenMaskOpName, kDropoutGenMaskV3OpName,
                                                             kStatelessDropOutGenMaskOpName};
+
+bool EnableAsyncDump() {
+  bool ret = false;
+#ifndef ENABLE_SECURITY
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  dump_json_parser.Parse();
+  ret = dump_json_parser.async_dump_enabled();
+#endif
+  return ret;
+}
 
 bool IsContinuousGroup(const std::vector<uint32_t> &rank_ids) {
   if (rank_ids.empty()) {
@@ -1007,14 +1019,15 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
                << (kHcomSecondaryStreamNum + 1) << ", independent stream number: " << independent_stream_.size() << ".";
 
   auto iter = graph_stream_num_.begin();
+  auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_core = AscendRuntimeManager::Instance().GetAscendRuntime(kAscendVM, device_id);
   while (total_stream_num > max_stream_count_ - kReservedStreamNum) {
     if (iter == graph_stream_num_.end()) {
       MS_LOG(EXCEPTION) << "Stream isn't enough! Total stream number " << total_stream_num << " exceeds the limit of "
                         << max_stream_count_
                         << ". For more details, please refer to 'Stream isn't enough' at https://www.mindspore.cn";
     }
-    if (ModelRunner::Instance().GetModelStatus(iter->first) == ge::model_runner::ModelStatus::EXECUTED) {
-      ModelRunner::Instance().UnloadModel(iter->first);
+    if (runtime_core != nullptr && runtime_core->CheckAndUnloadModelInAdvance(iter->first)) {
       total_stream_num -= iter->second;
     }
     iter++;
@@ -2606,7 +2619,7 @@ bool AscendStreamAssign::IsHcom(const CNodePtr &cur_cnode_ptr) const {
   if (cur_cnode_ptr->HasAttr(parallel::FIRST_RECEIVE)) {
     return true;
   }
-  if ((node_name == kSendOpName || node_name == kReceiveOpName) && !send_recv_parallel) {
+  if ((node_name == kSendOpName || node_name == kReceiveOpName) && !send_recv_parallel && !EnableAsyncDump()) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);

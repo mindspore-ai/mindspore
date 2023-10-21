@@ -34,7 +34,8 @@ constexpr char kNormalizeOperation[] = "Normalize";
 
 class NormalizeOperation : public TensorOperation {
  public:
-  NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc);
+  NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc,
+                     const std::string &device_target = "CPU");
 
   ~NormalizeOperation() override;
 
@@ -48,10 +49,13 @@ class NormalizeOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<float> mean_;
   std::vector<float> std_;
   bool is_hwc_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

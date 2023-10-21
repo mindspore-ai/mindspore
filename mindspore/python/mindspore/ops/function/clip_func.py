@@ -45,13 +45,19 @@ get_square_sum = C.MultitypeFuncGraph("get_square_sum")
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 
 
+def _old_norm(norm_type, x):
+    """Add norm function"""
+    out = F.pow((F.reduce_sum(F.pow(x, norm_type))), 1. / norm_type).astype(x.dtype)
+    return out
+
+
 @jit
 def _cal_total_norm(x, norm_type):
     if norm_type == float('inf'):
         func = lambda data: data.abs().max()
         total_norm = max(hyper_map(func, x))
     else:
-        total_norm = F.norm(F.stack(hyper_map(F.norm, x)))
+        total_norm = _old_norm(norm_type, F.stack(hyper_map(partial_op(_old_norm, norm_type), x)))
     return total_norm
 
 
@@ -59,6 +65,9 @@ def clip_by_norm(x, max_norm, norm_type=2.0, error_if_nonfinite=False):
     r"""
     Clip norm of a set of input Tensors. This norm is the result of calculating the norm of all elements in the input
     separately, connecting them into a vector, and then calculating the norm.
+
+    Note:
+        The interface is suitable for gradient clipping scenarios, and only supports input of type float.
 
     Args:
           x (Union(Tensor, list[Tensor], tuple[Tensor])): Input that wishes to be clipped.
@@ -252,23 +261,23 @@ def clamp(input, min=None, max=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> # case 1: the data type of x is Tensor
+        >>> # case 1: the data type of input is Tensor
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> min_value = Tensor(5, mindspore.float32)
         >>> max_value = Tensor(20, mindspore.float32)
-        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> output = ops.clamp(x, min_value, max_value)
+        >>> input = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp(input, min_value, max_value)
         >>> print(output)
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
-        >>> # case 2: the data type of x is list[Tensor]
+        >>> # case 2: the data type of input is list[Tensor]
         >>> min_value = 5
         >>> max_value = 20
-        >>> x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> output = ops.clamp([x,y], min_value, max_value)
+        >>> input_x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> input_y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
+        >>> output = ops.clamp([input_x,input_y], min_value, max_value)
         >>> for out in output:
         ...     print(out)
         [[ 5. 20.  5.  7.]

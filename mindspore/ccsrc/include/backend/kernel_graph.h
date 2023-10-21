@@ -478,7 +478,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
   void set_memory_managed_by_ge(bool memory_managed_by_ge) {
-    if (common::IsEnableRefMode()) {
+    if (IsEnableRefMode()) {
       memory_managed_by_ge_ = memory_managed_by_ge;
     }
   }

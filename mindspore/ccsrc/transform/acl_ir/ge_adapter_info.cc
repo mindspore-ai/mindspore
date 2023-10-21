@@ -32,6 +32,17 @@ void GeAdapterInfo::InitAclInputsAndOutputs() {
   InitParametersMap(adapter_->getOutputMap(), adapter_->getDynOutputMap(), false);
 }
 
+void GeAdapterInfo::InitRefMap() {
+  for (const auto &[output_index, output_param_info] : info_.output_idx_ms2ge) {
+    for (const auto &[input_index, input_param_info] : info_.input_idx_ms2ge) {
+      if (output_param_info.name == input_param_info.name) {
+        (void)info_.ref_map_.emplace(IntToSize(output_index), IntToSize(input_index));
+        break;
+      }
+    }
+  }
+}
+
 template <typename ParamMap, typename DynParamMap>
 void GeAdapterInfo::InitParametersMap(const ParamMap &params, const DynParamMap &dyn_params, bool is_input) {
   auto &mapping_flags = is_input ? info_.input_mapping_flags : info_.output_mapping_flags;
@@ -196,6 +207,7 @@ void GeAdapterInfo::InitInfo() {
   InitAttrToInputMap();
 
   InitAclInputsAndOutputs();
+  InitRefMap();
   MS_LOG(DEBUG) << "INIT INFO:" << info_.op_type << " -- " << info_.input_supported_dtypes[0] << " --- "
                 << info_.output_supported_dtypes[0];
 }
@@ -206,6 +218,7 @@ GeAdapterManager &GeAdapterManager::GetInstance() {
 }
 
 GeAdapterInfoPtr GeAdapterManager::GetInfo(const std::string &prim_name, bool is_training = true) {
+  std::lock_guard<std::mutex> guard(lock_);
   auto iter = op_cache_.find(prim_name);
   if (iter != op_cache_.end()) {
     return iter->second;

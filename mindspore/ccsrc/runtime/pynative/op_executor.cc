@@ -85,6 +85,8 @@ void OpExecutor::PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTa
 }
 
 void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task) {
+  MS_EXCEPTION_IF_NULL(op_run_task);
+  MS_EXCEPTION_IF_NULL(op_run_task->context());
   async_queue_.Push(op_run_task);
 }
 
@@ -116,6 +118,8 @@ bool OpExecutor::ActorInQueue(GraphId graph_id) { return async_queue_.TaskInQueu
 bool OpExecutor::BuildInQueue(GraphId graph_id) {
   return std::any_of(op_build_tasks_.begin(), op_build_tasks_.end(),
                      [&graph_id](const std::shared_ptr<pynative::DeviceOpBuildTask> &backend_op_build_task) {
+                       MS_EXCEPTION_IF_NULL(backend_op_build_task);
+                       MS_EXCEPTION_IF_NULL(backend_op_build_task->context());
                        return backend_op_build_task->context()->graph_id() == graph_id;
                      });
 }

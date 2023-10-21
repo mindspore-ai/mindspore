@@ -27,10 +27,6 @@
 
 namespace aicpu {
 namespace {
-// max param len limit 10k.
-constexpr uint32_t kMaxParamLen = 10240;
-// max extend info len limit 20k.
-constexpr uint32_t kMaxExtendLen = 20480;
 const char kContextKeyStreamId[] = "streamId";
 
 uint32_t ParseExtSessionInfo(AicpuParamHead *param_head, SessionInfo *&session) {
@@ -82,13 +78,9 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernel(void *param) {
 
   // parse param_len
   AicpuParamHead *param_head = static_cast<AicpuParamHead *>(param);
-  if ((param_head->length < sizeof(AicpuParamHead)) || (param_head->length > kMaxParamLen) ||
-      (param_head->extInfoLength > kMaxExtendLen)) {
-    KERNEL_LOG_ERROR(
-      "Param length[%u] not in [%zu, %u] or extend info length[%u] is "
-      "greater "
-      "than the limit[%u].",
-      param_head->length, sizeof(AicpuParamHead), kMaxParamLen, param_head->extInfoLength, kMaxExtendLen);
+  if ((param_head->length < sizeof(AicpuParamHead))) {
+    KERNEL_LOG_ERROR("Param length[%u] can not be less than AicpuParamHead length[%zu]", param_head->length,
+                     sizeof(AicpuParamHead));
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -130,13 +122,9 @@ __attribute__((visibility("default"))) uint32_t RunCpuKernelWithBlock(void *para
 
   // parse param_len
   AicpuParamHead *param_head = static_cast<AicpuParamHead *>(param);
-  if ((param_head->length < sizeof(AicpuParamHead)) || (param_head->length > kMaxParamLen) ||
-      (param_head->extInfoLength > kMaxExtendLen)) {
-    KERNEL_LOG_ERROR(
-      "Param length[%u] not in [%zu, %u] or extend info length[%u] is "
-      "greater "
-      "than the limit[%u].",
-      param_head->length, sizeof(AicpuParamHead), kMaxParamLen, param_head->extInfoLength, kMaxExtendLen);
+  if ((param_head->length < sizeof(AicpuParamHead))) {
+    KERNEL_LOG_ERROR("Param length[%u] can not be less than AicpuParamHead length[%zu]", param_head->length,
+                     sizeof(AicpuParamHead));
     return KERNEL_STATUS_PARAM_INVALID;
   }
 

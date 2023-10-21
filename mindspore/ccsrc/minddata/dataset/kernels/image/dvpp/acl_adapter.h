@@ -81,6 +81,39 @@ class AclAdapter {
   int MallocHost(void **host_ptr, size_t size) const;
   int FreeHost(void *host_ptr) const;
 
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Ascend910B
+  APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
+                       double fx, double fy, InterpolationMode mode);
+
+  APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
+                          std::vector<float> std, bool is_hwc);
+
+  APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustContrast(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                               std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustHue(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                 std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
+
+  // acl
+  APP_ERROR GetSocName(std::string *soc_name);
+
+  APP_ERROR CreateAclTensor(const int64_t *view_dims, uint64_t view_dims_num, mindspore::TypeId data_type,
+                            const int64_t *stride, int64_t offset, const int64_t *storage_dims,
+                            uint64_t storage_dims_num, void *tensor_data, bool is_hwc, void **acl_tensor);
+#endif
+
  private:
   AclAdapter() = default;
   ~AclAdapter() { FinalizePlugin(); }
@@ -128,6 +161,21 @@ class AclAdapter {
   aclrtMallocHostFunObj aclrt_malloc_host_fun_obj_;
   aclrtFreeHostFunObj aclrt_free_host_fun_obj_;
   aclrtMemcpyFunObj aclrt_memcpy_fun_obj_;
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Ascend910B
+  DvppResizeFunObj dvpp_resize_fun_obj_;
+  DvppDecodeFunObj dvpp_decode_fun_obj_;
+  DvppNormalizeFunObj dvpp_normalize_fun_obj_;
+  DvppAdjustBrightnessFunObj dvpp_brightness_fun_obj_;
+  DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
+  DvppAdjustHueFunObj dvpp_hue_fun_obj_;
+  DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
+
+  // acl interface
+  GetSocNameFunObj get_soc_name_fun_obj_;
+  CreateAclTensorFunObj create_acl_tensor_fun_obj_;
+#endif
 };
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ACL_ADAPTER_H_

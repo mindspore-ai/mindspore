@@ -26,6 +26,10 @@
 #include "include/api/types.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "runtime/hardware/device_context.h"
+#include "runtime/hardware/device_context_manager.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -98,6 +102,9 @@ class DATASET_API Execute {
   /// \brief Destructor.
   ~Execute();
 
+  // Update the TensorOperation
+  Status UpdateOperation(const std::shared_ptr<TensorOperation> &op);
+
   /// \brief Callable function to execute the TensorTransform in eager mode.
   /// \param[in] input Tensor to be transformed.
   /// \param[out] output Transformed tensor.
@@ -154,28 +161,30 @@ class DATASET_API Execute {
   Status ValidateDevice();
 
   /// \brief Initialize 310 resource
-  Status InitResource(MapTargetDevice device_type, uint32_t device_id);
+  Status InitResource(MapTargetDevice device_type, uint32_t device_id = 0);
 
   std::vector<std::shared_ptr<TensorTransform>> transforms_;
   std::vector<std::shared_ptr<TensorOperation>> ops_;
   MapTargetDevice device_type_;
-  std::shared_ptr<DeviceResource> device_resource_;
+
+  // Ascend310
+  std::shared_ptr<DeviceResource> device_resource_ = nullptr;
   struct ExtraInfo;
   std::shared_ptr<ExtraInfo> info_;
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Ascend910B
+  device::DeviceContext *device_context_ = nullptr;
+  size_t stream_id_;
+#endif
+
   std::vector<std::shared_ptr<TensorOp>> transforms_rt_;
-  bool ops_created{false};
 };
 
 class PyExecute : public Execute {
  public:
   // inherit base class constructors
   using Execute::Execute;
-
-  /// \brief Callable function to execute the TensorTransform in eager mode (only cpu).
-  /// \param[in] input_tensor A tensor to be transformed.
-  /// \param[out] out Result tensor after transform.
-  /// \return Status error code, returns OK if no error encountered.
-  Status operator()(const std::shared_ptr<Tensor> &input_tensor, std::shared_ptr<Tensor> *out);
 
   /// \brief Callable function to execute the TensorTransform in eager mode (only cpu).
   /// \param[in] input_tensor_list List of Tensors to be transformed.

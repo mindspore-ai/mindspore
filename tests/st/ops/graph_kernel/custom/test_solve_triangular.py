@@ -32,7 +32,7 @@ class NetSolveTriangular(nn.Cell):
         return self.sta(a, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

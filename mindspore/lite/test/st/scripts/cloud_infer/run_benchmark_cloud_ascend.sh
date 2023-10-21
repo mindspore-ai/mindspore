@@ -32,6 +32,71 @@ done
 
 export ASCEND_DEVICE_ID=${device_id}
 
+# Run on Ascend java:
+function Run_Ascend_java() {
+    local elapsed_time ret
+    echo "javac -version"
+    javac -version
+    echo "java -version"
+    java -version
+    # compile benchmark
+    echo "javac -cp ${benchmark_test}/mindspore-lite-${version}-linux-${arch}/runtime/lib/mindspore-lite-java.jar ${benchmark_test}/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${benchmark_test}/mindspore-lite-${version}-linux-${arch}/runtime/lib/mindspore-lite-java.jar ${benchmark_test}/java/src/main/java/Benchmark.java -d .
+
+    while read line; do
+        line_info=${line}
+        if [[ $line_info == \#* || $line_info == "" ]]; then
+            continue
+        fi
+
+        # model_info     accuracy_limit      run_mode
+        model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
+        spec_acc_limit=`echo ${line_info} | awk -F ' ' '{print $2}'`
+        acc_limit="1"
+        if [[ ${spec_acc_limit} != "" ]]; then
+            acc_limit="${spec_acc_limit}"
+        fi
+
+        # model_info detail
+        model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+        input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
+        #input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
+        mode=`echo ${model_info} | awk -F ';' '{print $3}'`
+        input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+
+        model_file=${models_path}'/'${model_name}'.mindir'
+        input_files=""
+        output_file=""
+        data_path=${model_data_path}'/models/hiai/input_output/'
+
+        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+          input_files=${data_path}'input/'${model_name}'.bin'
+        else
+          for i in $(seq 1 $input_num)
+          do
+          input_files=${input_files}${data_path}'input/'${model_name}'.bin_'$i','
+          done
+        fi
+        output_file=${data_path}'output/'${model_name}'.out'
+
+        echo $LD_LIBRARY_PATH >> "${run_ascend_java_log_file}"
+        echo ${model_name} >> "${run_ascend_java_log_file}"
+        echo "java -classpath .:${benchmark_test}/mindspore-lite-${version}-linux-${arch}/runtime/lib/mindspore-lite-java.jar Benchmark ${model_file} ${input_files} ${output_file} ${acc_limit} Ascend" >> "${run_ascend_java_log_file}"
+        elapsed_time=$(date +%s.%N)
+        java -classpath .:${benchmark_test}/mindspore-lite-${version}-linux-${arch}/runtime/lib/mindspore-lite-java.jar Benchmark ${model_file} ${input_files} ${output_file} ${acc_limit} "Ascend" >> ${run_ascend_java_log_file}
+        ret=$?
+        elapsed_time=$(printf %.2f "$(echo "$(date +%s.%N) - $elapsed_time" | bc)")
+        if [ ${ret} = 0 ]; then
+            run_result='Ascend_java: '${model_name}' '${elapsed_time}' pass'; echo ${run_result} >> ${run_java_result_file}
+        else
+            run_result='Ascend_java: '${model_name}' '${elapsed_time}' failed'; echo ${run_result} >> ${run_java_result_file}
+            cat ${run_ascend_java_log_file}
+            Print_Benchmark_Result ${run_java_result_file}
+            return 1
+        fi
+    done < ${models_java_config}
+}
+
 # Run Benchmark in Ascend platform:
 function Run_Benchmark() {
     cd ${benchmark_test}/mindspore-lite-${version}-linux-${arch} || exit 1
@@ -131,10 +196,16 @@ function Run_Benchmark() {
 }
 
 user_name=${USER}
+basepath=$(pwd)
 benchmark_test=/home/${user_name}/benchmark_test/${device_id}
 models_ascend_config=${benchmark_test}/models_mindir_cloud_ascend.cfg
+models_java_config=${benchmark_test}/models_mindir_cloud_java_ascend.cfg
 model_data_path=/home/workspace/mindspore_dataset/mslite
 models_path=${model_data_path}/models/hiai
+run_ascend_java_log_file=${basepath}/run_ascend_java_log.txt
+run_java_result_file=${basepath}/run_java_result.txt
+echo ' ' > ${run_java_result_file}
+echo 'run ascend java logs: ' > ${run_ascend_java_log_file}
 
 # Write benchmark result to temp file
 run_benchmark_result_file=${benchmark_test}/run_benchmark_result.txt
@@ -153,6 +224,16 @@ else
   echo "${backend} is not support."
   exit 1
 fi
+Run_Ascend_java
+Run_java_status=$?
+if [[ ${Run_java_status} = 0 ]];then
+    echo "Run java benchmark success"
+    Print_Benchmark_Result ${run_java_result_file}
+else
+    echo "Run java benchmark failed"
+    exit 1
+fi
+
 Run_Benchmark
 Run_benchmark_status=$?
 if [[ ${Run_benchmark_status} = 0 ]];then

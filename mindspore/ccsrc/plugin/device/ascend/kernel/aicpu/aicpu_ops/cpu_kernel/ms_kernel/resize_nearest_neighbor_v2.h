@@ -50,6 +50,11 @@ class ResizeNearestNeighborV2CpuKernel : public CpuKernel {
   Eigen::Index out_width;
   float height_scale;
   float width_scale;
+  bool is_nchw = true;
+  size_t n_idx = 0;
+  size_t c_idx = 1;
+  size_t h_idx = 2;
+  size_t w_idx = 3;
 };
 }  // namespace aicpu
 #endif

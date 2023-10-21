@@ -18,7 +18,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/mem.h"
 
 namespace mindspore {

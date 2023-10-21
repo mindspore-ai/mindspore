@@ -76,10 +76,15 @@ bool MaskedScatterCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedScatterInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedScatterOutputsNum, kernel_name_);
 
-  auto x = static_cast<T *>(inputs[0]->addr);
-  auto mask = static_cast<bool *>(inputs[1]->addr);
-  auto updates = static_cast<T *>(inputs[2]->addr);
-  auto y = static_cast<T *>(outputs[0]->addr);
+  auto x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto mask = GetDeviceAddress<bool>(inputs, kIndex1);
+  auto updates = GetDeviceAddress<T>(inputs, kIndex2);
+  auto y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(mask);
+  MS_EXCEPTION_IF_NULL(updates);
+  MS_EXCEPTION_IF_NULL(y);
+
   uint64_t j = 0;
   if (!need_broadcast_) {
     for (uint64_t i = 0; i < x_numElements_; i++) {

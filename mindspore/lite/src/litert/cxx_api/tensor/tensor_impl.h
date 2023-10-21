@@ -49,8 +49,8 @@ class LiteTensorImpl : public MutableTensorImpl {
 #if defined(ENABLE_CLOUD_FUSION_INFERENCE) || defined(ENABLE_CLOUD_INFERENCE)
     if (GetDeviceData() != nullptr && own_data_) {
       MS_LOG(INFO) << "free device data in tensor impl.";
-      kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData());
-      SetDeviceData(nullptr);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(GetDeviceData(), GetDeviceId());
+      lite_tensor_->set_device_data(nullptr);
     }
 #endif
     if (!from_session_) {
@@ -143,7 +143,7 @@ class LiteTensorImpl : public MutableTensorImpl {
     void *device_data = GetDeviceData();
     if (device_data != nullptr && own_data_) {
       MS_LOG(INFO) << "free device data in tensor impl.";
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data, GetDeviceId());
     }
 #endif
     lite_tensor_->set_device(device);

@@ -110,7 +110,6 @@ Status ProjectOp::ComputeColMap() {
 }
 
 Status ProjectOp::GetNextRowPullMode(TensorRow *const row) {
-  RETURN_IF_NOT_OK(ComputeColMap());
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
   if (new_row.empty()) {

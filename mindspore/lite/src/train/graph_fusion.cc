@@ -23,8 +23,10 @@
 #include "src/train/optimizer/fusion/gru_fusion_pass.h"
 #include "src/train/optimizer/fusion/matmul_activation_fusion_pass.h"
 #include "src/train/optimizer/fusion/reshape_gather_reshape_fusion_pass.h"
+#include "src/train/optimizer/fusion/matmul_matmul_add_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
+#include "src/train/optimizer/fusion/matmul_add_fusion_pass.h"
 
 namespace mindspore {
 namespace lite {
@@ -51,8 +53,10 @@ STATUS GraphFusion::Run(schema::MetaGraphT *graph) {
   auto old_nodes = GetGraphNodes(*graph);
   Optimizer fusion_optimizer;
   fusion_optimizer.AddPass(new (std::nothrow) ReshapeGatherReshapeFusionPass());
+  fusion_optimizer.AddPass(new (std::nothrow) MatMulAddFusionPass());
   fusion_optimizer.AddPass(new (std::nothrow) MatMulBiasAddFusionPass());
   fusion_optimizer.AddPass(new (std::nothrow) MatMulActivationFusionPass());
+  fusion_optimizer.AddPass(new (std::nothrow) MatMulMatMulAddFusionPass());
   fusion_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
   fusion_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
   auto status = fusion_optimizer.Run(graph);

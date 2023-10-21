@@ -147,31 +147,25 @@ class AddToken(TextTensorOperation):
 
 class JiebaTokenizer(TextTensorOperation):
     """
-    Tokenize Chinese string into words based on dictionary.
+    Use Jieba tokenizer to tokenize Chinese strings.
 
     Note:
-        The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
+        The dictionary files used by Hidden Markov Model segment and Max Probability segment can be
+        obtained through the `cppjieba GitHub <https://github.com/yanyiwu/cppjieba/tree/master/dict>`_ .
+        Please ensure the validity and integrity of these files.
 
     Args:
-        hmm_path (str): Dictionary file is used by HMMSegment algorithm.
-            The dictionary can be obtained on the official website of cppjieba.
-        mp_path (str): Dictionary file is used by MPSegment algorithm.
-            The dictionary can be obtained on the official website of cppjieba.
-        mode (JiebaMode, optional): Valid values can be ``JiebaMode.MP``, ``JiebaMode.HMM``,
-            ``JiebaMode.MIX``. Default: ``JiebaMode.MIX``.
-
-            - ``JiebaMode.MP``, tokenize with MPSegment algorithm.
-
-            - ``JiebaMode.HMM``, tokenize with Hidden Markov Model Segment algorithm.
-
-            - ``JiebaMode.MIX``, tokenize with a mix of MPSegment and HMMSegment algorithm.
-
-        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
+        hmm_path (str): Path to the dictionary file used by Hidden Markov Model segment.
+        mp_path (str): Path to the dictionary file used by Max Probability segment.
+        mode (JiebaMode, optional): The desired segment algorithms. See :class:`~.text.JiebaMode`
+            for details on optional values. Default: ``JiebaMode.MIX`` .
+        with_offsets (bool, optional): Whether to output the start and end offsets of each
+            token in the original string. Default: ``False`` .
 
     Raises:
-        ValueError: If path of HMMSegment dict is not provided.
-        ValueError: If path of MPSegment dict is not provided.
-        TypeError: If `hmm_path` or `mp_path` is not of type string.
+        TypeError: If `hmm_path` is not of type str.
+        TypeError: If `mp_path` is not of type str.
+        TypeError: If `mode` is not of type :class:`~.text.JiebaMode` .
         TypeError: If `with_offsets` is not of type bool.
 
     Supported Platforms:
@@ -234,13 +228,13 @@ class JiebaTokenizer(TextTensorOperation):
     @check_jieba_add_word
     def add_word(self, word, freq=None):
         """
-        Add a user defined word to JiebaTokenizer's dictionary.
+        Add a specified word mapping to the Vocab of the tokenizer.
 
         Args:
-            word (str): The word to be added to the JiebaTokenizer instance.
-                The added word will not be written into the built-in dictionary on disk.
-            freq (int, optional): The frequency of the word to be added. The higher the frequency,
-                the better chance the word will be tokenized. Default: ``None``, use default frequency.
+            word (str): The word to be added to the Vocab.
+            freq (int, optional): The frequency of the word to be added. The higher the word frequency,
+                the greater the chance that the word will be tokenized. Default: ``None``, using the
+                default word frequency.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -270,22 +264,16 @@ class JiebaTokenizer(TextTensorOperation):
     @check_jieba_add_dict
     def add_dict(self, user_dict):
         """
-        Add a user defined word to JiebaTokenizer's dictionary.
+        Add the specified word mappings to the Vocab of the tokenizer.
 
         Args:
-            user_dict (Union[str, dict]): One of the two loading methods is file path(str) loading
-                (according to the Jieba dictionary format) and the other is Python dictionary(dict) loading,
-                Python Dict format: {word1:freq1, word2:freq2,...}.
-                Jieba dictionary format : word(required), freq(optional), such as:
-
-                .. code-block::
-
-                    word1 freq1
-                    word2 None
-                    word3 freq3
-
-                Only valid word-freq pairs in user provided file will be added into the dictionary.
-                Rows containing invalid input will be ignored. No error nor warning Status is returned.
+            user_dict (Union[str, dict[str, int]]): The word mappings to be added to the Vocab.
+                If the input type is str, it means the path of the file storing the word mappings to be added.
+                Each line of the file should contain two fields separated by a space, where the first field
+                indicates the word itself and the second field should be a number indicating the word frequency.
+                Invalid lines will be ignored and no error or warning will be returned.
+                If the input type is dict[str, int], it means the dictionary storing the word mappings to be added,
+                where the key name is the word itself and the key value is the word frequency.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -759,12 +747,12 @@ class Truncate(TextTensorOperation):
 
 class TruncateSequencePair(TextTensorOperation):
     """
-    Truncate a pair of rank-1 tensors such that the total length is less than max_length.
-
-    This operation takes two input tensors and returns two output Tensors.
+    Truncate a pair of 1-D string input so that their total length is less than the specified length.
 
     Args:
-        max_length (int): Maximum length required.
+        max_length (int): The maximum total length of the output strings. If it is no less than the
+            total length of the original pair of strings, no truncation is performed; otherwise, the
+            longer of the two input strings is truncated until its total length equals this value.
 
     Raises:
         TypeError: If `max_length` is not of type int.
@@ -806,10 +794,11 @@ class TruncateSequencePair(TextTensorOperation):
 
 class UnicodeCharTokenizer(TextTensorOperation):
     """
-    Tokenize a scalar tensor of UTF-8 string to Unicode characters.
+    Unpack the Unicode characters in the input strings.
 
     Args:
-        with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
+        with_offsets (bool, optional): Whether to output the start and end offsets of each
+            token in the original string. Default: ``False`` .
 
     Raises:
         TypeError: If `with_offsets` is not of type bool.
@@ -821,15 +810,16 @@ class UnicodeCharTokenizer(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
+        >>> text_file_list = ["/path/to/text_file_dataset_file"]
+        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=False)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+        >>>
         >>> # If with_offsets=True, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=True)
-        >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
 
@@ -859,7 +849,8 @@ class WordpieceTokenizer(TextTensorOperation):
         unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
                 unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
                 output. Default: ``'[UNK]'``.
-        with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
+        with_offsets (bool, optional): Whether to output the start and end offsets of each
+            token in the original string. Default: ``False`` .
 
     Raises:
         TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
@@ -937,25 +928,18 @@ if platform.system().lower() != 'windows':
                 text to lower case and strip accented characters. If False, will only perform normalization on the
                 text, with mode specified by `normalization_form` . Default: ``False``.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: ``False``.
-            normalization_form (NormalizeForm, optional):
-                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
-                is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
-                NormalizeForm.NFKD. Default: NormalizeForm.NONE.
-
-                - NormalizeForm.NONE, no normalization.
-                - NormalizeForm.NFC, Canonical Decomposition, followed by Canonical Composition.
-                - NormalizeForm.NFKC, Compatibility Decomposition, followed by Canonical Composition.
-                - NormalizeForm.NFD, Canonical Decomposition.
-                - NormalizeForm.NFKD, Compatibility Decomposition.
-
+            normalization_form (NormalizeForm, optional): The desired normalization form.
+                See :class:`~.text.NormalizeForm` for details on optional values.
+                Default: ``NormalizeForm.NFKC`` .
             preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
                 tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: ``True``.
-            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether to output the start and end offsets of each
+                token in the original string. Default: ``False`` .
 
         Raises:
             TypeError: If `lower_case` is not of type bool.
             TypeError: If `keep_whitespace` is not of type bool.
-            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm` .
+            TypeError: If `normalization_form` is not of type :class:`~.text.NormalizeForm` .
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
             RuntimeError: If dtype of input Tensor is not str.
@@ -1032,21 +1016,14 @@ if platform.system().lower() != 'windows':
                 text, with mode specified by `normalization_form` . Default: ``False``.
             keep_whitespace (bool, optional): If ``True``, the whitespace will be kept in the output.
                 Default: ``False``.
-            normalization_form (NormalizeForm, optional):
-                `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ , only valid when `lower_case`
-                is ``False``, can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``, ``NormalizeForm.NFKC``,
-                ``NormalizeForm.NFD`` or ``NormalizeForm.NFKD``. Default: ``NormalizeForm.NONE``.
-
-                - ``NormalizeForm.NONE``, no normalization.
-                - ``NormalizeForm.NFC``, Canonical Decomposition, followed by Canonical Composition.
-                - ``NormalizeForm.NFKC``, Compatibility Decomposition, followed by Canonical Composition.
-                - ``NormalizeForm.NFD``, Canonical Decomposition.
-                - ``NormalizeForm.NFKD``, Compatibility Decomposition.
-
+            normalization_form (NormalizeForm, optional): The desired normalization form.
+                See :class:`~.text.NormalizeForm` for details on optional values.
+                Default: ``NormalizeForm.NFKC`` .
             preserve_unused_token (bool, optional): Whether to preserve special tokens. If ``True``,
                 will not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'.
                 Default: ``True``.
-            with_offsets (bool, optional): Whether to return the offsets of tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether to output the start and end offsets of each
+                token in the original string. Default: ``False`` .
 
         Raises:
             TypeError: If `vocab` is not of type :class:`mindspore.dataset.text.Vocab` .
@@ -1056,7 +1033,7 @@ if platform.system().lower() != 'windows':
             TypeError: If `unknown_token` is not of type str.
             TypeError: If `lower_case` is not of type bool.
             TypeError: If `keep_whitespace` is not of type bool.
-            TypeError: If `normalization_form` is not of type :class:`mindspore.dataset.text.NormalizeForm` .
+            TypeError: If `normalization_form` is not of type :class:`~.text.NormalizeForm` .
             TypeError: If `preserve_unused_token` is not of type bool.
             TypeError: If `with_offsets` is not of type bool.
 
@@ -1183,25 +1160,18 @@ if platform.system().lower() != 'windows':
 
     class NormalizeUTF8(TextTensorOperation):
         """
-        Apply normalize operation on UTF-8 string tensor.
+        Normalize the input UTF-8 encoded strings.
 
         Note:
             NormalizeUTF8 is not supported on Windows platform yet.
 
         Args:
-            normalize_form (NormalizeForm, optional): Valid values can be ``NormalizeForm.NONE``, ``NormalizeForm.NFC``,
-                ``NormalizeForm.NFKC``, ``NormalizeForm.NFD``, ``NormalizeForm.NFKD`` any of the four unicode
-                normalized forms. Default: ``NormalizeForm.NFKC``.
-                See http://unicode.org/reports/tr15/ for details.
-
-                - ``NormalizeForm.NONE``, do nothing for input string tensor.
-                - ``NormalizeForm.NFC``, normalize with Normalization Form C.
-                - ``NormalizeForm.NFKC``, normalize with Normalization Form KC.
-                - ``NormalizeForm.NFD``, normalize with Normalization Form D.
-                - ``NormalizeForm.NFKD``, normalize with Normalization Form KD.
+            normalize_form (NormalizeForm, optional): The desired normalization form.
+                See :class:`~.text.NormalizeForm` for details on optional values.
+                Default: ``NormalizeForm.NFKC`` .
 
         Raises:
-            TypeError: If `normalize_form` is not of type NormalizeForm.
+            TypeError: If `normalize_form` is not of type :class:`~.text.NormalizeForm`.
 
         Supported Platforms:
             ``CPU``
@@ -1235,22 +1205,22 @@ if platform.system().lower() != 'windows':
 
     class RegexReplace(TextTensorOperation):
         """
-        Replace a part of UTF-8 string tensor with given text according to regular expressions.
-
-        See https://unicode-org.github.io/icu/userguide/strings/regexp.html for supported regex pattern.
+        Replace part of the input UTF-8 string with a difference text string using regular expressions.
 
         Note:
             RegexReplace is not supported on Windows platform yet.
 
         Args:
-            pattern (str): the regex expression patterns.
-            replace (str): the string to replace matched element.
-            replace_all (bool, optional): If ``False``, only replace first matched element;
-                if ``True``, replace all matched elements. Default: ``True``.
+            pattern (str): The regular expression, used to mean the specific, standard textual syntax for
+                representing patterns for matching text.
+            replace (str): The string used to replace the matched elements.
+            replace_all (bool, optional): Whether to replace all matched elements. If ``False``, only the
+                first matched element will be replaced; otherwise, all matched elements will be replaced.
+                Default: ``True``.
 
         Raises:
-            TypeError: If `pattern` is not of type string.
-            TypeError: If `replace` is not of type string.
+            TypeError: If `pattern` is not of type str.
+            TypeError: If `replace` is not of type str.
             TypeError: If `replace_all` is not of type bool.
 
         Supported Platforms:
@@ -1260,12 +1230,10 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
-            >>> pattern = 'Canada'
-            >>> replace = 'China'
-            >>> replace_op = text.RegexReplace(pattern, replace)
+            >>> regex_replace = text.RegexReplace('apple', 'orange')
             >>> text_file_list = ["/path/to/text_file_dataset_file"]
             >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-            >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
+            >>> text_file_dataset = text_file_dataset.map(operations=regex_replace)
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1298,7 +1266,8 @@ if platform.system().lower() != 'windows':
             keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
                 if it can be matched by 'keep_delim_pattern'. The default value is an empty str
                 which means that delimiters will not be kept as an output token. Default: ``''``.
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether to output the start and end offsets of each
+                token in the original string. Default: ``False`` .
 
         Raises:
             TypeError: If `delim_pattern` is not of type string.
@@ -1352,7 +1321,8 @@ if platform.system().lower() != 'windows':
 
         Args:
             keep_whitespace (bool, optional): Whether or not emit whitespace tokens. Default: ``False``.
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether to output the start and end offsets of each
+                token in the original string. Default: ``False`` .
 
         Raises:
             TypeError: If `keep_whitespace` is not of type bool.
@@ -1405,7 +1375,8 @@ if platform.system().lower() != 'windows':
             WhitespaceTokenizer is not supported on Windows platform yet.
 
         Args:
-            with_offsets (bool, optional): Whether or not output offsets of tokens. Default: ``False``.
+            with_offsets (bool, optional): Whether to output the start and end offsets of each
+                token in the original string. Default: ``False`` .
 
         Raises:
             TypeError: If `with_offsets` is not of type bool.

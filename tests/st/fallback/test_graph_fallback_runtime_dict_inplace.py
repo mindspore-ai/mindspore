@@ -16,8 +16,9 @@
 import pytest
 import numpy as np
 
-from mindspore import jit, jit_class, nn
 from mindspore import context
+from mindspore import Tensor
+from mindspore import jit, jit_class, nn, ops
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -36,6 +37,7 @@ def test_global_dict_used_in_graph():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         return global_dict_1
@@ -58,6 +60,7 @@ def test_global_dict_used_in_graph_2():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         return global_dict_2["1"]
@@ -80,6 +83,7 @@ def test_global_dict_used_in_graph_3():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo():
         return global_dict_3["1"]
@@ -102,6 +106,7 @@ def test_global_dict_as_graph_input():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input):
         return dict_input
@@ -124,6 +129,7 @@ def test_global_dict_as_graph_input_2():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input):
         return dict_input["1"]
@@ -146,6 +152,7 @@ def test_global_dict_as_graph_input_3():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input):
         return dict_input["1"]
@@ -215,6 +222,7 @@ def test_dict_inplace_setitem():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input):
         dict_input["a"] = 3
@@ -238,6 +246,7 @@ def test_dict_inplace_setitem_2():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input):
         dict_input["a"] = 3
@@ -258,6 +267,7 @@ def test_dict_inplace_setitem_3():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit
     def foo(dict_input, list_input):
         dict_input["b"] = list_input
@@ -282,6 +292,7 @@ def test_dict_inplace_setitem_with_attribute():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     class Net(nn.Cell):
         def __init__(self, x):
             super(Net, self).__init__()
@@ -311,6 +322,7 @@ def test_dict_inplace_setitem_with_attribute_2():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     @jit_class
     class AttrClass():
         def __init__(self, x):
@@ -346,6 +358,7 @@ def test_dict_inplace_setitem_with_attribute_3():
     Description: Dict after inplace operation should keep object not changed.
     Expectation: No exception.
     """
+
     class AttrClass():
         def __init__(self, x):
             self.attr = x
@@ -366,3 +379,91 @@ def test_dict_inplace_setitem_with_attribute_3():
     assert ret == {"1": 10, "2": 2}
     assert net.x.attr == {"1": 10, "2": 2}
     assert id(x) == id(ret)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_getitem_after_setitem():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.dict = {"Name": "b", "Age": 15}
+
+        def construct(self, y):
+            self.dict["Age"] = y
+            a = (self.dict["Age"] == y)
+            return self.dict, a
+
+    net = Net()
+    ret1, ret2 = net(Tensor([1]))
+    assert ret1 == {"Name": "b", "Age": Tensor([1])}
+    assert ret2
+
+
+global_dict_for_update = {'Name': 'a', 'Age': 7}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_getitem_after_setitem_2():
+    """
+    Feature: Enable dict inplace operation
+    Description: Dict after inplace operation should keep object not changed.
+    Expectation: No exception.
+    """
+    class DcitNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.dict = {'Name': 'b', 'Age': 15}
+
+        def construct(self, y, z):
+            self.dict['Age'] = y
+            if self.dict['Age'] == y:
+                global_dict_for_update.update({"Grade": 1})
+            z.update({"Grade": "college"})
+            return global_dict_for_update, self.dict, z
+
+    y = Tensor([16])
+    z = {'Name': 'c', 'Age': 18}
+    net = DcitNet()
+    ret1, ret2, ret3 = net(y, z)
+    assert ret1 == {'Name': 'a', 'Age': 7, 'Grade': 1}
+    assert ret2 == {'Name': 'b', 'Age': Tensor([16])}
+    assert ret3 == {'Name': 'c', 'Age': 18, 'Grade': 'college'}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dict_inplace_setitem_with_dict_getitem():
+    """
+    Feature: Enable dict inplace operation
+    Description: There is dict getitem after inplace operation.
+    Expectation: No exception.
+    """
+
+    class DictNet(nn.Cell):
+        def construct(self, x):
+            for key in x:
+                x[key] *= 2
+            return x[0] + x[1]
+
+    x = {0: Tensor([0]), 1: Tensor([1])}
+    ms_out = DictNet()(x)
+    ms_grad = ops.grad(DictNet())(x)
+
+    assert ms_out == Tensor([2])
+    assert ms_grad == ()

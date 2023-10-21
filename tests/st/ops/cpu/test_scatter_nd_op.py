@@ -20,6 +20,7 @@ import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
+from mindspore.common.api import _pynative_executor
 
 
 class Net(nn.Cell):
@@ -107,6 +108,23 @@ def scatternd_positive_uint(nptype):
     expect = np.array([[0., 12.],
                        [0., 1.]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
+
+
+def scatternd_indices_out_of_range(nptype):
+    context.set_context(device_target="CPU")
+    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 2]]).astype(np.int16)
+    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+    shape = (2, 2)
+    scatternd = Net(shape)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    with pytest.raises(RuntimeError):
+        _ = scatternd(Tensor(arr_indices), Tensor(arr_update))
+        _pynative_executor.sync()
 
 
 @pytest.mark.level0
@@ -234,6 +252,18 @@ def test_scatternd_uint16():
     Expectation: success
     """
     scatternd_positive_uint(np.uint16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_indices_out_of_range():
+    """
+    Feature: ScatterNd
+    Description: indices has invalid value.
+    Expectation: catch the raised error.
+    """
+    scatternd_indices_out_of_range(np.int16)
 
 
 @pytest.mark.level0

@@ -32,7 +32,7 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 constexpr size_t kGatherInputsNum = 3;
 constexpr size_t kGatherOutputsNum = 1;
-constexpr size_t kGatherInputParamsMaxDim = 7;
+constexpr size_t kGatherInputParamsMaxDim = 8;
 }  // namespace
 bool GatherCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {

@@ -21,6 +21,7 @@
 #include "transform/graph_ir/custom_op_proto/cust_elewise_calculation_ops.h"
 #include "ops/ascend_op_name.h"
 #include "ops/array_ops.h"
+#include "ops/arithmetic_ops.h"
 #include "ops/framework_ops.h"
 #include "ops/math_ops.h"
 #include "ops/nn_optimizer_ops.h"
@@ -47,6 +48,7 @@ REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))
+REG_ADPT_DESC(ScalarAdd, prim::kPrimScalarAdd->name(), ADPT_DESC(Add))
 
 // AddV2
 INPUT_MAP(AddV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
@@ -285,7 +287,6 @@ CUST_INPUT_MAP(ArgMax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dimension)}};
 CUST_ATTR_INPUT_MAP(ArgMax) = {{"axis", "dimension"}};
 CUST_ATTR_MAP(ArgMax) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(ArgMax) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
 
 // ArgMaxD
 INPUT_MAP(ArgMaxD) = {{1, INPUT_DESC(x)}};
@@ -300,6 +301,11 @@ ATTR_INPUT_MAP(ArgMaxV2) = {{"axis", "dimension"}};
 ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
+#ifdef BUILD_LITE
+REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxV2));
+#else
+REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
+#endif
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
@@ -406,6 +412,7 @@ INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 ATTR_MAP(Cast) = {{"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cast, prim::kPrimCast->name(), ADPT_DESC(Cast))
+REG_ADPT_DESC(ScalarCast, prim::kPrimScalarCast->name(), ADPT_DESC(Cast))
 
 // Reciprocal
 INPUT_MAP(Reciprocal) = {{1, INPUT_DESC(x)}};

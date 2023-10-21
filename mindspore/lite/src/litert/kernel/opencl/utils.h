@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
 
 void *StoreTensorData(lite::Tensor *tensor);
 
-void FreeStoredData(void **data);
+void FreeStoredData(void *data);
 
 std::vector<std::string> CreateBuildOptionsExtByDType(TypeId type_id);
 

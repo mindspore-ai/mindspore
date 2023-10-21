@@ -21,6 +21,7 @@
 #include <string>
 #include <algorithm>
 #include <utility>
+#include "securec/include/securec.h"
 #include "mindspore/core/ops/conv_pool_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
@@ -48,7 +49,10 @@ void SplitConstantData(char *in_data, char **out_data, int64_t num_split, int64_
     int out_stride = (end_indices[slice_idx] - start_indices[slice_idx]) * inner_stride * element_bytes;
     char *src_ptr = in_data + start_indices[slice_idx] * inner_stride * element_bytes;
     for (int64_t out_idx = 0; out_idx < outer_total_dim; out_idx++) {
-      (void)(memcpy(out_data[slice_idx] + out_idx * out_stride, src_ptr, out_stride));
+      if (memcpy_s(out_data[slice_idx] + out_idx * out_stride, out_stride, src_ptr, out_stride) != EOK) {
+        MS_LOG(ERROR) << "memcpy split data failed.";
+        return;
+      }
       src_ptr += input_stride;
     }
   }
@@ -339,7 +343,7 @@ AnfNodePtr DepthwiseConv2DInfo::CreateOutputsOfSplit(const CNodePtr &ori_node, s
                                                      size_t split_num, const std::vector<int64_t> &splits) {
   MS_ASSERT(orig_node != nullptr && split_outputs != nullptr);
   auto depth_wise_conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
-  MS_ASSERT(depth_wise_conv_prim != nullptr);
+  MS_CHECK_TRUE_RET(depth_wise_conv_prim != nullptr, nullptr);
   auto ori_node_name = ori_node->fullname_with_scope();
   auto graph_node_input_shapes = Spliter::GetInstance()->graph_node_input_shapes();
   auto input_shape_iter = graph_node_input_shapes.find(ori_node_name);
@@ -499,7 +503,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
   }
   name_ = input_op_name;
   auto depth_wise_conv_prim = ops::GetOperator<ops::Conv2DFusion>(cnode_->input(kAnfPrimitiveIndex));
-  MS_ASSERT(depth_wise_conv_prim != nullptr);
+  MS_CHECK_TRUE_RET(depth_wise_conv_prim != nullptr, RET_ERROR);
   return ConstructOutputCNodes(depth_wise_conv_prim, feature_split_outputs, kernel_split_outputs, bias_split_outputs);
 }
 

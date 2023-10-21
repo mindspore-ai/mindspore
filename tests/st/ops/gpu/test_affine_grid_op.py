@@ -31,7 +31,7 @@ class AffineGridNet(nn.Cell):
         return self.affine_grid(theta, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_affine_grid_corner_case():

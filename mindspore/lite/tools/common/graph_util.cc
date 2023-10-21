@@ -152,16 +152,24 @@ STATUS GetCNodeOrParameterShapeVec(const AnfNodePtr &anf_node, std::vector<int> 
   auto int64_t_to_int_func = [](int64_t x) -> int { return static_cast<int>(x); };
   std::vector<int64_t> in_shape;
   if (anf_node->isa<CNode>()) {
-    GetShapeVectorAndIdxFromCNode(anf_node->cast<CNodePtr>(), &in_shape);
+    auto status = GetShapeVectorAndIdxFromCNode(anf_node->cast<CNodePtr>(), &in_shape);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Get shape from CNode failed.";
+      return status;
+    }
   } else if (anf_node->isa<Parameter>()) {
     auto param_node = anf_node->cast<ParameterPtr>();
-    GetShapeVectorFromParameter(param_node, &in_shape);
+    auto status = GetShapeVectorFromParameter(param_node, &in_shape);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Get shape from Parameter failed.";
+      return status;
+    }
   } else {
     MS_LOG(ERROR) << "Node type is not recognized.";
     return RET_ERROR;
   }
   shape->resize(in_shape.size());
-  std::transform(in_shape.begin(), in_shape.end(), shape->begin(), int64_t_to_int_func);
+  (void)std::transform(in_shape.begin(), in_shape.end(), shape->begin(), int64_t_to_int_func);
   return RET_OK;
 }
 
@@ -702,8 +710,7 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
     MS_LOG(ERROR) << "malloc model_buf failed";
     return RET_ERROR;
   }
-  (void)memcpy(*model_buf, content, *size);
-  return RET_OK;
+  return memcpy_s(*model_buf, *size, content, *size);
 }
 
 int InitEncryptKey(const std::shared_ptr<ConverterPara> &param, unsigned char *encKey, size_t *keyLen) {

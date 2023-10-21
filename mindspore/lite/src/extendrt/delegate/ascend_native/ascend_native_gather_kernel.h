@@ -29,9 +29,10 @@ class AscendNativeGatherKernel : public AscendNativeBaseKernel {
   AscendNativeGatherKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
                            InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
       : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
-
+  int InferShape() override;
   int Prepare() override;
   int Run() override;
+  int ReSize() override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_

@@ -26,8 +26,8 @@ import inspect
 import importlib
 import hashlib
 import contextlib
+from collections import OrderedDict, namedtuple
 import warnings
-from collections import OrderedDict
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -85,6 +85,12 @@ def _convert_python_data(data):
     if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
         return PythonRowTensor(row_tensor=data)
     if isinstance(data, tuple):
+        # Handle namedtuple since its type is tuple.
+        if hasattr(data, "_fields"):
+            type_name = data.__class__.__name__
+            data_dict = data._asdict()
+            fields = data_dict.keys()
+            return namedtuple(type_name, fields)(**_convert_python_data(data_dict))
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
         # Keep list object not change for inplace operation.
@@ -185,8 +191,7 @@ def __get_compile_cache_dep_files(file_path, compile_cache_dep_files, pkg):
         if isinstance(node, ast.ImportFrom):
             if node.module is not None:
                 module_name = node.module
-            if node.level == 1:
-                module_name = "." + module_name
+            module_name = "." * node.level + module_name
         elif not isinstance(node, ast.Import):
             continue
         # Do not care the files in mindspore package
@@ -366,20 +371,13 @@ class _MindsporeFunctionExecutor:
                                f"pynative mode and remove 'jit' decorator.")
         # Chose dynamic shape tensors or actual input tensors as compile args.
         compile_args = self._generate_compile_args(args)
-        if isinstance(self.obj, ms.nn.Cell):
-            key_id = str(id(self.obj)) + str(self.obj.create_time)
-        else:
-            key_id = str(id(self.obj)) + str(self._create_time)
-
-        if _pynative_executor.grad_flag():
-            key_id = key_id + ".grad"
-
+        key_id = self._get_key_id()
         compile_args = get_auto_dynamic_shape_args_with_check_input_signature(compile_args, key_id,
                                                                               self.input_signature)
 
         # Restore the mutable attr for every arg.
         compile_args = _restore_mutable_attr(args, compile_args)
-        generate_name = self._get_generate_name()
+        generate_name, echo_function_name = self._get_generate_name()
         # The full Function name
         full_function_name = generate_name
         create_time = ''
@@ -419,19 +417,7 @@ class _MindsporeFunctionExecutor:
         if phase in ms_compile_cache:
             return phase
 
-        if full_function_name in function_phases:
-            warning_times = 1
-            if len(function_phases[full_function_name]) >= warning_times:
-                tips = "Try to decorate the function with @jit(hash_args=...) " \
-                       "or @jit(compile_once=True). " \
-                       "For more details, get instructions about `jit` at " \
-                       "https://www.mindspore.cn/search?inputValue=jit."
-
-                logger.warning(f"The function '{full_function_name}' has been compiled for "
-                               f"{len(function_phases[full_function_name])} times. "
-                               f"{tips} ")
-        else:
-            function_phases[full_function_name] = set()
+        self._check_recompile(full_function_name, create_time, echo_function_name)
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
@@ -443,9 +429,15 @@ class _MindsporeFunctionExecutor:
 
         if self.obj is None:
             # Set an attribute to fn as an identifier.
-            setattr(self.fn, "__jit_function__", True)
+            if isinstance(self.fn, types.MethodType):
+                setattr(self.fn.__func__, "__jit_function__", True)
+            else:
+                setattr(self.fn, "__jit_function__", True)
             is_compile = self._graph_executor.compile(self.fn, compile_args, kwargs, phase, True)
-            delattr(self.fn, "__jit_function__")
+            if isinstance(self.fn, types.MethodType):
+                delattr(self.fn.__func__, "__jit_function__")
+            else:
+                delattr(self.fn, "__jit_function__")
         else:
             if isinstance(self.obj, ms.nn.Cell):
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
@@ -455,13 +447,30 @@ class _MindsporeFunctionExecutor:
             raise RuntimeError("Executor compile failed.")
         ms_compile_cache.add(phase)
 
+        return phase
+
+    def _check_recompile(self, full_function_name, create_time, echo_function_name):
+        """Warning when the function has been compiled."""
         ignore_dirs = ["mindspore/ops", "mindspore/nn"]
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
-            return phase
+            return
+
+        if full_function_name in function_phases:
+            warning_times = 1
+            if len(function_phases[full_function_name]) >= warning_times \
+                    and create_time not in function_phases[full_function_name]:
+                tips = "Try to decorate the function with @jit(hash_args=...) " \
+                       "or @jit(compile_once=True) to reduce the compile time. " \
+                       "For more details, get instructions about `jit` at " \
+                       "https://www.mindspore.cn/search?inputValue=jit."
+
+                logger.warning(f"The {echo_function_name} has been compiled again. "
+                               f"{tips} ")
+        else:
+            function_phases[full_function_name] = set()
 
         function_phases[full_function_name].add(create_time)
-        logger.info(f"Compile the function '{full_function_name}' create time={create_time} ,key={key}")
-        return phase
+
 
     @staticmethod
     def _optimizer_state_init(opt_states):
@@ -474,15 +483,29 @@ class _MindsporeFunctionExecutor:
                 opt_param.init_data()
 
 
+    def _get_key_id(self):
+        """get key id."""
+        if isinstance(self.obj, ms.nn.Cell):
+            key_id = str(id(self.obj)) + str(self.obj.create_time)
+        else:
+            key_id = str(id(self.obj)) + str(self._create_time)
+
+        if _pynative_executor.grad_flag():
+            key_id = key_id + ".grad"
+        return key_id
+
+
     def _get_generate_name(self):
         """get generate name."""
-        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
-            str(self.fn.__code__.co_firstlineno)
+        generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + str(
+            self.fn.__code__.co_firstlineno)
+        echo_function_name = "function \"" + self.fn.__name__ + "\" at the file \"" + self.fn.__code__.co_filename \
+                             + "\", line " + str(self.fn.__code__.co_firstlineno)
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
         if _is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
-        return generate_name
+        return generate_name, echo_function_name
 
 
     def _set_compile_cache_dep_files(self):
@@ -595,7 +618,9 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
             will trigger recompilation. Default: ``None`` .
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
-        compile_once(bool): The function would be compiled only once with risk even if the free variables were changed.
+        compile_once(bool): ``True``: The function would be compiled once when it was created many times.
+            But it may be wrong if the free variables were changed. ``False`` : It would be recompiled when
+            it was created again
             Default: ``False`` .
 
     Returns:
@@ -640,7 +665,7 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         ...
         >>> out = tensor_add_with_sig(x, y)
         ...
-        ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
+        ... # Set hash_args as fn, otherwise cache of compiled closure_fn will not be reused.
         ... # While fn differs during calling again, recompilation will be triggered.
         >>> def func(x):
         ...     return ops.exp(x)
@@ -669,6 +694,9 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
     """
 
     def wrap_mindspore(func):
+        if not isinstance(compile_once, bool):
+            logger.warning(f"The parameter `compile_once` of jit should be a bool, "
+                           f"but got {type(compile_once)}.")
         if hash_args:
             hash_obj = _get_jit_hash(hash_args)
         elif compile_once:

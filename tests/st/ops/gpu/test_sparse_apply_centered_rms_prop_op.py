@@ -33,7 +33,7 @@ class SparseApplyCenteredRMSPropNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_apply_centered_rms_prop_graph_1():

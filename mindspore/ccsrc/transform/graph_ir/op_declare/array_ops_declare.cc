@@ -36,13 +36,19 @@ REG_ADPT_DESC(Constant, kNameConst, ADPT_DESC(Constant, Const))
 // ScalarSummary
 INPUT_MAP(Summary) = {{2, INPUT_DESC(x)}};
 ATTR_MAP(Summary) = EMPTY_ATTR_MAP;
-#ifndef ENABLE_SECURITY
-REG_ADPT_DESC(ScalarSummary, prim::kPrimScalarSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(ImageSummary, prim::kPrimImageSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(TensorSummary, prim::kPrimTensorSummary->name(), ADPT_DESC(Summary))
-REG_ADPT_DESC(HistogramSummary, prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary))
-#endif
 REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
+
+// OutfeedEnqueueOpV2
+#ifndef ENABLE_SECURITY
+DYN_INPUT_MAP(OutfeedEnqueueOpV2) = {{2, DYN_INPUT_DESC(x)}};
+INPUT_MAP(OutfeedEnqueueOpV2) = {{1, INPUT_DESC(tensor_name)}};
+ATTR_MAP(OutfeedEnqueueOpV2) = {{"channel_name", ATTR_DESC(channel_name, AnyTraits<std::string>())}};
+OUTPUT_MAP(OutfeedEnqueueOpV2) = EMPTY_OUTPUT_MAP;
+REG_ADPT_DESC(TensorSummary, "TensorSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(ScalarSummary, "ScalarSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(ImageSummary, "ImageSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+REG_ADPT_DESC(HistogramSummary, "HistogramSummary", ADPT_DESC(OutfeedEnqueueOpV2))
+#endif
 
 // Data
 INPUT_MAP(Data) = EMPTY_INPUT_MAP;
@@ -157,7 +163,6 @@ INPUT_MAP(Identity) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Identity) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Identity) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IdentityLoad, kNameLoad, ADPT_DESC(Identity))
-REG_ADPT_DESC(IdentityTupleGetItem, kNameTupleGetItem, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityListGetItem, kNameListGetItem, ADPT_DESC(Identity))
 REG_ADPT_DESC(IdentityIdentity, kNameIdentity, ADPT_DESC(Identity))
 
@@ -170,6 +175,8 @@ REG_ADPT_DESC(IdentityNMakeTuple, kNameMakeTuple, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNMakeList, kNameMakeList, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNDepend, kNameDepend, ADPT_DESC(IdentityN))
 REG_ADPT_DESC(IdentityNReturn, kNameReturn, ADPT_DESC(IdentityN))
+// TupleGetItem's output may be a tuple when input is a nested tuple
+REG_ADPT_DESC(IdentityNTupleGetItem, kNameTupleGetItem, ADPT_DESC(IdentityN))
 
 // SelectV2
 INPUT_MAP(SelectV2) = {{1, INPUT_DESC(condition)}, {2, INPUT_DESC(then)}, {3, INPUT_DESC(else)}};

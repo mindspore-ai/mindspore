@@ -49,7 +49,7 @@ class LogProb2(nn.Cell):
         return self.n.log_prob(x_, df, loc, scale)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_log_likelihood():

@@ -325,7 +325,8 @@ std::vector<opt::PassPtr> InitFusions(const std::shared_ptr<ConverterPara> &para
                                     std::make_shared<opt::TileMatMulFusion>()};
   if (param->optimize_transformer) {
     fusions.push_back(std::make_shared<opt::MultiHeadAttentionFusion>());
-    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>());
+    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>(true));
+    fusions.push_back(std::make_shared<opt::EncoderLayerFusion>(false));
     fusions.push_back(std::make_shared<opt::DecoderLayerFusion>());
   }
   return fusions;
@@ -551,8 +552,13 @@ int RunDecreaseTransposePass(const FuncGraphPtr &old_graph, const std::shared_pt
   auto decrease_trans_pm = std::make_shared<opt::LitePassManager>("decrease transpose fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(decrease_trans_pm);
-  decrease_trans_pm->AddPass(std::make_shared<opt::ReshapeTransposeFusion>());
-  decrease_trans_pm->AddPass(std::make_shared<opt::TransposeFusion>());
+  std::vector<opt::PassPtr> fusions = {std::make_shared<opt::ReshapeTransposeFusion>(),
+                                       std::make_shared<opt::TransposeFusion>()};
+  std::for_each(fusions.begin(), fusions.end(), [&decrease_trans_pm, &param](opt::PassPtr fusion) {
+    if (fusion != nullptr && param->fusion_blacklists.find(fusion->name()) == param->fusion_blacklists.end()) {
+      decrease_trans_pm->AddPass(fusion);
+    }
+  });
   optimizer->AddPassManager(decrease_trans_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run decrease transpose failed.";

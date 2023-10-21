@@ -53,6 +53,7 @@ from mindspore.profiler.parser.ascend_fpbp_generator import AscendFPBPGenerator
 from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
 from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
+from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
 from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -352,10 +353,15 @@ class Profiler:
             Default value: ``True`` .
         timeline_limit (int, optional): (Ascend/GPU) Set the maximum storage size of the timeline file (unit M).
             When using this parameter, `op_time` must be set to True. Default value: ``500`` .
-        profile_framework (str, optional): (Ascend/GPU) Whether to collect host memory and time, it must be one of
-            ["all", "time", "memory", None]. When is enabled, a subdirectory host_info will be generated in the
+        profile_framework (str, optional): (Ascend/GPU) The host information to collect, it must be one of
+            ["all", "time", "memory", None], When is not set to None, a subdirectory host_info will be generated in the
             specified profiler directory, which stores the collected memory and time files on the Host side.
             Default: "all".
+
+            - "all": Record both host timestamp and host memory usage.
+            - "time": Only record host timestamp.
+            - "memory": Only record host memory usage.
+            - None: Not record host information.
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
@@ -1190,6 +1196,24 @@ class Profiler:
         finally:
             pass
 
+    def _ascend_graph_cluster_analyse(self, source_path):
+        """Analyse step trace time info"""
+
+        try:
+            logger.info("Profiling: analyzing the step trace time profiler info.")
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+
+            step_trace_time_path = os.path.join(self._output_path, f'step_trace_time_{dev_id}.csv')
+            step_trace_time_path = validate_and_normalize_path(step_trace_time_path)
+
+            cluster_analyse = AscendClusterGenerator(os.path.join(source_path, 'timeline'))
+            cluster_analyse.parse()
+            cluster_analyse.write(step_trace_time_path)
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
     def _ascend_graph_hccl_analyse(self, source_path):
         """Analyse hccl profiler info."""
         if not self._profile_communication:
@@ -1259,6 +1283,7 @@ class Profiler:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
+            self._ascend_graph_cluster_analyse(source_path)
             self._ascend_graph_hccl_analyse(source_path)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
@@ -1383,29 +1408,37 @@ class Profiler:
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
-            input_file_path = os.path.join(self._output_path, f'step_trace_profiling_{self._dev_id}.txt')
-            input_file_path = validate_and_normalize_path(input_file_path)
-            parser = GpuStepTraceParser(input_dir=input_file_path,
-                                        output_file_path=step_trace_intermediate_file_path,
-                                        is_training_mode=is_training_mode_flag,
-                                        is_gpu_kernel_async_launch=is_gpu_kernel_async_launch_flag)
-            parser.parse_and_save()
-            point_info = parser.record_point_info(point_info_file_path)
-        else:
-            # whether keep the first step
-            skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
-            point_info = framework_parser.point_info
-            # recognize inference or training mode
-            is_training_mode_flag = framework_parser.check_op_name("Gradients")
-            # parser the step trace files and save the result to disk
-            source_path = validate_and_normalize_path(source_path)
-            parser = AscendStepTraceParser(input_dir=source_path,
-                                           output_file_path=step_trace_intermediate_file_path,
-                                           skip_first_step=skip_first_step_flag,
-                                           is_training_mode=is_training_mode_flag)
-            parser.set_task_id_op_name_dict(framework_parser.to_task_id_full_op_name_dict())
-            parser.parse_and_save()
-            point_info = parser.record_point_info(point_info_file_path)
+            if context.get_context("mode") != context.PYNATIVE_MODE:
+                input_file_path = os.path.join(self._output_path, f'step_trace_profiling_{self._dev_id}.txt')
+                input_file_path = validate_and_normalize_path(input_file_path)
+                parser = GpuStepTraceParser(input_dir=input_file_path,
+                                            output_file_path=step_trace_intermediate_file_path,
+                                            is_training_mode=is_training_mode_flag,
+                                            is_gpu_kernel_async_launch=is_gpu_kernel_async_launch_flag)
+                parser.parse_and_save()
+                point_info = parser.record_point_info(point_info_file_path)
+                # print parser result
+                parser.show()
+                logger.info("Finish saving the intermediate result: %s", step_trace_intermediate_file_path)
+                logger.info("The point info is: %s", point_info)
+
+                return point_info, is_training_mode_flag
+            return {}, is_training_mode_flag
+
+        # whether keep the first step
+        skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
+        # recognize inference or training mode
+        is_training_mode_flag = framework_parser.check_op_name("Gradients")
+        # parser the step trace files and save the result to disk
+        source_path = validate_and_normalize_path(source_path)
+        parser = AscendStepTraceParser(input_dir=source_path,
+                                       output_file_path=step_trace_intermediate_file_path,
+                                       skip_first_step=skip_first_step_flag,
+                                       is_training_mode=is_training_mode_flag)
+        parser.set_task_id_op_name_dict(framework_parser.to_task_id_full_op_name_dict())
+        parser.parse_and_save()
+        point_info = parser.record_point_info(point_info_file_path)
+
         # print parser result
         parser.show()
         logger.info("Finish saving the intermediate result: %s", step_trace_intermediate_file_path)
@@ -1446,6 +1479,9 @@ class Profiler:
             job_id = self._ascend_job_id.rstrip('/').split('/')[-1]
             if job_id.startswith('PROF'):
                 device_dir = [dir for dir in os.listdir(self._ascend_job_id) if dir.startswith('device')]
+                info_file_path = get_file_path(os.path.join(self._ascend_job_id, device_dir[0]), "info.json")
+                training_rank_id, _ = self._parse_info_json(info_file_path)
+                self._rank_id = training_rank_id
                 return os.path.join(job_id, device_dir[0])
             return job_id
 

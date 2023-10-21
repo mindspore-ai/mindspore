@@ -880,8 +880,14 @@ AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &ot
   auto this_sequence_nodes_size = (this->sequence_nodes() == nullptr ? 0 : this->sequence_nodes()->size());
   auto other_sequence_nodes_size =
     (other_sequence->sequence_nodes() == nullptr ? 0 : other_sequence->sequence_nodes()->size());
-  if (this_sequence_nodes_size == 0 || other_sequence_nodes_size == 0) {
+  // The tuple or list output which has sequence_nodes may be joined with a tuple output node like top_k,
+  // we should return the branch which has sequence_nodes.
+  if (this_sequence_nodes_size == 0 && other_sequence_nodes_size == 0) {
     return sequence_nodes;
+  } else if (this_sequence_nodes_size == 0) {
+    return *(other_sequence->sequence_nodes());
+  } else if (other_sequence_nodes_size == 0) {
+    return *(this->sequence_nodes());
   }
   // Collect this and other sequence nodes.
   if (this->sequence_nodes() != nullptr) {
@@ -1439,6 +1445,10 @@ bool AbstractList::operator==(const AbstractBase &other) const {
   if (!other.isa<AbstractList>()) {
     return false;
   }
+  auto other_extra_info = static_cast<const AbstractList &>(other).extra_info();
+  if (extra_info_->size() != 0 && other_extra_info->size() != 0 && extra_info_ != other_extra_info) {
+    return false;
+  }
   return AbstractSequence::operator==(static_cast<const AbstractSequence &>(other));
 }
 
@@ -1579,6 +1589,24 @@ AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(res);
   res->InsertSequenceNodes(SequenceNodesJoin(other));
   return res;
+}
+
+ValuePtr AbstractNamedTuple::RealBuildValue() const {
+  std::vector<ValuePtr> element_value_list;
+  for (const auto &element : elements_) {
+    MS_EXCEPTION_IF_NULL(element);
+    auto element_value = element->BuildValue();
+    MS_EXCEPTION_IF_NULL(element_value);
+    element_value_list.push_back(element_value);
+  }
+  std::vector<ValuePtr> key_value_list;
+  for (const auto &key : keys_) {
+    MS_EXCEPTION_IF_NULL(key);
+    auto key_value = key->BuildValue();
+    MS_EXCEPTION_IF_NULL(key_value);
+    key_value_list.push_back(key_value);
+  }
+  return std::make_shared<ValueNamedTuple>(type_name_, key_value_list, element_value_list);
 }
 
 TypePtr AbstractSlice::BuildType() const {

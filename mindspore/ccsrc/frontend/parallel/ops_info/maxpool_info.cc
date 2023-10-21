@@ -77,6 +77,10 @@ Status MaxPoolInfo::GetAttrs() {
 }
 
 Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
+  MS_EXCEPTION_IF_ZERO("h_strategy", h_strategy);
+  MS_EXCEPTION_IF_ZERO("w_strategy", w_strategy);
+  MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[2]);
+  MS_EXCEPTION_IF_ZERO("stride_[3]", stride_[3]);
   if (outputs_shape_[0][2] % h_strategy != 0) {
     FILTER_LOG(is_auto_parallel_)
       << name_

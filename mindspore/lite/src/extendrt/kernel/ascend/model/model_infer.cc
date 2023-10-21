@@ -127,6 +127,7 @@ bool ModelInfer::Finalize() {
     MS_LOG(ERROR) << "Reset device " << options_->device_id << " failed.";
   }
   MS_LOG(INFO) << "End to reset device " << options_->device_id;
+  acl_env_ = nullptr;
   init_flag_ = false;
   return true;
 }

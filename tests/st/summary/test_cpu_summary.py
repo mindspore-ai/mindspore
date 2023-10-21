@@ -60,7 +60,7 @@ def train_summary_record(test_writer, steps):
     return out_me_dict
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @security_off_wrap
@@ -83,7 +83,7 @@ def test_summary_step2_summary_record1():
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @security_off_wrap

@@ -50,6 +50,7 @@ constexpr size_t kMaxAttrMemListSize = 191;
 static std::mutex compile_mtx;
 
 static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   profiler::CollectHostInfo("Ascend", "Operator Compilation",
                             "CreateAscendKernel_SerialCompile_" + anf_node->fullname_with_scope(), 0, 0, 0);
   kernel::KernelModPtr kernel_mod_ptr = nullptr;
@@ -84,7 +85,6 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
       break;
     }
     default: {
-      MS_EXCEPTION_IF_NULL(anf_node);
       MS_LOG(EXCEPTION) << "node [" << anf_node->DebugString() << "] Unsupported kernel_type:" << kernel_type;
     }
   }

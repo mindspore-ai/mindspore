@@ -92,10 +92,27 @@ void OutputActor::FreeOutputNodeMem() {
     auto &output_device_tensor = output_device_tensors_[i];
     // The output_device_tensor may be repeated.
     if ((output_node == nullptr) || (output_device_tensor == nullptr) || (output_device_tensor->GetPtr() == nullptr)) {
-      return;
+      continue;
     }
     if (!IsOutputAddressPersisted(output_device_tensor, output_nodes_[i])) {
       FreeMemoryByDeviceContext(output_device_tensor, device_contexts_[i]);
+    }
+  }
+}
+
+void OutputActor::FreeSummaryNodeMem() {
+  for (size_t i = 0; i < summary_nodes_.size(); ++i) {
+    auto &summary_node = summary_nodes_[i].first;
+    auto index = summary_nodes_[i].second;
+    if (summary_node == nullptr) {
+      continue;
+    }
+    auto output_device_addr = AnfAlgo::GetMutableOutputAddr(summary_node, index, false);
+    if ((output_device_addr == nullptr) || (output_device_addr->GetPtr() == nullptr)) {
+      continue;
+    }
+    if (!IsOutputAddressPersisted(output_device_addr.get(), summary_nodes_[i])) {
+      FreeMemoryByDeviceContext(output_device_addr.get(), nullptr);
     }
   }
 }
@@ -161,6 +178,9 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
   // Maybe the output node is the dynamic shape, need free the output node address to alloc new address by the new shape
   // and size in the next step running.
   FreeOutputNodeMem();
+
+  // Free summary node input after usage.
+  FreeSummaryNodeMem();
 
   // Send control arrow to trigger next step running.
   auto from_aid = const_cast<AID *>(&GetAID());
@@ -230,7 +250,6 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   // Set tensor base shape for restoring the tuple output when output node is dynamic sequence.
   if (common::AnfAlgo::IsDynamicSequence(output_node)) {
     tensor->set_base_shape(output_node->Shape());
@@ -244,6 +263,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
   if (device_context->GetDeviceType() != device_tensor->GetDeviceType()) {
     auto old_device_context = device_context;
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(

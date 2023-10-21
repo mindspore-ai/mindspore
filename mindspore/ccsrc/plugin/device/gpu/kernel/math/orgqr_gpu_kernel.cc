@@ -31,6 +31,7 @@ namespace kernel {
 bool OrgqrGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Orgqr>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -192,10 +193,16 @@ bool OrgqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *input_x = GetDeviceAddress<T>(inputs, kIndex0);
   T *input_tau = GetDeviceAddress<T>(inputs, kIndex1);
   T *output_y = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(input_tau);
+  MS_EXCEPTION_IF_NULL(output_y);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
   T *d_input_x = GetDeviceAddress<T>(workspace, kIndex1);
   T *d_output_y = GetDeviceAddress<T>(workspace, kIndex2);
+  MS_EXCEPTION_IF_NULL(dev_info);
+  MS_EXCEPTION_IF_NULL(d_input_x);
+  MS_EXCEPTION_IF_NULL(d_output_y);
 
   TransposeInfo x_info;
   TransposeInfo y_info;

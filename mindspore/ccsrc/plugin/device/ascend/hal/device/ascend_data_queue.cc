@@ -20,12 +20,15 @@
 #include <utility>
 #include "graph/def_types.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+#include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
 #include "ops/structure_op_name.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
+#include "runtime/device/kernel_runtime.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace device {
@@ -142,8 +145,8 @@ bool IsClosed() {
 AscendDataQueueDynamic::AscendDataQueueDynamic(const std::string &channel_name, const size_t capacity)
     : DataQueue(channel_name, capacity), stream_(nullptr), node_info_(nullptr) {
   auto context_key = device_context_->device_context_key();
-  auto runtime_instance = dynamic_cast<ascend::AscendKernelRuntime *>(
-    device::KernelRuntimeManager::Instance().GetKernelRuntime(context_key.device_name_, context_key.device_id_));
+  auto runtime_instance =
+    device::KernelRuntimeManager::Instance().GetKernelRuntime(context_key.device_name_, context_key.device_id_);
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
   stream_ = runtime_instance->compute_stream();
 }

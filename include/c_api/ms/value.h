@@ -22,7 +22,6 @@
 #include "include/c_api/ms/base/macros.h"
 #include "include/c_api/ms/base/handle_types.h"
 #include "include/c_api/ms/base/types.h"
-#include "include/c_api/ms/base/status.h"
 #include "include/c_api/ms/context.h"
 
 #ifdef __cplusplus

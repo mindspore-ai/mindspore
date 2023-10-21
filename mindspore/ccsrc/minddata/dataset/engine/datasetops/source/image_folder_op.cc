@@ -104,6 +104,7 @@ Status ImageFolderOp::PrepareData() {
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   ImageLabelPair pair_ptr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(pair_ptr->second, &label));
@@ -207,6 +208,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
 // This helper function recursively walks all folder_paths, and send each foldername to folder_name_queue_
 // if mRecursive == false, don't go into folder of folders
 Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
+  RETURN_UNEXPECTED_IF_NULL(dir);
   std::shared_ptr<Path::DirIterator> dir_itr = Path::DirIterator::OpenDirectory(dir);
   RETURN_UNEXPECTED_IF_NULL(dir_itr);
   while (dir_itr->HasNext()) {
@@ -331,6 +333,7 @@ Status ImageFolderOp::ComputeColMap() {
 
 // Get number of classes
 Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
+  RETURN_UNEXPECTED_IF_NULL(num_classes);
   if (num_classes_ > 0) {
     *num_classes = num_classes_;
     return Status::OK();

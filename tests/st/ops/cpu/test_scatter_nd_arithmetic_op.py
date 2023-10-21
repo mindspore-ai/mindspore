@@ -22,7 +22,9 @@ from mindspore.ops.operations.array_ops import ScatterNdMul
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor, Parameter
+from mindspore.common.api import _pynative_executor
 from mindspore.ops.functional import vmap
+
 
 func_map = {
     "mul": ScatterNdMul,
@@ -183,6 +185,40 @@ def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
 
     compare_with_numpy(func, lock, input_x, indices, updates)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
+@pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_indices_out_of_range(lock, func, data_type, index_type):
+    """
+    Feature: ScatterNd* operators.
+    Description: test cases for ScatterNd* operator with invalid indices
+    Expectation: raise RuntimeError
+    """
+    input_x = Tensor(np.ones((4, 4, 4)), data_type)
+    indices = Tensor(np.array([[0], [4]]), index_type)
+    updates = Tensor(
+        np.array(
+            [
+                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+                [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+            ]
+        ),
+        data_type,
+    )
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    with pytest.raises(RuntimeError):
+        _ = TestScatterNdNet(func, lock, input_x, indices, updates)()
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    with pytest.raises(RuntimeError):
+        _ = TestScatterNdNet(func, lock, input_x, indices, updates)()
+        _pynative_executor.sync()
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu

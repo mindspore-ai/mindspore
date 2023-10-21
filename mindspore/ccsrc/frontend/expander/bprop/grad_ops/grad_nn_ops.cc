@@ -103,21 +103,6 @@ NodePtrList Conv2DTransposeBpropExpander(BpropIRBuilder *ib) {
   return {dx, dw, ib->OutZeros(f_sizes)};
 }
 
-NodePtrList CommonMaxMinGradBprop(BpropIRBuilder *ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto btmp = ib->TupleGetItem(out, 0);
-  auto btmp_type = ib->GetDtype(btmp);
-  auto out0 = ib->Cast(ib->NotEqual(btmp, ib->Tensor(0, btmp_type)), btmp_type);
-  auto btmp1 = ib->TupleGetItem(out, 1);
-  auto btmp1_type = ib->GetDtype(btmp1);
-  auto out1 = ib->Cast(ib->NotEqual(btmp1, ib->Tensor(0, btmp1_type)), btmp1_type);
-  auto dz = ib->Add(ib->Mul(out0, ib->TupleGetItem(dout, 0)), ib->Mul(out1, ib->TupleGetItem(dout, 1)));
-  return {ib->OutZeros(x), ib->OutZeros(y), dz};
-}
-
 class BiasAddGradShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
@@ -641,9 +626,11 @@ REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto gamma = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
-  auto result = ib->Emit(
-    "LayerNormGrad", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma},
-    {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")}, {"begin_params_axis", ib->GetAttr("begin_params_axis")}});
+  auto result =
+    ib->Emit("LayerNormGrad", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma},
+             {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")},
+              {"begin_params_axis", ib->GetAttr("begin_params_axis")},
+              {"epsilon", ib->GetAttr("epsilon")}});
   auto d_x = ib->TupleGetItem(result, 0);
   auto d_gamma = ib->TupleGetItem(result, 1);
   auto d_beta = ib->TupleGetItem(result, 2);
@@ -1940,9 +1927,6 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   }
 });
 
-REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
-REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
-
 REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto w = ib->GetInput(kIndex0);
   auto u = ib->GetInput(kIndex1);
@@ -1961,5 +1945,42 @@ REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto gv = ib->TupleGetItem(grad, kIndex3);
   return {gw, gu, gk, gv, ib->ZerosLike(sp), ib->ZerosLike(sq), ib->ZerosLike(sm)};
 });
+
+REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
+  auto query = ib->GetInput(kIndex0);
+  auto key = ib->GetInput(kIndex1);
+  auto value = ib->GetInput(kIndex2);
+  auto attn_mask = ib->GetInput(kIndex3);
+  auto drop_mask = ib->GetInput(kIndex4);
+  auto pse_shift = ib->GetInput(kIndex5);
+  auto padding_mask = ib->GetInput(kIndex6);
+  auto out = ib->GetInput(kIndex7);
+  auto attention_out = ib->TupleGetItem(out, kIndex0);
+  auto softmax_max = ib->TupleGetItem(out, kIndex1);
+  auto softmax_sum = ib->TupleGetItem(out, kIndex2);
+  auto softmax_out = ib->EmitValue(kNone);
+  auto dout = ib->GetInput(kIndex8);
+  auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
+  auto grad = ib->Emit("FlashAttentionScoreGrad",
+                       {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
+                        drop_mask, pse_shift, padding_mask, softmax_out},
+                       {
+                         {"head_num", ib->GetAttr("head_num")},
+                         {"keep_prob", ib->GetAttr("keep_prob")},
+                         {"scale_value", ib->GetAttr("scale_value")},
+                         {"pre_tokens", ib->GetAttr("pre_tokens")},
+                         {"next_tokens", ib->GetAttr("next_tokens")},
+                         {"inner_precise", ib->GetAttr("inner_precise")},
+                         {"input_layout", ib->GetAttr("input_layout")},
+                       });
+  auto g_query = ib->TupleGetItem(grad, kIndex0);
+  auto g_key = ib->TupleGetItem(grad, kIndex1);
+  auto g_value = ib->TupleGetItem(grad, kIndex2);
+  auto g_attn_mask = ib->ZerosLike(attn_mask);
+  auto g_drop_mask = ib->ZerosLike(drop_mask);
+  auto g_pse_shift = ib->ZerosLike(pse_shift);
+  auto g_padding_mask = ib->ZerosLike(padding_mask);
+  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask};
+}));
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

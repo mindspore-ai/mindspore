@@ -26,8 +26,6 @@
 #include <unordered_set>
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/context.h"
-#include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
-#include "plugin/device/ascend/hal/device/tasksink/rtmodel_zero_copy.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/session/session_basic.h"
 #ifndef ENABLE_SECURITY
@@ -37,30 +35,29 @@
 using std::unordered_map;
 using std::vector;
 namespace mindspore::device::ascend {
-using ge::model_runner::TaskInfo;
 class AscendKernelRuntime : public KernelRuntime {
  public:
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
+  virtual void InitCore() {}
   bool LoadData(const session::KernelGraph &graph) override;
-  bool GenTask(const session::KernelGraph &graph);
+  virtual bool LoadDataCore() { return true; }
   void GenKernelEvents(const session::KernelGraph &graph) override;
-  void GetLastNodesOnStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *stream_last_nodes) const;
-  void ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
-                            std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
-                            const std::vector<size_t> &last_stream_nodes);
+  virtual void GenKernelEventsCore(const session::KernelGraph &graph) {}
   bool RunDynamicKernelAsync(const session::KernelGraph &graph) override;
-  bool LoadTask(const session::KernelGraph &graph);
   bool RunTask(const session::KernelGraph &graph);
+  virtual bool RunTaskCore(const session::KernelGraph &graph) { return true; }
   bool Load(const session::KernelGraph &graph, bool is_task_sink) override;
+  virtual bool LoadCore(const session::KernelGraph &graph, bool is_task_sink) { return true; }
   bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
   void ClearGraphRuntimeResource(uint32_t graph_id) override;
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
   void SetContext() override;
-  void CreateContext() override;
+  void SetContextForce() override;
+  void ResetStreamAndCtx() override;
   const void *context() const override { return rt_context_; }
   DeviceAddressPtr GetInternalDeviceAddress(const session::KernelGraph &graph, const AnfNodePtr &node) override;
   void GetShadowBackendNodeMap(const session::KernelGraph &graph,
@@ -68,19 +65,22 @@ class AscendKernelRuntime : public KernelRuntime {
 #ifndef ENABLE_SECURITY
   void PreInit() override;
 #endif
-  uint64_t GetAvailableMemMaxSize() const override;
   DeviceType GetTargetDeviceType() const override { return DeviceType::kAscend; };
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
   std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }
   void *GetModelStream(uint32_t graph_id) const override;
+  virtual void *GetModelStreamCore(uint32_t graph_id) const { return nullptr; }
   void *GetKernelStream(const AnfNodePtr &kernel) const override;
   // add for MindRT
   void ReleaseDeviceRes() override;
   uint64_t GetMsUsedHbmSize() const;
   void SetReuseCommunicationAddress(const session::KernelGraph &graph);
   void SetRtDevice(uint32_t device_id);
+  virtual void UnloadModelCore(uint32_t graph_id = UINT32_MAX) {}
+  virtual void RegTaskFailCallback(const bool &is_release = false) {}
+  virtual bool CheckAndUnloadModelInAdvance(uint32_t model_id) { return true; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -90,45 +90,21 @@ class AscendKernelRuntime : public KernelRuntime {
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
+  inline static const session::KernelGraph *current_graph_ = nullptr;
 
  private:
   bool InitDevice();
   bool ResetDevice(uint32_t device_id);
   static bool NeedDestroyHccl();
   static bool DestroyHccl();
-  void SetCurrentContext();
-
   void ClearGraphModelMap();
-  bool GraphWithEmptyTaskList(const session::KernelGraph &graph) const;
-  bool CheckGraphIdValid(GraphId graph_id) const;
-#ifndef ENABLE_SECURITY
-  void DistributeDebugTask(const session::KernelGraph &graph, const NotNull<std::function<void *()>> &model_handle);
-  void LaunchDataDump(GraphId graph_id);
-#endif
-  static std::pair<CNodePtr, std::string> GetErrorNodeInfo(uint32_t streamid, uint32_t taskid);
-  static std::string GetDumpPath(const std::string &suffix);
-#ifndef ENABLE_SECURITY
-  static void PrintDebugInfoAndDumpFailNode(const session::KernelGraph &graph);
-  static void DumpDebugInfoFile(const session::KernelGraph &graph);
-#endif
-  static void TaskFailCallback(rtExceptionInfo *task_fail_info);
-  static bool DeleteDumpDir(const std::string &path);
-  static int DeleteDumpFile(std::string path);
-  static std::string GetRealPath(const std::string &path);
   void CreateDefaultStream();
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
-  unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
-  unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
-#ifndef ENABLE_SECURITY
-  unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
-#endif
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
-  static std::map<std::string, uint32_t> overflow_tasks_;
-  static std::vector<rtExceptionInfo> task_fail_infoes_;
   std::set<uint32_t> initialized_device_set_{};
-  tasksink::RtModelZeroCopy rt_model_zero_copy_;
+  AscendKernelRuntime *runtime_core_{nullptr};
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);

@@ -100,6 +100,8 @@ void CheckInputsShape(const ShapeVector &x_shape, const ShapeVector &lu_data_sha
 abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   const int64_t kDimNum = 2;
   std::ostringstream buffer;
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -171,10 +173,10 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
 }
 
 TypePtr LuSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
   const int64_t kDimNum = 2;
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  const int64_t input_num = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   std::map<std::string, TypePtr> type;
   (void)type.emplace("x", input_args[0]->BuildType());
   (void)type.emplace("lu_data", input_args[1]->BuildType());
@@ -192,9 +194,6 @@ TypePtr LuSolveInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 MIND_API_OPERATOR_IMPL(LuSolve, BaseOperator);
 AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = LuSolveInferType(primitive, input_args);
   auto infer_shape = LuSolveInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

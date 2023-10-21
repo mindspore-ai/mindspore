@@ -67,7 +67,7 @@ namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
 // the input is tuple or list
-static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK};
+static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN};
 const uint32_t MAX_BFS_DEPTH = 7;
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
@@ -477,8 +477,11 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
-  redistribution_oplist_ptr =
-    TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(redistribution_oplist_ptr);
+  if (redistribution_oplist_ptr == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
+  }
+  redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+    redistribution_oplist_ptr, tensor_redistribution.input_shape());
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
@@ -717,11 +720,10 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
     SetUserAttrs(origin_prim->attrs(), prim);
     auto origin_prim_attrs = origin_prim->attrs();
-    if (origin_prim_attrs.find(RECOMPUTE_COMM_OP) != origin_prim_attrs.end() &&
-        !GetValue<bool>(origin_prim_attrs[RECOMPUTE_COMM_OP]) &&
-        COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end()) {
+    if (origin_prim_attrs.find(RECOMPUTE_COMM_OP) != origin_prim_attrs.end()) {
+      auto do_recompute = GetValue<bool>(origin_prim_attrs[RECOMPUTE_COMM_OP]);
       MS_LOG(INFO) << "The redistribution node in reshape would not be recomputed.";
-      prim->set_attr("recompute", MakeValue(false));
+      prim->set_attr(RECOMPUTE, MakeValue(do_recompute));
     }
     if (index == replace_op.size() - 1) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
@@ -1408,6 +1410,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   if (!enable_opt_shard) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(parameter);
   if (ParameterIsCloned(parameter)) {
     return;
   }
@@ -1419,7 +1422,6 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   }
 
   // set all gather type
-  MS_EXCEPTION_IF_NULL(parameter);
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   std::string op_name = ALL_GATHER;
   if (root->has_flag(kTraining)) {
@@ -1436,9 +1438,9 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
 static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res,
                                     const FuncGraphPtr &root) {
   // check null for param and cnode
+  MS_EXCEPTION_IF_NULL(parameter);
   auto param_shape = parameter->Shape();
 
-  MS_EXCEPTION_IF_NULL(parameter);
   MS_EXCEPTION_IF_NULL(param_shape);
 
   CNodePtr cnode = res.first->cast<CNodePtr>();
@@ -1734,7 +1736,6 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       return layout_ptr;
     }
   }
-  MS_LOG(WARNING) << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
   return nullptr;
 }
 
@@ -1921,7 +1922,6 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool
     }
     return layout_ptr;
   }
-  MS_LOG(WARNING) << "FindPrevLayout return nullptr, if reshape is not the first primitive, there must be some error";
   return nullptr;
 }
 
@@ -1950,6 +1950,9 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     if (prev_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetInputLayout(*prev_layout_ptr);
+    } else {
+      MS_LOG(WARNING)
+        << "FindPrevLayout return nullptr, if reshape is not the first primitive, there must be some error";
     }
     auto attrs = prim->attrs();
     if (StrategyFound(attrs) && !is_input_param) {
@@ -1960,6 +1963,10 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
     auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
+    if (!next_layout_ptr) {
+      MS_LOG(WARNING)
+        << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
+    }
     if (next_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info_ptr->SetOutputLayout(*next_layout_ptr);
@@ -2164,7 +2171,6 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
       }
 
       OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      MS_EXCEPTION_IF_NULL(distribute_operator);
       // StepReplace
       MS_EXCEPTION_IF_NULL(distribute_operator);
       auto replace_op = distribute_operator->replace_op();

@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 
 #include "src/extendrt/session/single_op_session.h"
 #include "src/extendrt/infer_device_address.h"
@@ -53,6 +54,11 @@ Status SingleOpInferSession::AscendInit(const std::shared_ptr<Context> &context)
     if (device_info->GetDeviceType() == DeviceType::kAscend) {
       if (!kernel::AscendKernelPlugin::Register()) {
         MS_LOG(ERROR) << "Failed to register Ascend plugin";
+        return kLiteError;
+      }
+      bool is_registered = kernel::AscendAllocatorPlugin::GetInstance().Register();
+      if (!is_registered) {
+        MS_LOG(ERROR) << "AscendAllocatorPlugin failed to register, cannot do acl memory operations";
         return kLiteError;
       }
       auto ascend_device_info = device_info->Cast<mindspore::AscendDeviceInfo>();
@@ -238,11 +244,17 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
   for (size_t i = 0; i < input_tensors.size(); i++) {
     auto &tensor = input_tensors[i];
     auto &kernel_tensor = kernel_args_.inputs[i];
+    MS_CHECK_TRUE_RET(kernel_tensor != nullptr, kLiteNullptr);
     auto tensor_name = FuncGraphUtils::GetTensorName(tensor);
     auto data_type = static_cast<DataType>(kernel_tensor->GetDtype());
     auto shape = kernel_tensor->GetShapeVector();
-    inputs_.push_back(std::make_shared<TensorDefaultImpl>(tensor_name, data_type, shape));
+    // when input shape is NOT dynamic, the sizes are known and memory can be pre-alloced (thus set is_acl_host to true)
+    bool is_acl_host = IsDynamicShape(shape) ? false : true;
+    auto input = std::make_shared<TensorDefaultImpl>(tensor_name, data_type, shape, is_acl_host);
+    MS_CHECK_TRUE_RET(input != nullptr, kLiteNullptr);
+    inputs_.push_back(input);
     input_names_.push_back(FuncGraphUtils::GetTensorName(tensor));
+    malloced_data_size_.insert(std::make_pair(input, input->DataSize()));
   }
   for (size_t i = 0; i < output_tensors.size(); i++) {
     auto &tensor = output_tensors[i];
@@ -265,11 +277,11 @@ Status SingleOpInferSession::InitInputOutputInfos(const FuncGraphPtr &graph) {
 
 Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "SingleOpInferSession::CompileGraph";
-
+  MS_CHECK_TRUE_RET(graph != nullptr, kLiteNullptr);
   auto nodes = graph->TopoSort(graph->get_return());
   if (nodes.empty()) {
     MS_LOG(ERROR) << "There are no nodes in the graph";
-    return mindspore::kLiteNullptr;
+    return kLiteNullptr;
   }
   size_t cnode_count = 0;
   for (const auto &node : nodes) {
@@ -316,6 +328,7 @@ Status SingleOpInferSession::RunGraph(uint32_t graph_id, const std::vector<tenso
 void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *outputs) {
   for (size_t i = 0; i < kernel_args_.outputs.size(); ++i) {
     if (dyn_outshape_[i]) {
+      MS_CHECK_TRUE_RET_VOID(kernel_args_.outputs[i] != nullptr);
       ShapeVector shape = kernel_args_.outputs[i]->GetShapeVector();
       (*outputs)[i].set_shape(shape);
       kernel::AddressPtr host_addr = kernel_args_.outputs[i]->GetHostData();
@@ -327,8 +340,11 @@ void SingleOpInferSession::SetBackOutputIfDynamic(std::vector<tensor::Tensor> *o
       } else if (host_addr != nullptr) {
         TypeId out_type = kernel_args_.outputs[i]->GetDtype();
         auto elem_num = kernel_args_.outputs[i]->GetSizeInBytes() / abstract::TypeIdSize(out_type);
+        auto acl_mem_deleter = [](uint8_t *data_buf_ptr) {
+          kernel::AscendAllocatorPlugin::GetInstance().FreeHost(static_cast<void *>(data_buf_ptr));
+        };
         auto ref_tensor_data =
-          std::make_shared<TensorRefData>(host_addr->addr, elem_num, host_addr->size, shape.size());
+          std::make_shared<TensorRefData>(host_addr->addr, elem_num, host_addr->size, shape.size(), acl_mem_deleter);
         (*outputs)[i] = tensor::Tensor(out_type, shape, ref_tensor_data);
         MS_LOG(DEBUG) << "resetting kernel tensor shape to 0 for the next prediction";
         kernel_args_.outputs[i]->SetShapeVector({0});
@@ -346,6 +362,7 @@ Status SingleOpInferSession::InitInputOutputData(const std::vector<tensor::Tenso
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     auto &kernel_input = kernel_args_.inputs[i];
+    MS_CHECK_TRUE_RET(kernel_input != nullptr, kLiteError);
     if (input.Size() != kernel_input->GetSizeInBytes()) {
       MS_LOG(ERROR) << "Byte size of input " << i << " != the size expected, given size " << input.Size()
                     << ", expected size " << kernel_input->GetSizeInBytes()
@@ -450,8 +467,10 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
       MS_LOG(ERROR) << "New shape of input " << i << " cannot be dynamic, new shape: " << new_shape;
       return kLiteError;
     }
+    MS_CHECK_TRUE_RET(inputs_[i] != nullptr, kLiteError);
     if (inputs_[i]->Shape() != new_shapes[i]) {
       input_changed = true;
+      MS_CHECK_TRUE_RET(kernel_args_.inputs[i] != nullptr, kLiteError);
       kernel_args_.inputs[i]->SetShapeVector(new_shapes[i]);
     }
   }
@@ -466,7 +485,19 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
   }
   // shapes of inputs and outputs should be updated in CustomAscendKernelMod::Resize
   for (size_t i = 0; i < inputs_.size(); i++) {
-    inputs_[i]->SetShape(kernel_args_.inputs[i]->GetShapeVector());
+    auto input = inputs_[i];
+    MS_CHECK_TRUE_RET(input != nullptr, kLiteNullptr);
+    auto input_tensor = std::dynamic_pointer_cast<TensorDefaultImpl>(inputs_[i]);
+    MS_CHECK_TRUE_MSG(input_tensor != nullptr, kLiteNullptr, "cast to TensorDefaultImpl failed");
+    input_tensor->SetShape(kernel_args_.inputs[i]->GetShapeVector());
+    MS_CHECK_TRUE_RET(malloced_data_size_.find(input) != malloced_data_size_.end(), kLiteError);
+    if (input_tensor->DataSize() > malloced_data_size_.at(input)) {
+      auto data_size = input_tensor->DataSize();
+      void *data_buf = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(data_size);
+      MS_CHECK_TRUE_MSG(data_buf != nullptr, kLiteNullptr, "malloc on host failed");
+      input_tensor->SetAclHostData(data_buf);
+      malloced_data_size_[input] = data_size;
+    }
   }
   for (size_t i = 0; i < outputs_.size(); i++) {
     outputs_[i]->SetShape(kernel_args_.outputs[i]->GetShapeVector());

@@ -100,6 +100,11 @@ bool EnableBackendCompileCache(const FuncGraphPtr &func_graph, const device::Dev
   if (device_type != device::DeviceType::kAscend) {
     return false;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
+    return false;
+  }
   return true;
 }
 
@@ -486,7 +491,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   const auto &outputs = io_nodes.second;
-  if (common::GetEnv("MS_RUNTIME_COMPILE") != "1" && common::AnfAlgo::IsAnyTypeInput(io_nodes.first)) {
+  if (common::AnfAlgo::IsAnyTypeInput(io_nodes.first)) {
     return CompileAnyTypeInputGraph(kernel_graph, outputs, device_context);
   }
   kernel_graph->erase_flag(kFlagPyNativeRunInGraph);
@@ -508,7 +513,7 @@ GraphId GraphCompiler::CompileGraph(const KernelGraphPtr &kernel_graph,
   session_->SetInputNodeUsage(kernel_graph, manager);
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->backend_policy() == "ge" && device_context->GetDeviceType() == device::DeviceType::kAscend &&
-      !common::IsEnableRefMode()) {
+      !IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
     if (!device_context->graph_executor_->CompileGraph(kernel_graph, {})) {
       MS_LOG(EXCEPTION) << "Compile kernel_graph failed: " << kernel_graph->graph_id();
@@ -709,8 +714,6 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   if (CompileCacheEnable()) {
     CompileCacheContext::GetInstance().Clear();
   }
-  // Set summary nodes for all graphs.
-  session_->SetSummaryNodesForAllGraphs(root_graph.get(), all_graphs);
 
   // dump all graphs.
   // for ascend mindRT.
@@ -791,7 +794,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     }
 
 #ifndef ENABLE_SECURITY
-    session_->SetSummaryNodes(graph.get());
+    session_->RecurseSetSummaryNodesForAllGraphs(graph.get());
     // Update needed dump kernels for mindRT.
     DumpJsonParser::GetInstance().UpdateNeedDumpKernels(*graph.get());
 #endif

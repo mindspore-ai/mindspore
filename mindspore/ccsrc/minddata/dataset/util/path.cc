@@ -177,9 +177,6 @@ Status Path::CreateDirectory(bool is_common_dir) {
 #endif
 #else
     int rc = mkdir(common::SafeCStr(path_), S_IRUSR | S_IWUSR | S_IXUSR);
-    if (rc == 0 && is_common_dir) {
-      rc = chmod(common::SafeCStr(path_), S_IRWXU | S_IRWXG | S_IRWXO);
-    }
 #endif
     if (rc) {
       std::ostringstream oss;
@@ -305,7 +302,7 @@ Status Path::OpenFile(int *file_descriptor, bool create) {
     }
   }
   if (create) {
-    fd = open(canonical_path, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP);
+    fd = open(canonical_path, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
   } else {
     fd = open(canonical_path, O_RDWR);
   }

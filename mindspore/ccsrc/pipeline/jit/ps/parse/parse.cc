@@ -24,6 +24,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
+#include <regex>
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -785,6 +786,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   ScopeGuard scope_guard(scope);
   TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
   FunctionBlockPtr func_block = MakeFunctionBlock();
+  MS_EXCEPTION_IF_NULL(func_block);
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
   } else {
@@ -850,13 +852,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     if (sub_block != block && sub_block->is_return_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has return statement inside, propagate flag back to block: " << block->ToString();
-      block->SetReturnStatementInside();
+      block->set_is_return_statement_inside();
     }
     // Propagate flag of break or continue statement back;
     if (sub_block != block && sub_block->is_break_continue_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has break or continue statement inside, propagate flag back to block: " << block->ToString();
-      block->SetBreakContinueStatementInside();
+      block->set_break_continue_statement_inside();
     }
     sub_block = next_block;
 
@@ -878,10 +880,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
         // Skip statements after 'return' (or 'break', 'continue').
         break;
       }
-    } else {
-      if (sub_block->func_graph()->get_return() != nullptr && i != count - 1) {
-        sub_block->func_graph()->set_return(nullptr);
-      }
+    }
+    // If the current block has multi return statements,
+    // only parse the statements before first return statement.
+    // Statements after the continue and break statements are also not parsed.
+    if (ast_->GetNodeType(node)->node_name() == "Break" || ast_->GetNodeType(node)->node_name() == "Continue" ||
+        ast_->GetNodeType(node)->node_name() == "Return") {
+      break;
     }
   }
   return sub_block;
@@ -1127,7 +1132,7 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
   func_graph->set_return(return_cnode);
   MS_LOG(DEBUG) << "Inside the block has return statement, block: " << block->ToString();
-  block->SetReturnStatementInside();
+  block->set_is_return_statement_inside();
   return block;
 }
 
@@ -1191,7 +1196,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
 
   return new_node;
@@ -1570,6 +1575,7 @@ ValuePtr Parser::GetParameterValue(const AnfNodePtr &parameter) const {
 
 bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const {
   MS_EXCEPTION_IF_NULL(bool_res);
+  MS_EXCEPTION_IF_NULL(block);
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() != 1) {
     return false;
@@ -1729,7 +1735,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
           call_cnode = HandleInterpret(block, call_cnode, node);
         }
       }
-      auto new_expr_src = fallback::GeneratePyExecuteScriptForCallNode(call_cnode, name_id);
+      auto new_expr_src = fallback::GeneratePyInterpretScriptForCallNode(call_cnode, name_id);
       fallback::SetNodeExprSrc(call_cnode, new_expr_src);
       return call_cnode;
     } else if (syntax_support != SYNTAX_SUPPORTED) {
@@ -1879,8 +1885,11 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
     if (global_dict.contains(module_name)) {
       py::object module_obj = global_dict[py::str(module_name)];
       std::string module_str = py::cast<std::string>(py::str(module_obj));
+      // The module of Tensor imported from MsAdapter could be:
+      // module 'msadapter' or module 'msadapter.pytorch' and so on.
       if (module_str.find("module 'mindspore'") != std::string::npos ||
-          module_str.find("module 'msadapter'") != std::string::npos) {
+          module_str.find("module 'mindtorch") != std::string::npos ||
+          module_str.find("module 'msadapter") != std::string::npos) {
         std::string script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
         AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
         interpret_node->set_interpret(true);
@@ -2143,7 +2152,7 @@ AnfNodePtr Parser::ParseSingleCompare(const FunctionBlockPtr &block, const py::o
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2213,7 +2222,8 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
       false_block = MakeFunctionBlock();
     }
     MakeConditionBlocks(block, true_block, false_block);
-    FunctionBlockPtr b1, b2;
+    FunctionBlockPtr b1;
+    FunctionBlockPtr b2;
 
     // If it is and, we need to process the rest nodes;
     // If it is or, we continue to next
@@ -2355,7 +2365,7 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   auto slice_type = ast_->GetNodeType(slice_node);
   std::string slice_type_name = slice_type->node_name();
   bool is_slice = slice_type_name == "Slice";
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript(value_str, slice_str, is_slice);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2427,7 +2437,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   // Generate expression script for binary operation node.
   std::string operand_str = GetExprStr(operand_node, operand);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForUnary(operand_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForUnary(operand_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2524,7 +2534,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(target_node, target_object);
   std::string right_str = GetExprStr(value_node, value_object);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(augassign_app, new_expr_src);
   return block;
 }
@@ -2547,7 +2557,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
     MS_LOG(DEBUG)
       << "Inside the branch block has return statement, ignore for transformation to parallel-if call, branch block:"
       << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
     return;
   }
   if (branch_block->is_break_continue_statement_inside()) {
@@ -2557,7 +2567,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
                   << ", block: " << block->ToString();
     MS_LOG(DEBUG) << "Propagate flag of break or continue statement from branch block to block, branch block:"
                   << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetBreakContinueStatementInside();
+    block->set_break_continue_statement_inside();
   } else if (branch_end->func_graph()->get_return() != nullptr) {
     // Currently, this can only happen with raise statement inside. As try/expect is not supported now,
     // and contional for raise will be evaluated in Compile time. If raise condition is met, it will
@@ -2676,15 +2686,47 @@ bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::ob
   return true;
 }
 
+bool Parser::GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
+                                             bool *is_true_cond) const {
+  auto location = GetLocation(if_node);
+  MS_EXCEPTION_IF_NULL(location);
+  const auto &comments = location->comments();
+  if (comments.empty()) {
+    return false;
+  }
+  const auto &comment = comments.back();
+  MS_LOG(DEBUG) << "The comment of if statement: " << comment << ", block: " << block->ToString();
+  std::regex regex("^#\\s*@jit.cond:\\s*([A-Za-z]+)$");
+  std::smatch matched_results;
+  if (!std::regex_match(comment, matched_results, regex)) {
+    return false;
+  }
+  constexpr auto container_match_count = 2;
+  if (matched_results.size() != container_match_count) {
+    return false;
+  }
+  const auto &cond_str = matched_results[1].str();
+  MS_LOG(DEBUG) << "The cond string of comment is " << cond_str;
+  if (cond_str != "True" && cond_str != "False") {
+    return false;
+  }
+  *is_true_cond = (cond_str == "True");
+  return true;
+}
+
 // Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
-bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node,
-                                    bool *is_true_cond) const {
+bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond,
+                                    const py::object &if_node) const {
   static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
   if (boost_parse == "0") {
     return false;
   }
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(is_true_cond);
+  // Try to get the constant condition from the comment "@jit.cond: True/False".
+  if (if_node != py::none() && GetConstantConditionFromComment(block, if_node, is_true_cond)) {
+    return true;
+  }
   auto node_type = ast()->GetNodeType(test_node);
   const std::string &node_type_name = node_type->node_name();
   MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
@@ -2708,7 +2750,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   bool is_true_cond = false;
-  bool is_bool_const_cond = CheckConstantCondition(block, test_node, &is_true_cond);
+  bool is_bool_const_cond = CheckConstantCondition(block, test_node, &is_true_cond, node);
 
   // Make condition node.
   AnfNodePtr bool_node = nullptr;
@@ -2844,7 +2886,7 @@ void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBloc
   if (body_block->is_return_statement_inside()) {
     MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
                   << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
   }
 }
 
@@ -2988,14 +3030,21 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   return interpret_get_item;
 }
 
+void CloneInnerNodeLocation(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto debug_info = node->debug_info();
+  MS_EXCEPTION_IF_NULL(debug_info);
+  auto old_location = debug_info->location();
+  MS_EXCEPTION_IF_NULL(old_location);
+  LocationPtr new_location = std::make_shared<Location>(*old_location);
+  debug_info->set_location(new_location);
+}
+
 // Implement unroll for statement with tuple/getitem.
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
   MS_EXCEPTION_IF_NULL(block);
-
-  const py::function len_with_check = python_adapter::GetPyFn(kStandardMethodModelName, kMsLenWithCheck);
-  auto len_with_check_fg = ParsePythonCode(len_with_check);
-  auto op_len_with_check = NewValueNode(len_with_check_fg);
+  AnfNodePtr op_len_with_check = block->MakeResolveOperation(NAMED_PRIMITIVE_LEN);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
 
@@ -3021,6 +3070,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
+  auto less_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "less_right_str", "<");
+  CloneInnerNodeLocation(cond_node);
+  fallback::SetNodeExprSrc(cond_node, less_expr_src);
 
   // Generate the body of the for statement
   FunctionBlockPtr body_block = MakeFunctionBlock(std::make_shared<TraceForBody>(block->func_graph()->debug_info()));
@@ -3028,6 +3080,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func_graph);
   bool interpret_without_internal =
     IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
   CNodePtr target_var = nullptr;
@@ -3036,6 +3089,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   } else {
     CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
     target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
+    auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
+    CloneInnerNodeLocation(target_var);
+    fallback::SetNodeExprSrc(target_var, new_expr_src);
   }
   header_block->UpdateGlobalPyParam(block->global_py_params());
   body_block->UpdateGlobalPyParam(block->global_py_params());
@@ -3044,8 +3100,12 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   // Create 'i = i + 1'
   std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
-  CNodePtr loop_var_inc =
-    body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, NewValueNode(static_cast<int64_t>(1))});
+  auto add_one = NewValueNode(static_cast<int64_t>(1));
+  CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, add_one});
+  auto add_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "add_right_str", "+");
+  CloneInnerNodeLocation(loop_var_inc);
+  fallback::SetNodeExprSrc(loop_var_inc, add_expr_src);
+
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
 
   // Link the variable name with the target
@@ -3722,10 +3782,12 @@ bool Parser::HandleAssignClassParameterMember(const FunctionBlockPtr &block, con
       std::string var_name = "self." + attr_name;
       auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
       auto obj_type = obj.attr("__class__").attr("__name__");
-      MS_EXCEPTION(TypeError) << "'" << var_name
-                              << "' should be initialized as a 'Parameter' type in the '__init__' function, but got '"
+      MS_EXCEPTION(TypeError) << "In JIT strict mode, if need to modify a member attribute of a class with " << var_name
+                              << ", the member attribute must be of the Parameter type. But got '"
                               << py::str(obj).cast<std::string>() << "' with type '"
-                              << py::str(obj_type).cast<std::string>() << ".\n\n"
+                              << py::str(obj_type).cast<std::string>()
+                              << "'. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
+                              << "to enable the JIT lax mode to support the current syntax.\n\n"
                               << trace::GetDebugInfoStr(target_node->debug_info());
     }
     MS_LOG(DEBUG) << "Erase unused node: " << target_node->DebugString();
@@ -3780,9 +3842,13 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr target_node = nullptr;
   auto node_type = ast()->GetNodeType(target_obj);
   const std::string &node_type_name = node_type->node_name();
-  MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
+  MS_LOG(DEBUG) << "node_type_name: " << node_type_name << ", target: " << py::str(target);
   if (node_type_name == "Attribute") {
-    // Do setattr for nested getattr target, parse getattr firstly.
+    // Prepare for setattr with nested getattr target, parse getattr firstly.
+    target_node = ParseExprNode(block, target_obj);
+    target_id_str = GetLocation(target_obj)->expr_src();
+  } else if (node_type_name == "Call") {
+    // Prepare for setattr with nested 'getattr' call target, parse 'getattr' call firstly.
     target_node = ParseExprNode(block, target_obj);
     target_id_str = GetLocation(target_obj)->expr_src();
   } else if (node_type_name == "Name") {
@@ -3853,8 +3919,8 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
     }
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
-      auto obj_type = obj.attr("__class__").attr("__name__");
       if (!py::hasattr(obj, "__parameter__")) {
+        auto obj_type = obj.attr("__class__").attr("__name__");
         MS_EXCEPTION(TypeError) << "When JIT_SYNTAX_LEVEL is not set to LAX" << var_name
                                 << " should be initialized as a 'Parameter' in the '__init__' function"
                                 << " to perform assign subscript, but got: " << py::str(obj).cast<std::string>()
@@ -3981,6 +4047,47 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   return true;
 }
 
+size_t GetSubStrNum(const string &script_text, const string &sub) {
+  size_t count = 0;
+  size_t pos = script_text.find(sub);
+  while (pos != string::npos) {
+    count++;
+    pos = script_text.find(sub, pos + 1);
+  }
+  return count;
+}
+
+std::string UpdateString(const string &str) {
+  string temp = "";
+  std::string new_string = "";
+  for (size_t i = 0; i < str.length(); i++) {
+    if (str[i] != '\n') {
+      temp += str[i];
+    } else {
+      if (temp[temp.length() - 1] != '\\') {
+        temp += "+\\";
+      }
+      auto pos = temp.find_first_not_of(" ");
+      temp = temp.substr(pos) + '\n';
+      new_string += temp;
+      temp = "";
+    }
+  }
+  auto pos = temp.find_first_not_of(" ");
+  new_string += temp.substr(pos);
+  return new_string;
+}
+
+string ProcessIndentationInScript(const string &script_text) {
+  const size_t f_string_num = 2;
+  size_t num1 = GetSubStrNum(script_text, "f'");
+  size_t num2 = GetSubStrNum(script_text, "f\"");
+  if (script_text.find("\n") == string::npos || num1 + num2 < f_string_num) {
+    return script_text;
+  }
+  return UpdateString(script_text);
+}
+
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                      const string &script_text) {
   MS_EXCEPTION_IF_NULL(block);
@@ -3988,6 +4095,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   if (!CheckNeedConvertInterpret(block, value_node, script_text)) {
     return value_node;
   }
+  string new_script_text = ProcessIndentationInScript(script_text);
 
   // Prepare global parameters.
   PyObjectWrapperPtr interpreted_global_dict = std::make_shared<InterpretedObject>(block->global_py_params());
@@ -3997,7 +4105,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
   try {
-    const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(script_text));
+    const py::set &ids = data_converter::GetPythonScriptIdAttrs(py::str(new_script_text));
     for (const auto &id : ids) {
       const auto &id_str = py::str(id);
       const auto &iter = values.find(id_str);
@@ -4010,12 +4118,12 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
       }
     }
   } catch (const std::exception &e) {
-    MS_LOG(INTERNAL_EXCEPTION) << "GetPythonScriptIdAttrs failed, script: " << py::str(script_text) << ".\n"
+    MS_LOG(INTERNAL_EXCEPTION) << "GetPythonScriptIdAttrs failed, script: " << py::str(new_script_text) << ".\n"
                                << e.what();
   }
   constexpr auto self_text = "self";
-  if (keys.find(self_text) == keys.end() && script_text.find(self_text) != std::string::npos) {
-    py::object self_namespace = ast()->CallParseModFunction(PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL, ast()->obj());
+  if (keys.find(self_text) == keys.end() && new_script_text.find(self_text) != std::string::npos) {
+    py::object self_namespace = ast()->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast()->obj());
     auto self_value = std::make_shared<InterpretedObject>(self_namespace);
     (void)filter_keys.emplace_back(NewValueNode(MakeValue(self_text)));
     (void)filter_values.emplace_back(NewValueNode(self_value));
@@ -4025,8 +4133,8 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
-  MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
+  AnfNodePtr interpreted_node = block->MakeInterpret(new_script_text, global_dict_node, local_dict_node, value_node);
+  MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << new_script_text
                << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
                << ",\nglobal_dict_node: " << global_dict_node->ToString()
                << ",\nlocal_dict_node: " << local_dict_node->DebugString(recursive_level)
@@ -4081,25 +4189,21 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   // b = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {
-    if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_)) {
-      // self.list_x = [xx, xx]
-      // y = self.list_x.pop()
-      MS_LOG(DEBUG) << "The variables whose type is not parameter do not support pop operation.";
-    } else {
-      auto func_graph = block->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      auto new_list =
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
-      auto pop_node =
-        func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+    auto func_graph = block->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto new_list =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(0))});
+    auto pop_node =
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), value_node, NewValueNode(SizeToLong(1))});
+    if (!(ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberOfSelf(list_pop_target_obj_))) {
       WriteAssignVars(block, list_pop_target_obj_, new_list);
-      if (count != 1) {
-        MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
-      }
-      auto pop_obj = py::cast<py::list>(targets_object)[0];
-      WriteAssignVars(block, pop_obj, pop_node);
-      return block;
     }
+    if (count != 1) {
+      MS_LOG(EXCEPTION) << "The pop operate has wrong input.";
+    }
+    auto pop_obj = py::cast<py::list>(targets_object)[0];
+    WriteAssignVars(block, pop_obj, pop_node);
+    return block;
   }
   for (size_t i = 0; i < count; i++) {
     auto target_node = py::cast<py::list>(targets_object)[i];
@@ -4122,7 +4226,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
     TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock();
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has break statement, block: " << block->ToString();
 
   // Jump to the end_block.
@@ -4141,7 +4245,7 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
   if (loop.iterator != nullptr) {
     (void)args.emplace_back(loop.iterator);
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has continue statement, block: " << block->ToString();
 
   block->Jump(loop.header, args);
@@ -4213,6 +4317,7 @@ FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::ob
   bool_node = HandleCondInterpret(block, bool_node, test_node);
 
   TraceGuard guard(std::make_shared<TraceAssert>(block->func_graph()->debug_info()));
+  TraceGuard location_guard(GetLocation(node));
   FunctionBlockPtr true_block = MakeFunctionBlock();
   FunctionBlockPtr false_block = MakeFunctionBlock();
   FunctionBlockPtr after_block = MakeFunctionBlock();

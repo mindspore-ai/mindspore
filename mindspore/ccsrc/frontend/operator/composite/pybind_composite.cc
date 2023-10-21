@@ -39,9 +39,9 @@ void RegCompositeOpsGroup(const py::module *m) {
   // Reg GradOperation
   (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(*m, "GradOperation_")
     .def(py::init<std::string &>(), py::arg("fn"))
-    .def(py::init<std::string &, bool, bool, bool, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
+    .def(py::init<std::string &, bool, bool, bool, bool, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
          py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"), py::arg("has_aux"),
-         py::arg("get_value"), py::arg("return_ids"));
+         py::arg("get_value"), py::arg("return_ids"), py::arg("merge_forward"));
 
   // Reg VmapOperation
   (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(*m, "VmapOperation_")
@@ -163,6 +163,11 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg HandleEmptySlice
   (void)py::class_<HandleEmptySlice, MetaFuncGraph, std::shared_ptr<HandleEmptySlice>>(*m, "HandleEmptySlice_")
+    .def(py::init<std::string &>());
+
+  // Reg HandleScalarTensorIndex
+  (void)py::class_<HandleScalarTensorIndex, MetaFuncGraph, std::shared_ptr<HandleScalarTensorIndex>>(
+    *m, "HandleScalarTensorIndex_")
     .def(py::init<std::string &>());
 
   // Reg HandleBoolTensor

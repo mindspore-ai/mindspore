@@ -275,11 +275,22 @@ AnfNodePtr FunctionBlock::MakeResolveAstOpNameSpace(const py::tuple &namespace_v
   return MakeResolve(name_space, symbol);
 }
 
-// Resolve class member: method, member variable, or self.
-AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_or_self) {
+// Resolve class object self.
+AnfNodePtr FunctionBlock::MakeResolveClassObject() {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
+  py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
+  NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_OBJECT, namespace_var);
+  constexpr auto self_name = "self";
+  SymbolPtr symbol = std::make_shared<Symbol>(self_name);  // Must be 'self'.
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
+  return MakeResolve(name_space, symbol);
+}
 
+// Resolve class member: method, member variable.
+AnfNodePtr FunctionBlock::MakeResolveClassMember(const std::string &attr_or_self) {
+  auto ast = parser_.ast();
+  MS_EXCEPTION_IF_NULL(ast);
   py::object namespace_var = ast->CallParseModFunction(PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, ast->obj());
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
   SymbolPtr symbol = std::make_shared<Symbol>(attr_or_self);
@@ -364,13 +375,13 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
         return nullptr;
       }
       auto bits_str = var_name.substr(start);
-      auto resolve_node = MakeResolveClassMemberOrSelf(bits_str);
+      auto resolve_node = MakeResolveClassMember(bits_str);
       if (!HasGlobalPyParam(var_name)) {
         UpdateLocalPyParam(var_name, resolve_node);
       }
       return resolve_node;
     } else if (var_name.size() == self_name_len) {  // 'self'
-      auto resolve_node = MakeResolveClassMemberOrSelf(var_name);
+      auto resolve_node = MakeResolveClassObject();
       if (!HasGlobalPyParam(var_name)) {
         UpdateLocalPyParam(var_name, resolve_node);
       }
@@ -484,7 +495,7 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
                                         const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node) {
   MS_LOG(DEBUG) << "MakeInterpret for " << script_text;
   MS_EXCEPTION_IF_NULL(orig_node);
-  auto script = std::make_shared<Script>(script_text);
+  auto script = std::make_shared<parse::Script>(script_text);
   auto script_node = NewValueNode(script);
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
@@ -851,7 +862,7 @@ CNodePtr FunctionBlock::GetJumpNode(FunctionBlock *target_block) {
   return it->second;
 }
 
-void FunctionBlock::SetReturnStatementInside() { is_return_statement_inside_ = true; }
-void FunctionBlock::SetBreakContinueStatementInside() { is_break_continue_statement_inside_ = true; }
+void FunctionBlock::set_is_return_statement_inside() { is_return_statement_inside_ = true; }
+void FunctionBlock::set_break_continue_statement_inside() { is_break_continue_statement_inside_ = true; }
 }  // namespace parse
 }  // namespace mindspore

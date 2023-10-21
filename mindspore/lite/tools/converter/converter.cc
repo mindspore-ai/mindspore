@@ -779,8 +779,9 @@ int CheckInputFormat(const std::shared_ptr<ConverterPara> &param) {
 
 int CheckInputOutputDataType(const std::shared_ptr<ConverterPara> &param) {
   if (param != nullptr) {
-    std::set input_valid_values = {DataType::kNumberTypeFloat32, DataType::kNumberTypeInt8,  DataType::kNumberTypeUInt8,
-                                   DataType::kNumberTypeInt32,   DataType::kNumberTypeInt64, DataType::kTypeUnknown};
+    std::set input_valid_values = {
+      DataType::kNumberTypeFloat16, DataType::kNumberTypeFloat32, DataType::kNumberTypeInt8, DataType::kNumberTypeUInt8,
+      DataType::kNumberTypeInt32,   DataType::kNumberTypeInt64,   DataType::kTypeUnknown};
     if (std::find(input_valid_values.begin(), input_valid_values.end(), param->input_data_type) ==
         input_valid_values.end()) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: input_data_type is not in {kNumberTypeFloat32, kNumberTypeInt8, "
@@ -788,8 +789,8 @@ int CheckInputOutputDataType(const std::shared_ptr<ConverterPara> &param) {
       return RET_INPUT_PARAM_INVALID;
     }
 
-    std::set output_valid_values = {DataType::kNumberTypeFloat32, DataType::kNumberTypeInt8, DataType::kNumberTypeUInt8,
-                                    DataType::kTypeUnknown};
+    std::set output_valid_values = {DataType::kNumberTypeFloat16, DataType::kNumberTypeFloat32,
+                                    DataType::kNumberTypeInt8, DataType::kNumberTypeUInt8, DataType::kTypeUnknown};
     if (std::find(output_valid_values.begin(), output_valid_values.end(), param->output_data_type) ==
         output_valid_values.end()) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: output_data_type is not in {kNumberTypeFloat32, kNumberTypeInt8, "

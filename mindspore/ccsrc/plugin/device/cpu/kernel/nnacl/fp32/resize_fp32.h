@@ -65,6 +65,8 @@ float CalculateAlignCorners(int x_resized, int length_original, int length_resiz
 
 float CalculateHalfPixel(int x_resized, int length_original, int length_resized);
 
+int CheckCropAndResizeBoxIdx(int32_t *box_idx, int32_t num_boxes, int32_t batch);
+
 #ifdef __cplusplus
 }
 #endif

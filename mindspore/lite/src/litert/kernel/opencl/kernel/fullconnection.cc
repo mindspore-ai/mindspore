@@ -203,7 +203,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_weight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 
@@ -251,7 +251,7 @@ int FullConnectionOpenCLKernel::InitBias() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 #else
@@ -307,7 +307,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_weight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 
@@ -335,14 +335,14 @@ int FullConnectionOpenCLKernel::InitBias() {
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
-    CHECK_NULL_RETURN(src_data);
+    MS_ASSERT(src_data);
     memcpy(bias_, src_data, CO_ * dtype_size);
   }
   if (allocator->UnmapBuffer(bias_) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 #endif

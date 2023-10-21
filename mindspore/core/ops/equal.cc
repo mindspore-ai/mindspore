@@ -170,8 +170,9 @@ TypePtr EqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 0);
   auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
   (void)abstract::CheckDtypeSame(prim->name(), x, y);
-  const std::set<TypePtr> valid_types = {kInt8,    kInt16, kInt32, kInt64,     kFloat,      kFloat16, kUInt16,
-                                         kFloat64, kUInt8, kBool,  kComplex64, kComplex128, kUInt32};
+  const std::set<TypePtr> valid_types = {kInt8,    kInt16,     kInt32,      kInt64,   kUInt8,
+                                         kUInt16,  kUInt32,    kUInt64,     kFloat16, kFloat,
+                                         kFloat64, kComplex64, kComplex128, kBool,    kBFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[1]->BuildType(), valid_types, prim->name());
   return std::make_shared<TensorType>(kBool);

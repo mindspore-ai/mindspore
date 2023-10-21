@@ -72,7 +72,7 @@ def test_seq_tensor_setitem():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_seq_tensor_setitem1():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -133,7 +133,7 @@ def test_seq_setitem_grad_1():
     print("grad out1 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

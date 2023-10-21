@@ -332,7 +332,11 @@ inline TraceContext::TraceContext(const LocationPtr &loc) : location_(loc) {
   if (top != nullptr) {
     trace_info_ = top->trace_info();
   }
-  MS_LOG(DEBUG) << "location_: " << location_->DebugString();
+  if (location_ != nullptr) {
+    MS_LOG(DEBUG) << "location_: " << location_->DebugString();
+  } else {
+    MS_LOG(DEBUG) << "location_ is null";
+  }
 }
 
 inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(trace_info) {
@@ -345,7 +349,11 @@ inline TraceContext::TraceContext(const TraceInfoPtr &trace_info) : trace_info_(
       location_ = top->location();
     }
   }
-  MS_LOG(DEBUG) << "location_: " << location_->DebugString();
+  if (location_ != nullptr) {
+    MS_LOG(DEBUG) << "location_: " << location_->DebugString();
+  } else {
+    MS_LOG(DEBUG) << "location_ is null";
+  }
 }
 
 struct MS_CORE_API DebugInfoCompare {

@@ -99,6 +99,11 @@ int ComplexCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     }
   }
 
+  if (real_bcast_ != image_bcast_) {
+    MS_LOG(ERROR) << "the broadcast shape of real and image is different";
+    return KRET_RESIZE_FAILED;
+  }
+
   return KRET_OK;
 }
 

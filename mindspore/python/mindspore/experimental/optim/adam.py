@@ -20,7 +20,6 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.ops._primitive_cache import _get_cache_prim
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
 
@@ -174,7 +173,7 @@ class Adam(Optimizer):
 
             beta1_power = self.op_pow(beta1, self.state_step)
             beta2_power = self.op_pow(beta2, self.state_step)
-            adam_with_amsgrad_opt = _get_cache_prim(P.ApplyAdamWithAmsgrad)(beta1, beta2, eps, False)
+            adam_with_amsgrad_opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, False)
             params = self.parameters[start_id: end_id]
             grads = gradients[start_id: end_id]
             grads = grads if not maximize else -grads

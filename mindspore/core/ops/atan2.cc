@@ -57,6 +57,7 @@ TypePtr Atan2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
@@ -73,6 +74,7 @@ TypePtr Atan2InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
                             << ".";
   }
   auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   auto is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   if (is_gpu) {
@@ -90,7 +92,7 @@ AbstractBasePtr Atan2Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   auto base_type = Atan2InferType(primitive, input_args);
   auto base_shape = Atan2InferShape(primitive, input_args);
-  return abstract::MakeAbstract(base_shape, base_type);
+  return abstract::MakeAbstractTensor(base_shape, base_type);
 }
 
 // AG means auto generated

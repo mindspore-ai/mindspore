@@ -85,7 +85,8 @@ std::vector<int64_t> TileShape(const std::vector<int64_t> &multiples, const std:
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout);
+NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout,
+                const bool keep_dims = false);
 NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
                      const NodePtr &dout);
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);

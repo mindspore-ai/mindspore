@@ -161,7 +161,7 @@ def test_print_string(mode):
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -181,7 +181,7 @@ def test_print_dynamic_shape(mode):
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_print_op_tuple():
@@ -203,7 +203,7 @@ def test_print_op_tuple():
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -256,7 +256,7 @@ def test_print_abs():
     print("out:", out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_print_tensor():

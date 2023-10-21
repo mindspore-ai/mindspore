@@ -32,7 +32,7 @@ Status CVTensor::CreateEmpty(const TensorShape &shape, DataType type, CVTensorPt
   RETURN_UNEXPECTED_IF_NULL(out);
   const CVTensorAlloc *alloc = GlobalContext::Instance()->cv_tensor_allocator();
   *out = std::allocate_shared<CVTensor>(*alloc, shape, type);
-  RETURN_UNEXPECTED_IF_NULL(out);
+  RETURN_UNEXPECTED_IF_NULL(*out);
   int64_t byte_size = (*out)->SizeInBytes();
   // Don't allocate if we have a tensor with no elements.
   if (byte_size != 0) {

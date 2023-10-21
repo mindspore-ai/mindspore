@@ -212,6 +212,18 @@ FuncGraphPtr GetFuncGraphFromPartialAbstract(const abstract::AbstractBasePtr &ab
   return GetFuncGraphFromPartialAbstract(partial_closure->fn());
 }
 
+FuncGraphPtr GetFuncGraphFromFuncGraphAbstract(const abstract::AbstractBasePtr &abs) {
+  auto func_closure = dyn_cast<abstract::FuncGraphAbstractClosure>(abs);
+  if (func_closure == nullptr) {
+    return nullptr;
+  }
+  if (func_closure->func_graph() == nullptr) {
+    MS_LOG(DEBUG) << "FuncGraph closure's func graph is null, " << abs->ToString();
+    return nullptr;
+  }
+  return func_closure->func_graph();
+}
+
 // Gets first input as MultitypeFuncGraph from the given cnode,
 // return null if input[0] is not a MultitypeFuncGraph.
 prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
@@ -435,7 +447,9 @@ class SideEffectFinder {
       MS_LOG(DEBUG) << "branch_node: " << branch_node->DebugString(recursive_level)
                     << ", abstract: " << (branch_abs != nullptr ? branch_abs->ToString() : "null");
       auto branch_cnode = branch_node->cast_ptr<CNode>();
+      MS_EXCEPTION_IF_NULL(branch_cnode);
       branch_fg_node = branch_cnode->input(1);
+      MS_EXCEPTION_IF_NULL(branch_fg_node);
       MS_LOG(DEBUG) << "branch_fg_node: " << branch_fg_node->DebugString(recursive_level);
     }
     return GetValueNode<FuncGraphPtr>(branch_fg_node);
@@ -480,7 +494,6 @@ class SideEffectFinder {
   EffectInfo TracePartialCallEffectInfo(const CNodePtr &cnode, const EffectInfo &old_info) {
     const AnfNodePtr &func_node = cnode->input(0);
     MS_EXCEPTION_IF_NULL(func_node);
-    MS_EXCEPTION_IF_NULL(func_node->abstract());
     // Only handle for Parameter or Non-Partial CNode.
     if (!func_node->isa<Parameter>() && (!func_node->isa<CNode>() || IsPrimitiveCNode(func_node, prim::kPrimPartial))) {
       return old_info;
@@ -501,6 +514,7 @@ class SideEffectFinder {
 
     // Try to obtain the effect info of func graph.
     auto effect_info = ObtainEffectInfoForFuncGraph(partial_real_func);
+    MS_EXCEPTION_IF_NULL(func_node->abstract());
     MS_LOG(DEBUG) << "CNode or Parameter func: " << func_node->DebugString()
                   << ", partial_real_func: " << partial_real_func->ToString() << ", "
                   << func_node->abstract()->ToString() << ", cnode: " << cnode->DebugString()
@@ -551,6 +565,7 @@ class SideEffectFinder {
       const auto &caller = call.first;
       const auto &func_graph = call.second;
       const auto &effect_info = ObtainEffectInfoForFuncGraph(func_graph);
+      MS_EXCEPTION_IF_NULL(caller->abstract());
       MS_LOG(DEBUG) << "func_graph: " << func_graph->ToString() << ", caller: " << caller->DebugString() << ", "
                     << caller->abstract()->ToString() << ", effect_info: " << effect_info.memory << "/"
                     << effect_info.io << "/" << effect_info.load << "/" << effect_info.back_mem;
@@ -1077,6 +1092,20 @@ class SideEffectFinder {
       return TraceOutputEffectInfo(func_cnode);
     }
 
+    // %0 = ExtractKeywordArg("key", value) // Maybe func_graph which has side effect.
+    // %1 = %0(arg1, arg2)                  // Need add monad.
+    if (IsPrimitiveCNode(cnode, prim::kPrimExtractKeywordArg)) {
+      auto abs = cnode->abstract();
+      auto real_func = GetFuncGraphFromFuncGraphAbstract(abs);
+      if (real_func != nullptr) {
+        // Try to obtain the effect info of func graph.
+        auto effect_info = ObtainEffectInfoForFuncGraph(real_func);
+        MS_LOG(DEBUG) << "The real_func: " << real_func->ToString() << ", " << abs->ToString()
+                      << ", cnode: " << cnode->DebugString() << ", effect_info: " << effect_info.memory << "/"
+                      << effect_info.io << "/" << effect_info.load;
+        return effect_info;
+      }
+    }
     // Otherwise, assume no side effect and stop trace.
     MS_LOG(INFO) << "CNode side effect unknown: " << cnode->DebugString();
     return {EffectInfo::kDetected, false, false, false, false};

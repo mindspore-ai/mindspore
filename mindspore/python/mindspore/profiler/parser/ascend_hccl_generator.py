@@ -142,7 +142,8 @@ class AscendHCCLGenerator:
         file_list = find_files(self.root_path, "hccl_*.json")
 
         for hccl_file in file_list:
-            iteration_id = int(hccl_file.split('_')[-1].split(('.'))[0])
+            _, relative_path = os.path.split(hccl_file)
+            iteration_id = int(relative_path.split('_')[3])
             with open(hccl_file) as f:
                 _, hccl_detail_data = self._original_data_analyse(json.load(f))
                 raw = self._iteration_analyse(hccl_detail_data, iteration_id)

@@ -367,7 +367,8 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index, const OutHandler &
 }
 
 int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
-                            const std::shared_ptr<std::vector<OutHandler>> &handler_vec) {
+                            const std::shared_ptr<std::vector<OutHandler>> &handler_vec, bool use_create_byindex_func,
+                            size_t dyn_index) {
   MS_EXCEPTION_IF_NULL(handler_vec);
   if (IsCustomOp(op)) {
     MS_LOG(ERROR) << "Custom Op do not support dynamic input";
@@ -376,9 +377,8 @@ int OpAdapterImpl::setInput(const OperatorPtr &op, int index,
   MS_EXCEPTION_IF_NULL(op);
   auto it = dyn_input_map_.find(index);
   if (it != dyn_input_map_.end()) {
-    if (op->GetOpType() == "ConcatV2") {
-      auto concat = std::static_pointer_cast<::ge::op::ConcatV2>(op);
-      (void)concat->create_dynamic_input_byindex_x(static_cast<unsigned int>(handler_vec->size()), 0);
+    if (use_create_byindex_func) {
+      it->second.create_dyn_input_by_index(op, static_cast<unsigned int>(handler_vec->size()), dyn_index);
     } else {
       it->second.create_dyn_input(op, static_cast<unsigned int>(handler_vec->size()));
     }

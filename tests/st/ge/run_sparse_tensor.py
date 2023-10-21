@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 from tests.st.ge import ge_train_env  # pylint: disable=unused-import
 import mindspore.context as context
 from mindspore import Tensor, COOTensor, CSRTensor, nn, ops
-
-os.environ['MS_ENABLE_REF_MODE'] = '1'
 
 class GradOfAllInputs(nn.Cell):
     def __init__(self, net):

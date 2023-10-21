@@ -329,10 +329,6 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   // check result
   ocl_runtime->GetAllocator()->MapBuffer(output.data(), CL_MAP_READ, nullptr, true);
-  if (output.data() == nullptr) {
-    MS_LOG(ERROR) << "output data null.";
-    return;
-  }
   CompareOutput<float>(output.data(), expect_data, output.ElementsNum(), atol, rtol, print_data);
   ocl_runtime->GetAllocator()->UnmapBuffer(output.data());
 

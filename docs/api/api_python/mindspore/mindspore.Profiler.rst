@@ -30,7 +30,12 @@ mindspore.Profiler
 
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值： ``True`` 。
         - **timeline_limit** (int, 可选) -（Ascend/GPU）设置限制timeline文件存储上限大小（单位M），使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``500`` 。
-        - **profile_framework** (str, 可选) -（Ascend/GPU）是否需要收集Host侧的内存和时间，可选参数为["all", "time", "memory", None]。开启后，会在指定的profiler目录下生成子目录host_info，存放收集到的Host侧的内存和时间文件。默认值：``"all"``。
+        - **profile_framework** (str, 可选) -（Ascend/GPU）需要收集的host信息类别，可选参数为["all", "time", "memory", None]，如果设置值不为None，会在指定的profiler目录下生成子目录host_info，存放收集到的Host侧的内存和时间文件。默认值：``"all"``。
+
+          - "all": 记录host侧时间戳和内存占用情况。
+          - "time": 只记录host侧时间戳。
+          - "memory": 只记录host侧内存占用情况。
+          - None: 不记录host信息。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。

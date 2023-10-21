@@ -33,7 +33,7 @@ constexpr char kAdjustSaturationOperation[] = "AdjustSaturation";
 
 class AdjustSaturationOperation : public TensorOperation {
  public:
-  explicit AdjustSaturationOperation(float saturation_factor);
+  explicit AdjustSaturationOperation(float saturation_factor, const std::string &device_target = "CPU");
 
   ~AdjustSaturationOperation() override = default;
 
@@ -47,8 +47,11 @@ class AdjustSaturationOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float saturation_factor_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

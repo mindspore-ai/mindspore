@@ -276,6 +276,11 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     if (node_value->isa<Scalar>()) {
       return {};
     }
+    if (node_value->isa<StringImm>()) {
+      auto string_value = node_value->cast<StringImmPtr>();
+      MS_EXCEPTION_IF_NULL(string_value);
+      return {SizeToLong(string_value->ToString().size())};
+    }
     if (node_value->isa<ValueSequence>()) {
       MS_LOG(INFO) << "GetRuntimePaddingShape does not support the value sequence for value node:"
                    << node->fullname_with_scope() << ", debug name:" << node->DebugString();

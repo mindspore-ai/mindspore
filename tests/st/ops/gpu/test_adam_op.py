@@ -96,7 +96,7 @@ def test_adam():
     assert losses2[1] > losses2[2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lazy_adam():
@@ -164,7 +164,7 @@ class AdamNetVmap(nn.Cell):
         self.net = net
         self.var_np = np.random.randn(*shape).astype(np.float32)
         self.m_np = np.random.randn(*shape).astype(np.float32)
-        self.v_np = np.random.randn(*shape).astype(np.float32)
+        self.v_np = abs(np.random.randn(*shape).astype(np.float32))
         self.var = Parameter(Tensor(self.var_np), name="var")
         self.m = Parameter(Tensor(self.m_np), name="m")
         self.v = Parameter(Tensor(self.v_np), name="v")

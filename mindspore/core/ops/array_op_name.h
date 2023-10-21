@@ -28,6 +28,7 @@ constexpr auto kSegmentSumOpName = "SegmentSum";
 constexpr auto kSegmentMinOpName = "SegmentMin";
 constexpr auto kSegmentMeanOpName = "SegmentMean";
 constexpr auto kSegmentProdOpName = "SegmentProd";
+constexpr auto kShapeOpName = "Shape";
 constexpr auto kDynamicShapeOpName = "DynamicShape";
 constexpr auto kTensorShapeOpName = "TensorShape";
 constexpr auto kCheckNumericsOpName = "CheckNumerics";

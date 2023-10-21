@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 """ test MSAdapter. """
 
 import pytest
+import numpy as np
 import mindspore as ms
 from tests.st.ms_adapter import Tensor, Parameter
 from tests.st.ms_adapter._register.utils import convert_to_ms_tensor, convert_to_adapter_tensor
@@ -23,7 +24,7 @@ from tests.st.ms_adapter._register.utils import convert_to_ms_tensor, convert_to
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_attr():
@@ -40,7 +41,7 @@ def test_tensor_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_method():
@@ -57,7 +58,7 @@ def test_tensor_method():
     assert func(x) == 20
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_attr():
@@ -74,7 +75,7 @@ def test_parameter_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_method():
@@ -91,7 +92,7 @@ def test_parameter_method():
     assert func(x) == 20
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_convert_type():
@@ -141,7 +142,7 @@ def test_tensor_isinstance():
     assert out[0] and not out[1] and out[2]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_isinstance():
@@ -178,3 +179,50 @@ def test_tensor_create_instance():
 
     out = func()
     assert out == 1
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_adpater_tensor_size():
+    """
+    Feature: MSAdapter
+    Description: Test adapter tensor size
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x):
+        return x.size()
+
+    x = Tensor([1, 2, 3, 4])
+    out = func(x)
+    assert out == (4,)
+
+
+@pytest.mark.skip(reason='Not support yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_adpater_tensor_size_2():
+    """
+    Feature: MSAdapter
+    Description: Test adapter tensor size
+    Expectation: No exception
+    """
+    class Net():
+        def __init__(self, type_input):
+            super().__init__()
+            self.dtype = type_input
+
+        def new_tensor(self, np_input):
+            return ms.Tensor(np_input, dtype=self.dtype)
+
+    @ms.jit
+    def func():
+        net = Net(ms.float32)
+        data = np.array([1, 2, 3])
+        x = net.new_tensor(data)
+        adapter_tensor = convert_to_adapter_tensor(x)
+        return adapter_tensor.size()
+
+    out_size = func()
+    assert out_size == (3,)

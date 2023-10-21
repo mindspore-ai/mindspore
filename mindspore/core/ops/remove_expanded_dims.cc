@@ -121,10 +121,14 @@ AbstractBasePtr RemoveExpandedDimsInner(const PrimitivePtr &primitive, const std
   ShapeVector value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(value_abs->BuildShape())[kShape];
   ShapeVector data_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(data_abs->BuildShape())[kShape];
   if (IsDynamic(value_shape) || IsDynamic(data_shape) || !IsValueKnown(has_false_abs->BuildValue()) ||
-      !IsValueKnown(broadcast_shape_abs->BuildValue()) || !IsValueKnown(idx_advanced_abs->BuildValue())) {
+      !IsValueKnown(broadcast_shape_abs->BuildValue()) || idx_advanced_abs->isa<abstract::AbstractTensor>()) {
     auto abs_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64);
-    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(
-      abs_any, std::make_shared<abstract::Shape>(std::vector<int64_t>{SizeToLong(value_shape.size())}));
+    auto new_value_shape = std::vector<int64_t>{SizeToLong(value_shape.size())};
+    if (IsDynamicRank(value_shape)) {
+      new_value_shape = value_shape;
+    }
+    auto abs_tensor =
+      std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>(new_value_shape));
     auto scalar_abs_tensor = std::make_shared<abstract::AbstractTensor>(abs_any, std::make_shared<abstract::Shape>());
 
     AbstractBasePtrList abs_list{scalar_abs_tensor, abs_tensor, scalar_abs_tensor};

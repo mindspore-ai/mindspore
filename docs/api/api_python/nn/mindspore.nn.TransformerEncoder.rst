@@ -16,7 +16,7 @@ mindspore.nn.TransformerEncoder
         - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：：float16、float32、float64或者布尔。默认值：``None``。
 
     输出：
-        Tensor。
+        Tensor。Tensor的shape和dtype与 `src` 一致。
 
     异常：
         - **AssertionError** - 如果 `src_key_padding_mask` 不是布尔或浮点类型。

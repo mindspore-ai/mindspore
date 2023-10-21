@@ -126,8 +126,9 @@ std::string GetGroupCkptSavePath() {
   return GetGraphCacheDir() + "/" + kGroupCkptFileName;
 }
 
-std::string GetDataQueueNameCachePath() {
-  std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kDataQueueNameCacheFileName;
+std::string GetDataQueueNameCachePath(const std::string &data_queue_num) {
+  std::string queue_name_cache_path =
+    GetGraphCacheDir() + "/" + GetRole() + "_" + data_queue_num + kDataQueueNameCacheFileName;
   return queue_name_cache_path;
 }
 
@@ -175,6 +176,9 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
     MS_LOG(WARNING) << "Open the compilation cache file " << realpath.value() << " failed.";
     return std::make_pair(nullptr, layout_map);
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   MindIRLoader mindir_loader;
   mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
   mindir_loader.set_has_parallel_info(has_parallel_info);
@@ -184,10 +188,11 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   context.SetFrontNameToFrontNode(name_to_node);
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+  if (ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
+    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
+  }
 #if defined(__linux__) && defined(WITH_BACKEND)
   // compile cache does not support host collective or graph kernel.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (common::UseHostCollective() || ms_context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL)) {
     context.SetRestrictedScenarios(true);
   }
@@ -244,7 +249,10 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
 
 bool ExportDataQueueName(const std::string &dataset_phase, const string &queue_name) {
   MS_LOG(INFO) << "Export data queue name in dataset phase: " << dataset_phase;
-  const auto &filename = GetDataQueueNameCachePath();
+  auto &context = CompileCacheContext::GetInstance();
+  context.set_has_cached_queue_name(true);
+  const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
+  MS_LOG(INFO) << "Export data queue name in file " << filename;
   nlohmann::json name_json;
   if (!Common::FileExists(filename)) {
     name_json[dataset_phase] = queue_name;
@@ -304,16 +312,24 @@ std::string GetDataQueueName(const FuncGraphPtr &fg) {
 }
 }  // namespace
 
+size_t CompileCacheManager::data_queue_num_ = 0;
 std::string CompileCacheManager::GetCachedDataQueueName(const std::string &dataset_phase) {
   std::string queue_name;
   if (!CompileCacheEnable()) {
+    return queue_name;
+  }
+  data_queue_num_++;
+  // if queue name has cached, we should not get it again from cache file in the same process.
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.has_cached_queue_name()) {
     return queue_name;
   }
   auto &config_mng = ConfigManager::GetInstance();
   if (config_mng.dataset_phase().empty()) {
     config_mng.set_dataset_phase(dataset_phase);
   }
-  const auto &filename = GetDataQueueNameCachePath();
+  const auto &filename = GetDataQueueNameCachePath(std::to_string(CompileCacheManager::data_queue_num_));
+  MS_LOG(INFO) << "Get data queue name from file " << filename;
   std::ifstream json_fs(filename);
   if (!json_fs.good()) {
     return queue_name;

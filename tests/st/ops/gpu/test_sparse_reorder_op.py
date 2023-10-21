@@ -55,7 +55,7 @@ def test_sparse_reorder_int16():
     assert np.allclose(y_values, expect_y_values, ertol_loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_reorder_int32():

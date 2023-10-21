@@ -151,8 +151,8 @@ int ScaleInitScaleOffset(ScaleStruct *scale) {
     int malloc_size = GetElementNum(scale_tensor) * data_type_size;
     NNACL_CHECK_MALLOC_SIZE(malloc_size);
     scale->offset_ = scale->base_.env_->Alloc(scale->base_.env_->allocator_, malloc_size);
-    memset(scale->offset_, 0, malloc_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(scale->offset_);
+    memset(scale->offset_, 0, malloc_size);
   }
 
   if (scale->data_type_ == kNumberTypeFloat16) {

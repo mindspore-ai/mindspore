@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.op(x, size, offsets)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph1():
@@ -51,7 +51,7 @@ def test_net_graph1():
     np.testing.assert_almost_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_graph2():

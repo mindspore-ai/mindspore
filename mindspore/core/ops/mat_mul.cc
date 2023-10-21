@@ -160,9 +160,9 @@ class MatMulInfer : public abstract::OpInferBase {
     if (device_target == kCPUDevice) {
       valid_types = {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     } else if (device_target == kGPUDevice) {
-      valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+      valid_types = {kInt32, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     } else {
-      valid_types = {kUInt8, kInt32, kFloat16, kFloat32, kBFloat16};
+      valid_types = {kUInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
     }
     std::map<std::string, TypePtr> types;
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());

@@ -97,9 +97,8 @@ abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
 }
 TypePtr NoRepeatNGramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  const int64_t kInputsNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, prim->name());
   std::map<std::string, TypePtr> seq_types;
   (void)seq_types.emplace("seq_type", input_args[0]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(seq_types, {kInt32}, prim->name());
@@ -119,9 +118,6 @@ int64_t NoRepeatNGram::get_ngram() const { return GetValue<int64_t>(GetAttr(kNgr
 MIND_API_OPERATOR_IMPL(NoRepeatNGram, BaseOperator);
 AbstractBasePtr NoRepeatNGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto type = NoRepeatNGramInferType(primitive, input_args);
   auto shape = NoRepeatNGramInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

@@ -84,15 +84,15 @@ int GatherDPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nv
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<int *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    Gather<int, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_, dim_after_axis_,
-                     stream, device_id_);
+    GatherD<int, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_, dim_after_axis_,
+                      stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT) {
     auto input = static_cast<const float *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<float *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    Gather<float, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_, dim_after_axis_,
-                       stream, device_id_);
+    GatherD<float, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_,
+                        dim_after_axis_, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported data type gatherd" << layer_name_;
   }

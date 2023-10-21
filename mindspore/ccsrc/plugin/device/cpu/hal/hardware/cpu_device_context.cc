@@ -81,10 +81,8 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
   switch (task_type) {
     case pynative::KernelTaskType::kCONTIGUOUS_TASK:
       return std::make_shared<CpuContiguousKernelTask>(task_context);
-      break;
     case pynative::KernelTaskType::kCOPY_TASK:
       return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
-      break;
     default:
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
   }
@@ -207,6 +205,13 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_lazy_inline = ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
+  if (enable_lazy_inline) {
+    MS_LOG(EXCEPTION) << "CPU does not support the lazy_inline feature, "
+                      << "please do not mark @lazy_inline in cell's __init__ func.";
+  }
   if (kernel_graph->is_from_single_op()) {
     SetOperatorInfo(kernel_graph);
     SingleOpGraphOptimize(kernel_graph);
@@ -221,9 +226,7 @@ void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     // SetOperatorInfo may generate new node, so need set kernel object type again.
     kernel_graph->SetKernelObjectTypesForUnrealNodes();
 #ifdef ENABLE_DUMP_IR
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    if (context->CanDump(kIntroductory)) {
+    if (ms_context->CanDump(kIntroductory)) {
       DumpIR("hwopt_comm_after_kernel_select_" + graph->ToString() + ".ir", graph, true);
     }
 #endif
@@ -517,10 +520,6 @@ bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_t
                                                                     input_storage_list, output_addr_list, nullptr);
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
-
-  // TODO(wangchangheng): need PROFILER_END
-  // PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
-  // kernel->fullname_with_scope(), false);
 
   auto ret = task->RunWithRet();
   if (!ret) {

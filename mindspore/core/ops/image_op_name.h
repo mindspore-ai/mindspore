@@ -62,6 +62,11 @@ constexpr auto kResizeGradDOpName = "ResizeGradD";
 constexpr auto kRGBToHSVOpName = "RGBToHSV";
 constexpr auto kUpsampleNearest3DGradOpName = "UpsampleNearest3DGrad";
 constexpr auto kNonMaxSuppressionWithOverlapsOpName = "NonMaxSuppressionWithOverlaps";
+constexpr auto kOutfeedEnqueueOpV2 = "OutfeedEnqueueOpV2";
+constexpr auto kTensorSummary = "TensorSummary";
+constexpr auto kScalarSummary = "ScalarSummary";
+constexpr auto kImageSummary = "ImageSummary";
+constexpr auto kHistogramSummary = "HistogramSummary";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_IMAGE_OP_NAME_H_

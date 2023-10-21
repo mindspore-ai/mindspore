@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,6 +68,11 @@ def gen_data(x_np, y_np, grad_=None):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_4d():
+    """
+    Feature: test minimum grad on CPU
+    Description: test the minimumgrad with 4D input.
+    Expectation: no expected value.
+    """
     x_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     y_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
     grad_ = np.random.randn(1, 3, 2, 2).astype(np.float32)
@@ -76,10 +81,36 @@ def test_min_tensor_grad_4d():
     print(output[1].asnumpy())
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_min_tensor_grad_with_same_input():
+    """
+    Feature: test minimumgrad on CPU
+    Description: test the minimumgrad with same input.
+    Expectation: result match to expected result.
+    """
+    x_np = np.array([1.7, 9.6, 5.8]).astype(np.float32)
+    y_np = np.array([1.7, 9.6, 5.8]).astype(np.float32)
+    grad_ = np.array([1.0, -1.0, 0]).astype(np.float32)
+    output = gen_data(x_np, y_np, grad_)
+    print(output[0].asnumpy())
+    print(output[1].asnumpy())
+    expect0 = np.array([0.5, -0.5, 0.])
+    expect1 = np.array([0.5, -0.5, 0.])
+    assert np.allclose(output[0].asnumpy(), expect0, rtol=1e-6, atol=1e-4)
+    assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min_tensor_grad_result():
+    """
+    Feature: test minimumgrad on CPU
+    Description: test the precision of minimumgrad.
+    Expectation: result match to expected result.
+    """
     inputA = np.array([[[[0.659578], [0.49113268], [0.75909054], [0.71681815], [0.30421826]]],
                        [[[0.30322495], [0.02858258], [0.06398096], [0.09519596], [0.12498625]]],
                        [[[0.7347768], [0.166469], [0.328553], [0.54908437], [0.23673844]]]]).astype(np.float32)

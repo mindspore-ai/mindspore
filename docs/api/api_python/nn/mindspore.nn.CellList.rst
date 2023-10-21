@@ -5,7 +5,7 @@ mindspore.nn.CellList
 
     构造Cell列表。关于Cell的介绍，可参考 `Cell <https://www.mindspore.cn/docs/zh-CN/master/api_python/nn/mindspore.nn.Cell.html#mindspore.nn.Cell>`_。
 
-    CellList可以像普通Python列表一样使用，其包含的Cell均已初始化。
+    CellList可以像普通Python列表一样使用，其包含的Cell均已初始化，其包含的Cell的类型不能为CellDict。
 
     参数：
         - **args** (list，可选) - Cell列表。
@@ -22,7 +22,7 @@ mindspore.nn.CellList
         将cells中的Cell添加到列表末尾。
 
         参数：
-            - **cells** (list) - 要添加的Cell列表。
+            - **cells** (list) - 要添加的Cell列表，Cell的类型不能为CellDict。
 
         异常：
             - **TypeError** - cells中的元素不是Cell。

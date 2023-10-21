@@ -17,26 +17,13 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include <utility>
 #include <map>
-#include <set>
-#include <algorithm>
 #include "mindspore/core/ops/ascend_op_name.h"
-#include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
-#include "runtime/device/ms_device_shape_transfer.h"
 #include "include/backend/optimizer/helper.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/kernel_info.h"
-#include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
-#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
@@ -292,128 +279,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   return make_tuple;
 }
 
-void ConvertAttrToInput(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *infos) {
-  auto graph = kernel_node->func_graph();
-  MS_EXCEPTION_IF_NULL(graph);
-  auto kernel_graph = graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-
-  std::ostringstream buf;
-  for (auto &info : *infos) {
-    buf << " (" << info.first << ", " << info.second << ")";
-  }
-  MS_LOG(DEBUG) << "Start converting attr to input for aicpu op[" << AnfUtils::GetCNodeName(kernel_node)
-                << "] with attr_name and input_index pairs:" << buf.str();
-
-  std::sort(infos->begin(), infos->end(),
-            [](const std::pair<string, size_t> &a, const std::pair<string, size_t> &b) { return a.second < b.second; });
-  auto orig_inputs = kernel_node->inputs();
-  size_t orig_input_num = orig_inputs.size() - 1;
-  size_t new_input_num = orig_input_num + infos->size();
-  size_t orig_tmp_idx = 0;
-  size_t attr_tmp_idx = 0;
-  std::vector<AnfNodePtr> new_inputs = {orig_inputs[0]};
-  for (size_t idx = 0; idx < new_input_num; ++idx) {
-    if (attr_tmp_idx < infos->size() && idx == infos->at(attr_tmp_idx).second) {
-      auto attr_name = infos->at(attr_tmp_idx).first;
-      auto value = primitive->GetAttr(attr_name);
-      if (value == nullptr) {
-        MS_LOG(DEBUG) << "Can not get attr[" << attr_name << "].";
-        return;
-      }
-      tensor::TensorPtr tensor_ptr = nullptr;
-      if (value->isa<tensor::Tensor>()) {
-        tensor_ptr = value->cast<tensor::TensorPtr>();
-      } else if (value->isa<Scalar>()) {
-        tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-      } else if (value->isa<ValueTuple>()) {
-        tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-      } else {
-        MS_LOG(DEBUG) << "The value of attr[" << attr_name << "] should be a tensor or scalar or value tuple.";
-        return;
-      }
-      if (tensor_ptr == nullptr) {
-        MS_LOG(DEBUG) << "Convert attr[" << attr_name << "] to tensor value failed.";
-        return;
-      }
-      auto value_node = kernel_graph->NewValueNode(tensor_ptr);
-      MS_EXCEPTION_IF_NULL(value_node);
-      new_inputs.push_back(value_node);
-      ++attr_tmp_idx;
-    } else if (orig_tmp_idx < orig_input_num) {
-      new_inputs.push_back(orig_inputs[orig_tmp_idx + 1]);
-      ++orig_tmp_idx;
-    }
-  }
-  kernel_node->set_inputs(new_inputs);
-}
-
-bool ConvertConstInputToAttr(const CNodePtr &cnode, const std::map<size_t, std::string> &input_to_attr_info) {
-  AnfNodePtrList new_inputs;
-  auto primitive = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto inputs = cnode->inputs();
-  new_inputs.push_back(inputs[0]);
-  for (size_t i = 0; i < inputs.size() - 1; ++i) {
-    auto input_node = inputs[i + 1];
-    MS_EXCEPTION_IF_NULL(input_node);
-    auto iter = input_to_attr_info.find(i);
-    if (iter != input_to_attr_info.end() && input_node->isa<ValueNode>()) {
-      auto value_node = input_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto value = value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        auto tensor = value->cast<tensor::TensorPtr>();
-        if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
-          MS_LOG(DEBUG) << "Const input data ptr is null from op " << cnode->fullname_with_scope() << "'s input " << i;
-          return false;
-        }
-        value = CreateValueFromTensor(tensor);
-        value = opt::UpdateValueByAttrDataType(value, iter->second);
-        MS_LOG(DEBUG) << "new attr value:" << value_node->ToString() << ", Type:" << value_node->type_name();
-      }
-
-      std::string attr_name = opt::GetInputName(cnode, i);
-      if (attr_name.empty()) {
-        return false;
-      }
-
-      if (cnode->HasAttr(attr_name)) {
-        auto origin_primitive = GetCNodePrimitive(cnode);
-        MS_EXCEPTION_IF_NULL(origin_primitive);
-        MS_LOG(ERROR) << "Origin op already has this attr " << attr_name
-                      << ". op attrs:" << origin_primitive->GetAttrsText() << ". DebugString:" << cnode->DebugString();
-        return false;
-      }
-
-      primitive->set_attr(attr_name, value);
-    } else {
-      new_inputs.push_back(inputs[i + 1]);
-    }
-  }
-  if (new_inputs.size() != inputs.size()) {
-    cnode->set_inputs(new_inputs);
-  }
-  return true;
-}
 }  // namespace
-
-void ConvertAttrAndInputBeforeAicpuKernelSelect(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<std::pair<string, size_t>> attr_to_input_infos;
-  if (kernel::GetAicpuOpAttrToInputInfo(kernel_node, &attr_to_input_infos)) {
-    ConvertAttrToInput(kernel_node, &attr_to_input_infos);
-  }
-
-  std::map<size_t, std::string> input_to_attr_info;
-  if (kernel::GetAicpuOpInputToAttrInfo(kernel_node, &input_to_attr_info) &&
-      !common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    (void)ConvertConstInputToAttr(kernel_node, input_to_attr_info);
-  }
-}
 
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select, size_t insert_index, bool is_insert_input) {
@@ -596,49 +462,6 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   return trans_node;
 }
 
-CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const AnfNodePtr &orig_node,
-                              const std::string &format, const TypeId &input_type, const TypeId &output_type,
-                              const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
-                              const std::string &reshape_type) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(origin_shape);
-  std::string input_format = format;
-  std::string output_format = format;
-  CNodePtr cast =
-    NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input}, func_graph, {orig_node});
-  MS_EXCEPTION_IF_NULL(cast);
-  // set kernel build info
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetInputsFormat({input_format});
-  builder.SetOutputsFormat({output_format});
-  builder.SetInputsReshapeType({reshape_type});
-  builder.SetOutputsReshapeType({reshape_type});
-  builder.SetInputsDeviceType({input_type});
-  builder.SetOutputsDeviceType({output_type});
-  builder.SetFusionType(kPatternOpaque);
-  builder.SetProcessor(kernel::Processor::AICORE);
-  if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {
-    builder.SetKernelType(KernelType::TBE_KERNEL);
-  } else {
-    builder.SetKernelType(KernelType::AKG_KERNEL);
-  }
-  // if kernel info is null , it remarks this function is running ut
-  if (cast->kernel_info() == nullptr) {
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    cast->set_kernel_info(kernel_info);
-  }
-  if (origin_shape->IsDynamic()) {
-    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cast);
-    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cast);
-  }
-  common::AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
-  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
-  common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, cast.get());
-  common::AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
-  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), cast);
-  return cast;
-}
-
 AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &orig_node, const AnfNodePtr &node,
                                   const KernelSelectPtr &kernel_select) {
   size_t outputs_num = AnfAlgo::GetOutputElementNum(node);
@@ -662,7 +485,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
     return new_node;
   }
   // Single output, output is tuple
-  if (outputs_num == 1 && common::AnfAlgo::IsTupleOutput(node)) {
+  if (outputs_num == 1 && common::AnfAlgo::IsTupleOutput(node) && orig_node->isa<Parameter>()) {
     return node;
   }
   // Multiple output
@@ -696,73 +519,6 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_inputs(new_inputs);
   return new_cnode;
-}
-
-CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> new_inputs = {common::AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  size_t in_num = common::AnfAlgo::GetInputNum(cnode);  // include monads.
-  for (size_t input_index = 0; input_index < in_num; ++input_index) {
-    auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_index);
-    MS_EXCEPTION_IF_NULL(cur_input);
-
-    if (HasAbstractMonad(cur_input)) {
-      // No cast for monad inputs.
-      new_inputs.push_back(cur_input);
-      continue;
-    }
-    // If input is TUPLE, skip insert cast
-    if (AnfUtils::IsRealKernel(cnode) &&
-        AnfAlgo::GetInputKernelObjectType(cnode, input_index) == kernel::KernelObjectType::TUPLE) {
-      MS_LOG(INFO) << "The node's InputObjectType is TUPLE, can not insert cast yet, skip it. Node: "
-                   << cnode->fullname_with_scope();
-      new_inputs.push_back(cur_input);
-      continue;
-    }
-
-    auto prev_node = common::AnfAlgo::GetPrevNodeOutput(cnode, input_index);
-    const auto infer_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
-    TypeId origin_type(kTypeUnknown);
-
-    auto kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
-    auto real_input_node = kernel_with_index.first;
-    MS_EXCEPTION_IF_NULL(real_input_node);
-    if (real_input_node->isa<Parameter>() || real_input_node->isa<ValueNode>()) {
-      origin_type = common::AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);
-      if (origin_type == kTypeUnknown) {
-        origin_type = AnfAlgo::GetOutputDeviceDataType(prev_node.first, prev_node.second);
-      }
-    } else {
-      // feature map
-      origin_type = common::AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
-    }
-    const std::string dev_fmt = AnfAlgo::GetInputFormat(cnode, input_index);
-    const abstract::BaseShapePtr origin_shape = AnfAlgo::GetOutputDetailShape(prev_node.first, prev_node.second);
-    // In graph kernel, we check parameter,
-    // the eliminate pass will not eliminate this case, so we just do not insert the no used cast.
-    if (TypeId device_type = AnfAlgo::GetInputDeviceDataType(cnode, input_index); origin_type != device_type) {
-      auto cast =
-        AddCastOpNodeToGraph(func_graph, cur_input, cnode, dev_fmt, origin_type, device_type, origin_shape, infer_type);
-      MS_EXCEPTION_IF_NULL(cast);
-      cast->set_scope(cnode->scope());
-      common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cast);
-      new_inputs.push_back(cast);
-    } else {
-      new_inputs.push_back(cur_input);
-    }
-  }
-  auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
-  CNodePtr new_node = nullptr;
-  if (kernel_graph == nullptr) {
-    new_node = std::make_shared<CNode>(*cnode);
-    new_node->CloneUserData(cnode);
-  } else {
-    new_node = kernel_graph->NewCNode(cnode);
-  }
-  MS_EXCEPTION_IF_NULL(new_node);
-  new_node->set_inputs(new_inputs);
-  return new_node;
 }
 
 bool CheckAICoreSupported(const AnfNodePtr &anf_node) {
@@ -873,39 +629,6 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
   builder->SetOutputsDeviceType(output_types);
   builder->SetOutputsKernelObjectType(output_object_types);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
-}
-
-std::string GetInputName(const CNodePtr &origin_op, size_t input_index) {
-  auto origin_primitive = GetCNodePrimitive(origin_op);
-  MS_EXCEPTION_IF_NULL(origin_primitive);
-  auto input_names = origin_primitive->GetAttr(kAttrInputNames);
-  if (input_names == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "input_names are nullptr in cnode " << origin_op->fullname_with_scope()
-                               << ", debug string:" << origin_op->DebugString()
-                               << ", attr text:" << origin_primitive->GetAttrsText();
-  }
-
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-  if (input_index >= input_names_vec.size()) {
-    MS_LOG(INFO) << "Input index is invalid. input index: " << input_index << ", input name size "
-                 << input_names_vec.size();
-    return "";
-  }
-  return input_names_vec[input_index];
-}
-
-ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type) {
-  static std::set<std::string> kListDataType = {"listInt", "listStr", "listBool", "listFloat"};
-  auto iter = kListDataType.find(attr_data_type);
-  ValuePtr ret = value;
-  if (iter != kListDataType.end()) {
-    if (!value->isa<ValueSequence>()) {
-      std::vector<ValuePtr> value_vec;
-      value_vec.push_back(value);
-      ret = std::make_shared<ValueTuple>(value_vec);
-    }
-  }
-  return ret;
 }
 
 void NormalizeReduceAttrAxis(const CNodePtr &cnode) {

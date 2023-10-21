@@ -49,6 +49,8 @@ abstract::ShapePtr CosInferShape(const PrimitivePtr &primitive, const std::vecto
 }
 
 TypePtr CosInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_dtype = input_args[0]->BuildType();
   auto prim_attrs = prim->attrs();
   if (prim_attrs.find(kLiteQuantAttrName) != prim_attrs.end()) {

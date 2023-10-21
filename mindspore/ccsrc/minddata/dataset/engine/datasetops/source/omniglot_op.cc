@@ -107,6 +107,7 @@ Status OmniglotOp::CountRowsAndClasses(const std::string &path, int64_t *num_row
   while (!folder_paths.empty()) {
     Path subdir(folder_paths.front());
     auto dir_itr = Path::DirIterator::OpenDirectory(&subdir);
+    RETURN_UNEXPECTED_IF_NULL(dir_itr);
     while (dir_itr->HasNext()) {
       ++row_cnt;
     }

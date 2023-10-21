@@ -15,7 +15,6 @@
 
 import numpy as np
 import pytest
-import os
 import random
 
 from mindspore.common import set_seed
@@ -30,7 +29,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.nn.optim import Adam
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
@@ -173,7 +172,6 @@ def seed_set():
 
 def get_mlp_cell_reuse_loss(enable_trace):
     ms.set_context(mode=ms.GRAPH_MODE)
-    os.environ['MS_DEV_CELL_REUSE'] = '1'
 
     # gen data
     seed_set()
@@ -183,7 +181,6 @@ def get_mlp_cell_reuse_loss(enable_trace):
     # cell reuse
     net = MLP(enable_trace)
     loss_list = train(net, data, label)
-    del os.environ['MS_DEV_CELL_REUSE']
 
     return loss_list
 

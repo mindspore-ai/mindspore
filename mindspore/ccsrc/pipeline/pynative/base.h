@@ -81,15 +81,13 @@ struct OpGradInfo {
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
-      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
+  GradParam(OpGradInfoPtr op_grad_info, bool use_dynamic_shape_process)
+      : op_grad_info(op_grad_info), use_dynamic_shape_process(use_dynamic_shape_process) {
     input_size = op_grad_info->input_value.size();
   }
 
   OpGradInfoPtr op_grad_info;
 
-  // High order used this
-  bool grad_by_value{true};
   // Dynamic shape or dynamic structure
   bool use_dynamic_shape_process{false};
 

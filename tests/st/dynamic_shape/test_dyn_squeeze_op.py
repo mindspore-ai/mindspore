@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.squeeze(tensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -61,7 +61,7 @@ def test_sqeeze_net_ascend(data_type):
     assert np.all(output.asnumpy() == expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type",
@@ -90,7 +90,7 @@ def test_sqeeze_net_cpu(data_type):
     assert np.all(output.asnumpy() == expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type",

@@ -48,6 +48,7 @@ bool EpsGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
 int EpsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   int ret = KernelMod::Resize(base_operator, inputs, outputs);
   if (ret != KRET_OK) {
     return ret;
@@ -72,8 +73,10 @@ T getEpsilon() {
 template <typename T>
 bool EpsGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  T *input = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(output);
   T min_val = getEpsilon<T>();
   CalEps(output_elements_, input, output, min_val, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;

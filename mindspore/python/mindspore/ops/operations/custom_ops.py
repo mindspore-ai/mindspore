@@ -149,7 +149,8 @@ class Custom(ops.PrimitiveWithInfer):
     <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_ .
 
     .. warning::
-        This is an experimental API that is subject to change.
+        - This is an experimental API that is subject to change.
+        - Currently, the functionality of Custom does not support Ascend 910B.
 
     .. note::
         The supported platforms are determined by the input `func_type`. The supported platforms are as follows:
@@ -161,6 +162,12 @@ class Custom(ops.PrimitiveWithInfer):
         - "pyfunc": supports ["CPU"].
         - "julia": supports ["CPU"].
         - "aicpu": supports ["Ascend"].
+
+        If run on ge backend, use `CustomRegOp` to generate the registration information of "aicpu" and "tbe" operator,
+        use `custom_info_register` to bind the registration information to the `func` of the "tbe" operator,
+        then save the registration information of "aicpu" operator and the `func` implementation of "tbe" operator to
+        a file or separate files, keep these files in a separate directory, and set the absolute path of this directory
+        to environment variable "MS_DEV_CUSTOM_OPP_PATH" before running the network.
 
     Args:
         func (Union[function, str]):
@@ -447,7 +454,7 @@ class Custom(ops.PrimitiveWithInfer):
     custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
     def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
-        ops.PrimitiveWithInfer.__init__(self, "Custom")
+        super().__init__("Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
         self.supported_func_type = ["hybrid", "akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]

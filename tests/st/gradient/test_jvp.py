@@ -113,7 +113,7 @@ def test_jvp_single_input_multiple_outputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -217,7 +217,7 @@ def test_jvp_multiple_inputs_multiple_outputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -17,6 +17,8 @@ The module transforms provides common operations, including Compose, OneHot and 
 """
 import json
 from abc import ABC
+import os
+import threading
 
 import sys
 from enum import IntEnum
@@ -36,6 +38,28 @@ from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..vision.py_transforms_util import is_pil
 
 
+# hold all the executor objects when in training procedure
+# key : pid_tid which distinguishes multiple executors by process_id + thread_id
+# value : executor object which lifecycle will always exist during training
+EXECUTORS_LIST = dict()
+
+
+# the follow case process / thread exit need call the function
+# 1. user defined dataset with process mode
+# 2. user defined dataset with thread mode
+# 3. user defined transform in map op with process mode
+# 4. user defined transform in map op with thread mode
+# 5. batch op with per_batch_map operation in process mode
+# 6. batch op with per_batch_map operation in thread mode
+def clean_unused_executors():
+    """
+    clean the unused executor object in UDF or map with PyFunc process / thread mode
+    """
+    key = str(os.getpid()) + "_" + str(threading.currentThread().ident)
+    if key in EXECUTORS_LIST:
+        EXECUTORS_LIST.pop(key)
+
+
 class TensorOperation:
     """
     Base class Tensor Ops
@@ -44,7 +68,7 @@ class TensorOperation:
     def __init__(self):
         super().__init__()
         self.implementation = None
-        self.callable_op_ = None
+        self.device_target = "CPU"
 
     def __call__(self, *input_tensor_list):
         """
@@ -62,9 +86,22 @@ class TensorOperation:
             except (RuntimeError, TypeError):
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
                                 .format(type(tensor), tensor))
-        if not hasattr(self, 'callable_op_') or self.callable_op_ is None:
-            self.callable_op_ = cde.Execute(self.parse())
-        output_tensor_list = self.callable_op_(tensor_row)
+
+        # get or create the executor from EXECUTORS_LIST
+        executor = None
+        key = str(os.getpid()) + "_" + str(threading.currentThread().ident)
+        if key in EXECUTORS_LIST:
+            # get the executor by process id and thread id
+            executor = EXECUTORS_LIST[key]
+            # remove the old transform which in executor and update the new transform
+            executor.UpdateOperation(self.parse())
+        else:
+            # create a new executor by process id and thread_id
+            executor = cde.Execute(self.parse())
+            # add the executor the global EXECUTORS_LIST
+            EXECUTORS_LIST[key] = executor
+
+        output_tensor_list = executor(tensor_row)
         output_numpy_list = [x.as_array() for x in output_tensor_list]
         return output_numpy_list[0] if len(output_numpy_list) == 1 else tuple(output_numpy_list)
 
@@ -340,6 +377,20 @@ class Compose(CompoundOperation):
         """
         return util.compose(self.transforms, *args)
 
+    def __call__(self, *args):
+        '''
+        If PY op exists in self.transforms, should use _execute_py to keep the output types unchanged.
+        '''
+        if any([t.implementation == Implementation.PY for t in self.transforms]):
+            self.implementation = Implementation.PY
+        return super().__call__(*args)
+
+    def release_resource(self):
+        # release the executor which is used by current thread/process when
+        # use transform in eager mode in map op
+        # this will be call in MapOp::WorkerEntry
+        clean_unused_executors()
+
 
 class Concatenate(TensorOperation):
     """
@@ -519,20 +570,25 @@ class Mask(TensorOperation):
 
 class OneHot(TensorOperation):
     """
-    Tensor operation to apply one hot encoding.
+    Apply One-Hot encoding to the input labels.
+
+    For a 1-D input of shape :math:`(*)`, an output of shape :math:`(*, num_classes)` will be
+    returned, where the elements with index values equal to the input values will be set to 1,
+    and the rest will be set to 0. If a label smoothing rate is specified, the element values
+    are further smoothed to enhance generalization.
 
     Args:
-        num_classes (int): Number of classes of objects in dataset.
-            It should be larger than the largest label number in the dataset.
-        smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
-            Default: ``0.0``, means no smoothing is applied.
+        num_classes (int): Total number of classes. Must be greater than the maximum value
+            of the input labels.
+        smoothing_rate (float, optional): The amount of label smoothing. Must be between
+            [0.0, 1.0]. Default: ``0.0``, no label smoothing.
 
     Raises:
-        TypeError: `num_classes` is not of type int.
-        TypeError: `smoothing_rate` is not of type float or int.
-        ValueError: `smoothing_rate` is not in range [0.0, 1.0].
-        RuntimeError: Input tensor is not of type int.
-        RuntimeError: Input tensor is not a 1-D tensor.
+        TypeError: If `num_classes` is not of type int.
+        TypeError: If `smoothing_rate` is not of type float.
+        ValueError: If `smoothing_rate` is not in range of [0.0, 1.0].
+        RuntimeError: If input label is not of type int.
+        RuntimeError: If the dimension of the input label is not 1.
 
     Supported Platforms:
         ``CPU``
@@ -815,17 +871,16 @@ class RandomOrder(PyTensorOperation):
 
 class Relational(IntEnum):
     """
-    Relationship operator.
+    Relational operator.
 
-    Possible enumeration values are: ``Relational.EQ``, ``Relational.NE``, ``Relational.GT``, ``Relational.GE``,
-    ``Relational.LT``, ``Relational.LE``.
+    Available values are as follows:
 
-    - Relational.EQ: refers to Equality.
-    - Relational.NE: refers not equal, or Inequality.
-    - Relational.GT: refers to Greater than.
-    - Relational.GE: refers to Greater than or equal to.
-    - Relational.LT: refers to Less than.
-    - Relational.LE: refers to Less than or equal to.
+    - Relational.EQ: Equal to.
+    - Relational.NE: Not equal to.
+    - Relational.GT: Greater than.
+    - Relational.GE: Greater than or equal to.
+    - Relational.LT: Less than.
+    - Relational.LE: Less than or equal to.
     """
     EQ = 0
     NE = 1
@@ -871,25 +926,24 @@ class _SliceOption(cde.SliceOption):
 
 class Slice(TensorOperation):
     """
-    Slice operation to extract a tensor out using the given n slices.
+    Extract a slice from the input.
 
-    The functionality of Slice is similar to NumPy's indexing feature (Currently only rank-1 tensors are supported).
+    Currently, only 1-D input is supported.
 
     Args:
-        slices (Union[int, list[int], slice, None, Ellipsis]):
-            Maximum `n` number of arguments to slice a tensor of rank `n` .
-            One object in slices can be one of:
-
-            1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
-            2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
-            3.  :py:obj:`slice`: Slice the generated indices from the
-                `slice <https://docs.python.org/3.7/library/functions.html?highlight=slice#slice>`_ object along the
-                first dimension. Similar to start:stop:step.
-            4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`[:]` in Python indexing.
-            5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None` .
+        slices (Union[int, list[int], slice, Ellipsis]): The desired slice.
+            If the input type is int, it will slice the element with the specified index value.
+            Negative index is also supported.
+            If the input type is list[int], it will slice all the elements with the specified index values.
+            Negative index is also supported.
+            If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
+            it will slice according to its specified start position, stop position and step size.
+            If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
+            all elements will be sliced.
+            If the input is None, all elements will be sliced.
 
     Raises:
-        TypeError: If `slices` is not of type int, list[int], :py:obj:`slice` , :py:obj:`None` or :py:obj:`Ellipsis` .
+        TypeError: If `slices` is not of type Union[int, list[int], slice, Ellipsis].
 
     Supported Platforms:
         ``CPU``
@@ -930,7 +984,8 @@ class TypeCast(TensorOperation):
     Tensor operation to cast to a given MindSpore data type or NumPy data type.
 
     Note:
-        This operation supports running on Ascend or GPU platforms by Offload.
+        This operation is executed on the CPU by default, but it is also supported
+        to be executed on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         data_type (Union[mindspore.dtype, numpy.dtype]): mindspore.dtype or numpy.dtype (e.g. `numpy.float32`)
@@ -940,7 +995,7 @@ class TypeCast(TensorOperation):
         TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.dtype` .
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
         >>> import mindspore.dataset as ds

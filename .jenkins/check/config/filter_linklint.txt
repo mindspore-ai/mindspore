@@ -54,3 +54,4 @@ https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/unified/x86_
 https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindInsight/any/mindinsight-2.1.0-py3-none-any.whl
 https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/lite/release/linux/x86_64/cloud_fusion/python37/mindspore_lite-2.1.0-cp37-cp37m-linux_x86_64.whl
 https://github.com/git-lfs/git-lfs/releases/download/v3.1.2/
+https://www.mindspore.cn/lite/en

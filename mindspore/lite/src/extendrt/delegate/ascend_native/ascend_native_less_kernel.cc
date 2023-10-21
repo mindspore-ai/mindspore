@@ -30,19 +30,15 @@ int AscendNativeLessKernel::InferShape() {
   return kSuccess;
 }
 
-int AscendNativeLessKernel::Prepare() {
-  auto ret = InferShape();
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
-    return kLiteError;
-  }
-  return kSuccess;
-}
+int AscendNativeLessKernel::Prepare() { return kSuccess; }
 
 int AscendNativeLessKernel::Run() {
   MS_LOG(INFO) << "AscendNativeLessKernel::Execute";
 
   return kSuccess;
 }
+
+int AscendNativeLessKernel::ReSize() { return kSuccess; }
+
 REGISTER_ASCEND_NATIVE_CREATOR(kNameLess, AscendNativeLessKernel)
 }  // namespace mindspore::kernel

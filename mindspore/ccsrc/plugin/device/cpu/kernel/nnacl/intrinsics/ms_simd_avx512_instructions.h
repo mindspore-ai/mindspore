@@ -232,10 +232,15 @@ static inline MS_FLOAT32X16 MS512_LOG_F32(MS_FLOAT32X16 src) {
   MS_FLOAT32X16 res =
     MS_ADD512_F32(MS_MUL512_F32(ln2, expsPD), MS_MUL512_F32(MS_MUL512_F32(div, MS_ADD512_F32(tmp1, data5)), data6));
   // if (src == 0) res = -inf;
-  // if (src < 0) res = nan;
   MS_MASK512_TYPE mask = MS_CMP512_F32(src, MS_MOV512_F32(0.0f), _CMP_EQ_OQ);
   res = MS_BLEND512_F32(res, MS_MOV512_F32(-INFINITY), mask);
+  // if (src == inf) res = inf;
+  mask = MS_CMP512_F32(src, MS_MOV512_F32(INFINITY), _CMP_EQ_OQ);
+  res = MS_BLEND512_F32(res, MS_MOV512_F32(INFINITY), mask);
+  // if (src < 0 || src == nan) res = nan;
   mask = MS_CMPLT512_F32(src, MS_MOV512_F32(0.0f));
+  res = MS_BLEND512_F32(res, MS_MOV512_F32(NAN), mask);
+  mask = MS_CMP512_F32(src, MS_MOV512_F32(0.0f), _CMP_UNORD_Q);
   res = MS_BLEND512_F32(res, MS_MOV512_F32(NAN), mask);
   return res;
 }

@@ -34,7 +34,8 @@ Status HwcToChwOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   outputs.clear();
   CHECK_FAIL_RETURN_UNEXPECTED(!inputs.empty(), "HWC2CHW: inputs cannot be empty.");
   TensorShape image_shape = inputs[0];
-  if (image_shape.Rank() == 3) {
+  constexpr auto kDefaultImageRank = 3;
+  if (image_shape.Rank() == kDefaultImageRank) {
     (void)outputs.emplace_back(TensorShape{image_shape[2], image_shape[0], image_shape[1]});
   }
   CHECK_FAIL_RETURN_UNEXPECTED(

@@ -2,13 +2,90 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.0 Release Notes
+
+### Major Features and Improvements
+
+#### DataSet
+
+- [STABLE] Enable the Ascend 910B hardware DVPP capability to accelerate data processing, support transformation list: Decode, Resize, Normalize, AdjustBrightness, AdjustContrast, AdjustHue, and AdjustSaturation operators.
+- [STABLE] The `row_size` parameter of data operation map/batch is extended to support passing list, which stands for [Input Shared Memory, Output Shared Memory], so as to flexibly control the size of shared memory in multi-process mode.
+- [STABLE] Provide 100% mindspore.dataset and mindspore.dataset.transforms samples for reference.
+- [STABLE] ConcatDataset supports global sampling. After combining data from multiple sources using concat operation, data can be globally sampled randomly to enhance data diversity.
+- [STABLE] When the model.train API is used for training, TimeMonitor(.., data_time=True) can be used to monitor data processing performance in real time.
+- [STABLE] Introduced the jemalloc library to solve the problem of slow memory rise due to untimely memory debris recovery in extreme scenarios.
+
+#### FrontEnd
+
+- [STABLE] Support adding decorator @lazy_inline to make a graph generated from cell being inlined lazily, which can improve the compilation performance effectively.
+- [STABLE] Optimize the function of mixed precision training, support automatic rewriting of Python scripts through rewrite to achieve mixed precision strategies, and support automatic parsing of functions, branch statements, and other syntax.
+- [STABLE] Mixed precision function optimization, ReWrite supports syntax parsing of class functions and branch statements, and extends O1 functionality.
+- [STABLE] Optimize the dynamic learning rate function and add APIs such as MultiStepLR; function get_lr and global_step decoupling, extending optimizer module functionality.
+- [STABLE] Optimize API code samples, API difference tables, and tutorials for using higher-order functions.
+
+#### Operator
+
+- [STABLE] Add new operator primitive `mindspore.ops.Dense`.
+- [STABLE] Add the random number operator state management feature, which allows the random number operator to save the state of the random number, and can be stably reproduced in scenarios such as model parallelism and recalculation. Currently, it only supports CPU/GPU platforms, and the involved random number operators include: `mindspore.ops.Multinomial`, `mindspore.ops.MultinomialWithReplacement`, `mindspore.ops.ParameterizedTruncatedNormal`, `mindspore.ops.StandardLaplace`, `mindspore.ops.StandardLaplace`, `mindspore.ops.Uniform`, `mindspore.ops.UniformInt`, `mindspore.ops.UniformReal`, `mindspore.ops.UniformInt`, `mindspore.ops.Dropout`, `mindspore.ops.RandomChoiceWithMask`, `mindspore.ops.RandomCategorical`, `mindspore.ops.RandomShuffle`, `mindspore.ops.RandamGamma`, `mindspore.ops.RandomPoisson` and `mindspore.ops.TruncatedNormal`.
+- [STABLE] When a GPU operator encounters an illegal input scenario, it supports asynchronously printing error logs in the CUDA kernel of the operator to the Host side and interrupting the execution of the current CUDA Stream, improving the efficiency of user operator problem positioning.
+
+#### PyNative
+
+- [STABLE] Support viewing mechanism in PyNative mode.
+- [STABLE] Function enhancement in PyNative mode: sens supports dict input type.
+
+#### Ascend
+
+- [STABLE] Supports user configurable operator high-precision/high-performance mode, users can use `context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})` to configure high-precision/high-performance modes for some TBE operators.
+- [BETA] Supports user configurable operators for fp16-in and fp32-out, users can use `context.set_context(ascend_config={"precision_mode": "force_fp32"})` to configure fp16-in and fp32-out for the TBE Cube operators.
+- [BETA] No need to set up MS_ENABLE_GE and MS_GE_TRAIN environment variable when running the network in the Ascend 910B platform.
+- [BETA] Remove the strong binding between `jit_level="O3"` and GE processes, so users no longer need to set `jit_level="O3"` when executing GE processes.
+- [BETA] Supports the use of NAN/INF overflow detection mode in the Ascend 910B environment, which can be achieved by setting the environment variable MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN-MODE".
+
+#### Parallel
+
+- [STABLE] Support the gradient accumulation feature in non-pipeline parallel scenarios in semi-automatic/fully automatic mode. Users can enable gradient accumulation by writing `net = GradAccumulationCell(net, micro_size)`. The gradient accumulation feature is compatible with the  lazy_inline feature.
+
+#### Inference
+
+Since version 2.2, the MindSpore main release package does not provide the inference interface enabling for the Ascend 310. If you need to use the inference interface, install the MindSpore Lite release package or download the MindSpore version earlier than 2.0. For details about how to install and use MindSpore Lite, see <https://www.mindspore.cn/lite/en>. HUAWEI Ascend 310 (Ascend) is an energy-efficient and highly integrated AI processor for edge scenarios. It supports inference on MindIR models. In the earlier version, MindSpore provides two methods for enabling inference on the Ascend 310 hardware:
+
+1. The MindSpore main release package provides the matching Ascend 310 version that supports C++ inference interfaces.
+2. The MindSpore Lite release package provides the matching Ascend version and supports C++ and Java inference.
+
+The C++ APIs provided by the two solutions are basically the same. In the future, MindSpore Lite is used instead of building and maintaining two sets of interfaces. The original 310 inference service built based on the MindSpore main release package can be switched to MindSpore Lite with a few modifications. For details, see <https://www.mindspore.cn/docs/en/master/faq/inference.html>.
+
+### Bug fixes
+
+- [I7SDA0] Fixed an issue where the accuracy of the CRNN network deteriorates on the NES platform.
+- [I7T4QK] Fixed an issue where the inference precision of the WGAN network deteriorates on the OptiX OSN 8800 platform.
+- [I7TJ8Z] Fixed an issue where the inference precision of the LGTM network deteriorates on the OptiX OSN 8800 platform.
+- [I7M58O] Fixed ASR-dynamic network training core dump issue on Ascend platform.
+- [I7L6B6] Fixed an issue where child processes do not exit in some scenarios when dataset is in multi-process mode.
+- [I7L7AE] Fixed an issue where dataset pipeline contains repeat operations and dynamic batchinfo.get_epoch_num() is incorrectly used in dataset.batch.
+- [I7UY7G] Rectify the file permission modification error in OBSMindDataset.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+bantao,Bingliang,BJ-WANG,Brian-K,caifubi,ccsszz,changzherui,chenfei_mindspore,chengfeng27,chenhaozhe,chenjianping,chenkang,chenweifeng,chuht,chujinjin,CShu0507,Cynthia叶,DeshiChen,douzhixing,Erpim,Etienne,fary86,fengxun,fengyixing,gaoshuanglong,Gaoxiong,gaoyong10,GaoZhenlong,Greatpan,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong,Henry Shi,HighCloud,Hongxing,huangbingjian,huanghui,huangxinjing,huangziling,hujiahui8,huoxinyou,HWalkingMan,jianghui58,jiangshanfeng,jiaorui,jijiarong,jjfeing,JuiceZ,jxl,KevinYi,kisnwang,KXiong,lanzhineng,Li Qingguo,LiangZhibo,lianliguang,ligan,lihao,Lihoon,limingqi107,ling,linqingke,liruyu,liubuyu,liuchao,liujunzhu,liuluobin,liupeng303,liutongtong9,liyan2022,liyejun,looop5,luochao60,luojianing,luoyang,machenggui,maning202007,Margaret_wangrui,MaZhiming,mengyuanli,moran,NaCN,nomindcarry,panshaowu,panzhihui,qinzheng,qiuzhongya,r1chardf1d0,shaojunsong,shenwei41,shenyaxin,shenzhangyi,Shira Zaloshinski,shunyuanhan,tangdezhi_123,tanghuikang,tan-wei-cheng,tan-wei-cheng-3260,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wangpingan,wangshaocong,wangtongyu6,wtcheng,wujueying,XianglongZeng,xiaotianci,xiaoxin_zhang,xiaoxiongzhu,xiaoyao,xiaoyuanyuan,XinDu,xujinliang,xupan,yanghaoran,yangluhang,yangruoqi713,yangsijia,yangzhenzhang,yangzishuo,yanjiaming,Yanzhi_YI,yao_yf,yefeng,yeyunpeng2020,yide12,YijieChen,YingLai Lin,YingtongHu,yonibaehr,youshu,yuchaojie,YuJianfeng,zangqx,zhaizhiqiang,zhangbuxue,zhangchunlei,zhangdanyang,zhangdong,zhanghaibo,zhangminli,zhangqi,zhangqinghua,zhangyanhui,zhangyifan,zhangyongxian,zhangzhen,zhangzheng,zhanzhan,zhengzuohe,ZhihaoLi,zhoufeng,zhouyaqiang0,zhuguodong,zhupuxu,zichun_ye,zjun,ZPaC,zuochuanyong,zyli2020,陈宇,程超,范吉斌,冯浩,冯一航,胡彬,宦晓玲,黄勇,雷元哲,黎冠新,李良灿,李林杰,刘崇鸣,刘力力,刘思铭,刘勇琪,吕浩宇,没有窗户的小巷,沈竞兴,王禹程,王振邦,徐安越,徐永飞,俞涵,张澍坤,周超,朱家兴
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.0 Release Notes
+
+### Major Features and Improvements
+
+#### FlashAttention Operator Fusion
+
+- [STABLE] The OptiX OSN Ascend 910B series supports the FlashAttention large operator fusion of the LLAMA and stable diffusion models.
+
 ## MindSpore 2.1.1 Release Notes
 
 ### Bug fixes
 
 - [I7Q9RX] The Ascend platform supports adaptive identification of different hardware types.
 - [I7SDA0] Fixed an issue where the accuracy of the CRNN network deteriorates on the NES platform.
-- [I6QYCD] Fixed an issue where the precision of the maskrcnn network deteriorates on the OptiX OSN 8800 platform.
 - [I7T4QK] Fixed an issue where the inference precision of the WGAN network deteriorates on the OptiX OSN 8800 platform.
 - [I7TJ8Z] Fixed an issue where the inference precision of the LGTM network deteriorates on the OptiX OSN 8800 platform.
 
@@ -325,7 +402,6 @@ Contributions of any kind are welcome!
 
 - [I6TKLW] Fix the issue of MobileNetV2 network performance degradation on the Ascend platform.
 - [I7CP5H] Fix the issue where ASR network training failed on the Ascend platform.
-- [I6QYCD] Fix the issue where the BERT-Large-Boost network fails to train in pynative mode on the Ascend platform.
 - [I7I3EZ] Fix the issue that caused run_check() failure due to changes to the enumeration interface in Pillow version 10.0.0. If encountered in a lower version of MindSpore, install versions of Pillow below 10.0.0 to avoid this issue.
 - [I7IZ8K] Fix accuracy issues with the assignsub interface in PyNative mode.
 - [I7HGY0] Fix the issue that the loss of the functional programming does not converge in the PyNative data_sink mode.

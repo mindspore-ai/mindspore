@@ -453,8 +453,9 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   }
   TensorShape input_shape = input->shape();
   // squeeze input
-  TensorShape squeeze_shape = TensorShape({-1, input_shape[-2], input_shape[-1]});
-  (void)input->Reshape(squeeze_shape);
+  TensorShape squeeze_shape =
+    TensorShape({input_shape.NumOfElements() / input_shape[-2] / input_shape[-1], input_shape[-2], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(squeeze_shape));
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
   CHECK_FAIL_RETURN_SYNTAX_ERROR(mask_start >= 0 && mask_start <= input_shape[check_dim_ind],
@@ -514,7 +515,7 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     }
   }
   // unsqueeze input
-  (void)input->Reshape(input_shape);
+  RETURN_IF_NOT_OK(input->Reshape(input_shape));
   *output = input;
   return Status::OK();
 }
@@ -678,11 +679,9 @@ Status FadeIn(std::shared_ptr<Tensor> *output, int32_t fade_in_len, FadeShape fa
         *iter = static_cast<T>(std::sin((*iter) * PI - PI / 2.0) / 2.0 + 0.5);
         break;
       default:
-        MS_LOG(EXCEPTION)
-          << "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
-             "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine], but got "
-          << fade_shape << " .";
-        break;
+        RETURN_STATUS_UNEXPECTED(
+          "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
+          "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine].");
     }
   }
   return Status::OK();
@@ -716,11 +715,9 @@ Status FadeOut(std::shared_ptr<Tensor> *output, int32_t fade_out_len, FadeShape 
         *iter = static_cast<T>(std::sin((*iter) * PI + PI / 2.0) / 2.0 + 0.5);
         break;
       default:
-        MS_LOG(EXCEPTION)
-          << "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
-             "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine], but got "
-          << fade_shape << " .";
-        break;
+        RETURN_STATUS_UNEXPECTED(
+          "The fade_shape parameter only supports these types [FadeShape::kLinear, FadeShape::kExponential, "
+          "FadeShape::kLogarithmic, FadeShape::kQuarterSine, FadeShape::kHalfSine].");
     }
   }
   return Status::OK();
@@ -2485,11 +2482,11 @@ Status MelSpectrogram(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
                       int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min, float f_max, int32_t pad,
                       int32_t n_mels, WindowType window, float power, bool normalized, bool center, BorderType pad_mode,
                       bool onesided, NormType norm, MelType mel_scale) {
+  RETURN_UNEXPECTED_IF_NULL(input);
+  RETURN_UNEXPECTED_IF_NULL(output);
   auto input_shape_vec = input->shape().AsVector();
   CHECK_FAIL_RETURN_UNEXPECTED(n_fft < TWO * input_shape_vec[input_shape_vec.size() - 1],
                                "MelSpectrogram: Padding size should be less than the corresponding input dimension.");
-  RETURN_UNEXPECTED_IF_NULL(input);
-  RETURN_UNEXPECTED_IF_NULL(output);
   std::shared_ptr<Tensor> spectrogram;
   RETURN_IF_NOT_OK(Spectrogram(input, &spectrogram, pad, window, n_fft, hop_length, win_length, power, normalized,
                                center, pad_mode, onesided));

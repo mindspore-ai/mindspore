@@ -24,6 +24,7 @@ namespace mindspore {
 namespace lite {
 constexpr size_t kDimension1D = 1;
 constexpr size_t kDimension2D = 2;
+constexpr size_t kAttrSize = 2;
 PrimitiveCPtr OnnxIm2ColParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Im2Col>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
@@ -66,7 +67,7 @@ bool OnnxIm2ColParser::ParseVecAttr(const onnx::AttributeProto &onnx_node_attr, 
                                     std::vector<int64_t> *vec) {
   MS_CHECK_TRUE_RET(vec != nullptr, false);
   vec->clear();
-  vec->resize(2);
+  vec->resize(kAttrSize);
   switch (onnx_node_attr.ints().size()) {
     case kDimension1D:
       vec->at(0) = onnx_node_attr.ints(0);

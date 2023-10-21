@@ -26,6 +26,7 @@ PrimitiveCPtr OnnxNonZeroParser::Parse(const onnx::GraphProto &onnx_graph, const
   auto prim = std::make_unique<ops::Where>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
+  MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
   prim_c->AddAttr("is_nonzero", MakeValue(true));
   return prim->GetPrim();
 }

@@ -20,7 +20,7 @@ from mindspore import context, jit
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_list_mul_non_integer_number():

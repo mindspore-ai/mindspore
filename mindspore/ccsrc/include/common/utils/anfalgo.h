@@ -198,6 +198,7 @@ class COMMON_EXPORT AnfAlgo {
                                    std::set<AnfNodePtr> *visited);
   static void GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *used_kernels,
                                  std::set<AnfNodePtr> *visited);
+  static std::string GetGraphSplitGroup(const AnfNodePtr &node);
   static AnfNodeIndexSet GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.
   static void GetRealInputs(const AnfNodePtr &node, std::vector<KernelWithIndex> *inputs);
@@ -313,6 +314,8 @@ class COMMON_EXPORT AnfAlgo {
   static abstract::BaseShapePtr GetDynamicSequenceShape(const AnfNodePtr &node, size_t output_idx);
   // Fetch the sub abstract from the top abstract by the index.
   static abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
+
+  static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {

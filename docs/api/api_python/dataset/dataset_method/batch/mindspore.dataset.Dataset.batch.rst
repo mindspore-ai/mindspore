@@ -37,4 +37,4 @@ mindspore.dataset.Dataset.batch
           - max_rowsize (Union[int, list[int]], 可选) - 指定在多进程之间复制数据时，共享内存分配的基本单位，总占用的共享内存会随着 ``num_parallel_workers`` 和 :func:`mindspore.dataset.config.set_prefetch_size` 增加而变大，仅当 `python_multiprocessing` 为 ``True`` 时，该选项有效。如果是int值，代表 ``input_columns`` 和 ``output_columns`` 均使用该值为单位创建共享内存；如果是列表，第一个元素代表 ``input_columns`` 使用该值为单位创建共享内存，第二个元素代表 ``output_columns`` 使用该值为单位创建共享内存。默认值： ``16`` ，单位为MB。
 
     返回：
-        Dataset， `batch` 操作后的数据集对象。
+        Dataset，应用了上述操作的新数据集对象。

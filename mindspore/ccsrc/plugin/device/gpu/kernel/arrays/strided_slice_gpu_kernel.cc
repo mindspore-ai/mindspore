@@ -29,6 +29,9 @@ using Complex = mindspore::utils::Complex<T>;
 template <typename T, typename S = int64_t>
 bool StridedSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (IsEmptyInput(inputs[0]->size)) {
+    return true;
+  }
   T *input = GetDeviceAddress<T>(inputs, 0);
   T *output = GetDeviceAddress<T>(outputs, 0);
   auto status = StridedSlice(input_shape_, begin_, strides_, output_shape_, input, output,

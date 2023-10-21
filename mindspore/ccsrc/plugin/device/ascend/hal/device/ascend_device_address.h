@@ -95,6 +95,7 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
                                                         mindspore::TypeId type, void *host_ptr) const;
   bool SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const;
   void SyncStream() const;
+  bool SyncStream(size_t stream_id) const;
   ShapeVector GetDeviceShape(ShapeVector *host_shape) const;
   std::shared_ptr<LaunchTransData> CreateLaunchTransData(const ShapeVector &host_shape, const std::string &ori_format,
                                                          const std::string &dst_format) const;
@@ -104,6 +105,8 @@ class AscendDeviceAddress : public LoadableDeviceAddress {
   void CopyDeviceToHost(void *dst, uint64_t size) const;
   bool CopyBetweenHostDevice(void *dst, const void *src, size_t size, bool async, size_t stream_id,
                              bool host_to_device) const;
+  bool CopyBetweenFileDeviceDirectly(void *ptr, const std::string &file_name, size_t size, size_t stream_id,
+                                     bool file_to_device) const;
 
   // The 'const' for this class is irrational, but I abide by it
   int64_t GetGroupsWithCache() const;

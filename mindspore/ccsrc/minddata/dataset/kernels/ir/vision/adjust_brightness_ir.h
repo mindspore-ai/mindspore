@@ -33,7 +33,7 @@ constexpr char kAdjustBrightnessOperation[] = "AdjustBrightness";
 
 class AdjustBrightnessOperation : public TensorOperation {
  public:
-  explicit AdjustBrightnessOperation(float brightness_factor);
+  explicit AdjustBrightnessOperation(float brightness_factor, const std::string &device_target = "CPU");
 
   ~AdjustBrightnessOperation() override = default;
 
@@ -47,8 +47,11 @@ class AdjustBrightnessOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float brightness_factor_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

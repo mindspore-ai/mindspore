@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import os
 import numpy as np
 import mindspore.nn as nn
 
@@ -65,7 +66,7 @@ def test_tile_eliminate():
     assert out.shape == (1, 1, 448, 448)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -84,7 +85,7 @@ def test_shape_raise():
         ops.shape([tensor0, tensor1])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -168,6 +169,7 @@ def test_primitive_avgpool():
     Description: Test ops avgpool grad.
     Expectation: No exception.
     """
+
     def test_inner(net_ms1, net_ms2, *inputs):
         net_ms1.set_grad()
         net_ms2.set_grad()
@@ -193,3 +195,123 @@ def test_primitive_avgpool():
     net1 = Net1()
     net2 = Net2()
     test_inner(net1, net2, input_1, kernel_size, strides, int_type, bool_type, none_type, output_grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bn_with_special_format():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test BatchNorm with special format.
+    Expectation: No exception.
+    """
+    data = np.arange(2 * 3).reshape(2, 3).astype(np.float32)
+    ms_bn = ms.ops.BatchNorm(is_training=True, epsilon=1e-05)
+    input_x = ms.Tensor(data)
+    scale = ms.Parameter(ms.ops.ones(3).astype(ms.float32))
+    bias = ms.Parameter(ms.ops.zeros(3).astype(ms.float32))
+    mean = ms.Parameter(ms.ops.zeros(3).astype(ms.float32))
+    variance = ms.Parameter(ms.ops.ones(3).astype(ms.float32))
+
+    out1 = ms_bn(input_x, scale, bias, mean, variance)[0]
+    out1_except = np.array([[-0.9999978, -0.99999774, -0.99999785], [0.9999978, 0.99999785, 0.9999976]],
+                           dtype=np.float32)
+    assert (out1.asnumpy() == out1_except).all()
+
+    # out1 is a Tensor with 5d format.
+    out2 = ms_bn(out1, scale, bias, mean, variance)[0]
+    out2_except = np.array([[-0.99999505, -0.99999505, -0.999995], [0.99999505, 0.99999505, 0.999995]],
+                           dtype=np.float32)
+    assert (out2.asnumpy() == out2_except).all()
+
+
+class CumProd(nn.Cell):
+    def __init__(self, exclusive, reverse, axis):
+        super().__init__()
+        self.op = ops.CumProd(exclusive=exclusive, reverse=reverse)
+        self.axis = axis
+
+    def construct(self, input_x):
+        return self.op(input_x, self.axis)
+
+
+class CumProdTest():
+    def __init__(self, input_shape, exclusive, reverse, axis, dtypex):
+        self.input_np = np.random.randn(*input_shape).astype(dtype=dtypex)
+        self.exclusive = exclusive
+        self.reverse = reverse
+        self.axis = axis
+        self.dtype = dtypex
+        self.output_grad_np = np.random.randn(*input_shape).astype(dtype=dtypex)
+
+    def forward_mindspore_impl(self):
+        inputa = Tensor(self.input_np)
+        net = CumProd(self.exclusive, self.reverse, self.axis)
+        out = net(inputa)
+        return out.asnumpy()
+
+    def grad_mindspore_impl(self):
+        inputa = Tensor(self.input_np)
+        output_grad = Tensor(self.output_grad_np.astype(self.dtype))
+        net = CumProd(self.exclusive, self.reverse, self.axis)
+        grad_net = GradOfFirstInput(net)
+        grad_net.set_train()
+        input_grad = grad_net(inputa, output_grad)
+        return input_grad.asnumpy()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_cumprod_with_acl():
+    """
+    Feature: PyNative forward RunOp.
+    Description: Test CumProd with acl.
+    Expectation: No exception.
+    """
+    os.environ['MS_DEV_FORCE_ACL'] = '1'
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    fact = CumProdTest((1024, 2048), False, False, 0, np.float32)
+    fact.forward_mindspore_impl()
+    fact.grad_mindspore_impl()
+    del os.environ['MS_DEV_FORCE_ACL']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jit_graph_has_no_parameter():
+    """
+    Feature: PyNative jit.
+    Description: Test jit forward graph is has no parameter.
+    Expectation: No exception.
+    """
+
+    class ClipByNormFuncNet(nn.Cell):
+        def __init__(self, max_norm, norm_type=2.0, error_if_nonfinite=False):
+            super().__init__()
+            self.max_norm = max_norm
+            self.norm_type = norm_type
+            self.error_if_nonfinite = error_if_nonfinite
+
+        def construct(self, *x):
+            return ops.clip_by_norm(x, self.max_norm, self.norm_type, self.error_if_nonfinite)
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(sens_param=True)
+
+        def construct(self, *x):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(*x)
+
+    net = ClipByNormFuncNet(max_norm=1, norm_type=2, error_if_nonfinite=True)
+    net.set_train()
+    inputx = [ops.randn(2, 2), ops.randn(2,)]
+    ms_output = net(*inputx)
+    GradNetWrtX(net)(*inputx, ms_output)

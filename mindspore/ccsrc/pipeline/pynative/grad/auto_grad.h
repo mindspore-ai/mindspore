@@ -121,7 +121,7 @@ class VariableAdjoint {
   AnfNodePtr k_node_{nullptr};
 };
 using VariableAdjointPtr = std::shared_ptr<VariableAdjoint>;
-using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+using expander::bprop::UserType;
 
 struct AdParam {
   AdParam() : tape_(std::make_shared<KernelGraph>()), fg_(std::make_shared<FuncGraph>()) {}
@@ -137,13 +137,15 @@ struct AdParam {
   OrderedSet<VariableAdjointPtr> variable_adjoint_set_;
   // Record cnode's input map for tape_
   expander::bprop::UserMap users_;
+  std::vector<std::tuple<AnfNodePtr, CNodePtr, size_t>> lazy_user_data_;
 };
 using AdParamPtr = std::shared_ptr<AdParam>;
 
 class AutoGradCellImpl {
  public:
   AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async);
+                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
+                   bool grad_by_value);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
@@ -161,6 +163,7 @@ class AutoGradCellImpl {
   // Input node is user cnode one of input, index is user input index
   // User->input(index) is input node
   void AddUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
+  inline bool grad_by_value() { return grad_by_value_; }
 
  private:
   FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
@@ -219,6 +222,7 @@ class AutoGradCellImpl {
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
   AnfNodePtr GetWeightGrad(bool grad_weights, const tensor::TensorPtrList &weights, bool weight_param_is_tuple);
   void LazyAddUser(const AnfNodePtr &node, const CNodePtr &user, size_t index);
+  void UpdateLazyUser();
   void AddTupleGetItemUser(const AnfNodePtr &input, const CNodePtr &user, size_t index);
   void Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, UserType *user, bool need_update = false);
   // To elimate tuplegetitem cnode
@@ -240,12 +244,12 @@ class AutoGradCellImpl {
   AdParamPtr ad_param_{nullptr};
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
-  std::vector<std::tuple<AnfNodePtr, CNodePtr, size_t>> lazy_user_data_;
   // These weights need to calculate gradient.
   mindspore::HashSet<std::string> need_grad_weights_;
   AnfNodePtrList weights_used_in_graph_;
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
+  bool grad_by_value_{false};
   bool need_do_manager_replace_{false};
   AsyncHqueuePtr assist_queue_{nullptr};
   bool enable_async_{false};

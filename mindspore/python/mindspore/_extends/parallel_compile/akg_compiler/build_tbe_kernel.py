@@ -98,7 +98,7 @@ class TransShape:
             formats.append(v["format"])
             ori_formats.append(v["ori_format"])
         if len(shapes) == 2 and len(shapes[0]) != len(shapes[1]):
-            from impl.add import _add_check_format, _infer_shape
+            from impl.dynamic.add import _add_check_format, _infer_shape
             format_pattern = _add_check_format({"shape": shapes[0], "format": formats[0]},
                                                {"shape": shapes[1], "format": formats[1]})
             ori_shape0 = ori_shapes[0] if ori_shapes[0] is not None else infer_ori_shape(

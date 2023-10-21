@@ -608,6 +608,87 @@ def test_map_and_generatordataset_with_multiprocessing():
     assert dataset.output_types() == [np.float64, np.float64]
 
 
+def map_with_pyfunc_with_multi_ops(mode):
+    GLOBAL_EXECUTOR_LEN = len(transforms.EXECUTORS_LIST)
+
+    data_dir = "../data/dataset/testImageNetData2/train"
+    data2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+
+    def pyfunc2(img_bytes):
+        img_decode = vision.Decode()(img_bytes)
+
+        # resize
+        img_resize = vision.Resize(size=(64, 32))(img_decode)
+
+        # normalize
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec)(img_resize)
+        return img_normalize
+
+    # map with PyFunc transform which contains vision.Decode, vision.Resize and vision.Normalize
+    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=mode, num_parallel_workers=2)
+
+    for _ in range(5):
+        for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            assert item[0].shape == (64, 32, 3)
+            assert item[0].dtype == np.float32
+
+    time.sleep(1)
+    assert len(transforms.EXECUTORS_LIST) == GLOBAL_EXECUTOR_LEN
+
+
+class FakeDataWithTransform:
+    def __init__(self):
+        self.input_ids = np.ones((128, 128, 3), dtype=np.uint8)
+        self.input_mask = np.ones((100, 100, 3), dtype=np.int32)
+
+    def __getitem__(self, index):
+        img_resize = vision.Resize(size=(64, 32))(self.input_ids)
+        return img_resize, self.input_mask
+
+    def __len__(self):
+        return 10
+
+
+def generator_with_multi_transforms(mode):
+    GLOBAL_EXECUTOR_LEN = len(transforms.EXECUTORS_LIST)
+
+    # generator with vision.Resize transform
+    data2 = ds.GeneratorDataset(source=FakeDataWithTransform(), column_names=["image", "label"], shuffle=False,
+                                python_multiprocessing=mode, num_parallel_workers=2)
+
+    def pyfunc2(img):
+        # normalize
+        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
+        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
+        img_normalize = vision.Normalize(mean=mean_vec, std=std_vec)(img)
+        return img_normalize
+
+    # map with PyFunc transform which contains vision.Normalize
+    data2 = data2.map(pyfunc2, input_columns="image", python_multiprocessing=mode, num_parallel_workers=2)
+
+    for _ in range(5):
+        for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
+            assert item[0].shape == (64, 32, 3)
+            assert item[0].dtype == np.float32
+
+    time.sleep(1)
+    assert len(transforms.EXECUTORS_LIST) == GLOBAL_EXECUTOR_LEN
+
+
+def test_generator_or_map_with_pyfunc_use_global_executor():
+    """
+    Feature: Generator op or Map op with pyfunc contains multi ops which use global executor
+    Description: Test generator or map with pyfunc
+    Expectation: The result is equal to the expected
+    """
+    map_with_pyfunc_with_multi_ops(True)
+    map_with_pyfunc_with_multi_ops(False)
+    generator_with_multi_transforms(True)
+    generator_with_multi_transforms(False)
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -624,3 +705,4 @@ if __name__ == '__main__':
     test_map_multiprocessing_with_in_out_rowsize()
     test_map_multiprocessing_with_in_out_rowsize_exception()
     test_map_and_generatordataset_with_multiprocessing()
+    test_generator_or_map_with_pyfunc_use_global_executor()

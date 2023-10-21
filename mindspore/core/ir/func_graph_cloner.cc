@@ -532,8 +532,8 @@ void Cloner::SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx) 
       cnode = new_cnode;
     }
 
-    auto &inputs = cnode->inputs();
-    for (size_t i = 0; i < inputs.size(); i++) {
+    const auto &inputs = cnode->inputs();
+    for (size_t i = 0; i < inputs.size(); ++i) {
       auto &input = inputs[i];
       if (IsValueNode<FuncGraph>(input)) {
         if (i == 1 && new_cnode != nullptr) {
@@ -575,6 +575,7 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
   AnfNodePtr new_param = nullptr;
   for (auto &param : params) {
     auto old_param = replicated_node_[param];
+    MS_EXCEPTION_IF_NULL(old_param);
     if (old_param->isa<CNode>() && old_param->func_graph() == func_graph) {
       replicated_node_[old_param] = old_param;
       replicated_map_node_[func_graph][old_param] = old_param;

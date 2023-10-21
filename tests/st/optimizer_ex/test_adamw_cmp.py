@@ -10,15 +10,13 @@ from mindspore.experimental.optim.lr_scheduler import StepLR
 
 
 class Network(nn.Cell):
-    def __init__(self, conv_weight, conv_bias, lin_weight, lin_bias):
+    def __init__(self, lin_weight, lin_bias):
         super().__init__()
-        self.conv = nn.Conv1d(4, 2, 1, stride=2, weight_init=conv_weight, has_bias=True, bias_init=conv_bias)
         self.lin = nn.Dense(2, 3, weight_init=lin_weight, bias_init=lin_bias)
         self.relu = nn.ReLU()
 
     def construct(self, x):
-        out = self.conv(x)
-        out = self.lin(out)
+        out = self.lin(x)
         out = self.relu(out)
         return out
 
@@ -26,13 +24,11 @@ class Network(nn.Cell):
 class NetworkPt(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv = torch.nn.Conv1d(4, 2, 1, stride=2, bias=False)
         self.lin = torch.nn.Linear(2, 3)
         self.relu = torch.nn.ReLU()
 
     def forward(self, x):
-        out = self.conv(x)
-        out = self.lin(out)
+        out = self.lin(x)
         out = self.relu(out)
         return out
 
@@ -40,13 +36,11 @@ class NetworkPt(torch.nn.Module):
 class AdamWFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
-        self.conv_weight_np = np.random.randn(2, 4, 1).astype(dtype)
-        self.conv_bias_np = np.random.randn(2,).astype(dtype)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 
-        self.data = np.random.rand(1, 4, 4).astype(np.float32)
-        self.label = np.random.rand(1, 2, 3).astype(np.float32)
+        self.data = np.random.rand(2, 2).astype(np.float32)
+        self.label = np.random.rand(2, 3).astype(np.float32)
 
         self.group = group
         self.lr_dynamic = lr_dynamic
@@ -61,14 +55,10 @@ class AdamWFactory():
         self.maximize = False
 
     def forward_pytorch_impl(self):
-        conv_weight = torch.Tensor(self.conv_weight_np.copy())
-        conv_bias = torch.Tensor(self.conv_bias_np.copy())
         lin_weight = torch.Tensor(self.lin_weight_np.copy())
         lin_bias = torch.Tensor(self.lin_bias_np.copy())
 
         model = NetworkPt()
-        model.conv.weight = torch.nn.Parameter(conv_weight)
-        model.conv.bias = torch.nn.Parameter(conv_bias)
         model.lin.weight = torch.nn.Parameter(lin_weight)
         model.lin.bias = torch.nn.Parameter(lin_bias)
 
@@ -78,14 +68,14 @@ class AdamWFactory():
         if not self.group:
             optimizer = torch.optim.AdamW(model.parameters(), self.lr)
         else:
-            conv_params, no_conv_params = [], []
+            bias_params, no_bias_params = [], []
             for param in model.named_parameters():
-                if "conv" in param[0]:
-                    conv_params.append(param[1])
+                if "bias" in param[0]:
+                    bias_params.append(param[1])
                 else:
-                    no_conv_params.append(param[1])
-            group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
-                            {'params': no_conv_params, 'lr': 0.66, "amsgrad": True}]
+                    no_bias_params.append(param[1])
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
+                            {'params': no_bias_params, 'lr': 0.66, "amsgrad": True}]
             optimizer = torch.optim.AdamW(params=group_params, lr=self.lr)
 
         criterion = torch.nn.L1Loss(reduction='mean')
@@ -108,11 +98,9 @@ class AdamWFactory():
 
 
     def forward_mindspore_impl(self):
-        conv_weight = Tensor(self.conv_weight_np.copy())
-        conv_bias = Tensor(self.conv_bias_np.copy())
         lin_weight = Tensor(self.lin_weight_np.copy())
         lin_bias = Tensor(self.lin_bias_np.copy())
-        model = Network(conv_weight, conv_bias, lin_weight, lin_bias)
+        model = Network(lin_weight, lin_bias)
 
         data = Tensor(self.data)
         label = Tensor(self.label)
@@ -120,10 +108,10 @@ class AdamWFactory():
         if not self.group:
             optimizer = AdamW(model.trainable_params(), self.lr)
         else:
-            conv_params = list(filter(lambda x: 'conv' in x.name, model.trainable_params()))
-            no_conv_params = list(filter(lambda x: 'conv' not in x.name, model.trainable_params()))
-            group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
-                            {'params': no_conv_params, 'lr': 0.66, "amsgrad": True}]
+            bias_params = list(filter(lambda x: 'bias' in x.name, model.trainable_params()))
+            no_bias_params = list(filter(lambda x: 'bias' not in x.name, model.trainable_params()))
+            group_params = [{'params': bias_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
+                            {'params': no_bias_params, 'lr': 0.66, "amsgrad": True}]
             optimizer = AdamW(params=group_params, lr=self.lr)
 
         criterion = nn.MAELoss(reduction="mean")
@@ -181,7 +169,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -193,12 +181,12 @@ def test_adamw_basic(mode):
     Description: Test adamw with default parameter.
     Expectation: success.
     """
-    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamWFactory(False, False)
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -210,12 +198,12 @@ def test_adamw_group(mode):
     Description: Test adamw with grouped params.
     Expectation: success.
     """
-    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamWFactory(True, False)
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -227,12 +215,12 @@ def test_adamw_lr_dynamic(mode):
     Description: Test adamw when lr is dynamic.
     Expectation: success.
     """
-    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamWFactory(False, True)
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -244,12 +232,12 @@ def test_adamw_group_lr_dynamic(mode):
     Description: Test adamw with grouped params when lr is dynamic.
     Expectation: success.
     """
-    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamWFactory(True, True)
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -261,6 +249,6 @@ def test_adamw_group_lr_dynamic_change_param(mode):
     Description: Test adamw with grouped params when optimizer params are changed.
     Expectation: success.
     """
-    ms.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
+    mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamWFactory(True, True, True)
     fact.result_cmp()

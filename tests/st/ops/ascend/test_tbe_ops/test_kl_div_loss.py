@@ -58,7 +58,7 @@ def compare_with_numpy(x, target, reduction):
     np.testing.assert_array_almost_equal(out.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -75,7 +75,7 @@ def test_kl_div_loss_scalar(reduction, data_type):
     compare_with_numpy(x, target, reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -92,7 +92,7 @@ def test_kl_div_loss_multi_dim(reduction, data_type):
     compare_with_numpy(x, target, reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

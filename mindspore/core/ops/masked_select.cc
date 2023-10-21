@@ -59,7 +59,9 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
 TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32, kInt64,   kUInt8, kUInt16,    kUInt32,
                                          kUInt64, kFloat16, kFloat, kFloat64, kBool,  kComplex64, kComplex128};
+  MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   std::map<std::string, TypePtr> types;
   (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
@@ -69,8 +71,6 @@ TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<Abstra
 
 AbstractBasePtr MaskedSelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, primitive->name());
   auto infer_shape = MaskedSelectInferShape(primitive, input_args);
   auto infer_type = MaskedSelectInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

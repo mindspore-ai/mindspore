@@ -37,10 +37,8 @@ __global__ void ScatterNdUpdate(const size_t unit_size, const size_t index_depth
     }
 
     write_index += j;
-
-    if (!out_bound) {
-      input[write_index] = updates[read_index];
-    }
+    CUDA_KERNEL_ASSERT(!out_bound);
+    input[write_index] = updates[read_index];
   }
 }
 
@@ -65,10 +63,8 @@ __global__ void ScatterNdBinaryOp(Functor func, const size_t unit_size, const si
     }
 
     write_index += j;
-
-    if (!out_bound) {
-      func(&input[write_index], updates[read_index]);
-    }
+    CUDA_KERNEL_ASSERT(!out_bound);
+    func(&input[write_index], updates[read_index]);
   }
 }
 

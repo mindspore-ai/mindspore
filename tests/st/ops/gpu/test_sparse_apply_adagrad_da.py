@@ -61,7 +61,7 @@ def test_sparseapplyadagradda_fp32():
     assert np.all(var_out.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparseapplyadagradda_fp16():

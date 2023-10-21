@@ -33,7 +33,7 @@ constexpr char kAdjustHueOperation[] = "AdjustHue";
 
 class AdjustHueOperation : public TensorOperation {
  public:
-  explicit AdjustHueOperation(float hue_factor);
+  explicit AdjustHueOperation(float hue_factor, const std::string &device_target = "CPU");
 
   ~AdjustHueOperation() override = default;
 
@@ -47,8 +47,11 @@ class AdjustHueOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   float hue_factor_;
+  std::string device_target_;  // CPU, Ascend
 };
 }  // namespace vision
 }  // namespace dataset

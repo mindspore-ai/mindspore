@@ -162,10 +162,11 @@ class ModuleParser(Parser):
             test_code = f"import sys\nsys.path.insert(0, r'{file_path_tmp}')\n{import_code}"
             try:
                 exec(test_code) # pylint: disable=W0122
-            except ValueError as e:
+            except (ValueError, ImportError) as e:
                 # try upper level to avoid ValueError: attempted relative import beyond top-level package
-                logger.warning(f"For MindSpore Rewrite, in module parser, test import code: "
-                               f"{import_code} failed: {e}. Try upper level.")
+                # this exception is changed to ImportError after python3.9
+                logger.info(f"For MindSpore Rewrite, in module parser, test import code: "
+                            f"{import_code} failed: {e}. Try upper level.")
                 level_count += 1
                 continue
             except Exception as e: # pylint: disable=W0703
@@ -176,8 +177,8 @@ class ModuleParser(Parser):
                 # try test code success
                 return import_node_test.module, file_path_tmp
         # try codes with all level failed
-        logger.error(f"For MindSpore Rewrite, in module parser, test import code: "
-                     f"{astunparse.unparse(import_node).strip()} failed. Ignore this import code.")
+        logger.warning(f"For MindSpore Rewrite, in module parser, test import code: "
+                       f"{astunparse.unparse(import_node).strip()} failed. Ignore this import code.")
         return None, None
 
     @staticmethod

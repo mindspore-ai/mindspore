@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 from .sparse_utils import get_platform, compare_res, compare_coo
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -51,7 +51,7 @@ def test_make_coo():
     compare_coo(coo3, coo2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -268,7 +268,7 @@ def test_dtype_coo_tensor():
     assert out4 in [mstype.float32]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -323,7 +323,7 @@ def test_coo_attr():
             assert py_tuple[i] == g_tuple[i]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

@@ -3,32 +3,32 @@ mindspore.dataset.config.set_enable_autotune
 
 .. py:function:: mindspore.dataset.config.set_enable_autotune(enable, filepath_prefix=None)
 
-    设置是否开启自动数据加速。默认情况下不开启自动数据加速。
+    设置是否开启数据处理参数自动调优。
 
-    自动数据加速用于在训练过程中根据环境资源的负载，自动调整数据处理管道全局配置，提高数据处理的速度。
+    可用于在训练中根据环境资源的负载，自动调整数据处理流水线中各个操作的参数配置，如并行度、缓冲队列大小，从而提高整体处理速度。
 
-    可以通过设置 `json_filepath` 将优化后的全局配置保存为JSON文件，以便后续复用。
+    该功能默认不开启。
 
     参数：
-        - **enable** (bool) - 是否开启自动数据加速。
-        - **filepath_prefix** (str，可选) - 优化后的全局配置的保存路径+文件前缀。多卡环境时，设备ID号与JSON扩展名会自动添加到 `filepath_prefix`
-          参数后面作为完整的文件路径，单卡默认设备ID号为0。例如，设置 `filepath_prefix="/path/to/some/dir/prefixname"` ，设备ID为1的训练进程
-          生成的调优文件将被命名为 `/path/to/some/dir/prefixname_1.json` 。默认值： ``None`` ，表示不保存配置文件，但可以通过INFO日志查看调优配置。
+        - **enable** (bool) - 是否开启自动调优。
+        - **filepath_prefix** (str，可选) - 优化后的参数配置的保存路径。仅当 `enable` 为 `True` 时生效。
+          各个Device上的参数配置文件将分别保存，最终保存的文件名将为 `filepath_prefix + RANK_ID + ".json"` ，
+          其中 RANK_ID 为该文件对应的Device编号。默认值： ``None`` ，不保存配置文件。
 
     异常：
         - **TypeError** - 当 `enable` 的类型不为bool。
-        - **TypeError** - 当 `json_filepath` 的类型不为str。
-        - **RuntimeError** - 当 `json_filepath` 字符长度为0。
-        - **RuntimeError** - 当 `json_filepath` 为目录。
-        - **RuntimeError** - 当 `json_filepath` 路径不存在。
-        - **RuntimeError** - 当 `json_filepath` 没有写入权限。
+        - **TypeError** - 当 `filepath_prefix` 的类型不为str。
+        - **RuntimeError** - 当 `filepath_prefix` 字符串长度为0。
+        - **RuntimeError** - 当 `filepath_prefix` 为目录。
+        - **RuntimeError** - 当 `filepath_prefix` 路径不存在。
+        - **RuntimeError** - 当 `filepath_prefix` 没有写入权限。
 
-    .. note:: 
-        - 当 `enable` 为 ``False`` 时，`json_filepath` 值将会被忽略。
-        - 生成的JSON文件可以通过 `mindspore.dataset.deserialize` 进行加载，得到调优后的数据处理管道。
+    .. note::
+        - 保存的参数配置文件可通过 `mindspore.dataset.deserialize` 接口加载，直接得到配置好最优参数的数据处理流水线对象。
+        - 可通过开启INFO级别日志，查看参数调优过程。
     
-    生成的JSON文件内容示例如下，"remark"字段将给出结论表明数据处理管道是否进行了调整，"summary"字段将展示数据处理管道的调优配置。
-    用户可以根据调优结果修改代码脚本。
+    生成的配置文件内容示例如下，"remark"字段描述是否进行了数据处理参数调优，"summary"字段简要展示了数据处理流水线中
+    各个操作及其对应的最优配置，而"tree"字段则为完整的数据处理流水线结构信息。
 
     .. code-block::
 

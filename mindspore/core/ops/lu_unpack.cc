@@ -145,9 +145,6 @@ TuplePtr LuUnpackInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 
 AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto infer_type = LuUnpackInferType(primitive, input_args);
   auto infer_shape = LuUnpackInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

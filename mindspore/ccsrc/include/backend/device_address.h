@@ -42,6 +42,7 @@ class CPUDeviceContext;
 }  // namespace cpu
 namespace ascend {
 class AscendKernelRuntime;
+class AscendRuntimeCore;
 class AscendMemoryManager;
 class AscendDeviceContext;
 #ifndef ENABLE_SECURITY
@@ -155,6 +156,8 @@ class DeviceAddress : public mindspore::DeviceSync {
 
   const std::string &format() const { return format_; }
   void set_format(const std::string &format) { format_ = format; }
+  const std::string &padding_type() const { return padding_type_; }
+  void set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
   TypeId type_id() const { return type_id_; }
   bool from_mem_pool() const { return from_mem_pool_; }
   void set_from_mem_pool(bool from_mem_pool) { from_mem_pool_ = from_mem_pool; }
@@ -167,6 +170,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   const ShapeVector &device_shape() const { return device_shape_; }
   bool from_persistent_mem() const { return from_persistent_mem_; }
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
+  bool need_recycle() const { return need_recycle_; }
+  void set_need_recycle(bool need_recycle) { need_recycle_ = need_recycle; }
   virtual bool mem_offloaded() const { return false; }
   void set_status(DeviceAddressStatus status) { status_ = status; }
   DeviceAddressStatus status() const { return status_; }
@@ -302,6 +307,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   mutable void *ptr_{nullptr};
   size_t size_{0};
   string format_{"DefaultFormat"};
+  std::string padding_type_;
   TypeId type_id_{kNumberTypeFloat16};
   mutable bool from_mem_pool_{false};
   uint8_t *communication_ptr_{nullptr};
@@ -326,6 +332,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name_{""};
   uint32_t device_id_{0};
   bool from_persistent_mem_{false};
+  bool need_recycle_{false};
 
   // The device address flag.
   size_t flag_{0};
@@ -347,6 +354,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::device::gpu::GPUMemoryManager;
   friend class mindspore::device::gpu::GPUDeviceContext;
   friend class mindspore::device::ascend::AscendKernelRuntime;
+  friend class mindspore::device::ascend::AscendRuntimeCore;
   friend class mindspore::device::ascend::AscendMemoryManager;
   friend class mindspore::device::ascend::AscendDeviceContext;
 #ifndef ENABLE_SECURITY

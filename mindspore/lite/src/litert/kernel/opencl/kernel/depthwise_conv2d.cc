@@ -199,7 +199,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "Malloc failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_weight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 #else
@@ -246,7 +246,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "Malloc data failed.";
     return RET_ERROR;
   }
-  FreeStoredData(&stored_weight_);
+  FreeStoredData(stored_weight_);
   return RET_OK;
 }
 #endif
@@ -292,7 +292,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
 
-  FreeStoredData(&stored_bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 #else
@@ -325,7 +325,7 @@ int DepthwiseConv2dOpenCLKernel::InitBias() {
     return RET_ERROR;
   }
 
-  FreeStoredData(&stored_bias_);
+  FreeStoredData(stored_bias_);
   return RET_OK;
 }
 #endif

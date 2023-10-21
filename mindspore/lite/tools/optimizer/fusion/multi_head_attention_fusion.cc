@@ -20,16 +20,23 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/tuple_get_item.h"
 #include "tools/common/tensor_util.h"
+#include "ops/op_utils.h"
+#include "ops/fusion/mat_mul_fusion.h"
 #include "ops/squeeze.h"
+
 namespace mindspore::opt {
 namespace {
 const auto &p1 = std::placeholders::_1;
@@ -78,6 +85,8 @@ bool MultiHeadAttentionFusion::Init() const {
   MS_CHECK_TRUE_RET(v_transpose_ != nullptr, false);
   k_transpose_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose), "k_transpose");
   MS_CHECK_TRUE_RET(k_transpose_ != nullptr, false);
+  dense_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "dense");
+  MS_CHECK_TRUE_RET(dense_ != nullptr, false);
   return true;
 }
 
@@ -146,9 +155,7 @@ STATUS GetAxis(const BaseRef &n, std::vector<int> *axes) {
 VectorRef MultiHeadAttentionFusion::DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
                                                     const BaseRef &axis, const BaseRef &transpose_var, bool test_div,
                                                     bool transpose, bool mul) const {
-  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "e-matmul");
-  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
-  auto dense = VectorRef({is_matmul, input, weight, bias});
+  auto dense = VectorRef({dense_, input, weight, bias});
   auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "e-reshape");
   MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
   auto reshape = VectorRef({is_reshape, dense, axis});
@@ -183,9 +190,7 @@ VectorRef MultiHeadAttentionFusion::DefineEmbedding(const BaseRef &input, const 
 
 VectorRef MultiHeadAttentionFusion::DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &axis,
                                                     const BaseRef &transpose_var, bool test_div, bool transpose) const {
-  auto is_matmul = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "e-matmul");
-  MS_CHECK_TRUE_RET(is_matmul != nullptr, {});
-  auto dense = VectorRef({is_matmul, input, weight});
+  auto dense = VectorRef({dense_, input, weight});
   auto is_reshape = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "e-reshape");
   MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
   auto reshape = VectorRef({is_reshape, dense, axis});
@@ -494,7 +499,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternSwin(bool flag) const {
   return matmul3;
 }
 
-VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha, bool multi_batch) const {
+VectorRef MultiHeadAttentionFusion::DefinePatternPangu(bool alpha, bool distributed) const {
   bool k_div = (alpha) ? true : false;
   auto q_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
   MS_CHECK_TRUE_RET(q_transpose != nullptr, {});
@@ -542,6 +547,7 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha, 
   auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "is_matmul3");
   MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
   auto matmul3 = VectorRef({is_matmul3, reshape6, weight_o_});
+  if (!distributed) matmul3.push_back(bias_o_);
   auto is_all_reduce = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimAllReduce), "is_all_reduce");
   MS_CHECK_TRUE_RET(is_all_reduce != nullptr, {});
   auto all_reduce = VectorRef({is_all_reduce, matmul3});
@@ -554,7 +560,8 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternPanguDistributed(bool alpha, 
   MS_CHECK_TRUE_RET(is_reshape7 != nullptr, {});
   auto var_reshpae7 = std::make_shared<Var>("var_reshpae");
   MS_CHECK_TRUE_RET(var_reshpae7 != nullptr, {});
-  auto reshape7 = VectorRef({is_reshape7, add2, var_reshpae7});
+  auto reshape7 =
+    (distributed) ? VectorRef({is_reshape7, add2, var_reshpae7}) : VectorRef({is_reshape7, matmul3, var_reshpae7});
   return reshape7;
 }
 namespace {
@@ -574,9 +581,41 @@ STATUS TransposeMatrix(std::shared_ptr<tensor::Tensor> src, std::shared_ptr<tens
   }
   return RET_OK;
 }
-
+AnfNodePtr GetAttribute(const FuncGraphPtr &func_graph, const EquivPtr &equiv, VarPtr node_name) {
+  if ((*equiv)[node_name] == nullptr || !utils::isa<AnfNodePtr>((*equiv)[node_name])) {
+    MS_LOG(ERROR) << node_name << "is not AnfNodePtr";
+    return nullptr;
+  }
+  AnfNodePtr node = utils::cast<AnfNodePtr>((*equiv)[node_name]);
+  MS_ASSERT(node != nullptr);
+  if (node == nullptr || !utils::isa<CNodePtr>(node)) {
+    auto manager = func_graph->manager();
+    if (manager == nullptr) {
+      return nullptr;
+    }
+    auto users = manager->node_users();
+    auto it = users.find(node);
+    if (it != users.end()) {
+      node = it->second.front().first;
+    }
+    if (node == nullptr || !utils::isa<CNodePtr>(node)) {
+      return nullptr;
+    }
+  }
+  auto cnode = utils::cast<CNodePtr>(node);
+  MS_ASSERT(cnode != nullptr);
+  auto input = cnode->input(0);
+  return input;
+}
+bool IsTransposeWeight(const FuncGraphPtr &func_graph, const EquivPtr &equiv, VarPtr dense) {
+  auto dense_input = GetAttribute(func_graph, equiv, dense);
+  MS_ASSERT(dense_input != nullptr);
+  auto dense_primitive = ops::GetOperator<ops::MatMulFusion>(dense_input);
+  MS_CHECK_TRUE_RET(dense_primitive != nullptr, false);
+  return dense_primitive->get_transpose_b();
+}
 std::shared_ptr<tensor::Tensor> ConcatTensors(const std::vector<std::shared_ptr<tensor::Tensor>> &tensors,
-                                              bool transpose = false) {
+                                              bool transpose = false, bool transpose_b = true) {
   const std::vector<int64_t> &base_shape = tensors.at(0)->shape();
   auto base_shape_size = base_shape.size();
   auto base_data_type = tensors.at(0)->data_type();
@@ -610,8 +649,34 @@ std::shared_ptr<tensor::Tensor> ConcatTensors(const std::vector<std::shared_ptr<
   std::size_t offset = 0;
   for (const auto &tensor : tensors) {
     void *ptr = reinterpret_cast<uint8_t *>(concat_tensor->data_c()) + offset;
-    memcpy_s(ptr, concat_tensor->Size() - offset, tensor->data_c(), tensor->Size());
-    offset += tensor->Size();
+    auto transpose_tensor = std::make_shared<tensor::Tensor>(base_data_type, tensor->shape());
+    if (transpose && !transpose_b) {
+      switch (base_data_type) {
+        case kNumberTypeFloat32: {
+          auto status = TransposeMatrix<float>(tensor, transpose_tensor);
+          MS_CHECK_TRUE_RET(status == RET_OK, nullptr);
+          break;
+        }
+        case kNumberTypeFloat16: {
+          auto status = TransposeMatrix<float16>(tensor, transpose_tensor);
+          MS_CHECK_TRUE_RET(status == RET_OK, nullptr);
+          break;
+        }
+        default:
+          MS_LOG(ERROR) << "unsupported data type " << base_data_type << std::endl;
+      }
+      auto ret = memcpy_s(ptr, concat_tensor->Size() - offset, transpose_tensor->data_c(), transpose_tensor->Size());
+      if (ret != RET_OK) {
+        MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret;
+      }
+      offset += transpose_tensor->Size();
+    } else {
+      auto ret = memcpy_s(ptr, concat_tensor->Size() - offset, tensor->data_c(), tensor->Size());
+      if (ret != RET_OK) {
+        MS_LOG(EXCEPTION) << "Failed to copy data, memcpy_s errorno: " << ret;
+      }
+      offset += tensor->Size();
+    }
   }
   if (transpose) {
     std::vector<int64_t> tshape = {new_shape[1], new_shape[0]};
@@ -644,9 +709,9 @@ std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatte
   }
   patterns[kMPAWithMaskPatternName] = DefineMPWithMaskPattern();
   patterns[kMPAPatternName] = DefineMPWithMaskPattern(false);
-  patterns[kPatternNameSigmaDistributedUsePast] = DefineMPPatternPanguDistributed(false);
-  patterns[kPatternNameSigmaDistributedUsePastMB] = DefineMPPatternPanguDistributed(false, true);
-  patterns[kPatternNameAlphaDistributedUsePast] = DefineMPPatternPanguDistributed(true);
+  patterns[kPatternNameSigmaUsePast] = DefinePatternPangu(false, false);
+  patterns[kPatternNameSigmaDistributedUsePastMB] = DefinePatternPangu(false, true);
+  patterns[kPatternNameAlphaDistributedUsePast] = DefinePatternPangu(true);
   patterns[kMPAWithMaskPatternNamePA] = DefineMPWithMaskPatternPA();
   patterns[kMPAPatternNamePA] = DefineMPWithMaskPatternPA(false);
   patterns[kMPAWithMaskPatternNameT5] = DefineMPWithMaskPatternT5();
@@ -969,12 +1034,13 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
   if (!cross && !t5_x_) {
     redundant.push_back(bias_q);
   }
+  bool transpose_b = IsTransposeWeight(func_graph, equiv, dense_);
   tensor::TensorPtr c_weights, q_weight_t;
   if (cross) {
-    c_weights = ConcatTensors({weight_k_tensor, weight_v_tensor}, true);
-    q_weight_t = ConcatTensors({weight_q_tensor}, true);
+    c_weights = ConcatTensors({weight_k_tensor, weight_v_tensor}, true, transpose_b);
+    q_weight_t = ConcatTensors({weight_q_tensor}, true, transpose_b);
   } else {
-    c_weights = ConcatTensors({weight_q_tensor, weight_k_tensor, weight_v_tensor}, true);
+    c_weights = ConcatTensors({weight_q_tensor, weight_k_tensor, weight_v_tensor}, true, transpose_b);
   }
   // convert tensors to params
   auto c_weight_param = func_graph->add_parameter();

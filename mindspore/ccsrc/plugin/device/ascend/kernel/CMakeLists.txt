@@ -31,9 +31,20 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         file(GLOB_RECURSE AKG_D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "akg/*.cc")
 endif()
 
-set_property(SOURCE ${D_SRC_LIST} ${AKG_D_SRC_LIST}
+file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "acl/*.cc"
+        "host/*.cc"
+        "aicpu/*.cc"
+        "hccl/*.cc"
+        "opapi/*.cc"
+        "ascend_kernel_mod.cc"
+        )
+list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
+
+set_property(SOURCE ${D_SRC_LIST} ${AKG_D_SRC_LIST} ${SRC_IN_910B}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 if(ENABLE_D)
+    add_library(_mindspore_plugin_device_ascend_kernel_910b_obj OBJECT ${SRC_IN_910B})
     add_library(_mindspore_plugin_device_ascend_kernel_obj OBJECT ${D_SRC_LIST} ${AKG_D_SRC_LIST})
 endif()
 

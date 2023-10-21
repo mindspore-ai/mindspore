@@ -77,3 +77,6 @@ endif()
 add_library(mindspore_infer_shared_lib_obj OBJECT ${MSLIB_INFER_SRC})
 add_dependencies(mindspore_infer_shared_lib_obj fbs_inner_src)
 
+if(MSLITE_ENABLE_ACL)
+add_subdirectory(llm_engine)
+endif()

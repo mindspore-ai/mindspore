@@ -1153,22 +1153,33 @@ class MS_CORE_API AbstractList final : public AbstractSequence, public ExtraInfo
 using AbstractListPtr = std::shared_ptr<AbstractList>;
 
 /// \brief Class AbstractNamedTuple describes a namedtuple node's abstract value.
-class MS_CORE_API AbstractNamedTuple : public AbstractTuple {
+class MS_CORE_API AbstractNamedTuple final : public AbstractTuple {
  public:
-  /// \brief Constructor of AbstractTuple.
+  /// \brief Constructor of AbstractNamedTuple.
   ///
+  /// \param[in] name The name of a namedtuple.
   /// \param[in] values  A List of data in namedtuple.
   /// \param[in] keys A list of label in namedtuple.
-  explicit AbstractNamedTuple(const AbstractBasePtrList &values, const AbstractBasePtrList &keys)
-      : AbstractTuple(values), keys_(keys) {}
+  AbstractNamedTuple(const std::string &type_name, const AbstractBasePtrList &keys, const AbstractBasePtrList &values)
+      : AbstractTuple(values), type_name_{type_name}, keys_(keys) {}
 
   /// \brief Destructor of  AbstractNamedTuple.
   ~AbstractNamedTuple() override = default;
   MS_DECLARE_PARENT(AbstractNamedTuple, AbstractTuple)
-
+  /// \brief Get the stored label.
+  ///
+  /// \return A vector of label.
   const AbstractBasePtrList &key() const { return keys_; }
+  /// \brief Get the name of namedtuple object.
+  ///
+  /// \return A string of namedtuple's type name.
+  const std::string &name() const { return type_name_; }
+
+ protected:
+  ValuePtr RealBuildValue() const override;
 
  private:
+  std::string type_name_;
   AbstractBasePtrList keys_;
 };
 using AbstractNamedTuplePtr = std::shared_ptr<AbstractNamedTuple>;

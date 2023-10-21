@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,9 @@ class BACKEND_EXPORT CallbackImplWithInferShape : public CallbackImpl {
   std::string GetInputFormat(const AnfNodePtr &, size_t) override;
   std::string GetOutputFormat(const AnfNodePtr &, size_t) override;
   std::string GetProcessor(const AnfNodePtr &) override;
+  void SetGraphKernelNodeKernelInfo(const AnfNodePtr &) override {}
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
+  void ResetKernelInfo(const AnfNodePtr &node) override {}
   bool IsUseDeviceInfo() override { return false; }
 };
 }  // namespace mindspore::graphkernel

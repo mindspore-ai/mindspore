@@ -34,7 +34,7 @@ class NetSequenceConcat(nn.Cell):
         return self.op(seq)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_cpu
@@ -53,7 +53,7 @@ def test_seq_tensor_concat0():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_cpu

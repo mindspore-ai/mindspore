@@ -82,8 +82,9 @@ void VdecHelper::DestroyResource() {
   if (isReleased_) {
     return;
   }
+  constexpr auto kMicrosecond = 1000;
   while (!isChannelExit_) {
-    (void)usleep(1000);
+    (void)usleep(kMicrosecond);
   }
   UnsubscribReportThread();
 

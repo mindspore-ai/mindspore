@@ -40,12 +40,16 @@ class TensorNumpyImpl : public MutableTensorImpl {
       : name_(name), buffer_(std::move(buffer)), ms_shape_(ms_shape) {}
   ~TensorNumpyImpl() {
     {
-      py::gil_scoped_acquire acquire;
-      { buffer_ = py::buffer_info(); }
+      if (PyGILState_Check() == 0) {
+        py::gil_scoped_acquire acquire;
+        { buffer_ = py::buffer_info(); }
+      } else {
+        buffer_ = py::buffer_info();
+      }
     }
     if (device_data_ != nullptr) {
       MS_LOG(INFO) << "free device data in tensor numpy impl.";
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_, device_id_);
     }
   }
   const std::vector<int64_t> &Shape() const override { return ms_shape_; }
@@ -80,7 +84,7 @@ class TensorNumpyImpl : public MutableTensorImpl {
   void SetDeviceData(void *data) override {
 #ifdef ENABLE_CLOUD_INFERENCE
     if (device_data_ != nullptr) {
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data_, device_id_);
     }
     device_data_ = data;
     return;

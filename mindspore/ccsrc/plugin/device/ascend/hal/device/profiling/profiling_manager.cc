@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include <cstdlib>
 #include "securec/include/securec.h"
-#include "./prof_mgr_core.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
@@ -119,12 +118,17 @@ bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t
   profiling_path_ = profiling_path;
   device_id_ = device_id;
 
-  bool ret = ProfRegisterCtrlCallback();
-  if (ret == false) {
-    return ret;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    MS_LOG(INFO) << "GE backend has been declare. No need to declare VM backend.";
+    return true;
   }
+  MS_LOG(INFO) << "Profiling backend is: " << backend;
 
-  return true;
+  bool ret = ProfRegisterCtrlCallback();
+  return ret;
 }
 
 bool ProfilingManager::ProfRegisterCtrlCallback() const {

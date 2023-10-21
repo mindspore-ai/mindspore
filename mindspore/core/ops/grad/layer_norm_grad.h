@@ -36,6 +36,7 @@ class MIND_API LayerNormGrad : public BaseOperator {
   void set_begin_params_axis(const int64_t begin_params_axis);
   int64_t get_begin_norm_axis() const;
   int64_t get_begin_params_axis() const;
+  float get_epsilon() const;
 };
 }  // namespace ops
 }  // namespace mindspore

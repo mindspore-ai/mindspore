@@ -345,29 +345,6 @@ kernel::PyExecuteOutputUserDataPtr GetUserDataFromAddress(const py::object &res)
   return nullptr;
 }
 
-std::pair<py::object, bool> GetTotalVectorRefPyData(const VectorRef &value_list) {
-  auto value_size = value_list.size();
-  if (value_size == 0) {
-    return {py::none(), false};
-  }
-  auto first_element = value_list[0];
-  auto user_data = GetUserDataFromAddress(BaseRefToPyData(first_element));
-  if (user_data == nullptr) {
-    return {py::none(), false};
-  }
-  // If all elements in VectorRef has the same user data, it is a whole pyexecute node with sequence output.
-  // So, we only need to take out the user data of one element and use it as the whole output.
-  for (size_t i = 1; i < value_size; ++i) {
-    auto element = value_list[i];
-    auto res = BaseRefToPyData(element);
-    auto cur_user_data = GetUserDataFromAddress(res);
-    if (user_data != cur_user_data) {
-      return {py::none(), false};
-    }
-  }
-  return {user_data->obj, true};
-}
-
 py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBasePtr &abs);
 
 template <typename T>
@@ -393,16 +370,6 @@ py::object GetVectorRefPyDataWithAbstract(const VectorRef &value_list, const abs
 }
 
 py::object GetVectorRefPyData(const VectorRef &value_list, const AbstractBasePtr &abs) {
-  static const auto allow_runtime_compile = common::GetEnv("MS_RUNTIME_COMPILE") != "1";
-  if (!allow_runtime_compile) {
-    // If Runtime compile is supported, all the PyExecute will be AbstractAny in frontend (no AbstractSequence).
-    // There will not exist the scene when multiple elements with the same user data should return as
-    // a whole python object. GetTotalVectorRefPyData will be deleted when MS_RUNTIME_COMPILE is deleted.
-    const auto &[py_res, use_as_total] = GetTotalVectorRefPyData(value_list);
-    if (use_as_total) {
-      return py_res;
-    }
-  }
   if (abs == nullptr || abs->isa<abstract::AbstractCSRTensor>() || abs->isa<abstract::AbstractCOOTensor>()) {
     return BaseRefToPyData(value_list, abs);
   }
@@ -438,6 +405,33 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
     return GetVectorRefPyData(vec_ref, abs);
   }
   return BaseRefToPyData(value, abs);
+}
+
+void AddManager(const FuncGraphManagerPtr &manager, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<FuncGraph>()) {
+    auto fg = value->cast<FuncGraphPtr>();
+    manager->AddFuncGraph(fg);
+  }
+  if (value->isa<ValueSequence>()) {
+    auto value_sequence = value->cast<ValueSequencePtr>();
+    for (const auto &elem : value_sequence->value()) {
+      AddManager(manager, elem);
+    }
+  }
+  if (value->isa<ValueDictionary>()) {
+    for (const auto &elem : value->cast<ValueDictionaryPtr>()->value()) {
+      AddManager(manager, elem.second);
+    }
+  }
+}
+
+void AddManagerForFuncGraphArgs(const ResourcePtr &resource, const ValuePtrList &arguments) {
+  auto manager = resource->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &arg : arguments) {
+    AddManager(manager, arg);
+  }
 }
 }  // namespace
 
@@ -1089,6 +1083,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   bool is_auto_parallel = is_parallel_mode && !py::hasattr(source, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source, parallel::kKeepInputUnchanged);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = args.size() + kwargs.size();
@@ -1565,7 +1560,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
-    if (!common::IsEnableRefMode()) {
+    if (!IsEnableRefMode()) {
       GeFirstInitParams();
     }
     std::string phase_prefix = GetPhasePrefix(phase);
@@ -2264,7 +2259,6 @@ void ClearResPart1() {
   device::StreamSynchronizer::GetInstance()->Finalize();
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
 
-  (void)distributed::collective::CollectiveManager::instance()->Finalize();
   PrimitivePy::ClearHookRes();
   ad::g_k_prims.clear();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
@@ -2304,6 +2298,9 @@ void ClearResPart2() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
+
+  // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper
+  (void)distributed::collective::CollectiveManager::instance()->Finalize();
 
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();

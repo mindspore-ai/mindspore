@@ -53,6 +53,21 @@ def test_bernoulli():
     assert elem_count * 0.4 < nonzero_count < elem_count * 0.6
 
 
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bernoulli_empty_tensor():
+    """
+    Feature: bernoulli function
+    Description: test cases for Bernoulli
+    Expectation: the result matches scipy
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x = Tensor([])
+    out = Net()(x, 0.5)
+    assert out.shape == (0,)
+
+
 class BernoulliDynamic(nn.Cell):
     def __init__(self, seed=-1):
         super(BernoulliDynamic, self).__init__()
@@ -85,7 +100,7 @@ def test_bernoulli_dynamic():
     assert elem_count * 0.4 < nonzero_count < elem_count * 0.6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bernoulli_dynamic_x_type_error():

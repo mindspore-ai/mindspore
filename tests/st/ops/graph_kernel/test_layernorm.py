@@ -121,7 +121,7 @@ def test_layernorm_grad(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
 
     compare_result(expect, output, dtype)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm_gpu():

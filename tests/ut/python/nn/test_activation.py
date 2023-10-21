@@ -220,6 +220,8 @@ def test_compile_leaky_relu():
     net = NetLeakyReLU(alpha=0.1)
     input_data = Tensor(np.array([[1.6, 0, 0.6], [6, 0, -6]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
+    input_data = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint32))
+    _cell_graph_executor.compile(net, input_data)
 
 
 class NetSoftsign(nn.Cell):

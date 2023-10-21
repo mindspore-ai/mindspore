@@ -192,7 +192,7 @@ add_gpu_info_attr_only = CustomRegOp("add_with_attr_kernel_gpu_2") \
     .get_op_info()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_aot_single_output_gpu():
@@ -239,7 +239,7 @@ add_cpu_info_attr_only = CustomRegOp("add_with_attr_kernel_cpu_2") \
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_aot_single_output_cpu():
@@ -259,7 +259,7 @@ def test_aot_single_output_cpu():
         aot_single_output_dyn_shape("add.cc", add_cpu_info)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reorganize():
@@ -287,7 +287,7 @@ def test_reorganize():
     assert np.allclose(expect, output.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_hetero_square_mul():
@@ -325,7 +325,7 @@ class SquareGradNet(Cell):
         return res2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_square_py_bprop():
@@ -358,7 +358,7 @@ def test_square_py_bprop():
     assert np.allclose(expect, dx_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_square_aot_bprop():
@@ -497,7 +497,7 @@ def test_add_mul_div_bprop_graph():
     add_mul_div_bprop("add_mul_div.cu", "add_mul_div.so", "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_add_mul_div_bprop_pynative():

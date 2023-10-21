@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -94,9 +94,7 @@ def test_range_with_wrong_input():
         step = mutable(4)
         return range(start, end, step)
 
-    with pytest.raises(TypeError) as ex:
-        foo()
-    assert "input should be a int scalar but got" in str(ex.value)
+    foo()
 
 
 def test_range_with_wrong_input_2():

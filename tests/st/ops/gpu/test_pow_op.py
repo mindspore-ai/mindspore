@@ -37,7 +37,7 @@ class Net(Cell):
 @pytest.mark.env_onecard
 def test_int_neg_exp():
     """
-    Feature: Support negative exponent when inputs are int datatypes。
+    Feature: Support negative exponent when inputs are int datatypes.
     Description: Input signed int numbers to Pow op. Test whether it supports negative exponents.
     Expectation: Output of Pow op match to expectations. (numpy.power not support negative exponents)
     """
@@ -57,7 +57,7 @@ def test_int_neg_exp():
 @pytest.mark.env_onecard
 def test_int_real_datatypes():
     """
-    Feature: Support various int and real datatypes。
+    Feature: Support various int and real datatypes.
     Description: Input various types of int and real numbers to Pow op. Test whether it supports.
     Expectation: Output of Pow op match to numpy.power.
     """
@@ -93,7 +93,7 @@ def test_int_real_datatypes():
 @pytest.mark.env_onecard
 def test_complex_datatypes():
     """
-    Feature: Support various complex datatypes。
+    Feature: Support various complex datatypes.
     Description: Input various types of complex numbers input Pow op. Test whether it supports.
     Expectation: Output of Pow op match to numpy.power.
     """
@@ -124,7 +124,7 @@ def test_complex_datatypes():
         assert out.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pow_dynamic_shape():

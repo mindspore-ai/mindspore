@@ -46,7 +46,10 @@ constexpr auto kGetGradOpName = "GetGrad";
 constexpr auto kSetSizeOpName = "SetSize";
 constexpr auto kPackFuncOpName = "PackFunc";
 constexpr auto kIsInstanceOpName = "isinstance";
-constexpr auto kLowerOpName = "Lower";
+constexpr auto kStringUpperOpName = "StringUpper";
+constexpr auto kStringLowerOpName = "StringLower";
+constexpr auto kHookBackwardName = "HookBackward";
+constexpr auto kCellBackwardHookName = "CellBackwardHook";
 
 // Framework
 constexpr auto kUpdateStateOpName = "UpdateState";

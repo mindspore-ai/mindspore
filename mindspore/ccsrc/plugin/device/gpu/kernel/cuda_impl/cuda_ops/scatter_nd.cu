@@ -34,16 +34,14 @@ __global__ void ScatterNdKernel(S *indices, T *update, T *output, const size_t b
 
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
-      out_bound |= indices_i >= work_shape[k];
+      CUDA_KERNEL_ASSERT(indices_i >= 0 && indices_i < work_shape[k]);
       write_index += indices_i * indices_stride[k];
     }
 
     write_index += j;
-    out_bound |= write_index >= output_size;
+    CUDA_KERNEL_ASSERT(write_index < output_size);
 
-    if (!out_bound) {
-      MsAtomicAdd(&output[write_index], update[read_index]);
-    }
+    MsAtomicAdd(&output[write_index], update[read_index]);
   }
 }
 

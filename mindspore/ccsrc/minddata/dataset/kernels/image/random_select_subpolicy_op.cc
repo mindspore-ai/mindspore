@@ -30,6 +30,7 @@ RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &p
 }
 
 Status RandomSelectSubpolicyOp::Compute(const TensorRow &input, TensorRow *output) {
+  IO_CHECK_VECTOR(input, output);
   TensorRow in_row = input;
   size_t rand_num = rand_int_(gen_);
   CHECK_FAIL_RETURN_UNEXPECTED(rand_num < policy_.size(),

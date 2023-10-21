@@ -101,9 +101,10 @@ target_compile_features(triton-mslite-backend PRIVATE cxx_std_11)
 target_compile_options(
   triton-mslite-backend PRIVATE
   $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-    -Wall -Wextra -Wno-unused-parameter -Werror>
+    -Wall -Wextra -Wno-unused-parameter -Werror -fstack-protector-all -fPIC -D_FORTIFY_SOURCE=2 -O2>
 )
 
+target_link_options(triton-mslite-backend PRIVATE -Wl,-z,relro,-z,now,-z,noexecstack -fstack-protector-all -s)
 if(NOT ${TRITON_ENABLE_GITEE})
   target_link_libraries(
     triton-mslite-backend

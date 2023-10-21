@@ -50,6 +50,8 @@
 #include "mindspore/core/ops/custom.h"
 #include "mindspore/lite/src/common/common.h"
 #include "mindspore/lite/tools/common/custom_ascend_utils.h"
+#include "inc/ops/array_ops.h"
+#include "inc/ops/elewise_calculation_ops.h"
 
 namespace mindspore {
 namespace {
@@ -222,12 +224,14 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
     }
   }
   ge_options["ge.exec.device_id"] = std::to_string(GetDeviceID());
-  if (!offline_mode_) {
-    ge_options["ge.featureBaseRefreshable"] = "1";
-  } else {
-    ge_options["ge.featureBaseRefreshable"] = "0";
+  if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
+    if (!offline_mode_) {
+      ge_options["ge.featureBaseRefreshable"] = "1";
+    } else {
+      ge_options["ge.featureBaseRefreshable"] = "0";
+    }
+    ge_options["ge.constLifecycle"] = "graph";
   }
-  ge_options["ge.constLifecycle"] = "graph";
 
   config_it = config_infos_.find(lite::kAscendContextSection);
   if (config_it != config_infos_.end()) {
@@ -360,13 +364,13 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
     MS_LOG(EXCEPTION) << "Failed to get graph session options, can not find ascend device context.";
   }
   uint32_t rank_id = ascend_device_info->GetRankID();
-  graph_name_ = anf_graph->ToString() + "_" + std::to_string(rank_id) + "_" + std::to_string(global_graph_idx_);
+  graph_name_ = std::to_string(rank_id) + "_" + std::to_string(global_graph_idx_) + "_" + anf_graph->ToString();
   for (auto &c : graph_name_) {
     if (c == '.') {
       c = '_';
     }
   }
-  ge_options["ge.graph_key"] = graph_name_;
+  ge_options[kGeGraphKey] = graph_name_;
   auto config_it = config_infos_.find(lite::kGeGraphOptionsSection);
   if (config_it != config_infos_.end()) {
     for (auto &item : config_it->second) {
@@ -855,17 +859,40 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
   return df_graph;
 }
 
-transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOffline(const FuncGraphPtr &anf_graph,
-                                                            std::map<std::string, std::string> *ge_options_ptr) {
-  tensor::TensorPtr model_cache;
+transform::DfGraphPtr GenExampleGraph(const std::string &name) {
+  MS_LOG(INFO) << "Gen fake graph name is " << name;
+  auto graph = std::make_shared<transform::DfGraph>(name);
+  auto shape_data = std::vector<int64_t>({1, 1, 1, 1});
+  transform::GeTensorDesc desc_data(ge::Shape(shape_data), ge::FORMAT_ND, ge::DT_FLOAT16);
+  auto data = ge::op::Data("data");
+  data.set_attr_index(0);
+  data.update_input_desc_x(desc_data);
+  data.update_output_desc_y(desc_data);
+  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
+  std::vector<transform::Operator> inputs{data};
+  std::vector<transform::Operator> outputs{add};
+  graph->SetInputs(inputs);
+  graph->SetOutputs(outputs);
+  return graph;
+}
+
+bool GeGraphExecutor::CreateGeGraphOffline(const FuncGraphPtr &anf_graph,
+                                           std::map<std::string, std::string> *ge_options_ptr, uint32_t *graph_id) {
+  ref_mode_flag_ = transform::RefModeFlag::kRefModeVariable;
+  if (!CreateSession()) {
+    MS_LOG(ERROR) << "Failed to create ge session";
+    return false;
+  }
+  tensor::TensorPtr model_cache = nullptr;
   std::string graph_name;
   std::map<std::string, ValuePtr> attr_map;
   std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
   if (!CustomAscendUtils::ParseCustomFuncGraph(anf_graph, &model_cache, &graph_name, &attr_map, &ref_datas)) {
     MS_LOG(ERROR) << "Failed to parse custom func graph";
-    return nullptr;
+    return false;
   }
-  if (auto option_it = ge_options_ptr->find(kGeGraphCompilerCacheDir); option_it == ge_options_ptr->end()) {
+  auto option_it = ge_options_ptr->find(kGeGraphCompilerCacheDir);
+  if (option_it == ge_options_ptr->end()) {
     if (auto it = attr_map.find(lite::kNameAttrWeightDir); it != attr_map.end()) {
       auto weight_dir = GetValue<std::string>(it->second);
       std::string mindir_path;
@@ -880,15 +907,25 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOffline(const FuncGraphPtr &
       (*ge_options_ptr)[kGeGraphCompilerCacheDir] = weight_dir;
     }
   }
+  if (graph_name.empty()) {
+    MS_LOG(ERROR) << "Graph compiler cache dir or graph name is empty";
+    return false;
+  }
+  graph_name_ = graph_name;
+  MS_LOG(INFO) << "Update ge options " << kGeGraphKey << " to " << graph_name;
+  (*ge_options_ptr)[kGeGraphKey] = graph_name;
   if (!ref_datas.empty()) {
-    ref_mode_flag_ = transform::RefModeFlag::kRefModeVariable;
     if (!InitRefDataContext(ref_datas, ge_options_ptr)) {
       MS_LOG(ERROR) << "Failed to init refdata context";
-      return nullptr;
+      return false;
     }
   }
-  auto df_graph = std::make_shared<transform::DfGraph>();
-  return df_graph;
+  auto df_graph = GenExampleGraph(graph_name);
+  if (!AddGraph(df_graph, *ge_options_ptr, graph_id)) {
+    MS_LOG(ERROR) << "Failed to add compute graph, graph name " << anf_graph->ToString();
+    return false;
+  }
+  return true;
 }
 
 transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &anf_graph,
@@ -905,8 +942,6 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
     MS_LOG(ERROR) << "Input param ge_options_ptr is nullptr.";
     return nullptr;
   }
-  auto &ge_options = *ge_options_ptr;
-  GetGeGraphOptions(anf_graph, &ge_options);
 
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   auto param = ParseGraphKernelConfigs(config_infos_);
@@ -926,8 +961,8 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
   }
 #endif
 
-  auto remove_load_pass = std::make_shared<opt::RemoveLoadPass>();
-  remove_load_pass->Run(anf_graph);
+  // auto remove_load_pass = std::make_shared<opt::RemoveLoadPass>();
+  // remove_load_pass->Run(anf_graph);
 
   if (!UpdateGraphInputs(anf_graph)) {
     MS_LOG(ERROR) << "Failed to update graph inputs";
@@ -940,13 +975,9 @@ transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &an
   auto func_type = anf_graph->get_attr(kAttrFuncType);
   is_data_flow_graph_ = func_type != nullptr && GetValue<std::string>(func_type) == kDataFlowGraphType;
   if (!is_data_flow_graph_) {
-    if (!CustomAscendUtils::IsCustomFuncGraph(anf_graph)) {
-      df_graph = CreateGeGraphOnline(anf_graph, ge_options_ptr);
-    } else {
-      df_graph = CreateGeGraphOffline(anf_graph, ge_options_ptr);
-    }
+    df_graph = CreateGeGraphOnline(anf_graph, ge_options_ptr);
   } else {
-    df_graph = GetDataFlowGraph(anf_graph, ge_options);
+    df_graph = GetDataFlowGraph(anf_graph, *ge_options_ptr);
   }
   return df_graph;
 }
@@ -955,15 +986,22 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
                                    uint32_t *graph_id) {
   MS_CHECK_TRUE_RET(graph_id != nullptr, false);
   std::map<std::string, std::string> ge_options;
-  auto df_graph = CompileGraphCommon(anf_graph, &ge_options);
-  if (df_graph == nullptr) {
-    MS_LOG(ERROR) << "Input param graph is nullptr.";
-    return false;
-  }
+  GetGeGraphOptions(anf_graph, &ge_options);
+
   uint32_t compute_graph_id = 0;
-  if (!AddGraph(df_graph, ge_options, &compute_graph_id)) {
-    MS_LOG(ERROR) << "Failed to add compute graph, graph name " << anf_graph->ToString();
+  if (CustomAscendUtils::IsCustomFuncGraph(anf_graph)) {
+    MS_LOG(ERROR) << "Offline converted MindIR is not supported currently";
     return false;
+  } else {
+    auto df_graph = CompileGraphCommon(anf_graph, &ge_options);
+    if (df_graph == nullptr) {
+      MS_LOG(ERROR) << "Input param graph is nullptr.";
+      return false;
+    }
+    if (!AddGraph(df_graph, ge_options, &compute_graph_id)) {
+      MS_LOG(ERROR) << "Failed to add compute graph, graph name " << anf_graph->ToString();
+      return false;
+    }
   }
   compute_graph_id_list_.push_back(compute_graph_id);
   *graph_id = compute_graph_id;
@@ -1043,6 +1081,7 @@ bool GeGraphExecutor::GetOneRealInputs(const FuncGraphPtr &anf_graph, std::vecto
 
 bool GeGraphExecutor::AoeTuning(const FuncGraphPtr &anf_graph) {
   std::map<std::string, std::string> ge_options;
+  GetGeGraphOptions(anf_graph, &ge_options);
   auto df_graph = CompileGraphCommon(anf_graph, &ge_options);
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Input param graph is nullptr.";
@@ -1337,7 +1376,7 @@ bool GeGraphExecutor::RunGraphWithStreamAsync(uint32_t graph_id, void *stream, c
   MS_EXCEPTION_IF_NULL(outputs);
 
   MS_LOG(INFO) << "Run the graph in GE with " << inputs.size() << " inputs";
-  struct timeval start_time, end_time;
+  struct timeval start_time;
   (void)gettimeofday(&start_time, nullptr);
 
   ge::Status ret = ge_session_->RunGraphWithStreamAsync(graph_id, stream, inputs, *outputs);
@@ -1349,7 +1388,7 @@ bool GeGraphExecutor::RunGraphWithStreamAsync(uint32_t graph_id, void *stream, c
     MS_LOG(ERROR) << "Sync stream for RunGraphWithStreamAsync failed";
     return false;
   }
-
+  struct timeval end_time;
   (void)gettimeofday(&end_time, nullptr);
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
@@ -1532,7 +1571,8 @@ bool GeGraphExecutor::CreateAsCustomFuncGraph(const FuncGraphPtr &func_graph) {
   auto files = ReadFileNames(build_cache_dir_);
   for (auto &file : files) {
     if (file.find(".om") != std::string::npos && file.find(graph_name_) != std::string::npos) {
-      buffer = ReadFile(build_cache_dir_ + "/" + file);
+      auto om_path = build_cache_dir_ + "/" + file;
+      buffer = ReadFile(om_path);
       break;
     }
   }

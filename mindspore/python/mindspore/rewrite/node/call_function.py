@@ -26,7 +26,8 @@ class CallFunction(Node, NodeManager):
     def __init__(self, targets: [ScopedValue], func_name: ScopedValue, args: [ScopedValue],
                  kwargs: {str: ScopedValue}, node_name: str, ast_node: ast.AST, ast_functiondef: ast.FunctionDef,
                  stree, instance):
-        """Constructor of CallFunction.
+        """
+        Constructor of CallFunction.
 
         Args:
             targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
@@ -48,12 +49,8 @@ class CallFunction(Node, NodeManager):
         NodeManager.set_ast_functiondef(self, ast_functiondef)
         NodeManager.set_manager_name(self, func_name.value)
 
-    def append(self, node, insert_to_ast: bool = True):
-        """ Append new node to node list. """
-        NodeManager.insert_node(self, node, self.get_tail(), False)
-
     def erase_node(self, node):
-        """Erase node form container."""
+        """Erase node from CallFunction."""
         NodeManager.erase_node(self, node)
         # erase asts
         ret = AstModifier.erase_ast_from_function(self.get_ast_functiondef(), node.get_ast())

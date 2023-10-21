@@ -19,9 +19,9 @@
  * \brief
  */
 #include "image_ops_shape_fns.h"
-#include "op_log.h"
 #include "error_util.h"
 #include "graph/utils/op_desc_utils.h"
+#include "op_log.h"
 
 namespace ge {
 graphStatus ColorspaceShapeFn(Operator &op, const std::string &output_name) {
@@ -94,6 +94,10 @@ graphStatus SetOutputToSizedImage(Operator &op, const int64_t batch_dim, const s
   op_desc->SetOpInferDepends(input_infer_depends);
 
   DataType data_type = DT_FLOAT;
+  auto op_name = op.GetName();
+  if (op_name == "ResizeBicubic") {
+    data_type = op.GetInputDescByName("images").GetDataType();
+  }
   // Update DataType when Attr "dtype" is set, used for op ResizeBicubic
   if (op.GetAttr("dtype", data_type) == GRAPH_SUCCESS) {
     if ((data_type != DT_FLOAT) && (data_type != DT_UINT8)) {

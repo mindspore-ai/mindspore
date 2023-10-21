@@ -129,7 +129,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
     // create tensor
     auto impl = LiteTensorImpl::CreateTensorImpl(CharToString(name), type, shape, nullptr, 0);
     if (impl == nullptr) {
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data, device_id);
       MS_LOG(ERROR) << "Allocate tensor impl failed.";
       return nullptr;
     }
@@ -138,7 +138,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
       auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyHostDataToDevice(const_cast<void *>(data),
                                                                                       device_data, element_size);
       if (status != kSuccess) {
-        kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+        kernel::AscendAllocatorPlugin::GetInstance().Free(device_data, device_id);
         MS_LOG(ERROR) << "copy host data to device data failed.";
         return nullptr;
       }
@@ -151,7 +151,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, enum DataType ty
 
     auto ms_tensor = new (std::nothrow) MSTensor(impl);
     if (ms_tensor == nullptr) {
-      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data);
+      kernel::AscendAllocatorPlugin::GetInstance().Free(device_data, device_id);
       MS_LOG(ERROR) << "Allocate MSTensor failed.";
       return nullptr;
     }
@@ -233,8 +233,8 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &
     auto new_tensor =
       CreateTensor(tensor.Name(), tensor.DataType(), tensor.Shape(), nullptr, tensor.DataSize(), "ascend", device_id);
     auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToDevice(
-      static_cast<MSTensor>(tensor).GetDeviceData(), new_tensor->GetDeviceData(), tensor.DataSize(),
-      tensor.GetDeviceId(), new_tensor->GetDeviceId());
+      static_cast<MSTensor>(tensor).GetDeviceData(), new_tensor->GetDeviceData(), new_tensor->DataSize(),
+      tensor.DataSize(), tensor.GetDeviceId(), new_tensor->GetDeviceId());
     if (status != kSuccess) {
       return nullptr;
     }
@@ -248,7 +248,7 @@ MSTensor *MSTensor::CreateTensor(const std::vector<char> &name, const MSTensor &
     auto host_form_device = malloc(tensor.DataSize());
     MS_CHECK_FALSE_MSG(host_form_device == nullptr, nullptr, "malloc host buf failed.");
     auto status = kernel::AscendAllocatorPlugin::GetInstance().CopyDeviceDataToHost(
-      static_cast<MSTensor>(tensor).GetDeviceData(), host_form_device, tensor.DataSize());
+      static_cast<MSTensor>(tensor).GetDeviceData(), host_form_device, tensor.DataSize(), tensor.GetDeviceId());
     if (status != kSuccess) {
       free(host_form_device);
       return nullptr;

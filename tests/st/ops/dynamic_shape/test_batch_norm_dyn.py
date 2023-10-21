@@ -54,7 +54,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_batchnorm_training_nchw_dynamic_shape():
@@ -96,7 +96,7 @@ def test_batchnorm_training_nchw_dynamic_shape():
     assert grad[4].asnumpy().shape == (channel,)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_not_training_nhwc_dynamic_shape():

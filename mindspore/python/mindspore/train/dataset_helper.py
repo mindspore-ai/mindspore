@@ -306,7 +306,7 @@ class DatasetHelper:
         >>> for next_element in set_helper:
         ...     # `next_element` includes data and label, using data to run the net
         ...     data = next_element[0]
-        ...     net(data)
+        ...     result = net(data)
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1):
@@ -411,8 +411,8 @@ class DatasetHelper:
             >>>
             >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
             >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
-            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
-            >>> set_helper.release()
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>> dataset_helper.release()
         """
         self.iter.release()
 
@@ -428,8 +428,8 @@ class DatasetHelper:
             >>>
             >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
             >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
-            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
-            >>> set_helper.continue_send()
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>> dataset_helper.continue_send()
         """
         self.iter.continue_send()
 

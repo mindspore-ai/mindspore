@@ -3,7 +3,7 @@ find_package(CUDA)
 add_compile_definitions(ENABLE_GPU)
 file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cu
-    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherd.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/batchtospace_impl.cu

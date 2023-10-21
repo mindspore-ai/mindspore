@@ -54,6 +54,7 @@ Status CifarOp::RegisterAndLaunchThreads() {
 
 // Load 1 TensorRow (image,label). 1 function call produces 1 TensorTow
 Status CifarOp::LoadTensorRow(row_id_type index, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
   std::shared_ptr<Tensor> label;
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
@@ -141,13 +142,13 @@ Status CifarOp::ReadCifar10BlockData() {
         RETURN_STATUS_UNEXPECTED("Invalid cifar10 file, failed to read data from: " + file +
                                  ", re-download dataset(make sure it is CIFAR-10 binary version).");
       }
-      (void)cifar_raw_data_block_->EmplaceBack(image_data);
+      RETURN_IF_NOT_OK(cifar_raw_data_block_->EmplaceBack(image_data));
       // Add file path info
       path_record_.push_back(file);
     }
     in.close();
   }
-  (void)cifar_raw_data_block_->EmplaceBack(std::vector<unsigned char>());  // end block
+  RETURN_IF_NOT_OK(cifar_raw_data_block_->EmplaceBack(std::vector<unsigned char>()));  // end block
 
   return Status::OK();
 }
@@ -194,13 +195,13 @@ Status CifarOp::ReadCifar100BlockData() {
         RETURN_STATUS_UNEXPECTED("Invalid cifar100 file, failed to read data from: " + file +
                                  ", re-download dataset(make sure it is CIFAR-100 binary version).");
       }
-      (void)cifar_raw_data_block_->EmplaceBack(image_data);
+      RETURN_IF_NOT_OK(cifar_raw_data_block_->EmplaceBack(image_data));
       // Add file path info
       path_record_.push_back(file);
     }
     in.close();
   }
-  (void)cifar_raw_data_block_->EmplaceBack(std::vector<unsigned char>());  // block end
+  RETURN_IF_NOT_OK(cifar_raw_data_block_->EmplaceBack(std::vector<unsigned char>()));  // block end
   return Status::OK();
 }
 
@@ -290,6 +291,7 @@ Status CifarOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
 Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage, bool isCIFAR10, int64_t *count) {
   // the logic of counting the number of samples is copied from ReadCifar100Block() and ReadCifar10Block()
   // Note that this count logic is flawed, should be able to copy the sampler of original CifarOp without state
+  RETURN_UNEXPECTED_IF_NULL(count);
   *count = 0;
   const int64_t num_samples = 0;
   const int64_t start_index = 0;

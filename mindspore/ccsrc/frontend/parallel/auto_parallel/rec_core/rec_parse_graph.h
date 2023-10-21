@@ -38,7 +38,7 @@ static const std::set<OperatorType> EliminateOpType = {
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,        OperatorType::kRecExpandDims,
   OperatorType::kRecStridedSlice, OperatorType::kRecCum,           OperatorType::kRecLayerNorm,
   OperatorType::kRecFlatten,      OperatorType::kRecBatchParallel, OperatorType::kRecStandAlone,
-  OperatorType::kRecPadV3};
+  OperatorType::kRecPadV3,        OperatorType::kRecBatchMatMul};
 
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
@@ -65,7 +65,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {REDUCE_MEAN, OperatorType::kRecReduce},
   {STAND_ALONE, OperatorType::kRecStandAlone},
   {GET_NEXT, OperatorType::kRecUnknownType},
-  {VIRTUAL_DATA_SET, OperatorType::kRecUnknownType},
+  {VIRTUAL_DATA_SET, OperatorType::kRecVirtual},
+  {VIRTUAL_OUTPUT, OperatorType::kRecVirtual},
   {BATCH_PARALLEL, OperatorType::kRecBatchParallel},
   {GATHERV2, OperatorType::kRecGatherV2},
   {EXPAND_DIMS, OperatorType::kRecExpandDims},
@@ -190,14 +191,14 @@ const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
 Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 
-OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                   Graph::NodeType NewTensor);
+void CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                            Graph::NodeType *NewTensor);
 
-TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+void Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                      const size_t iter_input_tensors, Graph::NodeType *NewTensor);
 
-TensorParam Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
+void Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                      const size_t iter_input_tensors, Graph::NodeType *NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names);

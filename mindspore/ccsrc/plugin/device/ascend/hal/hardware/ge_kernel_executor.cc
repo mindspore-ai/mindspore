@@ -16,42 +16,42 @@
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
 #include <utility>
 #include <algorithm>
+#include "include/common/utils/parallel_context.h"
+#include "acl/acl_rt.h"
+#include "acl/acl_op_compiler.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
-#include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "include/common/utils/parallel_context.h"
-#include "acl/acl_rt.h"
+#include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_attr_and_input_convert_regist.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
-#include "toolchain/adx_datadump_callback.h"
+#include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
-#include "utils/anf_utils.h"
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_kernel_task.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
-#include "include/backend/optimizer/helper.h"
-#include "kernel/opapi/aclnn_kernel_build.h"
-#include "kernel/acl/acl_kernel_build.h"
-#include "kernel/aicpu/aicpu_kernel_build.h"
-#include "kernel/aicpu/aicpu_kernel_metadata.h"
-#include "kernel/host/host_kernel_build.h"
-#include "kernel/host/host_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn_kernel_build.h"
+#include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_build.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_build.h"
+#include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "kernel/kernel_build_info.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "utils/anf_utils.h"
 
-using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
@@ -158,7 +158,7 @@ std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> Que
     kernel::HcclMetadataInfo(cnode, &kernel_info_list);
     return {KernelType::HCCL_KERNEL, kernel_info_list};
   }
-  opt::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
+  kernel::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
   kernel::AicpuMetadataInfo(cnode, &kernel_info_list);
   if (!kernel_info_list.empty()) {
     return {KernelType::AICPU_KERNEL, kernel_info_list};
@@ -243,7 +243,7 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
     output_reshape_types.assign(output_num, "");
     for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); i++) {
       auto input_format = AnfAlgo::GetPrevNodeOutputFormat(kernel, i);
-      if (!transform::AclHelper::CheckDefaultSupportFormat(input_format)) {
+      if ((!transform::AclHelper::CheckDefaultSupportFormat(input_format)) && (kernel_type != HCCL_KERNEL)) {
         MS_LOG(EXCEPTION) << "Aicpu kernel input not support this format: " << input_format
                           << ", kernel: " << kernel->fullname_with_scope() << ", input idx: " << i;
       }
@@ -297,6 +297,9 @@ void GenerateKernelBuildInfo(const AnfNodePtr &kernel, const KernelType &kernel_
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::GetKernelMod(kernel)) {
+      continue;
+    }
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
@@ -339,6 +342,20 @@ pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_t
       MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
   }
 }
+
+void SetAclOpPrecisionMode() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
+  if (op_precision_mode.empty()) {
+    return;
+  }
+  MS_LOG(INFO) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
+  auto ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! Error flag is " << ret;
+  }
+}
 }  // namespace
 
 void GeKernelExecutor::Initialize() {
@@ -350,6 +367,7 @@ void GeKernelExecutor::Initialize() {
   MS_EXCEPTION_IF_NULL(res_manager_);
   graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
   // not check graph executor, may use in ascend device context
+  SetAclOpPrecisionMode();
   initialized_ = true;
 }
 
@@ -357,7 +375,6 @@ void GeKernelExecutor::Destroy() {
   if (!initialized_) {
     return;
   }
-  AscendGraphOptimization::GetInstance().Reset();
   res_manager_ = nullptr;
   graph_executor_ = nullptr;
   initialized_ = false;
@@ -365,11 +382,11 @@ void GeKernelExecutor::Destroy() {
 
 void GeKernelExecutor::UnifyMindIR(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
+  GEGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
 void GeKernelExecutor::AddMindIRPass(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().AscendMindIRPass(graph);
+  GEGraphOptimization::GetInstance().GEMindIRPass(graph);
 }
 
 void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
@@ -378,11 +395,11 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // GE graph run mode do optimize in ProcessBeforeRun
-  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+  if (kernel_graph->is_graph_run_mode() && IsEnableRefMode()) {
     return;
   }
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
-  AscendGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
+  GEGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -403,20 +420,20 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
                                       MS_EXCEPTION_IF_NULL(item);
                                       return item->IsSimilarityKernelBuildInfo(*build_info);
                                     });
-      if (!find_valid) {
+      if ((!find_valid) && (kernel_type != HCCL_KERNEL)) {
         MS_EXCEPTION(TypeError) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
                                 << ", node: " << kernel->fullname_with_scope()
                                 << KernelSelectDebugString(build_info, kernel_info_list);
       }
     }
   }
-  AscendGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
+  GEGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
-  if (!nodes.empty() && common::IsEnableRefMode()) {
-    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(nodes[0]->func_graph());
+  if (!nodes.empty() && IsEnableRefMode()) {
+    auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(nodes[0]->func_graph());
     MS_EXCEPTION_IF_NULL(kernel_graph);
     // Not create kernel when use GE
     if (!kernel_graph->is_from_single_op() && kernel_graph->is_graph_run_mode()) {
@@ -452,7 +469,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   // use GE
-  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+  if (kernel_graph->is_graph_run_mode() && IsEnableRefMode()) {
     if (GraphWithNoRealKernel(kernel_graph)) {
       return;
     }
@@ -484,8 +501,6 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
   // load aicpu so
   LaunchDeviceLibrary();
-  // build kernel mod
-  CreateKernel(nodes);
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }
 
@@ -542,6 +557,10 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
     stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   }
   MS_EXCEPTION_IF_NULL(stream);
+  bool is_dynamic_shape_skip_execute = AnfAlgo::IsDynamicShapeSkipExecute(kernel);
+  if (is_dynamic_shape_skip_execute) {
+    nop_op_to_memcpy_.insert(kernel);
+  }
 #ifdef ENABLE_DEBUGGER
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
     auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
@@ -562,6 +581,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+      res_manager_->ResetStreamAndCtx();
       return false;
     }
   }

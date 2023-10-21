@@ -140,6 +140,10 @@ class Lamb(Optimizer):
         parameters are grouped, each group can set `weight_decay`. If not, the `weight_decay` in optimizer will be
         applied.
 
+    .. warning::
+        The update process of the Lamb optimizer is not completely elementwise, and the sharding of weights in
+        distributed parallel may affect the update result.
+
     Args:
         params (Union[list[Parameter], list[dict]]): Must be list of `Parameter` or list of `dict`. When the
             `params` is a list of `dict`, the string "params", "lr", "weight_decay", "grad_centralization" and
