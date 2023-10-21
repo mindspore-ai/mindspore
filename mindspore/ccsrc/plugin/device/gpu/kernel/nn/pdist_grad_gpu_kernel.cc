@@ -35,7 +35,7 @@ bool PDistGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  p_ = GetValue<double>(primitive_->GetAttr(ops::kP));
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   return true;
 }

@@ -71,7 +71,7 @@ class ROIAlignGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
   bool is_null_input_{false};
   int64_t pooled_height_{0};
   int64_t pooled_width_{0};
-  double spatial_scale_{0.0};
+  float spatial_scale_{0.0};
   int64_t sample_num_{0};
 
   int64_t roi_rows_{0};

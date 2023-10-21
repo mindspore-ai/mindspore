@@ -34,7 +34,7 @@ bool MultiMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' p should be 1 or 2, but got " << p_;
     return false;
   }
-  margin_ = GetValue<double>(primitive_->GetAttr(ops::kMargin));
+  margin_ = GetValue<float>(primitive_->GetAttr(ops::kMargin));
   string reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   reduction_ = 1;
   if (reduction == "mean") {

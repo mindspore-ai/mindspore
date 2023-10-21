@@ -61,7 +61,7 @@ class MultiMarginLossCPUKernelMod : public NativeCpuKernelMod, public MatchKerne
   size_t batch_size = 2;
   size_t dims = 1;
   std::string reduction = MEAN;
-  double margin = 1.0;
+  float margin = 1.0;
   int64_t p = 1;
   size_t input_num = 1;
   TypeId dtype_{kTypeUnknown};

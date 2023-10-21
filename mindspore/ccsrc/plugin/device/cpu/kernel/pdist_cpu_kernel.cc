@@ -60,7 +60,7 @@ struct pdist_calc {
 };
 
 bool PdistCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  p_ = GetValue<double>(primitive_->GetAttr(ops::kP));
+  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
   dtype_ = inputs[0]->dtype_id();
   return true;
 }

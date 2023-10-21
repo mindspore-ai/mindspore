@@ -63,7 +63,7 @@ class ROIAlignCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
  private:
   int pooled_height_{0};
   int pooled_width_{0};
-  double spatial_scale_{0.0};
+  float spatial_scale_{0.0};
   int sample_num_{0};
   int roi_end_mode_{0};
 

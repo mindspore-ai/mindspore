@@ -60,7 +60,7 @@ class MedianGpuKernelMod : public NativeGpuKernelMod {
       return false;
     }
 
-    if (GetValue<bool>(primitive_->GetAttr(ops::kIgnoreIndex))) {
+    if (GetValue<bool>(primitive_->GetAttr(ops::kIgnoreNan))) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attribute ignore_nan is not supported on GPU yet.";
       return false;
     }

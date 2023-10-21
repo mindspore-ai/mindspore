@@ -64,7 +64,7 @@ class MultiMarginLossGradCPUKernelMod : public NativeCpuKernelMod,
   size_t batch_size = 2;
   size_t dims = 1;
   string reduction = MEAN;
-  double margin = 1.0;
+  float margin = 1.0;
   int64_t p = 1;
   size_t input_num = 1;
   size_t y_grad_dims = 1;

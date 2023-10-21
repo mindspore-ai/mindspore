@@ -65,7 +65,7 @@ class PDistGpuKernelMod : public NativeGpuKernelMod {
   using PDistFunc =
     std::function<bool(PDistGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
-  double p_{0};
+  float p_{0};
   size_t input_type_size_{1};
   size_t x_size_;
   size_t y_size_;

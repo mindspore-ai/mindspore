@@ -36,7 +36,9 @@ bool NMSWithMaskFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << outputs.size()
                   << "output(s).";
   }
-  iou_value_ = GetValue<float>(primitive_->GetAttr(ops::kNmsIouThreshold));
+  if (primitive_->HasAttr(ops::kNmsIouThreshold)) {
+    iou_value_ = GetValue<float>(primitive_->GetAttr(ops::kNmsIouThreshold));
+  }
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;
   }

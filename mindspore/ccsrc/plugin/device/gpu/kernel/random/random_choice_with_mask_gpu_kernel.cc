@@ -39,8 +39,9 @@ bool RandomChoiceWithMaskGpuKernelMod::Init(const std::vector<KernelTensor *> &i
   uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
   count_ = static_cast<int32_t>(GetValue<int64_t>(primitive_->GetAttr("count")));
-
-  batch_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  if (primitive_->HasAttr("batch_rank")) {
+    batch_rank_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  }
   return true;
 }
 

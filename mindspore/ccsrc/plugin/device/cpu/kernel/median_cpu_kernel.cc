@@ -54,7 +54,7 @@ bool MedianCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
   global_median_ = GetValue<bool>(primitive_->GetAttr(ops::kGlobalMedian));
   axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   keepdim_ = GetValue<bool>(primitive_->GetAttr(ops::kKeepDims));
-  ignore_nan_ = GetValue<bool>(primitive_->GetAttr(ops::kIgnoreIndex));
+  ignore_nan_ = GetValue<bool>(primitive_->GetAttr(ops::kIgnoreNan));
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 

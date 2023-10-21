@@ -66,7 +66,7 @@ class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHe
   bool get_xdiff_shape_value_{false};
   int pooled_height_{0};
   int pooled_width_{0};
-  double spatial_scale_{0.0};
+  float spatial_scale_{0.0};
   int sample_num_{0};
   int roi_end_mode_{0};
 

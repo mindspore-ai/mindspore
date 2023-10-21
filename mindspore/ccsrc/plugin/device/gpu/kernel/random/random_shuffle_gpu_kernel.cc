@@ -42,7 +42,9 @@ constexpr size_t kScalarShapeSize = 1;
 
 bool RandomShuffleGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank)));
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank)));
+  }
   uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
   uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed2")));
   seed_ = random::GetSeed(seed, seed2);
