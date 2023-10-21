@@ -372,8 +372,13 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {old_address->device_name(), old_address->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, old_address->GetSize(), old_address->format(), old_address->type_id(), old_address->host_shape());
+      const auto &kernel_tensor = old_address->kernel_tensor();
+      MS_EXCEPTION_IF_NULL(kernel_tensor);
+      auto new_kernel_tensor = kernel_tensor->Clone();
+      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+      new_kernel_tensor->set_device_ptr(nullptr);
+
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
       MS_LOG(DEBUG) << "Create device tensor:" << new_address << " type:" << new_address->type_id();
       new_address->set_original_ref_count(old_address->original_ref_count());
@@ -381,7 +386,6 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       new_address->set_flag(old_address->flag());
       auto [node, index] = old_address->GetNodeIndex();
       new_address->SetNodeIndex(node, index);
-      new_address->set_padding_type(old_address->padding_type());
       AnfAlgo::SetOutputAddr(new_address, data_node_with_index.second, data_node_with_index.first.get());
     }
   }

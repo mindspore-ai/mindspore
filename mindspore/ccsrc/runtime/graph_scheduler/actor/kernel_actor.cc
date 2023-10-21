@@ -181,12 +181,34 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   if (is_dynamic_shape_) {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
-    InferShapeAndResize();
+
+    try {
+      // For dynamic shape case, need Re-InferShape and Resize kernel mod.
+      InferShapeAndResize();
+    } catch (const std::exception &e) {
+      if (strategy_ == GraphExecutionStrategy::kPipeline) {
+        MsException::Instance().SetException();
+      }
+      std::string error_info =
+        "#umsg#Kernel error:#umsg#InferShapeAndResize for kernel exception: " + kernel_->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    }
+
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name(), false);
   } else if (is_dynamic_value_) {
-    int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
-    if (ret != kernel::KRET_OK) {
-      MS_LOG(EXCEPTION) << "Resize failed for kernel " << kernel_->fullname_with_scope();
+    try {
+      // For dynamic value case, only need Resize kernel mod, the shape already inferred in compile phase.
+      int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
+      if (ret != kernel::KRET_OK) {
+        MS_LOG(EXCEPTION) << "Resize failed for kernel " << kernel_->fullname_with_scope();
+      }
+    } catch (const std::exception &e) {
+      if (strategy_ == GraphExecutionStrategy::kPipeline) {
+        MsException::Instance().SetException();
+      }
+      std::string error_info =
+        "#umsg#Kernel error:#umsg#Resize KernelMod for kernel exception: " + kernel_->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
   }
 
