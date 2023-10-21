@@ -2151,5 +2151,26 @@ REG_BPROP_BUILDER("Zeta").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     ib->Mul((ib->Mul((ib->Neg(x)), (ib->Emit("Zeta", {ib->Add(x, (ib->Tensor(1, ib->GetDtype(x)))), q})))), dout);
   return {ib->OutZeros(x), dq};
 });
+
+REG_BPROP_BUILDER("Baddbmm").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto batch1 = ib->GetInput(kIndex1);
+  auto batch2 = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto alpha = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex6);
+  auto beta_tensor = ib->ScalarToTensor(beta);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto input_grad = ib->Mul(beta_tensor, dout);
+  auto batch1_grad = ib->Mul(alpha_tensor, ib->BatchMatMul(dout, batch2, false, true));
+  auto batch2_grad = ib->Mul(alpha_tensor, ib->BatchMatMul(batch1, dout, true, false));
+  auto dout_shape = ib->GetShape(dout);
+  auto input_shape = ib->GetShape(input);
+  if (input_shape != dout_shape) {
+    auto bc_axis = ib->BroadcastGradientArgs(input, dout);
+    input_grad = ib->Reshape(ib->ReduceSum(input_grad, bc_axis[0], false, true), input_shape);
+  }
+  return {input_grad, batch1_grad, batch2_grad, ib->OutZeros(beta), ib->OutZeros(alpha)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

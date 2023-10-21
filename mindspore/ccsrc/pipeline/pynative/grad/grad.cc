@@ -1810,6 +1810,14 @@ CNodePtr GradExecutor::ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_
 void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const {
   if (save_graphs_ || grad_is_running_) {
     MS_EXCEPTION_IF_NULL(op_run_info);
+    if (op_run_info->input_value_id.empty()) {
+      (void)std::transform(op_run_info->op_grad_info->input_value.begin(), op_run_info->op_grad_info->input_value.end(),
+                           std::back_inserter(op_run_info->input_value_id),
+                           [](const ValuePtr &value) { return PyNativeAlgo::Common::GetIdByValue(value); });
+    }
+    if (op_run_info->out_value_id == "") {
+      op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->op_grad_info->out_value);
+    }
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_abstract(op_run_info->base_op_run_info.abstract);

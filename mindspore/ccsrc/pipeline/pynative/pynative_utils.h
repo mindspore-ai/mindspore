@@ -113,6 +113,13 @@ struct DataConvert {
                                            size_t input_index);
 };
 
+struct PyBoost {
+  static FrontendOpRunInfoPtr Init(const py::args &args);
+  static void DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
+                     const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
+                     const AbstractBasePtr &output_abs);
+};
+
 // Some common functions used in both jit and PackFunc grad
 struct GradCommon {
   static bool IsRealOp(const AnfNodePtr &cnode);

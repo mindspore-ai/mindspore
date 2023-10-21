@@ -9705,7 +9705,7 @@ def pyboost_baddbmm(input, batch1, batch2, beta=1.0, alpha=1.0):
           [5. 5. 5.]]]
     """
     pyboost_baddbmm_op = _get_cache_prim(Baddbmm)()
-    pyboost_baddbmm_op(input, batch1, batch2, beta, alpha)
+    return pyboost_baddbmm_op(input, batch1, batch2, beta, alpha)
 
 
 def pyboost_bias_add(input_x, bias):

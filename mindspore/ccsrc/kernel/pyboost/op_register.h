@@ -34,11 +34,15 @@ namespace kernel {
 namespace pyboost {
 class BACKEND_EXPORT Op {
  public:
+  using GradFunc = std::function<void(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &output,
+                                      const std::vector<abstract::AbstractBasePtr> &input_abs,
+                                      const abstract::AbstractBasePtr &output_abs)>;
   Op() = default;
   virtual ~Op() = default;
   virtual void CastInput() = 0;
-  void set_grad_func(const std::function<void()> &grad_func) { grad_func_ = grad_func; }
-  void DoGrad() { grad_func_(); }
+  void set_grad_func(const GradFunc &grad_func) { grad_func_ = grad_func; }
+  void DoGrad(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &output,
+              const std::vector<abstract::AbstractBasePtr> &input_abs, const abstract::AbstractBasePtr &output_abs);
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
 
@@ -65,7 +69,7 @@ class BACKEND_EXPORT Op {
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;
-  std::function<void()> grad_func_;
+  GradFunc grad_func_;
   PrimitivePtr primitive_;
   // Save abstract for grad.
   std::vector<AbstractBasePtr> input_abs_;

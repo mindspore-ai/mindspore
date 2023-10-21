@@ -33,7 +33,7 @@ class BACKEND_EXPORT Baddbmm : public pyboost::Op {
                                  const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) = 0;
 
  protected:
-  AbstractBasePtr output_abstract_;
+  tensor::TensorPtr output_;
 };
 }  // namespace pyboost
 }  // namespace kernel

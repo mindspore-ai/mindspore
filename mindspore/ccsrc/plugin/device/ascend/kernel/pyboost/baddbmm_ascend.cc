@@ -55,7 +55,6 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
     RUN_OP_API(aclnnBaddbmm, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,
                after_launch_func);
   }
-
   return true;
 }
 
@@ -71,6 +70,9 @@ tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tens
 
   Launch(input, batch1, batch2, beta, alpha, outputs_[0]);
   MS_LOG(DEBUG) << "Launch end";
+
+  DoGrad({input, batch1, batch2, beta, alpha}, outputs_, input_abs(), output_abs());
+  MS_LOG(DEBUG) << "DoGrad end";
   return outputs_[0];
 }
 }  // namespace pyboost

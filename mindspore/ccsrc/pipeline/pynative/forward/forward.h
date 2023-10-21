@@ -106,9 +106,11 @@ class ForwardExecutor {
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
   void ReInit();
   void RunContiguousTaskForTensor(const tensor::TensorPtr &tensor);
+  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
+  GradExecutorPtr grad() const;
+  void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
 
  private:
-  GradExecutorPtr grad() const;
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
@@ -137,7 +139,6 @@ class ForwardExecutor {
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type);
   void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
                                 bool enable_async);
-  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
 
   bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info,
                      bool is_tuple_output);

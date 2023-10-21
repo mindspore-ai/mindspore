@@ -1113,6 +1113,54 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
+FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
+  if (args.size() != kIndex2) {
+    MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
+  }
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward_executor = pynative_executor->forward_executor();
+  const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
+  PyParser::SetPrim(op_run_info, args[kIndex0]);
+  pynative_executor->StoreAsyncStatus(op_run_info);
+  forward_executor->InitOpRunInfo(op_run_info);
+  return op_run_info;
+}
+
+void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
+                     const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
+                     const AbstractBasePtr &output_abs) {
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward = pynative_executor->forward_executor();
+  op_run_info->op_grad_info->input_value = inputs;
+  op_run_info->op_grad_info->input_abs = input_abs;
+  op_run_info->op_grad_info->out_abs = output_abs;
+  op_run_info->base_op_run_info.abstract = output_abs;
+  op_run_info->input_size = inputs.size();
+  PyParser::PrepareOpGradInfo(op_run_info);
+  for (size_t index = 0; index < op_run_info->input_size; ++index) {
+    const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
+    DataConvert::ConvertValueToTensor(op_run_info, input_object, index, forward->grad()->top_cell());
+  }
+  std::vector<ValuePtr> output_values;
+  for (auto &output_tensor : output) {
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    if (op_run_info->requires_grad) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    }
+    (void)output_values.emplace_back(output_tensor);
+  }
+  auto result_value = std::make_shared<ValueTuple>(output_values);
+  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    op_run_info->real_out = result_value->value().front();
+  } else {
+    op_run_info->real_out = result_value;
+  }
+  op_run_info->op_grad_info->out_value = op_run_info->real_out;
+  forward->ForwardOpGradImpl(op_run_info);
+}
+
 void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                            size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);

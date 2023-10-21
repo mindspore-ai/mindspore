@@ -43,6 +43,13 @@ std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device
   return iter->second();
 }
 
+void Op::DoGrad(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &output,
+                const std::vector<abstract::AbstractBasePtr> &input_abs, const abstract::AbstractBasePtr &output_abs) {
+  if (grad_func_ != nullptr) {
+    grad_func_(inputs, output, input_abs, output_abs);
+  }
+}
+
 template class OpFactory<Baddbmm>;
 template class OpFactory<Add>;
 template class OpFactory<Mul>;
