@@ -707,46 +707,35 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(context);
 
-  std::vector<TensorPtr> tensors;
-  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() != 0) {
-    (void)tensors.emplace_back(AnfAlgo::SequenceToTensor(node_value));
-  } else {
-    TensorValueToTensor(node_value, &tensors);
-  }
-  for (size_t i = 0; i < tensors.size(); i++) {
-    const auto &tensor = tensors[i];
-    if (tensor == nullptr) {
-      MS_LOG(WARNING) << "Tensor is null";
-      return;
-    }
-    if (tensor->is_forward_output()) {
-      auto device_tensor = tensor->device_address();
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      CopyDataFromDeviceTensorStore(front_node, node, std::dynamic_pointer_cast<device::DeviceAddress>(device_tensor),
-                                    device_context, context);
-      continue;
-    }
-
-    if (value_node_prepared_) {
-      return;
-    }
-
-    const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
+  auto tensor = node_value->cast<TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->is_forward_output()) {
+    auto device_tensor = tensor->device_address();
     MS_EXCEPTION_IF_NULL(device_tensor);
-    // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
-    if (device_tensor->IsPtrValid()) {
-      CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
-      continue;
-    }
-    MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << i;
-    tensor->set_device_address(device_tensor);
-    UpdateRefCount(device_tensor.get(), true);
-
-    SyncTensorData(tensor, device_tensor, node, device_context, context, real_strategy_);
-    MS_LOG(DEBUG) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << i
-                  << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr();
-    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+    CopyDataFromDeviceTensorStore(front_node, node, std::dynamic_pointer_cast<device::DeviceAddress>(device_tensor),
+                                  device_context, context);
+    return;
   }
+
+  if (value_node_prepared_) {
+    return;
+  }
+
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, 0, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
+  if (device_tensor->IsPtrValid()) {
+    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+    return;
+  }
+  MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << 0;
+  tensor->set_device_address(device_tensor);
+  UpdateRefCount(device_tensor.get(), true);
+
+  SyncTensorData(tensor, device_tensor, node, device_context, context, real_strategy_);
+  MS_LOG(DEBUG) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << 0
+                << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr();
+  CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
 }
 
 void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &node_with_index,
@@ -880,6 +869,66 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
 }
 
+void DataPrepareActor::PrepareDataForSequenceAndScalarValue(const ValueNodePtr &node, size_t index,
+                                                            const AnfNodePtr &front_node,
+                                                            const DeviceContext *device_context,
+                                                            OpContext<DeviceTensor> *const context) const {
+  if (value_node_prepared_) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(context);
+  auto &node_value = node->value();
+  MS_EXCEPTION_IF_NULL(node_value);
+
+  if ((!node_value->isa<ValueSequence>()) && (!node_value->isa<Scalar>())) {
+    return;
+  }
+
+  if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() == 0) {
+    return;
+  }
+
+  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, index, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
+  if (device_tensor->GetPtr() != nullptr) {
+    CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+    return;
+  }
+
+  UpdateRefCount(device_tensor.get(), true);
+  MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString();
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
+                                                     0);
+  // 1. Allocate device memory for value node.
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context, node->fullname_with_scope(),
+                                                device_tensor->GetSize());
+  }
+  if (common::IsNeedProfileMemory()) {
+    auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
+    auto graph_str = (node->func_graph() == nullptr) ? "" : node->func_graph()->ToString();
+    MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
+                    << output_address << ", device address size: " << device_tensor->GetSize()
+                    << ", node: " << node->fullname_with_scope() << ", graph: " << graph_str
+                    << ", device address addr: " << device_tensor->GetPtr();
+  }
+
+  // 2. Sync copy data from host to device.
+  const auto &kernel_tensor = device_tensor->kernel_tensor();
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  if (!device_tensor->SyncHostToDevice(kernel_tensor->GetShapeVector(), kernel_tensor->size(),
+                                       kernel_tensor->dtype_id(), kernel_tensor->GetValuePtr())) {
+    std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+  }
+
+  // 3. Handle heterogeneous scene.
+  CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
+}
+
 // Prepare the device data for persistent device tensor of value node.
 void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const AnfNodePtr &front_node,
                                                const DeviceContext *device_context,
@@ -891,8 +940,10 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
   auto &node_value = node->value();
   MS_EXCEPTION_IF_NULL(node_value);
 
-  if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueSequence>() || node_value->isa<Scalar>()) {
+  if (node_value->isa<tensor::Tensor>()) {
     PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
+  } else if (node_value->isa<ValueSequence>() || node_value->isa<Scalar>()) {
+    PrepareDataForSequenceAndScalarValue(node, 0, front_node, device_context, context);
   } else if (node_value->isa<StringImm>()) {
     PrepareDataForStringValue(node, 0, front_node, device_context, context);
   } else {
