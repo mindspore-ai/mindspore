@@ -102,14 +102,13 @@ STATUS InOutDTypeTransPass::HandleGraphOutput(const FuncGraphPtr &graph) {
   MS_ASSERT(manager != nullptr);
   auto return_node = graph->get_return();
   MS_CHECK_TRUE_RET(return_node != nullptr, RET_ERROR);
-  auto origin_outputs = return_node->inputs();
-  if (lite::RemoveIfMakeTuple(return_node) != RET_OK) {
-    MS_LOG(ERROR) << "remove makeTuple failed.";
-    return_node->set_inputs(origin_outputs);
+  bool has_make_tuple = false;
+  std::vector<AnfNodePtr> graph_outputs;
+  if (lite::GetFlattenInputsIfMakeTuple(return_node, &graph_outputs, &has_make_tuple) != RET_OK) {
+    MS_LOG(ERROR) << "Get graph output nodes failed.";
     return RET_ERROR;
   }
-  auto outputs = return_node->inputs();
-  for (const auto &output : outputs) {
+  for (const auto &output : graph_outputs) {
     MS_CHECK_TRUE_RET(output != nullptr, RET_ERROR);
     if (!output->isa<CNode>() || IsMonadNode(output) || opt::CheckPrimitiveType(output, prim::kPrimUpdateState) ||
         opt::CheckPrimitiveType(output, prim::kPrimDepend) || opt::CheckPrimitiveType(output, prim::kPrimLoad)) {
@@ -125,7 +124,6 @@ STATUS InOutDTypeTransPass::HandleGraphOutput(const FuncGraphPtr &graph) {
       return RET_ERROR;
     }
   }
-  return_node->set_inputs(origin_outputs);
   return lite::RET_OK;
 }
 
