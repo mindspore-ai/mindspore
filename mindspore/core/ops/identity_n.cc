@@ -69,8 +69,8 @@ class MIND_API IdentityNInfer : public abstract::OpInferBase {
                                << "] input list of length should be equal or greater than 1 but get " << in_size
                                << " .";
     }
-    const std::set<TypePtr> identityn_valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,
-                                                     kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+    const std::set<TypePtr> identityn_valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,   kUInt16,
+                                                     kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
     for (size_t idx = 0; idx < in_size; ++idx) {
       auto name = "input x[" + std::to_string(idx) + "]";
       (void)CheckAndConvertUtils::CheckTensorTypeValid(name, x_seq[idx]->BuildType(), identityn_valid_types, op_name);
