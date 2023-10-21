@@ -443,6 +443,7 @@ constexpr const char kNameLoad[] = "Load";
 constexpr const char kNameDepend[] = "Depend";
 constexpr const char kNameReturn[] = "Return";
 constexpr const char kNameIdentity[] = "Identity";
+constexpr const char kNameIdentityN[] = "IdentityN";
 constexpr const char kNameUpdateState[] = "UpdateState";
 constexpr const char kNameTransData[] = "TransData";
 constexpr const char kNameWhere[] = "Where";
