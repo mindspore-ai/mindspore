@@ -33,7 +33,7 @@ STATUS ConstFoldAlongInferShape::PostProcess(const FuncGraphPtr &func_graph, con
   MS_CHECK_TRUE_MSG(const_fold_processor_ != nullptr, lite::RET_NULL_PTR, "const fold processor is nullptr");
   auto status = const_fold_processor_->DoConstantFold(func_graph, cnode);
   if (status != lite::RET_OK) {
-    MS_LOG(ERROR) << "do constant fold failed, the node is " << cnode->fullname_with_scope();
+    MS_LOG(WARNING) << "do constant fold failed, the node is " << cnode->fullname_with_scope();
   }
   return status;
 }

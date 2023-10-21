@@ -316,8 +316,8 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
     }
     status = PostProcess(func_graph, cnode);
     if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "post process current node failed, node is " << node->fullname_with_scope();
-      return lite::RET_ERROR;
+      MS_LOG(WARNING) << "post process current node failed, node is " << node->fullname_with_scope();
+      return lite::RET_INFER_ERR;
     }
   }
   return lite::RET_OK;
