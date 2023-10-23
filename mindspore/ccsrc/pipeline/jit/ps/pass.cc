@@ -40,6 +40,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
@@ -459,6 +460,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
+                         {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
