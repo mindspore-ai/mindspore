@@ -58,8 +58,8 @@ int RenormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     return ret;
   }
   x_shape_ = inputs[kIndex0]->GetShapeVector();
-  axis_ = GetValue<int64_t>(op_->GetAttr("dim"));
-  p_ = GetValue<float>(op_->GetAttr("p"));
+  axis_ = GetValue<int64_t>(primitive_->GetAttr("dim"));
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
   max_norm_ = GetValue<float>(primitive_->GetAttr("maxnorm"));
   return 0;
 }

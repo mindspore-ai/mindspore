@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops.operations.image_ops import ResizeLinear1D
+from mindspore.ops.operations import ResizeLinear1D
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 

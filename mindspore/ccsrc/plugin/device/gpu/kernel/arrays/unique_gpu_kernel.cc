@@ -55,7 +55,7 @@ const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
 }  // namespace
 
 bool UniqueGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto batch_rank = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+  auto batch_rank = primitive_->HasAttr("batch_rank") ? GetValue<int64_t>(primitive_->GetAttr("batch_rank")) : 0;
   if (batch_rank < 0) {
     return false;
   }
