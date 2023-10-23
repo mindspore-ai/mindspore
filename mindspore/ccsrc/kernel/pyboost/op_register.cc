@@ -22,6 +22,7 @@
 #include "kernel/pyboost/op/matmul.h"
 #include "kernel/pyboost/op/bias_add.h"
 #include "kernel/pyboost/op/linear.h"
+#include "kernel/pyboost/op/square.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,6 +49,7 @@ template class OpFactory<BatchMatmul>;
 template class OpFactory<BiasAdd>;
 template class OpFactory<Matmul>;
 template class OpFactory<Linear>;
+template class OpFactory<Square>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

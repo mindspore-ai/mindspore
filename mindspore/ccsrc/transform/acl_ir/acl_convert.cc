@@ -21,6 +21,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "ops/op_utils.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore::transform {
 namespace {
@@ -613,6 +614,35 @@ aclFormat AclConverter::ConvertFormat(const std::string &format) {
     MS_LOG(EXCEPTION) << "Invalid format:" << format;
   }
   return iter->second;
+}
+
+std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::CreateTensorDesc(const tensor::TensorPtr &tensor,
+                                                                           const ShapeVector &dev_shape,
+                                                                           const std::string &dev_format,
+                                                                           const std::string &desc_name) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  AclTensorDescMaker acl_tensor;
+  aclTensorDesc *acl_desc = nullptr;
+
+  const auto &device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  auto acl_data_type = ConvertType(tensor->data_type());
+  auto acl_ori_format = ConvertFormat(device_address->format());
+  auto acl_dev_format = ConvertFormat(dev_format);
+  acl_desc = acl_tensor.Create(acl_data_type, tensor->shape(), acl_ori_format)
+               .SetShape(dev_shape)
+               .SetFormat(acl_dev_format)
+               .SetName(desc_name)
+               .Get();
+  MS_EXCEPTION_IF_NULL(acl_desc);
+
+  // Create buf.
+  auto buffer_maker =
+    std::make_shared<AclTensorBufferMaker>(device_address->GetMutablePtr(), device_address->GetSize());
+  auto acl_data = buffer_maker->Get();
+  MS_EXCEPTION_IF_NULL(acl_data);
+  return std::make_pair(acl_desc, acl_data);
 }
 
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const AddressPtr &address,

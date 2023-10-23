@@ -37,7 +37,7 @@ tensor::TensorPtr BatchMatmulCPU::Call(const tensor::TensorPtr &x, const tensor:
 
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out", false);
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");
   auto input_x = TensorToKernelTensor(x, device_context);
   auto input_y = TensorToKernelTensor(y, device_context);
   auto output = TensorToKernelTensor(outputs_[0], device_context);

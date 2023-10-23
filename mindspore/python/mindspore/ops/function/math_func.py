@@ -9708,6 +9708,14 @@ def pyboost_baddbmm(input, batch1, batch2, beta=1.0, alpha=1.0):
     pyboost_baddbmm_op(input, batch1, batch2, beta, alpha)
 
 
+def pyboost_bias_add(input_x, bias):
+    pyboost_bias_add_op = _get_cache_prim(BiasAdd)(data_format='NCHW')
+    pyboost_bias_add_op(input_x, bias)
+
+def pyboost_square(input):
+    pyboost_square_op = _get_cache_prim(Square)()
+    pyboost_square_op(input)
+
 def log2(input):
     r"""
     Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
@@ -13456,6 +13464,8 @@ __all__ = [
     'dot',
     'batch_dot',
     'eps',
-    'pyboost_baddbmm'
+    'pyboost_baddbmm',
+    'pyboost_bias_add',
+    'pyboost_square'
 ]
 __all__.sort()

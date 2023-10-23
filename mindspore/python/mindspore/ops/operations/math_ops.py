@@ -29,7 +29,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
-from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
                              ReduceMax, ReduceMin, ReduceProd, Betainc, Neg,
                              Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp,
                              Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
@@ -42,6 +41,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
                              CumSum, Less, LessEqual)
 from mindspore._c_expression import pyboost_baddbmm
+from mindspore._c_expression import pyboost_baddbmm, pyboost_square
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""

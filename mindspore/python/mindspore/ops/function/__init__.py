@@ -436,7 +436,9 @@ from .math_func import (
     dot,
     batch_dot,
     eps,
-    pyboost_baddbmm
+    pyboost_baddbmm,
+    pyboost_bias_add,
+    pyboost_square
 )
 from .nn_func import (
     adaptive_avg_pool1d,

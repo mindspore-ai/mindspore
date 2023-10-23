@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op/bias_add.h"
+#include "kernel/pyboost/op/square.h"
 #include "kernel/pyboost/py_boost_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void BiasAdd::CastInput() {}
+void Square::CastInput() {}
 
-tensor::TensorPtr BiasAdd::Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias) {
+tensor::TensorPtr Square::Call(const tensor::TensorPtr &input) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();
 }

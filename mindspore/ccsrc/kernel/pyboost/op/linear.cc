@@ -23,22 +23,6 @@ namespace kernel {
 namespace pyboost {
 void Linear::CastInput() {}
 
-void Linear::InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &weight, const ValuePtr &bias_opt) {
-  auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
-  if (!eval_impl.has_value()) {
-    MS_LOG(EXCEPTION) << "Not found infer func for Baddbmm";
-  }
-  std::vector<AbstractBasePtr> input_abs = {input->ToAbstract(), weight->ToAbstract()};
-  auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
-
-  std::vector<tensor::TensorPtr> outputs;
-  PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
-  if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Cannot create output tensor for Baddbmm";
-  }
-  output_ = outputs[0];
-}
-
 tensor::TensorPtr Linear::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
                                const ValuePtr &bias_opt) {
   // TODO: kernel_mod->launch

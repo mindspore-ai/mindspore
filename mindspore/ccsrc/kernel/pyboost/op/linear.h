@@ -28,12 +28,8 @@ class BACKEND_EXPORT Linear : public pyboost::Op {
   ~Linear() = default;
 
   void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &weight, const ValuePtr &bias_opt);
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
                                  const ValuePtr &bias_opt);
-
- protected:
-  tensor::TensorPtr output_;
 };
 }  // namespace pyboost
 }  // namespace kernel

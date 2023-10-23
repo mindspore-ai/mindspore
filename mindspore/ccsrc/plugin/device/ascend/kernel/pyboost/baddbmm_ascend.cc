@@ -40,8 +40,7 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch1, "batch1");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch2, "batch2");
-  // is_gradient_out 暂时不考虑
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output", false);
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
 
   // 910A not support 0
   int8_t cube_math_type = 0;

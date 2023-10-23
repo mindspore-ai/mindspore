@@ -23,22 +23,6 @@ namespace kernel {
 namespace pyboost {
 void Matmul::CastInput() {}
 
-void Matmul::InferOutput(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
-  if (!eval_impl.has_value()) {
-    MS_LOG(EXCEPTION) << "Not found infer func for Matmul";
-  }
-  std::vector<AbstractBasePtr> input_abs = {x->ToAbstract(), y->ToAbstract()};
-  auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
-
-  std::vector<TensorPtr> outputs;
-  PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
-  if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Cannot create output tensor for Matmul";
-  }
-  output_ = outputs[0];
-}
-
 tensor::TensorPtr Matmul::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

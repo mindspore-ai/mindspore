@@ -44,6 +44,13 @@ class BACKEND_EXPORT Op {
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
+  tensor::TensorPtr output(const size_t &idx) {
+    if (idx >= outputs_.size()) {
+      MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
+    }
+    return outputs_[idx];
+  }
+
   template <typename... T>
   inline void Infer(const PrimitivePtr &primitive, T &... args) {
     InferOutput(primitive, &outputs_, ConvertTypes(args...));

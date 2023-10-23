@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_
 
-#include "kernel/pyboost/op_register.h"
+#include "kernel/pyboost/op/square.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Matmul : public pyboost::Op {
+class SquareAscend : public pyboost::Square {
  public:
-  Matmul() = default;
-  ~Matmul() = default;
+  SquareAscend() = default;
+  ~SquareAscend() = default;
+  bool Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &output);
 
-  void CastInput() override;
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
+  bool LaunchByKernel(const tensor::TensorPtr &input, const tensor::TensorPtr &output);
+
+  tensor::TensorPtr Call(const tensor::TensorPtr &input) override;
 };
+MS_REG_PYBOOST_OP(Ascend, Square);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MATMUL_H_
+
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_

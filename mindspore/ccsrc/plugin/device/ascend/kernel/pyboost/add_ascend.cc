@@ -33,8 +33,7 @@ bool AddAscend::Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, c
 
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
-  // is_gradient_out 暂时不考虑
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output", false);
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
 
   // 910A not support 0
   int8_t cube_math_type = 0;
@@ -53,9 +52,9 @@ bool AddAscend::Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, c
 }
 
 tensor::TensorPtr AddAscend::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  InferOutput(x, y);
-  Launch(x, y, output_);
-  return output_;
+  Infer(primitive_, x, y);
+  Launch(x, y, output(0));
+  return output(0);
 }
 }  // namespace pyboost
 }  // namespace kernel

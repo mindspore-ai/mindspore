@@ -789,8 +789,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
                                                                        const tensor::TensorPtr &tensor,
-                                                                       const std::string &output_name,
-                                                                       bool is_gradient_out) {
+                                                                       const std::string &output_name) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
@@ -800,8 +799,6 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const Dev
     // Padding shape/format
     device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
                                                                               tensor->data_type(), tensor->shape());
-
-    device_address->set_from_persistent_mem(is_gradient_out);
     tensor->set_device_address(device_address);
   }
 
