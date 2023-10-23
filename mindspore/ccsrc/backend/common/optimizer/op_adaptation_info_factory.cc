@@ -129,6 +129,7 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
   std::vector<AnfNodePtr> target_inputs;
   auto inputs = origin_op->inputs();
   target_inputs.push_back(inputs[0]);
+  auto graph = origin_op->func_graph();
   bool ir_change = false;
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
@@ -152,6 +153,9 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
         MS_LOG(INFO) << "Convert " << origin_op->fullname_with_scope() << "'s input " << i << " to attr failed.";
         return nullptr;
       }
+      auto kernel_graph = graph->cast<KernelGraphPtr>();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      kernel_graph->EraseValueNode(input_node->cast<ValueNodePtr>());
       ir_change = true;
     } else {
       target_inputs.push_back(inputs[i + 1]);
@@ -160,7 +164,6 @@ CNodePtr OpAdaptationInfoRegister::CreateTargetOp(const CNodePtr &origin_op,
 
   // Update target_op's inputs
   target_inputs[0] = NewValueNode(target_primitive);
-  auto graph = origin_op->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   auto target_op = opt::NewCNode(target_inputs, graph, {origin_op});
   MS_EXCEPTION_IF_NULL(target_op);

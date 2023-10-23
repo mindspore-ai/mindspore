@@ -707,6 +707,8 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
 
 void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.emplace(value_node); }
 
+void KernelGraph::EraseValueNode(const ValueNodePtr &value_node) { (void)graph_value_nodes_.erase(value_node); }
+
 bool KernelGraph::IsInRefOutputMap(const AnfWithOutIndex &pair) const { return ref_out_in_map_.count(pair) != 0; }
 
 bool KernelGraph::IsRefOutputMapValue(const AnfWithOutIndex &pair) const {

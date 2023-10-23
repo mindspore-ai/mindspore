@@ -195,6 +195,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // add value node to graph
   void AddValueNodeToGraph(const ValueNodePtr &value_node);
   void ClearAllValueNode() { graph_value_nodes_.clear(); }
+  void EraseValueNode(const ValueNodePtr &value_node);
   // ref output is in map
   bool IsInRefOutputMap(const AnfWithOutIndex &pair) const;
   // Whether the value corresponds to ref output.
