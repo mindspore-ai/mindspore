@@ -49,8 +49,7 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    // auto prim_func = GetPrimitiveFunction(cnode);
-    auto prim_func = GetValuePtr<Primitive>(cnode->input(0));
+    auto prim_func = GetPrimitiveFunction(cnode);
     if (prim_func == nullptr) {
       // cnode is attr primitive node, do nothing
       continue;
@@ -97,14 +96,6 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
       prim->AddAttr(arg.arg_name_, arg_value);
     }
 
-    // create a new CNode and replace the old one
-    // static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-    // auto op_it = operator_fns.find(op_type);
-    // if (op_it == operator_fns.end()) {
-    //  MS_LOG(WARNING) << "unsupported op operator type: " << op_type;
-    //  return false;
-    //}
-    // auto base_operator = op_it->second(prim);
     auto new_node = func_graph->NewCNode(prim, new_node_inputs);
     new_node->set_abstract(node->abstract());
     new_node->set_fullname_with_scope(node->fullname_with_scope());
@@ -152,36 +143,5 @@ PrimitivePtr ArgsToAttrPass::CreatePrimitive(const std::string &op_type) {
   return base_operator->GetPrim();
 #endif
 }
-// bool ArgsToAttrPass::Test(const std::string &op_type) {
-//   static auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-//   std::shared_ptr<mindspore::Primitive> prim;
-//   auto it = op_primc_fns.find(op_type);
-//   if (it == op_primc_fns.end()) {
-//     MS_LOG(WARNING) << "MindirModelLoader: Convert primitives failed, unsupported op primitive type: " << op_type;
-//     continue;
-//   }
-//   prim = it->second();
-//   prim->set_instance_name(op_type);
-//   // for (int j = 0; j < primitive_proto.attribute_size(); j++) {
-//   //   auto attr_proto = primitive_proto.attribute(j);
-//   //   auto value_ptr = MindirModelUtil::MakeValueFromAttribute(attr_proto);
-//   //   MS_CHECK_TRUE_MSG(value_ptr != nullptr, false,
-//   //                     "MindirModelLoader: convert primitives failed, parse prim: "
-//   //                       << prim->ToString() << " attributes error: " << attr_proto.DebugString());
-//   //   (void)prim->AddAttr(attr_proto.name(), value_ptr);
-//   // }
-//   // static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
-//   // auto op_it = operator_fns.find(op_type);
-//   // if (op_it == operator_fns.end()) {
-//   //   MS_LOG(WARNING) << "MindirModelLoader: Convert primitives failed, unsupported op operator type: " << op_type;
-//   //   continue;
-//   // }
-//   // auto base_operator = op_it->second(prim);
-//   // MS_CHECK_TRUE_MSG(this->all_operators_.count(primitive_proto.name()) <= 0, false,
-//   //                   "MindirModelLoader: There is a duplication primitive instance name: " <<
-//   primitive_proto.name());
-//   // this->all_operators_[primitive_proto.name()] = base_operator;
-//   return true;
-// }
 }  // namespace opt
 }  // namespace mindspore
