@@ -3765,10 +3765,10 @@ class LayerNorm(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
           The input of LayerNorm. Supported dtypes: float16, float32, float64.
-        - **gamma** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
-          The learnable parameter :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
-        - **beta** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
-          The learnable parameter :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
+        - **gamma** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
+          :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
+        - **beta** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
+          :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
