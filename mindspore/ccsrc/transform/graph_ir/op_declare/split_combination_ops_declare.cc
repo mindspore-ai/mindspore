@@ -21,8 +21,9 @@
 namespace mindspore::transform {
 // SplitD
 INPUT_MAP(SplitD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(SplitD) = {{"axis", ATTR_DESC(split_dim, AnyTraits<int64_t>())},
-                    {"output_num", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+INPUT_ATTR_MAP(SplitD) = {{2, ATTR_DESC(split_dim, AnyTraits<int64_t>())},
+                          {3, ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+ATTR_MAP(SplitD) = EMPTY_ATTR_MAP;
 DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Split, kNameSplit, ADPT_DESC(SplitD))
 

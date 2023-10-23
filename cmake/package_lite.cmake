@@ -146,7 +146,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/space_to_depth.h
             ${TOP_DIR}/mindspore/core/ops/sparse_softmax_cross_entropy_with_logits.h
             ${TOP_DIR}/mindspore/core/ops/sparse_to_dense.h
-            ${TOP_DIR}/mindspore/core/ops/split.h
+        #     ${TOP_DIR}/mindspore/core/ops/split.h
         #     ${TOP_DIR}/mindspore/core/ops/sqrt.h
             ${TOP_DIR}/mindspore/core/ops/squeeze.h
         #     ${TOP_DIR}/mindspore/core/ops/square.h

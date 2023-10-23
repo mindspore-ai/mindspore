@@ -18,11 +18,11 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/split_impl.cuh"
-#include "ops/split.h"
+#include "ops/ops_func_impl/split.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kSplitInputsNum = 1;
+constexpr size_t kSplitInputsNum = 3;
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
@@ -50,7 +50,7 @@ bool SplitFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
 
 bool SplitFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
-  output_num_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("output_num")));
+  output_num_ = static_cast<int>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
   outputs_host_ = std::make_unique<void *[]>(output_num_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -70,7 +70,7 @@ int SplitFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
-  axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  axis_ = static_cast<int>(inputs[kIndex1]->GetValueWithCheck<int64_t>());
   auto input_shape = inputs[0]->GetShapeVector();
   int dims = SizeToInt(input_shape.size());
   if (axis_ < 0) {
@@ -124,7 +124,7 @@ void SplitFwdGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be greater than 0, but got "
                       << output_num;
   }
-  if (input_num != 1) {
+  if (input_num != kSplitInputsNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
   }
   if (dims == 0) {
@@ -141,33 +141,103 @@ void SplitFwdGpuKernelMod::CheckParam(const std::vector<KernelTensor *> &inputs,
 }
 
 std::vector<std::pair<KernelAttr, SplitFwdGpuKernelMod::SplitFunc>> SplitFwdGpuKernelMod::func_list_ = {
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
    &SplitFwdGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
    &SplitFwdGpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
    &SplitFwdGpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt8),
    &SplitFwdGpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
    &SplitFwdGpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
    &SplitFwdGpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
    &SplitFwdGpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
    &SplitFwdGpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt16),
    &SplitFwdGpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt32),
    &SplitFwdGpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
    &SplitFwdGpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
    &SplitFwdGpuKernelMod::LaunchKernel<Complex<float>>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
    &SplitFwdGpuKernelMod::LaunchKernel<Complex<double>>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  {KernelAttr()
+     .AddAllSameAttr(true)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
    &SplitFwdGpuKernelMod::LaunchKernel<bool>},
 };
 

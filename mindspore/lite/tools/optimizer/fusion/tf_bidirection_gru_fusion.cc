@@ -28,7 +28,6 @@
 #include "tools/optimizer/common/helper.h"
 #include "ops/concat.h"
 #include "ops/gru.h"
-#include "ops/split.h"
 #include "ops/squeeze.h"
 #include "ops/stack.h"
 #include "ops/auto_generate/gen_lite_ops.h"

@@ -24,7 +24,7 @@
 #include "ops/concat.h"
 #include "ops/custom.h"
 #include "ops/fusion/add_fusion.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 class AddNodeParserTest : public NodeParserTest {

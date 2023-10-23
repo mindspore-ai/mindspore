@@ -98,7 +98,8 @@ bool ConcatV2FwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
 
   ori_axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
-  origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
+  // To do: primitive_ can not get attr "operator_origin_format".
+  // origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
   len_axis_.resize(inputs.size());
   return true;
 }

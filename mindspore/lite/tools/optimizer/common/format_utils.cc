@@ -64,7 +64,6 @@
 #include "ops/space_to_batch.h"
 #include "ops/space_to_batch_nd.h"
 #include "ops/space_to_depth.h"
-#include "ops/split.h"
 #include "ops/strided_slice.h"
 #include "ops/deformable_conv2d.h"
 #include "ops/roi_align.h"

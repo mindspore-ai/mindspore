@@ -17,7 +17,7 @@
 #include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/op_base.h"
-#include "ops/split.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 using mindspore::ops::kAxis;
 using mindspore::ops::kNameSplit;
 using mindspore::ops::kOutputNum;

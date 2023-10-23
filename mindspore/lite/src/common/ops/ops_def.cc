@@ -974,7 +974,7 @@ OP_SCHEMA_DEF_END(SparseToDense)
 
 OP_SCHEMA_DEF(Split)
 OP_ATTR(output_num, long)
-OP_ATTR(size_splits, [long])
+OP_ATTR_ONLY(size_splits, [long])
 OP_ATTR(axis, long)
 OP_SCHEMA_DEF_END(Split)
 

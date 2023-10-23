@@ -20,19 +20,19 @@
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
-#include "ops/split.h"
+#include "ops/ops_func_impl/split.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSplitInputsNum = 1;
+constexpr size_t kSplitInputsNum = 3;
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 }  // namespace
 
 bool SplitCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
-  output_num_ = GetValue<int64_t>(primitive_->GetAttr(ops::kOutputNum));
+  axis_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  output_num_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
   if (output_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' must be positive int, but got 0.";
   }
@@ -142,33 +142,103 @@ bool SplitCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
 
 std::vector<std::tuple<KernelAttr, SplitCpuKernelMod::SplitFunc, SplitCpuKernelMod::InitIOFunc>>
   SplitCpuKernelMod::func_list_ = {
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
      &SplitCpuKernelMod::LaunchKernel<float>, &SplitCpuKernelMod::InitIOSize<float>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
      &SplitCpuKernelMod::LaunchKernel<float16>, &SplitCpuKernelMod::InitIOSize<float16>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64),
      &SplitCpuKernelMod::LaunchKernel<double>, &SplitCpuKernelMod::InitIOSize<double>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt8),
      &SplitCpuKernelMod::LaunchKernel<int8_t>, &SplitCpuKernelMod::InitIOSize<int8_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt16),
      &SplitCpuKernelMod::LaunchKernel<int16_t>, &SplitCpuKernelMod::InitIOSize<int16_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
      &SplitCpuKernelMod::LaunchKernel<int32_t>, &SplitCpuKernelMod::InitIOSize<int32_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64),
      &SplitCpuKernelMod::LaunchKernel<int64_t>, &SplitCpuKernelMod::InitIOSize<int64_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt8),
      &SplitCpuKernelMod::LaunchKernel<uint8_t>, &SplitCpuKernelMod::InitIOSize<uint8_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt16),
      &SplitCpuKernelMod::LaunchKernel<uint16_t>, &SplitCpuKernelMod::InitIOSize<uint16_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt32),
      &SplitCpuKernelMod::LaunchKernel<uint32_t>, &SplitCpuKernelMod::InitIOSize<uint32_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeUInt64),
      &SplitCpuKernelMod::LaunchKernel<uint64_t>, &SplitCpuKernelMod::InitIOSize<uint64_t>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex64),
      &SplitCpuKernelMod::LaunchKernel<complex64>, &SplitCpuKernelMod::InitIOSize<complex64>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeComplex128),
      &SplitCpuKernelMod::LaunchKernel<complex128>, &SplitCpuKernelMod::InitIOSize<complex128>},
-    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+    {KernelAttr()
+       .AddAllSameAttr(true)
+       .AddInputAttr(kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeBool),
      &SplitCpuKernelMod::LaunchKernel<bool>, &SplitCpuKernelMod::InitIOSize<bool>}};
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Split, SplitCpuKernelMod);

@@ -143,7 +143,6 @@ GVAR_DEF(PrimitivePtr, kPrimTensorScatterDiv, std::make_shared<Primitive>("Tenso
 GVAR_DEF(PrimitivePtr, kPrimTensorScatterMax, std::make_shared<Primitive>("TensorScatterMax"));
 GVAR_DEF(PrimitivePtr, kPrimTensorScatterMin, std::make_shared<Primitive>("TensorScatterMin"));
 GVAR_DEF(PrimitivePtr, kPrimMapUniform, std::make_shared<Primitive>("MapUniform"));
-GVAR_DEF(PrimitivePtr, kPrimSplit, std::make_shared<Primitive>("Split"));
 GVAR_DEF(PrimitivePtr, kPrimSplitD, std::make_shared<Primitive>("SplitD"));
 GVAR_DEF(PrimitivePtr, kPrimSplitV, std::make_shared<Primitive>(kSplitVOpName));
 GVAR_DEF(PrimitivePtr, kPrimSplitVD, std::make_shared<Primitive>("SplitVD"));

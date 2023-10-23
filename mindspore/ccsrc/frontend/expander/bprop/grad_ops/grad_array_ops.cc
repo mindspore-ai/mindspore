@@ -1398,10 +1398,15 @@ REG_BPROP_BUILDER("Slice").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(begin), ib->OutZeros(size)};
 });
 
-REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout}, {{"axis", ib->GetAttr("axis")}});
-  return {dx};
+REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex4);
+  auto axis = ib->GetInput(kIndex1);
+  auto output_num = ib->GetInput(kIndex2);
+  auto axis_ptr = axis->BuildValue();
+  MS_EXCEPTION_IF_NULL(axis_ptr);
+  auto axis_value = GetValue<int64_t>(axis_ptr);
+  auto dx = ib->Emit("Concat", {dout}, {{"axis", MakeValue(axis_value)}});
+  return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
 DEF_PURE_SHAPE_CALC(g_tile)

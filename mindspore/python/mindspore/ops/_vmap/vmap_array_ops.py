@@ -2051,18 +2051,17 @@ def get_im2col_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Split)
 def get_split_vmap_rule(prim, axis_size):
     """VmapRule for `Split`."""
-
-    axis = prim.axis
-    if axis >= 0:
-        axis += 1
-    batch_prim = P.Split(axis, prim.output_num)
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, axis_bdim, output_num_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim, output_num_bdim)
         if is_all_none:
             return result
         x, x_dim = x_bdim
+        axis, axis_bdim = axis_bdim
+        if axis >= 0:
+            axis += 1
+        output_num, output_num_bdim = output_num_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
+        batch_prim = P.Split(axis, output_num)
         outputs = batch_prim(x)
         output = ()
         for out in outputs:

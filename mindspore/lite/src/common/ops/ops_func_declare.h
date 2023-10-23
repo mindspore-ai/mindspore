@@ -101,7 +101,6 @@
 #include "ops/sparse_fill_empty_rows.h"
 #include "ops/sparse_reshape.h"
 #include "ops/sparse_segment_sum.h"
-#include "ops/split.h"
 #include "ops/squeeze.h"
 #include "ops/squared_difference.h"
 #include "ops/stack.h"

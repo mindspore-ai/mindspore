@@ -25,7 +25,6 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
 from mindspore.ops import signature as sig
-from mindspore.ops.auto_generate import Identity
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
@@ -41,7 +40,7 @@ from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
-                             Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor)
+                             Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -891,68 +890,6 @@ class UniqueWithPad(Primitive):
     def __init__(self):
         """init UniqueWithPad"""
         self.init_prim_io_names(inputs=['x', 'pad_num'], outputs=['y', 'idx'])
-
-
-class Split(Primitive):
-    r"""
-    Splits the input tensor into output_num of tensors along the given axis and output numbers.
-
-    Refer to :func:`mindspore.ops.split` for more details.
-
-    Args:
-        axis (int): Index of the split position. Default: ``0`` .
-        output_num (int): The number of output tensors. Must be positive int. Default: ``1`` .
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_0, x_1, ..., x_{R-1})`, R >= 1.
-
-    Outputs:
-        tuple[Tensor], the shape of each output tensor is the same, which is
-        :math:`(x_0, x_1, ..., x_{axis}/{output\_num}, ..., x_{R-1})`.
-        And the data type is the same as `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> split = ops.Split(1, 2)
-        >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
-        >>> print(x)
-        [[1 1 1 1]
-         [2 2 2 2]]
-        >>> output = split(x)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1, 1],
-         [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
-        [[1, 1],
-         [2, 2]]))
-        >>> split = ops.Split(1, 4)
-        >>> output = split(x)
-        >>> print(output)
-        (Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1],
-         [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1],
-         [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1],
-         [2]]), Tensor(shape=[2, 1], dtype=Int32, value=
-        [[1],
-         [2]]))
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=0, output_num=1):
-        """Initialize Split"""
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_value_type("output_num", output_num, [int], self.name)
-        validator.check_positive_int(output_num, "output_num", self.name)
-        self.axis = axis
-        self.output_num = output_num
-        self.add_prim_attr('num_split', self.output_num)
 
 
 class Size(Primitive):

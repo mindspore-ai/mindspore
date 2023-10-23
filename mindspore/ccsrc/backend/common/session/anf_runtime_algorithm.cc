@@ -900,11 +900,11 @@ std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAb
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     value = value_node->value();
-    abstract::AbstractBasePtr abs = node->abstract();
+    auto abs = node->abstract();
     if (abs == nullptr) {
       MS_EXCEPTION_IF_NULL(value);
       abs = value->ToAbstract();
-      node->set_abstract(abs);
+      value_node->set_abstract(abs);
     }
     MS_EXCEPTION_IF_NULL(abs);
     shape = abs->GetShape();
