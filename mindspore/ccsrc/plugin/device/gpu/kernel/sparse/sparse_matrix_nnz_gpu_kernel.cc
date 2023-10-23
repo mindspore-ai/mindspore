@@ -58,22 +58,7 @@ int SparseMatrixNNZGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  auto x_d_s_shape = inputs[kIndex0]->GetShapeVector();
-  auto x_b_p_shape = inputs[kIndex1]->GetShapeVector();
-  auto x_r_p_shape = inputs[kIndex2]->GetShapeVector();
-  auto x_c_i_shape = inputs[kIndex3]->GetShapeVector();
-  auto x_v_shape = inputs[kIndex4]->GetShapeVector();
-  size_t x_d_s_elements_ = std::accumulate(x_d_s_shape.begin(), x_d_s_shape.end(), 1, std::multiplies<int64_t>());
-  size_t x_b_p_elements_ = std::accumulate(x_b_p_shape.begin(), x_b_p_shape.end(), 1, std::multiplies<int64_t>());
-  size_t x_r_p_elements_ = std::accumulate(x_r_p_shape.begin(), x_r_p_shape.end(), 1, std::multiplies<int64_t>());
-  size_t x_c_i_elements_ = std::accumulate(x_c_i_shape.begin(), x_c_i_shape.end(), 1, std::multiplies<int64_t>());
-  size_t x_v_elements_ = std::accumulate(x_v_shape.begin(), x_v_shape.end(), 1, std::multiplies<int64_t>());
 
-  input_size_list_.push_back(x_d_s_elements_ * unit_indices_size_);
-  input_size_list_.push_back(x_b_p_elements_ * unit_indices_size_);
-  input_size_list_.push_back(x_r_p_elements_ * unit_indices_size_);
-  input_size_list_.push_back(x_c_i_elements_ * unit_indices_size_);
-  input_size_list_.push_back(x_v_elements_ * unit_values_size_);
   output_size_list_.push_back(output_elements_ * sizeof(int32_t));
   return KRET_OK;
 }

@@ -86,15 +86,7 @@ int SparseSegmentOpsGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
   idx_seg_elements_ = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies{});
   output_dim0_ = LongToSize(output_shape.front());
 
-  size_t input_x_size = x_elements_ * unit_x_size_;
-  size_t input_idx_seg_size = idx_seg_elements_ * unit_idx_seg_size_;
   size_t output_size = output_elements_ * unit_x_size_;
-  input_size_list_.push_back(input_x_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  if (flag_) {
-    input_size_list_.push_back(unit_idx_seg_size_);
-  }
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back((output_dim0_ + 1) * sizeof(size_t));
   return KRET_OK;

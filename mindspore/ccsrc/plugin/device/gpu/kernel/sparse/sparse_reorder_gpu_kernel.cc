@@ -56,7 +56,6 @@ bool SparseReorderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int SparseReorderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   for (const auto &input : inputs) {
@@ -82,15 +81,10 @@ int SparseReorderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
     return KRET_RESIZE_FAILED;
   }
-  size_t input_size = input_elements_ * unit_size_;
-  size_t values_size = values_elements_ * values_unit_size_;
-  size_t shape_size = shape_elements_ * shape_unit_size_;
+
   size_t output_indices_size = output_indices_elements_ * unit_size_;
   size_t output_values_size = output_values_elements_ * values_unit_size_;
   size_t workspace_size = num_elems_ * unit_size_;
-  input_size_list_.push_back(input_size);
-  input_size_list_.push_back(values_size);
-  input_size_list_.push_back(shape_size);
   output_size_list_.push_back(output_indices_size);
   output_size_list_.push_back(output_values_size);
   workspace_size_list_.push_back(workspace_size);

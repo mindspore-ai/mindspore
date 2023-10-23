@@ -59,7 +59,6 @@ class SparseSegmentGradOpsGpuKernelMod : public NativeGpuKernelMod {
     output_dim0_ = 0;
     output_elements_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

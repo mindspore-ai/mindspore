@@ -94,18 +94,10 @@ void CSRSparseMatrixToDenseGpuKernelMod::ResetResource() noexcept {
   col_indices_size_ = 0;
   values_size_ = 0;
   output_size_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 
-void CSRSparseMatrixToDenseGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(dense_shape_size_);
-  input_size_list_.push_back(batch_ptr_size_);
-  input_size_list_.push_back(row_ptr_size_);
-  input_size_list_.push_back(col_indices_size_);
-  input_size_list_.push_back(values_size_);
-  output_size_list_.push_back(output_size_);
-}
+void CSRSparseMatrixToDenseGpuKernelMod::InitSizeLists() { output_size_list_.push_back(output_size_); }
 
 template <typename T, typename S>
 bool CSRSparseMatrixToDenseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,

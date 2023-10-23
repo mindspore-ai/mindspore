@@ -103,7 +103,6 @@ int LogNormalReverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
                                                           inputs.at(kIndex0)->GetDeviceShapeVector().end());
   input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<int64_t>());
   size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
   output_size_list_.push_back(input_size);
   workspace_size_list_.push_back(input_size);
   return KRET_OK;
@@ -111,7 +110,6 @@ int LogNormalReverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
 
 void LogNormalReverseGpuKernelMod::ResetResource() noexcept {
   input_elements_ = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

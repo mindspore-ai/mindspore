@@ -61,7 +61,6 @@ void SparseFillEmptyRowsGpuKernelMod::ResetResource() noexcept {
   output_elements4_ = 0;
   dense_row = 0;
   real_output_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
@@ -125,11 +124,6 @@ int SparseFillEmptyRowsGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   auto workspace_final_shape_size = sizeof(size_t);
   auto workspace_origin_index_order_size = input_indices_shapes_[kIndex0] * sizeof(int64_t);
   auto workspace_sorted_key_size = input_indices_shapes_[kIndex0] * sizeof(int64_t);
-
-  input_size_list_.push_back(input_indice_size_);
-  input_size_list_.push_back(input_values_size_);
-  input_size_list_.push_back(input_dense_shape_size_);
-  input_size_list_.push_back(input_default_values_size_);
 
   workspace_size_list_.push_back(workspace_elements_per_rows_size);
   workspace_size_list_.push_back(workspace_empty_rows_count_size);

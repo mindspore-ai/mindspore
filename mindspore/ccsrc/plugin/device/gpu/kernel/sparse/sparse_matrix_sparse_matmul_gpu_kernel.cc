@@ -86,7 +86,6 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const std::vector<KernelTensor *
 
     std::vector<size_t> temp{input_elements_, unit_size_};
     ele_size_vec.push_back(temp);
-    input_size_list_.push_back(input_elements_ * unit_size_);
   }
 
   rank = ele_size_vec[InputList::X1_DENSE_SHAPE][0];

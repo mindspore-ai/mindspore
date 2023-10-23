@@ -59,7 +59,6 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
     y_values_num_ = 0;
     x3_dense_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }

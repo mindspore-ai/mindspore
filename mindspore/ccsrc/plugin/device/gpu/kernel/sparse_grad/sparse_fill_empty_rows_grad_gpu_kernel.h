@@ -59,7 +59,6 @@ class SparseFillEmptyRowsGradGpuKernelMod : public NativeGpuKernelMod {
     workspace_flag_size_ = 0;
     workspace_sum_val_size_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }

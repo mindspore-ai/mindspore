@@ -84,7 +84,6 @@ void TensorArrayStackKernelMod::ResetResource() noexcept {
   ele_size_ = 0;
   stream_ptr_ = nullptr;
   shapes_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }

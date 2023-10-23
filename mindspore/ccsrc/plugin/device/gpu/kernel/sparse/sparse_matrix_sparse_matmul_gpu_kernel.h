@@ -61,7 +61,6 @@ class SparseMatrixSparseMatMulGpuKernelMod : public NativeGpuKernelMod {
     C_nnz1 = 0;
     transpose_a = false;
     transpose_b = false;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

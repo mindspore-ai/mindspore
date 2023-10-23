@@ -100,10 +100,6 @@ int ParameterizedTruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTen
     is_null_input_ = true;
   }
 
-  input_size_list_.emplace_back(mean_elements * unit_output_size_);
-  input_size_list_.emplace_back(stdevs_elements_ * unit_output_size_);
-  input_size_list_.emplace_back(min_elements * unit_output_size_);
-  input_size_list_.emplace_back(max_elements * unit_output_size_);
   output_size_list_.emplace_back(output_elements_ * unit_output_size_);
 
   return KRET_OK;

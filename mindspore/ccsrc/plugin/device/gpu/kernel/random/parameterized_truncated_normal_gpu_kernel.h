@@ -53,7 +53,6 @@ class ParameterizedTruncatedNormalGpuKernelMod : public NativeGpuKernelMod,
     is_null_input_ = false;
     batch_size_ = 0;
     samples_per_batch_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 

@@ -65,7 +65,6 @@ bool DynamicRnnOpBaseMod::Init(const std::vector<KernelTensor *> &inputs, const 
 }
 
 void DynamicRnnOpBaseMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   reserved_size_ = 0;
@@ -125,21 +124,12 @@ int DynamicRnnOpBaseMod::Resize(const std::vector<KernelTensor *> &inputs, const
 #endif
   CheckWeightSize(inputs);
   workspace_size_list_.push_back(workspace_size);
-  size_t x_size = IntToSize(max_seq_len_ * batch_size_ * input_size_) * input_type_size_;
-  size_t seq_len_size = IntToSize(batch_size_) * sizeof(int32_t);
   size_t h_size = 0;
   size_t c_size = 0;
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "Get h size failed");
   if (rnn_mode_ == CUDNN_LSTM) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(cx_desc_, &c_size), "Get c size failed");
   }
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(h_size);
-  if (rnn_mode_ == CUDNN_LSTM) {
-    input_size_list_.push_back(c_size);
-  }
-  input_size_list_.push_back(weight_size_);
-  input_size_list_.push_back(seq_len_size);
 
   size_t y_size = IntToSize(max_seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * input_type_size_;
   output_size_list_.push_back(y_size);

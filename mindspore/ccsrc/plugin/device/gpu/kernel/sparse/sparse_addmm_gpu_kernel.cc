@@ -64,10 +64,6 @@ int SparseAddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   std::vector<int64_t> output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
                                                             outputs.at(kIndex0)->GetDeviceShapeVector().end());
 
-  int64_t mat2_elements_ =
-    std::accumulate(mat2_shape_.begin(), mat2_shape_.end(), int64_t(1), std::multiplies<int64_t>());
-  int64_t mat3_elements_ =
-    std::accumulate(mat3_shape_.begin(), mat3_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t out_elements_ =
     std::accumulate(output_shape_.begin(), output_shape_.end(), int64_t(1), std::multiplies<int64_t>());
 
@@ -82,14 +78,8 @@ int SparseAddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (input_values_num_ == 0) {
     is_null_input_ = true;
   }
-  input_size_list_.emplace_back(input_values_num_ * unit_indices_size_ * kNumTwo);  // input_index
-  input_size_list_.emplace_back(input_values_num_ * unit_values_size_);             // input_value
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                      // input_shape
-  input_size_list_.emplace_back(mat2_elements_ * unit_values_size_);                // x2_dense
-  input_size_list_.emplace_back(mat3_elements_ * unit_values_size_);                // x3_dense
-  input_size_list_.emplace_back(unit_values_size_);                                 // alpha
-  input_size_list_.emplace_back(unit_values_size_);                                 // beta
-  output_size_list_.emplace_back(out_elements_ * unit_values_size_);                // output_dense
+
+  output_size_list_.emplace_back(out_elements_ * unit_values_size_);  // output_dense
   return KRET_OK;
 }
 

@@ -50,7 +50,6 @@ void CSRSparseMatrixToSparseTensorGpuKernelMod::ResetResource() noexcept {
   output_indices_size_ = 0;
   output_values_size_ = 0;
   output_dense_shape_size_ = 0;
-  input_size_list_.clear();
   workspace_size_list_.clear();
   output_size_list_.clear();
 }
@@ -103,11 +102,6 @@ int CSRSparseMatrixToSparseTensorGpuKernelMod::Resize(const std::vector<KernelTe
 }
 
 void CSRSparseMatrixToSparseTensorGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_dense_shape_size_);
-  input_size_list_.push_back(input_batch_pointers_size_);
-  input_size_list_.push_back(input_row_pointers_size_);
-  input_size_list_.push_back(input_col_indices_size_);
-  input_size_list_.push_back(input_values_size_);
   workspace_size_list_.push_back(input_col_indices_size_);
   output_size_list_.push_back(output_indices_size_);
   output_size_list_.push_back(output_values_size_);

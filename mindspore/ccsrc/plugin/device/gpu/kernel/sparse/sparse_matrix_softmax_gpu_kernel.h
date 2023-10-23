@@ -51,12 +51,6 @@ class SparseMatrixSoftmaxGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitSizeLists() {
-    // input size list
-    input_size_list_.push_back(dense_shape_elements_ * index_unit_size_);
-    input_size_list_.push_back(batch_pointers_elements_ * index_unit_size_);
-    input_size_list_.push_back(row_pointers_elements_ * index_unit_size_);
-    input_size_list_.push_back(col_indices_elements_ * index_unit_size_);
-    input_size_list_.push_back(values_elements_ * data_unit_size_);
     // output size list
     output_size_list_.push_back(dense_shape_elements_ * index_unit_size_);
     output_size_list_.push_back(batch_pointers_elements_ * index_unit_size_);

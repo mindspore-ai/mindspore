@@ -87,10 +87,6 @@ int SparseSparseGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   size_t ab_status1 = (a_values_num + b_values_num) * sizeof(int64_t);
   size_t ab_status2 = (a_values_num + b_values_num) * sizeof(int64_t);
 
-  input_size_list_.push_back(a_indices_size * indices_size_);
-  input_size_list_.push_back(a_values_size * values_size_);
-  input_size_list_.push_back(b_indices_size * indices_size_);
-  input_size_list_.push_back(b_values_size * values_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * rank_ * indices_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * values_size_);
   workspace_size_list_.push_back(ab_status);

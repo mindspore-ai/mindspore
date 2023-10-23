@@ -45,28 +45,11 @@ class LerpHelperGpuKernel : public GpuKernelHelperBase {
     std::vector<int64_t> inputz_shape = input_shapes[weight_pos];
     std::vector<int64_t> output_shape = output_shapes[0];
     weight_is_float_ = inputz_shape.size() == 0 ? true : false;
-    std::vector<std::vector<int64_t>> input_tensor_shapes{input_shapes[0], input_shapes[1]};
-    int inp_flag = CalShapesSizeInBytes<T>(input_tensor_shapes, 2, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
-    int inp_flag1 = 0;
-    if (weight_is_float_) {
-      size_t weight_size = sizeof(S);
-      input_size_list_.emplace_back(weight_size);
-    } else {
-      std::vector<std::vector<int64_t>> input_weight_shapes{input_shapes[2]};
-      int inp_flag1 =
-        CalShapesSizeInBytes<S>(input_weight_shapes, 1, kernel_name_, "input_weight_shapes", &input_size_list_);
-      if (inp_flag1 == -1) {
-        return inp_flag1;
-      }
-    }
     int out_flag = CalShapesSizeInBytes<T>(output_shapes, 1, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || inp_flag1 == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     Broadcast(inputx_shape, inputy_shape, inputz_shape);
     lhs_shape_.resize(MAX_DIMS, 1);
     rhs_shape_.resize(MAX_DIMS, 1);

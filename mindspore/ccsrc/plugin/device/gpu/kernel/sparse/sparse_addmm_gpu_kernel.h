@@ -60,7 +60,6 @@ class SparseAddmmGpuKernelMod : public NativeGpuKernelMod {
     mat1_col_ = 0;
     mat2_col_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     workspace_size_list_.clear();
     output_size_list_.clear();
   }

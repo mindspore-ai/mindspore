@@ -76,15 +76,12 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     cuda_stream_ptr_ = nullptr;
     input_shape_.clear();
     input_size_ = 1;
-    input_size_list_.clear();
     output_size_list_.clear();
   }
 
  protected:
   void InitSizeLists() {
-    input_size_list_.clear();
     output_size_list_.clear();
-    input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));
   }
 

@@ -73,12 +73,10 @@ int StandardLaplaceGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
 
   std::vector<int64_t> output_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
                                                            outputs.at(kIndex0)->GetDeviceShapeVector().end());
-  int64_t shape_elements = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies<int64_t>());
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (output_elements_ == 0) {
     is_null_input_ = true;
   }
-  input_size_list_.emplace_back(shape_elements * unit_input_size_);
   output_size_list_.emplace_back(output_elements_ * unit_output_size_);
   workspace_size_list_.push_back(output_elements_ * sizeof(curandState));
   return KRET_OK;

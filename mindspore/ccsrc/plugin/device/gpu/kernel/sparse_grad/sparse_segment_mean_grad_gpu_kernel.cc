@@ -73,13 +73,7 @@ int SparseSegmentMeanGradGpuKernelMod::Resize(const std::vector<KernelTensor *> 
   idx_seg_elements_ = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies{});
   output_dim0_ = LongToSize(output_shape.front());
 
-  size_t input_grad_size = grad_elements_ * unit_grad_size_;
-  size_t input_idx_seg_size = idx_seg_elements_ * unit_idx_seg_size_;
   size_t output_size = output_elements_ * unit_grad_size_;
-  input_size_list_.push_back(input_grad_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(input_idx_seg_size);
-  input_size_list_.push_back(unit_idx_seg_size_);
   output_size_list_.push_back(output_size);
   workspace_size_list_.push_back((outer_size_ + 1) * sizeof(size_t));
   return KRET_OK;

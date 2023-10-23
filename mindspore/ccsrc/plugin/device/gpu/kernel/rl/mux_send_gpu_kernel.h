@@ -94,7 +94,6 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
 
     nccl_data_type_ = nccl_dtype(inputs[0]->dtype_id());
     group_name_ = GetValue<std::string>(primitive_->GetAttr(kAttrGroup));
-    input_size_list_.clear();
     total_size_ = 0;
     size_t input_num = inputs.size();
     for (size_t i = 0; i < input_num; ++i) {
@@ -115,7 +114,6 @@ class MuxSendGpuKernel : public MuxBaseGpuKernel {
         data_size = sizeof(T);
       }
       size_t input_size = std::accumulate(input_shape.begin(), input_shape.end(), data_size, std::multiplies<size_t>());
-      input_size_list_.push_back(input_size);
       // Framework memory allocation ensures memory alignment.
       total_size_ += device::gpu::GPUMemoryAllocator::GetInstance().AlignMemorySize(input_size);
     }

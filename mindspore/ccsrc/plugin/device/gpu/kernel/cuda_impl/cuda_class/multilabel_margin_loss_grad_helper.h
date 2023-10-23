@@ -47,39 +47,22 @@ class MultilabelMarginLossGradHelperGpuKernel : public GpuKernelHelperBase {
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     ResetResource();
-    constexpr size_t INPUT_NUM_1 = 2;
-    constexpr size_t INPUT_NUM_2 = 2;
     constexpr size_t OUTPUT_NUM = 1;
-    constexpr int64_t kInputGradIndex = 0;
-    constexpr int64_t kInputXIndex = 1;
-    constexpr int64_t kInputTargetIndex = 2;
-    constexpr int64_t kInputIsTargetIndex = 3;
+    constexpr size_t kInputGradIndex = 0;
+    constexpr size_t kInputXIndex = 1;
+    constexpr size_t kInputTargetIndex = 2;
+    constexpr size_t kInputIsTargetIndex = 3;
     y_grad_shape_ = input_shapes[kInputGradIndex];
     x_shape_ = input_shapes[kInputXIndex];
     target_shape_ = input_shapes[kInputTargetIndex];
     is_target_shape_ = input_shapes[kInputIsTargetIndex];
-    std::vector<std::vector<int64_t>> input_shapes_1, input_shapes_2;
-    input_shapes_1.emplace_back(y_grad_shape_);
-    input_shapes_1.emplace_back(x_shape_);
-    input_shapes_2.emplace_back(target_shape_);
-    input_shapes_2.emplace_back(is_target_shape_);
 
-    int inp_flag1 =
-      CalShapesSizeInBytes<T>(input_shapes_1, INPUT_NUM_1, kernel_name_, "input_shapes_1", &input_size_list_);
-    if (inp_flag1 == -1) {
-      return inp_flag1;
-    }
-    int inp_flag2 =
-      CalShapesSizeInBytes<int>(input_shapes_2, INPUT_NUM_2, kernel_name_, "input_shapes_2", &input_size_list_);
-    if (inp_flag2 == -1) {
-      return inp_flag2;
-    }
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag1 == 1 || inp_flag2 == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
 
     return CheckKernelParam();
   }

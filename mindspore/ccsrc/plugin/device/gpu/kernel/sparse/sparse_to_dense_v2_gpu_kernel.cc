@@ -80,13 +80,7 @@ int SparseToDenseV2GpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     std::accumulate(input_shape_values.begin(), input_shape_values.end(), 1, std::multiplies<size_t>());
   input_elements_output_shape =
     std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  size_t input_size_indices = input_elements_indices * indice_size_;
-  size_t input_size_values = input_elements_values * value_size_;
-  size_t input_size_output_shape = input_elements_output_shape * indice_size_;
   size_t output_size = output_elements * value_size_;
-  input_size_list_.push_back(input_size_indices);
-  input_size_list_.push_back(input_size_values);
-  input_size_list_.push_back(input_size_output_shape);
   output_size_list_.push_back(output_size);
   return KRET_OK;
 }
@@ -97,7 +91,6 @@ void SparseToDenseV2GpuKernelMod::ResetResource() noexcept {
   input_elements_values = 0;
   input_elements_output_shape = 0;
   is_null_input_ = false;
-  input_size_list_.clear();
   output_size_list_.clear();
 }
 

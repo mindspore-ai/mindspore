@@ -66,7 +66,6 @@ bool GruGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std:
 }
 
 void GruGpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   reserved_size_ = 0;
@@ -231,14 +230,8 @@ std::vector<KernelAttr> GruGpuKernelMod::GetOpSupport() {
 }
 
 void GruGpuKernelMod::InitSizeLists() {
-  size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * input_type_size_;
-
   size_t h_size = 0;
   CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(h_size);
-  input_size_list_.push_back(weight_size_);
 
   size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * input_type_size_;
   output_size_list_.push_back(y_size);

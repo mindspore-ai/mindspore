@@ -62,19 +62,12 @@ class SparseSoftmaxGpuKernelMod : public NativeGpuKernelMod {
     values_elements_ = 0;
     shape_elements_ = 0;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
   void InitSizeLists() {
-    size_t indices_size = indices_elements_ * indices_unit_size_;
-    size_t values_size = values_elements_ * values_unit_size_;
-    size_t shape_size = shape_elements_ * shape_unit_size_;
     size_t output_size = values_elements_ * output_unit_size_;
-    input_size_list_.emplace_back(indices_size);
-    input_size_list_.emplace_back(values_size);
-    input_size_list_.emplace_back(shape_size);
     output_size_list_.emplace_back(output_size);
     workspace_size_list_.emplace_back(values_elements_ * sizeof(int32_t));
     workspace_size_list_.emplace_back(values_elements_ * sizeof(int64_t));

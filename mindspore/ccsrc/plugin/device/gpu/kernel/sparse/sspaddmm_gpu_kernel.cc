@@ -64,8 +64,6 @@ int SspaddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                                              inputs.at(kIndex6)->GetDeviceShapeVector().end());
   std::vector<int64_t> y_indices_shape = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeVector().begin(),
                                                               outputs.at(kIndex0)->GetDeviceShapeVector().end());
-  int64_t x3_dense_elements_ =
-    std::accumulate(x3_dense_shape.begin(), x3_dense_shape.end(), int64_t(1), std::multiplies<int64_t>());
   x1_values_num_ = x1_indices_shape[1];
   x2_values_num_ = x2_indices_shape[1];
   y_values_num_ = y_indices_shape[1];
@@ -73,20 +71,11 @@ int SspaddmmGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (y_values_num_ == 0) {
     is_null_input_ = true;
   }
-  // InitSizeLists
-  input_size_list_.emplace_back(x1_values_num_ * unit_indices_size_ * kNumTwo);  // x1_indices
-  input_size_list_.emplace_back(x1_values_num_ * unit_values_size_);             // x1_values
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                   // x1_shape
-  input_size_list_.emplace_back(x2_values_num_ * unit_indices_size_ * kNumTwo);  // x2_indices
-  input_size_list_.emplace_back(x2_values_num_ * unit_values_size_);             // x2_values
-  input_size_list_.emplace_back(kNumTwo * unit_indices_size_);                   // x2_shape
-  input_size_list_.emplace_back(x3_dense_elements_ * unit_values_size_);         // x3_dense
-  input_size_list_.emplace_back(unit_values_size_);                              // alpha
-  input_size_list_.emplace_back(unit_values_size_);                              // beta
-  workspace_size_list_.emplace_back(x2_values_num_ * sizeof(int64_t));           // index
-  output_size_list_.emplace_back(y_values_num_ * sizeof(int64_t) * kNumTwo);     // y_indices
-  output_size_list_.emplace_back(y_values_num_ * unit_values_size_);             // y_values
-  output_size_list_.emplace_back(kNumTwo * sizeof(int64_t));                     // y_shape
+
+  workspace_size_list_.emplace_back(x2_values_num_ * sizeof(int64_t));        // index
+  output_size_list_.emplace_back(y_values_num_ * sizeof(int64_t) * kNumTwo);  // y_indices
+  output_size_list_.emplace_back(y_values_num_ * unit_values_size_);          // y_values
+  output_size_list_.emplace_back(kNumTwo * sizeof(int64_t));                  // y_shape
 
   return KRET_OK;
 }

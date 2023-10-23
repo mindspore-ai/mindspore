@@ -59,7 +59,6 @@ int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const std::vector<KernelTe
   elements[kZero] = 0;
   elements[kOne] = 0;
   elements[kTwo] = 0;
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -68,8 +67,6 @@ int SparseTensorToCSRSparseMatrixGpuKernelMod::Resize(const std::vector<KernelTe
       std::vector<int64_t>(inputs.at(i)->GetDeviceShapeVector().begin(), inputs.at(i)->GetDeviceShapeVector().end());
     size_t input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
     elements[i] = input_elements_;
-    size_t unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(i).dtype);
-    input_size_list_.push_back(input_elements_ * unit_size_);
   }
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(0).dtype);
   workspace_size_list_.push_back(elements[kOne] * unit_size_);

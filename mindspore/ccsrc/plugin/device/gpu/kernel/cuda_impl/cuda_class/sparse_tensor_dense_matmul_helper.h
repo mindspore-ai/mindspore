@@ -45,13 +45,8 @@ class SparseTensorDenseMatmulHelperGpuKernel : public GpuKernelHelperBase {
   virtual ~SparseTensorDenseMatmulHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
-    constexpr size_t INPUT_NUM = 4;
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
-    int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
-    if (inp_flag == -1) {
-      return inp_flag;
-    }
     indices_shape_ = input_shapes[kIndex0];
     values_shape_ = input_shapes[kIndex1];
     dense_shape_ = input_shapes[kIndex3];
@@ -62,7 +57,7 @@ class SparseTensorDenseMatmulHelperGpuKernel : public GpuKernelHelperBase {
     if (out_flag == -1) {
       return out_flag;
     }
-    is_null_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 
@@ -130,7 +125,6 @@ class SparseTensorDenseMatmulHelperGpuKernel : public GpuKernelHelperBase {
   void ResetResource() noexcept override {
     b_rows = 0;
     b_cols = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }

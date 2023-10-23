@@ -110,14 +110,6 @@ bool ReservoirReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> 
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpy(handle_device_, &handle_, sizeof(handle_), cudaMemcpyHostToDevice),
                                     "cudaMemcpy failed.");
 
-  for (size_t i = 0; i < inputs.size(); i++) {
-    TypeId type = inputs[i]->dtype_id();
-    size_t type_size = GetTypeByte(TypeIdToType(type));
-    const std::vector<int64_t> &shape = inputs[i]->GetShapeVector();
-    size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    input_size_list_.push_back(tensor_size);
-  }
-
   output_size_list_.push_back(sizeof(handle_));
   return true;
 }

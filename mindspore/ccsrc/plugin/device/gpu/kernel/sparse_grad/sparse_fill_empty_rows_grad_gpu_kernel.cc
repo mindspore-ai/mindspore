@@ -85,8 +85,6 @@ int SparseFillEmptyRowsGradGpuKernelMod::Resize(const std::vector<KernelTensor *
   workspace_sum_val_size_ =
     grad_values_num_ * abstract::TypeIdSize(inputs[kIndex1]->dtype_id());  // Precision need auxlilary memory
 
-  input_size_list_.push_back(reverse_map_size_);
-  input_size_list_.push_back(grad_values_size_);
   workspace_size_list_.push_back(workspace_flag_size_);
   workspace_size_list_.push_back(workspace_sum_val_size_);
   output_size_list_.push_back(output_dvalues_size_);

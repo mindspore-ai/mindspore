@@ -64,7 +64,6 @@ void SparseAddGpuKernelMod::ResetResource() noexcept {
   dense_shape_.clear();
   b_indices_shape_.clear();
   b_values_shape_.clear();
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -126,10 +125,6 @@ int SparseAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
   auto a_row_num = a_values_shape_[0];
   auto b_row_num = b_values_shape_[0];
-  input_size_list_.push_back(a_indices_size_ * indices_size_);
-  input_size_list_.push_back(a_values_size_ * values_size_);
-  input_size_list_.push_back(b_indices_size_ * indices_size_);
-  input_size_list_.push_back(b_values_size_ * values_size_);
   CalWorkSpace();
   output_size_list_.push_back((a_row_num + b_row_num) * rank_ * indices_size_);
   output_size_list_.push_back((a_row_num + b_row_num) * values_size_);
