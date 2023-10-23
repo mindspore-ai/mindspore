@@ -41,7 +41,7 @@ def mul_vmap_func(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_mul_op_forward(context_mode, data_type):
     """
@@ -55,7 +55,6 @@ def test_mul_op_forward(context_mode, data_type):
     out = mul_forward_func(x, y)
     expect_out = np.array([2., 8., 12.]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("out:", out)
 
 
 @pytest.mark.level0
@@ -63,7 +62,7 @@ def test_mul_op_forward(context_mode, data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_mul_op_backward(context_mode, data_type):
     """
@@ -78,7 +77,6 @@ def test_mul_op_backward(context_mode, data_type):
     expect_out = np.array([[2., 4., 3.], [1., 2., 4.]]).astype(np.float32)
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out[0], rtol=1e-3)
     np.testing.assert_allclose(grads[1].asnumpy(), expect_out[1], rtol=1e-3)
-    print("grads:", grads)
 
 
 @pytest.mark.level0
@@ -86,7 +84,7 @@ def test_mul_op_backward(context_mode, data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_mul_op_vmap(context_mode, data_type):
     """
@@ -100,4 +98,32 @@ def test_mul_op_vmap(context_mode, data_type):
     out = mul_vmap_func(x, y)
     expect_out = np.array([[18., 30., 88.], [21., 10., 42.]]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-    print("vmap:", out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+# @pytest.mark.platform_arm_ascend_training 与master现象一致
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_mul_op_dynamic(context_mode):
+    """
+    Feature: mu; ops.
+    Description: test ops mul dynamic tensor input.
+    Expectation: output the right result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.mul)
+    test_cell.set_inputs(x_dyn, y_dyn)
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
+    out = test_cell(x, y)
+    expect_out = np.array([2., 8., 12.]).astype(np.float32)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
+    x_2 = ms.Tensor(np.array([3, 8, 11]).astype(np.float32))
+    y_2 = ms.Tensor(np.array([6, 5, 7]).astype(np.float32))
+    out_2 = test_cell(x_2, y_2)
+    expect_out_2 = np.array([18., 40., 77.]).astype(np.float32)
+    np.testing.assert_allclose(out_2.asnumpy(), expect_out_2, rtol=1e-3)
