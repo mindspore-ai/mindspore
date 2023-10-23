@@ -31,6 +31,8 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int64_t kDoubleSize = 2;
+
 class DynamicAkgParallelLaunch {
  public:
   using DynamicAkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
@@ -194,7 +196,7 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
         strides_[j] = strides_[j + 1] * shape_list_[i][j + 1];
       }
       (void)arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
-      (void)arg_size.insert(arg_size.end(), 2 * (max_length - shape_list_[i].size()), 0);
+      (void)arg_size.insert(arg_size.end(), kDoubleSize * (max_length - shape_list_[i].size()), 0);
       arg_size_vec.push_back(arg_size);
     }
 

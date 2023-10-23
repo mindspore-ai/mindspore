@@ -163,8 +163,18 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
       return c_idx * input_slice_size + d_idx + h_idx + w_idx;
     };
 
-    int64_t id0{0}, id1{0}, ih0{0}, ih1{0}, iw0{0}, iw1{0};
-    S d0lambda{0}, d1lambda{0}, h0lambda{0}, h1lambda{0}, w0lambda{0}, w1lambda{0};
+    int64_t id0{0};
+    int64_t id1{0};
+    int64_t ih0{0};
+    int64_t ih1{0};
+    int64_t iw0{0};
+    int64_t iw1{0};
+    S d0lambda{0};
+    S d1lambda{0};
+    S h0lambda{0};
+    S h1lambda{0};
+    S w0lambda{0};
+    S w1lambda{0};
 
     for (int64_t c_idx = begin; c_idx < end; ++c_idx) {
       for (int64_t od = 0; od < output_depth; ++od) {
@@ -200,8 +210,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     }
   };
 
-  float block_size = static_cast<float>(kGrainSize) / output_slice_size / 8;
-  ParallelLaunch(loop3d, static_cast<size_t>(channels), block_size);
+  ParallelLaunch(loop3d, static_cast<size_t>(channels), static_cast<float>(kGrainSize) / output_slice_size / 8);
   // memcopy and cast for fp16
   if (is_fp16) {
     T *real_input_ptr = GetDeviceAddress<T>(outputs, kIndex0);
@@ -210,8 +219,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
         real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);
       }
     };
-    block_size = kGrainSize;
-    ParallelLaunch(task_fp16, static_cast<size_t>(total), block_size);
+    ParallelLaunch(task_fp16, static_cast<size_t>(total), kGrainSize);
   }
   return true;
 }

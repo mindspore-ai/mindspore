@@ -42,7 +42,8 @@ constexpr int32_t TIME_OUT = 300;
 constexpr auto kLogLevel = "log_level";
 
 bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args) {
-  struct timeval start_time, end_time;
+  struct timeval start_time;
+  struct timeval end_time;
   (void)gettimeofday(&start_time, nullptr);
   MS_LOG(INFO) << "Akg start parallel build. kernel count: " << build_args.size();
 
@@ -162,7 +163,9 @@ bool AkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_
       } else {
         // in this case, the cnode is a IsGraphKernel when graph kernel mode is enabled
         // generate the fused json for the graph kernel subgraph
-        std::vector<AnfNodePtr> node_list, input_list, output_list;
+        std::vector<AnfNodePtr> node_list;
+        std::vector<AnfNodePtr> input_list;
+        std::vector<AnfNodePtr> output_list;
         GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
         if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
           MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";

@@ -41,10 +41,9 @@ CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 #endif
 }
 
-bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
+void CustomAOTCpuKernelMod::SetKernelPath(const BaseOperatorPtr &base_operator) {
   const auto &exec_info = GetValue<std::string>(base_operator->GetPrim()->GetAttr("func_name"));
+
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
     if (base_operator->GetPrim()->HasAttr("path_from_env") &&
@@ -53,7 +52,6 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
       if (path_in_env == nullptr) {
         MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, the attr path_from_env is set but the env var ["
                         << path << "] is empty. Use [" << path << "] as the path to the library instead.";
-
       } else {
         path = std::string(path_in_env);
       }
@@ -93,6 +91,12 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
       << "For '" << kernel_name_ << "' on CPU, user defined function path '" << exec_info
       << "' is illegal. Proper function path should follow the format of 'dir_path/file_name:func_name'";
   }
+}
+
+bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  SetKernelPath(base_operator);
 
   for (size_t i = 0; i < inputs.size(); i++) {
     auto in_shape = inputs[i]->GetShapeVector();
