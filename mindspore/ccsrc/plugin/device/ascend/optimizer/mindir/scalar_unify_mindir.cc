@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/mindir/scalar_unify_mindir.h"
-#include <memory>
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "include/common/utils/anfalgo.h"
 
