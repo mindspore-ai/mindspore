@@ -36,6 +36,7 @@ def randperm_v2_backward_func(n):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_randperm_v2_forward(mode):
     """
     Feature: randperm_v2 ops.
@@ -54,6 +55,7 @@ def test_randperm_v2_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_randperm_v2_backward(mode):
     """
     Feature: randperm_v2 ops.

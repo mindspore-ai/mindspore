@@ -36,6 +36,7 @@ def sinh_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_sinh_forward(mode):
     """
     Feature: sinh ops.
@@ -55,6 +56,7 @@ def test_sinh_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_sinh_backward(mode):
     """
     Feature: sinh ops.
@@ -74,6 +76,7 @@ def test_sinh_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_sinh_vmap(mode):
     """
     Feature: test vmap function.

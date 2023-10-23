@@ -36,6 +36,7 @@ def masked_fill_backward_func(input_x, mask, value):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_masked_fill_forward(mode):
     """
     Feature: masked_fill ops.
@@ -56,6 +57,7 @@ def test_masked_fill_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_masked_fill_backward(mode):
     """
     Feature: masked_fill ops.
@@ -78,6 +80,7 @@ def test_masked_fill_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_masked_fill_vmap(mode):
     """
     Feature: test vmap function.
@@ -100,6 +103,7 @@ def test_masked_fill_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 # @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_masked_fill_dynamic(mode):
     """
     Feature: masked_fill ops.

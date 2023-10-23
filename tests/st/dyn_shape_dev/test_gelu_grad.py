@@ -42,7 +42,8 @@ def gelu_grad_dyn_shape_func(dy, x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gelu_grad_forward(mode):
     """
     Feature: Ops.

@@ -36,6 +36,7 @@ def real_div_backward_func(x, y):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_real_div_forward(mode):
     """
     Feature: real_div ops.
@@ -56,6 +57,7 @@ def test_real_div_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_real_div_backward(mode):
     """
     Feature: real_div ops.
@@ -78,6 +80,7 @@ def test_real_div_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_real_div_vmap(mode):
     """
     Feature: test vmap function.

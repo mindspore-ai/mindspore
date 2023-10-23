@@ -36,6 +36,7 @@ def qr_backward_func(x, full_matrices):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_qr_forward(mode):
     """
     Feature: qr ops.

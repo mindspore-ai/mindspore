@@ -37,6 +37,7 @@ def reduce_min_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_reduce_min(mode):
     """
     Feature: Ops.
@@ -62,6 +63,7 @@ def test_reduce_min(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_reduce_min_vmap(mode):
     """
     Feature: test vmap function.

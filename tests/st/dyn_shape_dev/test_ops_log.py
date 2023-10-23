@@ -14,6 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
+import test_utils
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.common import dtype as mstype
@@ -92,6 +93,7 @@ def test_op_log_gpu():
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@test_utils.run_test_func
 def test_op_log_ascend():
     """
     Feature: Log ascend kernel

@@ -36,6 +36,7 @@ def prelu_backward_func(x, weight):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_prelu_forward(mode):
     """
     Feature: prelu ops.
@@ -62,6 +63,7 @@ def test_prelu_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_prelu_backward(mode):
     """
     Feature: prelu ops.

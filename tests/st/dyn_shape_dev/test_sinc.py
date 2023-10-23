@@ -36,6 +36,7 @@ def sinc_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_sinc_forward(mode):
     """
     Feature: sinc ops.
@@ -55,6 +56,7 @@ def test_sinc_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_sinc_backward(mode):
     """
     Feature: sinc ops.

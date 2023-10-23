@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import os
+import inspect
 from functools import wraps
 from mindspore import nn
 import mindspore as ms
@@ -78,3 +80,41 @@ def get_inputs_tensor(inputs_np):
     for input_np in inputs_np:
         inputs.append(Tensor(input_np))
     return inputs
+
+
+def need_run_graph_op_mode(func, args, kwargs):
+    if ms.get_context('device_target') != 'Ascend':
+        return False
+
+    # get description of function params expected
+    sig = inspect.signature(func)
+    sig_args = [param.name for param in sig.parameters.values()]
+
+    mode = None
+    if isinstance(kwargs, dict):
+        for key in ['mode', 'context_mode']:
+            if key in sig_args and key in kwargs:
+                mode = kwargs[key]
+                break
+
+    return mode == ms.GRAPH_MODE
+
+
+def run_test_func(test_func):
+
+    @wraps(test_func)
+    def wrapper(*args, **kwargs):
+        # call original test function
+        test_func(*args, **kwargs)
+
+        if not need_run_graph_op_mode(test_func, args, kwargs):
+            return
+
+        try:
+            # set environment var GRAPH_OP_RUN='1' to run graph in kernel mode
+            os.environ['GRAPH_OP_RUN'] = '1'
+            test_func(*args, **kwargs)
+        finally:
+            del os.environ['GRAPH_OP_RUN']
+
+    return wrapper

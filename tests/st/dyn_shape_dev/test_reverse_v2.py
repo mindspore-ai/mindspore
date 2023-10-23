@@ -36,6 +36,7 @@ def reverse_v2_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_reverse_v2(mode):
     """
     Feature: Ops.
@@ -58,7 +59,7 @@ def test_reverse_v2(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+#@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.skip(reason="Probability of failure.")
 def test_reverse_v2_vmap(mode):

@@ -38,6 +38,7 @@ def hsigmoid_grad_dyn_shape_func(grads, x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_hsigmoid_grad_forward(mode):
     """
     Feature: Ops.
@@ -59,6 +60,7 @@ def test_hsigmoid_grad_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_hsigmoid_grad_vmap(mode):
     """
     Feature: test vmap function.
@@ -85,6 +87,7 @@ def test_hsigmoid_grad_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_hsigmoid_grad_dynamic(mode):
     """
     Feature: test dynamic tensor and dynamic scalar of hsigmoid_grad.

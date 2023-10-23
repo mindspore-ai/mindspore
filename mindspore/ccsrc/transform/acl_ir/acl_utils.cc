@@ -16,6 +16,7 @@
 
 #include "transform/acl_ir/acl_utils.h"
 #include <algorithm>
+#include <mutex>
 #include <set>
 #include "utils/ms_context.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -144,6 +145,12 @@ class AclDumper {
  private:
   std::string acl_dump_config_ = "";
 };
+
+std::mutex set_opt_mutex;
+aclError SetCompileopt(aclCompileOpt opt, const char *value) {
+  std::lock_guard<std::mutex> lock(set_opt_mutex);
+  return aclSetCompileopt(opt, value);
+}
 }  // namespace
 
 namespace mindspore {
@@ -264,7 +271,7 @@ void AclRunner::Reset() {
 }
 
 void AclRunner::SetStaticMode() {
-  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "enable");
+  auto set_compile_flag = SetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "enable");
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -273,7 +280,7 @@ void AclRunner::SetStaticMode() {
 }
 
 void AclRunner::SetDynamicMode() {
-  auto set_compile_flag = aclSetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "disable");
+  auto set_compile_flag = SetCompileopt(aclCompileOpt::ACL_OP_JIT_COMPILE, "disable");
   if (set_compile_flag != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
@@ -290,18 +297,32 @@ void AclRunner::SetPrecisionMode(const AclPrecisionMode mode) {
     precision_mode = ms_context->get_param<std::string>(MS_CTX_PRECISION_MODE);
   }
   if (!precision_mode.empty()) {
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
+    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
   } else if (mode == ALLOW_FP32_TO_FP16) {
     static const std::string allow_fp32_to_fp16 = "allow_fp32_to_fp16";
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
+    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, allow_fp32_to_fp16.c_str());
   } else if (mode == FORCE_FP32) {
     static const std::string force_fp32 = "force_fp32";
-    ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
+    ret = SetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, force_fp32.c_str());
   } else {
     MS_LOG(EXCEPTION) << "Acl set run mode failed! op_name is " << op_type_ << " and error mode is " << mode;
   }
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
+  }
+}
+
+void AclRunner::SetOpPrecisionMode() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto op_precision_mode = ms_context->get_param<std::string>(MS_CTX_OP_PRECISION_MODE);
+  if (op_precision_mode.empty()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Set ACL_OP_PRECISION_MODE: " << op_precision_mode;
+  auto ret = SetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Acl set op precision mode failed! op_name is " << op_type_ << " and error flag is " << ret;
   }
 }
 

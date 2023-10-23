@@ -41,6 +41,7 @@ def celu_dyn_shape_func(x, alpha=1.0):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@test_utils.run_test_func
 def test_celu_forward(mode):
     """
     Feature: Ops.
@@ -62,6 +63,7 @@ def test_celu_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@test_utils.run_test_func
 def test_celu_backward(mode):
     """
     Feature: Auto grad.
@@ -83,6 +85,7 @@ def test_celu_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@test_utils.run_test_func
 def test_celu_vmap(mode):
     """
     Feature: test vmap function.

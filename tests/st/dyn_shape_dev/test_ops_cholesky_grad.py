@@ -14,6 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
+import test_utils
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
@@ -34,6 +35,7 @@ class CholeskyGradNet(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@test_utils.run_test_func
 def test_cholesky_grad_ascend():
     """
     Feature: Cholesky ascend kernel.

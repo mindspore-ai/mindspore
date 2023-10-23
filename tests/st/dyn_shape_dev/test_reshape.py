@@ -36,6 +36,7 @@ def reshape_backward_func(x, shape):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_reshape(mode):
     """
     Feature: Ops.
@@ -61,6 +62,7 @@ def test_reshape(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_reshape_vmap(mode):
     """
     Feature: test vmap function.

@@ -37,6 +37,7 @@ def gcd_backward_func(x1, x2):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gcd_forward(mode):
     """
     Feature: Ops.
@@ -58,6 +59,7 @@ def test_gcd_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gcd_backward(mode):
     """
     Feature: Auto grad.
@@ -77,6 +79,7 @@ def test_gcd_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gcd_vmap(mode):
     """
     Feature: test vmap function.

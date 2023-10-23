@@ -40,7 +40,8 @@ def lin_sapce_dyn_shape_func(start, stop, num=5):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_lin_space_forward(mode):
     """
     Feature: Ops.
@@ -59,7 +60,8 @@ def test_lin_space_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_lin_space_backward(mode):
     """
     Feature: Auto grad.
@@ -76,8 +78,8 @@ def test_lin_space_backward(mode):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
-#@pytest.mark.platform_arm_ascend_training   # Not support.
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_lin_space_vmap(mode):
     """
     Feature: test vmap function.
@@ -103,6 +105,7 @@ def test_lin_space_vmap(mode):
 @pytest.mark.platform_x86_gpu_training
 #@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+@test_utils.run_test_func
 def test_lin_sapce_dynamic(mode):
     """
     Feature: test dynamic tensor of lin_sapce.

@@ -36,6 +36,7 @@ def transpose_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_transpose_forward(mode):
     """
     Feature: Ops.
@@ -60,6 +61,7 @@ def test_transpose_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_transpose_backward(mode):
     """
     Feature: Auto grad.
@@ -79,6 +81,7 @@ def test_transpose_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_transpose_vmap(mode):
     """
     Feature: test vmap function.

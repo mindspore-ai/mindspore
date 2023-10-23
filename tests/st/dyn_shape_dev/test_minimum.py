@@ -57,6 +57,7 @@ def minimum_infervalue_func2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
+@test_utils.run_test_func
 def test_minimum_op_forward(context_mode, data_type):
     """
     Feature: Ops.
@@ -78,6 +79,7 @@ def test_minimum_op_forward(context_mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
+@test_utils.run_test_func
 def test_minimum_op_backward(context_mode, data_type):
     """
     Feature: Auto grad.
@@ -100,6 +102,7 @@ def test_minimum_op_backward(context_mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
+@test_utils.run_test_func
 def test_minimum_op_vmap(context_mode, data_type):
     """
     Feature: test vmap function.
@@ -120,6 +123,7 @@ def test_minimum_op_vmap(context_mode, data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_minimum_op_infervalue(context_mode):
     """
     Feature: Ops.
@@ -141,6 +145,7 @@ def test_minimum_op_infervalue(context_mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_minimum_op_dynamic_shape(context_mode):
     """
     Feature: minimum ops.
@@ -170,6 +175,7 @@ def test_minimum_op_dynamic_shape(context_mode):
 @pytest.mark.platform_x86_gpu_training
 # @pytest.mark.platform_arm_ascend_training 动态rank ge存在缺陷
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_minimum_op_dynamic_rank(context_mode):
     """
     Feature: minimum ops.

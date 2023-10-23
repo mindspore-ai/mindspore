@@ -26,6 +26,7 @@ import test_utils
 #@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @pytest.mark.env_onecard
+@test_utils.run_test_func
 def test_bias_add_4d(mode):
     """
     Feature: BiasAdd 4D.
@@ -162,6 +163,7 @@ def test_bias_add_backward(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_bias_add_vmap(mode):
     """
     Feature: biasadd vmap test.

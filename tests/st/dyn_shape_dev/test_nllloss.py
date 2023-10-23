@@ -36,6 +36,7 @@ def nllloss_backward_func(logits, labels, weight):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
+@test_utils.run_test_func
 def test_nllloss_forward(mode, data_type):
     """
     Feature: Ops.
@@ -59,6 +60,7 @@ def test_nllloss_forward(mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
+@test_utils.run_test_func
 def test_nllloss_forward_ascend(mode, data_type):
     """
     Feature: Ops.
@@ -85,6 +87,7 @@ def test_nllloss_forward_ascend(mode, data_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
+@test_utils.run_test_func
 def test_nllloss_backward(mode, data_type):
     """
     Feature: Auto grad.

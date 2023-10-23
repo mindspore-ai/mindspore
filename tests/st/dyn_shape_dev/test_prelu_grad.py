@@ -31,6 +31,7 @@ def prelu_grad_func(y, x, weight):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_prelu_grad(mode):
     """
     Feature: prelu_grad ops.

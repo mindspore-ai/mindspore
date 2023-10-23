@@ -37,6 +37,7 @@ def gather_d_backward_func(x, dim, index):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gather_d_forward(mode):
     """
     Feature: Ops.
@@ -80,6 +81,7 @@ def test_gather_d_backward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@test_utils.run_test_func
 def test_gather_d_vmap(mode):
     """
     Feature: test vmap function.

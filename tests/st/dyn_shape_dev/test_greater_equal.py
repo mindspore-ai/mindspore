@@ -37,6 +37,7 @@ def greater_equal_backward_func(x, y):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_greater_equal_forward(mode):
     """
     Feature: Ops.
@@ -58,6 +59,7 @@ def test_greater_equal_forward(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@test_utils.run_test_func
 def test_greater_equal_backward(mode):
     """
     Feature: Auto grad.

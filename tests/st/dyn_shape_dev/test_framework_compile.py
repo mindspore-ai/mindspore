@@ -15,6 +15,7 @@
 import math
 import pytest
 import numpy as np
+import test_utils
 
 import mindspore as ms
 from mindspore import nn, mutable
@@ -44,6 +45,7 @@ class AvgPoolCreateInstanceNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
 def test_avg_pool():
     """
     Feature: DynamicShape.
@@ -62,6 +64,7 @@ def test_avg_pool():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
 def test_avg_pool_create_instance_const_args():
     """
     Feature: DynamicShape.
@@ -80,6 +83,7 @@ def test_avg_pool_create_instance_const_args():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
 def test_avg_pool_create_instance_var_args():
     """
     Feature: DynamicShape.
@@ -112,6 +116,7 @@ class PowCreateInstanceNet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
 def test_pow_type_cast():
     """
     Feature: DynamicShape.
@@ -129,6 +134,7 @@ def test_pow_type_cast():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
+@test_utils.run_test_func
 def test_pow_create_instance_type_cast():
     """
     Feature: DynamicShape.
