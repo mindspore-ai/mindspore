@@ -15,7 +15,8 @@
 """kernel build server"""
 import os
 from mindspore import log as logger
-from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process, create_akg_v2_parallel_process
+from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process, \
+    create_akg_v2_parallel_process
 
 
 class Messager:

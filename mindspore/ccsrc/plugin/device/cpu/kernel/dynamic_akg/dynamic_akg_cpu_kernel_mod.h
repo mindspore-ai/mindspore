@@ -59,7 +59,7 @@ class DynamicAkgCpuKernelMod : public CpuKernelMod {
   static DynamicAkgCpuKernelManagerPtr kernel_manager_;
 
  private:
-  void *launch_func_;
+  void *launch_func_{nullptr};
   bool is_dynamic_{false};
 
   std::vector<std::vector<int64_t>> shape_list_;
