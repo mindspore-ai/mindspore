@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <limits>
-#include <vector>
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "ops/nn_op_name.h"
 #include "ops/array_op_name.h"

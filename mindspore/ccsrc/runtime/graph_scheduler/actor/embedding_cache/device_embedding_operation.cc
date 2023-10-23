@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <limits>
 #include "kernel/framework_utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
