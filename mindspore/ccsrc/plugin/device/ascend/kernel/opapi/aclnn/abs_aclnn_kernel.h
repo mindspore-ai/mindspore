@@ -22,15 +22,14 @@
 
 namespace mindspore {
 namespace kernel {
-using TensorParams = transform::TensorParams;
 
 class AbsAclnnKernelMod : public AclnnKernelMod {
  public:
   AbsAclnnKernelMod() {}
   ~AbsAclnnKernelMod() = default;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -26,6 +26,7 @@ namespace mindspore {
 namespace kernel {
 KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "aclnn op [" << opname << "]";
   auto kernel_ptr = Factory<AclnnKernelMod>::Instance().Create(opname);
@@ -33,9 +34,13 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "aclnn can't find Kernel[" << opname << "]";
     return nullptr;
   }
-  if (!kernel_ptr->Init(anf_node)) {
-    MS_LOG(ERROR) << "Kernel initialize failed!";
-    return nullptr;
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
+
+  if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
+         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
+                      << anf_node->fullname_with_scope() << "] failed.";
   }
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);

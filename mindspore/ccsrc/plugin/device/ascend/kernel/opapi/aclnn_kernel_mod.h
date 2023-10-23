@@ -23,6 +23,7 @@
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/kernel.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/op_api_exec.h"
@@ -30,36 +31,35 @@
 
 namespace mindspore {
 namespace kernel {
-using TensorParams = transform::TensorParams;
+using aclTensor = transform::aclTensor;
 using aclOpExecutor = transform::aclOpExecutor;
 using CallBackFunc = std::function<void()>;
 using OpApiUtil = transform::OpApiUtil;
 
-class AclnnKernelMod : public AscendKernelMod {
+class AclnnKernelMod : public KernelMod {
  public:
   AclnnKernelMod() {}
-  explicit AclnnKernelMod(const AnfNodePtr &anf_node_ptr) : AscendKernelMod(anf_node_ptr) {}
   ~AclnnKernelMod() = default;
-  virtual bool Init(const AnfNodePtr &anf_node);
-  virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  virtual bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs, void *stream_ptr);
+  virtual void ResetDeivceAddress(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {}
   void SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
   void SetOutputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
-  virtual int Resize(
-    const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &, uint32_t) override;
 
   void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
+  virtual void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  }
   bool IsNeedRetrieveOutputShape() override { return false; }
+  std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
  protected:
-  std::vector<TensorParams> input_params_;
-  std::vector<TensorParams> output_params_;
-
   aclOpExecutor *executor_{nullptr};
   CallBackFunc after_launch_func_{nullptr};
+  std::vector<aclTensor *> input_tensors_;
+  std::vector<aclTensor *> output_tensors_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;

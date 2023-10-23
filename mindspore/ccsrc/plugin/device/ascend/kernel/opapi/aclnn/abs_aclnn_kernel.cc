@@ -31,26 +31,21 @@ namespace kernel {
 constexpr size_t kInputIndex = 0;
 constexpr size_t kOutputIndex = 0;
 
-bool AbsAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+void AbsAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                         const std::vector<KernelTensor *> &outputs) {
+  ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]));
+}
+
+bool AbsAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto input_device = std::make_shared<device::ascend::AscendDeviceAddress>(
-    inputs[kInputIndex]->addr, inputs[kInputIndex]->size, kOpFormat_DEFAULT, input_params_[kInputIndex].data_type);
-  input_device->set_host_shape(input_params_[kInputIndex].ori_shape);
-  auto output_device =
-    std::make_shared<device::ascend::AscendDeviceAddress>(outputs[kOutputIndex]->addr, outputs[kOutputIndex]->size,
-                                                          kOpFormat_DEFAULT, output_params_[kOutputIndex].data_type);
-  output_device->set_host_shape(output_params_[kOutputIndex].ori_shape);
-
-  // TODO(ruige): Move to build and resize.
-  ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, input_device, output_device));
-
+  ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]));
   if (workspace_size_list_.empty()) {
     RUN_OP_API(aclnnAbs, stream_ptr, nullptr, 0, executor_, after_launch_func_);
-    return true;
+  } else {
+    RUN_OP_API(aclnnAbs, stream_ptr, workspace[0]->device_ptr(), workspace_size_list_[0], executor_,
+               after_launch_func_);
   }
-  RUN_OP_API(aclnnAbs, stream_ptr, workspaces[0]->addr, workspace_size_list_[0], executor_, after_launch_func_);
   return true;
 }
 MS_ACLLNN_KERNEL_FACTORY_REG(Abs, AbsAclnnKernelMod);
