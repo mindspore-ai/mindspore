@@ -137,10 +137,12 @@ from ..deprecated import (identity, DropoutDoMask, MaxPoolWithArgmax,
                           TensorAdd, InplaceUpdate, ScatterNonAliasingAdd,
                           BatchToSpaceND, Unpack, GatherV2, DynamicShape, ScalarToArray, Pack)
 from .manually_defined import (Rank,)
-from ..auto_generate import (Exp, Expm1, Erf, Erfc, Elu, Equal, Eye, Floor, FloorDiv, FloorMod, Flatten, Gather,
-                             GatherD, GatherNd, HSigmoid, Mul, Range, TensorShape, ZerosLike, RealDiv, Sin, Sinc, Sinh,
-                             Assign, PReLU, RandpermV2, Real, BiasAdd, Reciprocal, MaskedFill, ResizeBilinearV2,
-                             ResizeBilinearGrad, ReverseV2, Roll, Minimum)
+from ..auto_generate import (Assign, BiasAdd, Elu, Equal, Erf, Erfc, Exp, Expm1, Eye, Flatten, Floor, FloorDiv,
+                             FloorMod, Gather, GatherD, GatherNd, HSigmoid, MaskedFill, Minimum, Mul, PReLU,
+                             RandpermV2, Range, Real, RealDiv, Reciprocal, ReduceAll, ReduceAny, ReduceMax,
+                             ReduceMean, ReduceMin, ReduceProd, ReduceStd, ReduceSum, ReLU, ReLU6, Reshape,
+                             ResizeBilinearGrad, ResizeBilinearV2, ReverseV2, RightShift, Roll, Round, Rsqrt, Sin,
+                             Sinc, Sinh, TensorShape, ZerosLike)
 
 
 __all__ = [

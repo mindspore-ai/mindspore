@@ -69,9 +69,9 @@ BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<A
     std::vector<int64_t> axis_vec = axis_array.ToVector();
     std::vector<int64_t> real_axis_vec;
     (void)std::transform(
-      axis_vec.begin() + 1, axis_vec.end(), std::back_inserter(real_axis_vec),
+      axis_vec.begin(), axis_vec.end(), std::back_inserter(real_axis_vec),
       [&x_shape_size, &primitive](const int64_t &axis) { return CalRealAixs(axis, x_shape_size, primitive); });
-    auto out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, axis_vec, keep_dims);
+    auto out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, real_axis_vec, keep_dims);
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
