@@ -111,7 +111,7 @@ bool LogUniformCandidateSamplerCpuKernel::Launch(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &workspace,
                                                  const std::vector<KernelTensor *> &outputs) {
   int64_t *true_classes = static_cast<int64_t *>(inputs.at(0)->device_ptr());
-  auto true_classes_size = input_size_list_.at(0);
+  auto true_classes_size = inputs.at(0)->size();
   int64_t *sampled_candidates = static_cast<int64_t *>(outputs.at(0)->device_ptr());
   float *true_expected_count = static_cast<float *>(outputs.at(1)->device_ptr());
   float *sampled_expected_count = static_cast<float *>(outputs.at(2)->device_ptr());

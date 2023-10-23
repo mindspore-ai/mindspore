@@ -68,8 +68,8 @@ int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kInputNum) {
-      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
+    if (inputs.size() != kInputNum) {
+      MS_LOG(ERROR) << "The size of inputs should be " << kInputNum << ", but got " << inputs.size();
       return KRET_RESIZE_FAILED;
     }
     auto indptr_shape = inputs.at(kAIndptrIdx)->GetShapeVector();
@@ -82,10 +82,10 @@ int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
       (void)types_.emplace_back(dtype);
     }
     output_size_list_.clear();
-    (void)output_size_list_.emplace_back(input_size_list_[kADenseShapeIdx]);  // dense shape
-    (void)output_size_list_.emplace_back(input_size_list_[kABatchPtrIdx]);    // batch
-    (void)output_size_list_.emplace_back(input_size_list_[kAIndptrIdx]);      // indptr
-    auto max_out_size = input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx];
+    (void)output_size_list_.emplace_back(inputs[kADenseShapeIdx]->size());  // dense shape
+    (void)output_size_list_.emplace_back(inputs[kABatchPtrIdx]->size());    // batch
+    (void)output_size_list_.emplace_back(inputs[kAIndptrIdx]->size());      // indptr
+    auto max_out_size = inputs[kAIndicesIdx]->size() + inputs[kBIndicesIdx]->size();
     (void)output_size_list_.emplace_back(max_out_size);  // index
     (void)output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
                                          GetTypeByte(TypeIdToType(types_[kAValuesIdx])));  // value

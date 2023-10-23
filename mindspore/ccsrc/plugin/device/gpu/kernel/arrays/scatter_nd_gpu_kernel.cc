@@ -88,7 +88,7 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
     cudaMemsetAsync(output, static_cast<T>(0.0), output_size_list_[0], reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemSet failed in ScatterNdGpuKernelMod::LaunchKernel.");
 
-  const size_t input_size = input_size_list_[kIndex1] / sizeof(T);
+  const size_t input_size = inputs[kIndex1]->size() / sizeof(T);
   const size_t output_size = output_size_list_[kIndex0] / sizeof(T);
   auto status = ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
                           info, reinterpret_cast<cudaStream_t>(stream_ptr_));

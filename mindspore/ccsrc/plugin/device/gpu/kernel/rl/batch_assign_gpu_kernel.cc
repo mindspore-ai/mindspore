@@ -71,7 +71,7 @@ bool BatchAssignKernelMod::Launch(const std::vector<KernelTensor *> &inputs, con
     MS_ERROR_IF_NULL(local_addr);
     MS_ERROR_IF_NULL(source_addr);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(local_addr, source_addr, input_size_list_[i], cudaMemcpyDeviceToDevice, cuda_stream),
+      cudaMemcpyAsync(local_addr, source_addr, inputs[i]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
       "Overwrite failed");
   }
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream),

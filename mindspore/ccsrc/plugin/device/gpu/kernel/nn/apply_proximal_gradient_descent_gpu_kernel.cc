@@ -55,7 +55,7 @@ int ApplyProximalGradientDescentGpuKernelMod::Resize(const std::vector<KernelTen
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyProximalGradientDescentInputsNum) {
+  if (inputs.size() != kApplyProximalGradientDescentInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 5.";
     return KRET_RESIZE_FAILED;
   }
@@ -97,7 +97,7 @@ int ApplyProximalGradientDescentGpuKernelMod::Resize(const std::vector<KernelTen
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 

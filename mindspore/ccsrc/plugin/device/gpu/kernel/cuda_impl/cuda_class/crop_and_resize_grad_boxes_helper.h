@@ -67,27 +67,6 @@ class CropAndResizeGradBoxesHelperGpuKernel : public GpuKernelHelperBase {
     std::vector<int64_t> in_box_in_shape_ = input_shapes[kBoxIndex];
     std::vector<int64_t> ou_output_shape_ = output_shapes[kOutputIndex];
 
-    size_t cur_size_G = sizeof(G);
-    for (const auto &val : in_grads_shape_) {
-      cur_size_G *= val;
-    }
-    input_size_list_.emplace_back(cur_size_G);
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : in_images_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-    cur_size_G = sizeof(G);
-    for (const auto &val : in_boxes_shape_) {
-      cur_size_G *= val;
-    }
-    input_size_list_.emplace_back(cur_size_G);
-    size_t cur_size_int = sizeof(int);
-    for (const auto &val : in_box_in_shape_) {
-      cur_size_int *= val;
-    }
-    input_size_list_.emplace_back(cur_size_int);
-
     int out_flag =
       CalShapesSizeInBytes<G>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {

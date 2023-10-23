@@ -148,7 +148,7 @@ int CumSumCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_), LongToSize);
   exclusive_ = GetValue<bool>(primitive_->GetAttr(ops::kExclusive));
   reverse_ = GetValue<int64_t>(primitive_->GetAttr(ops::kReverse));
-  workspace_size_list_.push_back(input_size_list_.at(kIndex0));
+  workspace_size_list_.push_back(inputs.at(kIndex0)->size());
   return KRET_OK;
 }
 

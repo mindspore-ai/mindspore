@@ -78,9 +78,9 @@ int BiasDropoutAddGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kInputNum || output_size_list_.size() != kOutputNum) {
+  if (inputs.size() != kInputNum || output_size_list_.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " resize : input and output size should be " << kInputNum << " and " << kOutputNum
-                  << ", but get " << input_size_list_.size() << " and " << output_size_list_.size();
+                  << ", but get " << inputs.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
   auto x_shape = inputs[kInputXIndex]->GetShapeVector();

@@ -66,15 +66,15 @@ int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   dense_shape_ = inputs.at(kAShapeIdx)->GetShapeVector();
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kInputNum) {
-      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
+    if (inputs.size() != kInputNum) {
+      MS_LOG(ERROR) << "The size of inputs should be " << kInputNum << ", but got " << inputs.size();
       return KRET_RESIZE_FAILED;
     }
-    auto max_indices_out_size = input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx];
-    auto max_value_out_size = input_size_list_[kAValuesIdx] + input_size_list_[kBValuesIdx];
+    auto max_indices_out_size = inputs[kAIndicesIdx]->size() + inputs[kBIndicesIdx]->size();
+    auto max_value_out_size = inputs[kAValuesIdx]->size() + inputs[kBValuesIdx]->size();
     output_size_list_[kSumIndicesIdx] = max_indices_out_size;
     output_size_list_[kSumValuesIdx] = max_value_out_size;
-    output_size_list_[kSumShapeIdx] = input_size_list_[kAShapeIdx];
+    output_size_list_[kSumShapeIdx] = inputs[kAShapeIdx]->size();
   }
   auto dims = inputs.at(0)->GetShapeVector()[1];
   if (dims >= 0) {

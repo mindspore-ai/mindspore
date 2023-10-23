@@ -66,11 +66,6 @@ int ScatterNdArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   auto updates_shape_null = CheckNullInput(updates_shape);
   has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
   if (has_null_input_) {
-    input_size_list_[kIndex0] = input_shape_null ? 0 : input_size_list_[kIndex0];
-    input_size_list_[kIndex1] = indices_shape_null ? 0 : input_size_list_[kIndex1];
-    input_size_list_[kIndex2] = updates_shape_null ? 0 : input_size_list_[kIndex2];
-    output_size_list_.clear();
-    output_size_list_.push_back(input_size_list_[kIndex0]);
     return KRET_OK;
   }
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);

@@ -21,27 +21,6 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore::kernel {
-namespace {
-size_t GetBaseTypeSize(TypeId type_id) {
-  switch (type_id) {
-    case kNumberTypeFloat16:
-      return sizeof(float16);
-    case kNumberTypeFloat32:
-      return sizeof(float);
-    default:
-      MS_LOG(EXCEPTION) << "For Scale Grad input type is error: " << type_id;
-  }
-}
-
-size_t GetInputSize(const std::vector<int64_t> &input_shape, const TypeId &type_id) {
-  size_t input_size = GetBaseTypeSize(type_id);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= LongToSize(input_shape[i]);
-  }
-  return input_size;
-}
-}  // namespace
-
 template <typename T>
 void ScaleGradCpuKernelMod::LaunchScaleGradPerGrad(const std::vector<KernelTensor *> &inputs,
                                                    const std::vector<KernelTensor *> &outputs,
@@ -106,15 +85,10 @@ bool ScaleGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   for (size_t index = 0; index < input_size; index++) {
     auto type_id = inputs[index]->dtype_id();
     input_info_.push_back(type_id);
-    auto size = GetInputSize(inputs[index]->GetShapeVector(), type_id);
-    input_size_list_.push_back(size);
-  }
 
-  if (input_size < 1) {
-    MS_LOG(EXCEPTION) << "Operator " << kernel_name_ << " input size: " << input_size << " less than 1.";
-  }
-  for (size_t index = 0; index < input_size - 1; index++) {
-    output_size_list_.push_back(input_size_list_[index]);
+    if (index < input_size - 1) {
+      output_size_list_.push_back(inputs[index]->size());
+    }
   }
 
   return true;

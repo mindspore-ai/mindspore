@@ -54,7 +54,7 @@ int HShrinkCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if (ret != 0) {
     return ret;
   }
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return static_cast<int>(KRET_OK);
 }
 

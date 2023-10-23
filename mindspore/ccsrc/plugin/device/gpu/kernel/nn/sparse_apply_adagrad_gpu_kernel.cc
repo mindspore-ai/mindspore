@@ -66,8 +66,8 @@ int SparseApplyAdagradGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
     return ret;
   }
 
-  if (input_size_list_.size() != kSparseApplyAdagradInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 4 but got " << input_size_list_.size();
+  if (inputs.size() != kSparseApplyAdagradInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 4 but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
@@ -114,7 +114,7 @@ int SparseApplyAdagradGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 

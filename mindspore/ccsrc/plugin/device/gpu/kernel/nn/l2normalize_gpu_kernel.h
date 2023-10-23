@@ -69,7 +69,7 @@ class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
 
     if (all_match_) {
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(reduce_workspace_addr, input_addr, input_size_list_[0], cudaMemcpyDeviceToDevice,
+        cudaMemcpyAsync(reduce_workspace_addr, input_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                         reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cudaMemcpyAsync failed in L2Normalize::Launch.");
     } else {

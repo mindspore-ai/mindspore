@@ -325,59 +325,22 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr size_t OUTPUT_NUM = 1;
     ResetResource();
-    int inp_flag = 0;
     size_t row_pooling_index =
       is_max_pooling_grad_ ? kInputRowPoolingSequenceIndex : kAvgGradInputRowPoolingSequenceIndex;
     size_t col_pooling_index =
       is_max_pooling_grad_ ? kInputColPoolingSequenceIndex : kAvgGradInputColPoolingSequenceIndex;
-    size_t input3_index = is_max_pooling_grad_ ? kOutBackpropIndex : kAvgGradOutBackpropIndex;
-    size_t cur_size_T = sizeof(T);
-    if (is_max_pooling_grad_) {
-      orig_input_shape_ = input_shapes[kOrigInputIndex];
-      for (const auto &val : orig_input_shape_) {
-        cur_size_T *= val;
-      }
-      inp_flag = IsNullInput(cur_size_T, inp_flag);
-      input_size_list_.emplace_back(cur_size_T);
 
-      orig_output_shape_ = input_shapes[kOrigOutputIndex];
-      cur_size_T = sizeof(T);
-      for (const auto &val : orig_output_shape_) {
-        cur_size_T *= val;
-      }
-      inp_flag = IsNullInput(cur_size_T, inp_flag);
-      input_size_list_.emplace_back(cur_size_T);
-    } else {
-      orig_input_shape_ = input_shapes[kOrigInputIndex];
-      size_t cur_size_input_shape = sizeof(int64_t);
-      inp_flag = IsNullInput(orig_input_shape_[0], inp_flag);
-      input_size_list_.emplace_back(cur_size_input_shape * orig_input_shape_[0]);
-    }
-
-    out_backprop_shape_ = input_shapes[input3_index];
-    cur_size_T = sizeof(T);
-    for (const auto &val : out_backprop_shape_) {
-      cur_size_T *= val;
-    }
-    inp_flag = IsNullInput(cur_size_T, inp_flag);
-    input_size_list_.emplace_back(cur_size_T);
     row_pooling_shape_ = input_shapes[row_pooling_index];
     col_pooling_shape_ = input_shapes[col_pooling_index];
-    size_t cur_size = sizeof(int64_t);
-    if ((row_pooling_shape_[0] == 0 || col_pooling_shape_[0] == 0) && inp_flag == 0) {
-      inp_flag = 1;
-    }
-    input_size_list_.emplace_back(cur_size * row_pooling_shape_[0]);
-    input_size_list_.emplace_back(cur_size * col_pooling_shape_[0]);
-
     output_shape_ = output_shapes[kOutputIndex];
+
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
     if (out_flag == -1) {
       return out_flag;
     }
 
-    is_null_fractional_grad_input_ = (inp_flag == 1 || out_flag == 1);
+    is_null_fractional_grad_input_ = (HasZeroInShapes(input_shapes) || out_flag == 1);
     return CheckKernelParam();
   }
 

@@ -175,9 +175,9 @@ int DeformableOffsetsGradGpuKernelMod::Resize(const std::vector<KernelTensor *> 
     MS_LOG(ERROR) << kernel_name_ << " kernel mode resize failed.";
     return ret;
   }
-  if (input_size_list_.size() != kInputNum || output_size_list_.size() != kOutputNum) {
+  if (inputs.size() != kInputNum || output_size_list_.size() != kOutputNum) {
     MS_LOG(ERROR) << kernel_name_ << " resize : input and output size should be " << kInputNum << " and " << kOutputNum
-                  << ", but got " << input_size_list_.size() << " and " << output_size_list_.size();
+                  << ", but got " << inputs.size() << " and " << output_size_list_.size();
     return KRET_RESIZE_FAILED;
   }
   SetDims(inputs, outputs);

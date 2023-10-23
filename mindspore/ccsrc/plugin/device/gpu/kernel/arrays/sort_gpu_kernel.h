@@ -104,8 +104,8 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
                   << " input_rank_=" << input_rank_ << " input_size_=" << input_size_ << " inner_size_=" << inner_size_
                   << " outer_size_=" << outer_size_;
 
-    if (input_size_list_.size() > 0) {
-      size_t input_bytes = input_size_list_.at(kIndex0);
+    if (inputs.size() > 0) {
+      size_t input_bytes = inputs.at(kIndex0)->size();
       size_t indices_bytes = input_size_ * sizeof(int32_t);
       workspace_size_list_.push_back(input_bytes);
       workspace_size_list_.push_back(indices_bytes);
@@ -161,7 +161,6 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
     perm_.clear();
     outer_size_ = 0;
     inner_size_ = 0;
-    input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }

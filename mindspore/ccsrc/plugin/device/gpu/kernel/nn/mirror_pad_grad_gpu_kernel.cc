@@ -49,7 +49,7 @@ bool MirrorPadGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
 
   size_t dx_size = output_size_ / sizeof(T);
   size_t interim_dy_size = workspace_size_ / sizeof(T);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(input_copy, input, input_size_list_[0], cudaMemcpyDeviceToDevice,
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(input_copy, input, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                                                      reinterpret_cast<cudaStream_t>(stream_ptr)),
                                      "For 'MirrorPadGrad', it launch memcopy failed.");
   auto status = CalMirrorPadGrad(dx_size, interim_dy_size, input_copy, interim, output_shape_[0],

@@ -56,7 +56,7 @@ bool SoftplusGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   T *dy_addr = GetDeviceAddress<T>(inputs, 0);
   T *x_addr = GetDeviceAddress<T>(inputs, 1);
   T *dx_addr = GetDeviceAddress<T>(outputs, 0);
-  auto status = SoftplusGrad(input_size_list_.at(0) / sizeof(T), dy_addr, x_addr, dx_addr,
+  auto status = SoftplusGrad(inputs.at(0)->size() / sizeof(T), dy_addr, x_addr, dx_addr,
                              reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;

@@ -100,7 +100,7 @@ template <typename T, typename S>
 bool DynamicBroadcastGradientArgsCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                                             const std::vector<kernel::KernelTensor *> &,
                                                             const std::vector<kernel::KernelTensor *> &outputs) {
-  std::vector<size_t> ranks = {input_size_list_[0] / sizeof(T), input_size_list_[1] / sizeof(T)};
+  std::vector<size_t> ranks = {inputs[0]->size() / sizeof(T), inputs[1]->size() / sizeof(T)};
   std::vector<std::vector<T>> reverse_shapes(kDynamicBroadcastGradientArgsInputsNum);
   if (!is_null_input0_) {
     const T *s0_addr = static_cast<T *>(inputs[0]->device_ptr());

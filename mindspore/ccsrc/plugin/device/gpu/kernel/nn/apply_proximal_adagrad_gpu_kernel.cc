@@ -57,7 +57,7 @@ int ApplyProximalAdagradGpuKernelMod::Resize(const std::vector<KernelTensor *> &
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kApplyProximalAdagradInputsNum) {
+  if (inputs.size() != kApplyProximalAdagradInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6.";
     return KRET_RESIZE_FAILED;
   }

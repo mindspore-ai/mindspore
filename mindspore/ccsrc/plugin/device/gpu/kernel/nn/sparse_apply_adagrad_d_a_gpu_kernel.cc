@@ -161,7 +161,7 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const std::vector<KernelTensor *> &
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_var_size_;
+  input_elements_ = inputs[0]->size() / unit_var_size_;
   indices_size_ = 1;
   for (size_t i = 0; i < indices.size(); i++) {
     indices_size_ *= indices[i];

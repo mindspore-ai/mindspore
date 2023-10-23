@@ -53,17 +53,6 @@ class MaxUnpool2DHelperGpuKernel : public GpuKernelHelperBase {
     input_shape_ = input_shapes[kIndex0];
     indices_shape_ = input_shapes[kIndex1];
 
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : input_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    size_t cur_size_S = sizeof(S);
-    for (const auto &val : indices_shape_) {
-      cur_size_S *= val;
-    }
-    input_size_list_.emplace_back(cur_size_S);
     work_size_list_.emplace_back(sizeof(int64_t));
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);
@@ -171,23 +160,6 @@ class MaxUnpool2DGradHelperGpuKernel : public GpuKernelHelperBase {
     grad_shape_ = input_shapes[kIndex1];
     indices_shape_ = input_shapes[kIndex2];
 
-    size_t cur_size_T = sizeof(T);
-    for (const auto &val : backprop_input_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    cur_size_T = sizeof(T);
-    for (const auto &val : grad_shape_) {
-      cur_size_T *= val;
-    }
-    input_size_list_.emplace_back(cur_size_T);
-
-    size_t cur_size_S = sizeof(S);
-    for (const auto &val : indices_shape_) {
-      cur_size_S *= val;
-    }
-    input_size_list_.emplace_back(cur_size_S);
     work_size_list_.emplace_back(sizeof(int64_t));
     int out_flag =
       CalShapesSizeInBytes<T>(output_shapes, OUTPUT_NUM, kernel_name_, "output_shapes", &output_size_list_);

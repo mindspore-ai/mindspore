@@ -109,7 +109,7 @@ bool L2NormalizeGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
 
   if (all_match_) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(reduce_workspace_addr, x_addr, input_size_list_[0], cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(reduce_workspace_addr, x_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       kernel_name_ + " cudaMemcpyAsync failed in L2Normalize::Launch.");
   } else {

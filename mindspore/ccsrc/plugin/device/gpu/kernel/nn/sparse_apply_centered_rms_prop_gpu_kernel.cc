@@ -72,8 +72,8 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const std::vector<KernelTenso
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kSparseApplyCenteredRMSPropInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 10 but got " << input_size_list_.size();
+  if (inputs.size() != kSparseApplyCenteredRMSPropInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 10 but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
@@ -157,7 +157,7 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const std::vector<KernelTenso
                   << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size;
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return ret;
 }
 

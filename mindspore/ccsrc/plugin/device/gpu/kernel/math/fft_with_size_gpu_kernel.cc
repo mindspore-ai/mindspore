@@ -365,8 +365,8 @@ int FFTWithSizeGpuKernelMod::ResizeIRFFT(const std::vector<KernelTensor *> &inpu
   // We copy input buffer to avoid cufft overwriting, while complex-to-real.
   // onesided: false
   // C2C transform, and cast complex(workspace) to float(output).
-  MS_EXCEPTION_IF_CHECK_FAIL(!input_size_list_.empty(), "input_size_list_ must be not empty!");
-  workspace_size_list_ = {input_size_list_[0]};
+  MS_EXCEPTION_IF_CHECK_FAIL(!inputs.empty(), "The inputs must be not empty!");
+  workspace_size_list_ = {inputs[0]->size()};
   if (!MakeCufftPlan(inputs, outputs)) {
     return KRET_RESIZE_FAILED;
   }

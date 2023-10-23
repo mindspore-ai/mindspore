@@ -54,11 +54,11 @@ int HShrinkGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kHShrinkInputsNum) {
+  if (inputs.size() != kHShrinkInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 1.";
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = input_size_list_[0] / unit_size_;
+  input_elements_ = inputs[0]->size() / unit_size_;
   return KRET_OK;
 }
 

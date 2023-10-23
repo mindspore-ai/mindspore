@@ -46,14 +46,7 @@ int DynamicStitchKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   for (size_t d = first_index_dims; d < first_data_shape.size(); ++d) {
     one_data_ele_num_ *= first_data_shape[d];
   }
-  for (size_t i = 0; i < n_; i++) {
-    auto data_shape = GetShapeAdaptively(inputs, n_ + i);
-    size_t data_size = std::accumulate(data_shape.begin(), data_shape.end(), size_t(1), std::multiplies<size_t>());
-    //  Data size
-    input_size_list_.push_back(data_size * data_type_size_);
-    // Index size
-    input_size_list_.insert(input_size_list_.begin() + i, data_size / one_data_ele_num_ * index_type_size);
-  }
+
   size_t output_size =
     std::accumulate(output_shape.begin(), output_shape.end(), data_type_size_, std::multiplies<size_t>());
 
@@ -91,7 +84,6 @@ void DynamicStitchKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTe
 }
 
 void DynamicStitchKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -112,7 +104,7 @@ bool DynamicStitchKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   for (size_t i = 0; i < n_; i++) {
     auto index_addr = GetDeviceAddress<int>(inputs, i);
     auto data_addr = GetDeviceAddress<unsigned char>(inputs, n_ + i);
-    size_t index_num = input_size_list_[i] / sizeof(int);
+    size_t index_num = inputs[i]->size() / sizeof(int);
     auto status = CallStitch(index_addr, data_addr, output_addr, index_num, one_data_ele_num_ * data_type_size_,
                              max_index_dev, cuda_stream);
     CHECK_CUDA_STATUS(status, kernel_name_);

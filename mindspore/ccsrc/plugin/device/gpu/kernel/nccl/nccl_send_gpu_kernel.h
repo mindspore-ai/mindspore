@@ -36,7 +36,7 @@ class NcclSendGpuKernel : public NcclGpuKernelMod {
       return true;
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    (void)Send(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_, dest_rank_,
+    (void)Send(input_addr, inputs[0]->size() / sizeof(T), nccl_data_type_, dest_rank_,
                reinterpret_cast<cudaStream_t>(stream_ptr), group_name_);
     return true;
   }

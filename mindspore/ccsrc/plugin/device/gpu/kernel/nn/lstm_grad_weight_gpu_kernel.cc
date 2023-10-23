@@ -148,7 +148,7 @@ bool LstmGradWeightGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
 
   if (!states_init_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, input_size_list_[kIndex4], 0),
+      cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, inputs[kIndex4]->size(), 0),
       "restore dropout state failed");
     states_init_ = true;
   }

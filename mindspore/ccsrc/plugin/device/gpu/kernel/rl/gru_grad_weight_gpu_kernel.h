@@ -70,7 +70,7 @@ class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
 
     if (!states_init_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, input_size_list_[kIndexFour], 0),
+        cudnnRestoreDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, state_size_, 0),
         "restore dropout state failed");
       states_init_ = true;
     }
@@ -175,20 +175,8 @@ class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
   }
   void InitSizeLists() {
-    size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * sizeof(T);
-
-    size_t h_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
-
-    size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * sizeof(T);
-    input_size_list_.push_back(x_size);
-    input_size_list_.push_back(h_size);
-    input_size_list_.push_back(y_size);
-    input_size_list_.push_back(reserved_size_);
-    size_t state_size = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size),
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size_),
                                         "get dropout states size failed");
-    input_size_list_.push_back(state_size);
 
     output_size_list_.push_back(weight_size_);
 
@@ -247,6 +235,7 @@ class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
 
   size_t weight_size_;
   size_t reserved_size_;
+  size_t state_size_;
 
   cudnnRNNDescriptor_t rnn_desc_;
   cudnnDropoutDescriptor_t dropout_desc_;

@@ -56,11 +56,11 @@ bool DynamicReshapeKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   auto output_addr = GetDeviceAddress<unsigned char>(outputs, 0);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(output_addr, data_addr, input_size_list_[0], cudaMemcpyDeviceToDevice, cuda_stream),
+    cudaMemcpyAsync(output_addr, data_addr, inputs[0]->size(), cudaMemcpyDeviceToDevice, cuda_stream),
     "DynamicReshape cpy data failed");
-  std::vector<S> real_output_shape_ = std::vector<S>(input_size_list_[1] / sizeof(S), 0);
+  std::vector<S> real_output_shape_ = std::vector<S>(inputs[1]->size() / sizeof(S), 0);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&real_output_shape_[0], shape_addr, input_size_list_[1], cudaMemcpyDeviceToHost, cuda_stream),
+    cudaMemcpyAsync(&real_output_shape_[0], shape_addr, inputs[1]->size(), cudaMemcpyDeviceToHost, cuda_stream),
     "DynamicReshape cpy real output shape value failed");
   std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape_),
                  [](const S &value) { return static_cast<int64_t>(value); });

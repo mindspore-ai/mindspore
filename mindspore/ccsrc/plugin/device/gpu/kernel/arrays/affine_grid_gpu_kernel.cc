@@ -165,7 +165,7 @@ int AffineGridGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   ResetResource();
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), N_INPUTS, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), N_OUTPUTS, kernel_name_);
-  // set up input_size_list_ & output_size_list_ if <ops::AffineGrid> infer shape successfully.
+  // set up output_size_list_ if <ops::AffineGrid> infer shape successfully.
   int ret = KernelMod::Resize(inputs, outputs);
   if (ret != KRET_OK) {
     return ret;

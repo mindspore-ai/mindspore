@@ -55,7 +55,6 @@ bool SparseAddGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 }
 
 void SparseAddGradCpuKernelMod::ResetResource() noexcept {
-  input_size_list_.clear();
   output_size_list_.clear();
   workspace_size_list_.clear();
 }
@@ -66,10 +65,6 @@ int SparseAddGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto ret = KernelMod::Resize(inputs, outputs);
   indices_column_ = inputs.at(1)->GetShapeVector()[1];
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    if (input_size_list_.size() != kInputNum) {
-      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
-      return KRET_RESIZE_FAILED;
-    }
     auto dout_shape = inputs.at(kDoutIdx)->GetShapeVector();
     auto x1_indices_shape = inputs.at(kX1IndicesIdx)->GetShapeVector();
     auto x2_indices_shape = inputs.at(kX2IndicesIdx)->GetShapeVector();
@@ -83,18 +78,11 @@ int SparseAddGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     (void)std::transform(out_indices_shape.begin(), out_indices_shape.end(), std::back_inserter(out_indices_shape_),
                          LongToSize);
 
-    auto dout_size_ = std::accumulate(dout_shape_.begin(), dout_shape_.end(), 1, std::multiplies<size_t>());
     auto x1_indices_size_ =
       std::accumulate(x1_indices_shape_.begin(), x1_indices_shape_.end(), 1, std::multiplies<size_t>());
     auto x2_indices_size_ =
       std::accumulate(x2_indices_shape_.begin(), x2_indices_shape_.end(), 1, std::multiplies<size_t>());
-    auto out_indices_size_ =
-      std::accumulate(out_indices_shape_.begin(), out_indices_shape_.end(), 1, std::multiplies<size_t>());
 
-    input_size_list_.push_back(dout_size_);
-    input_size_list_.push_back(x1_indices_size_);
-    input_size_list_.push_back(x2_indices_size_);
-    input_size_list_.push_back(out_indices_size_);
     output_size_list_.push_back(x1_indices_size_);
     output_size_list_.push_back(x2_indices_size_);
   }

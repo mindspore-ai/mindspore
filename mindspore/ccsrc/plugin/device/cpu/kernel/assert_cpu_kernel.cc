@@ -79,9 +79,6 @@ int AssertCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     return ret;
   }
   auto inputs_size = inputs.size();
-  if (inputs_size != input_size_list_.size()) {
-    return KRET_RESIZE_FAILED;
-  }
   kernel_funcs_.resize(inputs_size);
   summarizes_.resize(inputs_size);
   for (size_t i = 0; i < inputs_size; i++) {
@@ -93,7 +90,7 @@ int AssertCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
       return KRET_RESIZE_FAILED;
     }
     kernel_funcs_[i] = func_iter->second;
-    auto element = input_size_list_[i] / abstract::TypeIdSize(input_type_id);
+    auto element = inputs[i]->size() / abstract::TypeIdSize(input_type_id);
     summarizes_[i] = static_cast<int>(std::min(static_cast<size_t>(summarize_), element));
   }
 

@@ -44,8 +44,6 @@ class AssignHelperGpuKernel : public GpuKernelHelperBase {
     auto input_shape = input_shapes[kIndex0];
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     input_size_ = sizeof(T) * SizeOf(input_shape);
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
     return 0;
   }
@@ -84,7 +82,6 @@ class AssignHelperGpuKernel : public GpuKernelHelperBase {
   void ResetResource() override {
     input_size_ = 1;
     is_null_input_ = false;
-    input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }

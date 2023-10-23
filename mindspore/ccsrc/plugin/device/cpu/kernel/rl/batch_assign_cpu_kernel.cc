@@ -54,7 +54,7 @@ bool BatchAssignCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, 
       auto source_addr = GetDeviceAddress<unsigned char>(inputs, i + elements_num_);
       MS_EXCEPTION_IF_NULL(local_addr);
       MS_EXCEPTION_IF_NULL(source_addr);
-      auto ret = memcpy_s(local_addr, input_size_list_[i], source_addr, input_size_list_[i + elements_num_]);
+      auto ret = memcpy_s(local_addr, inputs[i]->size(), source_addr, inputs[i + elements_num_]->size());
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << kernel_name_ << " memcpy failed, errorno(" << ret << ")";
       }

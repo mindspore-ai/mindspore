@@ -119,9 +119,9 @@ int CTCGreedyDecoderGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
 
   InitSizeLists();
 
-  if (input_size_list_.size() != kInputNum) {
+  if (inputs.size() != kInputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', Input size list should be " << kInputNum << ", but got "
-                  << input_size_list_.size() << ".";
+                  << inputs.size() << ".";
     return KRET_RESIZE_FAILED;
   }
 

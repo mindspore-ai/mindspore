@@ -77,8 +77,8 @@ int SparseApplyMomentumGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
     return ret;
   }
 
-  if (input_size_list_.size() != kSparseApplyMomentumInputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6 but got " << input_size_list_.size();
+  if (inputs.size() != kSparseApplyMomentumInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 6 but got " << inputs.size();
     return KRET_RESIZE_FAILED;
   }
 
@@ -134,7 +134,7 @@ int SparseApplyMomentumGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_var_size_;
+  input_elements_ = inputs[0]->size() / unit_var_size_;
   indices_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); i++) {
     indices_size_ *= indices_shape[i];

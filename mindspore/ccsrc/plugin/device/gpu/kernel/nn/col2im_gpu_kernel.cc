@@ -81,7 +81,7 @@ int Col2ImFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
-  if (input_size_list_.size() != kCol2ImInputsNum) {
+  if (inputs.size() != kCol2ImInputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2.";
     return KRET_RESIZE_FAILED;
   }

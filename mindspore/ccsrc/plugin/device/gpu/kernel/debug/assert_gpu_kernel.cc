@@ -47,7 +47,7 @@ int AssertGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   for (size_t i = 1; i < inputs_size; i++) {
     auto input_type_id = inputs[i]->dtype_id();
     types_[i - 1] = static_cast<int>(input_type_id);
-    auto element = input_size_list_[i] / abstract::TypeIdSize(input_type_id);
+    auto element = inputs[i]->size() / abstract::TypeIdSize(input_type_id);
     summarizes_[i - 1] = static_cast<int>(std::min(static_cast<size_t>(summarize_), element));
   }
   input_addrs_.resize(input_data_size);

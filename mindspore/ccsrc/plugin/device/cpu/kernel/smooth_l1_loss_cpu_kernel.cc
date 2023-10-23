@@ -122,7 +122,7 @@ int SmoothL1LossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   // when reduction is not set to none, we need extra space to record the result, with the same size with predict_size.
   if (reduction_ != ReductionType::NONE) {
-    this->workspace_size_list_.push_back(input_size_list_[0]);
+    this->workspace_size_list_.push_back(inputs[0]->size());
   }
 
   auto predict_shape = inputs[kIndex0]->GetShapeVector();

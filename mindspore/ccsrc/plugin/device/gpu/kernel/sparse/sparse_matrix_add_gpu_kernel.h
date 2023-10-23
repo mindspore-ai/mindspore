@@ -108,11 +108,11 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
       return ret;
     }
     output_size_list_.clear();
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_DENSE_SHAPE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_BATCH_POINTER]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_ROW]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
-    output_size_list_.emplace_back(input_size_list_[InputList::X1_VALUE] + input_size_list_[InputList::X2_VALUE]);
+    output_size_list_.emplace_back(inputs[InputList::X1_DENSE_SHAPE]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_BATCH_POINTER]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_ROW]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_VALUE]->size() + inputs[InputList::X2_VALUE]->size());
+    output_size_list_.emplace_back(inputs[InputList::X1_VALUE]->size() + inputs[InputList::X2_VALUE]->size());
     return KRET_OK;
   }
 
