@@ -62,9 +62,17 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
 
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                       const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
-  InferOutput(input, batch1, batch2, beta, alpha);
-  Launch(input, batch1, batch2, beta, alpha, output_);
-  return output_;
+  MS_LOG(DEBUG) << "Call start";
+  Infer(primitive_, input, batch1, batch2, beta, alpha);
+  MS_LOG(DEBUG) << "Infer end";
+
+  if (outputs_.size() != 1) {
+    MS_LOG(EXCEPTION) << "Baddbmm output size should be 1, but got " << outputs_.size();
+  }
+
+  Launch(input, batch1, batch2, beta, alpha, outputs_[0]);
+  MS_LOG(DEBUG) << "Launch end";
+  return outputs_[0];
 }
 }  // namespace pyboost
 }  // namespace kernel

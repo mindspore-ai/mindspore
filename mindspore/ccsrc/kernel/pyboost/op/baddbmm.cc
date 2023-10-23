@@ -24,27 +24,6 @@ namespace pyboost {
 void Baddbmm::CastInput() {
   // todo
 }
-
-void Baddbmm::InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                          const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
-  // todo: DoInfer and get AbstractBasePtr.
-  // output_abstract_ = Infer();
-  // same shape with input
-  auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
-  if (!eval_impl.has_value()) {
-    MS_LOG(EXCEPTION) << "Not found infer func for Baddbmm";
-  }
-  std::vector<AbstractBasePtr> input_abs = {input->ToAbstract(), batch1->ToAbstract(), batch2->ToAbstract(),
-                                            beta->ToAbstract(), alpha->ToAbstract()};
-  auto output_abs = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs);
-
-  std::vector<tensor::TensorPtr> outputs;
-  PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
-  if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Cannot create output tensor for Baddbmm";
-  }
-  output_ = outputs[0];
-}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

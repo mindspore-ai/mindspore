@@ -38,6 +38,7 @@ py::object Pyboost_Baddbmm(const py::args &args) {
   if (args.size() != kIndex2) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
+  MS_LOG(DEBUG) << "Run Pyboost_Baddbmm";
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
   const auto &grad_executor = pynative_executor->grad_executor();
@@ -94,6 +95,7 @@ py::object Pyboost_Baddbmm(const py::args &args) {
   auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
   op->set_primitive(std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim));
   auto output = op->Call(input, batch1, batch2, beta, alpha);
+  MS_LOG(DEBUG) << "Run Pyboost_Baddbmm end";
   return parser.Wrap(output);
 }
 void RegisterPyBoostFunction(py::module *m) {

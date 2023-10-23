@@ -28,15 +28,12 @@ class BACKEND_EXPORT Baddbmm : public pyboost::Op {
   ~Baddbmm() override = default;
 
   void CastInput() override;
-  void InferOutput(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1, const tensor::TensorPtr &batch2,
-                   const ScalarPtr &beta, const ScalarPtr &alpha);
 
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                  const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) = 0;
 
  protected:
   AbstractBasePtr output_abstract_;
-  tensor::TensorPtr output_;
 };
 }  // namespace pyboost
 }  // namespace kernel

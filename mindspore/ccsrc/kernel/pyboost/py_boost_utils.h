@@ -18,10 +18,26 @@ using DeviceAddressFutureDataPtr = pynative::DeviceAddressFutureDataPtr;
 using DeviceAddressFuture = pynative::DeviceAddressFuture;
 }  // namespace
 
-class PyBoostUtils {
+class BACKEND_EXPORT PyBoostUtils {
  public:
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
 };
+
+template <typename T, std::size_t... ls>
+AbstractBasePtr InferImpl(const PrimitivePtr &primitive, const T &t, std::index_sequence<ls...>) {
+  auto eval_impl = abstract::GetPrimitiveInferImpl(primitive);
+  std::vector<AbstractBasePtr> input_abs;
+  [&input_abs, &t]() { (input_abs.emplace_back(std::get<ls>(t)->ToAbstract()), ...); }();
+  return eval_impl->InferShapeAndType(nullptr, primitive, input_abs);
+}
+
+template <typename... T>
+void BACKEND_EXPORT InferOutput(const PrimitivePtr &primitive, std::vector<tensor::TensorPtr> *outputs,
+                                const std::tuple<T...> &t) {
+  auto output_abs = InferImpl(primitive, t, std::index_sequence_for<T...>());
+  outputs->clear();
+  PyBoostUtils::CreateOutputTensor(output_abs, outputs);
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

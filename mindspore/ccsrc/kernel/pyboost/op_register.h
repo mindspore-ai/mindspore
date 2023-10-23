@@ -26,6 +26,8 @@
 #include "utils/ms_utils.h"
 #include "ir/tensor.h"
 #include "include/backend/visible.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "kernel/pyboost/py_boost_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,6 +43,21 @@ class BACKEND_EXPORT Op {
   const PrimitivePtr &primitive() const { return primitive_; }
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
+
+  template <typename... T>
+  inline void Infer(const PrimitivePtr &primitive, T &... args) {
+    InferOutput(primitive, &outputs_, ConvertTypes(args...));
+  }
+
+  template <typename T>
+  T ConvertType(T value) {
+    return value;
+  }
+
+  template <typename... Ts>
+  constexpr auto ConvertTypes(Ts &... args) {
+    return std::make_tuple(ConvertType(args)...);
+  }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;

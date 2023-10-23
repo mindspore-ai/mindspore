@@ -40,6 +40,9 @@ constexpr size_t kMatSize = 3;
 
 abstract::ShapePtr BaddbmmInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  if (input_args.size() != 5) {
+    MS_LOG(EXCEPTION) << "input args size should be 5, but got " << input_args.size();
+  }
   auto prim_name = primitive->name();
   auto input_shape_ptr = input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
   auto batch1_shape_ptr = input_args[1]->BuildShape()->cast<abstract::ShapePtr>();

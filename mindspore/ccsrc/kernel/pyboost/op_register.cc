@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+
 template <typename T>
 OpFactory<T> &OpFactory<T>::Get() {
   static OpFactory<T> instance;
