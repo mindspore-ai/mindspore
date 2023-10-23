@@ -84,7 +84,7 @@ bool CustomAscendUtils::SetCustomOutputs(const FuncGraphPtr &func_graph, const C
       }
       auto abstract_tensor_clone = abstract_tensor->Clone();
       abstract_tensor_clone->set_name(abstract_tensor->name());
-      abstract_list.emplace_back(abstract_tensor_clone);
+      (void)abstract_list.emplace_back(abstract_tensor_clone);
     }
     custom_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   }
