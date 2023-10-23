@@ -200,9 +200,12 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(
       // Create device tensor.
       const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
-      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, device_address->GetSize(), device_address->format(), device_address->type_id(),
-        device_address->host_shape());
+
+      const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+        {node_with_index.first, node_with_index.second}, nullptr, device_address->GetSize(), device_address->format(),
+        device_address->type_id(), device_address->host_shape(), device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
       MS_LOG(DEBUG) << "Create new address for node that has no corresponding backend node:"
                     << parameter_with_index.first->DebugString() << " index:" << parameter_with_index.second

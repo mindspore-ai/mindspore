@@ -323,12 +323,23 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     if (InputDataNoNeedCopy(input_device_tensor, node_device_tensor)) {
       continue;
     }
+<<<<<<< HEAD
     if (type_ != KernelTransformType::kSuperKernelActor || node_device_tensor->GetSize() == 0) {
       // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
       node_device_tensor->SetSize(input_device_tensor->GetSize());
     }
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_sync_user_data_handler(input_device_tensor->sync_user_data_handler());
+=======
+    // For dynamic shape in sub graph sink and any type parameter, the input size should be updated.
+    node_device_tensor->SetSize(input_device_tensor->GetSize());
+    // Update Shape.
+    const auto &node_device_kernel_tensor = node_device_tensor->kernel_tensor();
+    const auto &input_kernel_tensor = input_device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(node_device_kernel_tensor);
+    MS_EXCEPTION_IF_NULL(input_kernel_tensor);
+    node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
+>>>>>>> Unify CreateDeviceAddress interface
 
     // Copy.
     DeviceTensorPtr copy_device_tensor = nullptr;
@@ -355,9 +366,14 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       }
 
       if (copy_input_device_tensors_[i] == nullptr) {
-        copy_input_device_tensors_[i] = device_context->device_res_manager_->CreateDeviceAddress(
-          nullptr, node_device_tensor->GetSize(), node_device_tensor->format(), node_device_tensor->type_id(),
-          node_device_tensor->host_shape());
+        MS_EXCEPTION_IF_NULL(node_device_tensor->kernel_tensor());
+        const auto new_kernel_tensor = node_device_tensor->kernel_tensor()->Clone();
+        MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+        new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
+        new_kernel_tensor->set_device_id(device_context->device_context_key().device_id_);
+        new_kernel_tensor->set_device_ptr(nullptr);
+
+        copy_input_device_tensors_[i] = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
         MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
                       << " for actor:" << GetAID();
       }

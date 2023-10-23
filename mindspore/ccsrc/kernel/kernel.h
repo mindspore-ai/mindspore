@@ -146,42 +146,16 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   ~KernelTensor() = default;
 
   // Constructor of KernelTensor by shape, type, value.
-  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
-    if (type) {
-      SetType(type);
-    }
-    if (shape) {
-      // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
-      SetShape(shape);
-    }
-    if (value) {
-      SetValue(value);
-    }
-
-    // Update size_ at constructing KernelTensor.
-    // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
-    CalculateMemSize();
-  }
+  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
   // Constructor of KernelTensor by device info.
   KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
                const string &device_name, uint32_t device_id, const UserDataPtr &user_data = nullptr);
 
   // Constructor of KernelTensor by shape, type, value and device info.
-  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
-               mindspore::Format format, void *device_ptr, size_t size, const string &device_name, uint32_t device_id)
-      : format_(format), device_ptr_(device_ptr), size_(size), device_name_(device_name), device_id_(device_id) {
-    if (type) {
-      SetType(type);
-    }
-    if (shape) {
-      // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
-      SetShape(shape);
-    }
-    if (value) {
-      SetValue(value);
-    }
-  }
+  KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value, void *device_ptr,
+               size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
+               const string &device_name, uint32_t device_id, const UserDataPtr &user_data = nullptr);
 
   KernelTensor(const KernelTensor &other);
 
@@ -385,11 +359,11 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       MS_LOG(EXCEPTION)
         << "Get value failed, there is no any value in KernelTensor."
            "Here are the possible reasons:"
-           "1. When the operator KernelMod is registered, the data type is not correct, such as Scalar or Tuple, but "
-           "is registered as Tensor."
+           "1. When the operator KernelMod is registered, the data type is not correct, such as Scalar or Tuple, "
+           "but is registered as Tensor."
            "2. If the KernelMod is registered correctly, it may be an attempt to GetValue the output of the "
-           "previous operator. During compilation, the output of the operator has no value. You can check the ir file "
-           "to see if the input for the current operator value is from an operator.";
+           "previous operator. During compilation, the output of the operator has no value. You can check the ir "
+           "file to see if the input for the current operator value is from an operator.";
     }
     return value_opt.value();
   }
@@ -539,9 +513,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
   // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
   // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
-  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements number
-  // in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of this
-  // Tuple is {2}.
+  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements
+  // number in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of
+  // this Tuple is {2}.
   ShapeVector shape_vector_{};
 
   // The flatten shape(maybe after padding) vector.

@@ -125,12 +125,21 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
 
+  static std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> GetAbstractInfo(const AnfNodePtr &node,
+                                                                               size_t output_idx);
+
+  static bool ExistOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+
   // Get output kernel tensor if exists, otherwise throw a exception.
   static const KernelTensorPtr &GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
   // Get output kernel tensor if exists, otherwise create a new one and set into node.
   static const KernelTensorPtr &GetOrCreateOutputKernelTensor(const AnfNodePtr &node, size_t output_idx);
+
+  // Get input kernel tensor if exists, otherwise throw a exception.
+  static const KernelTensorPtr &GetPrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx);
   // Get input kernel tensor if exists, otherwise create a new one and set into node.
   static const KernelTensorPtr &GetOrCreatePrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx);
+
   // Get all input kernel tensor if exists, otherwise create new KernelTensor and set into input node.
   static std::vector<KernelTensor *> GetOrCreateAllInputKernelTensors(const AnfNodePtr &node);
   // Get all output kernel tensor if exists, otherwise create new KernelTensor and set into node.

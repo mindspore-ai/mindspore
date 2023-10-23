@@ -373,8 +373,14 @@ bool ContiguousViewCopySrcAddr(const AddressAndStorageInfoPtr &src_addr_info,
 
   const auto &dst_shape = src_addr_info->storage->shape;
   auto tensor_size = SizeOf(dst_shape) * GetTypeByte(TypeIdToType(src_addr_info->addr->type_id()));
-  auto dst_addr = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
-                                                                           src_addr_info->addr->type_id(), dst_shape);
+
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, kOpFormat_DEFAULT, src_addr_info->addr->type_id(), dst_shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(src_addr_info->addr->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(dst_shape));
+
+  auto dst_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   dst_addr->set_device_shape(dst_shape);
 
   auto dst_addr_info = std::make_shared<AddressAndStorageInfo>(dst_addr, nullptr);
@@ -477,8 +483,14 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
   if (base_format.empty()) {
     MS_LOG(DEBUG) << "Base format is empty, need to transdata first.";
     auto tensor_size = SizeOf(input_storage_info->ori_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
-    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, tensor_size, kOpFormat_NCHW, input_address->type_id(), input_storage_info->ori_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_storage_info->ori_shape));
+
+    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     baseformat_addr->set_device_shape(input_storage_info->ori_shape);
     auto ret = LaunchTransData(input_address, input_storage_info, baseformat_addr, device_context, stream_ptr);
     if (!ret) {
@@ -490,8 +502,14 @@ DeviceAddressPtr ConvertAddrToBaseFormat(const DeviceAddressPtr &input_address,
     const auto &device_shape =
       trans::TransShapeToDevice(input_storage_info->ori_shape, base_format, input_address->type_id());
     auto tensor_size = SizeOf(device_shape) * GetTypeByte(TypeIdToType(input_address->type_id()));
-    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, base_format,
-                                                                               input_address->type_id(), device_shape);
+
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, tensor_size, base_format, input_address->type_id(), device_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(input_address->type_id())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(device_shape));
+
+    baseformat_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     baseformat_addr->set_device_shape(device_shape);
     auto ret = IdentityFunc(input_address, input_storage_info, baseformat_addr, device_context, stream_ptr);
     if (!ret) {

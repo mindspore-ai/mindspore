@@ -718,10 +718,14 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   auto new_kernel_tensor = kernel_tensor->Clone();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+
+  new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
+  new_kernel_tensor->set_device_id(device_context->device_context_key().device_id_);
   new_kernel_tensor->set_device_ptr(nullptr);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
-  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
   MS_EXCEPTION_IF_NULL(new_device_address);
+  MS_LOG(DEBUG) << "Create device tensor:" << new_device_address << " type:" << new_device_address->type_id();
+
   new_device_address->set_original_ref_count(old_device_address->original_ref_count());
   new_device_address->ResetRefCount();
   auto node = old_device_address->GetNodeIndex();

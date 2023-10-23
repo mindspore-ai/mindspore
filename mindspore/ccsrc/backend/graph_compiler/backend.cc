@@ -1256,8 +1256,14 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
         MS_LOG(EXCEPTION) << "First tensor can not be nullptr";
       }
       auto address_size = GetTypeByte(TypeIdToType(input_tensor->data_type())) * SizeOf(input_tensor->shape());
-      auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape());
+
+      auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        nullptr, address_size, kOpFormat_DEFAULT, input_tensor->data_type(), input_tensor->shape(),
+        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
+      kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+
+      auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 
       input_tensor->set_device_address(input_addr);
       RunAllocMemTask(device_context, input_tensor, enable_async);
@@ -1309,8 +1315,13 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
     MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
   }
   auto type_id = old_storage_info->data_type;
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, kOpFormat_DEFAULT, type_id, old_storage_info->shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();

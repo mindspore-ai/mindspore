@@ -658,9 +658,14 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
           auto tmp_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
             {graph_output_data->data_->device_name(), graph_output_data->data_->device_id()});
           MS_EXCEPTION_IF_NULL(tmp_device_context);
-          fallback_device_tensors_[index] = tmp_device_context->device_res_manager_->CreateDeviceAddress(
-            nullptr, graph_output_data->data_->GetSize(), graph_output_data->data_->format(),
-            graph_output_data->data_->type_id(), graph_output_data->data_->host_shape());
+
+          const auto &graph_output_kernel_tensor = graph_output_data->data_->kernel_tensor();
+          MS_EXCEPTION_IF_NULL(graph_output_kernel_tensor);
+          const auto &fallback_kernel_tensor = graph_output_kernel_tensor->Clone();
+          MS_EXCEPTION_IF_NULL(fallback_kernel_tensor);
+          fallback_kernel_tensor->set_device_ptr(nullptr);
+          fallback_device_tensors_[index] =
+            tmp_device_context->device_res_manager_->CreateDeviceAddress(fallback_kernel_tensor);
           MS_EXCEPTION_IF_NULL(fallback_device_tensors_[index]);
           MS_LOG(DEBUG) << "Create device address:" << fallback_device_tensors_[index] << " for actor:" << GetAID()
                         << " index:" << index << " device type:" << fallback_device_tensors_[index]->GetDeviceType()
@@ -683,6 +688,14 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
         graph_output_data->data_->sync_user_data_handler());
       clear_device_tensors.emplace(graph_output_data->data_);
       graph_ouput_device_tensors_[index]->SetSize(graph_output_data->data_->GetSize());
+
+      // Update Shape.
+      const auto &graph_output_device_kernel_tensor = graph_ouput_device_tensors_[index]->kernel_tensor();
+      const auto &graph_output_data_kernel_tensor = graph_output_data->data_->kernel_tensor();
+      MS_EXCEPTION_IF_NULL(graph_output_device_kernel_tensor);
+      MS_EXCEPTION_IF_NULL(graph_output_data_kernel_tensor);
+      graph_output_device_kernel_tensor->SetShape(graph_output_data_kernel_tensor->GetShape()->Clone());
+
       auto node_with_index = graph_output_data->data_->node_index();
       graph_ouput_device_tensors_[index]->SetNodeIndex(node_with_index.first.lock(), node_with_index.second);
       MS_LOG(DEBUG) << "Actor:" << GetAID() << "src device address:" << graph_output_data->data_

@@ -26,6 +26,23 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
+KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
+  if (type) {
+    SetType(type);
+  }
+  if (shape) {
+    // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
+    SetShape(shape);
+  }
+  if (value) {
+    SetValue(value);
+  }
+
+  // Update size_ at constructing KernelTensor.
+  // Note: calculate memory size should be executed after 'SetType' and 'SetShape'.
+  CalculateMemSize();
+}
+
 KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
                            const ShapeVector &host_shape, const string &device_name, uint32_t device_id,
                            const UserDataPtr &user_data)
@@ -37,6 +54,21 @@ KernelTensor::KernelTensor(void *device_ptr, size_t size, const std::string &for
       device_name_(device_name),
       device_id_(device_id),
       user_data_(user_data) {}
+
+KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
+                           void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
+                           const ShapeVector &host_shape, const string &device_name, uint32_t device_id,
+                           const UserDataPtr &user_data)
+    : KernelTensor(shape, type, value) {
+  host_shape_ = host_shape;
+  dtype_id_ = dtype_id;
+  format_ = GetFormatFromStrToEnum(format);
+  device_ptr_ = device_ptr;
+  size_ = size;
+  device_name_ = device_name;
+  device_id_ = device_id;
+  user_data_ = user_data;
+}
 
 KernelTensor::KernelTensor(const KernelTensor &other) {
   shape_ = other.shape_ != nullptr ? other.shape_->Clone() : abstract::kNoShape;

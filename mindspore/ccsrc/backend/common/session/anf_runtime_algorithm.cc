@@ -888,6 +888,66 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
   return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
 }
 
+std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAbstractInfo(const AnfNodePtr &node,
+                                                                                           size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  abstract::BaseShapePtr shape;
+  TypePtr type;
+  ValuePtr value;
+
+  // Create output kernel tensor if not exists.
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    value = value_node->value();
+    abstract::AbstractBasePtr abs = node->abstract();
+    if (abs == nullptr) {
+      MS_EXCEPTION_IF_NULL(value);
+      abs = value->ToAbstract();
+      node->set_abstract(abs);
+    }
+    MS_EXCEPTION_IF_NULL(abs);
+    shape = abs->GetShape();
+    type = abs->GetType();
+  } else {
+    const auto &abs = common::AnfAlgo::GetNodeAbstractByIndex(node, output_idx);
+    MS_EXCEPTION_IF_NULL(abs);
+    shape = abs->GetShape();
+    type = abs->GetType();
+    value = kValueAny;
+  }
+
+  // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
+  // so the output infer type and device type will be different, we change the output tensor to the real device type.
+  if (type->isa<TensorType>()) {
+    auto real_device_type = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
+    auto abs_tensor_type = type->cast<TensorTypePtr>();
+    auto abs_element = abs_tensor_type->element();
+    if (abs_element != nullptr) {
+      auto abs_tensor_element_type = abs_element->type_id();
+      if (real_device_type != kTypeUnknown && real_device_type != abs_tensor_element_type) {
+        MS_LOG(INFO) << "For kernel " << node->DebugString() << ", the infer type of output[" << output_idx << "] is "
+                     << TypeIdToString(abs_tensor_element_type) << ", but the device type is "
+                     << TypeIdToString(real_device_type)
+                     << ". Maybe there has insert cast pass which changed the device type."
+                     << " So we change the tensor type from " << TypeIdToString(abs_tensor_element_type) << " to "
+                     << TypeIdToString(real_device_type);
+        abs_tensor_type->set_element(TypeIdToType(real_device_type));
+      }
+    }
+  }
+
+  return std::make_tuple(shape, type, value);
+}
+
+bool AnfRuntimeAlgorithm::ExistOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+
+  return kernel_info->OutputAddrExist(output_idx) || kernel_info->OutputKernelTensorExist(output_idx);
+}
+
 const KernelTensorPtr &AnfRuntimeAlgorithm::GetOutputKernelTensor(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
@@ -923,49 +983,16 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
     return kernel_info->GetOutputKernelTensor(output_idx);
   }
 
-  abstract::BaseShapePtr shape;
-  ValuePtr value;
-  TypePtr type;
-  // Create output kernel tensor if not exists.
-  if (node->isa<ValueNode>()) {
-    auto value_node = node->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    const abstract::AbstractBasePtr &abs = node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    shape = abs->GetShape();
-    type = abs->GetType();
-    value = value_node->value();
-  } else {
-    const auto &abs = common::AnfAlgo::GetNodeAbstractByIndex(node, output_idx);
-    MS_EXCEPTION_IF_NULL(abs);
-    shape = abs->GetShape();
-    type = abs->GetType();
-    value = kValueAny;
-  }
-
-  // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
-  // so the output infer type and device type will be different, we change the output tensor to the real device type.
-  if (type->isa<TensorType>()) {
-    auto real_device_type = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
-    auto abs_tensor_type = type->cast<TensorTypePtr>();
-    auto abs_element = abs_tensor_type->element();
-    if (abs_element != nullptr) {
-      auto abs_tensor_element_type = abs_element->type_id();
-      if (real_device_type != kTypeUnknown && real_device_type != abs_tensor_element_type) {
-        MS_LOG(INFO) << "For kernel " << node->DebugString() << ", the infer type of output[" << output_idx << "] is "
-                     << TypeIdToString(abs_tensor_element_type) << ", but the device type is "
-                     << TypeIdToString(real_device_type)
-                     << ". Maybe there has insert cast pass which changed the device type."
-                     << " So we change the tensor type from " << TypeIdToString(abs_tensor_element_type) << " to "
-                     << TypeIdToString(real_device_type);
-        abs_tensor_type->set_element(TypeIdToType(real_device_type));
-      }
-    }
-  }
+  auto [shape, type, value] = GetAbstractInfo(node, output_idx);
   auto kernel_tensor = std::make_shared<KernelTensor>(shape, type, value);
   kernel_info->SetOutputKernelTensor(kernel_tensor, output_idx);
 
   return kernel_info->GetOutputKernelTensor(output_idx);
+}
+
+const KernelTensorPtr &AnfRuntimeAlgorithm::GetPrevNodeOutputKernelTensor(const AnfNodePtr &node, size_t input_idx) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, input_idx, false);
+  return GetOutputKernelTensor(kernel_with_index.first, kernel_with_index.second);
 }
 
 const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreatePrevNodeOutputKernelTensor(const AnfNodePtr &node,
@@ -997,19 +1024,21 @@ std::vector<KernelTensor *> AnfRuntimeAlgorithm::GetOrCreateAllOutputKernelTenso
 KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
   const AnfWithOutIndex &node_with_index, void *const device_ptr, size_t size, const string &format, TypeId dtype_id,
   const ShapeVector &host_shape, const std::string &device_name, uint32_t device_id, const UserDataPtr &user_data) {
-  auto kernel_tensor = GetOrCreateOutputKernelTensor(node_with_index.first, node_with_index.second);
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  abstract::BaseShapePtr shape;
+  TypePtr type;
+  ValuePtr value;
+  if (ExistOutputKernelTensor(node_with_index.first, node_with_index.second)) {
+    const auto &kernel_tensor = GetOutputKernelTensor(node_with_index.first, node_with_index.second);
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    shape = kernel_tensor->GetShape()->Clone();
+    type = kernel_tensor->GetType()->Clone();
+    value = kernel_tensor->GetValueTrack();
+  } else {
+    std::tie(shape, type, value) = GetAbstractInfo(node_with_index.first, node_with_index.second);
+  }
 
-  kernel_tensor->set_device_ptr(device_ptr);
-  kernel_tensor->set_size(size);
-  kernel_tensor->SetStringFormat(format);
-  kernel_tensor->set_dtype_id(dtype_id);
-  kernel_tensor->set_host_shape(host_shape);
-  kernel_tensor->set_device_name(device_name);
-  kernel_tensor->set_device_id(device_id);
-  kernel_tensor->set_user_data(user_data);
-
-  return kernel_tensor;
+  return std::make_shared<kernel::KernelTensor>(shape, type, value, device_ptr, size, format, dtype_id, host_shape,
+                                                device_name, device_id, user_data);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetNodeInputSizeList(const AnfNodePtr &node) {

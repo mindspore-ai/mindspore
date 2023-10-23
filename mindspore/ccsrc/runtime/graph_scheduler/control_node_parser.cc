@@ -376,8 +376,11 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
   } else {
     // Create device tensor.
     std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
-    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format,
-                                                                       output_type_id, ShapeVector());
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {backend_node, 0}, nullptr, tensor_size, output_format, output_type_id, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create address for front node:" << front_node->DebugString()
@@ -469,13 +472,17 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
       address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     } else {
       // Create device tensor.
-      address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id,
-                                                                         ShapeVector());
+      const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+        {node, front_node_with_index.second}, nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector(),
+        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     }
   } else {
     // Create device tensor.
-    address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id,
-                                                                       ShapeVector());
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {node, front_node_with_index.second}, nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+    address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   }
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(INFO) << "Create address for node that has no corresponding backend node:"

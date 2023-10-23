@@ -68,6 +68,36 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
   }
 }
 
+void UpdateDynamicSequenceType(const AnfNodePtr &output_node, const kernel::KernelTensorPtr &output_kernel_tensor) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+
+  if (!common::AnfAlgo::IsDynamicSequence(output_node)) {
+    return;
+  }
+
+  const auto &abs = output_node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  const auto &seq_abs = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+
+  // Update abstract.
+  if (seq_abs->dynamic_len()) {
+    std::vector<ShapeVector> shapes = BaseShapeToShapeVector(output_kernel_tensor->GetShape());
+    std::vector<TypeId> types = std::vector(shapes.size(), output_kernel_tensor->dtype_id());
+    common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, output_node);
+  }
+
+  // Update real type into output kernel tensor.
+  const auto &type = output_kernel_tensor->GetType();
+  MS_EXCEPTION_IF_NULL(type);
+  const auto &seq_type = type->cast<TuplePtr>();
+  MS_EXCEPTION_IF_NULL(seq_type);
+  if (seq_type->dynamic_len()) {
+    output_kernel_tensor->SetType(output_node->abstract()->GetType());
+  }
+}
+
 void OutputActor::Init() {
   // Check device contexts number.
   if (device_contexts_.size() != output_nodes_.size()) {
@@ -226,6 +256,11 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
 
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+
+  // For dynamice sequence output, the Type(Tuple) hasn't been re-inferred, only Shape has been re-inferred, need update
+  // real Type of Tuple into kernel tensor to restore the tuple output.
+  UpdateDynamicSequenceType(output_node, output_kernel_tensor);
+
   // If output is an empty sequence return an empty tensor directly.
   if (output_node->abstract() != nullptr && output_node->abstract()->isa<abstract::AbstractSequence>() &&
       !output_kernel_tensor->GetShapeVector().empty() && output_kernel_tensor->GetShapeVector().front() == 0) {

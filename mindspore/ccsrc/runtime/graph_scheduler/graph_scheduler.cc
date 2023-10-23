@@ -1835,9 +1835,15 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
       const auto &pre_device_tensor =
         AnfAlgo::GetPrevNodeMutableOutputAddr(to_kernel_with_input_idx.first, to_kernel_with_input_idx.second, false);
       MS_EXCEPTION_IF_NULL(pre_device_tensor);
-      copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, pre_device_tensor->GetSize(), pre_device_tensor->format(), pre_device_tensor->type_id(),
-        pre_device_tensor->host_shape());
+
+      const auto &pre_kernel_tensor = pre_device_tensor->kernel_tensor();
+      const auto new_kernel_tensor = pre_kernel_tensor->Clone();
+      MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+      new_kernel_tensor->set_device_name(to_device_context->device_context_key().device_name_);
+      new_kernel_tensor->set_device_id(to_device_context->device_context_key().device_id_);
+      new_kernel_tensor->set_device_ptr(nullptr);
+
+      copy_actor->output_ = to_device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_LOG(DEBUG) << "Create device tensor:" << copy_actor->output_;
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
@@ -2703,9 +2709,12 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
                  << ", type:" << device_context->GetDeviceType();
-    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(other_type_device_tensor);
     other_type_device_tensor->SetNodeIndex(value_node, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
@@ -2748,9 +2757,12 @@ void GraphScheduler::PersistDeviceTensorForParameter(const AnfNodePtr &parameter
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
                  << ", type:" << device_context->GetDeviceType();
-    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-      device_tensor->host_shape());
+
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {parameter, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+    auto other_type_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     other_type_device_tensor->SetNodeIndex(parameter, 0);
     other_type_device_tensor->set_from_persistent_mem(true);
     MS_LOG(DEBUG) << "Create device tensor:" << other_type_device_tensor
@@ -2798,10 +2810,12 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, index, false);
     MS_EXCEPTION_IF_NULL(sub_device_tensor);
 
+    const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+      {backend_node, index}, nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(),
+      sub_device_tensor->type_id(), sub_device_tensor->host_shape(), device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
     MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-      nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id(),
-      sub_device_tensor->host_shape());
+    auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     new_device_tensor->SetNodeIndex(backend_node, index);
     new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());

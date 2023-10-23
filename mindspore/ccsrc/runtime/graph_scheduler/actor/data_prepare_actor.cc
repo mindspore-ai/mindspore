@@ -399,6 +399,7 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   MS_EXCEPTION_IF_NULL(abstract);
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(input_node, 0);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+  output_kernel_tensor->SetType(abstract->GetType());
   output_kernel_tensor->SetShape(abstract->GetShape());
 }
 
@@ -1019,9 +1020,11 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
       if (device_tensor->GetDeviceType() != device_context->GetDeviceType()) {
-        host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(
-          nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
-          device_tensor->host_shape());
+        const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+          {backend_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+          device_tensor->host_shape(), device_context->device_context_key().device_name_,
+          device_context->device_context_key().device_id_);
+        host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
         MS_EXCEPTION_IF_NULL(host_tensor_address);
         MS_LOG(DEBUG) << "Create device tensor:" << host_tensor_address << " type:" << host_tensor_address->type_id();
         host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
