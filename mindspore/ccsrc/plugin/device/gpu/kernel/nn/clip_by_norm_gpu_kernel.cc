@@ -69,9 +69,6 @@ bool ClipByNormGpuKernelMod<T, S>::Init(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &outputs) {
   // Get `ClipByNorm` c++ primitive
 
-  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(primitive_);
-  MS_EXCEPTION_IF_NULL(prim);
-
   // Check whether current input and output attributes are valid.
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   if (!MatchKernelAttr(kernel_attr, GetOpSupport()).first) {
@@ -88,12 +85,11 @@ int ClipByNormGpuKernelMod<T, S>::Resize(const std::vector<KernelTensor *> &inpu
     return ret;
   }
 
-  auto prim = std::dynamic_pointer_cast<ops::ClipByNorm>(primitive_);
   ResetResource();
   InitIOShape(inputs, outputs);
   InitResource();
   CheckTensorSize({x_shape_, clip_norm_shape_, output_shape_});
-  InitAxisAndEpsilon(prim);
+  InitAxisAndEpsilon(primitive_);
   BroadcastInfer();
   // Determine data shape, type and format for `inputA_descriptor` and `outputC_descriptor`
   DetermineDeviceDataInfoForCudnn(inputs[0]);
@@ -239,16 +235,16 @@ void ClipByNormGpuKernelMod<T, S>::InitIOShape(const std::vector<KernelTensor *>
 }
 
 template <typename T, typename S>
-void ClipByNormGpuKernelMod<T, S>::InitAxisAndEpsilon(const ops::ClipByNormPtr &prim) {
+void ClipByNormGpuKernelMod<T, S>::InitAxisAndEpsilon(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   // Get axis vector from attribute
   auto axis_value = prim->GetAttr(kAttrAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
   std::vector<int64_t> temp_axis;
-  if (axis_value->isa<api::ValueSequence>()) {
-    temp_axis = api::GetValue<std::vector<int64_t>>(axis_value);
-  } else if (axis_value->isa<api::Int64Imm>()) {
-    temp_axis.emplace_back(api::GetValue<int64_t>(axis_value));
+  if (axis_value->isa<ValueSequence>()) {
+    temp_axis = GetValue<std::vector<int64_t>>(axis_value);
+  } else if (axis_value->isa<Int64Imm>()) {
+    temp_axis.emplace_back(GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For `" << kernel_name_ << "`, the type of attribute `axis` is invalid.";
   }

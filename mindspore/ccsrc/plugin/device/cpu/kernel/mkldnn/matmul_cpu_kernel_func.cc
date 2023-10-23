@@ -44,7 +44,6 @@ using dims = dnnl::memory::dims;
 void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   prim_ = primitive;
-  kernel_name_ = primitive->name();
   trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
   trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }

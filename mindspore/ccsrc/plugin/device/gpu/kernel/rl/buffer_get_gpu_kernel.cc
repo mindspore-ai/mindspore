@@ -76,7 +76,7 @@ std::vector<KernelAttr> BufferGetKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BufferGet, BufferGetKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BufferGetItem, BufferGetKernelMod);
 
 }  // namespace kernel
 }  // namespace mindspore

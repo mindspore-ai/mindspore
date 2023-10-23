@@ -117,22 +117,26 @@ TuplePtr ConcatOffsetV1InferType(const PrimitivePtr &primitive, const std::vecto
                             << input_args[kInputIndex1]->GetType()->ToString();
   }
   auto idx_type = input_args[kInputIndex1]->GetType();
-  TypePtrList types_list;
+  TypePtrList type_list;
   size_t idx_size;
   if (is_tuple_x) {
-    types_list = idx_type->cast<TuplePtr>()->elements();
-    idx_size = types_list.size();
+    auto type_tuple_ptr = idx_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(type_tuple_ptr);
+    type_list = type_tuple_ptr->elements();
+    idx_size = type_list.size();
   } else {
-    types_list = idx_type->cast<ListPtr>()->elements();
-    idx_size = types_list.size();
+    auto type_list_ptr = idx_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(type_list_ptr);
+    type_list = type_list_ptr->elements();
+    idx_size = type_list.size();
   }
   std::map<std::string, TypePtr> types;
   for (size_t i = 0; i < idx_size; ++i) {
     std::string tensori = "tensor" + std::to_string(i);
-    (void)types.emplace(tensori, types_list[i]);
+    (void)types.emplace(tensori, type_list[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return std::make_shared<Tuple>(std::vector<TypePtr>(idx_size, types_list[0]));
+  return std::make_shared<Tuple>(std::vector<TypePtr>(idx_size, type_list[0]));
 }
 }  // namespace
 

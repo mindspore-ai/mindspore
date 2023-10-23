@@ -44,7 +44,7 @@ std::pair<abstract::BaseShapePtrList, size_t> GetSequnceIndexShape(const Primiti
   MS_EXCEPTION_IF_NULL(idx_shape_ptr);
   abstract::BaseShapePtrList idx_shape{};
   size_t idx_size;
-  if (!is_tuple_x) {
+  if (is_tuple_x) {
     auto shape_tuple = idx_shape_ptr->cast<abstract::TupleShapePtr>();
     idx_shape = shape_tuple->shape();
     idx_size = shape_tuple->size();
@@ -60,19 +60,26 @@ TypePtrList GetSequnceIndexType(const PrimitivePtr &primitive, size_t index,
                                 const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
   bool is_tuple_x = CheckAndConvertUtils::IsTuple(input_args[index]);
+  bool is_list_x = CheckAndConvertUtils::IsList(input_args[index]);
 
-  if (!is_tuple_x) {
-    MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have TupleTensor input, but get "
+  if ((!is_tuple_x) && (!is_list_x)) {
+    MS_EXCEPTION(TypeError) << "For [" << op_name << "] should have ListTensor or TupleTensor input, but get "
                             << input_args[index]->GetType()->ToString();
   }
 
   auto idx_type_ptr = input_args[index]->GetType();
   MS_EXCEPTION_IF_NULL(idx_type_ptr);
-  TypePtrList types_list;
-  if (!is_tuple_x) {
-    types_list = idx_type_ptr->cast<TuplePtr>()->elements();
+  TypePtrList types;
+  if (is_tuple_x) {
+    auto types_tuple_ptr = idx_type_ptr->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(types_tuple_ptr);
+    types = types_tuple_ptr->elements();
+  } else {
+    auto types_list_ptr = idx_type_ptr->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(types_list_ptr);
+    types = types_list_ptr->elements();
   }
-  return types_list;
+  return types;
 }
 
 abstract::ShapePtr BufferAppendInferShape(const PrimitivePtr &primitive,
@@ -83,16 +90,15 @@ abstract::ShapePtr BufferAppendInferShape(const PrimitivePtr &primitive,
   auto data_shape = GetSequnceIndexShape(primitive, kInputIndex0, input_args).first;
   auto data_size = GetSequnceIndexShape(primitive, kInputIndex0, input_args).second;
   auto exp_shape = GetSequnceIndexShape(primitive, kInputIndex1, input_args).first;
-  auto exp_size = GetSequnceIndexShape(primitive, kInputIndex1, input_args).second;
   auto count_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
 
   (void)CheckAndConvertUtils::CheckInteger("exp elements ", SizeToLong(exp_shape.size()), kEqual,
                                            SizeToLong(data_shape.size()), op_name);
   int64_t exp_batch = 1;
-  if (data_size == exp_size) {
+  if (data_shape[0]->GetShapeVector().size() == exp_shape[0]->GetShapeVector().size()) {
     exp_batch = exp_shape[0]->GetShapeVector()[0];
     for (size_t i = 0; i < data_size; i++) {
-      if (data_size != exp_size) {
+      if (data_shape[0]->GetShapeVector().size() != exp_shape[0]->GetShapeVector().size()) {
         MS_LOG(EXCEPTION) << "For " << op_name << "the dimension of " << i << "th 'exp_shape' must be equal to "
                           << "the dimension of " << i << "th 'data_shape', but got the " << i
                           << "th 'exp_shape': " << exp_shape[i]->GetShapeVector() << ", the " << i

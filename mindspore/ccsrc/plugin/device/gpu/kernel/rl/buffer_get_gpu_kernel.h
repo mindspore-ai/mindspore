@@ -29,6 +29,9 @@ class BufferGetKernelMod : public NativeGpuKernelMod {
  public:
   BufferGetKernelMod();
   ~BufferGetKernelMod();
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return true;
+  };
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;

@@ -31,6 +31,11 @@ BufferSampleKernelMod::~BufferSampleKernelMod() {
   }
 }
 
+bool BufferSampleKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
 int BufferSampleKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {

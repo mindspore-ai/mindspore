@@ -30,6 +30,11 @@ BufferAppendKernelMod::BufferAppendKernelMod() : element_nums_(0), exp_batch_(0)
 
 BufferAppendKernelMod::~BufferAppendKernelMod() {}
 
+bool BufferAppendKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  return true;
+}
+
 int BufferAppendKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   for (const auto &input : inputs) {
@@ -65,7 +70,7 @@ bool BufferAppendKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   for (size_t i = 0; i < element_nums_; i++) {
     auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
     auto exp_addr = GetDeviceAddress<unsigned char>(inputs, i + element_nums_);
-    size_t one_exp_len = input_size_list_[i + element_nums_];
+    size_t one_exp_len = inputs[i + element_nums_]->size();
     status =
       BufferAppend(capacity_, one_exp_len, index_addr, LongToInt(exp_batch_), buffer_addr, exp_addr, cuda_stream);
     CHECK_CUDA_STATUS(status, kernel_name_);
