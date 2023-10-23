@@ -172,11 +172,14 @@ Status ConcatNode::from_json(nlohmann::json json_obj, std::vector<std::shared_pt
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "sampler", kConcatNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "children_flag_and_nums", kConcatNode));
   RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "children_start_end_index", kConcatNode));
+  RETURN_IF_NOT_OK(ValidateParamInJson(json_obj, "children_sizes", kConcatNode));
   std::shared_ptr<SamplerObj> sampler;
   RETURN_IF_NOT_OK(Serdes::ConstructSampler(json_obj["sampler"], &sampler));
   std::vector<std::pair<int, int>> children_flag_and_nums = json_obj["children_flag_and_nums"];
   std::vector<std::pair<int, int>> children_start_end_index = json_obj["children_start_end_index"];
-  *result = std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index);
+  std::vector<int64_t> children_sizes = json_obj["children_sizes"];
+  *result =
+    std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index, children_sizes);
   return Status::OK();
 }
 #endif
