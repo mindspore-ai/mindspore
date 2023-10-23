@@ -34,7 +34,7 @@ def betainc_forward_func(a, b, x):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_betainc(mode):
     """
     Feature: Betainc

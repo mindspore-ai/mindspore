@@ -37,7 +37,7 @@ def sigmoid_grad_dyn_shape_func(y, dy):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid_grad_forward(mode):
     """
     Feature: Ops.
@@ -57,7 +57,7 @@ def test_sigmoid_grad_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid_grad_backward(mode):
     """
     Feature: Ops.

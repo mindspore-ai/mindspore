@@ -29,7 +29,7 @@ def avg_pool_grad_forward_func(x, out, dout):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.skip(reason="Not ready")
 def test_avg_pool_grad(mode):
     """

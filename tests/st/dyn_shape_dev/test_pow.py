@@ -41,7 +41,7 @@ def pow_vmap_func(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_pow_op_forward(context_mode, data_type):
     """
@@ -63,7 +63,7 @@ def test_pow_op_forward(context_mode, data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_pow_op_backward(context_mode, data_type):
     """
@@ -86,7 +86,7 @@ def test_pow_op_backward(context_mode, data_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_pow_op_vmap(context_mode, data_type):
     """

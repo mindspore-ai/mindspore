@@ -91,7 +91,7 @@ def get_grad_inputs_and_output(nptype_input, nptype_weight, reduction, input_typ
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
 def test_nllloss_grad_vmap(mode, data_type):
     """

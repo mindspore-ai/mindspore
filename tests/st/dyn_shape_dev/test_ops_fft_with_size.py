@@ -32,7 +32,7 @@ def fft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided=T
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_forward(mode):
     """
     Feature: auto ops.
@@ -48,7 +48,7 @@ def test_fft_with_size_forward(mode):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_backward(mode):
     """
     Feature: auto grad.

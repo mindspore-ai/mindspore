@@ -116,7 +116,7 @@ def scatternd_positive_uint(nptype, mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_float64(mode):
     """
     Feature: ScatterNd
@@ -132,7 +132,7 @@ def test_scatternd_float64(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_float32(mode):
     """
     Feature: ScatterNd
@@ -148,7 +148,7 @@ def test_scatternd_float32(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_float16(mode):
     """
     Feature: ScatterNd
@@ -164,7 +164,7 @@ def test_scatternd_float16(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_int64(mode):
     """
     Feature: ScatterNd
@@ -180,7 +180,7 @@ def test_scatternd_int64(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_int32(mode):
     """
     Feature: ScatterNd
@@ -196,7 +196,7 @@ def test_scatternd_int32(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_int16(mode):
     """
     Feature: ScatterNd
@@ -212,7 +212,7 @@ def test_scatternd_int16(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_int8(mode):
     """
     Feature: ScatterNd
@@ -228,7 +228,7 @@ def test_scatternd_int8(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_uint64(mode):
     """
     Feature: ScatterNd
@@ -243,7 +243,7 @@ def test_scatternd_uint64(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_uint32(mode):
     """
     Feature: ScatterNd
@@ -258,7 +258,7 @@ def test_scatternd_uint32(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_uint16(mode):
     """
     Feature: ScatterNd
@@ -273,7 +273,7 @@ def test_scatternd_uint16(mode):
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatternd_uint8(mode):
     """
     Feature: ScatterNd
