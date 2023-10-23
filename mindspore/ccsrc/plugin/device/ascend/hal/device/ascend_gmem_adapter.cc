@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
-
 #include <pthread.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #include <tuple>
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace device {
@@ -45,7 +44,7 @@ struct CallbackThread {
 
   int create() {
     flag_.store(true);
-    return pthread_create(&thread_, NULL, &callback_thread_func, this);
+    return pthread_create(&thread_, nullptr, &callback_thread_func, this);
   }
 
   pthread_t thread_;
@@ -100,7 +99,7 @@ size_t AscendGmemAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size
     return 0;
   }
   size_t real_size = end_addr - from_addr;
-  int ret = free_eager_(from_addr, real_size, nullptr);
+  int ret = free_eager_(from_addr, SizeToUlong(real_size), nullptr);
   return ret != 0 ? 0 : real_size;
 }
 

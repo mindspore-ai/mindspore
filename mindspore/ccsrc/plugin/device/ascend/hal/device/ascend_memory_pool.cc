@@ -150,7 +150,7 @@ size_t AscendMemoryPool::GetMaxUsedMemSize() const {
   }
   auto max_used_hbm = AscendMemAdapter::GetInstance().GetMsUsedHbmSize();
   size_t static_offset = reinterpret_cast<uint8_t *>(min_used_addr) - AscendMemAdapter::GetInstance().GetBaseAddr();
-  return max_used_hbm - static_offset;
+  return LongToSize(max_used_hbm) - static_offset;
 }
 
 const bool AscendMemoryPool::IsEnableEagerFree() const {
