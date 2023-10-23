@@ -46,7 +46,14 @@ class AclKernelMod : public KernelMod {
   void SetDeviceInfo(const std::vector<std::string> &input_device_formats,
                      const std::vector<std::string> &output_device_formats,
                      const std::vector<TypeId> &input_device_types, const std::vector<TypeId> &output_device_types);
-  bool IsNeedRetrieveOutputShape() override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override {
+    MS_EXCEPTION_IF_NULL(converter_);
+    return converter_->is_need_retrieve_output_shape();
+  }
+
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
   void PackageInput(const size_t idx, const std::string &format, ShapeVector *shape);
   void PackageOutput(const size_t idx, const ShapeVector &shape);
@@ -65,7 +72,6 @@ class AclKernelMod : public KernelMod {
 
  protected:
   std::string DebugString() const;
-  void SyncOutputShape();
   void GetInputInfo(const std::vector<KernelTensor *> &inputs);
   int GetOutputInfo(const std::vector<KernelTensor *> &outputs);
 

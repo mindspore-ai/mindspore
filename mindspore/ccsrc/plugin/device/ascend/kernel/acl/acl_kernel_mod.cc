@@ -264,17 +264,17 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
   output_size_list_.resize(output_device_formats.size(), 0);
 }
 
-void AclKernelMod::SyncOutputShape() {
+void AclKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> & /*inputs*/,
+                                            const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_NULL(converter_);
   std::vector<std::vector<int64_t>> output_shape = converter_->SyncData();
-  for (size_t i = 0; i < output_shape.size(); ++i) {
-    outputs_[i]->SetShapeVector(output_shape[i]);
+  if (outputs.size() != output_shape.size()) {
+    MS_LOG(EXCEPTION) << "Size of outputs is " << outputs.size() << ", which is not equal to size of shape vector "
+                      << output_shape.size();
   }
-}
-
-bool AclKernelMod::IsNeedRetrieveOutputShape() {
-  MS_EXCEPTION_IF_NULL(converter_);
-  return converter_->is_need_retrieve_output_shape();
+  for (size_t i = 0; i < output_shape.size(); ++i) {
+    outputs[i]->SetShapeVector(output_shape[i]);
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
