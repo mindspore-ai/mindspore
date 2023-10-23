@@ -1856,11 +1856,7 @@ static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, c
   return prim;
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node,
-                                                                   const AbstractBasePtr &ival,
-                                                                   const AttrValueMapPtr &attrs,
-                                                                   const AnfNodePtr &cnode,
-                                                                   const AbstractFunctionPtr &abs) {
+ValuePtr GetValueForAbstractFunction(const AbstractFunctionPtr &abs, const AttrValueMapPtr &attrs) {
   ValuePtr value = nullptr;
   if (abs->isa<PrimitiveAbstractClosure>()) {
     auto real_fn = dyn_cast_ptr<PrimitiveAbstractClosure>(abs);
@@ -1880,7 +1876,18 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   } else {
     return nullptr;
   }
-  MS_EXCEPTION_IF_NULL(value);
+  return value;
+}
+
+AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node,
+                                                                   const AbstractBasePtr &ival,
+                                                                   const AttrValueMapPtr &attrs,
+                                                                   const AnfNodePtr &cnode,
+                                                                   const AbstractFunctionPtr &abs) {
+  ValuePtr value = GetValueForAbstractFunction(abs, attrs);
+  if (value == nullptr) {
+    return nullptr;
+  }
   if (value->isa<FuncGraph>() && value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH)) {
     return nullptr;
   }

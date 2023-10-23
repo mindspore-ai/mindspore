@@ -448,7 +448,9 @@ class _MindsporeFunctionExecutor:
 
         return phase
 
-    def _check_recompile(self, full_function_name, create_time, echo_function_name):
+
+    @staticmethod
+    def _check_recompile(full_function_name, create_time, echo_function_name):
         """Warning when the function has been compiled."""
         ignore_dirs = ["mindspore/ops", "mindspore/nn"]
         if any((lambda x: x in full_function_name)(x) for x in ignore_dirs):
