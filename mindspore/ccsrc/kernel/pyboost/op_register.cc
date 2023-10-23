@@ -19,6 +19,9 @@
 #include "kernel/pyboost/op/add.h"
 #include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
+#include "kernel/pyboost/op/matmul.h"
+#include "kernel/pyboost/op/bias_add.h"
+#include "kernel/pyboost/op/linear.h"
 
 namespace mindspore {
 namespace kernel {
