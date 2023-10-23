@@ -72,9 +72,8 @@ const std::vector<OpWithLevel> clusterable_ops_with_level_v2 = {
   {kGPUDevice, OpLevel_0, prim::kPrimAssign},
 };
 
-const std::vector<std::string> disable_cluster_op_list_v2 = {
-  "OneHot", "StridedSlice", "CumSum", "Transpose", "BatchMatMul", "MatMul", "BroadcastTo",
-};
+const std::vector<std::string> disable_cluster_op_list_v2 = {"OneHot", "CumSum",      "Transpose",   "BatchMatMul",
+                                                             "MatMul", "BroadcastTo", "StridedSlice"};
 
 std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
@@ -239,7 +238,7 @@ std::vector<PrimitivePtr> DynamicShapeCluster::GetClusterableOpList() {
 bool DynamicShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
                                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-  if (!node_in_oplist || !common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicRankNode(node)) {
+  if (!node_in_oplist || common::AnfAlgo::IsDynamicRankNode(node)) {
     return false;
   }
   if (GkUtils::IsKeepBasicNode(node)) {

@@ -363,7 +363,9 @@ bool GraphKernelJsonGenerator::GetInputTensorValue(const AnfNodePtr &anf_node, s
       return true;
     }
     SetSingleValue(node_json, data, type_id, cnode, input_idx);
-    *input_shape = {1};
+    if (GraphKernelFlags::GetInstance().kernel_generator != "AKG_V2") {
+      *input_shape = {1};
+    }
     return true;
   }
   return false;
@@ -780,7 +782,7 @@ void GraphKernelJsonGenerator::GetIOSize(const nlohmann::json &node_json, std::v
 }
 
 size_t GraphKernelJsonGenerator::GenHashId(const std::string &info) const {
-  if (!dump_option_.save_ptr_address || GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion) {
+  if (!dump_option_.save_ptr_address) {
     return std::hash<std::string>()(info);
   }
   // gen hash id without node address

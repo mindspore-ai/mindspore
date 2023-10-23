@@ -387,7 +387,9 @@ bool CostModelSplitSchemer::SplitByCostModel() {
 }
 
 std::shared_ptr<SplitSchemer> GraphKernelSplitterWithPy::GetSplitSchema(const std::string &processor) {
-  if (processor != kCPUDevice && processor != kAscendDevice) {
+  bool using_py_split_ =
+    (processor == kGPUDevice) && (!is_dynamic_ || !GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  if (using_py_split_) {
     MS_LOG(DEBUG) << "use py split model";
     return std::make_shared<CostModelSplitSchemer>();
   } else {
