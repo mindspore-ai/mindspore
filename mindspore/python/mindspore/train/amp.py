@@ -64,6 +64,7 @@ AMP_BLACK_LIST = [
 MS_AMP_BY_REWRITE = False
 _amp_cast_op = P.Cast
 
+
 class _OutputTo16(nn.Cell):
     """Wrap cell for amp. Cast network output back to float16."""
     def __init__(self, backbone, dtype=mstype.float16):
