@@ -111,23 +111,21 @@ void SafeSplitSchemer::SplitNodes(const FuncGraphPtr &func_graph) {
 
 void GraphKernelBuild::Init() {
   // Init KernelMeta.
-  std::string kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
-  std::transform(kernel_generator.begin(), kernel_generator.end(), kernel_generator.begin(), ::tolower);
-
   if (bin_map_ == nullptr) {
     bin_map_ = kernel::KernelMeta::GetInstance();
     if (!bin_map_->initialized()) {
-      bin_map_->Initialize(kernel_generator);
+      bin_map_->Initialize();
     }
   }
 
   // Init AkgKernelBuilder.
   auto device_type = Callback::Instance()->GetTargetFromContext();
-  bool is_dynamic = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
-  kernel_builder_ = kernel::GraphKernelBuildManager::Instance().GetGraphKernelBuilder(device_type, is_dynamic);
+  bool is_akg_v2 = (GraphKernelFlags::GetInstance().kernel_generator == "AKG_V2");
+  kernel_builder_ = kernel::GraphKernelBuildManager::Instance().GetGraphKernelBuilder(device_type, is_akg_v2);
   if (kernel_builder_ == nullptr) {
     MS_EXCEPTION(UnknownError) << "Can't find corresponding kernel builder for device: " << device_type
-                               << ", and enable_dynamic_shape_fusion flag to be: " << is_dynamic << " .";
+                               << ", and kernel_generator flag to be: "
+                               << GraphKernelFlags::GetInstance().kernel_generator << " .";
   }
 }
 

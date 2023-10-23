@@ -244,7 +244,7 @@ void GraphKernelFlags::CheckSupport() const {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-    if (is_cpu && !(const_cast<GraphKernelFlags *>(this)->enable_dynamic_shape_fusion)) {
+    if (is_cpu && const_cast<GraphKernelFlags *>(this)->kernel_generator == "AKG") {
       MS_LOG(WARNING)
         << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now. Please "
            "refer to https://www.mindspore.cn/install and install the required version of LLVM.";
@@ -353,6 +353,11 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("disable_simplify_exprs", &disable_simplify_exprs);
   reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
+
+  if (enable_dynamic_shape_fusion) {
+    // enable_dynamic_shape_fusion is only supported in akg_v2 generator
+    kernel_generator = "AKG_V2";
+  }
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {
