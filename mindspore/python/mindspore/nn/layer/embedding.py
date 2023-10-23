@@ -123,9 +123,13 @@ class Embedding(Cell):
                                                          "padding_idx", self.cls_name)
             if isinstance(self.init_tensor, Tensor) and self.init_tensor.init is not None:
                 self.init_tensor = self.init_tensor.init_data()
-            self.init_tensor = self.init_tensor.asnumpy()
+            init_tensor_type = self.init_tensor.dtype
+            if init_tensor_type == mstype.bfloat16:
+                self.init_tensor = self.init_tensor.float().asnumpy()
+            else:
+                self.init_tensor = self.init_tensor.asnumpy()
             self.init_tensor[self.padding_idx] = 0
-            self.init_tensor = Tensor(self.init_tensor)
+            self.init_tensor = Tensor(self.init_tensor, init_tensor_type)
         self.embedding_table = Parameter(
             self.init_tensor, name='embedding_table')
         self.expand = P.ExpandDims()

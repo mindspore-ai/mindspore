@@ -27,6 +27,11 @@ class Net(nn.Cell):
         return output
 
 
+class Net1(nn.Cell):
+    def construct(self, x, y):
+        return x == y
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -72,4 +77,28 @@ def test_eq_broadcast(mode):
     other = Tensor(np.array([1.0]))
     value = net(inputs, other)
     expect_value = np.array([[True, False], [False, False]])
+    assert np.allclose(expect_value, value.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_eq(mode):
+    """
+    Feature: __eq__ in Tensor.
+    Description: Verify the result of __eq__ in Tensor.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = Net1()
+
+    inputs = Tensor(np.array([[True, False], [False, True]]))
+    other = Tensor(np.array([[True, True], [True, True]]))
+    value = net(inputs, other)
+    expect_value = np.array([[True, False], [False, True]])
     assert np.allclose(expect_value, value.asnumpy())

@@ -10315,6 +10315,8 @@ def _canonicalize_fft_shape_and_dim(input, shape, dim):
 def as_strided(x, shape=None, strides=None):
     n = np.dtype(mstype.dtype_to_nptype(x.dtype)).itemsize
     strides = tuple(np.array(strides) * n)
+    if x.dtype == mstype.bfloat16:
+        return Tensor(np.lib.stride_tricks.as_strided(x.float().asnumpy(), shape, strides, False, True), dtype=x.dtype)
     return Tensor(np.lib.stride_tricks.as_strided(x.asnumpy(), shape, strides, False, True), dtype=x.dtype)
 
 

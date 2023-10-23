@@ -304,19 +304,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return False
-        # bool type is not supported for `Equal` operator in backend.
-        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
-            if isinstance(other, Tensor):
-                return Tensor(np.array(self.asnumpy() == other.asnumpy()))
-            return Tensor(np.array(self.asnumpy() == other))
         return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return True
-        #  bool type is not supported for `NotEqual` operator in backend.
-        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
-            return Tensor(np.array(self.asnumpy() != other.asnumpy()))
         return tensor_operator_registry.get('__ne__')(self, other)
 
     def __hash__(self):
@@ -335,7 +327,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return out
 
     def __bool__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         if data.shape == ():
             return bool(data)
         if data.shape == (1,):
@@ -351,15 +346,24 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         raise ValueError(message)
 
     def __int__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         return self._convert_scalar_(data, int, "Only one element tensors can be converted to Python scalars")
 
     def __float__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         return self._convert_scalar_(data, float, "Only one element tensors can be converted to Python scalars")
 
     def __index__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         if data.dtype not in ["int8", "int16", "int32", "int64", "bool"]:
             raise ValueError("Only integer tensors of a single element can be converted to an index.")
         return self._convert_scalar_(data, int,
