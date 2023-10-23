@@ -1588,7 +1588,7 @@ bool AttrFound(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
-static bool IsCommunicationOp(const PrimitivePtr &prim) {
+bool IsCommunicationOp(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
 }
@@ -1941,6 +1941,27 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
   TensorLayout tensorlayout_in = tensorinfo_in.tensor_layout();
   return tensorlayout_in;
+}
+
+bool IsCellReuseForwardGraph(const FuncGraphPtr &graph) { return graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE); }
+
+FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph) {
+  AnfNodePtr node = forward_graph->get_return();
+  std::vector<std::pair<PrimitivePtr, int64_t>> patterns = {
+    {prim::kPrimReturn, kIndex1}, {prim::kPrimMakeTuple, kIndex2}, {prim::kPrimPartial, kIndex1}};
+  for (const auto &pattern : patterns) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsPrimitiveCNode(cnode, pattern.first)) {
+      return nullptr;
+    }
+    auto prev_node_index = pattern.second;
+    if (prev_node_index >= SizeToLong(cnode->inputs().size())) {
+      return nullptr;
+    }
+    node = cnode->input(prev_node_index);
+  }
+  return GetValueNode<FuncGraphPtr>(node);
 }
 
 Shape mirror_group_list(const TensorLayoutPtr &layout) {

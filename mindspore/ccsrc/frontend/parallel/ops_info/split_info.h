@@ -50,6 +50,7 @@ class SplitInfo : public OperatorInfo {
 
  private:
   size_t axis_ = 0;
+  size_t skip_redistribution_ = false;
 };
 
 class SplitVInfo : public SplitInfo {
