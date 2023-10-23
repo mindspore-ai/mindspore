@@ -42,6 +42,7 @@
 #include "kernel/oplib/op_info_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
+#include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #ifndef ENABLE_SECURITY
 #include "toolchain/prof_api.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -425,10 +426,16 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto ascend_device_address_ptr = std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id,
-                                                                         node_index, kAscendDevice, device_id);
+
+  const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
+    {node_index.first, node_index.second}, device_ptr, device_size, format, type_id, {}, kAscendDevice, device_id);
+  auto ascend_device_address_ptr = std::make_shared<AscendDeviceAddress>(kernel_tensor);
   MS_EXCEPTION_IF_NULL(ascend_device_address_ptr);
+
+  ascend_device_address_ptr->SetNodeIndex(node_index.first, node_index.second);
   ascend_device_address_ptr->set_is_ptr_persisted(true);
+  ascend_device_address_ptr->set_device_synchronizer(std::make_shared<AscendDeviceSynchronizer>());
+
   return ascend_device_address_ptr;
 }
 
