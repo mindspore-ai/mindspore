@@ -131,6 +131,32 @@ void SetGradInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &gr
 }
 }  // namespace
 
+bool InferByOpDef(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &prim = op_run_info->op_grad_info->op_prim;
+  auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
+  if (frontend_func_impl) {
+    op_run_info->base_op_run_info.abstract =
+      frontend_func_impl->InferAbstract(prim, op_run_info->op_grad_info->input_abs);
+    if (op_run_info->base_op_run_info.abstract != nullptr) {
+      MS_LOG(DEBUG) << "Pynative Infer by InferAbstract, got abstract: "
+                    << op_run_info->base_op_run_info.abstract->ToString();
+      return true;
+    }
+  }
+
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def) {
+    (void)op_def->func_impl_->CheckValidation(prim, op_run_info->op_grad_info->input_abs);
+    auto shape = op_def->func_impl_->InferShape(prim, op_run_info->op_grad_info->input_abs);
+    auto type = op_def->func_impl_->InferType(prim, op_run_info->op_grad_info->input_abs);
+    op_run_info->base_op_run_info.abstract = mindspore::abstract::MakeAbstract(shape, type);
+    MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << op_run_info->base_op_run_info.abstract->ToString();
+    return true;
+  }
+
+  return false;
+}
+
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
@@ -138,39 +164,31 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   op_run_info->base_op_run_info.abstract = nullptr;
-  auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
-  // Only cache the abstract when the primitive should call the python code.
-  if (!eval_impl.has_value() && GetOutputAbstractByCache(op_run_info)) {
+
+  prim->BeginRecordAddAttr();
+
+  if (prim->name() == kPackFuncOpName) {
+    const auto &func_graph =
+      expander::ExpandPackFuncPynative(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
+    MS_EXCEPTION_IF_NULL(func_graph);
+    op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
+    prim->set_attr("recent_graph", func_graph);
+    AddWeightsToInput(op_run_info, func_graph);
+    if (op_run_info->requires_grad) {
+      SetGradInfo(op_run_info, func_graph);
+    }
+
+    prim->EndRecordAddAttr();
     return;
   }
 
-  // Cache miss to call the infer function
-  prim->BeginRecordAddAttr();
+  if (InferByOpDef(op_run_info)) {
+    prim->EndRecordAddAttr();
+    return;
+  }
 
-  // Cannot find any c++ infer
-  if (!eval_impl.has_value()) {
-    auto frontend_func_impl = mindspore::ops::GetOpFrontendFuncImplPtr(prim->name());
-    if (frontend_func_impl != nullptr) {
-      op_run_info->base_op_run_info.abstract =
-        frontend_func_impl->InferAbstract(prim, op_run_info->op_grad_info->input_abs);
-    }
-    if (op_run_info->base_op_run_info.abstract != nullptr) {
-      prim->EndRecordAddAttr();
-    }
-    if (auto op_def = mindspore::ops::GetOpDef(prim->name()); op_def != nullptr) {
-      MS_EXCEPTION_IF_NULL(op_def->func_impl_);
-      (void)op_def->func_impl_->CheckValidation(prim, op_run_info->op_grad_info->input_abs);
-      auto shape = op_def->func_impl_->InferShape(prim, op_run_info->op_grad_info->input_abs);
-      auto type = op_def->func_impl_->InferType(prim, op_run_info->op_grad_info->input_abs);
-      op_run_info->base_op_run_info.abstract = mindspore::abstract::MakeAbstract(shape, type);
-    } else {
-      py::gil_scoped_acquire acquire;
-      CallPyInferFunc(prim, op_run_info);
-      MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
-      prim->EndRecordAddAttr();
-      return;
-    }
-  } else {
+  auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
+  if (eval_impl.has_value()) {
     // the WhileList ops should be constant fold in Pynative mode.
     if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
       auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
@@ -183,21 +201,19 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
 
     op_run_info->base_op_run_info.abstract =
       eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
+    prim->EndRecordAddAttr();
+    return;
   }
 
-  if (op_run_info->base_op_run_info.abstract == nullptr) {
-    if (prim->name() == kPackFuncOpName) {
-      const auto &func_graph =
-        expander::ExpandPackFuncPynative(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
-      MS_EXCEPTION_IF_NULL(func_graph);
-      op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
-      prim->set_attr("recent_graph", func_graph);
-      AddWeightsToInput(op_run_info, func_graph);
-      if (op_run_info->requires_grad) {
-        SetGradInfo(op_run_info, func_graph);
-      }
-    }
+  // Only cache the abstract when the primitive should call the python code.
+  if (GetOutputAbstractByCache(op_run_info)) {
+    prim->EndRecordAddAttr();
+    return;
   }
+
+  // call python infer
+  py::gil_scoped_acquire acquire;
+  CallPyInferFunc(prim, op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   prim->EndRecordAddAttr();
 }

@@ -1377,7 +1377,14 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
 OpDefConvertFunc GetConverterByType(int32_t dtype) {
   auto it = kConverters.find(dtype);
   if (it == kConverters.end()) {
-    MS_LOG(EXCEPTION) << "For " << dtype << ", the Converter is not found.";
+    if ((dtype >> kTypeShiftBits) == 0) {
+      MS_LOG(EXCEPTION) << "Can't find converter for dtype[" << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype))
+                        << "].";
+    } else {
+      MS_LOG(EXCEPTION) << "Can't find converter for src_type["
+                        << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype >> kTypeShiftBits)) << "] and dst_type["
+                        << ops::EnumToString(static_cast<ops::OP_DTYPE>(dtype & kDstMask)) << "].";
+    }
   }
 
   return it->second;
