@@ -1952,8 +1952,8 @@ class NormalizePad(ImageTensorOperation):
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
         dtype (str, optional): Set the output data type of normalized image. Default: ``"float32"``.
-        is_hwc (bool, optional): Whether the input image is HWC.
-            ``True`` - HWC format, ``False`` - CHW format. Default: ``True``.
+        is_hwc (bool, optional): Specify the format of input image.
+            ``True`` - HW(C) format, ``False`` - CHW format. Default: ``True``.
 
     Raises:
         TypeError: If `mean` is not of type sequence.

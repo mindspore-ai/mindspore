@@ -196,7 +196,6 @@ class CsvToMR:
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
-            TypeError: If parallel_writer is not bool.
             IOError: Csv file does not exist.
             ValueError: The first line of the CSV file is used as column name and each field cannot start with a number.
         """

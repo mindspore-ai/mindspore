@@ -5,12 +5,12 @@
 
     COCO（Common Objects in Context）数据集。
     
-    该API支持解析COCO2017数据集，支持四种类型的机器学习任务，分别是目标检测、关键点检测、物体分割和全景分割。
+    该API支持解析COCO2017数据集，支持四种类型的机器学习任务，分别是目标检测、关键点检测、物体分割、全景分割和图片注解。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **annotation_file** (str) - 数据集标注JSON文件的路径。
-        - **task** (str, 可选) - 指定COCO数据的任务类型。支持的任务类型包括： ``'Detection'`` 、 ``'Stuff'`` 、 ``'Panoptic'`` 和 ``'Keypoint'`` 。默认值： ``'Detection'`` 。
+        - **task** (str, 可选) - 指定COCO数据的任务类型。支持的任务类型包括： ``'Detection'`` （目标检测） 、 ``'Stuff'`` （物体分割） 、 ``'Panoptic'`` （全景分割） 、 ``'Keypoint'`` （关键点检测）和 ``'Captioning'`` （图片注解） 。默认值： ``'Detection'`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数，可以小于数据集总数。默认值： ``None`` ，读取全部样本图片。
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
         - **shuffle** (bool, 可选) - 是否混洗数据集。默认值： ``None`` ，表2中会展示不同参数配置的预期行为。
@@ -57,6 +57,10 @@
     |                         |                                              |
     |                         |   [area, dtype=uint32]                       |
     +-------------------------+----------------------------------------------+
+    | Captioning              |   [image, dtype=uint8]                       |
+    |                         |                                              |
+    |                         |   [captions, dtype=string]                   |
+    +-------------------------+----------------------------------------------+
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
@@ -66,7 +70,7 @@
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **RuntimeError** - 解析 `annotation_file` 指定的JSON文件失败。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
-        - **ValueError** - `task` 参数取值不为 ``'Detection'`` 、 ``'Stuff'`` 、 ``'Panoptic'`` 或 ``'Keypoint'`` 。
+        - **ValueError** - `task` 参数取值不为 ``'Detection'`` 、 ``'Stuff'`` 、 ``'Panoptic'`` 、 ``'Keypoint'`` 或 ``'Captioning'`` 。
         - **ValueError** - `annotation_file` 参数对应的文件不存在。
         - **ValueError** - `dataset_dir` 参数路径不存在。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。

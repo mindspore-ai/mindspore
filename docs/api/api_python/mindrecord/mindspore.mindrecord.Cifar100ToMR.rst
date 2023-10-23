@@ -30,5 +30,4 @@
             - **MRMValidateDataError** - 原始数据集数据异常。
             - **MRMSetHeaderError** - 设置MindRecord文件头失败。
             - **MRMWriteDatasetError** - 创建MindRecord索引失败。
-            - **TypeError** - 参数 `parallel_writer` 不是bool类型。
             - **ValueError** - 参数 `fields` 不合法。
