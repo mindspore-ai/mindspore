@@ -33,9 +33,7 @@ class MindirInfer {
 
 class InferByHostInfo : public MindirInfer {
  public:
-  void InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) override {
-    // todo
-  }
+  void InferOp(const NodePtr &node, const PrimitivePtr &prim, const NodePtrList &args) override;
   void SetValue(const NodePtr &node) override { node->as<AnfNodePtr>()->set_abstract(node->GetValue()->ToAbstract()); }
 };
 
