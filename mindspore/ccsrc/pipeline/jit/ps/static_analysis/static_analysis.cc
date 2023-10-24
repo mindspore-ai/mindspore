@@ -1700,5 +1700,26 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
                 << evaluator->ToString();
   return nullptr;
 }
+
+AbstractBasePtr EvalFunctionValue(const ValuePtr &func, const AbstractBasePtrList &args_spec) {
+  auto func_abs = func->ToAbstract();
+  if (!func_abs->isa<AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value : " << func->ToString() << " is not a callable object.";
+  }
+  if (func->isa<Primitive>() && !func->isa<prim::DoSignaturePrimitive>()) {
+    return EvalOnePrim(func->cast<PrimitivePtr>(), args_spec)->abstract();
+  } else {
+    auto infer_graph = std::make_shared<FuncGraph>();
+    std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
+    std::transform(args_spec.begin(), args_spec.end(), std::back_inserter(inputs),
+                   [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
+    auto infer_node = infer_graph->NewCNode(inputs);
+    infer_graph->set_return(infer_node);
+    auto manager = Manage(infer_graph, true);
+    auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
+    auto res = engine->Run(infer_graph, args_spec);
+    return res.eval_result->abstract();
+  }
+}
 }  // namespace abstract
 }  // namespace mindspore
