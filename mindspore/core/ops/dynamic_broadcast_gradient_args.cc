@@ -209,14 +209,14 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
 
     std::vector<std::vector<int64_t>> input_shapes(kInputNum);
     auto x = input_args[0]->GetValue();
-    if (x == kValueAny) {
+    if (x->ContainsValueAny()) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_0 is ValueAny, will backoff to cpu.";
       return nullptr;
     }
     input_shapes[0] = GetValue<std::vector<int64_t>>(x);
 
     auto y = input_args[1]->GetValue();
-    if (y == kValueAny) {
+    if (y->ContainsValueAny()) {
       MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_1 is ValueAny, will backoff to cpu.";
       return nullptr;
     }

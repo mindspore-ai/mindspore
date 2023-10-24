@@ -195,7 +195,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
                                              prim_name);
     auto elem = abstract::CheckArg<abstract::AbstractSequence>(prim_name, input_args, 0);
     auto elem_value = elem->GetValue();
-    if (elem_value == kValueAny) {
+    if (elem_value->ContainsValueAny()) {
       return nullptr;
     }
     auto type_abs = abstract::CheckArg<abstract::AbstractType>(prim_name, input_args, 1);

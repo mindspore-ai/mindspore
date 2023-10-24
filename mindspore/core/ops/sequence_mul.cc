@@ -101,7 +101,7 @@ AbstractBasePtr SequenceMulInferInner(const PrimitivePtr &primitive, const std::
     return seq_abs;
   }
 
-  if (scalar_abs->GetValue() == kValueAny) {
+  if (scalar_abs->GetValue()->ContainsValueAny()) {
     if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
       // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.
       return std::make_shared<abstract::AbstractAny>();

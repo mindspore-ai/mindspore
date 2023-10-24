@@ -163,7 +163,7 @@ inline AbstractBasePtr AbstractBase::Join(const AbstractBasePtr &other) {
   return shared_from_base<AbstractBase>();
 }
 
-bool AbstractBase::IsBroaden() const { return value_ == kValueAny; }
+bool AbstractBase::IsBroaden() const { return value_->ContainsValueAny(); }
 
 bool AbstractBase::operator==(const AbstractBase &other) const {
   if (this == &other) {
@@ -2793,21 +2793,21 @@ AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
 
   // Join the default_value.
   auto joined_default_value = ValueJoin(default_value_, other_abs->default_value_);
-  if (joined_default_value == kValueAny) {
+  if (joined_default_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << default_value_->ToString()
                              << " != " << other_abs->default_value_->ToString();
   }
 
   // Join the permit_filter_value.
   auto joined_permit_filter_value = ValueJoin(permit_filter_value_, other_abs->permit_filter_value_);
-  if (joined_permit_filter_value == kValueAny) {
+  if (joined_permit_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join default value failed for MapTensor. " << permit_filter_value_->ToString()
                              << " != " << other_abs->permit_filter_value_->ToString();
   }
 
   // Join the evict_filter_value.
   auto joined_evict_filter_value = ValueJoin(evict_filter_value_, other_abs->evict_filter_value_);
-  if (joined_evict_filter_value == kValueAny) {
+  if (joined_evict_filter_value->ContainsValueAny()) {
     MS_EXCEPTION(ValueError) << "Join evict_filter_value failed for MapTensor. " << evict_filter_value_->ToString()
                              << " != " << other_abs->evict_filter_value_->ToString();
   }

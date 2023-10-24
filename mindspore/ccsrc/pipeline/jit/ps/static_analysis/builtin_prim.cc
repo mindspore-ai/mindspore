@@ -38,7 +38,7 @@ bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) con
       }
       auto const_abstract_value = ele->cast_ptr<AbstractScalar>();
       MS_EXCEPTION_IF_NULL(const_abstract_value);
-      if (const_abstract_value->BuildValue() == kValueAny) {
+      if (const_abstract_value->BuildValue()->ContainsValueAny()) {
         return false;
       }
     }
@@ -110,7 +110,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
       }
       auto const_abstract_value = ele->cast_ptr<AbstractScalar>();
       MS_EXCEPTION_IF_NULL(const_abstract_value);
-      if (const_abstract_value->BuildValue() == kValueAny) {
+      if (const_abstract_value->BuildValue()->ContainsValueAny()) {
         return false;
       }
     }
@@ -208,7 +208,7 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
     MS_EXCEPTION_IF_NULL(const_value);
     auto const_type = args_abs_list[0]->BuildType();
     MS_EXCEPTION_IF_NULL(const_type);
-    if (const_value == kValueAny) {
+    if (const_value->ContainsValueAny()) {
       MS_EXCEPTION(TypeError) << "object of type " << const_type->ToString() << " has no len().";
     }
     auto py_x_data = ValueToPyData(const_value);

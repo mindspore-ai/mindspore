@@ -40,7 +40,7 @@ constexpr size_t kMaxDimNums = 8;
 
 static inline bool IsAnyValue(const AbstractBasePtr &abs) {
   MS_EXCEPTION_IF_NULL(abs);
-  return abs->BuildValue() == kValueAny;
+  return abs->BuildValue()->ContainsValueAny();
 }
 
 IndexHandleLevel TensorIndex::PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs) {

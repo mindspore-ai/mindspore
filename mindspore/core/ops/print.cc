@@ -80,7 +80,7 @@ std::string PrintValueToString(const ValuePtr &value) {
   if (value == nullptr) {
     return "UnknownValue";
   }
-  if (value == kValueAny) {
+  if (value->ContainsValueAny()) {
     return "UnknownValue";
   }
   if (value->isa<StringImm>()) {

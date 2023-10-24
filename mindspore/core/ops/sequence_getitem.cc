@@ -74,7 +74,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For primitive:'" << op_name << "', cannot get item by index from an empty sequence.";
   }
   // Input or index is variable, items shape and type should be same.
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     SetSequenceElementsUseFlagsRecursively(queue, true);
     if (CheckAndConvertUtils::CheckContainNestedOrIrregularSequence(input_args)) {
       // Sequence ops with nested or irregular sequence input should be convert to PyExecute node.

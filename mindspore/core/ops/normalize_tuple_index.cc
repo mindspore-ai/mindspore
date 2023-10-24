@@ -76,7 +76,7 @@ AbstractBasePtr NormalizeIntIndex(const ShapeVector &data_shape, const AbstractB
                                   const std::vector<int64_t> &tuple_index_types, size_t expand_dims_mask) {
   AbstractBasePtr output_index_val_abs =
     std::make_shared<abstract::AbstractTensor>(std::make_shared<abstract::AbstractScalar>(kValueAny, kInt64));
-  if (IsDynamic(data_shape) || index_val_abs->GetValue() == kValueAny) {
+  if (IsDynamic(data_shape) || index_val_abs->GetValue()->ContainsValueAny()) {
     return output_index_val_abs;
   }
   auto new_dim_index =
@@ -153,7 +153,7 @@ AbstractBasePtr NormalizeBoolSequenceIndex(const ShapeVector &data_shape, const 
   // Handle bool list index
   AbstractBasePtr output_index_val_abs = std::make_shared<abstract::AbstractTensor>(
     kInt64, std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny})));
-  if (list_index_val_abs->GetValue() == kValueAny || IsDynamicRank(data_shape)) {
+  if (list_index_val_abs->GetValue()->ContainsValueAny() || IsDynamicRank(data_shape)) {
     return output_index_val_abs;
   }
   const AbstractBasePtrList &list_index_val_ele = list_index_val_abs->elements();

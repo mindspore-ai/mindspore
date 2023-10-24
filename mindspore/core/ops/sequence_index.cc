@@ -75,8 +75,8 @@ class SequenceIndexInfer : public abstract::OpInferBase {
     auto target_value = target_abs->GetValue();
     auto start_build_value = input_args[start_index]->GetValue();
     auto end_build_value = input_args[end_index]->GetValue();
-    if (seq_abs->GetValue() == kValueAny || target_value == kValueAny || start_build_value == kValueAny ||
-        end_build_value == kValueAny) {
+    if (seq_abs->GetValue()->ContainsValueAny() || target_value->ContainsValueAny() ||
+        start_build_value->ContainsValueAny() || end_build_value->ContainsValueAny()) {
       return nullptr;
     }
 

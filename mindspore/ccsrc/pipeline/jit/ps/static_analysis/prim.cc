@@ -2934,7 +2934,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(local_abs_val);
       MS_EXCEPTION_IF_NULL(name);
       auto py_data_name = py::str(ValueToPyData(name->BuildValue()));
-      if (local_abs_val == kValueAny) {
+      if (local_abs_val->ContainsValueAny()) {
         const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (allow_fallback_runtime) {
           MS_LOG(INFO) << "When using JIT Fallback to handle script '" << script
@@ -3373,7 +3373,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       MS_EXCEPTION_IF_NULL(arg);
       auto param_value = arg->BuildValue();
       MS_EXCEPTION_IF_NULL(param_value);
-      if (param_value == kValueAny) {
+      if (param_value->ContainsValueAny()) {
         // If obj is a Primitive class and has variable arguments, just return and go through another process.
         if (py::hasattr(obj, PYTHON_PRIMITIVE_FLAG) && mindspore::ops::GetOpDef(cls_name) != nullptr) {
           return {params, true};

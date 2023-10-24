@@ -52,7 +52,7 @@ AbstractBasePtr LessImpl(const AbstractBasePtrList &seqx_elements, const Abstrac
     }
     auto x_value = x_element->GetValue();
     auto y_value = y_element->GetValue();
-    if (x_value == kValueAny || y_value == kValueAny) {
+    if (x_value->ContainsValueAny() || y_value->ContainsValueAny()) {
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
 

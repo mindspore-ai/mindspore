@@ -39,7 +39,7 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }
   if (CheckAndConvertUtils::IsDynamicSequence(x_abs) || CheckAndConvertUtils::IsDynamicSequence(y_abs) ||
-      x_abs->GetValue() == kValueAny || y_abs->GetValue() == kValueAny) {
+      x_abs->GetValue()->ContainsValueAny() || y_abs->GetValue()->ContainsValueAny()) {
     return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
   }
   return std::make_shared<abstract::AbstractScalar>(*x_abs->GetValue() == *y_abs->GetValue());

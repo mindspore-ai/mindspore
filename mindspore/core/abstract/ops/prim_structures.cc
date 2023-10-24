@@ -151,7 +151,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.

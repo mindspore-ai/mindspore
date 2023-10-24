@@ -47,7 +47,7 @@ AbstractBasePtr SequenceIsGreater(const AbstractBasePtrList &seqx_elements, cons
       MS_EXCEPTION(TypeError) << "For primitive tupel_equal, the input element must be scalar, but got "
                               << x_element->ToString() << " and " << y_element->ToString();
     }
-    if (x_element->GetValue() == kValueAny || y_element->GetValue() == kValueAny) {
+    if (x_element->GetValue()->ContainsValueAny() || y_element->GetValue()->ContainsValueAny()) {
       return std::make_shared<abstract::AbstractScalar>(kValueAny, kBool);
     }
     auto x = GetScalarCastValue<double>(prim_name, x_element->GetValue());

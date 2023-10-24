@@ -32,7 +32,7 @@ AbstractBasePtr FindMaxOrMin(const AbstractBasePtrList &seq_elements, const bool
   std::vector<T> values;
   for (size_t i = 0; i < seq_elements.size(); ++i) {
     auto element = seq_elements[i];
-    if (element->GetValue() == kValueAny) {
+    if (element->GetValue()->ContainsValueAny()) {
       return element->Clone();
     }
     values.push_back(element->GetValue()->cast<G>()->value());

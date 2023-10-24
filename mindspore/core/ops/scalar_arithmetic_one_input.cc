@@ -103,7 +103,7 @@ class ScalarOneInputInfer : public abstract::OpInferBase {
     }
 
     auto x_value = elem->GetValue();
-    if (x_value == kValueAny) {
+    if (x_value->ContainsValueAny()) {
       return nullptr;
     }
     auto x_type = input_args[0]->GetType();

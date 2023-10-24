@@ -302,7 +302,7 @@ class ScalarArithmeticInfer : public abstract::OpInferBase {
 
     auto x_value = elem_x->GetValue();
     auto y_value = elem_y->GetValue();
-    if (x_value == kValueAny || y_value == kValueAny) {
+    if (x_value->ContainsValueAny() || y_value->ContainsValueAny()) {
       return nullptr;
     }
     auto x_type = input_args[x_index]->GetType();

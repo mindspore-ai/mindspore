@@ -472,7 +472,7 @@ AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const Primiti
       MS_EXCEPTION_IF_NULL(cur);
       auto cur_val = cur->BuildValue();
       MS_EXCEPTION_IF_NULL(cur_val);
-      if (cur_val == kValueAny) {
+      if (cur_val->ContainsValueAny()) {
         is_shape_unknown = true;
         break;
       }

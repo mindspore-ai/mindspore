@@ -70,7 +70,7 @@ class SequenceCountInfer : public abstract::OpInferBase {
       return nullptr;
     }
     auto target_value = target_abs->GetValue();
-    if (seq_abs->GetValue() == kValueAny || target_value == kValueAny) {
+    if (seq_abs->GetValue()->ContainsValueAny() || target_value->ContainsValueAny()) {
       return nullptr;
     }
     const auto &seq_elements = seq_abs->elements();

@@ -54,7 +54,7 @@ AbstractBasePtr DictInplaceSetItemInfer(const abstract::AnalysisEnginePtr &, con
   MS_EXCEPTION_IF_NULL(key_abs);
   auto key_value = key_abs->GetValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  if (key_value == kValueAny) {
+  if (key_value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << prim_name << " only support constant key but got abstract of key: " << key_abs->ToString();
   }
   if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>()) && !key_abs->isa<abstract::AbstractTensor>() &&

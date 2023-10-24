@@ -1061,7 +1061,7 @@ std::string GetExceptionString(const AbstractBasePtr &arg, const AnfNodePtr &inp
   MS_EXCEPTION_IF_NULL(arg);
   if (arg->isa<abstract::AbstractSequence>() && !IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
     return GetTupleOrListString(arg, input, key_value, need_symbol, need_comma);
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>() ||
+  } else if (arg->BuildValue()->ContainsValueAny() || arg->isa<abstract::AbstractTensor>() ||
              IsPrimitiveCNode(input, prim::kPrimGetAttr)) {
     exception_str = GetVariable(input, key_value, exception_str, need_symbol);
   } else if (arg->isa<abstract::AbstractDictionary>()) {
@@ -1089,7 +1089,7 @@ bool CheckHasVariable(const AbstractBasePtr &arg) {
         return true;
       }
     }
-  } else if (arg->BuildValue() == kValueAny || arg->isa<abstract::AbstractTensor>()) {
+  } else if (arg->BuildValue()->ContainsValueAny() || arg->isa<abstract::AbstractTensor>()) {
     return true;
   }
   return false;

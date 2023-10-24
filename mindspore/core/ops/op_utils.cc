@@ -531,7 +531,7 @@ std::vector<int64_t> GetSequenceValue(const std::string &arg_name, const Abstrac
   std::vector<int64_t> out_shape;
   for (auto element : abs_seq->elements()) {
     auto element_val = element->GetValue();
-    if (element_val == kValueAny) {
+    if (element_val->ContainsValueAny()) {
       out_shape.push_back(abstract::Shape::kShapeDimAny);
     } else if (element_val->isa<Int64Imm>()) {
       (void)out_shape.emplace_back(GetValue<ShapeValueDType>(element_val));
@@ -756,7 +756,7 @@ AbstractBasePtr InferSequenceSetItem(const PrimitivePtr &primitive, const Abstra
     CheckDynamicLengthSequenceSetItem(op_name, queue, target);
     return queue->Clone();
   }
-  if (index_value == kValueAny) {
+  if (index_value->ContainsValueAny()) {
     // If the index is variable and the sequence is constant length, then all of the element within the sequence
     // should have the same type and shape with the target input. The element within the return sequence should
     // be all broadened.

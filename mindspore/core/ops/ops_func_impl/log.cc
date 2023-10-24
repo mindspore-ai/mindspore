@@ -58,7 +58,7 @@ class LogFrontendFuncImpl : public OpFrontendFuncImpl {
   // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x_value = input_args[kIndex0]->GetValue();
-    if (x_value == kValueAny) {
+    if (x_value->ContainsValueAny()) {
       return nullptr;
     }
     auto x_tensor = x_value->cast<tensor::TensorPtr>();

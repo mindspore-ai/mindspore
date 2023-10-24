@@ -155,7 +155,7 @@ class ScalarCastInfer : public abstract::OpInferBase {
     }
 
     auto x_value = elem_x->GetValue();
-    if (x_value == kValueAny) {
+    if (x_value->ContainsValueAny()) {
       return nullptr;
     }
     auto res_type = InferType(primitive, input_args);

@@ -271,7 +271,7 @@ bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, cons
     cmp_type = ValueToPyData(cmp_closure_first_input->BuildValue());
   } else {
     auto cmp_value = cmp->BuildValue();
-    if (cmp_value == kValueAny) {
+    if (cmp_value->ContainsValueAny()) {
       return false;
     }
     cmp_type = ValueToPyData(cmp_value);
@@ -443,7 +443,8 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   } else if (IsAdapterTensor(x)) {
     // x is adapter tensor.
     result = CheckIsInstanceForAdapter(x, cmp);
-  } else if (x->BuildValue() == kValueAny) {
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  } else if (x->BuildValue()->ContainsValueAny()) {
     // x is variable built-in type.
     auto x_abs_type = std::make_shared<AbstractType>(x->BuildType());
     auto py_x_type = ValueToPyData(x_abs_type->BuildValue());
@@ -755,7 +756,7 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
     } else if (args_abs_list[index]->isa<AbstractScalar>()) {
       ValuePtr scalar_value = args_abs_list[index]->cast<AbstractScalarPtr>()->BuildValue();
       MS_EXCEPTION_IF_NULL(scalar_value);
-      if (scalar_value->isa<IntegerImm>() || scalar_value == kValueAny) {
+      if (scalar_value->isa<IntegerImm>() || scalar_value->ContainsValueAny()) {
         slice_args.push_back(args_abs_list[index]);
       } else if (scalar_value->isa<BoolImm>()) {
         ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));

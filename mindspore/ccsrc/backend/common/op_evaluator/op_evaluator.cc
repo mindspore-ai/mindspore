@@ -25,7 +25,7 @@ using KernelTensorPtr = std::shared_ptr<mindspore::kernel::KernelTensor>;
 using TensorPtr = std::shared_ptr<tensor::Tensor>;
 
 KernelTensorPtr CreateKernelTensor4Input(const AbstractBasePtr &arg) {
-  if (arg->BuildValue() == kValueAny || !arg->isa<mindspore::abstract::AbstractTensor>()) {
+  if (arg->BuildValue()->ContainsValueAny() || !arg->isa<mindspore::abstract::AbstractTensor>()) {
     MS_LOG(DEBUG) << "Input arg does not have value or is not a tensor";
     return nullptr;
   }
