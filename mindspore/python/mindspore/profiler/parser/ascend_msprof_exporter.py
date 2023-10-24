@@ -56,7 +56,7 @@ class AscendMsprofExporter:
 
         self._check_msprof_env()
 
-    def export(self, model_iteration_dict=None):
+    def export(self, model_iteration_dict=None, kind=4):
         """start_time is the time to collect PROF data"""
 
         if not model_iteration_dict:
@@ -64,9 +64,16 @@ class AscendMsprofExporter:
 
         if model_iteration_dict:
             for model_id, value in model_iteration_dict.items():
-                for iteration_id in value:
-                    msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
-                    self._run_cmd(msprof_export_cmd)
+                max_iteration = max(value)
+                if max_iteration <= kind:
+                    for iteration_id in value:
+                        msprof_export_cmd = self._msprof_command_generator(self.prof_root_dir, model_id, iteration_id)
+                        self._run_cmd(msprof_export_cmd)
+                else:
+                    msprof_export_cmd_summary, msprof_export_cmd_timeline \
+                        = self._msprof_command_generator_tmp(self.prof_root_dir, model_id, max_iteration)
+                    self._run_cmd(msprof_export_cmd_summary)
+                    self._run_cmd(msprof_export_cmd_timeline)
             self._check_export_files(self.source_path, model_iteration_dict)
 
     def _run_cmd(self, cmd, raise_error=True):
@@ -96,6 +103,23 @@ class AscendMsprofExporter:
         if isinstance(iter_id, int) and iter_id >= 0:
             export_cmd.append("--iteration-id={}".format(iter_id))
         return export_cmd
+
+    def _msprof_command_generator_tmp(self, output, model_id=None, iter_count=None):
+        """msprof export helper"""
+        export_cmd_summary = ["python",
+                              "/usr/local/Ascend/latest/toolkit/tools/profiler/profiler_tool/analysis/msprof/msprof.py",
+                              "export", "summary", "-dir", output]
+        export_cmd_timeliine = ["python",
+                                "/usr/local/Ascend/latest/toolkit/tools/profiler/profiler_tool/"
+                                "analysis/msprof/msprof.py",
+                                "export", "timeline", "-dir", output]
+        if isinstance(model_id, int) and model_id >= 0:
+            export_cmd_summary.extend(["--model-id", str(model_id)])
+            export_cmd_timeliine.extend(["--model-id", str(model_id)])
+        if isinstance(iter_count, int) and iter_count >= 0:
+            export_cmd_summary.extend(["--iteration-count", str(iter_count)])
+            export_cmd_timeliine.extend(["--iteration-count", str(iter_count)])
+        return export_cmd_summary, export_cmd_timeliine
 
     def _check_msprof_env(self):
         """Check the existence of msprof binary tool"""

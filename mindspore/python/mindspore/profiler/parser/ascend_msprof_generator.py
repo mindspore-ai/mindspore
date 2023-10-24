@@ -107,7 +107,6 @@ class AscendMsprofDataGenerator:
         op_summary = []
         for file in self.find_files(self.source_path, "op_summary*.csv"):
             with open(file, newline='') as csvfile:
-                iteration = int(file.split('_')[-1].split('.')[0])
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                 header = next(reader)
                 self.link_index_with_name(header, self.op_summary_basis_name)
@@ -116,10 +115,8 @@ class AscendMsprofDataGenerator:
                     self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_extend_name}
                 else:
                     self.op_summary_name = self.op_summary_basis_name
-                self.op_summary_name['Iteration ID'] = {'index': -1, 'dtype': ('Iteration ID', object)}
                 for row in reader:
                     row = [row[index.get('index')] for index in self.op_summary_name.values()]
-                    row[self.op_summary_name['Iteration ID']['index']] = iteration
                     row = ['0' if i == 'N/A' else i for i in row]
                     op_summary.append(tuple(row))
 
@@ -158,31 +155,9 @@ class AscendMsprofDataGenerator:
                 self.link_index_with_name(header, self.steptrace_name)
                 for row in reader:
                     rows = [row[index.get('index')] for index in self.steptrace_name.values()]
-                    if row[9:]:
-                        rows.extend(row[9:len(header)])
-                    if len(rows) < len(header):
-                        rows.extend([0 for _ in range(len(header) - len(rows))])
                     rows = ['0' if i == 'N/A' else i for i in rows]
                     steptrace.append(tuple(rows))
             break
-
-        hccl_data = self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][
-            ['Task ID', 'Stream ID', 'Op Name']]
-
-        index = len(self.steptrace_name)
-        for name in hccl_data:
-            if index >= len(header):
-                break
-            name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
-            self.steptrace_name[name] = {'index': index, 'dtype': (name, float)}
-            index += 1
-            self.steptrace_name[f'{name} duration'] = {'index': index, 'dtype': (f'{name} duration', float)}
-            index += 1
-
-        for i in range(len(self.steptrace_name), len(header), 2):
-            name = f'hccl_{i}'
-            self.steptrace_name[name] = {'index': i, 'dtype': (name, float)}
-            self.steptrace_name[f'{name} duration'] = {'index': i+1, 'dtype': (f'{name} duration', float)}
 
         steptrace_dt = np.dtype([value['dtype'] for value in self.steptrace_name.values()])
 

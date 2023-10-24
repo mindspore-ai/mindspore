@@ -1284,7 +1284,6 @@ class Profiler:
             self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
             self._ascend_graph_cluster_analyse(source_path)
-            self._ascend_graph_hccl_analyse(source_path)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
 
