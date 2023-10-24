@@ -150,7 +150,6 @@ class Custom(ops.PrimitiveWithInfer):
 
     .. warning::
         - This is an experimental API that is subject to change.
-        - Currently, the functionality of Custom does not support Ascend 910B.
 
     .. note::
         The supported platforms are determined by the input `func_type`. The supported platforms are as follows:

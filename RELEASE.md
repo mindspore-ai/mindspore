@@ -8,7 +8,6 @@
 
 #### DataSet
 
-- [STABLE] Enable the Ascend 910B hardware DVPP capability to accelerate data processing, support transformation list: Decode, Resize, Normalize, AdjustBrightness, AdjustContrast, AdjustHue, and AdjustSaturation operators.
 - [STABLE] The `row_size` parameter of data operation map/batch is extended to support passing list, which stands for [Input Shared Memory, Output Shared Memory], so as to flexibly control the size of shared memory in multi-process mode.
 - [STABLE] Provide 100% mindspore.dataset and mindspore.dataset.transforms samples for reference.
 - [STABLE] ConcatDataset supports global sampling. After combining data from multiple sources using concat operation, data can be globally sampled randomly to enhance data diversity.
@@ -38,9 +37,7 @@
 
 - [STABLE] Supports user configurable operator high-precision/high-performance mode, users can use `context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})` to configure high-precision/high-performance modes for some TBE operators.
 - [BETA] Supports user configurable operators for fp16-in and fp32-out, users can use `context.set_context(ascend_config={"precision_mode": "force_fp32"})` to configure fp16-in and fp32-out for the TBE Cube operators.
-- [BETA] No need to set up MS_ENABLE_GE and MS_GE_TRAIN environment variable when running the network in the Ascend 910B platform.
 - [BETA] Remove the strong binding between `jit_level="O3"` and GE processes, so users no longer need to set `jit_level="O3"` when executing GE processes.
-- [BETA] Supports the use of NAN/INF overflow detection mode in the Ascend 910B environment, which can be achieved by setting the environment variable MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN-MODE".
 
 #### Parallel
 
@@ -71,14 +68,6 @@ Thanks goes to these wonderful people:
 bantao, Bingliang, BJ-WANG, Brian-K, caifubi, ccsszz, changzherui, chenfei_mindspore, chengfeng27, chenhaozhe, chenjianping, chenkang, chenweifeng, chuht, chujinjin, CShu0507, Cynthia叶, DeshiChen, douzhixing, Erpim, Etienne, fary86, fengxun, fengyixing, gaoshuanglong, Gaoxiong, gaoyong10, GaoZhenlong, Greatpan, GuoZhibin, guozhijian, hangq, hanhuifeng, haozhang, hedongdong, Henry Shi, HighCloud, Hongxing, huangbingjian, huanghui, huangxinjing, huangziling, hujiahui8, huoxinyou, HWalkingMan, jianghui58, jiangshanfeng, jiaorui, jijiarong, jjfeing, JuiceZ, jxl, KevinYi, kisnwang, KXiong, lanzhineng, Li Qingguo, LiangZhibo, lianliguang, ligan, lihao, Lihoon, limingqi107, ling, linqingke, liruyu, liubuyu, liuchao, liujunzhu, liuluobin, liupeng303, liutongtong9, liyan2022, liyejun, looop5, luochao60, luojianing, luoyang, machenggui, maning202007, Margaret_wangrui, MaZhiming, mengyuanli, moran, NaCN, nomindcarry, panshaowu, panzhihui, qinzheng, qiuzhongya, r1chardf1d0, shaojunsong, shenwei41, shenyaxin, shenzhangyi, Shira Zaloshinski, shunyuanhan, tangdezhi_123, tanghuikang, tan-wei-cheng, tan-wei-cheng-3260, TronZhang, TuDouNi, VectorSL, wang_ziqi, wanghenchang, wangpingan, wangshaocong, wangtongyu6, wtcheng, wujueying, XianglongZeng, xiaotianci, xiaoxin_zhang, xiaoxiongzhu, xiaoyao, xiaoyuanyuan, XinDu, xujinliang, xupan, yanghaoran, yangluhang, yangruoqi713, yangsijia, yangzhenzhang, yangzishuo, yanjiaming, Yanzhi_YI, yao_yf, yefeng, yeyunpeng2020, yide12, YijieChen, YingLai Lin, YingtongHu, yonibaehr, youshu, yuchaojie, YuJianfeng, zangqx, zhaizhiqiang, zhangbuxue, zhangchunlei, zhangdanyang, zhangdong, zhanghaibo, zhangminli, zhangqi, zhangqinghua, zhangyanhui, zhangyifan, zhangyongxian, zhangzhen, zhangzheng, zhanzhan, zhengzuohe, ZhihaoLi, zhoufeng, zhouyaqiang0, zhuguodong, zhupuxu, zichun_ye, zjun, ZPaC, zuochuanyong, zyli2020, 陈宇, 程超, 范吉斌, 冯浩, 冯一航, 胡彬, 宦晓玲, 黄勇, 雷元哲, 黎冠新, 李良灿, 李林杰, 刘崇鸣, 刘力力, 刘思铭, 刘勇琪, 吕浩宇, 没有窗户的小巷, 沈竞兴, 王禹程, 王振邦, 徐安越, 徐永飞, 俞涵, 张澍坤, 周超, 朱家兴
 
 Contributions of any kind are welcome!
-
-## MindSpore Lite 2.2.0 Release Notes
-
-### Major Features and Improvements
-
-#### FlashAttention Operator Fusion
-
-- [STABLE] The OptiX OSN Ascend 910B series supports the FlashAttention large operator fusion of the LLAMA and stable diffusion models.
 
 ## MindSpore 2.1.1 Release Notes
 
