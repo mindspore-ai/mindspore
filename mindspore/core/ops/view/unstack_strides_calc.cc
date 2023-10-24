@@ -16,7 +16,10 @@
 #include "ops/view/unstack_strides_calc.h"
 #include <vector>
 #include <memory>
+#include <set>
+#include <string>
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::ops {
 constexpr size_t kUnstackCalcInputsNum = 1;
@@ -27,6 +30,8 @@ TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector
 
   auto tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
+  auto type = tensor->Dtype();
+  (void)CheckAndConvertUtils::CheckTypeValid("input_x", type, common_valid_types_with_complex_and_bool, "Unstack");
   auto axis_value_ptr = prim->GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(axis_value_ptr);
   auto dim = GetValue<int64_t>(axis_value_ptr);
@@ -39,9 +44,10 @@ TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector
 
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(ndims), kGreaterEqual, 1, "Unstack");
   CheckAndConvertUtils::CheckInRange("axis value", dim, kIncludeLeft, {-ndims, ndims}, "Unstack");
-
   dim = DynamicDimWrap(dim, ndims);
   int64_t size = oldShape[dim];
+  (void)CheckAndConvertUtils::CheckInteger("output_num", size, kGreaterThan, 0, "Unstack");
+
   std::vector<TensorStorageInfoPtr> res_storage_info(size);
   for (int64_t d = 0; d < size; d++) {
     ShapeVector newShape(oldShape.begin(), oldShape.end());

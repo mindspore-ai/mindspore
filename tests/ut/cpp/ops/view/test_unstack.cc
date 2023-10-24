@@ -35,19 +35,19 @@ TEST_F(TestViewUnstack, View) {
   int64_t axis_data = 0;
   auto input_axis = MakeValue(axis_data);
 
-  // size 不为1异常处理
+  // test size
   std::vector<ValuePtr> inputs_unstack_size;
   inputs_unstack_size.push_back(input_tensor);
   inputs_unstack_size.push_back(input_axis);
   ASSERT_TRUE(UnstackCalc(prim, inputs_unstack_size).empty());
 
-   // nullptr 异常处理
+   // test nullptr
   std::vector<ValuePtr> inputs_unstack_null;
   auto nullinput_tensor = nullptr;
   inputs_unstack_null.push_back(nullinput_tensor);
   ASSERT_TRUE(UnstackCalc(prim, inputs_unstack_null).empty());
 
-  // 格式异常处理
+  // test type
   std::vector<ValuePtr> inputs_unstack_type;
   inputs_unstack_type.push_back(input_axis);
   ASSERT_TRUE(UnstackCalc(prim, inputs_unstack_type).empty());
@@ -65,7 +65,7 @@ TEST_F(TestViewUnstack, View) {
     ASSERT_TRUE(storage_info->shape == expect_shape);
   }
 
-  // 按照第2维展开, is_contiguous在pytorch上是false
+  // test is_contiguous
   axis_data = 2;
   input_axis = MakeValue(axis_data);
   prim->AddAttr(kAxis, input_axis);

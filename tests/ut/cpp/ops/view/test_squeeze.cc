@@ -35,20 +35,20 @@ TEST_F(TestViewSqueeze, View) {
   std::vector<int64_t> axis_data = {2};
   auto input_axis = MakeValue(axis_data);
 
-  // size 不为1异常处理
+  // test size
   std::vector<ValuePtr> inputs_squeeze_size;
   inputs_squeeze_size.push_back(input_tensor);
   inputs_squeeze_size.push_back(input_axis);
 
   ASSERT_TRUE(SqueezeCalc(prim, inputs_squeeze_size).empty());
 
-  // nullptr 异常处理
+  // test nullptr
   std::vector<ValuePtr> inputs_squeeze_null;
   auto nullinput_tensor = nullptr;
   inputs_squeeze_null.push_back(nullinput_tensor);
   ASSERT_TRUE(SqueezeCalc(prim, inputs_squeeze_null).empty());
 
-  // 格式异常处理
+  // test type
   std::vector<ValuePtr> inputs_squeeze_type;
   inputs_squeeze_type.push_back(input_axis);
   ASSERT_TRUE(SqueezeCalc(prim, inputs_squeeze_type).empty());
@@ -63,7 +63,6 @@ TEST_F(TestViewSqueeze, View) {
   ASSERT_TRUE(storage_info[0]->is_contiguous);
   ASSERT_TRUE(storage_info[0]->shape == expect_shape);
 
-  // axis_data 为空，删除所有维度中size为1的维度
   axis_data = {};
   input_axis = MakeValue(axis_data);
   prim->AddAttr(kAxis, input_axis);

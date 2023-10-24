@@ -40,9 +40,7 @@ def test_squeeze_single_op():
     net = Net()
     np_tensor = np.random.randn(10, 1, 1, 20)
     ms_tensor = Tensor(np_tensor, dtype=ms.float32)
-    # 测试axis为空
     expect_output_1 = net(ms_tensor).asnumpy()
-    # 将输入axis的维度为1的维度删除
     expect_output_2 = net(ms_tensor, 1).asnumpy()
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
     expect_grad_1 = grad_op(net)(ms_tensor)
