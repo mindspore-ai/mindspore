@@ -21,7 +21,6 @@
 #ifndef CUSTOMIZE_OP_PROTO_UTIL_REDUCE_INFER_UTIL_H_
 #define CUSTOMIZE_OP_PROTO_UTIL_REDUCE_INFER_UTIL_H_
 
-#include <memory.h>
 #include <string>
 #include <vector>
 #include <map>

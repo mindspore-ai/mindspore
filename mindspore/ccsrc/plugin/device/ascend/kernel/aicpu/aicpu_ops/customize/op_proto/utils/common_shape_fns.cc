@@ -484,7 +484,7 @@ graphStatus ReplaceDim(const Shape &s, int64_t dim_index_in, int64_t new_dim, Sh
   }
   int64_t dim_index = dim_index_in;
   if (dim_index < 0) {
-    dim_index = (int64_t)s.GetDimNum() + dim_index;
+    dim_index = static_cast<int64_t>(s.GetDimNum()) + dim_index;
   }
   if (!FastBoundsCheck(dim_index, s.GetDimNum())) {
     out = Shape();
@@ -505,7 +505,7 @@ graphStatus ReplaceDim(const GeShape &s, int64_t dim_index_in, int64_t new_dim, 
   }
   int64_t dim_index = dim_index_in;
   if (dim_index < 0) {
-    dim_index = (int64_t)s.GetDimNum() + dim_index;
+    dim_index = static_cast<int64_t>(s.GetDimNum()) + dim_index;
   }
   if (!FastBoundsCheck(dim_index, s.GetDimNum())) {
     out = GeShape();
@@ -625,7 +625,7 @@ graphStatus SubShape(const Shape &s, int64_t start, int64_t end, int64_t stride,
 
 graphStatus SubShape(const GeShape &src_shape, int64_t start, int64_t end, int64_t stride, GeShape &out_shape,
                      const ge::Operator &op) {
-  int64_t src_rank = src_shape.GetDimNum();
+  int64_t src_rank = static_cast<int64_t>(src_shape.GetDimNum());
   if (src_rank > static_cast<int64_t>(std::numeric_limits<int32_t>::max())) {
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(op, ConcatString("rank[", src_rank, "] cannot exceed kint32max"));
     return GRAPH_FAILED;
@@ -711,8 +711,8 @@ graphStatus Concatenate(const GeShape &s1, const GeShape &s2, GeShape &out) {
     out = GeShape(ge::UNKNOWN_RANK);
     return GRAPH_SUCCESS;
   }
-  const int64_t s1_rank = s1.GetDimNum();
-  const int64_t s2_rank = s2.GetDimNum();
+  const int64_t s1_rank = static_cast<int64_t>(s1.GetDimNum());
+  const int64_t s2_rank = static_cast<int64_t>(s2.GetDimNum());
   const int64_t out_rank = s1_rank + s2_rank;
   std::vector<int64_t> out_dims;
   out_dims.reserve(out_rank);
@@ -1119,7 +1119,7 @@ graphStatus SetShapeAndRange(Operator &op, const ShapeAndRange &feed_shape_and_r
   if (!marks.empty()) {
     OP_LOGI(op, "Set marks[0] = %s", marks[0].GetString());
     bool shape_changed = false;
-    auto aicpu_resource_context = reinterpret_cast<AicpuResourceContext *>(context->GetResourceContext(marks[0]));
+    auto aicpu_resource_context = dynamic_cast<AicpuResourceContext *>(context->GetResourceContext(marks[0]));
     if (aicpu_resource_context == nullptr) {
       aicpu_resource_context = new (std::nothrow) AicpuResourceContext();
       if (aicpu_resource_context == nullptr) {
@@ -1160,7 +1160,7 @@ graphStatus GetShapeAndRange(Operator &op, ShapeAndRange &out, bool &geted, Infe
       AICPU_INFER_SHAPE_INNER_ERR_REPORT(op, std::string("register relied on resource key failed."));
       return GRAPH_FAILED;
     }
-    auto aicpu_resource_context = reinterpret_cast<AicpuResourceContext *>(infer_context->GetResourceContext(marks[0]));
+    auto aicpu_resource_context = dynamic_cast<AicpuResourceContext *>(infer_context->GetResourceContext(marks[0]));
     if (aicpu_resource_context != nullptr) {
       auto &shape_and_range = aicpu_resource_context->shape_and_range_;
       if (shape_and_range.empty()) {

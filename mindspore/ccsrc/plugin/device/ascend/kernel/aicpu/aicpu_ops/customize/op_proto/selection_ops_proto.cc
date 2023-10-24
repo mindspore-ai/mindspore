@@ -70,7 +70,7 @@ IMPLEMT_COMMON_INFERFUNC(GatherNdInferShape) {
   auto params_shape = input_params->GetShape();
   auto indices_shape = input_indices->GetShape();
   auto params_shape_size = params_shape.GetDimNum();
-  int indices_shape_size = indices_shape.GetDimNum();
+  int indices_shape_size = static_cast<int>(indices_shape.GetDimNum());
   vector<int64_t> dim_vec;
   vector<int64_t> params_shape_vec = params_shape.GetDims();
   vector<int64_t> indices_shape_vec = indices_shape.GetDims();
@@ -83,16 +83,16 @@ IMPLEMT_COMMON_INFERFUNC(GatherNdInferShape) {
   DataType params_type = input_params->GetDataType();
   if (indices_last_element == -1 || indices_last_element == -2 || IsUnknownRankShape(params_shape_vec)) {
     dim_vec.push_back(-2);
-  } else if (!CheckGatherNdParamsSize(op, indices_last_element, (int)params_shape_size)) {
+  } else if (!CheckGatherNdParamsSize(op, indices_last_element, static_cast<int>(params_shape_size))) {
     return GRAPH_FAILED;
   } else {
     for (int i = 0; i < indices_shape_size - 1; ++i) {
       dim_vec.push_back(indices_shape.GetDim(i));
-      if ((size_t)i < shape_range_indices.size()) {
+      if (static_cast<size_t>(i) < shape_range_indices.size()) {
         out_range.push_back(shape_range_indices[i]);
       }
     }
-    for (size_t i = indices_last_element; i < params_shape_size; ++i) {
+    for (size_t i = static_cast<size_t>(indices_last_element); i < params_shape_size; ++i) {
       dim_vec.push_back(params_shape.GetDim(i));
       if (i < shape_range_x.size()) {
         out_range.push_back(shape_range_x[i]);
@@ -305,7 +305,7 @@ IMPLEMT_COMMON_INFERFUNC(ScatterNdInferShape) {
       shape_dims.push_back(-1);
     }
   } else {
-    for (size_t i = 0; i < (uint32_t)const_data.size(); ++i) {
+    for (size_t i = 0; i < static_cast<uint32_t>(const_data.size()); ++i) {
       shape_dims.push_back(const_data[i]);
     }
   }
@@ -371,7 +371,7 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
     return GRAPH_SUCCESS;
   }
   // update axis to positive number
-  int32_t dimnum = input_shape.GetDimNum();
+  int32_t dimnum = static_cast<int32_t>(input_shape.GetDimNum());
   if (axis > dimnum) {
     string correct_size = ConcatString("attr axis(", axis, ") must be < ", input_shape.GetDimNum());
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), correct_size);
@@ -429,10 +429,10 @@ COMMON_INFER_FUNC_REG(OneHot, OneHotInferShape);
 // ----------------UnsortedSegmentSum-------------------
 static void GetUnsortedSegmentSumConstValue(const Tensor &const_tensor, const DataType &dtype, int64_t &const_data) {
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
     const_data = *const_data_ptr;
   } else {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
     const_data = *const_data_ptr;
   }
 }
@@ -486,8 +486,8 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
   GetRealRange(shape, shape_range_x);
   GetRealRange(shape_id, shape_range_seg_id);
 
-  int64_t dim_idsize_input = shape_id.GetDimNum();
-  int64_t dim_size_input = shape.GetDimNum();
+  int64_t dim_idsize_input = static_cast<int64_t>(shape_id.GetDimNum());
+  int64_t dim_size_input = static_cast<int64_t>(shape.GetDimNum());
   DataType input_dtype = op_desc->GetInputDescPtr(0)->GetDataType();
   PROFILING_PROTO_AFTER_GET_SHAPE_REG();
   if (shape.IsUnknownDimNum() || shape_id.IsUnknownDimNum()) {
@@ -500,7 +500,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
     }
     return GRAPH_SUCCESS;
   } else if (dim_idsize_input > 1) {
-    size_t rank = dim_size_input - dim_idsize_input + 1;
+    size_t rank = static_cast<size_t>(dim_size_input - dim_idsize_input + 1);
     size_t idx = 1;
     output_shape.SetDimNum(rank);
     output_shape.SetDim(0, input_num_segments);
@@ -508,7 +508,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
     for (int64_t i = dim_idsize_input; i < dim_size_input; i++) {
       int64_t x_dim = shape.GetDim(i);
       output_shape.SetDim(idx, x_dim);
-      if ((size_t)i < shape_range_x.size()) {
+      if (static_cast<size_t>(i) < shape_range_x.size()) {
         out_range.push_back(shape_range_x[i]);
       }
       idx++;
@@ -521,7 +521,7 @@ IMPLEMT_COMMON_INFERFUNC(UnsortedSegmentSumInferShape) {
     for (size_t i = 1; i < rank; i++) {
       int64_t x_dim = shape.GetDim(i);
       output_shape.SetDim(i, x_dim);
-      if ((size_t)i < shape_range_x.size()) {
+      if (static_cast<size_t>(i) < shape_range_x.size()) {
         out_range.push_back(shape_range_x[i]);
       }
     }
@@ -541,16 +541,16 @@ COMMON_INFER_FUNC_REG(UnsortedSegmentSum, UnsortedSegmentSumInferShape);
 static void GetSliceConstValue(const Tensor &const_tensor, const DataType &dtype, std::vector<int64_t> &const_data) {
   size_t size = 0;
   if (dtype == ge::DT_INT32) {
-    int32_t *const_data_ptr = (int32_t *)const_tensor.GetData();
+    const int32_t *const_data_ptr = reinterpret_cast<const int32_t *>(const_tensor.GetData());
     size = const_tensor.GetSize() / sizeof(int32_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back((int32_t)((*(const_data_ptr + i))));
+      const_data.push_back(static_cast<int32_t>((*(const_data_ptr + i))));
     }
   } else {
-    int64_t *const_data_ptr = (int64_t *)const_tensor.GetData();
+    const int64_t *const_data_ptr = reinterpret_cast<const int64_t *>(const_tensor.GetData());
     size = const_tensor.GetSize() / sizeof(int64_t);
     for (size_t i = 0; i < size; ++i) {
-      const_data.push_back(((int64_t)(*(const_data_ptr + i))));
+      const_data.push_back((static_cast<int64_t>(*(const_data_ptr + i))));
     }
   }
 }
