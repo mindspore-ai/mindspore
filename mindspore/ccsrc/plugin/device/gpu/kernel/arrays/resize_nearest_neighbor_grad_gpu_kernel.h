@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <map>
 #include <vector>
-#include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
 #include "mindspore/core/utils/check_convert_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -106,16 +105,9 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       work_size_ = o_num * sizeof(float);
     }
     workspace_size_list_.push_back(work_size_);
-    if (primitive_->HasAttr(ops::kAlignCorners)) {
-      align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
-    } else {
-      // for ResizeNearestNeighborGrad, the inputs index will be out of range.
-      align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
-    }
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
     return KRET_OK;
   }
-
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   float Scaling(const int in_size, const int out_size, bool align_corners) {

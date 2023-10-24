@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,21 +40,68 @@ class ResizeNearestNeighborGradCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
+    static const std::vector<KernelAttr> support_list = {KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat16),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat64),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeInt32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeInt64),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat16)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat16),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat32)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeFloat64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeFloat64),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt32)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeInt32),
+                                                         KernelAttr()
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kNumberTypeInt64)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                                                           .AddOutputAttr(kNumberTypeInt64)};
     return support_list;
   }
-
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   template <typename T>

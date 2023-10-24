@@ -37,7 +37,8 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ReLU6Grad, EluGrad, GatherDGradV2, ResizeBilinearGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
-                             GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad)
+                             GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
+                             ResizeNearestNeighborGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1628,24 +1629,6 @@ class GatherDGrad(Primitive):
         self.dim = dim
         self.out_shape = shape
         self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
-
-
-class ResizeNearestNeighborGrad(Primitive):
-    """
-    Compute gradient of `ResizeNearestNeighbor` operator.
-
-    Note:
-        The shape of input parameter `size` must be (height, width).
-
-    Args:
-        align_corners (bool): Whether the centers of the 4 corner pixels of the input
-            and output tensors are aligned. Default: ``False``.
-    """
-
-    @prim_attr_register
-    def __init__(self, align_corners=False):
-        """Initialize ResizeNearestNeighborGrad"""
-        self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
 
 
 class UpsampleNearest3DGrad(Primitive):

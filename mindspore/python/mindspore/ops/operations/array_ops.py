@@ -41,7 +41,7 @@ from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
-                             Range, MaskedFill, RightShift, NonZero)
+                             Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -3315,55 +3315,6 @@ class Mvlgamma(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type('p', p, [int], self.name)
         validator.check_positive_int(p, 'p', self.name)
-
-
-class ResizeNearestNeighbor(Primitive):
-    r"""
-    Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
-    neighbor algorithm selects the value of the nearest point and does not consider the
-    values of neighboring points at all, yielding a piecewise-constant interpolant.
-
-    Args:
-        size (Union[tuple, list]): The target size. The dimension of size must be 2.
-        align_corners (bool): Whether the centers of the 4 corner pixels of the input
-                              and output tensors are aligned. Default: ``False`` .
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
-
-    Outputs:
-        Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
-        The data type is the same as the `input_x`.
-
-    Raises:
-        TypeError: If `size` is neither tuple nor list.
-        TypeError: If `align_corners` is not a bool.
-        ValueError: If length of `size` is not equal to 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
-        >>> size = (2, 2)
-        >>> output = ops.ResizeNearestNeighbor(size=size)(input_tensor)
-        >>> print(output)
-        [[[[-0.1  0.3]
-           [ 0.4  0.5]]]]
-    """
-
-    @prim_attr_register
-    def __init__(self, size, align_corners=False):
-        """Initialize ResizeNearestNeighbor"""
-        validator.check_value_type("size", size, [tuple, list], self.name)
-        validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        validator.check_equal_int(len(size), 2, "length of size", self.name)
-        for i, value in enumerate(size):
-            validator.check_non_negative_int(value, f'{i}th value of size', self.name)
-        self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
 
 
 class ScatterUpdate(Primitive):

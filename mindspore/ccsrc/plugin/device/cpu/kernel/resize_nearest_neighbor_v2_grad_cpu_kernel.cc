@@ -126,7 +126,7 @@ bool ResizeNearestNeighborV2GradCpuKernelMod::LaunchKernel(const std::vector<ker
 #define RESIZE_NEAREST_NEIGHBOR_V2_GRAD_CPU_REG(MS_T, T) \
   KernelAttr()                                           \
     .AddInputAttr(MS_T)                                  \
-    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)    \
+    .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)    \
     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)    \
     .AddOutputAttr(MS_T),                                \

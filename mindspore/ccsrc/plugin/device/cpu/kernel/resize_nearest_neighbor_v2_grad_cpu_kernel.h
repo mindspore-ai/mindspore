@@ -43,8 +43,6 @@ class ResizeNearestNeighborV2GradCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 

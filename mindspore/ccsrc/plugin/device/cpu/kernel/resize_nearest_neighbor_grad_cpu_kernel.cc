@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_grad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
 #include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kResizeNearestNeighborGradInputNum = 4;
 constexpr size_t kResizeNearestNeighborGradOutputNum = 1;
 constexpr size_t kResizeNearestNeighborGradInputsShapeSize = 4;
 constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
@@ -29,6 +29,8 @@ constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 
 bool ResizeNearestNeighborGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeNearestNeighborGradInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto match = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!match.first) {
@@ -40,14 +42,13 @@ bool ResizeNearestNeighborGradCpuKernelMod::Init(const std::vector<KernelTensor 
 
 int ResizeNearestNeighborGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
-  auto ret = KernelMod::Resize(inputs, outputs);
-  if (ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto shape_signed = inputs[kIndex0]->GetShapeVector();
   auto input_shape = Convert2SizeTClipNeg(shape_signed);
   auto output_size = outputs[kIndex0]->GetShapeVector();
-  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
+  align_corners_ = inputs[kIndex2]->GetValueWithCheck<bool>();
   dtype_ = inputs[kIndex0]->dtype_id();
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
@@ -76,7 +77,6 @@ int ResizeNearestNeighborGradCpuKernelMod::Resize(const std::vector<KernelTensor
 bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                                    const std::vector<kernel::KernelTensor *> &,
                                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeNearestNeighborGradOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {

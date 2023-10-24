@@ -891,9 +891,11 @@ DEF_PURE_SHAPE_CALC(g_resize_nearest_neighbor)
     auto rank = SizeToLong(x.size());
     return {rank > 2 ? (rank - 2) : 0};
   });
-REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
+  auto align_corners = ib->GetInput(kIndex2);
+  auto half_pixel_centers = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto x_shape = ib->GetShape(x);
   NodePtr shape;
   if (!IsDynamic(x_shape)) {
@@ -905,7 +907,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i1}).SetBody(BOD
   } else {
     shape = ib->ShapeCalc(g_resize_nearest_neighbor, {x})[0];
   }
-  auto out = ib->Emit("ResizeNearestNeighborGrad", {dout, shape}, {{"align_corners", ib->GetAttr("align_corners")}});
+  auto out = ib->Emit("ResizeNearestNeighborGrad", {dout, shape, align_corners, half_pixel_centers}, {});
   return {out};
 });
 
@@ -1692,14 +1694,16 @@ REG_BPROP_BUILDER("IdentityN").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {dout};
 });
 
-REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto align_corners = ib->GetInput(kIndex2);
   auto half_pixel_centers = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
   if (grad_in_size->isa<ValueNode>()) {
-    grad_in_size = ib->Tensor(GetIntList(grad_in_size), kInt64);
+    grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
+  } else {
+    grad_in_size = ib->Emit("TensorToTuple", {grad_in_size});
   }
   auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});
   return {dx, ib->OutZeros(grad_in_size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};

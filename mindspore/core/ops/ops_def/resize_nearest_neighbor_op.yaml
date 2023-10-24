@@ -1,0 +1,18 @@
+#operator resize_nearest_neighbor
+resize_nearest_neighbor:
+    args:
+        image_in:
+            dtype: tensor
+        size:
+            dtype: tuple[int]
+            type_cast: list[int]
+            init: NO_VALUE
+        align_corners:
+            dtype: bool
+            init: False
+        half_pixel_centers:
+          dtype: bool
+          init: False
+    returns:
+        image_out:
+            dtype: tensor

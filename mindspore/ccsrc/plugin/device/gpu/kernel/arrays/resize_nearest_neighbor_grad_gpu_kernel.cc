@@ -18,18 +18,30 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  ResizeNearestNeighborGradGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborGrad,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  ResizeNearestNeighborGradGpuKernelMod, half)
-MS_REG_GPU_KERNEL_ONE(
-  ResizeNearestNeighborGrad,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  ResizeNearestNeighborGradGpuKernelMod, int)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      ResizeNearestNeighborGradGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      ResizeNearestNeighborGradGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborGrad,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      ResizeNearestNeighborGradGpuKernelMod, int)
 MS_REG_GPU_KERNEL_TWO(ResizeNearestNeighborV2Grad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat64)
