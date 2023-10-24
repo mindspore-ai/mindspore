@@ -55,7 +55,8 @@ class ROIAlignInfer : public abstract::OpInferBase {
     auto feature_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
     auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-    int64_t out_c, out_n;
+    int64_t out_c;
+    int64_t out_n;
     if (IsDynamicRank(feature_shape)) {
       out_c = abstract::Shape::kShapeDimAny;
     } else {

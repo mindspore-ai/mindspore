@@ -151,7 +151,8 @@ abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::v
     ConvertShapeNHWCToNCHW(&in_shape);
   }
 
-  int64_t out_h = 0, out_w = 0;
+  int64_t out_h = 0;
+  int64_t out_w = 0;
   if (pad_mode == PadMode::SAME) {
     out_h = in_shape[kIndex2] == -1 ? -1 : CeilDiv(in_shape[kIndex2], strides[kIndex2]);
     out_w = in_shape[kIndex3] == -1 ? -1 : CeilDiv(in_shape[kIndex3], strides[kIndex3]);
