@@ -21,6 +21,7 @@
 #include <string>
 #include <fstream>
 #include <mutex>
+#include <shared_mutex>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -35,6 +36,7 @@ class CsvWriter {
   void CloseFile() noexcept;
   template <typename T>
   void WriteToCsv(const T &val, bool end_line = false) {
+    std::shared_lock<std::shared_mutex> lock(write_mutex_);
     file_ << val;
     if (end_line) {
       file_ << kEndLine;
@@ -49,6 +51,7 @@ class CsvWriter {
   const std::string kEndLine = "\n";
   std::ofstream file_;
   std::string file_path_str_ = "";
+  std::shared_mutex write_mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_CSV_WRITER_H_
