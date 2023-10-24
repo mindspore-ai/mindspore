@@ -159,7 +159,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     }
     auto paddings_value = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
-    if (paddings_value->isa<ValueAny>()) {
+    if (paddings_value->ContainsValueAny()) {
       return PaddingNoTensor(paddings_shape_ptr, x_shape);
     }
     paddings_arg = CheckAndConvertUtils::CheckTensorIntValue("paddings value", paddings_value, prim_name, padding_type);

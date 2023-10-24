@@ -71,7 +71,7 @@ abstract::ShapePtr SetSizeInferShape(const PrimitivePtr &primitive, const std::v
                                                      op_name);
     auto set_shape_value = set_shape_tensor->GetValue();
     MS_EXCEPTION_IF_NULL(set_shape_value);
-    if (!set_shape_value->isa<None>() && !set_shape_value->isa<ValueAny>()) {
+    if (!set_shape_value->isa<None>() && !set_shape_value->ContainsValueAny()) {
       auto value = GetArrayValue<int64_t>(set_shape_value).value().ToVector();
       for (size_t i = 0; i < LongToSize(shape_size_dim); ++i) {
         set_shape_value_vec[i] = value[i];

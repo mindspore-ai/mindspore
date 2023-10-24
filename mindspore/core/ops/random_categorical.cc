@@ -55,7 +55,7 @@ int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   if (CheckAndConvertUtils::IsScalar(nun_sample_arg)) {
     auto num_sample_input_type = nun_sample_arg->GetType();
     auto value = nun_sample_arg->GetValue();
-    if (value->isa<ValueAny>()) {
+    if (value->ContainsValueAny()) {
       return num_sample;
     }
     if (num_sample_input_type->type_id() == kNumberTypeInt64) {

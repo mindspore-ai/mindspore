@@ -123,7 +123,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     }
   } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
     auto axis_value = input_args[kInputIndex2]->GetValue();
-    if (axis_value->isa<ValueAny>()) {
+    if (axis_value->ContainsValueAny()) {
       is_axis_dyn = true;
     } else {
       auto axis_val_opt = GetScalarValue<int64_t>(axis_value);

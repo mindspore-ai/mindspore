@@ -97,7 +97,7 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
 
 inline bool IsPackTensor(const py::object &arg) { return py::hasattr(arg, "__pack__"); }
 
-inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->isa<ValueAny>()); }
+inline bool IsHasValue(const ValuePtr &value) { return (value != nullptr && !value->ContainsValueAny()); }
 
 bool IsTensorSequence(const py::object &arg) {
   if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {

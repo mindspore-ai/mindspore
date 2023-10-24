@@ -20,6 +20,7 @@
 #include "ops/nn_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -275,6 +276,17 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto format = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto format_value = format->BuildValue();
+  auto format_int_opt = ops::GetScalarValue<int64_t>(format_value);
+  if (format_int_opt.has_value()) {
+    if (format_int_opt.value() == Format::NCDHW) {
+      auto format_new = ib->EmitValue(MakeValue<int64_t>(Format::NCHW));
+      return {dout, ib->Emit(kBiasAddGradOpName, {dout, format_new}), ib->OutZeros(format)};
+    }
+
+    return {dout, ib->Emit(kBiasAddGradOpName, {dout, format}), ib->OutZeros(format)};
+  }
+
   auto true_branch = [](Emitter *e) -> NodePtrList { return {e->EmitValue(MakeValue<int64_t>(Format::NCHW))}; };
   auto false_branch = [&format](const Emitter *e) -> NodePtrList { return {format}; };
   auto cond = ib->Equal(format, ib->Value<int64_t>(Format::NCDHW));

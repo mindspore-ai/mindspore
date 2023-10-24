@@ -66,7 +66,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   int64_t num_samples_val = 0;
   if (CheckAndConvertUtils::IsScalar(input_args[1])) {
     auto num_samples_value_ptr = input_args[1]->GetValue();
-    if (num_samples_value_ptr->isa<ValueAny>()) {
+    if (num_samples_value_ptr->ContainsValueAny()) {
       num_samples_val = -1;
     } else {
       auto num_samples_opt = GetScalarValue<int64_t>(num_samples_value_ptr);
@@ -83,7 +83,7 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   } else if (CheckAndConvertUtils::IsTensor(input_args[1])) {
     auto num_samples_value_ptr = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(num_samples_value_ptr);
-    if (!num_samples_value_ptr->isa<ValueAny>()) {
+    if (!num_samples_value_ptr->ContainsValueAny()) {
       auto num_samples_type = input_args[1]->GetType()->cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(num_samples_type);
       if (num_samples_type->element()->type_id() == kNumberTypeInt64) {

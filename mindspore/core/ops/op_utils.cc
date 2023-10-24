@@ -881,9 +881,7 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 }
 
 bool IsValueKnown(const ValuePtr &value) {
-  // For now if the Abstract is a container of elements such as AbstractSequence and AbstractDictionary,
-  // the GetValue returns ValueAny if any one of the elements' value is ValueAny
-  if (value->isa<ValueAny>() || value->isa<None>()) {
+  if (value->ContainsValueAny() || value->isa<None>()) {
     return false;
   }
 

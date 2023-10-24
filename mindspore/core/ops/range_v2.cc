@@ -47,7 +47,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 #define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->ContainsValueAny()))
 constexpr auto op_name = "RangeV2";
 
 template <typename T>

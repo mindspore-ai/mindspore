@@ -603,7 +603,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(args_abs_list[1]);
 
   auto x_shp_value = shape_x->BuildValue();
-  if (x_shp_value->isa<ValueAny>()) {
+  if (x_shp_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
                                << args_abs_list[1]->ToString() << ".";
   }
@@ -623,7 +623,7 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
   }
 
   auto axis_value = axis->BuildValue();
-  if (axis_value->isa<ValueAny>()) {
+  if (axis_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The ReduceShape operator's data field can't be anything: "
                                << args_abs_list[1]->ToString() << ".";
   }
@@ -647,14 +647,14 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto div_shp_value = div_shp->BuildValue();
   MS_EXCEPTION_IF_NULL(div_shp_value);
-  if (div_shp_value->isa<ValueAny>()) {
+  if (div_shp_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                                << args_abs_list[0]->ToString() << ".";
   }
 
   auto shape_x_value = shape_x->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_x_value);
-  if (shape_x_value->isa<ValueAny>()) {
+  if (shape_x_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The 'tuple_div' operator shape's data field can't be anything, but got "
                                << args_abs_list[1]->ToString() << ".";
   }

@@ -25,7 +25,7 @@
 #include "ops/ops_func_impl/range.h"
 
 namespace mindspore::ops {
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->ContainsValueAny()))
 
 template <typename T>
 BaseShapePtr CalculateShapeSize(const ValuePtr start_ptr, const ValuePtr limit_ptr, const ValuePtr delta_ptr) {

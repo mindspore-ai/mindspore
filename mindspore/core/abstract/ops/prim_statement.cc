@@ -228,7 +228,7 @@ AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePt
     MS_LOG(EXCEPTION) << "IsConstant requires args input size = 1";
   }
   ValuePtr v = args_abs_list[0]->BuildValue();
-  return std::make_shared<AbstractScalar>(!v->isa<ValueAny>());
+  return std::make_shared<AbstractScalar>(!v->ContainsValueAny());
 }
 }  // namespace abstract
 }  // namespace mindspore

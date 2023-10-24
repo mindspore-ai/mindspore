@@ -1432,7 +1432,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   bool need_infer_value = std::all_of(args.begin(), args.end(), [](const AbstractBasePtr &abs) -> bool {
     MS_EXCEPTION_IF_NULL(abs);
     auto value = abs->BuildValue();
-    return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>() && !value->isa<Monad>() &&
+    return (value != nullptr && !value->ContainsValueAny() && !value->isa<None>() && !value->isa<Monad>() &&
             !value->isa<FuncGraph>());
   });
 
@@ -2201,7 +2201,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   ScopeGuard scope_guard(scope);
   ValuePtr item_value = item_args->BuildValue();
   MS_EXCEPTION_IF_NULL(item_value);
-  if (item_value->isa<ValueAny>()) {
+  if (item_value->ContainsValueAny()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 

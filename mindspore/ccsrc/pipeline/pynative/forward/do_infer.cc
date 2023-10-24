@@ -445,7 +445,7 @@ py::object InferOperation::CallConstantFolding(const py::args &args) const {
   (void)op_run_info->op_grad_info->input_abs.emplace_back(v->ToAbstract());
   PynativeInfer(op_run_info);
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
-  if (infer_value->isa<ValueAny>()) {
+  if (infer_value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << "Can not get value from abstract";
   }
   return PyNativeAlgo::DataConvert::ValueToPyObj(infer_value);
