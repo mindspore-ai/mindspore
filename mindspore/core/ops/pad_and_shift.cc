@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/unique.h"
 
 #include <memory>
 #include <vector>
@@ -21,78 +20,78 @@
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "abstract/utils.h"
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "ops/array_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Unique, BaseOperator);
-
-class MIND_API UniqueInfer : public abstract::OpInferBase {
+class MIND_API PadAndShiftInfer : public abstract::OpInferBase {
  public:
   // This is used for backend infer by kernel tensor.
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     // inputs: a 1-d Tensor
-    auto input = input_args[0];
-
-    auto shape = input->GetShape();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->GetShapeVector().size() != 1) {
-      MS_LOG(EXCEPTION) << "Rank of " << primitive->name() << "'s input must be 1.";
-    }
-
-    auto ids_max_shape = shape->Clone();
-    auto idx_shape = shape->Clone();
-    return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{ids_max_shape, idx_shape});
-  }
-
-  // This is used for backend infer by kernel tensor.
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    // inputs: a 1-d Tensor
     const std::string op_name = primitive->name();
-    CheckArgsSize(op_name, input_args, 1);
     auto input = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
-    return std::make_shared<Tuple>(TypePtrList{input->GetType()->Clone(), input->GetType()->Clone()});
-  }
-
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    // inputs: a 1-d Tensor
-    const std::string op_name = primitive->name();
-    CheckArgsSize(op_name, input_args, 1);
-    abstract::AbstractTensorPtr input = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, 0);
-
+    MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShape();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->GetShapeVector().size() != 1) {
       MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
     }
+    // max shape equals to input0's shape.
+    ShapeVector max_shape = shape->GetShapeVector();
+    return std::make_shared<abstract::TensorShape>(max_shape);
+  }
 
-    auto ids_shape = std::make_shared<abstract::TensorShape>(ShapeVector{abstract::Shape::kShapeDimAny});
-    auto ids = std::make_shared<abstract::AbstractTensor>(input->element(), ids_shape);
-    // Currently we choose the same data type as input for the idx.
-    TypePtr ids_idx_type = kInt32;
-    MS_EXCEPTION_IF_NULL(input->element());
-    MS_EXCEPTION_IF_NULL(input->element()->GetTypeTrack());
-    if (input->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
-      ids_idx_type = kInt64;
+  // This is used for backend infer by kernel tensor.
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    const std::string op_name = primitive->name();
+    const size_t size_expected = 3;
+    CheckArgsSize(op_name, input_args, size_expected);
+    auto input = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+    return input->GetType()->Clone();
+  }
+
+  // This is used for frontend infer by abstract. If MakeAbstract support make env type abstract, InferShapeAndType can
+  // be deleted.
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    const std::string op_name = primitive->name();
+    const size_t size_expected = 3;
+    CheckArgsSize(op_name, input_args, size_expected);
+    auto input = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, 0);
+    MS_EXCEPTION_IF_NULL(input);
+    auto shape = input->shape();
+    MS_EXCEPTION_IF_NULL(shape);
+    if (shape->shape().size() != 1) {
+      MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
     }
-    auto idx_shape = shape->Clone();
-    auto ids_idx = std::make_shared<abstract::AbstractTensor>(ids_idx_type, idx_shape);
-    // outputs: ids, ids_idx
-    AbstractBasePtrList elements = {ids, ids_idx};
-    return std::make_shared<abstract::AbstractTuple>(elements);
+    ShapeVector ids_shape = {abstract::TensorShape::kShapeDimAny};
+    return std::make_shared<abstract::AbstractTensor>(input->element(),
+                                                      std::make_shared<abstract::TensorShape>(ids_shape));
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Unique, prim::kPrimUnique, UniqueInfer, false);
+class MIND_API PadAndShift : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(PadAndShift);
+  /// \brief Constructor.
+  PadAndShift() : BaseOperator("PadAndShift") {}
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(PadAndShift, prim::kPrimPadAndShift, PadAndShiftInfer, false);
 }  // namespace ops
 }  // namespace mindspore

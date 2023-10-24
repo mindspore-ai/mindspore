@@ -552,6 +552,7 @@ ShapeVector GetShapeValue(const PrimitivePtr &primitive, const AbstractBasePtr &
   MS_EXCEPTION_IF_NULL(abs_value);
   auto arg_type = arg->GetType();
   MS_EXCEPTION_IF_NULL(arg_type);
+
   if (IsValueKnown(abs_value)) {
     if (CheckAndConvertUtils::IsTensor(arg)) {
       return CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "", arg_type);

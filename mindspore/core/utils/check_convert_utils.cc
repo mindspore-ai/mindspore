@@ -649,10 +649,10 @@ abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &
   MS_EXCEPTION_IF_NULL(abstract);
   auto base_shape = abstract->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
-  if (!base_shape->isa<abstract::Shape>()) {
+  if (!base_shape->isa<abstract::TensorShape>()) {
     MS_LOG(EXCEPTION) << prim_name << " can not get shape for input " << index;
   }
-  auto shape = base_shape->cast<abstract::ShapePtr>();
+  auto shape = base_shape->cast<abstract::TensorShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }

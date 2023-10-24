@@ -40,6 +40,7 @@
 "mindspore/mindspore/ccsrc/backend/graph_compiler/backend_base.cc"                                    "variableScope"
 "mindspore/mindspore/core/ops/max_pool.cc"                                                            "zerodivcond"
 "mindspore/mindspore/core/ops/max_pool3d.cc"                                                          "zerodivcond"
+"mindspore/mindspore/core/ops/pooling.cc"                                                             "zerodivcond"
 "mindspore/core/utils/log_adapter.cc"                                                                 "stlIfStrFind"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                             "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/frontend/expander/bprop/grad_ops/grad_array_ops.cc"                        "internalAstError"

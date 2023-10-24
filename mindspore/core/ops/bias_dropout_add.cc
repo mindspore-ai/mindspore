@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,61 +14,50 @@
  * limitations under the License.
  */
 
-#include "ops/scalar_summary.h"
-
 #include <memory>
 #include <vector>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "abstract/utils.h"
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
-#include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindapi/base/shared_ptr.h"
-#include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/structure_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "ops/nn_ops.h"
+#include "ops/fusion/bias_dropout_add_fusion.h"
 
 namespace mindspore {
 namespace ops {
-
-MIND_API_OPERATOR_IMPL(ScalarSummary, BaseOperator);
-void ScalarSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, api::MakeValue(true)); }
-
-bool ScalarSummary::get_side_effect_io() const {
-  auto value_ptr = GetAttr(kSideEffectIO);
-  return GetValue<bool>(value_ptr);
-}
-
-void ScalarSummary::Init() { this->set_side_effect_io(); }
-
-class MIND_API ScalarSummaryInfer : public abstract::OpInferBase {
+class MIND_API BiasDropoutAddInfer : public abstract::OpInferBase {
  public:
   // This is used for backend infer by kernel tensor.
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    // check
-    auto v_shape = input_args[1]->GetShape()->GetShapeVector();
-    (void)CheckAndConvertUtils::CheckInteger("v rank", int64_t(v_shape.size()), kLessEqual, 1, prim_name);
-    return std::make_shared<abstract::Shape>(ShapeVector(1));
+    auto x = input_args[0];
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(x->GetShape());
+
+    ShapeVector shape = x->GetShape()->GetShapeVector();
+    auto output_shape = std::make_shared<abstract::Shape>(shape);
+    return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{output_shape, output_shape});
   }
 
   // This is used for backend infer by kernel tensor.
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 1, kObjectTypeTensorType);
-    return kInt32;
+    size_t input_size = 3;
+    auto op_name = primitive->name();
+    CheckArgsSize(op_name, input_args, input_size);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+    auto out_type = x->GetType()->Clone();
+    return std::make_shared<Tuple>(TypePtrList{out_type, out_type});
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarSummary, prim::kPrimScalarSummary, ScalarSummaryInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(BiasDropoutAdd, prim::kPrimBiasDropoutAdd, BiasDropoutAddInfer, false);
 }  // namespace ops
 }  // namespace mindspore

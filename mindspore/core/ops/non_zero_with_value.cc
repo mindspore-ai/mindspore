@@ -49,27 +49,64 @@ AbstractBasePtr NonZeroWithValueInfer(const abstract::AnalysisEnginePtr &, const
   abstract::AbstractTensorPtr x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
 
   MS_EXCEPTION_IF_NULL(x);
-  auto x_shape = x->shape();
+  auto x_shape = x->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   ShapeVector y_shape;
 
-  int64_t rank_base = SizeToLong(x_shape->shape().size());
-  int64_t max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
-
+  auto shape_vec = x_shape->GetShapeVector();
+  int64_t rank_base = SizeToLong(shape_vec.size());
+  if (shape_vec.size() == 1 && shape_vec[0] == abstract::TensorShape::kShapeRankAny) {
+    rank_base = abstract::Shape::kShapeDimAny;
+  }
   (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
-  ShapeVector max_shape = {rank_base, max_size};
 
-  auto value =
-    std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape, max_shape));
-  auto index =
-    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape, max_shape));
-  auto count =
-    std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape, max_shape));
+  auto value = std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape));
+  auto index = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
+  auto count = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
   AbstractBasePtrList result = {value, index, count};
   return std::make_shared<abstract::AbstractTuple>(result);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(NonZeroWithValue, prim::kPrimNonZeroWithValue, NonZeroWithValueInfer, nullptr, true);
+
+class MIND_API AGNonZeroWithValueInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    const std::string &op_name = primitive->name();
+    constexpr size_t input_num = 1;
+    abstract::CheckArgsSize(op_name, input_args, input_num);
+    auto x = CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 0, kObjectTypeTensorType);
+
+    MS_EXCEPTION_IF_NULL(x);
+    auto x_shape = x->GetShape();
+    MS_EXCEPTION_IF_NULL(x_shape);
+    ShapeVector y_shape;
+
+    auto shape_vec = x_shape->GetShapeVector();
+    int64_t rank_base = SizeToLong(shape_vec.size());
+    int64_t max_size = std::accumulate(shape_vec.begin(), shape_vec.end(), 1, std::multiplies<int64_t>());
+    (void)y_shape.emplace_back(rank_base);
+    // Set as max shape when in running process.
+    (void)y_shape.emplace_back(max_size);
+    auto value_shape = std::make_shared<abstract::Shape>(y_shape);
+    auto index_shape = std::make_shared<abstract::Shape>(y_shape);
+    auto count_shape = std::make_shared<abstract::Shape>(y_shape);
+    return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{value_shape, index_shape, count_shape});
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x = CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 0, kObjectTypeTensorType);
+    return std::make_shared<Tuple>(std::vector<TypePtr>{x->GetType(), kInt32, kInt32});
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return NonZeroWithValueInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NonZeroWithValue, prim::kPrimNonZeroWithValue, AGNonZeroWithValueInfer, false);
 }  // namespace ops
 }  // namespace mindspore

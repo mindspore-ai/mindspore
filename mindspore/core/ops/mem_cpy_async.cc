@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-#include "ops/broadcast.h"
-#include "mindapi/ir/value.h"
-#include "ops/op_name.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "utils/log_adapter.h"
+#include <memory>
+#include <vector>
+
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -29,44 +26,25 @@
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
+#include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "ops/op_utils.h"
-#include "ops/array_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
+#include "ops/framework_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Broadcast, BaseOperator);
-void Broadcast::Init(const int64_t root_rank, const std::string &group) {
-  this->set_root_rank(root_rank);
-  this->set_group(group);
-}
-void Broadcast::set_root_rank(const int64_t root_rank) { (void)this->AddAttr(kKeepProb, api::MakeValue(root_rank)); }
-
-void Broadcast::set_group(const std::string &group) {
-  CheckAndConvertUtils::CheckString(kGroup, group, {"hccl_world_group", "hccl_world_group"}, this->name());
-  (void)this->AddAttr(kGroup, api::MakeValue(group));
-}
-int64_t Broadcast::get_root_rank() const {
-  auto value_ptr = this->GetAttr(kRootRank);
-  return GetValue<int64_t>(value_ptr);
-}
-
-std::string Broadcast::get_group() const {
-  auto value_ptr = this->GetAttr(kGroup);
-  return GetValue<std::string>(value_ptr);
-}
-
-class MIND_API BroadcastInfer : public abstract::OpInferBase {
+class MIND_API MemCpyAsyncInfer : public abstract::OpInferBase {
  public:
   // This is used for backend infer by kernel tensor.
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::string op_name = primitive->name();
-    CheckArgsSize(op_name, input_args, 1);
-    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
-    MS_EXCEPTION_IF_NULL(x);
-    MS_EXCEPTION_IF_NULL(x->GetShape());
-    return x->GetShape()->Clone();
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
+    return std::make_shared<abstract::TensorShape>(input_args[1]->GetShape()->GetShapeVector());
   }
 
   // This is used for backend infer by kernel tensor.
@@ -74,11 +52,17 @@ class MIND_API BroadcastInfer : public abstract::OpInferBase {
     const std::string op_name = primitive->name();
     CheckArgsSize(op_name, input_args, 1);
     auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
-    MS_EXCEPTION_IF_NULL(x);
     return x->GetType()->Clone();
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Broadcast, prim::kPrimBroadcast, BroadcastInfer, false);
+class MIND_API MemCpyAsync : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(MemCpyAsync);
+  /// \brief Constructor.
+  MemCpyAsync() : BaseOperator("MemCpyAsync") {}
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(MemCpyAsync, prim::kPrimMemCpyAsync, MemCpyAsyncInfer, false);
 }  // namespace ops
 }  // namespace mindspore

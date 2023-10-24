@@ -29,6 +29,7 @@
 #include "ops/ops_func_impl/mul.h"
 #include "ops/sub.h"
 #include "ops/ops_func_impl/square.h"
+#include "utils/check_convert_utils.h"
 
 namespace {
 constexpr auto kRankSize = "rank_size";
@@ -45,94 +46,12 @@ auto AddInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim
 }  // namespace ops
 
 namespace abstract {
-AbstractBasePtr InferImplIdentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list) {
-  // An object of a subclass of AbstractBase
-  CheckArgsSize(primitive->name(), args_abs_list, 1);
-  return args_abs_list[0];
-}
-
-AbstractBasePtr InferImplEnvironCreate(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list) {
-  // args: None.
-  CheckArgsSize(primitive->name(), args_abs_list, 0);
-  static const AbstractBasePtr abs_env = std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
-  return abs_env;
-}
-
-AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  // args: Three objects of a subclass of AbstractBase, env, key, default_value(default).
-  CheckArgsSize(primitive->name(), args_abs_list, kSizeThree);
-  auto key = args_abs_list[kIndexOne];
-  auto default_value = args_abs_list[kIndexTwo];
-  TypePtr type = key->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(type);
-  if (type->type_id() != kObjectTypeSymbolicKeyType) {
-    MS_LOG(EXCEPTION) << "EnvironGet evaluator args[1] should be a SymbolicKeyInstance but: " << key->ToString();
-  }
-
-  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << default_value->ToString();
-  if (default_value->isa<AbstractTensor>() && EnvSetSparseResultMgr::GetInstance().Get()) {
-    auto tensor_value = default_value->cast<AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor_value);
-    return std::make_shared<AbstractUndetermined>(tensor_value->element()->Clone(), tensor_value->shape()->Clone());
-  }
-
-  if (!key->GetValueTrack()->isa<SymbolicKeyInstance>()) {
-    return default_value;
-  }
-  ValuePtr key_value_ptr = key->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(key_value_ptr);
-  auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
-  auto expected = key_value_track->abstract();
-  MS_EXCEPTION_IF_NULL(expected);
-  (void)expected->Join(default_value);
-  // If expected is AbstractRef, return it's AbstractTensor as Value type other than Reference type.
-  if (expected->isa<AbstractRefTensor>()) {
-    const auto &abs_ref = expected->cast<AbstractRefPtr>();
-    MS_EXCEPTION_IF_NULL(abs_ref);
-    return abs_ref->CloneAsTensor();
-  }
-  return expected;
-}
-
-AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list) {
-  // args: Three objects of a subclass of AbstractBase, env, key, value.
-  CheckArgsSize(primitive->name(), args_abs_list, kSizeThree);
-
-  auto key = args_abs_list[kIndexOne];
-  ValuePtr key_value_ptr = key->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(key_value_ptr);
-  auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
-  if (key_value_track == nullptr) {
-    MS_LOG(EXCEPTION) << "EnvironSet evaluator args[1] expected should be able to cast to SymbolicKeyInstancePtrbut: "
-                      << key_value_ptr->ToString();
-  }
-  auto expected = key_value_track->abstract();
-  MS_EXCEPTION_IF_NULL(expected);
-
-  auto value = args_abs_list[kIndexTwo];
-  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << value->ToString();
-  if (value->isa<AbstractUndetermined>() && !value->isa<AbstractTensor>()) {
-    EnvSetSparseResultMgr::GetInstance().Set(true);
-  }
-  return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
-}
-
 AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_abs_list) {
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
   constexpr auto environ_add_input_size = 2;
   CheckArgsSize(primitive->name(), args_abs_list, environ_add_input_size);
   return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
-}
-
-AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                           const AbstractBasePtrList &) {
-  return std::make_shared<abstract::AbstractScalar>(kValueAny, std::make_shared<Bool>());
 }
 
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -347,40 +266,6 @@ AbstractBasePtr InferImplAllReduce(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
 }
 
-AbstractBasePtr InferImplBroadcast(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
-}
-
-AbstractBasePtr InferImplAllGather(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  auto tmp_shape = x->shape()->shape();
-  if (!primitive->HasAttr(kRankSize)) {
-    MS_LOG(EXCEPTION) << "Primitive don't have rank_size attr";
-  }
-  auto rank_size = GetValue<int64_t>(primitive->GetAttr(kRankSize));
-  if (rank_size == 0) {
-    MS_LOG(EXCEPTION) << "rank_size is 0";
-  }
-  if (tmp_shape.empty()) {
-    MS_LOG(EXCEPTION) << "shape size is 0";
-  }
-  if (tmp_shape[0] > 0) {
-    tmp_shape[0] = tmp_shape[0] * rank_size;
-  }
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
-}
-
 AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_abs_list) {
   const std::string op_name = primitive->name();
@@ -398,16 +283,6 @@ AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const Primitiv
   }
   tmp_shape[0] = LongMulWithOverflowCheck(tmp_shape[0], rank_size);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
-}
-
-AbstractBasePtr InferImplMemCpyAsync(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_abs_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
 }
 
 AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -519,48 +394,7 @@ AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(output);
   return output;
 }
-AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list) {
-  // An object of a subclass of AbstractBase
-  constexpr auto adam_input_size = 10;
-  CheckArgsSize(primitive->name(), args_abs_list, adam_input_size);
-  auto input0 = args_abs_list[0];
-  auto input1 = args_abs_list[1];
-  auto input2 = args_abs_list[2];
-  auto input3 = args_abs_list[3];
-  auto input4 = args_abs_list[4];
-  auto mul0_x = args_abs_list[5];
-  auto mul1_x = args_abs_list[6];
-  auto mul2_x = args_abs_list[7];
-  auto mul3_x = args_abs_list[8];
-  auto add2_y = args_abs_list[9];
 
-  auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
-  auto mul_infer_impl = std::make_shared<ops::MulFuncImpl>();
-  auto mul1 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul1_x, input0}),
-                           mul_infer_impl->InferType(primitive, {mul1_x, input0}));
-  auto mul0 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul0_x, input2}),
-                           mul_infer_impl->InferType(primitive, {mul0_x, input2}));
-  auto mul2 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul2_x, input1}),
-                           mul_infer_impl->InferType(primitive, {mul2_x, input1}));
-  auto mul3 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul3_x, square0.value()}),
-                           mul_infer_impl->InferType(primitive, {mul3_x, square0.value()}));
-
-  auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
-  auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
-  auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
-  auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
-  auto infer_impl = std::make_shared<ops::RealDivFuncImpl>();
-  auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
-  auto infer_type = infer_impl->InferType(primitive, {add0, add2});
-  auto true_div0 = MakeAbstract(infer_shape, infer_type);
-  auto mul4 = MakeAbstract(mul_infer_impl->InferShape(primitive, {input4, true_div0}),
-                           mul_infer_impl->InferType(primitive, {input4, true_div0}));
-  auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul4});
-
-  AbstractBasePtrList rets = {add1, add0, sub0};
-  return std::make_shared<AbstractTuple>(rets);
-}
 AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_abs_list) {
   // An object of a subclass of AbstractBase
@@ -569,50 +403,7 @@ AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(output);
   return output;
 }
-AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_abs_list) {
-  // An object of a subclass of AbstractBase
-  constexpr auto adam_input_size = 11;
-  CheckArgsSize(primitive->name(), args_abs_list, adam_input_size);
-  auto input0 = args_abs_list[0];
-  auto input1 = args_abs_list[1];
-  auto input2 = args_abs_list[2];
-  auto input3 = args_abs_list[3];
-  auto input4 = args_abs_list[4];
-  auto mul0_x = args_abs_list[5];
-  auto mul1_x = args_abs_list[6];
-  auto mul2_x = args_abs_list[7];
-  auto mul3_x = args_abs_list[8];
-  auto mul4_x = args_abs_list[9];
-  auto add2_y = args_abs_list[10];
-  auto mul_infer_impl = std::make_shared<ops::MulFuncImpl>();
-  auto mul0 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul0_x, input2}),
-                           mul_infer_impl->InferType(primitive, {mul0_x, input2}));
-  auto mul1 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul1_x, input0}),
-                           mul_infer_impl->InferType(primitive, {mul1_x, input0}));
-  auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
-  auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
-  auto mul2 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul2_x, input1}),
-                           mul_infer_impl->InferType(primitive, {mul2_x, input1}));
-  auto mul3 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul3_x, square0.value()}),
-                           mul_infer_impl->InferType(primitive, {mul3_x, square0.value()}));
 
-  auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
-  auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
-  auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
-  auto mul4 = MakeAbstract(mul_infer_impl->InferShape(primitive, {mul4_x, input3}),
-                           mul_infer_impl->InferType(primitive, {mul4_x, input3}));
-  auto infer_impl = std::make_shared<ops::RealDivFuncImpl>();
-  auto infer_shape = infer_impl->InferShape(primitive, {add0, add2});
-  auto infer_type = infer_impl->InferType(primitive, {add0, add2});
-  auto real_div0 = MakeAbstract(infer_shape, infer_type);
-  auto add3 = ops::AddInfer(nullptr, primitive, {mul4, real_div0});
-  auto mul5 = MakeAbstract(mul_infer_impl->InferShape(primitive, {input4, add3}),
-                           mul_infer_impl->InferType(primitive, {input4, add3}));
-  auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul5});
-  AbstractBasePtrList rets = {add1, add0, sub0};
-  return std::make_shared<AbstractTuple>(rets);
-}
 // Infer for MapTensor.default_value.
 AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const AbstractBasePtrList &args_abs_list) {

@@ -40,23 +40,6 @@ std::optional<StandardPrimitiveImplReg> GetBackendPrimitiveInferImpl(const Primi
   if (found.has_value()) {
     return found.value();
   }
-
-  static PrimitiveEvalImplMap old_infer_funcs = {
-    // deprecated backend infer functions.
-    // Do not add anything in this initializer anymore since it will be removed soon, backend will register their infer
-    // function in backend plugin.
-    {prim::kPrimBroadcast, R{InferImplBroadcast, nullptr, true}},  // remove when Broadcast core/ops infer ready
-    {prim::kPrimAllGather, R{InferImplAllGather, nullptr, true}},  // remove when AllGather core/ops infer ready
-    {prim::kPrimConcatOffset,
-     R{InferImplConcatOffset, nullptr, true}},  // remove when ConcatOffset core/ops infer ready
-    {prim::kPrimAdamApplyOne, R{InferImplAdamApplyOne, nullptr, true}},
-    {prim::kPrimAdamApplyOneWithDecay, R{InferImplAdamApplyOneWithDecay, nullptr, true}},
-  };
-
-  iter = old_infer_funcs.find(primitive);
-  if (iter != old_infer_funcs.end()) {
-    return iter->second;
-  }
   return std::optional<StandardPrimitiveImplReg>();
 }
 }  // namespace abstract

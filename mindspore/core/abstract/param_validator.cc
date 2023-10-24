@@ -55,10 +55,10 @@ TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &e
   }
 }
 
-TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &accepts,
+TypePtr CheckTensorDType(const AbstractBasePtr &tensor, const TypePtrList &accepts,
                          const std::string &error_message_prefix) {
   MS_EXCEPTION_IF_NULL(tensor);
-  TypePtr type = tensor->BuildType();
+  TypePtr type = tensor->GetType();
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
     MS_LOG(EXCEPTION) << error_message_prefix << "requires Tensor but got " << type->ToString();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,61 +14,58 @@
  * limitations under the License.
  */
 
-#include "ops/scalar_summary.h"
-
 #include <memory>
 #include <vector>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "abstract/utils.h"
 #include "ir/anf.h"
-#include "ir/dtype/number.h"
-#include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindapi/base/shared_ptr.h"
-#include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/structure_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
-#include "utils/log_adapter.h"
+#include "ops/framework_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
-
-MIND_API_OPERATOR_IMPL(ScalarSummary, BaseOperator);
-void ScalarSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, api::MakeValue(true)); }
-
-bool ScalarSummary::get_side_effect_io() const {
-  auto value_ptr = GetAttr(kSideEffectIO);
-  return GetValue<bool>(value_ptr);
-}
-
-void ScalarSummary::Init() { this->set_side_effect_io(); }
-
-class MIND_API ScalarSummaryInfer : public abstract::OpInferBase {
+class MIND_API EnvironCreateInfer : public abstract::OpInferBase {
  public:
   // This is used for backend infer by kernel tensor.
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    // check
-    auto v_shape = input_args[1]->GetShape()->GetShapeVector();
-    (void)CheckAndConvertUtils::CheckInteger("v rank", int64_t(v_shape.size()), kLessEqual, 1, prim_name);
-    return std::make_shared<abstract::Shape>(ShapeVector(1));
+    // Inputs: a tensor
+    return abstract::kNoShape;
   }
 
   // This is used for backend infer by kernel tensor.
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 1, kObjectTypeTensorType);
-    return kInt32;
+    const size_t size_expected = 2;
+    CheckArgsSize(primitive->name(), input_args, size_expected);
+    return std::make_shared<EnvType>();
+  }
+
+  // This is used for frontend infer by abstract. If MakeAbstract support make env type abstract, InferShapeAndType can
+  // be deleted.
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    // args: None.
+    CheckArgsSize(primitive->name(), input_args, 0);
+    static const AbstractBasePtr abs_env =
+      std::make_shared<abstract::AbstractScalar>(kValueAny, std::make_shared<EnvType>());
+    return abs_env;
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarSummary, prim::kPrimScalarSummary, ScalarSummaryInfer, false);
+class MIND_API EnvironCreate : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(EnvironCreate);
+  /// \brief Constructor.
+  EnvironCreate() : BaseOperator("EnvironCreate") {}
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(EnvironCreate, prim::kPrimEnvironCreate, EnvironCreateInfer, false);
 }  // namespace ops
 }  // namespace mindspore

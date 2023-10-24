@@ -24,38 +24,6 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(FSEDecode, BaseOperator);
-abstract::ShapePtr FSEDecodeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  std::vector<int64_t> output_shape;
-  auto input_y = input_args[kInputIndex6];
-  MS_EXCEPTION_IF_NULL(input_y);
-  if (input_y->isa<abstract::AbstractTensor>()) {
-    auto y_value = input_y->GetValue();
-    MS_EXCEPTION_IF_NULL(y_value);
-    abstract::ShapePtr y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
-    auto shape_value = y_shape->shape();
-    if (shape_value.size() != 1) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the shape size must be 1, but got: " << shape_value.size()
-                              << ".";
-    }
-    if (y_shape->IsDynamic()) {
-      output_shape.push_back(abstract::Shape::kShapeRankAny);
-    } else {
-      output_shape = GetShapeValue(primitive, input_y);
-    }
-    return std::make_shared<abstract::Shape>(output_shape);
-  } else {
-    MS_EXCEPTION(TypeError) << "input_y must be AbstractTensor" << input_y;
-  }
-}
-
-TypePtr FSEDecodeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &) {
-  auto dst_t = prim->GetAttr(kDstT);
-  return TypeIdToType(static_cast<TypeId>(GetValue<int64_t>(dst_t)));
-}
-
 void FSEDecode::set_dst_t(const int64_t dst_t) { (void)AddAttr(kDstT, api::MakeValue(dst_t)); }
 int64_t FSEDecode::get_dst_t() const { return GetValue<int64_t>(GetAttr(kDstT)); }
 
@@ -84,15 +52,41 @@ void FSEDecode::Init(const int64_t dst_t, const int64_t curr_chunk, const int64_
   this->set_table_log(table_log);
 }
 
-AbstractBasePtr FSEDecodeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 7;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  auto infertype = FSEDecodeInferType(primitive, input_args);
-  auto infershape = FSEDecodeInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infershape, infertype);
-}
-REGISTER_PRIMITIVE_EVAL_IMPL(FSEDecode, prim::kPrimFSEDecode, FSEDecodeInfer, nullptr, true);
+class MIND_API AGFSEDecodeInfer : public abstract::OpInferBase {
+ public:
+  // This is used for backend infer by kernel tensor.
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
+    std::vector<int64_t> output_shape;
+    auto input_y = input_args[kInputIndex6];
+    MS_EXCEPTION_IF_NULL(input_y);
+    if (CheckAndConvertUtils::IsTensor(input_y)) {
+      abstract::ShapePtr y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
+      auto shape_value = y_shape->shape();
+      if (shape_value.size() != 1) {
+        MS_EXCEPTION(TypeError) << "For '" << prim_name
+                                << "', the shape size must be 1, but got: " << shape_value.size() << ".";
+      }
+      if (MS_UNLIKELY(y_shape->IsDynamic())) {
+        return std::make_shared<abstract::Shape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+      }
+      output_shape = GetShapeValue(primitive, input_y);
+      return std::make_shared<abstract::TensorShape>(output_shape);
+    } else {
+      MS_EXCEPTION(TypeError) << "input_y must be AbstractTensor" << input_y;
+    }
+  }
+
+  // This is used for backend infer by kernel tensor.
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    auto dst_t = primitive->GetAttr(kDstT);
+    return TypeIdToType(static_cast<TypeId>(GetValue<int64_t>(dst_t)));
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(FSEDecode, prim::kPrimFSEDecode, AGFSEDecodeInfer, false);
 }  // namespace ops
 }  // namespace mindspore

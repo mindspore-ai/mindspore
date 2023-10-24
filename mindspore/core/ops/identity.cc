@@ -21,9 +21,10 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/array_ops.h"
+#include "ops/array_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/framework_ops.h"
 
 namespace mindspore {
 namespace ops {
@@ -55,7 +56,7 @@ AbstractBasePtr IdentityInfer(const abstract::AnalysisEnginePtr &, const Primiti
 }
 
 // AG means auto generated
-class MIND_API AGIdentityInfer : public abstract::OpInferBase {
+class MIND_API AGIdentitysInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
@@ -71,6 +72,31 @@ class MIND_API AGIdentityInfer : public abstract::OpInferBase {
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Identity, prim::kPrimIdentitys, AGIdentityInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Identity, prim::kPrimIdentitys, AGIdentitysInfer, false);
+
+class MIND_API AGidentityInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return input_args[0]->GetShape()->Clone();
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return input_args[0]->GetType()->Clone();
+  }
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return input_args[0];
+  }
+};
+
+class MIND_API identity : public BaseOperator {
+ public:
+  MIND_API_BASE_MEMBER(identity);
+  /// \brief Constructor.
+  identity() : BaseOperator("identity") {}
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(identity, prim::kPrimIdentity, AGidentityInfer, false);
 }  // namespace ops
 }  // namespace mindspore

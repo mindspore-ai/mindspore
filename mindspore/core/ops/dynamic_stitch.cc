@@ -28,8 +28,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr DynamicStitchFrontendInferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int64_t args_size = 2;
@@ -140,7 +140,7 @@ abstract::ShapePtr DynamicStitchInferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr DynamicStitchInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DynamicStitchFrontendInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
@@ -167,8 +167,8 @@ TypePtr DynamicStitchInferType(const PrimitivePtr &primitive, const std::vector<
 MIND_API_OPERATOR_IMPL(DynamicStitch, BaseOperator);
 AbstractBasePtr DynamicStitchInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_type = DynamicStitchInferType(primitive, input_args);
-  auto infer_shape = DynamicStitchInferShape(primitive, input_args);
+  auto infer_type = DynamicStitchFrontendInferType(primitive, input_args);
+  auto infer_shape = DynamicStitchFrontendInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
@@ -177,11 +177,59 @@ class MIND_API AGDynamicStitchInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return DynamicStitchInferShape(primitive, input_args);
+    if (input_args.size() < kSize2) {
+      MS_LOG(EXCEPTION) << "Dynamic stitch inputs size must greater than 2. But got: " << input_args.size();
+    }
+    if (input_args.size() % 2 != 0) {
+      MS_LOG(EXCEPTION) << "Dynamic stitch inputs size must be even. But got: " << input_args.size();
+    }
+
+    int64_t first_dim_size = 0;
+    auto indices_size = input_args.size() / 2;
+    for (size_t i = 0; i < indices_size; i++) {
+      auto indice_i = input_args[i];
+      MS_EXCEPTION_IF_NULL(indice_i);
+      auto value_i = indice_i->GetValue();
+      MS_EXCEPTION_IF_NULL(value_i);
+      auto index_i_value =
+        CheckAndConvertUtils::CheckTensorIntValue("indices", value_i, primitive->name(), indice_i->GetType());
+      auto index_i_max = std::max_element(index_i_value.begin(), index_i_value.end());
+      first_dim_size = *index_i_max > first_dim_size ? *index_i_max : first_dim_size;
+    }
+
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    MS_EXCEPTION_IF_NULL(input_args[indices_size]);
+    auto indices0_shape = input_args[0]->GetShape()->GetShapeVector();
+    auto data0_shape = input_args[indices_size]->GetShape()->GetShapeVector();
+
+    for (size_t i = 1; i < indices_size; ++i) {
+      auto indicesi_shape = input_args[i]->GetShape()->GetShapeVector();
+      auto datai_shape = input_args[indices_size + i]->GetShape()->GetShapeVector();
+      if (indicesi_shape.size() > datai_shape.size()) {
+        MS_LOG(EXCEPTION) << "The rank of indices[i] must be <= rank of data[i]!";
+      }
+    }
+    ShapeVector out_shape;
+    out_shape.push_back(first_dim_size + 1);
+    // support input data dynamic shape
+    for (size_t i = indices0_shape.size(); i < data0_shape.size(); ++i) {
+      out_shape.push_back(data0_shape[i]);
+    }
+    return std::make_shared<abstract::TensorShape>(out_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return DynamicStitchInferType(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    auto data_size = input_args.size();
+    if (data_size < 2) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', data tuple size should be greater than 1";
+    }
+    auto indices_size = input_args.size() / 2;
+    auto data0 = input_args[indices_size];
+    MS_EXCEPTION_IF_NULL(data0);
+    MS_EXCEPTION_IF_NULL(data0->GetType());
+    return data0->GetType()->Clone();
   }
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {

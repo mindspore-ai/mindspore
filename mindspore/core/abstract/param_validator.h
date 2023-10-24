@@ -34,7 +34,7 @@ namespace abstract {
 // check if variable's type is an instance of any of accepts or of a subclass of it.
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix);
 
-TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &accepts,
+TypePtr CheckTensorDType(const AbstractBasePtr &tensor, const TypePtrList &accepts,
                          const std::string &error_message_prefix);
 
 TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const TypePtrList &accepts,
