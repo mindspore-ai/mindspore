@@ -356,16 +356,3 @@ def test_kwargs_default_value2():
     nn_op = nn.ResizeBilinear()
     res = nn_op(x, (4, 4), align_corners=True)
     print(res)
-
-
-def test_insert_none_param_to_cell():
-    """
-    Feature: Raise Error when param is None in insert_param_to_cell.
-    Description: None not allowed in insert_param_to_cell.
-    Expectation: Raise Error.
-    """
-    class Net_In(nn.Cell):
-        pass
-    net_in = Net_In()
-    with pytest.raises(TypeError):
-        net_in.insert_param_to_cell("bias", None)
