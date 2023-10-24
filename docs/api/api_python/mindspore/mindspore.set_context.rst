@@ -164,10 +164,10 @@ mindspore.set_context
 
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。
-        - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。其中除了parallel_speed_up_json_path以外的配置当前只仅支持在Ascend910B硬件平台设置，其他平台不生效。
+        - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。
           precision_mode、jit_compile和atomic_clean_policy参数的默认值属于实验性质参数，将来可能会发生变化。
 
-          - **precision_mode** (str): 混合精度模式设置，Ascend910B硬件平台训练默认值：以CANN设置的默认值为准。推理网络默认值： ``force_fp16`` 。其值范围如下：
+          - **precision_mode** (str): 混合精度模式设置。推理网络默认值： ``force_fp16`` 。其值范围如下：
 
             - force_fp16: 当算子既支持float16，又支持float32时，直接选择float16。
             - allow_fp32_to_fp16: 当算子不支持float32数据类型时，直接降低精度float16。
