@@ -32,9 +32,9 @@ class MatMul : public OpDesc {
   static void Transpose(ShapeVector *shape) {
     auto shape_len = shape->size();
     // transpose last two axis
-    auto tmp = shape[shape_len - 1];
-    shape[shape_len - 1] = shape[shape_len - 2];
-    shape[shape_len - 2] = tmp;
+    auto tmp = shape[shape_len - kDim1];
+    shape[shape_len - kDim1] = shape[shape_len - kDim2];
+    shape[shape_len - kDim2] = tmp;
   }
 
  protected:
@@ -53,11 +53,11 @@ class MatMul : public OpDesc {
       MS_LOG(INFO) << "MatMul/BatchMatMul do not need to be replaced by Mul";
       return false;
     }
-    if (transpose_a_ && shape_a_.size() < 2) {
+    if (transpose_a_ && shape_a_.size() < kDim2) {
       MS_LOG(INFO) << "shape of input_0 should be bigger than 2 but got " << shape_a_.size();
       return false;
     }
-    if (transpose_b_ && shape_b_.size() < 2) {
+    if (transpose_b_ && shape_b_.size() < kDim2) {
       MS_LOG(INFO) << "shape of input_1 should be bigger than 2 but got " << shape_b_.size();
       return false;
     }

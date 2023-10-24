@@ -42,7 +42,7 @@ class SoftmaxGradExt : public OpDesc {
     }
     (void)std::for_each(axis.begin(), axis.end(), [&ori_shape](auto &ele) {
       if (ele < 0) {
-        ele += ori_shape.size();
+        ele += static_cast<int64_t>(ori_shape.size());
       }
     });
 

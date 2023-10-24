@@ -27,7 +27,7 @@ class SquareSumAll : public OpDesc {
  protected:
   bool CheckInputs() override {
     auto input_num = inputs_info_.size();
-    if (input_num != 2) {
+    if (input_num != kIndex2) {
       MS_LOG(INFO) << "For 'SquareSumAll', the inputs number should be 2, but got " << input_num;
       return false;
     }
