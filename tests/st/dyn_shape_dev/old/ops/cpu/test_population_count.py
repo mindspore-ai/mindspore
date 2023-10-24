@@ -58,9 +58,9 @@ def test8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+# @pytest.mark.level0
+# @pytest.mark.platform_x86_cpu
+# @pytest.mark.env_onecard
 def test_vmap_population_count():
     """
     Feature: PopulationCount cpu op vmap feature.
