@@ -24,6 +24,7 @@ from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
 from mindspore.ops.operations.array_ops import Identity
 from mindspore.ops._primitive_cache import _get_cache_prim
+from ..auto_generate import Assign
 
 
 class Load(PrimitiveWithCheck):

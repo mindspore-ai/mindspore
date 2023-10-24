@@ -20,6 +20,7 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 from mindspore.ops._utils import get_broadcast_shape
+from ..auto_generate import RandpermV2
 
 
 class NonDeterministicInts(Primitive):

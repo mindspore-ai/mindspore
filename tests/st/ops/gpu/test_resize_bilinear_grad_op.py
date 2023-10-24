@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops.operations as G
+import mindspore.ops.operations._grad_ops as G
 from mindspore import Tensor
 
 

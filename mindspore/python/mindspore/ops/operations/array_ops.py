@@ -37,6 +37,10 @@ from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
+from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
+                             ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
+                             Range, MaskedFill, RightShift, NonZero)
+from .manually_defined import Rank
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -185,50 +189,6 @@ class Expand(Primitive):
         """Initialize Expand."""
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
-
-
-class ExpandDims(PrimitiveWithCheck):
-    """
-    Adds an additional dimension to `input_x` at the given axis, the dimension of
-    `input_x` should be greater than or equal to 1.
-
-    Refer to :func:`mindspore.ops.expand_dims` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **axis** (int) - Specifies the dimension index at which to expand
-          the shape of `input_x`. The value of axis must be in the range
-          `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0. It has the same data type as `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> expand_dims = ops.ExpandDims()
-        >>> output = expand_dims(input_tensor, 0)
-        >>> print(output)
-        [[[2. 2.]
-          [2. 2.]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ExpandDims"""
-        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['output'])
-
-    def infer_value(self, input_x, axis):
-        value = None
-        if input_x is not None and axis is not None:
-            value = Tensor(np.expand_dims(input_x.asnumpy(), axis))
-        return value
 
 
 class DType(Primitive):
@@ -585,88 +545,6 @@ class Col2Im(Primitive):
         self.add_prim_attr('stride', self.stride)
 
 
-class Reshape(PrimitiveWithCheck):
-    """
-    Rearranges the input Tensor based on the given shape.
-
-    Refer to :func:`mindspore.ops.reshape` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_shape** (tuple[int]) - The input tuple is constructed by multiple
-          integers, i.e., :math:`(y_1, y_2, ..., y_S)`.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> reshape = ops.Reshape()
-        >>> output = reshape(input_x, (3, 2))
-        >>> print(output)
-        [[-0.1  0.3]
-         [ 3.6  0.4]
-         [ 0.5 -3.2]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Reshape"""
-        self.init_prim_io_names(inputs=['tensor', 'shape'], outputs=['output'])
-
-    def infer_value(self, x, shape):
-        """infer value"""
-        # for shape is not constant
-        if shape is None or self.none_in_tuple_or_list(shape) or x is None:
-            return None
-
-        if isinstance(shape, (Tensor, Tensor_)):
-            validator.check_tensor_dtype_valid("shape", mstype.TensorType(shape.dtype),
-                                               [mstype.int32, mstype.int64], self.name)
-            shape = shape.asnumpy().tolist()
-        else:
-            validator.check_value_type("shape", shape, [tuple], self.name)
-            shape = list(shape)
-
-        neg_index = -1
-        dim_prod = 1
-        for i, shp_i in enumerate(shape):
-            validator.check_value_type("shape[%d]" % i, shp_i, [int], self.name)
-            if shp_i == -1:
-                if neg_index != -1:
-                    raise ValueError(f"For '{self.name}', there can be at most one '-1' in 'input_shape', "
-                                     f"but got {shape}.")
-                neg_index = i
-            else:
-                dim_prod *= shp_i
-        out = None
-        if not is_shape_unknown(x.shape):
-            x_shp = x.shape
-            if dim_prod <= 0:
-                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
-                                 f"the value of 'input_shape' is {shape}. "
-                                 f"The product of 'input_shape' should > 0, but got {dim_prod}.")
-            arr_prod = np.prod(x_shp)
-            if neg_index != -1:
-                shape[neg_index] = int(arr_prod // dim_prod)
-                dim_prod *= shape[neg_index]
-            if dim_prod != arr_prod:
-                raise ValueError(f"For '{self.name}', the product of the 'input_x' shape "
-                                 f"should be equal to product of 'input_shape', but got product of the"
-                                 f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
-            out = Tensor(x.asnumpy().reshape(shape))
-        return out
-
-    def none_in_tuple_or_list(self, x):
-        return isinstance(x, (tuple, list)) and None in x
-
-
 class Shape(Primitive):
     """
     Returns the shape of the input tensor.
@@ -757,48 +635,6 @@ class Squeeze(Primitive):
         else:
             self.axis = (axis,)
             self.add_prim_attr("axis", (axis,))
-
-
-class Transpose(Primitive):
-    """
-    Permutes the dimensions of the input tensor according to input permutation.
-
-    Refer to :func:`mindspore.ops.transpose` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_perm** (tuple[int]) - The permutation to be converted. The elements in `input_perm` are composed of
-          the indexes of each dimension of `input_x`. The length of `input_perm` and the shape of `input_x` must be
-          the same. Only constant value is allowed. Must be in the range [0, rank(input_x)).
-
-    Outputs:
-        Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
-        shape of `input_x` and the value of `input_perm`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-        >>> input_perm = (0, 2, 1)
-        >>> transpose = ops.Transpose()
-        >>> output = transpose(input_x, input_perm)
-        >>> print(output)
-        [[[ 1.  4.]
-          [ 2.  5.]
-          [ 3.  6.]]
-         [[ 7. 10.]
-          [ 8. 11.]
-          [ 9. 12.]]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Transpose"""
-        self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
 
 
 class ConjugateTranspose(Primitive):
@@ -968,76 +804,6 @@ class UniqueConsecutive(Primitive):
         self.add_prim_attr("return_idx", return_idx)
         self.add_prim_attr("return_counts", return_counts)
         self.add_prim_attr("axis", axis)
-
-
-class Gather(Primitive):
-    r"""
-    Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
-
-    Refer to :func:`mindspore.ops.gather` for more details.
-
-    Args:
-        batch_dims (int, optional): Specifies the number of batch dimensions.
-            It must be less than or equal to the rank of `input_indices`. Default: ``0`` .
-
-    Inputs:
-        - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
-          Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
-        - **axis** (Union(int, Tensor[int])) - Specifies the dimension index to gather indices.
-          When axis is Tensor, the size must be 1.
-
-    Outputs:
-        Tensor, the shape of tensor is
-        :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case1: input_indices is a Tensor with shape (5, ).
-        >>> input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.Gather()(input_params, input_indices, axis)
-        >>> print(output)
-        [1. 3. 5. 3. 7.]
-        >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension,
-        the output shape is equal to the input_indices shape.
-        >>> input_indices = Tensor(np.array([[0, 2], [2, 6]]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.Gather()(input_params, input_indices, axis)
-        >>> print(output)
-        [[ 1. 3.]
-         [ 3. 7.]]
-        >>> # case3: input_indices is a Tensor with shape (2, ). input_params is a Tensor with shape (3, 4) and axis is 0.
-        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
-        >>> axis = 0
-        >>> output = ops.Gather()(input_params, input_indices, axis)
-        >>> print(output)
-        [[1.  2.  3.  4.]
-         [9. 10. 11. 12.]]
-        >>> # case4: input_indices is a Tensor with shape (2, ).
-        >>> # input_params is a Tensor with shape (3, 4) and axis is 1, batch_dims is 1.
-        >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
-        >>> input_indices = Tensor(np.array([0, 2, 1]), mindspore.int32)
-        >>> axis = 1
-        >>> batch_dims = 1
-        >>> output = ops.Gather(batch_dims)(input_params, input_indices, axis)
-        >>> print(output)
-        [ 1.  7. 10.]
-    """
-
-    @prim_attr_register
-    def __init__(self, batch_dims=0):
-        """Initialize Gather"""
-        validator.check_value_type("batch_dims", batch_dims, [int], self.name)
-        self.add_prim_attr("batch_dims", batch_dims)
-        self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
 
 class SparseGatherV2(Primitive):
@@ -1775,38 +1541,6 @@ class Zeros(Primitive):
         """Initialize Zeros"""
 
 
-class OnesLike(Primitive):
-    """
-    Returns a Tensor with a value of 1 and its shape and data type is the same as the input.
-
-    Refer to :func:`mindspore.ops.ones_like` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x` but filled with ones.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> oneslike = ops.OnesLike()
-        >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> output = oneslike(input_x)
-        >>> print(output)
-        [[1 1]
-         [1 1]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize OnesLike"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-
 class TupleToArray(PrimitiveWithInfer):
     """
     Converts a tuple to a tensor.
@@ -1978,47 +1712,6 @@ class InvertPermutation(PrimitiveWithInfer):
         return {'shape': x_shp,
                 'dtype': x['dtype'],
                 'value': tuple(y)}
-
-
-class Argmax(Primitive):
-    """
-    Returns the indices of the maximum value along a specified `axis` of a Tensor.
-
-    Refer to :func:`mindspore.ops.argmax` for more details.
-
-    Args:
-        axis (int): Axis where the Argmax operation applies to. Default: ``-1`` .
-        output_type (:class:`mindspore.dtype`): Output data type.
-            Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
-          dimensions.
-
-    Outputs:
-        Tensor, indices of the max value of input tensor across the axis.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-        >>> output = ops.Argmax(output_type=mindspore.int32)(input_x)
-        >>> print(output)
-        [1 0 0]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=-1, output_type=mstype.int32):
-        """Initialize Argmax"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_types_same_and_valid({'output': output_type}, [mstype.int32, mstype.int64], self.name)
-        self.axis = axis
-        self.add_prim_attr('output_type', output_type)
 
 
 class Argmin(Primitive):
@@ -3105,61 +2798,6 @@ class Coalesce(Primitive):
                                 outputs=['y_indices', 'y_values', 'y_shape'])
 
 
-class ReverseV2(Primitive):
-    """
-    Reverses specific dimensions of a tensor.
-
-    .. warning::
-        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
-
-    Args:
-        axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor.
-          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `axis` is neither list nor tuple.
-        TypeError: If element of `axis` is not an int.
-        ValueError: There are multiple identical axes in `axis`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> op = ops.ReverseV2(axis=[1])
-        >>> output = op(input_x)
-        >>> print(output)
-        [[4 3 2 1]
-         [8 7 6 5]]
-        >>> op = ops.ReverseV2(axis=[1, 0])
-        >>> output = op(input_x)
-        >>> print(output)
-        [[8 7 6 5]
-         [4 3 2 1]]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis):
-        """Initialize ReverseV2."""
-        validator.check_value_type('axis', axis, [list, tuple], self.name)
-        for i, each in enumerate(axis):
-            validator.check_value_type(f'axis[{i}]', each, [int], self.name)
-        self.axis = axis
-        if isinstance(axis, list):
-            self.axis = tuple(axis)
-            self.add_prim_attr('axis', self.axis)
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-
 class Rint(Primitive):
     """
     Returns an integer that is closest to `input_x` element-wise.
@@ -3773,51 +3411,6 @@ class StridedSlice(PrimitiveWithInfer):
         return slices, len(slice_value)
 
 
-class Diag(PrimitiveWithCheck):
-    r"""
-
-    Constructs a diagonal tensor with a given diagonal values.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.diag` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor.
-
-    Outputs:
-        Tensor, has the same dtype as the `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
-        >>> diag = ops.Diag()
-        >>> output = diag(input_x)
-        >>> print(output)
-        [[1 0 0 0]
-         [0 2 0 0]
-         [0 0 3 0]
-         [0 0 0 4]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Diag"""
-
-    def infer_value(self, x):
-        if x is None:
-            return None
-        # do constant-folding only when x rank is 1
-        if len(x.shape) != 1:
-            return None
-        ret = np.diag(x.asnumpy())
-        return Tensor(ret)
-
-
 class DiagPart(PrimitiveWithCheck):
     r"""
 
@@ -3910,139 +3503,6 @@ class Mvlgamma(Primitive):
         validator.check_positive_int(p, 'p', self.name)
 
 
-class Eye(Primitive):
-    """
-    Creates a tensor with ones on the diagonal and zeros in the rest.
-
-    Refer to :func:`mindspore.ops.eye` for more details.
-
-    Inputs:
-        - **n** (int) - The number of rows of returned tensor. Constant value only.
-        - **m** (int) - The number of columns of returned tensor. Constant value only.
-        - **t** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
-          Default: ``None`` , the data type of the returned tensor is mindspore.float32.
-
-    Outputs:
-        Tensor, a tensor with ones on the diagonal and the rest of elements are zero. The shape of `output` depends on
-        the user's Inputs `n` and `m`. And the data type depends on Inputs `t`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> eye = ops.Eye()
-        >>> output = eye(2, 2, mindspore.int32)
-        >>> print(output)
-        [[1 0]
-         [0 1]]
-        >>> print(output.dtype)
-        Int32
-        >>> output = eye(1, 2, mindspore.float64)
-        >>> print(output)
-        [[1. 0.]]
-        >>> print(output.dtype)
-        Float64
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Eye"""
-        self.init_prim_io_names(inputs=['n', 'm', 't'], outputs=['output'])
-
-
-class ScatterNd(Primitive):
-    r"""
-    Scatters a tensor into a new tensor depending on the specified indices.
-
-    Refer to :func:`mindspore.ops.scatter_nd` for more details.
-
-    Inputs:
-        - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
-          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
-        - **updates** (Tensor) - The source Tensor to be scattered.
-          It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
-        - **shape** (tuple[int]) - Define the shape of the output tensor, has the same data type as indices.
-          The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than or equal to 2.
-          In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-          And the value of any element in `shape` must be greater than or equal to 1.
-          In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
-
-    Outputs:
-        Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> op = ops.ScatterNd()
-        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
-        ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
-        ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
-        >>> shape = (4, 4, 4)
-        >>> output = op(indices, updates, shape)
-        >>> print(output)
-        [[[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]
-         [[1. 1. 1. 1.]
-          [2. 2. 2. 2.]
-          [3. 3. 3. 3.]
-          [4. 4. 4. 4.]]
-         [[0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]
-          [0. 0. 0. 0.]]]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
-        >>> shape = (3, 3)
-        >>> output = op(indices, updates, shape)
-        >>> # In order to facilitate understanding, explain the operator pseudo-operation process step by step:
-        >>> # Step 1: Generate an empty Tensor of the specified shape according to the shape
-        >>> # [
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> #     [0. 0. 0.]
-        >>> # ]
-        >>> # Step 2: Modify the data at the specified location according to the indicators
-        >>> # 0th row of indices is [0, 1], 0th row of updates is 3.2.
-        >>> # means that the empty tensor in the 0th row and 1st col set to 3.2
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 0.   0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # 1th row of indices is [1, 1], 1th row of updates is 1.1.
-        >>> # means that the empty tensor in the 1th row and 1st col set to 1.1
-        >>> # [
-        >>> #     [0. 3.2. 0.]
-        >>> #     [0. 1.1  0.]
-        >>> #     [0. 0.   0.]
-        >>> # ]
-        >>> # The final result is as follows:
-        >>> print(output)
-        [[0. 3.2 0.]
-         [0. 1.1 0.]
-         [0. 0.  0.]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ScatterNd"""
-        self.init_prim_io_names(inputs=['indices', 'update', 'shape'], outputs=['output'])
-
-
 class ResizeNearestNeighbor(Primitive):
     r"""
     Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
@@ -4090,98 +3550,6 @@ class ResizeNearestNeighbor(Primitive):
         for i, value in enumerate(size):
             validator.check_non_negative_int(value, f'{i}th value of size', self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
-
-
-class ResizeNearestNeighborV2(Primitive):
-    r"""
-    Resizes the input tensor to specific size by using the nearest neighbor algorithm.
-
-    The nearest neighbor algorithm selects the value of the nearest point and does not consider the
-    values of neighboring points at all, yielding a piecewise-constant interpolant.
-
-    Args:
-        align_corners (bool, optional): If ``True`` , the centers of the 4 corner pixels of the input and output
-            tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
-        half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` ,
-            `align_corners` should be False. Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor) - 4-D with shape :math:`(batch, channels, height, width)` .
-        - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
-          of 2 elements: [`new_height, new_width`].
-
-    Outputs:
-        - **y** (Tensor) - The resized images. A 4-D with shape
-          :math:`(batch, channels, new\_height, new\_width)`. It has the same dtype as `x`.
-
-    Raises:
-        TypeError: If `x` or `size` is not a Tensor.
-        TypeError: If the data type  of `size` is not int32.
-        TypeError: If `align_corners` or `half_pixel_centers` is not bool.
-        ValueError: If any value of `size` is non positive.
-        ValueError: If the dimension of `x` is not 4.
-        ValueError: If the dimension of `size` is not 1.
-        ValueError: If the elements number of `size` is not 2.
-        ValueError: If attr `half_pixel_centers` and `align_corners` are True at the same time.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> input_tensor = Tensor(np.ones((1, 1, 4, 4)), mstype.float32)
-        >>> size = Tensor([2, 2], mstype.int32)
-        >>> resize = ops.ResizeNearestNeighborV2()
-        >>> output = resize(input_tensor, size)
-        >>> print(output)
-        [[[[1. 1.]
-           [1. 1.]]]]
-        >>> print(output.shape)
-        (1, 1, 2, 2)
-    """
-
-    @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False):
-        """Initialize ResizeNearestNeighborV2"""
-        self.init_prim_io_names(inputs=['x', 'size'], outputs=['y'])
-        validator.check_bool(align_corners, 'align_corners', self.name)
-        validator.check_bool(half_pixel_centers, 'half_pixel_centers', self.name)
-
-
-class GatherNd(Primitive):
-    r"""
-    Gathers slices from a tensor by indices.
-
-    Refer to :func:`mindspore.ops.gather_nd` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor to gather values.
-        - **indices** (Tensor) - The index tensor, with int32 or int64 data type.
-
-    Outputs:
-        Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> op = ops.GatherNd()
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> output = op(input_x, indices)
-        >>> print(output)
-        [-0.1  0.5]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize GatherNd"""
-        self.init_prim_io_names(inputs=['input_x', 'indices'], outputs=['y'])
 
 
 class ScatterUpdate(Primitive):
@@ -6268,43 +5636,6 @@ class EmbeddingLookup(Primitive):
         self.add_prim_attr('bprop_return_sparse', True)
 
 
-class GatherD(Primitive):
-    """
-    Gathers elements along an axis specified by dim.
-
-    Refer to :func:`mindspore.ops.gather_elements` for more details.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-        - **dim** (int) - The axis along which to index. It must be int32 or int64.
-        - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
-          int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
-
-    Outputs:
-        Tensor, has the same data type with `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
-        >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
-        >>> dim = 1
-        >>> output = ops.GatherD()(x, dim, index)
-        >>> print(output)
-        [[1 1]
-         [4 3]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize GatherD"""
-        self.init_prim_io_names(inputs=['x', 'dim', 'index'], outputs=['output'])
-
-
 class Identity(Primitive):
     """
     The `mindspore.ops.Identity` interface is deprecated, please use the :func:`mindspore.ops.deepcopy` instead.
@@ -7569,53 +6900,6 @@ class Cummax(Primitive):
         self.add_prim_attr("dim", axis)
 
 
-class RightShift(Primitive):
-    r"""
-    Shift the value of each position of Tensor `input_x` to the right by corresponding bits in Tensor `input_y`.
-    The inputs are two tensors, dtypes of them must be consistent, and the
-    shapes of them could be broadcast.
-
-    .. math::
-
-        \begin{aligned}
-        &out_{i} =x_{i} >> y_{i}
-        \end{aligned}
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor, will be shifted to the right
-          by `input_y` bits element-wise. Support all int and uint types.
-        - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
-
-    Outputs:
-        - **output** (Tensor) - The output tensor, has the same type as `input_x`.
-
-    Raises:
-        TypeError: If `input_x` or `input_y` is not tensor.
-        TypeError: If `input_x` and `input_y` could not be broadcast.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> rightshift = ops.RightShift()
-        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
-        >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
-        >>> output = rightshift(input_x, input_y)
-        >>> print(output)
-        [0 1 1]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize RightShift."""
-        self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
-
-
 class LogSpace(Primitive):
     r"""
     Generates a 1-D Tensor with a length of steps. The tensor's
@@ -7681,46 +6965,6 @@ class LogSpace(Primitive):
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['start', 'end'], outputs=['y'])
-
-
-class NonZero(Primitive):
-    """
-    Return a tensor of the positions of all non-zero values.
-
-    Refer to :func:`mindspore.ops.nonzero` for more details.
-
-    Inputs:
-        - **x** (Tensor) - The input Tensor, its rank should be greater than or eaqual to 1.
-
-    Outputs:
-        - **y** (Tensor), 2-D Tensor of data type int64.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import NonZero
-        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-        >>> nonzero = NonZero()
-        >>> output = nonzero(x)
-        >>> print(output)
-        [[0 0 0]
-         [0 1 0]]
-        >>> x = Tensor(np.array([1, 0, 2, 0, 3]), mindspore.int32)
-        >>> nonzero = NonZero()
-        >>> output = nonzero(x)
-        >>> print(output)
-        [[0]
-         [2]
-         [4]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class Tril(Primitive):

@@ -37,6 +37,7 @@ from mindspore.communication.management import GlobalComm, get_rank
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
+from ..auto_generate import TensorCopySlices, SiLU
 
 # Bit operation
 bit_and = bit_and()
@@ -1327,45 +1328,6 @@ class DynamicBroadcastGradientArgs(Primitive):
         """Init BroadcastGradientArgs"""
 
 
-class TensorCopySlices(Primitive):
-    """
-    Copy continues memory.
-
-    Inputs:
-        - **x** (Tensor) - The target Tensor.
-        - **value** (Tensor) - The tensor to update x.
-        - **begin** (tuple[int]) - A tuple which represents the location where to start. Only
-          constant value is allowed.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
-          Only constant value is allowed.
-        - **strides** (tuple[int]) - A tuple which represents the stride is continuously added
-          before reaching the maximum location. Only constant value is allowed.
-
-    Outputs:
-        - **y** (Tensor), has the same shape and data type of x.
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore.ops.operations import _inner_ops
-        >>> copy_slices = _inner_ops.TensorCopySlices()
-        >>> out = copy_slices(Tensor(np.zeros((5, 5))), Tensor(np.ones((2, 5))), (3, 0), (5, 5), (1, 1))
-        >>> print(out)
-            [[1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [1., 1., 1., 1., 1.],
-             [0., 0., 0., 0., 0.],
-             [0., 0., 0., 0., 0.]]
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize TensorScatterUpdate"""
-        self.init_prim_io_names(inputs=['x', 'value', 'begin', 'end', 'strides'], outputs=['y'])
-
-
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
@@ -2616,28 +2578,6 @@ class IsParameter(PrimitiveWithInfer):
         return {'shape': [],
                 'dtype': mstype.bool_,
                 'value': isinstance(x['dtype'], mstype.RefType)}
-
-
-class SiLU(Primitive):
-    r"""
-    Computes SiLU (Sigmoid Linear Unit activation function) of input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.silu` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> output = ops.SiLU(x)
-        >>> print(output)
-        [-0.269  1.762  -0.1423  1.762  -0.269]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SiLU"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class TileSize(Primitive):

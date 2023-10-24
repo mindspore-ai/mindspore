@@ -135,8 +135,8 @@ PrimitiveCPtr OnnxCoshParser::Parse(const onnx::GraphProto &onnx_graph, const on
   return prim->GetPrim();
 }
 
-PrimitiveCPtr OnnxAcosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Acos>();
+PrimitiveCPtr OnnxACosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::ACos>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   return prim->GetPrim();
 }
@@ -295,7 +295,7 @@ OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxAsinhParser("Asinh", new OnnxAsinhParser());
 OnnxNodeRegistrar g_onnxCosParser("Cos", new OnnxCosParser());
 OnnxNodeRegistrar g_onnxCoshParser("Cosh", new OnnxCoshParser());
-OnnxNodeRegistrar g_onnxAcosParser("Acos", new OnnxAcosParser());
+OnnxNodeRegistrar g_onnxACosParser("ACos", new OnnxACosParser());
 OnnxNodeRegistrar g_onnxAcoshParser("Acosh", new OnnxAcoshParser());
 OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
 OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());

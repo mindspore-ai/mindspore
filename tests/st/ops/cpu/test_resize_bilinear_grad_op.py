@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops.operations as G
+import mindspore.ops.operations._grad_ops as G
 from mindspore import Tensor, ops
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
