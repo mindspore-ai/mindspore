@@ -1764,7 +1764,7 @@ void ControlNodeParser::FetchDeviceContextByNode(const std::vector<KernelWithInd
       const auto &iter = front_to_backend_kernels_.find(output_node);
       if (iter == front_to_backend_kernels_.end()) {
         MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
-        (void)return_device_contexts.emplace_back(default_context);
+        (void)return_device_contexts->emplace_back(default_context);
         continue;
       }
       MS_EXCEPTION_IF_NULL(iter->second.second);

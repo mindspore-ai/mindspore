@@ -1064,7 +1064,7 @@ def _build_broadcast_graph(broadcast_params_dict, broadcast_phase):
     _broadcast_net.phase = broadcast_phase
     broadcasted_params = _broadcast_net()
     for param_name, param in zip(broadcast_params_dict.keys(), broadcasted_params):
-        broadcast_params_dict[param_name].set_data(param)
+        broadcast_params_dict.get(param_name).set_data(param)
 
 
 def _get_auto_split_param_names(parameter_layout_dict):

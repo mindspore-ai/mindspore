@@ -65,8 +65,8 @@ int GptqQuantizer::FilterWeightNode(const FuncGraphPtr &func_graph,
 // extract weight params
 void GptqQuantizer::ExtractWeightParams(schema::MetaGraphT *meta_graph,
                                         std::map<std::string, std::unique_ptr<WeightInfo>> *weights) const {
-  CHECK_NULL_RETURN(meta_graph);
-  CHECK_NULL_RETURN(weights);
+  CHECK_NULL_RETURN_VOID(meta_graph);
+  CHECK_NULL_RETURN_VOID(weights);
   for (auto &tensor : meta_graph->allTensors) {
     if (weights->find(tensor->name) == weights->end()) {
       continue;

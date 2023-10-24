@@ -600,13 +600,17 @@ void FreeMemory(DeviceTensor *device_tensor) {
 }
 }  // namespace
 
-void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
+void AnyTypeKernelActor::CheckParams(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph());
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
                                                   "Invalid device context for any type actor:" + GetAID().Name());
   }
+}
+
+void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context) {
+  CheckParams(context);
   const auto &data_iter = graph_output_op_data_.find(context->sequential_num_);
   if (data_iter != graph_output_op_data_.end()) {
     std::set<DeviceTensor *> clear_device_tensors;
