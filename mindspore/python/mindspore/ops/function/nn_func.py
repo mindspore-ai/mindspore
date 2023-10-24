@@ -2238,17 +2238,21 @@ def interpolate(input,
             'area', 'nearest-exact'(matches Scikit-Image and PIL nearest neighbours interpolation algorithms and fixes
             knows issues with `nearest`, 3D and 4D). Default: ``"nearest"`` .
 
-        align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
-            aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
-            Default: ``None`` .
+        align_corners (bool): Whether to use corner alignment for coordinate mapping. Assuming a transformation is
+            applied to the input Tensor along the x-axis, the specific calculation formula is as follows:
 
             .. code-block::
 
-                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
+                ori_i = new_length != 1 ? new_i * (ori_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
 
-                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
+                ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-            This is only valid for 'linear', 'bilinear', or 'bicubic' modes. Default: ``False`` .
+            Among them, :math:`ori\_length` and :math:`new\_length` represent the length of the Tensor before and after
+            transformation along the x-axis respectively; :math:`new_i` represents the coordinate of the i-th element
+            along the x-axis after transformation; :math:`ori_i` represents the corresponding coordinate of the original
+            data along the x-axis.
+
+            This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``False`` .
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
