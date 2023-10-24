@@ -166,4 +166,5 @@ def mutable(input_data, dynamic_len=False):
 
     setattr(ret, "__ms_mutable__", True)
     setattr(ret, "__ms_dynamic_len__", dynamic_len)
+    setattr(ret, "__ms_origin_object__", input_data)
     return ret
