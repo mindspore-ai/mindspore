@@ -90,7 +90,7 @@ class BACKEND_EXPORT EmbeddingHashMap {
 
   int InsertDataUnsafe(const int key);
 
-  int FindPosUnsafe(const int key);
+  int FindPosUnsafe();
 
   // The hash map capacity.
   size_t hash_capacity_;

@@ -29,6 +29,7 @@ namespace ascend {
 static constexpr const char kGMemLibName[] = "libgmem.so";
 static constexpr const char kMsEnableGmem[] = "MS_ENABLE_GMEM";
 constexpr uint64_t kAscendMmapAlignSize = 1 << 21;
+constexpr int kMapPeerShared = 0x8000000;
 
 void *callback_thread_func(void *data);
 
@@ -153,8 +154,7 @@ uint8_t *AscendGmemAdapter::MmapMemory(size_t size, void *addr) const {
     return nullptr;
   }
 
-#define MAP_PEER_SHARED 0x8000000
-  int flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_PEER_SHARED;
+  int flags = MAP_PRIVATE | MAP_ANONYMOUS | kMapPeerShared;
   int prot = PROT_READ | PROT_WRITE;
   void *mapped_addr = mmap(addr, size, prot, flags, -1, 0);
   if (mapped_addr == MAP_FAILED) {
