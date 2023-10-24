@@ -932,10 +932,8 @@ class GELU(Cell):
         """Initialize GELU."""
         super(GELU, self).__init__()
         validator.check_bool(approximate, 'approximate', self.cls_name)
-        self.approximate = approximate
-        if approximate:
-            self.approximate = 'tanh'
-        else:
+        self.approximate = 'tanh'
+        if not approximate:
             self.approximate = 'none'
 
     def construct(self, x):
