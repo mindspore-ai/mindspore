@@ -167,19 +167,6 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
   const auto &base_type_id = GetTypeIdByAbstract(sub_abstracts[0]);
   const auto &base_shape_vector = GetShapeVectorByAbstract(sub_abstracts[0]);
 
-  auto get_shape_vector_by_abstract = [](const AbstractBasePtr &abstract) -> ShapeVector {
-    if (abstract->isa<abstract::AbstractScalar>()) {
-      return {};
-    } else if (abstract->isa<abstract::AbstractTensor>()) {
-      const auto &base_shape = abstract->BuildShape();
-      MS_EXCEPTION_IF_NULL(base_shape);
-      if (!base_shape->isa<abstract::Shape>()) {
-        MS_LOG(EXCEPTION) << "Invalid shape:" << base_shape->ToString() << " in abstract:" << abstract->ToString();
-      }
-      const auto &shape = base_shape->cast<abstract::ShapePtr>();
-      MS_EXCEPTION_IF_NULL(shape);
-
->>>>>>> 3d83a57e0eb... Code check.
   for (size_t i = 1; i < sub_abstracts.size(); ++i) {
     MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
     if (sub_abstracts[i] == nullptr ||
