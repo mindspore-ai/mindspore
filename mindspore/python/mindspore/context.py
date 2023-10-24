@@ -1204,12 +1204,10 @@ def set_context(**kwargs):
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
-            Currently, configurations except `parallel_speed_up_json_path` are currently only supported on Ascend910B
-            hardware platform. The default value of `precision_mode`, `jit_compile` and
+            The default value of `precision_mode`, `jit_compile` and
             `atomic_clean_policy` are experimental parameters, may change in the future.
 
-            - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
-              value of training network is based on the value of CANN, and the default value of inference network
+            - precision_mode (str): Mixed precision mode setting, and the default value of inference network
               is ``force_fp16`` . The value range is as follows:
 
               - force_fp16: When the operator supports both float16 and float32, select float16 directly.
