@@ -1209,7 +1209,7 @@ class Profiler:
             cluster_analyse = AscendClusterGenerator(os.path.join(source_path, 'timeline'))
             cluster_analyse.parse()
             cluster_analyse.write(step_trace_time_path)
-        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+        except ProfilerException as err:
             logger.warning(err.message)
         finally:
             pass
@@ -1481,7 +1481,7 @@ class Profiler:
                 device_dir = [dir for dir in os.listdir(self._ascend_job_id) if dir.startswith('device')]
                 info_file_path = get_file_path(os.path.join(self._ascend_job_id, device_dir[0]), "info.json")
                 training_rank_id, _ = self._parse_info_json(info_file_path)
-                self._rank_id = training_rank_id
+                self._rank_id = int(training_rank_id)
                 return os.path.join(job_id, device_dir[0])
             return job_id
 

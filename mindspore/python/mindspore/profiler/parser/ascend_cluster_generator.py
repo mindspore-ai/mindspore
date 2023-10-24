@@ -25,13 +25,13 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
 
 
 def find_files(directory, pattern):
-    """Find files with feature 'pattern' from the directory"""
+    """Find files from the directory"""
     file_list = []
-    for root, _, files in os.walk(directory):
-        files.sort(key=lambda x: os.path.getctime(os.path.join(directory, x)))
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
+    for root, _, file in os.walk(directory):
+        file.sort(key=lambda x: os.path.getctime(os.path.join(directory, x)))
+        for base in file:
+            if fnmatch.fnmatch(base, pattern):
+                filename = os.path.join(root, base)
                 file_list.append(filename)
     return file_list
 
