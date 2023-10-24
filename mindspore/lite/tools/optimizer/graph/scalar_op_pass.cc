@@ -476,6 +476,12 @@ STATUS ScalarOpPass::RunScalarOpPass(const FuncGraphPtr &func_graph, const FuncG
       status = this->ReplaceScalarOp(func_graph, node, manager, prim::kPrimFloorDiv);
     } else if (CheckPrimitiveType(node, prim::kPrimScalarSub)) {
       status = this->ReplaceScalarOp(func_graph, node, manager, prim::kPrimSub);
+    } else if (CheckPrimitiveType(node, prim::kPrimScalarAdd)) {
+      status = this->ReplaceScalarOp(func_graph, node, manager, prim::kPrimAdd);
+    } else if (CheckPrimitiveType(node, prim::kPrimScalarCast)) {
+      MS_LOG(ERROR) << "For models with dynamic input shapes, ScalarCast node conversion has not been supported yet, "
+                       "please check cast operations such as \"int(some_var)\" in the front-end code and remove them.";
+      status = lite::RET_NOT_SUPPORT;
     }
 
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
