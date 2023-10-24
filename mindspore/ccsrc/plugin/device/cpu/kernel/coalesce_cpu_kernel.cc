@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/coalesce_cpu_kernel.h"
+
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -39,22 +41,31 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inp
   return true;
 }
 
-void CoalesceCpuKernelMod::SyncOutputShape() {
+void CoalesceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   ShapeVector dims;
   (void)dims.emplace_back(SizeToLong(shape_size_));
   (void)dims.emplace_back(SizeToLong(jump) + 1);
   ShapeVector dim;
   (void)dim.emplace_back(SizeToLong(jump) + 1);
-  outputs_[kIndex0]->SetShapeVector(dims);
-  outputs_[kIndex1]->SetShapeVector(dim);
-  outputs_[kIndex2]->SetShapeVector(y_shape_shape_);
+  size_t dims_ele = LongToSize(std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<int64_t>()));
+  size_t dim_ele = LongToSize(std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int64_t>()));
+  size_t y_ele =
+    LongToSize(std::accumulate(y_shape_shape_.begin(), y_shape_shape_.end(), 1, std::multiplies<int64_t>()));
+
+  outputs[kIndex0]->SetShapeVector(dims);
+  outputs[kIndex1]->SetShapeVector(dim);
+  outputs[kIndex2]->SetShapeVector(y_shape_shape_);
+
+  outputs[kIndex0]->set_size(dims_ele * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(dim_ele * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(y_ele * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
 bool CoalesceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCoalesceInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCoalesceOutputsNum, kKernelName);
   dtype_ = inputs.at(kIndex1)->dtype_id();
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

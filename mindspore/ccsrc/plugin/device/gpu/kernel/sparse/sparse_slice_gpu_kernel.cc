@@ -103,11 +103,15 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-void SparseSliceGpuKernelMod::SyncOutputShape() {
+void SparseSliceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSlice cudaStreamSynchronized failed");
-  outputs_[kIndex0]->SetShapeVector(ShapeVector({real_output_size, static_cast<int64_t>(num_dim_)}));
-  outputs_[kIndex1]->SetShapeVector(ShapeVector({real_output_size}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex0]->SetShapeVector(ShapeVector({real_output_size, static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({real_output_size}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));
+  outputs[kIndex0]->set_size(LongToSize(real_output_size) * num_dim_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(real_output_size) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(num_dim_ * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, SparseSliceGpuKernelMod::SparseSliceLaunchFunc>> SparseSliceGpuKernelMod::func_list_ =

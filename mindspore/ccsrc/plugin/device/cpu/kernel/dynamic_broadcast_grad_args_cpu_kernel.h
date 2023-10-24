@@ -46,13 +46,17 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
 
-  void SyncOutputShape() override {
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     ShapeVector r0_shape{SizeToLong(r0_size_)};
     ShapeVector r1_shape{SizeToLong(r1_size_)};
 
-    outputs_[0]->SetShapeVector(r0_shape);
-    outputs_[1]->SetShapeVector(r1_shape);
+    outputs[0]->SetShapeVector(r0_shape);
+    outputs[1]->SetShapeVector(r1_shape);
+    outputs[0]->set_size(r0_size_ * UnitSizeInBytes(outputs[0]->dtype_id()));
+    outputs[1]->set_size(r1_size_ * UnitSizeInBytes(outputs[1]->dtype_id()));
 
     return;
   }

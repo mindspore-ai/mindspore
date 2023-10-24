@@ -159,7 +159,9 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     std::vector<ShapeVector> shapes = {
       {SizeToLong(x1_dense_shape_host_.size())},                              // dense shape
       {SizeToLong(y_batch_pointer_host_.size())},                             // batch pointer
@@ -168,7 +170,9 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // values
     };
     for (size_t i = 0; i < outputs_.size(); ++i) {
-      outputs_[i]->SetShapeVector(shapes[i]);
+      outputs[i]->SetShapeVector(shapes[i]);
+      outputs[i]->set_size(LongToSize(std::accumulate(
+        shapes[i].begin(), shapes[i].end(), UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
     }
   }
 

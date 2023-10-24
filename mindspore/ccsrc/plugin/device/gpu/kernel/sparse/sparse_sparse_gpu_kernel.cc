@@ -171,13 +171,18 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   return true;
 }
 
-void SparseSparseGpuKernelMod::SyncOutputShape() {
+void SparseSparseGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseSparseOperators, cudaStreamSynchronize failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int64_t>(rank_)};
   std::vector<int64_t> sum_values_shape = {real_output_size_};
-  outputs_[kSparseSparseIndex0]->SetShapeVector(sum_indices_shape);
-  outputs_[kSparseSparseIndex1]->SetShapeVector(sum_values_shape);
+  outputs[kSparseSparseIndex0]->SetShapeVector(sum_indices_shape);
+  outputs[kSparseSparseIndex1]->SetShapeVector(sum_values_shape);
+  outputs[kSparseSparseIndex0]->set_size(LongToSize(real_output_size_ * rank_) *
+                                         UnitSizeInBytes(outputs[kSparseSparseIndex0]->dtype_id()));
+  outputs[kSparseSparseIndex1]->set_size(LongToSize(real_output_size_) *
+                                         UnitSizeInBytes(outputs[kSparseSparseIndex1]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, SparseSparseGpuKernelMod::SparseSparseFunc>> SparseSparseGpuKernelMod::func_list_ = {

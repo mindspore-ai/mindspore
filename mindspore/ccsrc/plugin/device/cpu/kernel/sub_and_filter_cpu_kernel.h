@@ -55,7 +55,10 @@ class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
   void ResetResource() noexcept {
     output_size_list_.clear();
     workspace_size_list_.clear();

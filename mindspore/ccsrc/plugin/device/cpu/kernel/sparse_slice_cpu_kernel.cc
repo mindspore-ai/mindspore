@@ -115,12 +115,15 @@ int SparseSliceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return ret;
 }
 
-void SparseSliceCpuKernelMod::SyncOutputShape() {
-  outputs_[0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
-  outputs_[1]->SetShapeVector(ShapeVector({slice_nnz_}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+void SparseSliceCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({slice_nnz_}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({rank_}));
+  outputs[kIndex0]->set_size(LongToSize(slice_nnz_ * rank_) * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(slice_nnz_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(rank_) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
-
 template <typename T>
 bool SparseSliceCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                            const std::vector<kernel::KernelTensor *> &workspace,

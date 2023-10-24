@@ -255,10 +255,20 @@ void DenseToSparseSetOperationCpuKernelMod::ApplySetOperation(const std::set<T> 
   }
 }
 
-void DenseToSparseSetOperationCpuKernelMod::SyncOutputShape() {
-  outputs_[kOutput1]->SetShapeVector(infer_shape_[kOutput1]);
-  outputs_[kOutput2]->SetShapeVector(infer_shape_[kOutput2]);
-  outputs_[kOutput3]->SetShapeVector(infer_shape_[kOutput3]);
+void DenseToSparseSetOperationCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                     const std::vector<KernelTensor *> &outputs) {
+  outputs[kOutput1]->SetShapeVector(infer_shape_[kOutput1]);
+  outputs[kOutput2]->SetShapeVector(infer_shape_[kOutput2]);
+  outputs[kOutput3]->SetShapeVector(infer_shape_[kOutput3]);
+  outputs[kOutput1]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput1].begin(), infer_shape_[kOutput1].end(),
+                               UnitSizeInBytes(outputs[kOutput1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kOutput2]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput2].begin(), infer_shape_[kOutput2].end(),
+                               UnitSizeInBytes(outputs[kOutput2]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kOutput3]->set_size(
+    LongToSize(std::accumulate(infer_shape_[kOutput3].begin(), infer_shape_[kOutput3].end(),
+                               UnitSizeInBytes(outputs[kOutput3]->dtype_id()), std::multiplies<int64_t>())));
 }
 template <typename T>
 bool DenseToSparseSetOperationCpuKernelMod::OutputSparseTensor(const std::vector<kernel::KernelTensor *> &inputs,

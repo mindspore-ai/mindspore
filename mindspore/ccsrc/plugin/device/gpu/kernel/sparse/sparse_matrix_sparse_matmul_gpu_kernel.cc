@@ -429,7 +429,8 @@ bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<Kernel
   return true;
 }
 
-void SparseMatrixSparseMatMulGpuKernelMod::SyncOutputShape() {
+void SparseMatrixSparseMatMulGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
                                      "SparseMatrixSparseMatMul cudaStreamSynchronized failed");
   std::vector<int64_t> output2_shape = {
@@ -441,9 +442,12 @@ void SparseMatrixSparseMatMulGpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> output4_shape = {
     SizeToLong(C_nnz1),
   };
-  outputs_[kIndex2]->SetShapeVector(output2_shape);
-  outputs_[kIndex3]->SetShapeVector(output3_shape);
-  outputs_[kIndex4]->SetShapeVector(output4_shape);
+  outputs[kIndex2]->SetShapeVector(output2_shape);
+  outputs[kIndex3]->SetShapeVector(output3_shape);
+  outputs[kIndex4]->SetShapeVector(output4_shape);
+  outputs[kIndex2]->set_size(LongToSize(C_num_rows1) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+  outputs[kIndex3]->set_size(LongToSize(C_nnz1) * UnitSizeInBytes(outputs[kIndex3]->dtype_id()));
+  outputs[kIndex4]->set_size(LongToSize(C_nnz1) * UnitSizeInBytes(outputs[kIndex4]->dtype_id()));
 }
 
 template <typename T>

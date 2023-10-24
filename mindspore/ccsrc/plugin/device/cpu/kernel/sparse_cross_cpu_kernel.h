@@ -47,7 +47,9 @@ class SparseCrossCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
-  void SyncOutputShape();
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <bool HASHED_OUTPUT, typename T, typename S>

@@ -195,10 +195,12 @@ bool MaskedSelectGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   return true;
 }
 
-void MaskedSelectGpuKernelMod::SyncOutputShape() {
+void MaskedSelectGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "MaskedSelect cudaStreamSynchronize failed");
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_)};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, MaskedSelectGpuKernelMod::MaskedSelectFunc>> MaskedSelectGpuKernelMod::func_list_ = {

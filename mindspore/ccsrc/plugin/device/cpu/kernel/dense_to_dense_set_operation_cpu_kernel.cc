@@ -267,9 +267,13 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   return PopulateOutput<T>(inputs, outputs, group_shape, res_num, &res_sets_map);
 }
 
-void DenseToDenseSetOperationCpuKernelMod::SyncOutputShape() {
+void DenseToDenseSetOperationCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                    const std::vector<KernelTensor *> &outputs) {
   for (uint32_t i = 0; i < real_infer_shape_.size(); i++) {
-    outputs_[i]->SetShapeVector(real_infer_shape_[i]);
+    outputs[i]->SetShapeVector(real_infer_shape_[i]);
+    size_t out_ele = LongToSize(
+      std::accumulate(real_infer_shape_[i].begin(), real_infer_shape_[i].end(), 1, std::multiplies<int64_t>()));
+    outputs[i]->set_size(out_ele * UnitSizeInBytes(outputs[i]->dtype_id()));
   }
 }
 

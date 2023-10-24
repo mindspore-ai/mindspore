@@ -202,13 +202,26 @@ bool SparseFillEmptyRowsGpuKernelMod::LaunchKernel(const std::vector<KernelTenso
   return true;
 }
 
-void SparseFillEmptyRowsGpuKernelMod::SyncOutputShape() {
+void SparseFillEmptyRowsGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_indice_shape = {SizeToLong(real_output_size_), 2};
-  outputs_[kIndex0]->SetShapeVector(new_output_indice_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_indice_shape);
   std::vector<int64_t> new_output_values_shape = {SizeToLong(real_output_size_)};
-  outputs_[kIndex1]->SetShapeVector(new_output_values_shape);
-  outputs_[kIndex2]->SetShapeVector(output_empty_row_indicator_shape_);
-  outputs_[kIndex3]->SetShapeVector(output_reverse_index_map_shape_);
+  outputs[kIndex1]->SetShapeVector(new_output_values_shape);
+  outputs[kIndex2]->SetShapeVector(output_empty_row_indicator_shape_);
+  outputs[kIndex3]->SetShapeVector(output_reverse_index_map_shape_);
+  outputs[kIndex0]->set_size(
+    LongToSize(std::accumulate(new_output_indice_shape.begin(), new_output_indice_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex1]->set_size(
+    LongToSize(std::accumulate(new_output_values_shape.begin(), new_output_values_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex2]->set_size(
+    LongToSize(std::accumulate(output_empty_row_indicator_shape_.begin(), output_empty_row_indicator_shape_.end(),
+                               UnitSizeInBytes(outputs[kIndex2]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kIndex3]->set_size(
+    LongToSize(std::accumulate(output_reverse_index_map_shape_.begin(), output_reverse_index_map_shape_.end(),
+                               UnitSizeInBytes(outputs[kIndex3]->dtype_id()), std::multiplies<int64_t>())));
 }
 std::vector<KernelAttr> SparseFillEmptyRowsGpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list;

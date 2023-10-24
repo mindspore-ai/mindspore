@@ -96,7 +96,8 @@ int UniqueGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   return KRET_OK;
 }
 
-void UniqueGpuKernelMod::SyncOutputShape() {
+void UniqueGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                  const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();
@@ -108,7 +109,9 @@ void UniqueGpuKernelMod::SyncOutputShape() {
                                  "Unique output info error.");
       shape[0] = dyn_out.shapes[0][0];
     }
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
+                                                    std::multiplies<int64_t>())));
   }
 }
 

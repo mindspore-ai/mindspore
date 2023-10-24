@@ -99,9 +99,11 @@ bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTens
   return true;
 }
 
-void MaskedSelectCpuKernelMod::SyncOutputShape() {
+void MaskedSelectCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_)};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, MaskedSelectCpuKernelMod::MaskedSelectFunc>> MaskedSelectCpuKernelMod::func_list_ = {

@@ -169,13 +169,17 @@ int UniqueConsecutiveGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   return 0;
 }
 
-void UniqueConsecutiveGpuKernelMod::SyncOutputShape() {
+void UniqueConsecutiveGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   for (size_t i = 0; i < output_num; ++i) {
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end()));
+    outputs[i]->set_size(
+      LongToSize(std::accumulate(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end(),
+                                 UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
   }
 }
 

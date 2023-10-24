@@ -44,7 +44,9 @@ class SparseSliceCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); };
-  void SyncOutputShape();
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   template <typename T>

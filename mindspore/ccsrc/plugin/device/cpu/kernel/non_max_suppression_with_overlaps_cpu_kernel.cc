@@ -118,9 +118,11 @@ bool NonMaxSuppressionWithOverlapsCpuKernelMod::Launch(const std::vector<kernel:
   return true;
 }
 
-void NonMaxSuppressionWithOverlapsCpuKernelMod::SyncOutputShape() {
+void NonMaxSuppressionWithOverlapsCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                         const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> new_output_shape = {real_output_size_};
-  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->SetShapeVector(new_output_shape);
+  outputs[kIndex0]->set_size(real_output_size_ * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
 }
 
 std::vector<KernelAttr> NonMaxSuppressionWithOverlapsCpuKernelMod::GetOpSupport() {

@@ -43,12 +43,15 @@ class NormalizeTupleIndexCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     if (output_sizes_.empty()) {
-      outputs_[0]->SetShapeVector({});
+      outputs[0]->SetShapeVector({});
+      outputs[0]->set_size(0);
     } else {
-      outputs_[0]->SetShapeVector({SizeToLong(output_sizes_[0])});
+      outputs[0]->SetShapeVector({SizeToLong(output_sizes_[0])});
+      outputs[0]->set_size(output_sizes_[0] * UnitSizeInBytes(outputs[0]->dtype_id()));
     }
   }
 

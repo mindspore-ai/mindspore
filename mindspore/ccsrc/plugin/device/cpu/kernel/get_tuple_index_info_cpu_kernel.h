@@ -20,6 +20,7 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -42,15 +43,23 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     for (size_t i = 0; i < out_shapes_.size(); i++) {
       const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
       if (i == 4) {
-        outputs_[i]->SetShapeVector(out_shapes_[i]);
+        outputs[i]->SetShapeVector(out_shapes_[i]);
+        outputs[i]->set_size(
+          LongToSize(std::accumulate(out_shapes_[i].begin(), out_shapes_[i].end(),
+                                     UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
+
       } else if (out_size != 0) {
-        outputs_[i]->SetShapeVector({SizeToLong(out_shapes_[i].size())});
+        outputs[i]->SetShapeVector({SizeToLong(out_shapes_[i].size())});
+        outputs[i]->set_size(out_shapes_[i].size() * UnitSizeInBytes(outputs[i]->dtype_id()));
       } else {
-        outputs_[i]->SetShapeVector({});
+        outputs[i]->SetShapeVector({});
+        outputs[i]->set_size(0);
       }
     }
   }

@@ -176,21 +176,30 @@ bool CTCGreedyDecoderGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   return true;
 }
 
-void CTCGreedyDecoderGpuKernelMod::SyncOutputShape() {
+void CTCGreedyDecoderGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
 
   std::vector<int64_t> indices_shape = outputs_[kIndex0]->GetShapeVector();
   indices_shape[kIndex0] = element_cnt_;
-  outputs_[kIndex0]->SetShapeVector(std::vector<int64_t>(indices_shape.begin(), indices_shape.end()));
+  outputs[kIndex0]->SetShapeVector(std::vector<int64_t>(indices_shape.begin(), indices_shape.end()));
+  outputs[kIndex0]->set_size(
+    LongToSize(std::accumulate(indices_shape.begin(), indices_shape.end(),
+                               UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
 
   std::vector<int64_t> values_shape = outputs_[kIndex1]->GetShapeVector();
   values_shape[kIndex0] = element_cnt_;
-  outputs_[kIndex1]->SetShapeVector(std::vector<int64_t>(values_shape.begin(), values_shape.end()));
+  outputs[kIndex1]->SetShapeVector(std::vector<int64_t>(values_shape.begin(), values_shape.end()));
+  outputs[kIndex1]->set_size(
+    LongToSize(std::accumulate(values_shape.begin(), values_shape.end(), UnitSizeInBytes(outputs[kIndex1]->dtype_id()),
+                               std::multiplies<int64_t>())));
 
   std::vector<int64_t> log_shape = outputs_[kIndex3]->GetShapeVector();
   log_shape[kIndex0] = inputs_x_shape_[1];
-  outputs_[kIndex3]->SetShapeVector(std::vector<int64_t>(log_shape.begin(), log_shape.end()));
+  outputs[kIndex3]->SetShapeVector(std::vector<int64_t>(log_shape.begin(), log_shape.end()));
+  outputs[kIndex3]->set_size(LongToSize(std::accumulate(
+    log_shape.begin(), log_shape.end(), UnitSizeInBytes(outputs[kIndex3]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<std::pair<KernelAttr, CTCGreedyDecoderGpuKernelMod::CTCGreedyDecoderFunc>>

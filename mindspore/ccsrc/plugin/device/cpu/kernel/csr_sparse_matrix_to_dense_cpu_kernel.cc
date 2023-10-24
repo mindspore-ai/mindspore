@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/csr_sparse_matrix_to_dense_cpu_kernel.h"
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -111,7 +112,12 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::Kernel
   return true;
 }
 
-void CSRSparseMatrixToDenseCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
+void CSRSparseMatrixToDenseCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                  const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(y_dims_);
+  outputs[kIndex0]->set_size(LongToSize(std::accumulate(
+    y_dims_.begin(), y_dims_.end(), UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+}
 
 template <typename indiceT, typename valueT>
 void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,

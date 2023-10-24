@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <map>
 #include <utility>
+#include <functional>
 
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/non_max_suppression_with_overlaps_impl.cuh"
@@ -195,13 +196,16 @@ bool NMSWithOverlapsFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor
   return true;
 }
 
-void NMSWithOverlapsFwdGpuKernelMod::SyncOutputShape() {
+void NMSWithOverlapsFwdGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
 
   std::vector<int64_t> shape = outputs_[kIndex0]->GetShapeVector();
   shape[kIndex0] = num_output_;
-  outputs_[kIndex0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  outputs[kIndex0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  outputs[kIndex0]->set_size(LongToSize(std::accumulate(
+    shape.begin(), shape.end(), UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<std::pair<KernelAttr, NMSWithOverlapsFwdGpuKernelMod::NMSWithOverlapsFunc>>

@@ -101,9 +101,12 @@ int MapTensorGetGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
   return KRET_OK;
 }
 
-void MapTensorGetGradCpuKernelMod::SyncOutputShape() {
+void MapTensorGetGradCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                            const std::vector<KernelTensor *> &outputs) {
   MS_EXCEPTION_IF_CHECK_FAIL(outputs_.size() == 1, "The outputs number of kernel MapTensorGetGrad should be 1");
-  outputs_[0]->SetShapeVector(value_dims_);
+  outputs[0]->SetShapeVector(value_dims_);
+  outputs[0]->set_size(LongToSize(std::accumulate(
+    value_dims_.begin(), value_dims_.end(), UnitSizeInBytes(outputs[0]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 template <typename KeyType>

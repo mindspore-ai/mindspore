@@ -129,12 +129,15 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     // required synchronize for UpdateOp
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                        "cudaStreamSynchronize failed");
     std::vector<int64_t> output_shape = {output_shape_};
-    outputs_[0]->SetShapeVector(output_shape);
+    outputs[0]->SetShapeVector(output_shape);
+    outputs[0]->set_size(LongToSize(output_shape_) * UnitSizeInBytes(outputs[0]->dtype_id()));
   }
 
  private:

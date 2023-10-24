@@ -117,6 +117,15 @@ std::vector<size_t> ShapeCalcCpuKernelMod::GetLaunchIgnoredInputAddressIdx() con
   return ignored_idx;
 }
 
+void ShapeCalcCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
+  for (size_t i = 0; i < outs_shape_.size(); ++i) {
+    ShapeVector shape{static_cast<int64_t>(outs_shape_[i].size())};
+    outputs[i]->SetShapeVector(shape);
+    outputs[i]->set_size(outs_shape_[i].size() * UnitSizeInBytes(outputs[i]->dtype_id()));
+  }
+}
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ShapeCalc, ShapeCalcCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

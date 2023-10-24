@@ -115,16 +115,22 @@ bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<Kerne
   return true;
 }
 
-void CombinedNonMaxSuppressionGpuKernelMod::SyncOutputShape() {
+void CombinedNonMaxSuppressionGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cudaStreamSynchronized failed");
   std::vector<int64_t> shape0 = {batch_size_, per_detections_, DimSize4};
   std::vector<int64_t> shape1 = {batch_size_, per_detections_};
   std::vector<int64_t> shape2 = {batch_size_, per_detections_};
   std::vector<int64_t> shape3 = {batch_size_};
-  outputs_[kIndex0]->SetShapeVector(shape0);
-  outputs_[kIndex1]->SetShapeVector(shape1);
-  outputs_[kIndex2]->SetShapeVector(shape2);
-  outputs_[kIndex3]->SetShapeVector(shape3);
+  outputs[kIndex0]->SetShapeVector(shape0);
+  outputs[kIndex1]->SetShapeVector(shape1);
+  outputs[kIndex2]->SetShapeVector(shape2);
+  outputs[kIndex3]->SetShapeVector(shape3);
+  outputs[kIndex0]->set_size(LongToSize(batch_size_ * per_detections_ * DimSize4) *
+                             UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(batch_size_ * per_detections_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(batch_size_ * per_detections_) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+  outputs[kIndex3]->set_size(LongToSize(batch_size_) * UnitSizeInBytes(outputs[kIndex3]->dtype_id()));
 }
 
 std::vector<std::pair<KernelAttr, CombinedNonMaxSuppressionGpuKernelMod::CombinedNonMaxSuppressionLaunchFunc>>

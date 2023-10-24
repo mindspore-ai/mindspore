@@ -19,6 +19,7 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "mindspore/core/ops/tile_size.h"
 #include "plugin/factory/ms_factory.h"
@@ -42,9 +43,14 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     for (size_t i = 0; i < out_shapes_.size(); i++) {
-      outputs_[i]->SetShapeVector(out_shapes_[i]);
+      outputs[i]->SetShapeVector(out_shapes_[i]);
+      outputs[i]->set_size(
+        LongToSize(std::accumulate(out_shapes_[i].begin(), out_shapes_[i].end(),
+                                   UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));
     }
   }
 

@@ -198,10 +198,12 @@ bool MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
   return true;
 }
 
-void MapCacheIdxCpuKernelMod::SyncOutputShape() {
+void MapCacheIdxCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_shape = {SizeToLong(miss_count_)};
   for (size_t i = 1; i < outputs_size_; i++) {
-    outputs_[i]->SetShapeVector(out_shape);
+    outputs[i]->SetShapeVector(out_shape);
+    outputs[i]->set_size(miss_count_ * UnitSizeInBytes(outputs[i]->dtype_id()));
   }
 }
 

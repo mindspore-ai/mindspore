@@ -191,12 +191,17 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-void SparseSplitGpuKernelMod::SyncOutputShape() {
+void SparseSplitGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSplit cudaStreamSynchronized failed");
   for (size_t i = 0; i < num_split; i++) {
-    outputs_[i]->SetShapeVector(ShapeVector({h_blocks[i], Kindex2}));                                  // indices
-    outputs_[i + num_split]->SetShapeVector(ShapeVector({h_blocks[i]}));                               // value
-    outputs_[i + num_split * Kindex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));  // shape
+    outputs[i]->SetShapeVector(ShapeVector({h_blocks[i], Kindex2}));                                  // indices
+    outputs[i + num_split]->SetShapeVector(ShapeVector({h_blocks[i]}));                               // value
+    outputs[i + num_split * Kindex2]->SetShapeVector(ShapeVector({static_cast<int64_t>(num_dim_)}));  // shape
+    outputs[i]->set_size(LongToSize(h_blocks[i] * Kindex2) * UnitSizeInBytes(outputs[i]->dtype_id()));
+    outputs[i + num_split]->set_size(LongToSize(h_blocks[i]) * UnitSizeInBytes(outputs[i + num_split]->dtype_id()));
+    outputs[i + num_split * Kindex2]->set_size(num_dim_ *
+                                               UnitSizeInBytes(outputs[i + num_split * Kindex2]->dtype_id()));
   }
 }
 

@@ -176,7 +176,8 @@ int ListDiffGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return KRET_OK;
 }
 
-void ListDiffGpuKernelMod::SyncOutputShape() {
+void ListDiffGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();
@@ -185,7 +186,9 @@ void ListDiffGpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> shape = outputs_[kIndex0]->GetShapeVector();
   shape[kIndex0] = num_out;
   for (size_t i = 0; i < output_num; ++i) {
-    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+    outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),
+                                                    std::multiplies<int64_t>())));
   }
 }
 

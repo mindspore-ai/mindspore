@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/fractional_avg_pool_grad_cpu_kernel.h"
 #include <map>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -138,7 +139,12 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   return true;
 }
 
-void FractionalAvgPoolGradCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(out_shape_); }
+void FractionalAvgPoolGradCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                                 const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(out_shape_);
+  outputs[kIndex0]->set_size(LongToSize(std::accumulate(
+    out_shape_.begin(), out_shape_.end(), UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
+}
 
 template <typename T>
 void FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(

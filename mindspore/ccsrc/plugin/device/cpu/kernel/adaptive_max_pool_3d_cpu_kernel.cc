@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/adaptive_max_pool_3d_cpu_kernel.h"
 
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace {
@@ -40,7 +41,6 @@ bool AdaptiveMaxPool3DCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
@@ -73,9 +73,14 @@ int AdaptiveMaxPool3DCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   return KRET_OK;
 }
 
-void AdaptiveMaxPool3DCpuKernelMod::SyncOutputShape() {
-  outputs_[kIndex0]->SetShapeVector(output_shape_);
-  outputs_[kIndex1]->SetShapeVector(output_shape_);
+void AdaptiveMaxPool3DCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                             const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(output_shape_);
+  outputs[kIndex1]->SetShapeVector(output_shape_);
+  size_t out_ele =
+    LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kIndex0]->set_size(out_ele * UnitSizeInBytes(dtype_));
+  outputs[kIndex0]->set_size(out_ele * sizeof(int));
 }
 
 std::vector<KernelAttr> AdaptiveMaxPool3DCpuKernelMod::GetOpSupport() {

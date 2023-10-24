@@ -249,15 +249,25 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
       &SparseAddGpuKernelMod::LaunchKernel<index_type, value_type, thr_type>                                        \
   }
 
-void SparseAddGpuKernelMod::SyncOutputShape() {
+void SparseAddGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseAdd cudaStreamSynchronized failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int32_t>(rank_)};
   std::vector<int64_t> sum_values_shape = {real_output_size_};
   std::vector<int64_t> dense_shape(dense_shape_.begin(), dense_shape_.end());
-  outputs_[kSparseAddIndex0]->SetShapeVector(sum_indices_shape);
-  outputs_[kSparseAddIndex1]->SetShapeVector(sum_values_shape);
-  outputs_[kSparseAddIndex2]->SetShapeVector(dense_shape);
+  outputs[kSparseAddIndex0]->SetShapeVector(sum_indices_shape);
+  outputs[kSparseAddIndex1]->SetShapeVector(sum_values_shape);
+  outputs[kSparseAddIndex2]->SetShapeVector(dense_shape);
+  outputs[kSparseAddIndex0]->set_size(
+    LongToSize(std::accumulate(sum_indices_shape.begin(), sum_indices_shape.end(),
+                               UnitSizeInBytes(outputs[kSparseAddIndex0]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kSparseAddIndex1]->set_size(
+    LongToSize(std::accumulate(sum_values_shape.begin(), sum_values_shape.end(),
+                               UnitSizeInBytes(outputs[kSparseAddIndex1]->dtype_id()), std::multiplies<int64_t>())));
+  outputs[kSparseAddIndex2]->set_size(
+    LongToSize(std::accumulate(dense_shape.begin(), dense_shape.end(),
+                               UnitSizeInBytes(outputs[kSparseAddIndex2]->dtype_id()), std::multiplies<int64_t>())));
 }
 
 std::vector<std::pair<KernelAttr, SparseAddGpuKernelMod::SparseAddLaunchFunc>> SparseAddGpuKernelMod::func_list_ = {

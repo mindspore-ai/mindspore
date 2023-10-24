@@ -124,14 +124,20 @@ int SparseAddGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return KRET_OK;
 }
 
-void SparseAddGradGpuKernelMod::SyncOutputShape() {
+void SparseAddGradGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                         const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseAddGrad, cudaStreamSynchronized failed");
   std::vector<int64_t> dx1_shape = {dx1_size_};
   std::vector<int64_t> dx2_shape = {dx2_size_};
 
-  outputs_[kSparseAddGradIndex0]->SetShapeVector(dx1_shape);
-  outputs_[kSparseAddGradIndex1]->SetShapeVector(dx2_shape);
+  outputs[kSparseAddGradIndex0]->SetShapeVector(dx1_shape);
+  outputs[kSparseAddGradIndex1]->SetShapeVector(dx2_shape);
+
+  outputs[kSparseAddGradIndex0]->set_size(LongToSize(dx1_size_) *
+                                          UnitSizeInBytes(outputs[kSparseAddGradIndex0]->dtype_id()));
+  outputs[kSparseAddGradIndex1]->set_size(LongToSize(dx1_size_) *
+                                          UnitSizeInBytes(outputs[kSparseAddGradIndex1]->dtype_id()));
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, SparseAddGrad,

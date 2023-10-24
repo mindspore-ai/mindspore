@@ -225,11 +225,16 @@ int SparseCrossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   return KRET_OK;
 }
 
-void SparseCrossCpuKernelMod::SyncOutputShape() {
+void SparseCrossCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                       const std::vector<KernelTensor *> &outputs) {
   int64_t kSparseTensorRank = 2;
-  outputs_[kIndex0]->SetShapeVector(ShapeVector({indices_row_, kSparseTensorRank}));
-  outputs_[kIndex1]->SetShapeVector(ShapeVector({indices_row_}));
-  outputs_[kIndex2]->SetShapeVector(ShapeVector({kSparseTensorRank}));
+  outputs[kIndex0]->SetShapeVector(ShapeVector({indices_row_, kSparseTensorRank}));
+  outputs[kIndex1]->SetShapeVector(ShapeVector({indices_row_}));
+  outputs[kIndex2]->SetShapeVector(ShapeVector({kSparseTensorRank}));
+  outputs[kIndex0]->set_size(LongToSize(indices_row_ * kSparseTensorRank) *
+                             UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->set_size(LongToSize(indices_row_) * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->set_size(LongToSize(kSparseTensorRank) * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
 }
 
 void ExtractFeatureData(const std::vector<std::vector<int64_t>> &indices_list_in, int64_t batch_size,

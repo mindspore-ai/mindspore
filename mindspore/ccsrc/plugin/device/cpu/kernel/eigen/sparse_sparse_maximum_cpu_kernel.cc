@@ -289,17 +289,18 @@ bool SparseSparseMaximumCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
   return true;
 }
 
-void SparseSparseMaximumCpuKernelMod::SyncOutputShape() {
+void SparseSparseMaximumCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_indcie_shape;
   ShapeVector out_values_shape;
   out_indcie_shape.push_back(sum_nnz_);
   out_indcie_shape.push_back(num_dims_);
   out_values_shape.push_back(sum_nnz_);
   // Set output shape and dtype
-  outputs_[0]->SetShapeVector(out_indcie_shape);
-  outputs_[0]->SetDtype(TypeIdToType(itype_));
-  outputs_[1]->SetShapeVector(out_values_shape);
-  outputs_[1]->SetDtype(TypeIdToType(dtype_));
+  outputs[0]->SetShapeVector(out_indcie_shape);
+  outputs[0]->set_size(LongToSize(sum_nnz_ * num_dims_) * UnitSizeInBytes(itype_));
+  outputs[1]->SetShapeVector(out_values_shape);
+  outputs[1]->set_size(LongToSize(sum_nnz_) * UnitSizeInBytes(dtype_));
 }
 
 std::vector<KernelAttr> SparseSparseMaximumCpuKernelMod::GetOpSupport() {

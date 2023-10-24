@@ -90,12 +90,13 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &i
   out_size_ = count;
 }
 
-void SubAndFilterCpuKernelMod::SyncOutputShape() {
+void SubAndFilterCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                        const std::vector<KernelTensor *> &outputs) {
   ShapeVector out_shape = {out_size_};
-  outputs_[0]->SetShapeVector(out_shape);
-  outputs_[0]->SetDtype(TypeIdToType(x_dtype_));
-  outputs_[1]->SetShapeVector(out_shape);
-  outputs_[1]->SetDtype(TypeIdToType(x_dtype_));
+  outputs[0]->SetShapeVector(out_shape);
+  outputs[0]->set_size(LongToSize(out_size_) * UnitSizeInBytes(x_dtype_));
+  outputs[1]->SetShapeVector(out_shape);
+  outputs[1]->set_size(LongToSize(out_size_) * UnitSizeInBytes(x_dtype_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SubAndFilter, SubAndFilterCpuKernelMod);

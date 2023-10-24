@@ -184,15 +184,17 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
     };
     return support_list;
   }
-
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     ShapeVector out_shape;
     if (output_sizes_.empty()) {
       (void)out_shape.emplace_back(SizeToLong(0));
     } else {
       (void)out_shape.emplace_back(SizeToLong(output_sizes_[0]));
     }
-    outputs_[0]->SetShapeVector(out_shape);
+    outputs[0]->SetShapeVector(out_shape);
+    outputs[0]->set_size(LongToSize(out_shape[0]) * UnitSizeInBytes(outputs[0]->dtype_id()));
   }
 
  protected:

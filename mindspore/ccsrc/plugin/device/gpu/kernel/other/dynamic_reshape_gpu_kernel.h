@@ -51,9 +51,14 @@ class DynamicReshapeKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncOutputShape() override {
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {
     MS_LOG(DEBUG) << "Run PostExecute for DynamicReshape, real output shape is " << output_shape_;
-    outputs_[kIndex0]->SetShapeVector(output_shape_);
+    outputs[kIndex0]->SetShapeVector(output_shape_);
+    outputs[kIndex0]->set_size(
+      LongToSize(std::accumulate(output_shape_.begin(), output_shape_.end(),
+                                 UnitSizeInBytes(outputs[kIndex0]->dtype_id()), std::multiplies<int64_t>())));
   }
   std::vector<KernelAttr> GetOpSupport() override;
 

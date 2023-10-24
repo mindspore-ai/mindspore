@@ -38,7 +38,10 @@ class NonMaxSuppressionWithOverlapsCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override;
 
  protected:
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

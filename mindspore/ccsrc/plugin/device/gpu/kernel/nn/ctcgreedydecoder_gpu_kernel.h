@@ -55,7 +55,10 @@ class CTCGreedyDecoderGpuKernelMod : public NativeGpuKernelMod {
     CTCGreedyDecoderGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
     const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
   static std::vector<std::pair<KernelAttr, CTCGreedyDecoderFunc>> func_list_;
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
   CTCGreedyDecoderFunc kernel_func_;
 
  private:

@@ -239,15 +239,16 @@ std::vector<KernelAttr> ListDiffCPUKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void ListDiffCPUKernelMod::SyncOutputShape() {
+void ListDiffCPUKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                    const std::vector<KernelTensor *> &outputs) {
   // update out
   ShapeVector out_shape_ = {out_size_};
   ShapeVector idx_shape_ = {out_size_};
   // set output shape and dtype
-  outputs_[0]->SetShapeVector(out_shape_);
-  outputs_[0]->SetDtype(TypeIdToType(out_type_));
-  outputs_[1]->SetShapeVector(idx_shape_);
-  outputs_[1]->SetDtype(TypeIdToType(idx_type_));
+  outputs[0]->SetShapeVector(out_shape_);
+  outputs[0]->set_size(out_size_ * UnitSizeInBytes(out_type_));
+  outputs[1]->SetShapeVector(idx_shape_);
+  outputs[1]->set_size(out_size_ * UnitSizeInBytes(idx_type_));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ListDiff, ListDiffCPUKernelMod);

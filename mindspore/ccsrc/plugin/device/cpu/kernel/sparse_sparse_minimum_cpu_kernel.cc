@@ -180,16 +180,17 @@ void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::Ker
   }
 }
 
-void SparseSparseMinimumCpuKernelMod::SyncOutputShape() {
+void SparseSparseMinimumCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   std::vector<int64_t> dims;
   (void)dims.emplace_back(y_nnz_);
   (void)dims.emplace_back(num_dims_);
   std::vector<int64_t> dim;
   (void)dim.emplace_back(y_nnz_);
-  outputs_[0]->SetShapeVector(dims);
-  outputs_[1]->SetShapeVector(dim);
-  outputs_[0]->SetDtype(TypeIdToType(itype_));
-  outputs_[1]->SetDtype(TypeIdToType(dtype_));
+  outputs[0]->SetShapeVector(dims);
+  outputs[1]->SetShapeVector(dim);
+  outputs[0]->set_size(LongToSize(y_nnz_ * num_dims_) * UnitSizeInBytes(itype_));
+  outputs[1]->set_size(LongToSize(y_nnz_) * UnitSizeInBytes(dtype_));
 }
 
 #define ADD_KERNEL(t1, t2, t3, t4, t5, t6, t7, t8) \

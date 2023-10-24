@@ -63,7 +63,9 @@ class NMSWithOverlapsFwdGpuKernelMod : public NativeGpuKernelMod {
     const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &, void *)>;
   NMSWithOverlapsFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NMSWithOverlapsFunc>> func_list_;
-  void SyncOutputShape() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
 
  private:
   void ResetResource();
