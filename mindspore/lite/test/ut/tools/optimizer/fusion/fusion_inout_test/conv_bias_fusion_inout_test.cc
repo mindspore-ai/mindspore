@@ -19,7 +19,7 @@
 #include "tools/optimizer/fusion/conv_biasadd_fusion.h"
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/conv_fusion_inout_test.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "ops/bias_add.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 class ConvBiasFusionInoutTest : public ConvFusionInoutTest {
