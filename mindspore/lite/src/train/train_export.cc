@@ -154,6 +154,8 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
 std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(
   const mindspore::lite::Tensor *tensor, const std::vector<mindspore::lite::Tensor *> const_folded_output,
   schema::Tensor *scTensor, int preferred_dim, const int tensor_quant_type) {
+  MS_CHECK_TRUE_RET(tensor != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(scTensor != nullptr, nullptr);
   auto tensorT = std::make_unique<schema::TensorT>();
   bool const_fold = false;
   if (quant_type_ == QT_NONE && !const_folded_output.empty() &&
