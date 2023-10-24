@@ -713,12 +713,13 @@ class GraphSplitByPattern:
             for i in range(len(areas) - 1):
                 dom = areas[i]
                 for a in areas[i + 1:]:
-                    if dom.check_acyclic(a) and a.check_acyclic(dom) and selector(dom, a):
-                        if self.limit_area_size(dom, [a], 64) and dom.fuse_confirm(a):
-                            dom.fuse(a)
-                            self.set_area_map(a.ops, dom)
-                            self.areas.remove(a)
-                            return True
+                    can_fuse = dom.check_acyclic(a) and a.check_acyclic(dom) and selector(dom, a) \
+                        and self.limit_area_size(dom, [a], 64) and dom.fuse_confirm(a)
+                    if can_fuse:
+                        dom.fuse(a)
+                        self.set_area_map(a.ops, dom)
+                        self.areas.remove(a)
+                        return True
             return False
 
         def _update_areas(areas, from_op):

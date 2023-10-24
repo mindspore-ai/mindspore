@@ -237,12 +237,13 @@ class TupleNodeFormatter : public opt::Pass {
     MS_EXCEPTION_IF_NULL(fg);
     auto node_abs = node->abstract()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(node_abs);
-    auto output_num = SizeToUlong(node_abs->size());
+    auto output_num = node_abs->size();
     AnfNodePtrList mt_inputs{NewValueNode(prim::kPrimMakeTuple)};
     mt_inputs.reserve(output_num + 1);
-    for (uint64_t i = 0; i < output_num; i++) {
-      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(MakeValue((int64_t)i))};
-      gt_inputs.back()->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(i)));
+    for (size_t i = 0; i < output_num; i++) {
+      auto idx = MakeValue(SizeToLong(i));
+      AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(idx)};
+      gt_inputs.back()->set_abstract(idx->ToAbstract());
       auto &gt = mt_inputs.emplace_back(fg->NewCNode(gt_inputs));
       gt->set_abstract(node_abs->elements()[i]);
       Callback::Instance()->SetEmptyKernelInfo(gt);
