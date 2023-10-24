@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#endif
 #include "include/fork_utils.h"
 
 namespace mindspore {
@@ -32,12 +27,6 @@ void ForkUtilsBeforeFork() {
   if (enable_flag.empty() || enable_flag == "0") {
     return;
   }
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-  ForkUtils::GetInstance().fork_valid_flag = (getpid() == syscall(SYS_gettid));
-#endif
-  if (!ForkUtils::GetInstance().fork_valid_flag) {
-    return;
-  }
   FORK_UTILS_LOG("Fork event occurred, function called in parent process before fork.");
   for (auto &iter : ForkUtils::GetInstance().GetCallbacks()) {
     iter.before_fork_func();
@@ -50,9 +39,6 @@ void ForkUtilsParentAtFork() {
   if (enable_flag.empty() || enable_flag == "0") {
     return;
   }
-  if (!ForkUtils::GetInstance().fork_valid_flag) {
-    return;
-  }
   FORK_UTILS_LOG("Fork event occurred, function called in parent process after fork.");
   for (auto &iter : ForkUtils::GetInstance().GetCallbacks()) {
     iter.parent_atfork_func();
@@ -63,9 +49,6 @@ void ForkUtilsParentAtFork() {
 void ForkUtilsChildAtFork() {
   std::string enable_flag = common::GetEnv("MS_ENABLE_FORK_UTILS");
   if (enable_flag.empty() || enable_flag == "0") {
-    return;
-  }
-  if (!ForkUtils::GetInstance().fork_valid_flag) {
     return;
   }
   FORK_UTILS_LOG("Fork event occurred, function called in child process after fork.");
