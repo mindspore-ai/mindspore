@@ -25,10 +25,11 @@
 
 namespace mindspore {
 struct LLMReq {
-  uint64_t req_id = 0;
+  int64_t req_id = -1;
   uint64_t prompt_length = 0;
   uint64_t prompt_cluster_id = 0;
   uint64_t decoder_cluster_id = 0;
+  int64_t prefix_id = -1;
 };
 
 struct LLMEngineStatus {
@@ -51,6 +52,8 @@ class MS_API LLMEngine {
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status CompleteRequest(const LLMReq &req);
   LLMEngineStatus FetchStatus();
+  Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs);
+  Status ReleasePromptPrefix(const LLMReq &req);
 
  private:
   std::shared_ptr<LLMEnginePluginBase> plugin_ = nullptr;

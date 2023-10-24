@@ -22,15 +22,46 @@
 #include <atomic>
 #include <map>
 #include "ge/ge_ir_build.h"
-#include "external/llm_engine_types.h"
-#include "common/ge_common/ge_inner_error_codes.h"
-
-namespace ge {
-GE_ERRORNO_COMMON(LLM_WAIT_PROC_TIMEOUT_LITE, 102, "wait to be processed failed!");
-GE_ERRORNO_COMMON(LLM_NOT_RECV_KV_CACHE_LITE, 103, "not receive kv cache!");
-}  // namespace ge
+#include "ge/ge_api_types.h"
 
 namespace llm {
+struct LLMEngineStatus {
+  uint64_t empty_max_prompt_kv;  // 全量集群可容纳的KV
+};
+class LLMReq {
+ public:
+  LLMReq() = default;
+  ~LLMReq() = default;
+
+  void SetReqId(const int64_t req_id) { req_id_ = req_id; }
+
+  int64_t GetReqId() const { return req_id_; }
+
+  void SetPromptLength(const uint64_t prompt_length) { prompt_length_ = prompt_length; }
+
+  uint64_t GetPromptLength() const { return prompt_length_; }
+
+  void SetPromptClusterId(const uint64_t prompt_cluster_id) { prompt_cluster_id_ = prompt_cluster_id; }
+
+  uint64_t GetPromptClusterId() const { return prompt_cluster_id_; }
+
+  void SetDecoderClusterId(const uint64_t decoder_cluster_id) { decoder_cluster_id_ = decoder_cluster_id; }
+
+  uint64_t GetDecoderClusterId() const { return decoder_cluster_id_; }
+
+  void SetPrefixId(const int64_t prefix_id) { prefix_id_ = prefix_id; }
+
+  int64_t GetPrefixId() const { return prefix_id_; }
+
+ private:
+  int64_t req_id_{-1L};
+  // 请求prompt的句子长度，做完padding的值， 用于申请prompt的KVCache
+  uint64_t prompt_length_{0UL};
+  uint64_t prompt_cluster_id_{0UL};  // in/out， runPrompt的输出， runecoder的输入
+  uint64_t decoder_cluster_id_{0UL};
+  int64_t prefix_id_{-1L};
+  int8_t reserved_[128];
+};
 class DecoderManager;
 class PromptManager;
 class LLMEngine {
@@ -39,17 +70,30 @@ class LLMEngine {
   ~LLMEngine();
   ge::Status LLMEngineInitialize(const std::vector<ge::ModelBufferData> &,
                                  const std::map<ge::AscendString, ge::AscendString> &);
-  static LLMEngineStatus fetchLLMEngineStatus();
+  static LLMEngineStatus FetchLLMEngineStatus();
   int64_t FetchLlmEngineQueueStatus();
-
+  // API2：execute prompt
   ge::Status RunPromptAsync(const LLMReq &, const std::vector<ge::Tensor> &, ge::RunAsyncCallback);
   ge::Status RunPrompt(const LLMReq &, const std::vector<ge::Tensor> &, std::vector<ge::Tensor> &);
 
+  // API3: Execute the Decoder calculation
+  // a. Assign an idle index for the request
+  // b. Fetch KVCache from the specified prompt cluster based on the request and write it to the corresponding idle
+  // index c. Perform Decoder computation and asynchronously return the calculation result
   ge::Status RunDecoderAsync(const LLMReq &, const std::vector<ge::Tensor> &, ge::RunAsyncCallback);
   ge::Status RunDecoder(const LLMReq &, const std::vector<ge::Tensor> &, std::vector<ge::Tensor> &);
 
+  // Externally notifies that the request has ended. If the request has already started execution, release the
+  // placeholders associated with incremental inference. If the request has not yet started execution, remove it from
+  // the queue.
   ge::Status LLMReqComplete(const LLMReq &);
   ge::Status LLMEngineFinalize();
+
+  // Preload prompt prefix model to generate kv cache
+  ge::Status PreloadPromptPrefix(const LLMReq &, const std::vector<ge::Tensor> &);
+
+  // Release kv cache of prompt prefix model
+  ge::Status ReleasePromptPrefix(const LLMReq &);
 
  private:
   std::shared_ptr<PromptManager> prompt_manager_;
