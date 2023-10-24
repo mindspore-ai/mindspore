@@ -92,11 +92,9 @@ STATUS ReshapeGatherReshapeFusionPass::DoFusion(
   auto &reshape2_node = graph->nodes.at(reshape2_index);
   MS_CHECK_TRUE_MSG(reshape2_node != nullptr, RET_NULL_PTR, "reshape2_node is nullptr");
   if (reshape1_node->inputIndex.size() != opt::kInputSizeTwo ||
-      reshape1_node->outputIndex.size() != opt::kOutputSizeOne ||
       reshape1_node->quantType == schema::QuantType_QUANT_ALL ||
       reshape1_node->quantType == schema::QuantType_QUANT_DYNAMIC ||
       reshape2_node->inputIndex.size() != opt::kInputSizeTwo ||
-      reshape2_node->outputIndex.size() != opt::kOutputSizeOne ||
       reshape2_node->quantType == schema::QuantType_QUANT_ALL ||
       reshape2_node->quantType == schema::QuantType_QUANT_DYNAMIC ||
       gather_node->quantType == schema::QuantType_QUANT_ALL ||
