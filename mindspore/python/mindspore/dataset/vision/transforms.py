@@ -144,14 +144,14 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -227,14 +227,14 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -373,14 +373,14 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -457,14 +457,14 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1159,14 +1159,14 @@ class Decode(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1908,14 +1908,14 @@ class Normalize(ImageTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -4182,14 +4182,14 @@ class Resize(ImageTensorOperation, PyTensorOperation):
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` , where ``Ascend`` refers to Ascend910B device. Default: ``CPU`` .
+                ``CPU`` . Default: ``CPU`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.
-            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+            ValueError: If `device_target` is not ``CPU`` .
 
         Supported Platforms:
-            ``CPU`` ``Ascend``
+            ``CPU``
 
         Examples:
             >>> import mindspore.dataset as ds
