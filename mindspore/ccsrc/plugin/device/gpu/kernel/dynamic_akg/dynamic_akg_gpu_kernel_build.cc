@@ -47,7 +47,7 @@ void DynamicAkgGpuKernelBuilder::SetKernelMod(const KernelPackPtr &kernel_pack,
     std::any_of(args.inputs.begin(), args.inputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); }) ||
     std::any_of(args.outputs.begin(), args.outputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); });
   kernel_mod_ptr->SetKernelDynamicStatus(is_dynamic_kernel);
-  kernel_mod_ptr->UpdateShapeList(args.inputs, args.outputs);
+  kernel_mod_ptr->Initialize();
   AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
 }
 
