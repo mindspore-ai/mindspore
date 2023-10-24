@@ -23,7 +23,6 @@
 #include "mindapi/base/types.h"
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
-#include "mindspore/core/ops/op_name.h"
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePromptFlashAttention = "PromptFlashAttention";
