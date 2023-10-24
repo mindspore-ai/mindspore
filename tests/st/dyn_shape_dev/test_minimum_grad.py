@@ -82,12 +82,47 @@ def test_minimum_grad_op_vmap(context_mode, data_type):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training 与master现象一致
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_minimum_grad_op_dynamic(context_mode):
+def test_minimum_grad_op_dynamic_shape(context_mode):
     """
     Feature: minimum_grad ops.
-    Description: test ops minimum_grad dynamic tensor input.
+    Description: test ops minimum_grad dynamic shape tensor input.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x1_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    x2_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    grads_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.minimum_grad)
+    test_cell.set_inputs(x1_dyn, x2_dyn, grads_dyn)
+    x1 = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    x2 = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
+    grads = ms.Tensor(np.array([1., 2., 3.]).astype(np.float32))
+    out = test_cell(x1, x2, grads)
+    expect_out = np.array([[1., 2., 0.], [0., 0., 3.]]).astype(np.float32)
+    np.testing.assert_allclose(out[0].asnumpy(), expect_out[0], rtol=1e-3)
+    np.testing.assert_allclose(out[1].asnumpy(), expect_out[1], rtol=1e-3)
+
+    x1_2 = ms.Tensor(np.array([3, 6, 2]).astype(np.float32))
+    x2_2 = ms.Tensor(np.array([7, 5, 9]).astype(np.float32))
+    grads_2 = ms.Tensor(np.array([3., 5., 2.]).astype(np.float32))
+    out_2 = test_cell(x1_2, x2_2, grads_2)
+    expect_out_2 = np.array([[3., 0., 2.], [0., 5., 0.]]).astype(np.float32)
+    np.testing.assert_allclose(out_2[0].asnumpy(), expect_out_2[0], rtol=1e-3)
+    np.testing.assert_allclose(out_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+# @pytest.mark.platform_arm_ascend_training 动态rank ge存在缺陷
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_minimum_grad_op_dynamic_rank(context_mode):
+    """
+    Feature: minimum_grad ops.
+    Description: test ops minimum_grad dynamic rank tensor input.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)

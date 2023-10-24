@@ -104,12 +104,41 @@ def test_minimum_op_vmap(context_mode, data_type):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.platform_arm_ascend_training 与master现象一致
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_minimum_op_dynamic(context_mode):
+def test_minimum_op_dynamic_shape(context_mode):
     """
     Feature: minimum ops.
-    Description: test ops minimum dynamic tensor input.
+    Description: test ops minimum dynamic shape tensor input.
+    Expectation: output the right result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(ops.auto_generate.minimum)
+    test_cell.set_inputs(x_dyn, y_dyn)
+    x = ms.Tensor(np.array([6, 1, 2]).astype(np.float32))
+    y = ms.Tensor(np.array([9, 2, 4]).astype(np.float32))
+    out = test_cell(x, y)
+    expect_out = np.array([6., 1., 2.]).astype(np.float32)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
+    x_2 = ms.Tensor(np.array([3, 8, 11]).astype(np.float32))
+    y_2 = ms.Tensor(np.array([6, 5, 7]).astype(np.float32))
+    out_2 = test_cell(x_2, y_2)
+    expect_out_2 = np.array([3., 5., 7.]).astype(np.float32)
+    np.testing.assert_allclose(out_2.asnumpy(), expect_out_2, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+# @pytest.mark.platform_arm_ascend_training 动态rank ge存在缺陷
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_minimum_op_dynamic_rank(context_mode):
+    """
+    Feature: minimum ops.
+    Description: test ops minimum dynamic rank tensor input.
     Expectation: output the right result.
     """
     ms.context.set_context(mode=context_mode)
