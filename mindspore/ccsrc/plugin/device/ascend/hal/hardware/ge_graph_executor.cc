@@ -1044,6 +1044,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       const auto &kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, real_index);
       MS_EXCEPTION_IF_NULL(kernel_tensor);
       kernel_tensor->SetShapeVector(actual_shapes);
+      MS_LOG(DEBUG) << "Update output[ " << i << "] shape: " << actual_shapes << " size: " << ge_outputs[i].GetSize();
     }
   }
   if (real_output_size != ge_outputs.size()) {
@@ -1218,6 +1219,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       std::vector<size_t> shape = Convert2SizeT(shapes);
       size_t type_size = GetTypeByte(TypeIdToType(host_type));
       memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
+      MS_LOG(DEBUG) << "Update input " << kv.first->DebugString() << " shape: " << shape << " size: " << memory_size;
     }
     (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});

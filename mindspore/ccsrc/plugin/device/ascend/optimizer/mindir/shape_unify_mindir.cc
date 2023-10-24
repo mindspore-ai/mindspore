@@ -40,9 +40,9 @@ namespace mindspore {
 namespace opt {
 
 const BaseRef ShapeUnifyMindIR::DefinePattern() const {
-  VarPtr Xs = std::make_shared<SeqVar>();
+  VarPtr x = std::make_shared<Var>();
   auto prim = std::make_shared<Primitive>(kShapeOpName);
-  return VectorRef({prim, Xs});
+  return VectorRef({prim, x});
 }
 
 const AnfNodePtr ShapeUnifyMindIR::Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const {
