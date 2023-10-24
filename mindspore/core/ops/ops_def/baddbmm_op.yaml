@@ -8,13 +8,16 @@ baddbmm:
     batch2:
       dtype: tensor
     beta:
-      dtype: float
-      init: 1.0
+      dtype: number
+      init: 1
     alpha:
-      dtype: float
-      init: 1.0
+      dtype: number
+      init: 1
   returns:
     output:
       dtype: tensor
   class:
     name: Baddbmm
+  pyboost: True
+
+

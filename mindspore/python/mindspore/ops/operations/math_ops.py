@@ -29,6 +29,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
+from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
                              ReduceMax, ReduceMin, ReduceProd, Betainc, Neg,
                              Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp,
                              Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
@@ -828,13 +829,6 @@ class BatchMatMul(Primitive):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
         self.add_prim_attr('adj_x1', self.transpose_a)
         self.add_prim_attr('adj_x2', self.transpose_b)
-
-class Baddbmm(Primitive):
-    @prim_attr_register
-    def __init__(self):
-        cls_name = self.name
-    def __call__(self, *args):
-        return _convert_stub(pyboost_baddbmm(self, args))
 
 
 class AddN(Primitive):

@@ -88,7 +88,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        NextAfter, Orgqr, Qr, RaggedRange, Digamma, Eig, EuclideanNorm, CompareAndBitpack, ComplexAbs,
                        CumulativeLogsumexp, Gcd, Polygamma, Trace, TridiagonalMatMul, TrilIndices, TriuIndices, Zeta,
                        Roll, Lgamma, Logit, MatrixSolveLs, Polar, Fmax, Fmin, Quantile, Sinc, Angle, Bernoulli,
-                       NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac, Ormqr, Baddbmm)
+                       NanToNum, Igamma, BesselI0, BesselI1, InplaceIndexAdd, Igammac, Ormqr)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -693,7 +693,6 @@ __all__ = [
     "MaskedScatter",
     "Ormqr",
     "RandpermV2",
-    "Baddbmm"
 ]
 
 __custom__ = [

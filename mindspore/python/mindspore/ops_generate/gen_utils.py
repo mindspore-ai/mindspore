@@ -19,7 +19,7 @@ import os
 import glob
 import hashlib
 import yaml
-
+from template import CppTemplate
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,62 @@ cc_license_str = f"""/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */"""
+
+
+def is_tensor(op_arg):
+    if op_arg.arg_dtype == 'tensor':
+        return True
+    return False
+
+def is_tensor_list(op_arg):
+    if op_arg.arg_dtype in ['list[tensor]', 'tuple[tensor]']:
+        return True
+    return False
+def get_index(index: int):
+    """
+    get index
+    :param index:
+    :return: str
+    """
+    index_map = {
+        0: 'kIndex0',
+        1: 'kIndex1',
+        2: 'kIndex2',
+        3: 'kIndex3',
+        4: 'kIndex4',
+        5: 'kIndex5',
+        6: 'kIndex6',
+        7: 'kIndex7',
+        8: 'kIndex8',
+        9: 'kIndex9',
+    }
+    if index in index_map:
+        return index_map[index]
+    raise TypeError(f"""Unsupported index {index} for index map.""")
+
+def get_convert_type_str(dtype: str):
+    """
+    Convert type
+    """
+    # add more type here
+    type_convert = {
+        'int': 'ToInt',
+        'float': 'ToFloat',
+        'bool': 'ToBool',
+        'number': 'ToScalar',
+        'tuple[int]': 'ToIntList',
+        'tuple[float]': 'ToFloatList',
+        'tuple[bool]': 'ToBoolList',
+        'tuple[tensor]': 'ToTensorList',
+        'list[int]': 'ToIntList',
+        'list[float]': 'ToFloatList',
+        'list[bool]': 'ToBoolList',
+        'list[tensor]': 'ToTensorList',
+        'tensor': 'ToTensor',
+    }
+    if dtype in type_convert:
+        return type_convert[dtype]
+    raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 
 def get_type_str(type_str):
@@ -163,3 +219,7 @@ def get_assign_str_by_type_it(arg_info, arg_name, dtype):
     else:
         assign_str = arg_name
     return assign_str
+
+
+def convert_python_func_name_to_c(func_name: str) -> str:
+    return ''.join(word.capitalize() for word in func_name.split('_'))

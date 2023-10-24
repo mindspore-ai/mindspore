@@ -1116,7 +1116,8 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
 
 FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
   if (args.size() != kIndex2) {
-    MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
+    MS_LOG(EXCEPTION) << "Two args are needed by RunOp"
+                      << ", but got " << args.size();
   }
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();

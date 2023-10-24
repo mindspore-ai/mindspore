@@ -78,7 +78,6 @@ from mindspore.ops.operations.math_ops import (
     Polar,
     Angle,
     FFTWithSize,
-    Baddbmm
 )
 from mindspore.common.tensor import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -9660,62 +9659,6 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     return y
 
 
-def pyboost_baddbmm(input, batch1, batch2, beta=1.0, alpha=1.0):
-    r"""
-    The result is the sum of the input and a batch matrix-matrix product of matrices in batch1 and batch2.
-    The formula is defined as follows:
-
-    .. math::
-        \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
-
-    Args:
-        input (Tensor): The input Tensor. When batch1 is a :math:`(C, W, T)` Tensor and batch2 is a
-            :math:`(C, T, H)` Tensor, input must be broadcastable with :math:`(C, W, H)` Tensor.
-        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
-        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
-        beta (Union[float, int], optional): multiplier for input. Default: ``1`` .
-        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. Default: ``1`` .
-            Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
-            be a real number.
-
-    Returns:
-        Tensor, has the same dtype as input, shape will be :math:`(C, W, H)`.
-
-    Raises:
-        TypeError: The type of `input`, `batch1`, `batch2` is not Tensor.
-        TypeError: The types of `input`, `batch1`, `batch2` are different.
-        TypeError: For inputs of type FloatTensor or DoubleTensor, \
-                    arguments beta and alpha not be real numbers, otherwise not be integers.
-        TypeError: For Baddbmm, attributes alpha and beta are not real numbers
-        ValueError: If `batch1` and `batch2` are not 3-D tensors.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.ones([1, 3, 3]).astype(np.float32))
-        >>> batch1 = Tensor(np.ones([1, 3, 4]).astype(np.float32))
-        >>> batch2 = Tensor(np.ones([1, 4, 3]).astype(np.float32))
-        >>> output = ops.pyboost_baddbmm(input, batch1, batch2)
-        >>> print(output)
-        [[[5. 5. 5.]
-          [5. 5. 5.]
-          [5. 5. 5.]]]
-    """
-    pyboost_baddbmm_op = _get_cache_prim(Baddbmm)()
-    return pyboost_baddbmm_op(input, batch1, batch2, beta, alpha)
-
-
-def pyboost_bias_add(input_x, bias):
-    pyboost_bias_add_op = _get_cache_prim(BiasAdd)(data_format='NCHW')
-    pyboost_bias_add_op(input_x, bias)
-
-def pyboost_square(input):
-    pyboost_square_op = _get_cache_prim(Square)()
-    pyboost_square_op(input)
-
 def log2(input):
     r"""
     Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
@@ -13464,8 +13407,5 @@ __all__ = [
     'dot',
     'batch_dot',
     'eps',
-    'pyboost_baddbmm',
-    'pyboost_bias_add',
-    'pyboost_square'
 ]
 __all__.sort()

@@ -18,15 +18,14 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
+from mindspore.ops.auto_generate import baddbmm
 
 def test_baddbmm_ascend():
     context.set_context(device_target="Ascend")
-    baddbmm = ops.Baddbmm()
 
     input = Tensor(np.ones([1, 3, 3]).astype(np.float32))
     batch1 = Tensor(np.ones([1, 3, 4]).astype(np.float32))
     batch2 = Tensor(np.ones([1, 4, 3]).astype(np.float32))
-
     output = baddbmm(input, batch1, batch2, 1, 1)
     output = baddbmm(output, batch1, batch2, 1, 1)
     assert (output.asnumpy() == np.ones([1, 3, 3]).astype(np.float32) * 9).all()
