@@ -35,6 +35,7 @@ ShapeCalcFunctorPtr ShapeCalc::get_functor() const {
 }
 
 std::vector<bool> ShapeCalc::get_value_depend() const { return GetValue<std::vector<bool>>(GetAttr(kAttrValueDepend)); }
+ShapeArray ShapeCalc::get_calc_result() const { return GetValue<ShapeArray>(GetAttr(kAttrCalcResult)); }
 
 class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
  public:
@@ -44,11 +45,13 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     auto value_depend = GetValue<std::vector<bool>>(primitive->GetAttr(kAttrValueDepend));
     ShapeArray args(input_args.size());
     HashSet<size_t> unknown_inputs;
+    bool is_any_dynamic_shape = false;
     for (size_t i = 0; i < input_args.size(); ++i) {
       const auto &abs = input_args[i];
       if (!value_depend[i]) {
         // If it is not value depended, use shape as args.
         TryGetShapeArg(abs, i, &unknown_inputs, &args);
+        is_any_dynamic_shape = is_any_dynamic_shape || IsDynamic(args[i]);
       } else {
         // Value depended, try to get value from input abstract.
         TryGetValueArg(primitive, abs, i, &unknown_inputs, &args);
@@ -59,7 +62,16 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(functor_attr);
     auto functor = functor_attr->cast<ShapeCalcFunctorPtr>();
     MS_EXCEPTION_IF_NULL(functor);
-    auto out = functor->Infer(args, unknown_inputs);
+    ShapeVector out;
+    if (!unknown_inputs.empty() || is_any_dynamic_shape) {
+      out = functor->Infer(args, unknown_inputs);
+    } else {
+      auto ans = functor->Calc(args);
+      primitive->set_attr(kAttrCalcResult, MakeValue(ans));
+      out.reserve(ans.size());
+      std::transform(ans.cbegin(), ans.cend(), std::back_inserter(out),
+                     [](const ShapeVector &shape) { return SizeToLong(shape.size()); });
+    }
     if (out.size() == 1) {
       // single output does not use AbstractTuple to avoid TupleGetItem
       return std::make_shared<abstract::AbstractTensor>(kInt64, out);

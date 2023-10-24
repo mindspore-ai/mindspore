@@ -422,7 +422,10 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
     return res;
   }
 
-  auto out = Emit(kShapeCalcOpName, inputs, {{kAttrFunctor, functor}, {ops::kAttrValueDepend, MakeValue(value_index)}});
+  auto out = Emit(kShapeCalcOpName, inputs,
+                  {{kAttrFunctor, functor},
+                   {ops::kAttrValueDepend, MakeValue(value_index)},
+                   {kAttrInputIsDynamicShape, MakeValue(true)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);

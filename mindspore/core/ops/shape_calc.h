@@ -27,6 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kAttrValueDepend = "value_depend";
 constexpr auto kNameShapeCalc = "ShapeCalc";
+constexpr auto kAttrCalcResult = "calc_result";
 class MIND_API ShapeCalc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ShapeCalc);
@@ -34,6 +35,7 @@ class MIND_API ShapeCalc : public BaseOperator {
 
   ShapeCalcFunctorPtr get_functor() const;
   std::vector<bool> get_value_depend() const;
+  ShapeArray get_calc_result() const;
 };
 }  // namespace ops
 }  // namespace mindspore
