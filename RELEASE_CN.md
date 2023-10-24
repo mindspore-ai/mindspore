@@ -8,7 +8,6 @@
 
 #### DataSet
 
-- [STABLE] 使能Ascend 910B系列硬件DVPP能力，目前支持下列数据增强算子：Decode、Resize、Normalize、AdjustBrightness、AdjustContrast、AdjustHue、AdjustSaturation。
 - [STABLE] 数据操作map/batch的`row_size`参数扩展支持传入list，代表[输入共享内存, 输出共享内存]，以便在多进程模式时灵活控制共享内存的大小。
 - [STABLE] 为官网API文档页面mindspore.dataset、mindspore.dataset.transforms、mindspore.mindrecord的所有API补充完善样例，方便用户参考。
 - [STABLE] ConcatDataset支持全局采样能力，即使用concat操作组合多来源数据后，可以对数据进行全局随机采样以增强数据多样性。
@@ -38,9 +37,7 @@
 
 - [STABLE] 支持用户可配置算子高精度/高性能模式，用户可以通过`context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})`对部分TBE算子配置高精度/高性能模式。
 - [BETA] 支持用户可配置fp16进fp32出的算子，用户可以通过`context.set_context(ascend_config={"precision_mode": "force_fp32"})`对TBE Cube算子配置fp16进fp32出。
-- [BETA] 在Ascend 910B环境运行网络时无需再设置MS_ENABLE_GE和MS_GE_TRAIN环境变量。
 - [BETA] 去除jit level "O3"与GE流程强绑定，用户在执行GE流程时无需再设置`jit_level="O3"`。
-- [BETA] 支持Ascend 910B环境使用NAN/INF的溢出检测模式，可以通过设置环境变量MS_ASCEND_CHECK_OVERFLOW_MODE="INFNAN_MODE"进行切换。
 
 #### Parallel
 
@@ -71,14 +68,6 @@
 bantao, Bingliang, BJ-WANG, Brian-K, caifubi, ccsszz, changzherui, chenfei_mindspore, chengfeng27, chenhaozhe, chenjianping, chenkang, chenweifeng, chuht, chujinjin, CShu0507, Cynthia叶, DeshiChen, douzhixing, Erpim, Etienne, fary86, fengxun, fengyixing, gaoshuanglong, Gaoxiong, gaoyong10, GaoZhenlong, Greatpan, GuoZhibin, guozhijian, hangq, hanhuifeng, haozhang, hedongdong, Henry Shi, HighCloud, Hongxing, huangbingjian, huanghui, huangxinjing, huangziling, hujiahui8, huoxinyou, HWalkingMan, jianghui58, jiangshanfeng, jiaorui, jijiarong, jjfeing, JuiceZ, jxl, KevinYi, kisnwang, KXiong, lanzhineng, Li Qingguo, LiangZhibo, lianliguang, ligan, lihao, Lihoon, limingqi107, ling, linqingke, liruyu, liubuyu, liuchao, liujunzhu, liuluobin, liupeng303, liutongtong9, liyan2022, liyejun, looop5, luochao60, luojianing, luoyang, machenggui, maning202007, Margaret_wangrui, MaZhiming, mengyuanli, moran, NaCN, nomindcarry, panshaowu, panzhihui, qinzheng, qiuzhongya, r1chardf1d0, shaojunsong, shenwei41, shenyaxin, shenzhangyi, Shira Zaloshinski, shunyuanhan, tangdezhi_123, tanghuikang, tan-wei-cheng, tan-wei-cheng-3260, TronZhang, TuDouNi, VectorSL, wang_ziqi, wanghenchang, wangpingan, wangshaocong, wangtongyu6, wtcheng, wujueying, XianglongZeng, xiaotianci, xiaoxin_zhang, xiaoxiongzhu, xiaoyao, xiaoyuanyuan, XinDu, xujinliang, xupan, yanghaoran, yangluhang, yangruoqi713, yangsijia, yangzhenzhang, yangzishuo, yanjiaming, Yanzhi_YI, yao_yf, yefeng, yeyunpeng2020, yide12, YijieChen, YingLai Lin, YingtongHu, yonibaehr, youshu, yuchaojie, YuJianfeng, zangqx, zhaizhiqiang, zhangbuxue, zhangchunlei, zhangdanyang, zhangdong, zhanghaibo, zhangminli, zhangqi, zhangqinghua, zhangyanhui, zhangyifan, zhangyongxian, zhangzhen, zhangzheng, zhanzhan, zhengzuohe, ZhihaoLi, zhoufeng, zhouyaqiang0, zhuguodong, zhupuxu, zichun_ye, zjun, ZPaC, zuochuanyong, zyli2020, 陈宇, 程超, 范吉斌, 冯浩, 冯一航, 胡彬, 宦晓玲, 黄勇, 雷元哲, 黎冠新, 李良灿, 李林杰, 刘崇鸣, 刘力力, 刘思铭, 刘勇琪, 吕浩宇, 没有窗户的小巷, 沈竞兴, 王禹程, 王振邦, 徐安越, 徐永飞, 俞涵, 张澍坤, 周超, 朱家兴
 
 欢迎以任何形式对项目提供贡献！
-
-## MindSpore Lite 2.2.0 Release Notes
-
-### 主要特性和增强
-
-#### 支持FlashAttention算子融合
-
-- [STABLE] 在Ascend 910B系列硬件上，支持LLAMA、stable diffusion系列模型的FlashAttention大算子融合。
 
 ## MindSpore 2.1.1 Release Notes
 

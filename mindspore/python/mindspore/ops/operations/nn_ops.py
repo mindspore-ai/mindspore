@@ -11353,8 +11353,6 @@ class PromptFlashAttention(Primitive):
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
-    Supported Platforms:
-        ``Ascend910B``
     """
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
