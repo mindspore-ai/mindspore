@@ -143,7 +143,7 @@ def _obfuscate_single_ckpt(ckpt_name, obf_ratios, path_list, target_list, saved_
         if module:
             layer_index = _judge_layer_index(item)
             if layer_index >= OBF_RATIOS_LENGTH:
-                break
+                continue
             if module not in module_has_been_obfuscated:
                 module_has_been_obfuscated.add(module)
                 obf_ratios_index += 1
