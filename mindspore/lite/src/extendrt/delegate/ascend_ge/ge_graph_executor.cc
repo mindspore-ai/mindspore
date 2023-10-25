@@ -1596,6 +1596,10 @@ bool GeGraphExecutor::CreateAsCustomFuncGraph(const FuncGraphPtr &func_graph) {
 }
 
 bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
+  if (ref_mode_flag_ == transform::RefModeFlag::kRefModeNone) {
+    MS_LOG(INFO) << "parameter_as_refdata in ascend_context is none, skip offline build graph";
+    return true;
+  }
   offline_mode_ = true;
   MS_LOG(INFO) << "Set offline mode";
   uint32_t graph_id = 0;

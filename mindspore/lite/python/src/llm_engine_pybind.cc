@@ -23,18 +23,19 @@
 namespace mindspore::lite {
 namespace py = pybind11;
 
-std::vector<MSTensorPtr> PyLLMEnginePredict(LLMEngine *llm_engine, const LLMReq &req,
-                                            const std::vector<MSTensorPtr> &inputs_ptr) {
+std::pair<std::vector<MSTensorPtr>, Status> PyLLMEnginePredict(LLMEngine *llm_engine, const LLMReq &req,
+                                                               const std::vector<MSTensorPtr> &inputs_ptr) {
   if (llm_engine == nullptr) {
     MS_LOG(ERROR) << "Model object cannot be nullptr";
     return {};
   }
   std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
   std::vector<MSTensor> outputs;
-  if (!llm_engine->Predict(req, inputs, &outputs).IsOk()) {
-    return {};
+  auto status = llm_engine->Predict(req, inputs, &outputs);
+  if (!status.IsOk()) {
+    return {{}, status};
   }
-  return MSTensorToMSTensorPtr(outputs);
+  return {MSTensorToMSTensorPtr(outputs), status};
 }
 
 void LLMEnginePyBind(const py::module &m) {
