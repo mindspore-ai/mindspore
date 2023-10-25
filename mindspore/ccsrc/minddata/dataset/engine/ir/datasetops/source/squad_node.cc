@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
 
 #include <algorithm>
-#include <map>
 #include <memory>
 #include <string>
 #include <utility>

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/filter_op.h"
-#include <algorithm>
-#include <cstring>
-#include <iostream>
-#include <memory>
-#include <vector>
+
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/tensor.h"
-
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"

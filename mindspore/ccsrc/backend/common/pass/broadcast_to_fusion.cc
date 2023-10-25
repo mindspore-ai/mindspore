@@ -16,9 +16,6 @@
 
 #include "backend/common/pass/broadcast_to_fusion.h"
 
-#include <vector>
-#include <memory>
-
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 

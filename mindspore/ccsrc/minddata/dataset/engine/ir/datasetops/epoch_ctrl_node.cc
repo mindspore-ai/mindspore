@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for EpochCtrlNode
 EpochCtrlNode::EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs) : RepeatNode() {
   // The root node's parent must set to null pointer.

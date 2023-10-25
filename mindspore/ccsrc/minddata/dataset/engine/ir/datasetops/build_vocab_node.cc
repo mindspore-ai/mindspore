@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
-
 BuildVocabNode::BuildVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<Vocab> vocab,
                                const std::vector<std::string> &columns, const std::pair<int64_t, int64_t> &freq_range,
                                int64_t top_k, const std::vector<std::string> &special_tokens, bool special_first)
