@@ -18,7 +18,6 @@
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/tile_fusion.h"
-#include "ops/identity.h"
 #include "ops/fusion/exp_fusion.h"
 #include "ops/round.h"
 #include "ops/tan.h"

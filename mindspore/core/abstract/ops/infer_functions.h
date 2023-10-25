@@ -51,6 +51,8 @@ MIND_API AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const
                                                 const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const AbstractBasePtrList &args_abs_list);
+MIND_API AbstractBasePtr InferImplidentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
 
 MIND_API AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const AbstractBasePtrList &args_abs_list);

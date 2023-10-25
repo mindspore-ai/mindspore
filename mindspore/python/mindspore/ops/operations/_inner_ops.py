@@ -2518,7 +2518,7 @@ class ConvertToMsTensor(Primitive):
         """Run in PyNative mode"""
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
-        return ops.deepcopy(x)
+        return ops.auto_generate.deepcopy(x)
 
 
 convert_to_ms_tensor = ConvertToMsTensor()

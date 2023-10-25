@@ -24,7 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "mindspore/core/ops/identity.h"
+#include "mindspore/core/ops/ops_func_impl/identity.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 

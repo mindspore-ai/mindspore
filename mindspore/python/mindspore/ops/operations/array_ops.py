@@ -25,6 +25,7 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
 from mindspore.ops import signature as sig
+from mindspore.ops.auto_generate import Identity
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
@@ -5598,19 +5599,6 @@ class EmbeddingLookup(Primitive):
         self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
                                 outputs=['output'])
         self.add_prim_attr('bprop_return_sparse', True)
-
-
-class Identity(Primitive):
-    """
-    The `mindspore.ops.Identity` interface is deprecated, please use the :func:`mindspore.ops.deepcopy` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        pass
 
 
 class IdentityN(Primitive):

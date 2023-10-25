@@ -61,7 +61,7 @@ GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 // SideEffectPropagate
 GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>(kDependOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimPartial, std::make_shared<Primitive>("Partial", kSideEffectPropagate));
-GVAR_DEF(PrimitivePtr, kPrimIdentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
+GVAR_DEF(PrimitivePtr, kPrimidentity, std::make_shared<Primitive>(kidentityOpName, kSideEffectPropagate));
 
 // Other primitive not used by backend but used in core;
 GVAR_DEF(PrimitivePtr, kPrimStateSetItem, std::make_shared<Primitive>("state_setitem"));

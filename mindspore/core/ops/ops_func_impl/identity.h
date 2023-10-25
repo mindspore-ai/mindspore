@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_identity_parser.h"
-#include <vector>
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IDENTITY_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IDENTITY_H_
+
 #include <memory>
-#include "ops/auto_generate/gen_lite_ops.h"
-#include "nnacl/op_base.h"
+#include <vector>
+#include "mindapi/base/types.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace lite {
-PrimitiveCPtr OnnxIdentityParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Identity>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
-
-OnnxNodeRegistrar g_onnxIdentityParser("Identity", new OnnxIdentityParser());
-}  // namespace lite
+namespace ops {
+class MIND_API IdentityFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
+}  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_IDENTITY_H_

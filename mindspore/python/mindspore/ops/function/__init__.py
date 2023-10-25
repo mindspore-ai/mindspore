@@ -158,8 +158,7 @@ from .array_func import (
     searchsorted,
     aminmax,
     sort,
-    top_k,
-    deepcopy
+    top_k
 )
 from .parameter_func import (
     assign_add,

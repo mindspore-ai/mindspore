@@ -46,6 +46,13 @@ auto AddInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim
 }  // namespace ops
 
 namespace abstract {
+AbstractBasePtr InferImplidentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_abs_list) {
+  // An object of a subclass of AbstractBase
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  return args_abs_list[0];
+}
+
 AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_abs_list) {
   // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).

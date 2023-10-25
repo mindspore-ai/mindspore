@@ -7490,35 +7490,6 @@ def top_k(input_x, k, sorted=True):
     return top_k_(input_x, k)
 
 
-def deepcopy(input_x):
-    """
-    Returns a deepcopy of input tensor.
-
-    Args:
-        input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Returns:
-        Tensor, a deepcopy of `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
-        >>> output = ops.deepcopy(input)
-        >>> print(output)
-        [[0 1]
-         [2 1]]
-    """
-    _deepcopy = _get_cache_prim(P.Identity)()
-    return _deepcopy(input_x)
-
-
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -7651,7 +7622,6 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
-    'top_k',
-    'deepcopy'
+    'top_k'
 ]
 __all__.sort()
