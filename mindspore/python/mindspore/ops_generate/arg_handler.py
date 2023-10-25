@@ -14,10 +14,9 @@
 # ============================================================================
 """Operator argument handle function."""
 
-from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 
-
-ops_dtype_to_enum = inner.DtypeToEnum()
+ops_dtype_to_enum = DtypeToEnum()
 
 
 def to_kernel_size(kernel_size):

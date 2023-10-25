@@ -93,6 +93,7 @@
 "mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "consider-using-enumerate"
 "mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_and_impl.py"                                   "too-many-function-args"
 "mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_or_impl.py"                                    "too-many-function-args"
+"mindspore/mindspore/python/mindspore/ops_generate/gen_ops_inner_prim.py"                                                "super-init-not-called"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"

@@ -2729,31 +2729,6 @@ class CopyWithSlice(Primitive):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])
 
 
-class DtypeToEnum(Primitive):
-    r"""
-    Convert mindspore dtype to enum.
-
-    Inputs:
-        - **dtype** (mindspore.dtype) - The data type.
-
-    Outputs:
-        An integer.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize"""
-
-    def __call__(self, dtype):
-        """Run in PyNative mode"""
-        if not isinstance(dtype, typing.Type):
-            raise TypeError(f"For dtype_to_enum function, the input should be mindpsore dtype, but got {dtype}.")
-        return typing.type_to_type_id(dtype)
-
-
 class MoeFFN(Primitive):
     r"""
     The MoeFFN computation is similar to Feed-Forward Network, it contains matmul + gelu + matmul.
