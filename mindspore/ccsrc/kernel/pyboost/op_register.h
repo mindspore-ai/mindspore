@@ -51,25 +51,25 @@ class BACKEND_EXPORT Op {
     return outputs_[idx];
   }
 
+  const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
+  const AbstractBasePtr &output_abs() const { return output_abs_; }
+
   template <typename... T>
-  inline void Infer(const PrimitivePtr &primitive, T &... args) {
-    InferOutput(primitive, &outputs_, ConvertTypes(args...));
-  }
-
-  template <typename T>
-  T ConvertType(T value) {
-    return value;
-  }
-
-  template <typename... Ts>
-  constexpr auto ConvertTypes(Ts &... args) {
-    return std::make_tuple(ConvertType(args)...);
+  inline void InferOutput(T &... args) {
+    (input_abs_.emplace_back(args->ToAbstract()), ...);
+    auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
+    output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
+    outputs_.clear();
+    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
   }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;
   std::function<void()> grad_func_;
   PrimitivePtr primitive_;
+  // Save abstract for grad.
+  std::vector<AbstractBasePtr> input_abs_;
+  AbstractBasePtr output_abs_;
 };
 
 template <typename T>

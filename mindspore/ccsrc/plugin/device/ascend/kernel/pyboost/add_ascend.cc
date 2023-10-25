@@ -52,7 +52,7 @@ bool AddAscend::Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, c
 }
 
 tensor::TensorPtr AddAscend::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  Infer(primitive_, x, y);
+  InferOutput(x, y);
   Launch(x, y, output(0));
   return output(0);
 }

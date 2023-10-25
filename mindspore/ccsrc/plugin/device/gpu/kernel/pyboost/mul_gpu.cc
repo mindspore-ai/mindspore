@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr MulGPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  Infer(primitive_, x, y);
+  InferOutput(x, y);
   auto kernel = std::make_shared<BroadcastOptGpuKernelMod>("Mul");
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});

@@ -26,7 +26,7 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr AddGPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   // TODO: (CARRY) dyn_shape_dev
-  Infer(primitive_, x, y);
+  InferOutput(x, y);
   auto kernel = std::make_shared<BroadcastOptGpuKernelMod>("Add");
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});

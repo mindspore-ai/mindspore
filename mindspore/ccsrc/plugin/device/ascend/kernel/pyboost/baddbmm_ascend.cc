@@ -62,7 +62,7 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                       const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
   MS_LOG(DEBUG) << "Call start";
-  Infer(primitive_, input, batch1, batch2, beta, alpha);
+  InferOutput(input, batch1, batch2, beta, alpha);
   MS_LOG(DEBUG) << "Infer end";
 
   if (outputs_.size() != 1) {

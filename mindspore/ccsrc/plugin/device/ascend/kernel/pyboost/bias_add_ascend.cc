@@ -78,7 +78,7 @@ bool BiasAddAscend::Launch(const tensor::TensorPtr &input_x, const tensor::Tenso
 }
 
 tensor::TensorPtr BiasAddAscend::Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias) {
-  Infer(primitive_, input_x, bias);
+  InferOutput(input_x, bias);
   Launch(input_x, bias, output(0));
   return output(0);
 }

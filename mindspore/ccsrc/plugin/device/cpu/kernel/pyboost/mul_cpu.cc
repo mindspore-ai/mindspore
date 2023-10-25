@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr MulCPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  Infer(primitive_, x, y);
+  InferOutput(x, y);
   auto kernel = std::make_shared<ArithmeticCpuKernelMod>("Mul");
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kCPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
@@ -63,7 +63,7 @@ tensor::TensorPtr MulCPU::Call(const tensor::TensorPtr &x, const tensor::TensorP
 tensor::TensorPtr MulCPU::Call(const tensor::TensorPtr &x, const ScalarPtr &y) {
   auto x_type = x->data_type();
   auto tensor_y = pyboost::ScalarToTensor(y, TypeIdToType(x_type));
-  Infer(primitive_, x, tensor_y);
+  InferOutput(x, tensor_y);
   auto kernel = std::make_shared<ArithmeticCpuKernelMod>("Mul");
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kCPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
