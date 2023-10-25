@@ -50,8 +50,9 @@ def split_with_json(json_str, flags_str):
 def _load_repository(graph, flags):
     """Load repository if exists"""
     def check_repo(op, best_split, op_desc):
-        if not isinstance(best_split, dict) or "group_num" not in best_split or "graph_mode" not in best_split \
-                or "split_result" not in best_split:
+        if not isinstance(best_split, dict):
+            return False
+        if "group_num" not in best_split or "graph_mode" not in best_split or "split_result" not in best_split:
             logger.warning("The graph split repository of {} should be a dict which contains 'group_num', 'graph_mode' "
                            "and 'split_result' field, but got {}".format(op, best_split))
             return False

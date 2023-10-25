@@ -39,7 +39,12 @@ const auto GetPadShape = [](size_t K, size_t M, size_t N) {
 
 using KMNLIST = std::tuple<size_t, size_t, size_t, size_t, size_t, size_t>;
 KMNLIST GetTransShape(bool trans_a, bool trans_b, const vec &shape_a, const vec &shape_b, vec *pad_a, vec *pad_b) {
-  size_t k, m, n, pad_k, pad_m, pad_n;
+  size_t k;
+  size_t m;
+  size_t n;
+  size_t pad_k;
+  size_t pad_m;
+  size_t pad_n;
   size_t size = shape_a.size();
   k = LongToSize(trans_a ? shape_a[size - kIndex2] : shape_a[size - kIndex1]);
   m = LongToSize(trans_a ? shape_a[size - kIndex1] : shape_a[size - kIndex2]);
@@ -92,7 +97,12 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
     tail_shape_unpad->push_back(0);
   }
 
-  size_t K, M, N, pad_K, pad_M, pad_N;
+  size_t K;
+  size_t M;
+  size_t N;
+  size_t pad_K;
+  size_t pad_M;
+  size_t pad_N;
   std::tie(K, M, N, pad_K, pad_M, pad_N) = GetTransShape(tran_a, tran_b, shape_a, shape_b, pad_shape_a, pad_shape_b);
   // Donot Pad for cublas operator
   if (!IsAkgMatMul(K, M, N)) {

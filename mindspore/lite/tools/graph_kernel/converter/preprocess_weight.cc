@@ -75,7 +75,10 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
   auto c_out = weight_shape[kWeightChannelOutAxis];
   auto input_shape = cb->GetInputShape(cnode, kConv2dDataIndex - 1);
   auto c_in = input_shape[kDepthWiseChannelAxis];
-  int64_t c_out_o, c_out_i, c_in_o, c_in_i;
+  int64_t c_out_o;
+  int64_t c_out_i;
+  int64_t c_in_o;
+  int64_t c_in_i;
   int64_t dst_simd_size = 8LL;
   int64_t src_simd_size = 8LL;
   if (common::GetEnv("MS_CPU_FEATURE") == "avx512") {

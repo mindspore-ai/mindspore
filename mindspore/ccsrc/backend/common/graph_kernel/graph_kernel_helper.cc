@@ -190,7 +190,9 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
   bool is_single_graph_kernel = has_graph_kernel && nodes.size() == 1;
 
   FuncGraphPtr fg;
-  AnfNodePtrList op_nodes, inputs, outputs;
+  AnfNodePtrList op_nodes;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
   if (is_single_graph_kernel) {
     fg = common::AnfAlgo::GetCNodeFuncGraphPtr(nodes[0]);
     kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
@@ -222,7 +224,9 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     std::tie(fg, std::ignore, std::ignore) = BuildSingleGraphFromNodes(nodes);
   }
 
-  AnfNodePtrList op_nodes, inputs, outputs;
+  AnfNodePtrList op_nodes;
+  AnfNodePtrList inputs;
+  AnfNodePtrList outputs;
   kernel::GetValidKernelNodes(fg, &op_nodes, &inputs, &outputs);
 
   auto mng = fg->manager();

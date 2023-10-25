@@ -38,7 +38,8 @@ NodePtr GetPadResult(const inner::GraphBuilder &gb, const NodePtr &input_node, i
     if (pad_n == 0 && pad_h == 0 && pad_w == 0 && pad_c == 0) {
       input_pad = input_node;
     } else {
-      ShapeVector head_pad, tail_pad;
+      ShapeVector head_pad;
+      ShapeVector tail_pad;
       if (do_transform) {
         head_pad = {0, 0, pad_n, pad_w, 0};
         tail_pad = {0, 0, pad_h, pad_c, 0};
@@ -57,7 +58,8 @@ NodePtr GetPadResult(const inner::GraphBuilder &gb, const NodePtr &input_node, i
     auto stride_w = GetValue<std::vector<int64_t>>(attrs["strides"])[1];
     auto kernel_h = GetValue<std::vector<int64_t>>(attrs["kernel_size"])[0];
     auto kernel_w = GetValue<std::vector<int64_t>>(attrs["kernel_size"])[1];
-    int64_t pad_h, pad_w;
+    int64_t pad_h;
+    int64_t pad_w;
     if (input_h % stride_h == 0) {
       pad_h = std::max(kernel_h - stride_h, int64_t(0));
     } else {
@@ -71,7 +73,8 @@ NodePtr GetPadResult(const inner::GraphBuilder &gb, const NodePtr &input_node, i
     if (pad_h == 0 && pad_w == 0) {
       input_pad = input_node;
     } else {
-      ShapeVector head_pad, tail_pad;
+      ShapeVector head_pad;
+      ShapeVector tail_pad;
       auto pad_top = pad_h / 2;
       auto pad_bottom = pad_h - pad_top;
       auto pad_left = pad_w / 2;
