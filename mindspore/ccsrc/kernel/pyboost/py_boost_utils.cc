@@ -141,7 +141,7 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
     case kNumberTypeFloat64:
       return CastToTensor<double>(scalar, type);
     default:
-      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
+      MS_LOG(EXCEPTION) << "When convert scalar to tensor, the dst type: " << type << " is invalid.";
   }
 }
 }  // namespace pyboost

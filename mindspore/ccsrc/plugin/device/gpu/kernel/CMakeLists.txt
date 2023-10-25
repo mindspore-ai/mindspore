@@ -3,7 +3,10 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 if(ENABLE_GPU)
-    file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+    file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "*.cc"
+            "pyboost/*.cc"
+    )
     file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/*.cc"
         "dynamic_akg/*.cc"
