@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#include <utility>
 #include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 
 #include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/kernels/data/slice_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-
 Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 2, "TruncateSequencePair: Expected two inputs, but got " +

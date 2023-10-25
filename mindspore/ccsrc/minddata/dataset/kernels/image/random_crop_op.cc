@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 
-#include <random>
-
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"

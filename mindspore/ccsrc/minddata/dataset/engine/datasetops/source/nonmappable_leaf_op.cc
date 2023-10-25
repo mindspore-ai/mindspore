@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
 
-#include <utility>
-
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/execution_tree.h"

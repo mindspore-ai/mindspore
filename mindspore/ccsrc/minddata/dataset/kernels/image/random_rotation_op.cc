@@ -16,7 +16,6 @@
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 
 #include <random>
-#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"

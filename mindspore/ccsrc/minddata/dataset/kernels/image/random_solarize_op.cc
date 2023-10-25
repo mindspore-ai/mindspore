@@ -16,8 +16,6 @@
 
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 
-#include <utility>
-
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 

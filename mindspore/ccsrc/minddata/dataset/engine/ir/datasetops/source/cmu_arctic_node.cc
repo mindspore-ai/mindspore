@@ -15,10 +15,6 @@
  */
 #include "minddata/dataset/engine/ir/datasetops/source/cmu_arctic_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/source/cmu_arctic_op.h"
 #include "minddata/dataset/util/status.h"
 

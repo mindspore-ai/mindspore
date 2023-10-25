@@ -16,11 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
 
-#include <algorithm>
-#include <memory>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 

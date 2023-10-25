@@ -15,9 +15,7 @@
  */
 #include "minddata/dataset/engine/datasetops/source/sst2_op.h"
 
-#include <algorithm>
 #include <fstream>
-#include <stdexcept>
 
 #include "include/common/debug/common.h"
 #include "minddata/dataset/core/config_manager.h"

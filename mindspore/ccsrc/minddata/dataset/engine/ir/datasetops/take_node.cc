@@ -1,5 +1,5 @@
 /**
- * Copyright 20202-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for TakeNode
 TakeNode::TakeNode(std::shared_ptr<DatasetNode> child, int32_t count) : take_count_(count) { this->AddChild(child); }
 

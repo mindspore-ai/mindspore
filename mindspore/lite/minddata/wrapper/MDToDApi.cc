@@ -100,7 +100,9 @@ int MDToDApi_pathTest(const char *path) {
     Path v = dir_it->next();
     MS_LOG(INFO) << v.toString() << "\n";
     i++;
-    if (i > path_len_limit) break;
+    if (i > path_len_limit) {
+      break;
+    }
   }
   return 0;
 }
@@ -433,7 +435,9 @@ extern "C" int MDToDApi_UpdateIsForTrain(MDToDApi *pMDToDApi, int32_t isForTrain
   int64_t file_id = pMDToDApi->_file_id;
   MS_LOG(INFO) << "Start Update isForTRain for id: " << file_id << " To " << isForTrain;
 
-  if (file_id < 0) return -1;
+  if (file_id < 0) {
+    return -1;
+  }
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
   mindspore::dataset::DataHelper dh;
@@ -450,7 +454,9 @@ extern "C" int MDToDApi_UpdateNoOfFaces(MDToDApi *pMDToDApi, int32_t noOfFaces) 
   int64_t file_id = pMDToDApi->_file_id;
   MS_LOG(INFO) << "Start Update noOfFaces for id: " << file_id << " To " << noOfFaces;
 
-  if (file_id < 0) return -1;
+  if (file_id < 0) {
+    return -1;
+  }
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
   mindspore::dataset::DataHelper dh;
