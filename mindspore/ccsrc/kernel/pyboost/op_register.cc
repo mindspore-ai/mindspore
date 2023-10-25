@@ -42,6 +42,7 @@ std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device
   }
   return iter->second();
 }
+
 template class OpFactory<Baddbmm>;
 template class OpFactory<Add>;
 template class OpFactory<Mul>;

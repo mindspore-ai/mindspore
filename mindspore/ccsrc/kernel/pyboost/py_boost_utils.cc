@@ -4,6 +4,7 @@
 
 #include "py_boost_utils.h"
 #include "kernel/common_utils.h"
+#include "runtime/device/device_address_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -62,7 +63,24 @@ KernelTensorPtr ScalarToKernelTensor(const ScalarPtr &scalar, const DeviceContex
   return std::make_shared<KernelTensor>(scalar);
 }
 
-template<typename T>
+std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context) {
+  std::vector<KernelTensorPtr> kernel_tensors;
+  for (auto &value : values) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<Scalar>()) {
+      auto scalar = std::dynamic_pointer_cast<Scalar>(value);
+      kernel_tensors.emplace_back(std::make_shared<KernelTensor>(scalar));
+    } else if (value->isa<tensor::Tensor>()) {
+      auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
+      kernel_tensors.emplace_back(std::make_shared<KernelTensor>(tensor));
+    } else {
+      MS_EXCEPTION(TypeError) << "value type is not supported";
+    }
+  }
+  return kernel_tensors;
+}
+
+template <typename T>
 tensor::TensorPtr CastToTensor(const ScalarPtr &scalar, const TypePtr &type) {
   if (scalar == nullptr) {
     MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
@@ -143,6 +161,27 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type) {
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the dst type: " << type << " is invalid.";
   }
+}
+kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> workspace_sizes,
+                                                          const DeviceContext *device_context) {
+  kernel::AddressPtrList workspaces;
+  for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+    auto workspace_device_address =
+      runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_sizes[i]);
+    (void)workspaces.emplace_back(std::make_shared<kernel::Address>(workspace_device_address->GetMutablePtr(),
+                                                                    workspace_device_address->GetSize()));
+  }
+  return workspaces;
+}
+
+DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device) {
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  return device_context;
 }
 }  // namespace pyboost
 }  // namespace kernel

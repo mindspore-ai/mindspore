@@ -39,6 +39,10 @@ void BACKEND_EXPORT InferOutput(const PrimitivePtr &primitive, std::vector<tenso
 }
 KernelTensorPtr BACKEND_EXPORT TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
 KernelTensorPtr BACKEND_EXPORT ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);
+std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context);
+DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device);
+kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> workspace_sizes,
+                                                          const DeviceContext *device_context);
 tensor::TensorPtr BACKEND_EXPORT ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 }  // namespace pyboost
 }  // namespace kernel
