@@ -124,9 +124,6 @@ transform::DfGraphPtr GetDataFlowGraph(const FuncGraphPtr &anf_graph,
 
 GeGraphExecutor::~GeGraphExecutor() {
   if (ge_session_) {
-    for (auto graph_id : init_graph_id_list_) {
-      ge_session_->RemoveGraph(graph_id);
-    }
     for (auto graph_id : compute_graph_id_list_) {
       ge_session_->RemoveGraph(graph_id);
       auto session_context = GeSessionManager::GetGeSessionContext(session_id_);
@@ -216,14 +213,8 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
   auto &ge_options = *ge_options_ptr;
   ge_options["ge.trainFlag"] = "0";
   ge_options["ge.enablePrintOpPass"] = "0";
-  auto config_it = config_infos_.find(lite::kGeSessionOptionsSection);
-  if (config_it != config_infos_.end()) {
-    for (auto &item : config_it->second) {
-      ge_options[item.first] = item.second;
-      MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
-    }
-  }
   ge_options["ge.exec.device_id"] = std::to_string(GetDeviceID());
+  ge_options["ge.exec.staticMemoryPolicy"] = "2";
   if (ref_mode_flag_ != transform::RefModeFlag::kRefModeNone) {
     if (!offline_mode_) {
       ge_options["ge.featureBaseRefreshable"] = "1";
@@ -232,7 +223,13 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
     }
     ge_options["ge.constLifecycle"] = "graph";
   }
-
+  auto config_it = config_infos_.find(lite::kGeSessionOptionsSection);
+  if (config_it != config_infos_.end()) {
+    for (auto &item : config_it->second) {
+      ge_options[item.first] = item.second;
+      MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
+    }
+  }
   config_it = config_infos_.find(lite::kAscendContextSection);
   if (config_it != config_infos_.end()) {
     GetGeSessionOptionsFromAscendContext(config_it->second, ge_options_ptr);
@@ -835,13 +832,13 @@ transform::DfGraphPtr GeGraphExecutor::CreateGeGraphOnline(const FuncGraphPtr &a
       MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
       return nullptr;
     }
-    init_graph_id_list_.push_back(init_graph_id);
     auto init_data_names = converter->GetInitDataNames();
     // copy init weight to device
     if (!RunGeInitGraph(init_graph_id, init_data_names, params_vals)) {
       MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
       return nullptr;
     }
+    ge_session_->RemoveGraph(init_graph_id);
   } else {
     MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
   }
@@ -1596,6 +1593,10 @@ bool GeGraphExecutor::CreateAsCustomFuncGraph(const FuncGraphPtr &func_graph) {
 }
 
 bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
+  if (ref_mode_flag_ == transform::RefModeFlag::kRefModeNone) {
+    MS_LOG(INFO) << "parameter_as_refdata in ascend_context is none, skip offline build graph";
+    return true;
+  }
   offline_mode_ = true;
   MS_LOG(INFO) << "Set offline mode";
   uint32_t graph_id = 0;
@@ -1603,20 +1604,13 @@ bool GeGraphExecutor::OfflineBuildGraph(const FuncGraphPtr &graph) {
     MS_LOG(ERROR) << "Failed to CompileGraph";
     return false;
   }
-  if (init_graph_id_list_.empty()) {
-    MS_LOG(INFO) << "Call GE CompileGraph start";
-    ge::Status ret = ge_session_->CompileGraph(graph_id);
-    if (ret != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
-      return false;
-    }
-    MS_LOG(INFO) << "Call GE CompileGraph end";
-  } else {
-    if (!Warmup(graph, graph_id)) {
-      MS_LOG(ERROR) << "Failed to Warmup";
-      return false;
-    }
+  MS_LOG(INFO) << "Call GE CompileGraph start";
+  ge::Status ret = ge_session_->CompileGraph(graph_id);
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE CompileGraph Failed: " << ge::GEGetErrorMsg();
+    return false;
   }
+  MS_LOG(INFO) << "Call GE CompileGraph end";
   if (!CreateAsCustomFuncGraph(graph)) {
     MS_LOG(ERROR) << "Failed to CreateAsCustomFuncGraph";
     return false;

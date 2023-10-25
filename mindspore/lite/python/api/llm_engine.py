@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.tensor import Tensor
-from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_
+from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -94,6 +94,17 @@ class LLMReq:
         check_isinstance("decoder_cluster_id", decoder_cluster_id, int)
         self.llm_request_.decoder_cluster_id = decoder_cluster_id
 
+    @property
+    def prefix_id(self):
+        """Get decoder prefix id of this inference task in LLMEngine"""
+        return self.llm_request_.prefix_id
+
+    @prefix_id.setter
+    def prefix_id(self, prefix_id: int):
+        """Set decoder prefix id of this inference task in LLMEngine"""
+        check_isinstance("prefix_id", prefix_id, int)
+        self.llm_request_.prefix_id = prefix_id
+
 
 class LLMEngineStatus:
     """
@@ -118,6 +129,20 @@ class LLMRole(Enum):
     """
     Prompt = 0
     Decoder = 1
+
+
+class LLMKVCacheNotExist(RuntimeError):
+    """
+    Key & Value cache does not exist in Prompt cluster specified by parameter LLMReq.prompt_cluster_id, and the
+    LLM request may have been released in Prompt cluster by calling method LLMEngine.complete_request.
+    Raised in LLMEngine.predict.
+    """
+
+
+class LLMWaitProcessTimeOut(RuntimeError):
+    """
+    Request waiting for processing timed out. Raised in LLMEngine.predict.
+    """
 
 
 class LLMEngine:
@@ -221,6 +246,10 @@ class LLMEngine:
             TypeError: `inputs` is a list, but the elements are not Tensor.
             RuntimeError: schedule and execute inference request failed.
             RuntimeError: this LLMEngine object has not been inited
+            LLMKVCacheNotExist: Key & Value cache does not exist in Prompt cluster specified by
+                `llm_req.prompt_cluster_id`, and the LLM request may have been released in Prompt cluster
+                by calling method LLMEngine.complete_request.
+            LLMWaitProcessTimeOut: Request waiting for processing timed out. Raised in LLMEngine.predict.
         """
         if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
@@ -234,7 +263,12 @@ class LLMEngine:
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
         # pylint: disable=protected-access
-        outputs = self.engine_.predict(llm_req.llm_request_, _inputs)
+        outputs, status = self.engine_.predict(llm_req.llm_request_, _inputs)
+        status_code = status.StatusCode()
+        if status_code == StatusCode.kLiteLLMWaitProcessTimeOut:
+            raise LLMWaitProcessTimeOut("Waiting for processing timeout")
+        if status_code == StatusCode.kLiteLLMKVCacheNotExist:
+            raise LLMKVCacheNotExist("KV Cache not exist")
         if not outputs:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []
@@ -273,3 +307,57 @@ class LLMEngine:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         status = self.engine_.fetch_status()
         return LLMEngineStatus(status)
+
+    def preload_prompt_prefix(self, llm_req: LLMReq, inputs: Union[Tuple[Tensor], List[Tensor]]):
+        """
+        Preload prompt inference common prefix.
+
+        Args:
+            llm_req (LLMReq): Request of LLMEngine.
+            inputs (Union[Tuple[Tensor], List[Tensor]]): A list that includes all input Tensors in order.
+
+        Raises:
+            TypeError: `llm_req` is not a LLMReq.
+            TypeError: `inputs` is not a list.
+            TypeError: `inputs` is a list, but the elements are not Tensor.
+            RuntimeError: preload prompt prefix inference request failed.
+            RuntimeError: this LLMEngine object has not been inited
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        if not isinstance(inputs, (tuple, list)):
+            raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
+        check_isinstance("llm_req", llm_req, LLMReq)
+        _inputs = []
+        for i, element in enumerate(inputs):
+            if not isinstance(element, Tensor):
+                raise TypeError(f"inputs element must be Tensor, but got {type(element)} at index {i}.")
+            # pylint: disable=protected-access
+            _inputs.append(element._tensor)
+        # pylint: disable=protected-access
+        ret = self.engine_.preload_prompt_prefix(llm_req.llm_request_, _inputs)
+        if not ret.IsOk():
+            raise RuntimeError(f"Failed to call preload_prompt_prefix, req id {llm_req.req_id}, prompt_cluster_id "
+                               f"{llm_req.prompt_cluster_id}, decoder cluster id {llm_req.decoder_cluster_id}, "
+                               f"prefix id {llm_req.prefix_id}")
+
+    def release_prompt_prefix(self, llm_req: LLMReq):
+        """
+        Release the memory space used by prompt inference common prefix.
+
+        Args:
+            llm_req (LLMReq): Request of LLMEngine.
+
+        Raises:
+            TypeError: `llm_req` is not a LLMReq.
+            RuntimeError: this LLMEngine object has not been inited
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        check_isinstance("llm_req", llm_req, LLMReq)
+        # pylint: disable=protected-access
+        ret = self.engine_.release_prompt_prefix(llm_req.llm_request_)
+        if not ret.IsOk():
+            raise RuntimeError(f"Failed to call release_prompt_prefix, req id {llm_req.req_id}, prompt_cluster_id "
+                               f"{llm_req.prompt_cluster_id}, decoder cluster id {llm_req.decoder_cluster_id}, "
+                               f"prefix id {llm_req.prefix_id}")

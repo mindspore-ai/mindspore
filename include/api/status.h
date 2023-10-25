@@ -86,6 +86,8 @@ enum StatusCode : uint32_t {
   kLiteOutOfTensorRange = kLite | (0x0FFFFFFF & -100), /**< Failed to check range. */
   kLiteInputTensorError = kLite | (0x0FFFFFFF & -101), /**< Failed to check input tensor. */
   kLiteReentrantError = kLite | (0x0FFFFFFF & -102),   /**< Exist executor running. */
+  kLiteLLMWaitProcessTimeOut = kLite | (0x0FFFFFFF & -103),   /**< Wait to be processed time out. */
+  kLiteLLMKVCacheNotExist = kLite | (0x0FFFFFFF & -104),   /**< KV Cache not exist. */
 
   // Graph error code, range: [-200,-300)
   kLiteGraphFileError = kLite | (0x0FFFFFFF & -200), /**< Failed to verify graph file. */

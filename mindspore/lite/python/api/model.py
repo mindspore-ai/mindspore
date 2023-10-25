@@ -80,7 +80,7 @@ model_type_cxx_py_map = {
 def set_env(func):
     """set env for Ascend custom opp"""
 
-    def warpper(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         current_path = os.path.dirname(os.path.abspath(__file__))
         mslite_ascend_ascendc_custom_kernel_path = os.path.join(current_path,
                                                                 "custom_kernels",
@@ -109,7 +109,7 @@ def set_env(func):
             logging.warning("mslite ascendc custom kernel path not found")
         return func(*args, **kwargs)
 
-    return warpper
+    return wrapper
 
 
 class Model(BaseModel):
@@ -733,7 +733,8 @@ class ModelGroup:
            TypeError: `models` is a list or tuple, but the elements are not all str or Model.
            RuntimeError: Failed to add model grouping information.
         """
-        check_isinstance("models", models, (list, tuple))
+        if not isinstance(models, (list, tuple)):
+            raise TypeError(f"models must be list/tuple, but got {type(models)}")
         if not models:
             raise RuntimeError(f"models cannot be empty")
         model0 = models[0]
