@@ -36,6 +36,20 @@ REG_FALLBACK_BUILDER("SiLUGrad").SetBody(BODYFUNC(ib) {
   return {ib->Add(dx, bc_dy)};
 });
 
+REG_FALLBACK_BUILDER("Baddbmm").SetBody(BODYFUNC(ib) {
+  // baddbmm equation: output = beta * input + alpha * matmul(batch1, batch2)
+  auto input = ib->GetInput(kIndex0);
+  auto batch1 = ib->GetInput(kIndex1);
+  auto batch2 = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto alpha = ib->GetInput(kIndex4);
+
+  auto mm_output = ib->BatchMatMul(batch1, batch2);
+  auto alpha_output = ib->Mul(mm_output, alpha);
+  auto beta_output = ib->Mul(input, beta);
+  return {ib->Add(beta_output, alpha_output)};
+});
+
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
     auto &x_shape = inputs.at(kIndex0);
