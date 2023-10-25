@@ -399,13 +399,18 @@ void AkgKernelImplInfo::preprocessDynamicReduceTiling() {
 
   // build a map from prime number to mapping idx
   prime_to_mapping_idx_.clear();
+  prime_to_mapping_dividend_.clear();
   for (const auto &p : template_tiling_order_) {
     int prime = p.first;
     prime_to_mapping_idx_[prime] = -1;
+    prime_to_mapping_dividend_[prime] = -1;
     for (size_t i = 0; i < map_arg_list_.size(); i++) {
       auto map_arg = map_arg_list_[i];
       if (parsed_js_[map_arg].is_number() && parsed_js_[map_arg] == prime) {
         prime_to_mapping_idx_[prime] = i;
+        break;
+      } else if (CheckJsonValueFormat(map_arg) && parsed_js_[map_arg][1] == prime) {
+        prime_to_mapping_dividend_[prime] = i;
         break;
       }
     }
@@ -611,8 +616,26 @@ void DynamicTileImpl::SolveDynamicReduction() {
         proper_seq = proper_seq / tile_size;
       }
     }
-    int curr_idx = prime_to_mapping_idx_[prime];
-    UpdateMapping(curr_idx, tile_size, prime);
+    // update mapping
+    if (prime_to_mapping_idx_[prime] != -1) {
+      // scenario 1: BlockIdx.x = prime
+      auto curr_idx = prime_to_mapping_idx_[prime];
+      thread_info_[curr_idx] = tile_size;
+      solved_map_loc_.insert(curr_idx);
+    } else if (prime_to_mapping_dividend_[prime] != -1) {
+      // scenario 2: BlockIdx.x = symbol / prime
+      // NOTE: since we know thread_info_'s format here, we only use tile_size
+      // to represent both divier and dividend. update var name later.
+      auto curr_idx = prime_to_mapping_dividend_[prime];
+      thread_info_[curr_idx] = tile_size;
+    }
+    if (runtime_vars_.find(prime) != runtime_vars_.end()) {
+      runtime_vars_[prime]->runtime_size = tile_size;
+      int64_t neg_prime = -prime;
+      if (runtime_vars_.find(neg_prime) != runtime_vars_.end()) {
+        runtime_vars_[neg_prime]->runtime_size = -tile_size;
+      }
+    }
     axis_length_left_[symbol] = (current_length - 1) / tile_size + 1;
   }
 }

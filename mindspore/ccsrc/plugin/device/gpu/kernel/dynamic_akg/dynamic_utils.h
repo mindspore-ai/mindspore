@@ -210,6 +210,7 @@ class AkgKernelImplInfo {
   std::vector<int> runtime_threads_order_;
   std::vector<std::pair<int, int>> template_tiling_order_;  // pair includes prime & mark
   std::unordered_map<int, int> prime_to_mapping_idx_;
+  std::unordered_map<int, int> prime_to_mapping_dividend_;
   bool enable_atomic_{false};
   int dyn_algorithm_{0};
   static std::unordered_map<std::string, int> algo_to_int_;

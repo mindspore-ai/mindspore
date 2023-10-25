@@ -181,7 +181,6 @@ void DynamicAkgGpuKernelMod::InitAkgKernelImpls() {
 AkgKernelImplInfoPtr DynamicAkgGpuKernelMod::SelectKernelImpl() {
   if (kernel_map_.find(kernel_name_) == kernel_map_.end()) {
     MS_EXCEPTION(RuntimeError) << "No default kernel for " << kernel_name_;
-    return nullptr;
   }
   auto default_kernel = kernel_map_[kernel_name_];
   AkgKernelImplInfoPtr static_kernel = nullptr;
@@ -192,11 +191,11 @@ AkgKernelImplInfoPtr DynamicAkgGpuKernelMod::SelectKernelImpl() {
     static_kernel = it.second;
   }
   if (static_kernel == nullptr) {
-    MS_LOG(DEBUG) << "Only have default kernel, return";
+    MS_LOG(DEBUG) << "For " << kernel_name_ << ", only have default kernel, return";
     return default_kernel;
   }
   if (default_kernel->runtime_vars_.empty()) {
-    MS_LOG(DEBUG) << "Default kernel is static tile, return";
+    MS_LOG(DEBUG) << "For " << kernel_name_ << ", default kernel is static tile, return";
     return default_kernel;
   }
   static_kernel->Init();
