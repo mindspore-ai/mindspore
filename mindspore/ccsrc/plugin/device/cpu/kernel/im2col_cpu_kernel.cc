@@ -55,7 +55,7 @@ bool Im2ColCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIm2ColInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIm2ColOutputsNum, kernel_name_);
 
-  ksizes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kSize));
+  ksizes_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKsizes));
   strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   dilations_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
   pads_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));

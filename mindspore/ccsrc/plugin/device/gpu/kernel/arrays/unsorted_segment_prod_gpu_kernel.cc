@@ -35,7 +35,9 @@ bool UnsortedSegmentProdGpuKernelMod::Init(const std::vector<KernelTensor *> &in
     return false;
   }
 
-  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    batch_rank_ = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+  }
 
   ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->dtype_id());
 

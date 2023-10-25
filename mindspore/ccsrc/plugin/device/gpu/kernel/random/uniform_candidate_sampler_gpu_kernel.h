@@ -58,7 +58,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
     int64_t counter = 0;
     std::set<T> set_container;
     // pick between [0, range_max_-1]
-    if (range_max_ > static_cast<int64_t>(std::numeric_limits<T>::max())) {
+    if (std::numeric_limits<T>::max() < std::numeric_limits<int64_t>::max() &&
+        range_max_ > static_cast<int64_t>(std::numeric_limits<T>::max())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', range_max_ failed to cast";
     }
     range = static_cast<T>(range_max_);
@@ -88,7 +89,8 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
   template <typename S>
   S Probability() {
     S range;
-    if (range_max_ > static_cast<int64_t>(std::numeric_limits<S>::max())) {
+    if (std::numeric_limits<S>::max() < std::numeric_limits<int64_t>::max() &&
+        range_max_ > static_cast<int64_t>(std::numeric_limits<S>::max())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', range_max_ failed to cast";
     }
     range = static_cast<S>(range_max_);

@@ -58,7 +58,7 @@ class NetWithGlobalNorm(Net):
         return out
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_adafactor():
@@ -75,7 +75,7 @@ def test_adafactor():
     assert np.all(diff < 1e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_adafactor_with_global_norm():

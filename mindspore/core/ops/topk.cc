@@ -53,14 +53,10 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
-    MS_EXCEPTION_IF_NULL(input1_value);
-    if (input1_value->isa<tensor::Tensor>()) {
-      auto k_tensor_ptr = input1_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(k_tensor_ptr);
-      k_v = *static_cast<int32_t *>(k_tensor_ptr->data_c());
-    }
+    auto k_val = GetArrayValue<int64_t>(input1_value).value();
+    k_v = k_val[0];
   } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
-    k_v = GetValue<int64_t>(input1_value);
+    k_v = GetScalarValue<int64_t>(input1_value).value();
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << input_args[kInputIndex1]->type_name();
   }

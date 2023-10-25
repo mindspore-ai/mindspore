@@ -36,9 +36,7 @@ constexpr int kOutputsNum = 1;
 }  // namespace
 bool UpsampleTrilinear3DGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3DGrad>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners_ = kernel_ptr->get_align_corners();
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

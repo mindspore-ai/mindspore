@@ -356,6 +356,7 @@ std::pair<bool, NodePtr> Emitter::NeedReduce(const NodePtr &shape, const NodePtr
 
 NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims, bool skip_mode) {
   MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(axis);
   auto need_reduce = NeedReduce(Shape(x), axis, keep_dims, skip_mode);
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
@@ -385,7 +386,7 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const Nod
   MS_EXCEPTION_IF_NULL(params);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(axis);
-  return Emit(kGatherOpName, {params, indices, axis, this->EmitValue(MakeValue(batch_dims))});
+  return Emit(kGatherOpName, {params, indices, axis, Value(batch_dims)});
 }
 NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t axis, int64_t batch_dims) {
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);

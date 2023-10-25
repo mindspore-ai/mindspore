@@ -24,7 +24,7 @@ bool TripletMarginLossCPUKernelMod::Init(const std::vector<KernelTensor *> &inpu
                                          const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNumber, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNumber, kernel_name_);
-  p_ = GetValue<float>(primitive_->GetAttr(ops::kP));
+  p_ = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   swap_ = GetValue<bool>(primitive_->GetAttr(ops::kSwap));
   eps_ = GetValue<float>(primitive_->GetAttr(ops::kEps));
   reduction_ = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));

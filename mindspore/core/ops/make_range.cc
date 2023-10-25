@@ -30,6 +30,7 @@
 #include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/value.h"
+#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "ops/primitive_c.h"
@@ -122,12 +123,16 @@ AbstractBasePtr InferImplMakeRange(const PrimitivePtr &primitive, const Abstract
   std::vector<int64_t> values;
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
     auto element = args_spec_list[i];
+    auto element_type = element->GetType();
     auto element_val = element->GetValue();
-    if (!element_val->isa<Int64Imm>() && !element_val->isa<Int32Imm>()) {
+    if (element_type->type_id() == kNumberTypeInt64) {
+      values.push_back(GetScalarValue<int64_t>(element_val).value());
+    } else if (element_type->type_id() == kNumberTypeInt32) {
+      values.push_back(GetScalarValue<int>(element_val).value());
+    } else {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
                               << element->ToString();
     }
-    values.push_back(element_val->cast<Int64ImmPtr>()->value());
   }
   return CalcSlidePara(values, prim_name, type);
 }

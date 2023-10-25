@@ -146,7 +146,9 @@ bool RandomCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &input
 
 std::vector<KernelAttr> RandomCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-    {kStandardNormal, {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kStandardNormal,
+     {KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kObjectTypeTuple, kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32)}},
     {kUniformInt,
      {KernelAttr()
         .AddInputAttr(kNumberTypeInt32)

@@ -84,7 +84,8 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   TransposeInfo GetTransposeInfo();
 
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
+  // std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
   template <typename T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

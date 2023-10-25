@@ -41,9 +41,7 @@ bool UpsampleTrilinear3DGpuKernelMod::Init(const std::vector<KernelTensor *> &in
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UpsampleTrilinear3D>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  align_corners_ = kernel_ptr->get_align_corners();
+  align_corners_ = GetValue<bool>(primitive_->GetAttr(ops::kAlignCorners));
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

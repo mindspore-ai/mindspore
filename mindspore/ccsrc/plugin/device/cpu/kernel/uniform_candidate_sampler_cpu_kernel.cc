@@ -178,14 +178,14 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const std::vector<KernelTensor *>
   num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
   unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
   range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
-  int64_t seed_ = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr(ops::kSeed));
   remove_accidental_hits_ = GetValue<bool>(primitive_->GetAttr("remove_accidental_hits"));
 
-  if (seed_ < 0) {
+  if (seed < 0) {
     MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'seed' can not be less than 0, but got: "
-                             << seed_;
+                             << seed;
   }
-  uint64_t init_seed = random::GetSeed(static_cast<uint64_t>(seed_), 0);
+  uint64_t init_seed = random::GetSeed(static_cast<uint64_t>(seed), 0);
   rng_.seed(init_seed);
   // check the attribute, inputs and outputs
   CheckAttribute();

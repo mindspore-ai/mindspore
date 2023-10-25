@@ -35,17 +35,13 @@ bool UniformCandidateSamplerGpuKernelMod::Init(const std::vector<KernelTensor *>
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::UniformCandidateSampler>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   // getting attrs
-  num_true_ = kernel_ptr->get_num_true();
-  num_sampled_ = kernel_ptr->get_num_sampled();
-  unique_ = kernel_ptr->get_unique();
-  range_max_ = kernel_ptr->get_range_max();
-  remove_accidental_hits_ = kernel_ptr->get_remove_accidental_hits();
-  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("seed")));
+  num_true_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumTrue));
+  num_sampled_ = GetValue<int64_t>(primitive_->GetAttr(ops::kNumSampled));
+  unique_ = GetValue<bool>(primitive_->GetAttr(ops::kUnique));
+  range_max_ = GetValue<int64_t>(primitive_->GetAttr(ops::kRangeMax));
+  remove_accidental_hits_ = GetValue<bool>(primitive_->GetAttr("remove_accidental_hits"));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kSeed)));
   uint64_t init_seed = random::GetSeed(seed, 0);
   rng_.seed(init_seed);
 

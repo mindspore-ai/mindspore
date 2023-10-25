@@ -63,7 +63,7 @@ def test_iou_gpu(data_type):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_iou_gpu_dynamic_shape():

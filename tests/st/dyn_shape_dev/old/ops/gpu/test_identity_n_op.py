@@ -49,7 +49,7 @@ def generate_testcases(nptype):
     assert id(input_tensor) != id(output)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_identity_n_float32_input_error():
@@ -69,7 +69,7 @@ def test_identity_n_float32_input_error():
         assert id(input_tensor) != id(output)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_identity_n_float32():
@@ -81,7 +81,7 @@ def test_identity_n_float32():
     generate_testcases(np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_identity_n_int32():

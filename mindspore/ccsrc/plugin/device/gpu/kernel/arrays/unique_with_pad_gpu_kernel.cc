@@ -63,11 +63,14 @@ const std::vector<std::pair<KernelAttr, UniqueWithPadPtrCreatorFunc>> kernel_att
 
 bool UniqueWithPadGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto batch_rank = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
-  if (batch_rank < 0) {
-    return false;
+  if (primitive_->HasAttr(ops::kBatchRank)) {
+    auto batch_rank = GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank));
+    if (batch_rank < 0) {
+      return false;
+    }
+    batch_rank_ = static_cast<size_t>(batch_rank);
   }
-  batch_rank_ = static_cast<size_t>(batch_rank);
+
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;

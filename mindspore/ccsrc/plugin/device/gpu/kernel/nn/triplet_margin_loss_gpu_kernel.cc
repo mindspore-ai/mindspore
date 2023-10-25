@@ -136,17 +136,15 @@ bool TripletMarginLossGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
 
 bool TripletMarginLossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::TripletMarginLoss>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->p = kernel_ptr->get_p();
-  attr_ptr_->swap = kernel_ptr->get_swap();
-  attr_ptr_->eps = kernel_ptr->get_eps();
-  attr_ptr_->reduction = kernel_ptr->get_reduction();
+  attr_ptr_->p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
+  attr_ptr_->swap = GetValue<bool>(primitive_->GetAttr(ops::kSwap));
+  attr_ptr_->eps = GetValue<float>(primitive_->GetAttr(ops::kEps));
+  attr_ptr_->reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
