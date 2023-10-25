@@ -58,10 +58,10 @@ ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, con
 }
 
 // None indicates that the optional input is not passed
-bool IsOptionalInputNotPass(const AbstractBasePtr &input) {
-  MS_EXCEPTION_IF_NULL(input);
-  return input->BuildType()->type_id() == kMetaTypeNone;
-}
+//bool IsOptionalInputNotPass(const AbstractBasePtr &input) {
+//  MS_EXCEPTION_IF_NULL(input);
+//  return input->BuildType()->type_id() == kMetaTypeNone;
+//}
 
 abstract::TupleShapePtr PromptFlashAttentionInferShape(const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
@@ -167,9 +167,9 @@ TuplePtr PromptFlashAttentionInferType(const PrimitivePtr &prim, const std::vect
   (void)types.emplace("attn_mask", input_args[kPromptFlashAttentionInputAttnMaskIndex]->BuildType());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
-  if (!IsOptionalInputNotPass(input_args[kPromptFlashAttentionInputPaddingMaskIndex])) {
-    MS_LOG(EXCEPTION) << "For " << op_name << ": 'padding_mask' must be None currently.";
-  }
+  //if (!IsOptionalInputNotPass(input_args[kPromptFlashAttentionInputPaddingMaskIndex])) {
+  //  MS_LOG(EXCEPTION) << "For " << op_name << ": 'padding_mask' must be None currently.";
+  //}
   TypePtrList output_type_ptr_list(kPromptFlashAttentionOutputsNum);
   output_type_ptr_list[kPromptFlashAttentionOutputAttentionOutIndex] = type;
   return std::make_shared<Tuple>(output_type_ptr_list);

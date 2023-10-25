@@ -38,6 +38,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize, Fra
 from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
+from mindspore.ops.operations.nn_ops import PromptFlashAttention
 from mindspore.ops.operations._inner_ops import SiLU
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
@@ -7016,6 +7017,9 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
     triplet_margin_loss_op = _get_cache_prim(TripletMarginLoss)(p=p, eps=eps, swap=swap, reduction=reduction)
     return triplet_margin_loss_op(anchor, positive, negative, margin_tensor)
 
+def prompt_flash_attention(query, key, value, attn_mask=None, padding_mask=None, actual_seq_lengths=None, num_heads=0, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH', num_key_value_heads=0):
+    prompt_flash_attention_op = _get_cache_prim(PromptFlashAttention)(num_heads=num_heads, scale_value=scale_value, pre_tokens=pre_tokens, next_tokens=next_tokens, input_layout=input_layout, num_key_value_heads=num_key_value_heads)
+    return prompt_flash_attention_op(query, key, value, attn_mask, padding_mask, actual_seq_lengths)
 
 def linear(x, w, b):
     """inner linear"""
@@ -7487,6 +7491,7 @@ __all__ = [
     'pdist',
     'pad',
     'prelu',
+    'prompt_flash_attention',
     'mirror_pad',
     'cross_entropy',
     'grid_sample',

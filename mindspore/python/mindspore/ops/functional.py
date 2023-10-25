@@ -27,7 +27,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
-from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
+from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D, PromptFlashAttention
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
@@ -389,6 +389,7 @@ tensor_operator_registry.register('multinomial', multinomial)
 tensor_operator_registry.register('norm', norm)
 tensor_operator_registry.register('renorm', renorm)
 tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
+tensor_operator_registry.register('prompt_flash_attention', PromptFlashAttention)
 tensor_operator_registry.register('coalesce', coalesce)
 tensor_operator_registry.register('argmax_with_value', max)
 tensor_operator_registry.register('argmin_with_value', min)
