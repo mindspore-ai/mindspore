@@ -1208,7 +1208,7 @@ class UniqueWithPad(Primitive):
 
 
 class Split(Primitive):
-    """
+    r"""
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
     Refer to :func:`mindspore.ops.split` for more details.
@@ -1222,7 +1222,7 @@ class Split(Primitive):
 
     Outputs:
         tuple[Tensor], the shape of each output tensor is the same, which is
-        :math:`(x_0, x_1, ..., x_{axis}/{output_num}, ..., x_{R-1})`.
+        :math:`(x_0, x_1, ..., x_{axis}/{output\_num}, ..., x_{R-1})`.
         And the data type is the same as `input_x`.
 
     Supported Platforms:
