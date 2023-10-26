@@ -150,6 +150,7 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
 }
 
 void KernelTensor::SetType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
   type_ = type;
   type_id_ = type_->object_type();
 
@@ -202,18 +203,16 @@ void KernelTensor::SetType(const TypePtr &type) {
       SetSequenceDType(element_type);
     } break;
 
-    case kObjectTypeNumber: {
-      dtype_ = type;
-      dtype_id_ = dtype_->type_id();
-    } break;
-
-    case kObjectTypeString: {
+    case kObjectTypeNumber:
+    case kObjectTypeString:
+    case kObjectTypeUMonad:
+    case kObjectTypeIOMonad: {
       dtype_ = type;
       dtype_id_ = dtype_->type_id();
     } break;
 
     default:
-      MS_LOG(EXCEPTION) << "Can not set object type for: " << type->ToString();
+      MS_LOG(DEBUG) << "Need not set dtype for: " << type->ToString();
   }
 
   element_size_in_bytes_ = GetTypeByte(dtype_);
