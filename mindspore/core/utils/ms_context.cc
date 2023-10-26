@@ -237,6 +237,12 @@ std::string MsContext::backend_policy() const {
   return "unknown";
 }
 
+void MsContext::set_ascend_detail_soc_version(const std::string &soc_version) {
+  ascend_detail_soc_version_ = soc_version;
+}
+
+std::string MsContext::ascend_detail_soc_version() const { return ascend_detail_soc_version_; }
+
 bool MsContext::set_ascend_soc_version(const std::string &soc_version) {
   auto iter = kAscendSocVersion.find(soc_version);
   if (iter == kAscendSocVersion.end()) {
