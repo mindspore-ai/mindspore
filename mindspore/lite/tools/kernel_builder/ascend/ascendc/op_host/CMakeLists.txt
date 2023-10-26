@@ -15,6 +15,7 @@ include_directories(${TOP_DIR}/graphengine/910b/inc)
 include_directories(${TOP_DIR}/graphengine/910b/inc/external)
 include_directories(${TOP_DIR}/graphengine/910b/third_party/fwkacllib)
 include_directories(${TOP_DIR}/graphengine/910b/third_party/fwkacllib/inc)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ops_srcs)
 opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR ${BUILD_INC_910A_DIR}
