@@ -156,3 +156,70 @@ def test_minimum_op_dynamic_rank(context_mode):
     out_2 = test_cell(x_2, y_2)
     expect_out_2 = np.array([3., 5., 7.]).astype(np.float32)
     np.testing.assert_allclose(out_2.asnumpy(), expect_out_2, rtol=1e-3)
+
+
+# 反向动态shape有公共问题，待解决后再放开用例
+@pytest.mark.skip
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_minimum_op_dynamic_backward_shape(context_mode):
+    """
+    Feature: minimum ops.
+    Description: test ops minimum dynamic shape tensor input.
+    Expectation: output the right result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(minimum_backward_func)
+    test_cell.set_inputs(x_dyn, y_dyn)
+    x = ms.Tensor(np.array([6, 1, 2]).astype(np.float32))
+    y = ms.Tensor(np.array([9, 2, 4]).astype(np.float32))
+    grads = test_cell(x, y)
+    expect_out = np.array([[1., 1., 0.], [0., 0., 1.]]).astype(np.float32)
+    np.testing.assert_allclose(grads[0].asnumpy(), expect_out[0], rtol=1e-3)
+    np.testing.assert_allclose(grads[1].asnumpy(), expect_out[1], rtol=1e-3)
+
+    x_2 = ms.Tensor(np.array([3, 8, 11]).astype(np.float32))
+    y_2 = ms.Tensor(np.array([6, 5, 7]).astype(np.float32))
+    grads_2 = test_cell(x_2, y_2)
+    expect_out_2 = np.array([[1., 0., 0.], [0., 1., 1.]]).astype(np.float32)
+    np.testing.assert_allclose(grads_2[0].asnumpy(), expect_out_2[0], rtol=1e-3)
+    np.testing.assert_allclose(grads_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)
+
+# 反向动态shape有公共问题，待解决后再放开用例
+@pytest.mark.skip
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_minimum_op_dynamic_backward_rank(context_mode):
+    """
+    Feature: minimum ops.
+    Description: test ops minimum dynamic rank tensor input.
+    Expectation: output the right result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(minimum_backward_func)
+    test_cell.set_inputs(x_dyn, y_dyn)
+    x = ms.Tensor(np.array([6, 1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([9, 2, 4, 3]).astype(np.float32))
+    grads = test_cell(x, y)
+    expect_out = np.array([[1., 1., 1., 0.], [0., 0., 0., 1.]]).astype(np.float32)
+    np.testing.assert_allclose(grads[0].asnumpy(), expect_out[0], rtol=1e-3)
+    np.testing.assert_allclose(grads[1].asnumpy(), expect_out[1], rtol=1e-3)
+
+    x_2 = ms.Tensor(np.array([3, 8, 11]).astype(np.float32))
+    y_2 = ms.Tensor(np.array([6, 5, 7]).astype(np.float32))
+    grads_2 = test_cell(x_2, y_2)
+    expect_out_2 = np.array([[1., 0., 0.], [0., 1., 1.]]).astype(np.float32)
+    np.testing.assert_allclose(grads_2[0].asnumpy(), expect_out_2[0], rtol=1e-3)
+    np.testing.assert_allclose(grads_2[1].asnumpy(), expect_out_2[1], rtol=1e-3)

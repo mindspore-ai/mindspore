@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+# pylint: disable=unused-import
 """Defines math operators with functional form."""
 
 import collections
@@ -35,6 +36,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
+from mindspore.ops.auto_generate import minimum, mul
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -170,7 +172,6 @@ equal_ = P.Equal()
 isfinite_ = P.IsFinite()
 isnan_ = P.IsNan()
 maximum_ = P.Maximum()
-minimum_ = P.Minimum()
 lerp_ = P.Lerp()
 tensor_round_ = P.Round()
 linspace_ = P.LinSpace()
@@ -959,55 +960,6 @@ def true_divide(dividend, divisor):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return div(dividend, divisor, rounding_mode=None)
-
-
-def mul(input, other):
-    r"""
-    Multiplies two tensors element-wise.
-
-    .. math::
-
-        out_{i} = input_{i} * other_{i}
-
-    Note:
-        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
-          they must be able to broadcast to a common shape.
-        - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
-        - The two inputs comply with the implicit type conversion rules to make the data types
-          consistent.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `other` is not one of the following: Tensor, number.Number, bool.
-        ValueError: If `input` and `other` are not the same shape.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-        >>> output = ops.mul(x, y)
-        >>> print(output)
-        [ 4. 10. 18.]
-    """
-    return tensor_mul(input, other)
 
 
 def multiply(input, other):
@@ -4937,59 +4889,6 @@ def fmin(input, other):
     """
     fmin_ = Fmin()
     return fmin_(input, other)
-
-
-def minimum(input, other):
-    r"""
-    Computes the minimum of input tensors element-wise.
-
-    Note:
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
-          consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, dtypes of them cannot be bool at the same time.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-        - Shapes of them are supposed to be broadcast.
-        - If one of the elements being compared is a NaN, then that element is returned.
-
-    .. math::
-        output_i = \min(input_i, other_i)
-
-    Args:
-        input (Union[Tensor, Number, bool]): The first input is a number or
-            a bool or a tensor whose data type is number or bool.
-        other (Union[Tensor, Number, bool]): The second input is a number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-        ValueError: If `input` and `other` are not the same shape after broadcast.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> # case 1 : same data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> output = ops.minimum(x, y)
-        >>> print(output)
-        [1. 2. 3.]
-        >>> # case 2 : different data type
-        >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.int32)
-        >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> output = ops.minimum(x, y)
-        >>> print(output.dtype)
-        Float32
-    """
-    return minimum_(input, other)
 
 
 def median(input, axis=-1, keepdims=False):
