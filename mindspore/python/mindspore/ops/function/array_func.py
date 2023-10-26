@@ -1733,7 +1733,11 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
-        perm = ops.make_range(0, ops.rank(input))
+        x_rank = rank_(input)
+        # If input is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+        if x_rank in (0, 1):
+            return reshape_(input, (-1,))
+        perm = ops.make_range(0, x_rank)
         new_order = ops.tuple_reversed(perm)
         input = _get_cache_prim(P.Transpose)()(input, new_order)
 
