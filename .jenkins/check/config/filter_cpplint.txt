@@ -96,6 +96,10 @@
 "mindspore/mindspore/lite/src/extendrt/cxx_api/model/model_impl.cc"                                "whitespace/parens"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/gemm_mask_avx512/" "runtime/int"
 "mindspore/mindspore/lite/python/src/lite_infer_pybind.cc"                                         "runtime/references"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/decoder_kv_cache.cpp"        "runtime/references"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/platform_ascendc.h"          "runtime/references"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host/prompt_kv_cache.cpp"         "runtime/references"
+
 # ascend samples
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/aicpu/sample/"                                "build/include_subdir"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "build/include_subdir"
