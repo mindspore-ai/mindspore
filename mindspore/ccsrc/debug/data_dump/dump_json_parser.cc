@@ -354,7 +354,9 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
     if (fd.bad()) {
       fd.close();
-      MS_LOG(EXCEPTION) << "Write mem to file " << file_path_str << " failed.";
+      MS_LOG(EXCEPTION)
+        << "Write mem to file " << file_path_str
+        << " failed. This error may be caused by insufficient disk space. Please check the available disk space.";
     }
     fd.close();
     ChangeFileMode(file_path_str, S_IRUSR);
