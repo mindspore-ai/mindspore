@@ -5945,11 +5945,11 @@ def tensor_split(input, indices_or_sections, axis=0):
 
             - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-              - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
-                :math:`input.shape(axis) / n` .
-              - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
-                will have size :math:`input.shape(axis) // n + 1` , and the rest will have
-                size :math:`input.shape(axis) // n` .
+              - If :math:`input.shape[axis]` can be divisible by n, sub-sections will have equal size
+                :math:`input.shape[axis] / n` .
+              - If :math:`input.shape[axis]` is not divisible by n, the first :math:`input.shape[axis] \bmod n` sections
+                will have size :math:`input.shape[axis] // n + 1` , and the rest will have
+                size :math:`input.shape[axis] // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
               and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,
