@@ -44,7 +44,8 @@ INPUT_MAP(IncreFlashAttention) = {{1, INPUT_DESC(query)},
 DYN_INPUT_MAP(IncreFlashAttention) = {{2, DYN_INPUT_DESC(key)}, {3, DYN_INPUT_DESC(value)}};
 ATTR_MAP(IncreFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<int64_t>())},
                                  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
-                                 {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())}};
+                                 {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
+                                 {"num_key_value_heads", ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())}};
 OUTPUT_MAP(IncreFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(IncreFlashAttention, "IncreFlashAttention", ADPT_DESC(IncreFlashAttention))
 

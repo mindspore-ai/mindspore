@@ -25,6 +25,7 @@
 #include "ops/prompt_flash_attention.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/slice.h"
+#include "ops/sequence_ops.h"
 
 namespace mindspore::opt {
 namespace {
@@ -789,7 +790,9 @@ CNodePtr FlashAttentionFusion::CreateFAForBNSDWithAttenMask(const FuncGraphPtr &
     return CreatePromptFlashAttentionCnodeForBNSD(
       func_graph, node, q, k, v, atten_mask, input_tensor_q_shape[kNumIndex1], 0, scale_value, num_key_value_heads);
   } else {
-    MS_LOG(WARNING) << "seq len is 1, now not support incre flash attention.";
+    MS_LOG(INFO) << "seq len is 1, incre flash attention.";
+    return CreateIncreFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
+                                                 input_tensor_q_shape[kNumIndex1], scale_value, num_key_value_heads);
   }
   return nullptr;
 }
@@ -862,11 +865,9 @@ CNodePtr FlashAttentionFusion::CreateGQACNodeForBNSD(const FuncGraphPtr &func_gr
   return nullptr;
 }
 
-CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph,
-                                                                     const AnfNodePtr &node, const AnfNodePtr &q,
-                                                                     const AnfNodePtr &k, const AnfNodePtr &v,
-                                                                     const AnfNodePtr &atten_mask, int64_t num_heads,
-                                                                     int64_t next_token, float scale_value) const {
+CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(
+  const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
+  const AnfNodePtr &atten_mask, int64_t num_heads, float scale_value, int64_t num_key_value_heads) const {
   MS_LOG(INFO) << "CreateIncreFlashAttentionCnodeForBNSD";
   // create op
   auto incre_flash_attention_prim = std::make_shared<ops::IncreFlashAttention>();
@@ -877,11 +878,14 @@ CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(const FuncG
   // add attr
   incre_flash_attention_prim->AddAttr("num_heads", api::MakeValue(num_heads));
   incre_flash_attention_prim->AddAttr("input_layout", api::MakeValue("BNSD"));
-  incre_flash_attention_prim->AddAttr("next_tokens", api::MakeValue(next_token));
   incre_flash_attention_prim->AddAttr("scale_value", api::MakeValue(scale_value));
+  incre_flash_attention_prim->AddAttr("num_key_value_heads", api::MakeValue(num_key_value_heads));
 
-  MS_LOG(INFO) << "num heads: " << num_heads << ", input layout: BNSD, next tokens: " << next_token
-               << ", scale value: " << scale_value;
+  std::vector<int64_t> dyn_input_sizes = {-1, 1, 1, -1, -1, -1};
+  incre_flash_attention_prim->AddAttr("dyn_input_sizes", api::MakeValue(dyn_input_sizes));
+
+  MS_LOG(INFO) << "num heads: " << num_heads << ", input layout: BNSD, scale value: " << scale_value
+               << ", num_key_value_heads: " << num_key_value_heads << ", dyn_input_sizes:" << dyn_input_sizes;
   auto fa_prim_c = incre_flash_attention_prim->GetPrim();
   CNodePtr incre_flash_attention_cnode = nullptr;
   if (atten_mask != nullptr) {
@@ -1129,6 +1133,11 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForPg(const std::string &
     return CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
                                                   input_tensor_q_shape[kNumIndex1], 0, scale_value,
                                                   input_tensor_k_shape[kNumIndex1]);
+  } else {
+    MS_LOG(INFO) << "seq len is 1, incre flash attention.";
+    return CreateIncreFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, atten_mask,
+                                                 input_tensor_q_shape[kNumIndex1], scale_value,
+                                                 input_tensor_q_shape[kNumIndex1]);
   }
   return nullptr;
 }
