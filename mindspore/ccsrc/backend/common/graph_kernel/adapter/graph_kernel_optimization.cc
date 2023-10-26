@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
+#include "backend/common/graph_kernel/set_infershape_functor.h"
 #include "backend/common/graph_kernel/bprop_graph_optimizer.h"
 
 #ifdef ENABLE_AKG
@@ -260,6 +261,9 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<RewriteOutputShape>(), OptLevel_1);
 
+  auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  // Add infershape functor for dynamic shape graph kernel
+  pm->Add(std::make_shared<SetInferShapeFunctor>(), enable_dyn_level);
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
   return pm;
