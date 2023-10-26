@@ -979,7 +979,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
     if (trace == nullptr) {
       return nullptr;
     } else if (trace->GetTraceType() == TraceType::Unsupported) {
-      return std::make_shared<UnsupportedTrace>(obj, params);
+      return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
     } else {
       vparams.push_back(trace->GetObject());
     }
@@ -993,7 +993,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
     if (strict) {
       return nullptr;
     } else {
-      return std::make_shared<UnsupportedTrace>(obj, params);
+      return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
     }
   }
   switch (opcode) {
@@ -1008,7 +1008,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
         if (strict) {
           return nullptr;
         } else {
-          return std::make_shared<UnsupportedTrace>(obj, params);
+          return std::make_shared<UnsupportedTrace>(obj, params, opcode, opargs);
         }
       }
     default:
@@ -1026,7 +1026,8 @@ PyObject *CustomizedTrace::Retrieve(PTraceContext context) { return retrieve_(co
 
 std::string CustomizedTrace::ToString() { return tostring_(); }
 
-UnsupportedTrace::UnsupportedTrace(PyObject *obj, TraceVector params) : Trace(obj, nullptr), params_(params) {
+UnsupportedTrace::UnsupportedTrace(PyObject *obj, TraceVector params, int op, int arg)
+    : Trace(obj, nullptr), params_(params), op_(op), arg_(arg) {
   curType_ = TraceType::Unsupported;
 }
 

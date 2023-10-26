@@ -46,6 +46,7 @@ static const std::unordered_map<std::string, GraphJitConfig::Options> bool_key_m
   {"loop_unrolling", GraphJitConfig::kLoopUnrolling},
   {"infer_primitive", GraphJitConfig::kInferPrimitive},
   {"strict_trace", GraphJitConfig::kStrictTrace},
+  {"LOG_GRAPH_BREAK", GraphJitConfig::kLogGraphBreak}
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
 };
