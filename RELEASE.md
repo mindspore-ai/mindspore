@@ -69,6 +69,14 @@ bantao, Bingliang, BJ-WANG, Brian-K, caifubi, ccsszz, changzherui, chenfei_minds
 
 Contributions of any kind are welcome!
 
+## MindSpore Lite 2.2.0 Release Notes
+
+### Major Features and Improvements
+
+#### FlashAttention Operator Fusion
+
+- [STABLE] The OptiX OSN Ascend 910 series supports the FlashAttention large operator fusion of the LLAMA and stable diffusion models.
+
 ## MindSpore 2.1.1 Release Notes
 
 ### Bug fixes
