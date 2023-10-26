@@ -95,6 +95,7 @@ class ForwardExecutor {
   inline void set_is_jit_compiling(bool is_jit_compiling) { is_jit_compiling_ = is_jit_compiling; }
   bool is_jit_compiling() const { return is_jit_compiling_; }
 
+  const AsyncQueuePtr &frontend_queue() const { return frontend_queue_; }
   void WorkerJoin() {
     frontend_queue_->WorkerJoin();
     backend_queue_->WorkerJoin();

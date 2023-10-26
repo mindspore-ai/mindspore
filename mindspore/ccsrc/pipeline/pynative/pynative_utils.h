@@ -118,6 +118,8 @@ struct PyBoost {
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
                      const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
                      const AbstractBasePtr &output_abs);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outpus);
+  static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
 };
 
 // Some common functions used in both jit and PackFunc grad

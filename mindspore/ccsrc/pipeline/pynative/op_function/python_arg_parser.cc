@@ -71,13 +71,6 @@ ScalarPtr ConvertNumber(const py::object &obj) {
   return nullptr;
 }
 
-TensorPtr ConvertTensor(const py::object &obj) {
-  if (!py::isinstance<tensor::Tensor>(obj)) {
-    return nullptr;
-  }
-  return obj.cast<tensor::TensorPtr>();
-}
-
 // StringImmPtr ConvertStr(const py::object &obj) {
 //   if (!py::isinstance<py::str>(obj)) {
 //     return nullptr;
@@ -114,10 +107,10 @@ void Parser::Parse(py::list python_args) {
   }
 }
 
-TensorPtr Parser::ToTensor(size_t i) {
+ValuePtr Parser::ToTensor(size_t i) {
   const auto &op_arg = op_def_->args_[i];
   const py::object &obj = (*python_args_)[i];
-  TensorPtr tensor = ConvertTensor(obj);
+  auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
     return tensor;
   }

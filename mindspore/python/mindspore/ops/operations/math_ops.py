@@ -42,6 +42,7 @@ from mindspore._c_expression import Tensor as Tensor_
                              CumSum, Less, LessEqual)
 from mindspore._c_expression import pyboost_baddbmm
 from mindspore._c_expression import pyboost_baddbmm, pyboost_square
+from mindspore.common._stub_tensor import _convert_stub
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -833,7 +834,7 @@ class Baddbmm(Primitive):
     def __init__(self):
         cls_name = self.name
     def __call__(self, *args):
-        return pyboost_baddbmm(self, args)
+        return _convert_stub(pyboost_baddbmm(self, args))
 
 
 class AddN(Primitive):

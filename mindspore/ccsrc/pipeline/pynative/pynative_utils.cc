@@ -36,6 +36,7 @@
 #include "ops/sequence_op_name.h"
 #include "ops/structure_ops.h"
 #include "ops/other_ops.h"
+#include "pipeline/pynative/predict_out_type_map.h"
 
 namespace mindspore {
 namespace pynative {
@@ -1126,6 +1127,43 @@ FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
   return op_run_info;
 }
 
+void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outpus) {
+  std::vector<ValuePtr> output_values;
+  for (auto &output_tensor : outpus) {
+    MS_EXCEPTION_IF_NULL(output_tensor);
+    if (op_run_info->requires_grad) {
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    }
+    (void)output_values.emplace_back(output_tensor);
+  }
+  auto result_value = std::make_shared<ValueTuple>(output_values);
+  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    op_run_info->real_out = result_value->value().front();
+  } else {
+    op_run_info->real_out = result_value;
+  }
+}
+
+void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract) {
+  if (op_run_info->stub_output == nullptr) {
+    return;
+  }
+
+  auto success = op_run_info->stub_output->SetAbstract(abstract);
+  if (!success) {
+    const auto &op_name = op_run_info->base_op_run_info.op_name;
+    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                            << PredictOutType(op_run_info) << ", infer type is " << abstract->BuildType()
+                            << ", the name of operator is [" << op_name
+                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  }
+  MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
+
+  op_run_info->stub_output->SetValue(op_run_info->real_out);
+}
+
 void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
                      const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
                      const AbstractBasePtr &output_abs) {
@@ -1140,22 +1178,6 @@ void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
     DataConvert::ConvertValueToTensor(op_run_info, input_object, index, forward->grad()->top_cell());
-  }
-  std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : output) {
-    MS_EXCEPTION_IF_NULL(output_tensor);
-    if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
-    }
-    (void)output_values.emplace_back(output_tensor);
-  }
-  auto result_value = std::make_shared<ValueTuple>(output_values);
-  if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->real_out = result_value->value().front();
-  } else {
-    op_run_info->real_out = result_value;
   }
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
   forward->ForwardOpGradImpl(op_run_info);

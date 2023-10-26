@@ -27,7 +27,7 @@ class Parser {
  public:
   explicit Parser(const ops::OpDefPtr op_def) : op_def_(op_def) {}
   void Parse(py::list args);
-  TensorPtr ToTensor(size_t i);
+  ValuePtr ToTensor(size_t i);
   ValuePtrList ToTensorList(size_t i);
   Int64ImmPtr ToInt(size_t i);
   std::vector<Int64ImmPtr> ToIntList(size_t i);

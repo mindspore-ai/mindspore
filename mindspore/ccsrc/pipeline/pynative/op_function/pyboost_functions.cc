@@ -22,6 +22,8 @@
 #include "kernel/pyboost/op/square.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "pipeline/pynative/predict_out_type_map.h"
+#include "pipeline/pynative/forward/forward_task.h"
 
 namespace mindspore::ops {
 extern OpDef gBaddbmm;
@@ -38,18 +40,41 @@ py::object Pyboost_Baddbmm(const py::args &args) {
   auto batch2 = parser.ToTensor(kIndex2);
   auto beta = parser.ToScalar(kIndex3);
   auto alpha = parser.ToScalar(kIndex4);
-  auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
-  if (op_run_info->requires_grad) {
-    op->set_grad_func([op_run_info](const std::vector<ValuePtr> &inputs, const std::vector<TensorPtr> &output,
-                                    const std::vector<abstract::AbstractBasePtr> &input_abs,
-                                    const AbstractBasePtr &output_abs) {
-      PyNativeAlgo::PyBoost::DoGrad(op_run_info, inputs, output, input_abs, output_abs);
-    });
-  }
-  op->set_primitive(op_run_info->op_grad_info->op_prim);
-  auto output = op->Call(input, batch1, batch2, beta, alpha);
-  MS_LOG(DEBUG) << "Run Pyboost_Baddbmm end";
-  return parser.Wrap(output);
+
+  auto top_type = PredictOutType(op_run_info);
+  auto node = stub::MakeTopNode(top_type);
+  GilReleaseWithCheck release_gil;
+  op_run_info->stub_output = node.second;
+  auto forward_task = std::make_shared<FrontendTask>(
+    [input, batch1, batch2, beta, alpha](const FrontendOpRunInfoPtr &op_run_info) {
+      // stub tensor to tensor.
+      auto input_tensor = PyNativeAlgo::Common::StubNodeToTensor(input);
+      auto batch1_tensor = PyNativeAlgo::Common::StubNodeToTensor(batch1);
+      auto batch2_tensor = PyNativeAlgo::Common::StubNodeToTensor(batch2);
+
+      auto op = CREATE_PYBOOST_OP(Baddbmm, op_run_info->base_op_run_info.device_target);
+      op->set_primitive(op_run_info->op_grad_info->op_prim);
+      (void)op->Call(input_tensor, batch1_tensor, batch2_tensor, beta, alpha);
+
+      op_run_info->base_op_run_info.abstract = op->output_abs();
+      PyNativeAlgo::PyBoost::MakeOutputValue(op_run_info, op->outputs());
+      PyNativeAlgo::PyBoost::UpdateStubOutput(op_run_info, op->output_abs());
+
+      if (op_run_info->requires_grad) {
+        op->set_grad_func([op_run_info](const std::vector<ValuePtr> &inputs, const std::vector<TensorPtr> &output,
+                                        const std::vector<abstract::AbstractBasePtr> &input_abs,
+                                        const AbstractBasePtr &output_abs) {
+          PyNativeAlgo::PyBoost::DoGrad(op_run_info, inputs, output, input_abs, output_abs);
+        });
+
+        op->DoGrad({input, batch1_tensor, batch2_tensor, beta, alpha});
+      }
+
+      MS_LOG(DEBUG) << "Dispatch Pyboost_Baddbmm end";
+    },
+    op_run_info);
+  PyNativeExecutor::GetInstance()->forward_executor()->frontend_queue()->Push(forward_task);
+  return node.first;
 }
 
 py::object Pyboost_BiasAdd(const py::args &args) {
