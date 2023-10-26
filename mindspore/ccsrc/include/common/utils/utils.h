@@ -606,6 +606,11 @@ constexpr auto kGeCache = "ge_cache";
 constexpr auto kGeGraphKey = "ge.graph_key";
 constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 
+// recompute and parallel
+constexpr auto kRecomputeInsert = "recompute_insert";
+constexpr auto kAddedRecomputeDependAttr = "added_recompute_depend";
+constexpr auto kCondidateOverlapBlockId = "condidate_overlap_block_id";
+
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
 COMMON_EXPORT bool IsOneOfNotSupportedTransFormat(const std::string &format);

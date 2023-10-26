@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-bool EnableGraphReuse() {
+bool EnableCellReuse() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const auto cell_reuse = context->CellReuseLevel() != CellReuseLevel::kNoCellReuse;
@@ -331,7 +331,9 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
     }
     if (!HasRecomputedInput(node)) {
       (void)std::copy(node->inputs().begin(), node->inputs().end(), std::back_inserter(new_inputs));
-      new_inputs[1] = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[1], depend_nodes});
+      auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[1], depend_nodes});
+      depend->AddAttr(kRecomputeInsert, MakeValue(true));
+      new_inputs[1] = depend;
     } else {
       for (auto &input : node->inputs()) {
         if (!input->isa<CNode>()) {
@@ -354,7 +356,9 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
         new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
       }
       for (size_t i = 1; i < new_inputs.size(); ++i) {
-        new_inputs[i] = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[i], new_depend_nodes});
+        auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[i], new_depend_nodes});
+        depend->AddAttr(kRecomputeInsert, MakeValue(true));
+        new_inputs[i] = depend;
       }
     }
     auto new_k_fg_caller = bprop_fg->NewCNode(new_inputs);
@@ -473,7 +477,7 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
   if (bprop_fg == fg) {
     if (!IsRecomputeCell(GetValueNode<FuncGraphPtr>(k_fg_caller_cnode->input(0)))) {
       auto depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), k_fg_caller_cnode->input(1), depend_nodes});
-      depend->AddAttr("recompute_insert", MakeValue(true));
+      depend->AddAttr(kRecomputeInsert, MakeValue(true));
       manager->SetEdge(k_fg_caller_cnode, 1, depend);
       k_fg_caller_cnode->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
     } else {
@@ -481,7 +485,9 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
       (void)std::transform(k_fg_caller_cnode->inputs().begin() + 1, k_fg_caller_cnode->inputs().end(),
                            std::back_inserter(new_k_fg_caller_inputs),
                            [&fg, &depend_nodes](const AnfNodePtr &input) -> AnfNodePtr {
-                             return fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), input, depend_nodes});
+                             auto depend = fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), input, depend_nodes});
+                             depend->AddAttr(kRecomputeInsert, MakeValue(true));
+                             return depend;
                            });
       auto new_k_fg_caller = fg->NewCNodeInOrder(new_k_fg_caller_inputs);
       auto primal_fg_caller = k_fg_caller_cnode->user_data<CNode>(kPrimalFgCallerUserDataKey);
@@ -564,7 +570,7 @@ bool IsNestedRecomputed(const AnfNodePtr &node) {
 }  // namespace
 
 bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt) {
-  if (!EnableGraphReuse()) {
+  if (!EnableCellReuse()) {
     return false;
   }
 #ifdef ENABLE_DUMP_IR

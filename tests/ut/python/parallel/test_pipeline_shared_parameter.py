@@ -113,6 +113,39 @@ class LazyInlineNet(nn.Cell):
         return out
 
 
+class LazyInlineRecomputeNet(nn.Cell):
+    @lazy_inline
+    def __init__(self, stra1, stra2, param=None):
+        super().__init__()
+        self.cell1 = MatMulCell(stra1, stra2)
+        self.softmax1 = P.Softmax(-1)
+        self.abs1 = P.Abs()
+        self.cell1.pipeline_stage = 0
+        self.softmax1.pipeline_stage = 0
+        self.abs1.pipeline_stage = 0
+        self.cell1.recompute()
+        self.softmax1.recompute()
+        self.abs1.recompute()
+        self.cell2 = MatMulCell2(stra1, stra2)
+        self.softmax2 = P.Softmax(-1)
+        self.abs2 = P.Abs()
+        self.cell2.pipeline_stage = 1
+        self.softmax2.pipeline_stage = 1
+        self.abs2.pipeline_stage = 1
+        self.cell2.recompute()
+        self.softmax2.recompute()
+        self.abs2.recompute()
+
+    def construct(self, x, label):
+        out, param = self.cell1(x)
+        out = self.abs1(out)
+        out = self.softmax1(out)
+        out = self.cell2(out, param)
+        out = self.softmax2(out)
+        out = self.abs2(out)
+        return out
+
+
 def test_pipeline_split_stage0():
     context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -156,6 +189,27 @@ def test_pipeline_lazy_inline_stage0():
     stra1 = ((16, 1), (1, 1))
     stra2 = ((8, 1), (1, 1))
     net = PipelineCell(LazyInlineNet(stra1, stra2), 4)
+    params = net.network.cell1.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_lazy_inline_overlap_grad_comm_nodes_stage0():
+    """
+    Feature: overlap recompute and grad comm nodes in lazy inline
+    Description: test overlap recompute and grad comm nodes in lazy_inline
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(recompute_comm_overlap=True)
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    stra1 = ((4, 1), (1, 4))
+    stra2 = ((4, 1), (1, 4))
+    net = PipelineCell(LazyInlineRecomputeNet(stra1, stra2), 4)
     params = net.network.cell1.trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optim = nn.Lamb(params, learning_rate=0.01)
