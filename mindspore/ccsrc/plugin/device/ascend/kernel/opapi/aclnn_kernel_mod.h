@@ -22,16 +22,18 @@
 #include <tuple>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include "plugin/factory/ms_factory.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "transform/acl_ir/op_api_exec.h"
-#include "plugin/factory/ms_factory.h"
+#include "transform/acl_ir/op_api_util.h"
 
 namespace mindspore {
 namespace kernel {
 using TensorParams = transform::TensorParams;
 using aclOpExecutor = transform::aclOpExecutor;
 using CallBackFunc = std::function<void()>;
+using OpApiUtil = transform::OpApiUtil;
 
 class AclnnKernelMod : public AscendKernelMod {
  public:

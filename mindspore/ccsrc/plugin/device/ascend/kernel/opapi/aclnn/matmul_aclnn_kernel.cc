@@ -44,7 +44,7 @@ bool MMAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     outputs[0]->addr, outputs[0]->size, kOpFormat_DEFAULT, output_params_[0].data_type);
   output_device->set_host_shape(output_params_[0].ori_shape);
 
-  ParseGenExecutor(GEN_EXECUTOR(aclnnMatmul, input_device, input_device2, output_device, 0));
+  ParseGenExecutor(GEN_EXECUTOR(aclnnMatmul, input_device, input_device2, output_device, OpApiUtil::GetCubeMathType()));
 
   if (workspace_size_list_.empty()) {
     RUN_OP_API(aclnnMatmul, stream_ptr, nullptr, 0, executor_, after_launch_func_);
