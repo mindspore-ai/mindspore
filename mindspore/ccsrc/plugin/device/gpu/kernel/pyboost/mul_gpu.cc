@@ -36,7 +36,7 @@ tensor::TensorPtr MulGPU::Call(const tensor::TensorPtr &x, const tensor::TensorP
 
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out", false);
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");
   auto input_x = TensorToKernelTensor(x, device_context);
   auto input_y = TensorToKernelTensor(y, device_context);
   auto output = TensorToKernelTensor(outputs_[0], device_context);
@@ -64,7 +64,7 @@ tensor::TensorPtr MulGPU::Call(const tensor::TensorPtr &x, const tensor::TensorP
 tensor::TensorPtr MulGPU::Call(const tensor::TensorPtr &x, const ScalarPtr &y) {
   auto x_type = x->data_type();
   auto tensor_y = pyboost::ScalarToTensor(y, TypeIdToType(x_type));
-  Infer(primitive_, x, tensor_y);
+  InferOutput(x, tensor_y);
   auto kernel = std::make_shared<BroadcastOptGpuKernelMod>("Mul");
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
@@ -75,7 +75,7 @@ tensor::TensorPtr MulGPU::Call(const tensor::TensorPtr &x, const ScalarPtr &y) {
 
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, tensor_y, "y");
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out", false);
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");
   auto input_x = TensorToKernelTensor(x, device_context);
   auto input_y = TensorToKernelTensor(tensor_y, device_context);
   auto output = TensorToKernelTensor(outputs_[0], device_context);
