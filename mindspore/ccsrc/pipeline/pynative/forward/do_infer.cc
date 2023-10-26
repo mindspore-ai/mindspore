@@ -146,9 +146,9 @@ bool InferByOpDef(const FrontendOpRunInfoPtr &op_run_info) {
 
   auto op_def = mindspore::ops::GetOpDef(prim->name());
   if (op_def) {
-    (void)op_def->func_impl_->CheckValidation(prim, op_run_info->op_grad_info->input_abs);
-    auto shape = op_def->func_impl_->InferShape(prim, op_run_info->op_grad_info->input_abs);
-    auto type = op_def->func_impl_->InferType(prim, op_run_info->op_grad_info->input_abs);
+    (void)op_def->func_impl_.CheckValidation(prim, op_run_info->op_grad_info->input_abs);
+    auto shape = op_def->func_impl_.InferShape(prim, op_run_info->op_grad_info->input_abs);
+    auto type = op_def->func_impl_.InferType(prim, op_run_info->op_grad_info->input_abs);
     op_run_info->base_op_run_info.abstract = mindspore::abstract::MakeAbstract(shape, type);
     MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << op_run_info->base_op_run_info.abstract->ToString();
     return true;

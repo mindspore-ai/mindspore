@@ -1367,11 +1367,7 @@ PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitiveFunctionPt
 
 AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const AbstractBasePtrList &args) {
   if (op_def_ != nullptr) {
-    if (op_def_->func_impl_ == nullptr) {
-      MS_LOG(EXCEPTION) << "For Primitive[" << prim_func_->name() << "], the FuncImpl is empty.";
-    }
-
-    (void)op_def_->func_impl_->CheckValidation(prim_func_, args);
+    (void)op_def_->func_impl_.CheckValidation(prim_func_, args);
     if (frontend_func_impl_ != nullptr) {
       auto infer_result = frontend_func_impl_->InferAbstract(prim_func_, args);
       if (infer_result != nullptr) {
@@ -1379,8 +1375,8 @@ AbstractBasePtr PrimitiveFunctionEvaluator::CheckAndInfer(const AbstractBasePtrL
       }
     }
 
-    auto type = op_def_->func_impl_->InferType(prim_func_, args);
-    auto shape = op_def_->func_impl_->InferShape(prim_func_, args);
+    auto type = op_def_->func_impl_.InferType(prim_func_, args);
+    auto shape = op_def_->func_impl_.InferShape(prim_func_, args);
     return MakeAbstract(shape, type);
   }
   MS_LOG(INTERNAL_EXCEPTION) << "Find infer function failed, primitive: " << prim_func_->ToString();

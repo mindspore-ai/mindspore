@@ -71,7 +71,7 @@ OpDef gBatchNormGradWithActivation = {
       {"epsilon", 9},
       {"data_format", 10},
     },
-  .func_impl_ = &gBatchNormGradWithActivationFuncImpl,
+  .func_impl_ = gBatchNormGradWithActivationFuncImpl,
 };
 REGISTER_PRIMITIVE_OP_DEF(kNameBatchNormGradWithActivation, &gBatchNormGradWithActivation);
 }  // namespace mindspore::ops

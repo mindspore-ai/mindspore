@@ -187,7 +187,7 @@ OpDef gBatchNorm = {
                {"epsilon", 6},
                {"momentum", 7},
                {"data_format", 8}},
-  .func_impl_ = &gBatchNormFuncImpl,
+  .func_impl_ = gBatchNormFuncImpl,
 };
 
 REGISTER_PRIMITIVE_OP_DEF(kNameBatchNorm, &gBatchNorm);

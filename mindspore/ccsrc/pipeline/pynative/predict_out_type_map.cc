@@ -17,6 +17,7 @@
 #include "pipeline/pynative/predict_out_type_map.h"
 #include <string>
 #include <vector>
+#include "ops/op_def.h"
 
 namespace mindspore {
 namespace pynative {
@@ -33,12 +34,49 @@ inline TypePtr PredictOutTypeByOutputNum(const int64_t &output_num) {
 }
 }  // namespace
 
+TypePtr PredictOutTypeByOpDef(const ops::OpDefPtr op_def) {
+  auto returns_num = op_def->returns_.size();
+  if (returns_num == 1) {
+    if (op_def->returns_[0].arg_dtype_ == ops::OP_DTYPE::DT_TENSOR) {
+      return kTensorType;
+    }
+
+    if (op_def->returns_[0].arg_dtype_ == ops::OP_DTYPE::DT_LIST_TENSOR ||
+        op_def->returns_[0].arg_dtype_ == ops::OP_DTYPE::DT_TUPLE_TENSOR) {
+      return kTuple;
+    }
+
+    return kTypeNone;
+  }
+
+  static const std::vector<TypePtr> kSequenceTypes = {
+    kTuple,  // this is only a placeholder
+    kTuple,  // this is only a placeholder
+    kTupleTensor2, kTupleTensor3, kTupleTensor4, kTupleTensor5,
+    kTupleTensor6, kTupleTensor7, kTupleTensor8, kTupleTensor9,
+  };
+
+  if (returns_num >= kSequenceTypes.size()) {
+    MS_LOG(EXCEPTION) << "For " << op_def->name_ << ", the number of output must be less than " << kSequenceTypes.size()
+                      << ", but got " << returns_num << ".";
+  }
+
+  return kSequenceTypes[returns_num];
+}
+
 TypePtr PredictOutTypeByName(const std::string &op_name) {
   static PredictOutTypeMap ops_map;
   const auto iter = ops_map.find(op_name);
   if (iter != ops_map.end()) {
     return iter->second;
   }
+  auto op_def = ops::GetOpDef(op_name);
+  if (op_def != nullptr) {
+    auto type = PredictOutTypeByOpDef(op_def);
+    MS_LOG(DEBUG) << "PredictOutTypeByOpDef: " << type->ToString();
+    return ops_map[op_name] = type;
+  }
+
   static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
   if (operator_fns.find(op_name) == operator_fns.end()) {
     return ops_map[op_name] = kTypeNone;

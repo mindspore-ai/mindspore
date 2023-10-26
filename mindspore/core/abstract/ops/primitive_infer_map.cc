@@ -338,11 +338,11 @@ std::optional<BaseShapePtr> InferShapeByFuncImpl(const PrimitivePtr &primitive, 
   }
 
   auto op_def = ops::GetOpDef(op_name);
-  if (op_def == nullptr || op_def->func_impl_ == nullptr) {
+  if (op_def == nullptr) {
     return std::nullopt;
   }
-  (void)op_def->func_impl_->CheckValidation(primitive, input_args);
-  return op_def->func_impl_->InferShape(primitive, input_args);
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  return op_def->func_impl_.InferShape(primitive, input_args);
 }
 
 std::optional<TypePtr> InferTypeByFuncImpl(const PrimitivePtr &primitive, const AbstractBasePtrList &input_args,
@@ -360,11 +360,11 @@ std::optional<TypePtr> InferTypeByFuncImpl(const PrimitivePtr &primitive, const 
   }
 
   auto op_def = ops::GetOpDef(op_name);
-  if (op_def == nullptr || op_def->func_impl_ == nullptr) {
+  if (op_def == nullptr) {
     return std::nullopt;
   }
-  (void)op_def->func_impl_->CheckValidation(primitive, input_args);
-  return op_def->func_impl_->InferType(primitive, input_args);
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  return op_def->func_impl_.InferType(primitive, input_args);
 }
 
 std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const PrimitivePtr &primitive,
@@ -380,12 +380,12 @@ std::optional<AbstractBasePtr> InferAbstractByFuncImpl(const PrimitivePtr &primi
   }
 
   auto op_def = ops::GetOpDef(op_name);
-  if (op_def == nullptr || op_def->func_impl_ == nullptr) {
+  if (op_def == nullptr) {
     return std::nullopt;
   }
-  (void)op_def->func_impl_->CheckValidation(primitive, input_args);
-  auto shape = op_def->func_impl_->InferShape(primitive, input_args);
-  auto type = op_def->func_impl_->InferType(primitive, input_args);
+  (void)op_def->func_impl_.CheckValidation(primitive, input_args);
+  auto shape = op_def->func_impl_.InferShape(primitive, input_args);
+  auto type = op_def->func_impl_.InferType(primitive, input_args);
   return MakeAbstract(shape, type);
 }
 

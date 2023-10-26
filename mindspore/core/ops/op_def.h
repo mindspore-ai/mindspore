@@ -63,7 +63,7 @@ struct OpDef {
   std::vector<OpArg> args_;
   std::vector<OpArg> returns_;
   std::unordered_map<std::string, size_t> indexes_;
-  OpFuncImplRawPtr func_impl_{nullptr};
+  OpFuncImpl &func_impl_;
 };
 
 using OpDefPtr = OpDef *;

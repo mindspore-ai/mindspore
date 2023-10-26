@@ -15,8 +15,10 @@ nllloss:
             dtype: int
             init: -100
     returns:
-        output: 
-            dtype: tuple[tensor]
+        loss: 
+            dtype: tensor
+        total_weight:
+            dtype: tensor
     function:
         name: nll_loss_
     class:

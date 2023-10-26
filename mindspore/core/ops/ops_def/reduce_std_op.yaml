@@ -14,5 +14,7 @@ reduce_std:
       dtype: bool
       init: False
   returns:
-    output:
-      dtype: tuple[tensor]
+    output_std:
+      dtype: tensor
+    output_mean:
+      dtype: tensor

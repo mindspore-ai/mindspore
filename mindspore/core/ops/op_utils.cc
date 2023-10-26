@@ -909,9 +909,8 @@ std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
     }
     return depend_list;
   }
-  auto op_func_impl = op_def->func_impl_;
-  MS_EXCEPTION_IF_NULL(op_func_impl);
-  depend_list = op_func_impl->GetValueDependArgIndices();
+
+  depend_list = op_def->func_impl_.GetValueDependArgIndices();
   if (!depend_list.empty()) {
     return depend_list;
   }

@@ -70,7 +70,7 @@ OpDef gBatchNormWithAddAndActivation = {
       {"momentum", 7},
       {"data_format", 8},
     },
-  .func_impl_ = &gBatchNormWithAddAndActivationFuncImpl,
+  .func_impl_ = gBatchNormWithAddAndActivationFuncImpl,
 };
 REGISTER_PRIMITIVE_OP_DEF(kNameBatchNormWithAddAndActivation, &gBatchNormWithAddAndActivation);
 }  // namespace mindspore::ops

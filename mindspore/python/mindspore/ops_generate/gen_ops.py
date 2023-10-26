@@ -269,7 +269,7 @@ def generate_py_primitive(yaml_data):
 
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
-        inputs_args, inputs_assign, init_args, args_assign, init_args_with_default = process_args(args)
+        inputs_args, _, init_args, args_assign, init_args_with_default = process_args(args)
         init_code = '\n'.join(args_assign)
 
         labels = operator_data.get('labels')
@@ -296,13 +296,10 @@ class {class_name}(Primitive):\n"""
 
     def __call__(self, {', '.join(inputs_args) if inputs_args else ''}):
         return super().__call__("""
-        # if inputs_args:
-        #     primitive_code += ', '.join(inputs_args)
-        #     primitive_code += ', '
-
-        if inputs_assign:
-            primitive_code += ', '.join(inputs_assign)
+        if inputs_args:
+            primitive_code += ', '.join(inputs_args)
             primitive_code += ', '
+
         if init_args:
             primitive_code += ', '.join([f'self.{arg}' for arg in init_args])
         primitive_code += """)
@@ -496,7 +493,7 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         cc_index_str += f"""\n    }},"""
         opdef_cc += cc_index_str
 
-        cc_func_impl_str = f"""\n  .func_impl_ = &g{class_name}FuncImpl,"""
+        cc_func_impl_str = f"""\n  .func_impl_ = g{class_name}FuncImpl,"""
         opdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
