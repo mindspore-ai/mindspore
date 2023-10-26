@@ -35,6 +35,6 @@ mindspore.dataset.FakeImageDataset
     .. note:: 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
     .. include:: mindspore.dataset.sampler.rst
-
+        :parser: reStructuredText
 
 .. include:: mindspore.dataset.api_list_vision.rst
