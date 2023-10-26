@@ -154,11 +154,11 @@ def _check_to_numpy(plugin, tensor, prim=None):
     if plugin == 'image':
         if np_value.ndim == 4:
             return np_value
-        raise ValueError(f'For "{summary_name}", The tensor seems not to hold a valid image.')
+        raise ValueError(f'For "{summary_name}", the tensor seems not to hold a valid image.')
     if plugin in ('tensor', 'histogram'):
         if np_value.ndim > 0:
             return np_value
-        raise ValueError(f'For "{summary_name}", The value should not be empty.')
+        raise ValueError(f'For "{summary_name}", the value should not be empty.')
     return np_value
 
 
