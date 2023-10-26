@@ -755,6 +755,13 @@ void CodeGenerator::CutoffBytecodesIfGraphBreak() {
   bool is_loop = false;
   auto f = buildLastFrame(this->graph_, &stop_trace_at, &is_loop);
 
+  if (stop_trace_at->GetGraph() && this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+    auto sub = stop_trace_at->GetGraph();
+    PyObject *file = sub->GetCodeObj()->co_name;
+    GRAPH_JIT_LOG_F("break graph at [ %U : %d ] operation %s", file, stop_trace_at->GetLineNo(),
+                    GetStopTraceReasonDesc(sub->GetStopTraceReason()).c_str());
+  }
+
   f.ResizeLocal(nlocals_);
 
   // no operations captured, break at code start
@@ -1483,6 +1490,9 @@ bool CodeGenerator::TryToBreakGraphIfParameterUnsupported() {
   bool support_param = true;
   for (auto i : this->graph_->GetFrame(0).GetLocals()) {
     if (i->GetType() == AbstractNode::Param && !i->GetVobj()->IsMindSporeSupportedType()) {
+      if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+        GRAPH_JIT_LOG_F("rewrite bytecode because of parameter is unsupported [%s]", i->GetVobj()->ToString().c_str());
+      }
       support_param = false;
       break;
     }

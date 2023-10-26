@@ -707,7 +707,6 @@ static void GraphCompile(JitCompileResults *jcr, OptCodePtr oc, py::object func_
 extern bool UnsupportedCodeTypeCheck(PyCodeObject *co);
 static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   if (UnsupportedCodeTypeCheck(c->f->f_code)) {
-    PyErr_SetString(PyExc_TypeError, "unsupported function type");
     return false;
   }
 
