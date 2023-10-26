@@ -1586,7 +1586,7 @@ class Model:
                 use_past = not is_first_iteration
                 model_group_id = self._mindspore_lite_model_group_id
 
-        check_input_data(*predict_data, data_class=Tensor)
+        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
         if use_past:
             # Execute incremental model inference
             if not self._lite_incremental_predictor:
@@ -1867,7 +1867,7 @@ class Model:
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             raise RuntimeError('Infer predict layout only supports semi auto parallel and auto parallel mode.')
         _parallel_predict_check()
-        check_input_data(*predict_data, data_class=Tensor)
+        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
 
         predict_net = self._predict_network
         # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
