@@ -38,7 +38,7 @@ def compare(a, b):
     return np.allclose(a.asnumpy(), b)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_tuple_tensor():
@@ -87,7 +87,7 @@ def test_grad_mutable_tuple_tensor():
     assert id(m_t.__ms_origin_object__) == id(t)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_list_tensor():
@@ -124,7 +124,7 @@ def test_grad_mutable_list_tensor():
     t = [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
          Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)]
     m_t = mutable(t)
-    output = GradNetWrtX(Net())(t)
+    output = GradNetWrtX(Net())(m_t)
     assert isinstance(output, list)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
                         [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
@@ -136,7 +136,7 @@ def test_grad_mutable_list_tensor():
     assert id(m_t.__ms_origin_object__) == id(t)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_mutable_dict_tensor():
@@ -173,7 +173,7 @@ def test_grad_mutable_dict_tensor():
     t = {'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
          'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)}
     m_t = mutable(t)
-    output = GradNetWrtX(Net())(t)
+    output = GradNetWrtX(Net())(m_t)
     assert isinstance(output, dict)
     assert len(output.keys()) == 2
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
