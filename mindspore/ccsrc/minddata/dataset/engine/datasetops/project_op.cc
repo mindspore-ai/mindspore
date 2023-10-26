@@ -15,11 +15,11 @@
  */
 
 #include "minddata/dataset/engine/datasetops/project_op.h"
+
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/execution_tree.h"

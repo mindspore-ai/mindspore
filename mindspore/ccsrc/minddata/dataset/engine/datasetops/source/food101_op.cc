@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
  * limitations under the License.
 */
 #include "minddata/dataset/engine/datasetops/source/food101_op.h"
-
-#include <algorithm>
-#include <iomanip>
-#include <regex>
-#include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_schema.h"

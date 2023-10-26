@@ -16,10 +16,6 @@
 
 #include "minddata/dataset/engine/datasetops/map_op/npu_map_job.h"
 
-#include <set>
-#include <string>
-#include <utility>
-
 #include "minddata/dataset/core/device_tensor_ascend910b.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 

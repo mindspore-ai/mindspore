@@ -111,7 +111,7 @@ Status BatchOp::operator()() {
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(op_current_epochs_, batch_num, cnt)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && ENABLE_PYTHON
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && defined(ENABLE_PYTHON)
     if ((num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
       MS_LOG(WARNING) << "Memory consumption is more than " << (GetMemoryUsage() * 100) << "%, "
                       << "which may cause OOM. Please reduce num_parallel_workers size / "
