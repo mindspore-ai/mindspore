@@ -10144,8 +10144,23 @@ class PromptFlashAttention(Primitive):
     S -- Sequence length
     H -- Hidden size
 
+    Note:
+    is only supported on ascend910B
+
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    Args:
+        num_heads (int): The number of heads.
+        scale_value (float): The scale value indicating the scale coefficient, which is used as the scalar of
+          Muls in the calculation. Default: 1.0.
+        pre_tokens (int): Previous tokens. Default: 2147483547.
+        next_tokens (int): next tokens.  Default: 0.
+          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
+          indicates that the data blocks in the upper triangle are not involved in the calculation
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
+        num_key_value_heads (int): head numbers of key/value which are used in GQA algorithm.
+          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or float32.
@@ -10157,22 +10172,32 @@ class PromptFlashAttention(Primitive):
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **padding_mask** (Tensor) - The padding mask tensor with data type of float16 or float32
-        - **actual_seq_lengths** (Tensor): Describe actual sequence length of each input with data type of int.
-        - **num_heads**  (int): The number of heads.
-        - **scale_value** (float): The scale value indicating the scale coefficient, which is used as the scalar of
-          Muls in the calculation. Default: 1.0.
-        - **pre_tokens** (int): Previous tokens. Default: 2147483547.
-        - **next_tokens** (int): next tokens.  Default: 0.
-          indicate the upper triangle, Indicate the number of data blocks involved in the calculation. The value 0
-          indicates that the data blocks in the upper triangle are not involved in the calculation
-        - **input_layout** (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`, Default `BSH`.
-        - **num_key_value_heads** (int): head numbers of key/value which are used in GQA algorithm.
-          The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        - **actual_seq_lengths** (Tupe(int)): Describe actual sequence length of each input with data type of int.
 
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore.ops.operations.nn_ops as P
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> B = 1
+        >>> N = 16
+        >>> S = 256
+        >>> D = 16
+        >>> query = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
+        >>> attn_mask = Tensor(np.ones((B, 1, S, S), dtype=np.float16))
+        >>> pfa = P.PromptFlashAttention(N, input_layout='BNSD')
+        >>> out = pfa(query, key, value, attn_mask, None, None)
+        >>> print(out[0].shape)
+        (1, 16, 256, 16)
     """
+
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
                  num_key_value_heads=0):

@@ -20,11 +20,8 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
+from mindspore.ops import operations as OPS
 import mindspore.ops.operations.nn_ops as P
-
-
-def setup_function():
-    context.set_auto_parallel_context(dataset_strategy="full_batch")
 
 
 def generate_inputs(B, N, S, D, input_layout='BSH'):
@@ -69,10 +66,17 @@ class Net(nn.Cell):
                 stra = ((dp, 1, mp), (dp, 1, mp), (dp, 1, mp), (dp, 1, 1, 1))
             if input_layout == 'BNSD':
                 stra = ((dp, mp, 1, 1), (dp, mp, 1, 1), (dp, mp, 1, 1), (dp, 1, 1, 1))
+        stra_q = None
+        if stra is not None:
+            stra_q = (stra[0],)
+        self.square = OPS.Square().shard(stra_q)
         self.fa_op.shard(stra)
 
+
     def construct(self, query, key, value, attn_mask, padding_mask, actual_seq_lengths):
-        return self.fa_op(query, key, value, attn_mask, None, actual_seq_lengths)
+        ret = self.square(query)
+        out = self.fa_op(ret, key, value, attn_mask, None, actual_seq_lengths)
+        return self.square(out[0])
 
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
@@ -92,7 +96,8 @@ def test_self_attention_standalone(input_layout):
 
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
-def test_prompt_flash_attention_semi_auto_parallel(input_layout):
+@pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
+def test_prompt_flash_attention_semi_auto_parallel(input_layout, strategys):
     """
     Feature: test PromptFlashAttention semi parallel
     Description: semi parallel
@@ -100,8 +105,8 @@ def test_prompt_flash_attention_semi_auto_parallel(input_layout):
     """
     set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    dp = 2
-    mp = 4
+    dp = strategys[0]
+    mp = strategys[1]
     B, N, S, D = 8, 16, 1024, 128
     inputs = generate_inputs(B, N, S, D, input_layout=input_layout)
     net = Net(N, dp=dp, mp=mp, input_layout=input_layout)
@@ -109,13 +114,14 @@ def test_prompt_flash_attention_semi_auto_parallel(input_layout):
 
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
-def test_prompt_flash_attention_auto_parallel(input_layout):
+@pytest.mark.parametrize('search_mode', ['sharding_propagation', 'dynamic_programming', 'recursive_programming'])
+def test_prompt_flash_attention_auto_parallel(input_layout, search_mode):
     """
     Feature: test PromptFlashAttention auto parallel
     Description: auto parallel
     Expectation: compile success
     """
-    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="dynamic_programming", device_num=8,
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode=search_mode, device_num=8,
                                       global_rank=0)
     dp = 2
     mp = 4
