@@ -55,7 +55,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                            const std::string &input_name);
   static device::DeviceAddressPtr CreateOutputTensorAddress(const DeviceContext *device_context,
                                                             const tensor::TensorPtr &tensor,
-                                                            const std::string &output_name);
+                                                            const std::string &output_name, std::string format = "");
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
   static device::DeviceAddressPtr CreateScalarAddress(const DeviceContext *device_context,

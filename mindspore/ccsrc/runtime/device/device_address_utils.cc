@@ -762,15 +762,13 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (device_address == nullptr) {
     auto tensor_size = LongToSize(tensor->data().nbytes());
-    // Padding shape/format
     device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
                                                                               tensor->data_type(), tensor->shape());
 
     device_address->set_from_persistent_mem(tensor->is_parameter());
     tensor->set_device_address(device_address);
-  }
-
-  if (device_address->GetPtr() != nullptr) {
+  } else {
+    MS_EXCEPTION_IF_NULL(device_address->GetPtr());
     return device_address;
   }
 
@@ -778,9 +776,9 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
 
-  // Padding shape/format
+  // Default format no need to padding shape
   if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                        tensor->data_c(), tensor->device_info().host_format_)) {
+                                        tensor->data_c(), kOpFormat_DEFAULT)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "input_name:" << input_name << " ptr:" << device_address->GetPtr();
@@ -789,15 +787,37 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
                                                                        const tensor::TensorPtr &tensor,
-                                                                       const std::string &output_name) {
+                                                                       const std::string &output_name,
+                                                                       std::string format) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
+
+  auto get_format_by_tensor_shape = [device_context, tensor](const auto &format) -> std::string {
+    if (!format.empty()) {
+      // ori_format is not empty, use ori_format.
+      return format;
+    }
+
+    if (device_context->GetDeviceType() != device::DeviceType::kAscend) {
+      return kOpFormat_DEFAULT;
+    }
+
+    switch (tensor->shape().size()) {
+      case kShape4dDims:
+        return kOpFormat_NCHW;
+      case kShape5dDims:
+        return kOpFormat_NCDHW;
+      default:
+        return kOpFormat_ND;
+    }
+  };
 
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (device_address == nullptr) {
     auto tensor_size = LongToSize(tensor->data().nbytes());
-    // Padding shape/format
-    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+
+    const auto &device_format = get_format_by_tensor_shape(format);
+    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, device_format,
                                                                               tensor->data_type(), tensor->shape());
     tensor->set_device_address(device_address);
   }

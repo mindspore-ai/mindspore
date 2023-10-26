@@ -26,6 +26,9 @@
 #include "ir/tensor.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
+#include "transform/acl_ir/acl_helper.h"
+#include "runtime/device/ms_device_shape_transfer.h"
 
 namespace mindspore::transform {
 // Api data struct.
@@ -242,20 +245,18 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
 
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
   auto shape = tensor->shape();
-  const auto shape_size = shape.size();
-  aclFormat format = ACL_FORMAT_ND;
-  switch (shape_size) {
-    case 3:
-      format = ACL_FORMAT_NCL;
-      break;
-    case 4:
-      format = ACL_FORMAT_NCHW;
-      break;
-    case 5:
-      format = ACL_FORMAT_NCDHW;
-      break;
-    default:
-      format = ACL_FORMAT_ND;
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(device_address);
+  const auto &tensor_format = device_address->format();
+  aclFormat format = AclConverter::ConvertFormat(tensor_format);
+  auto dev_shape = shape;
+  if (transform::AclHelper::CheckDefaultSupportFormat(tensor_format)) {
+    int64_t groups = 1;
+    auto node_idx = device_address->GetNodeIndex();
+    if (node_idx.first != nullptr) {
+      groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
+    }
+    dev_shape = trans::TransShapeToDevice(shape, tensor_format, tensor->data_type(), groups);
   }
 
   // Create strides.
@@ -268,10 +269,8 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
     strides[i] = strides[i] * strides[i + 1];
   }
 
-  auto device_address = tensor->device_address();
-  MS_EXCEPTION_IF_NULL(device_address);
-  auto acl_tensor = aclCreateTensor(shape.data(), shape_size, acl_data_type, strides.data(), 0, format, shape.data(),
-                                    shape_size, device_address->GetMutablePtr());
+  auto acl_tensor = aclCreateTensor(shape.data(), shape.size(), acl_data_type, strides.data(), 0, format,
+                                    dev_shape.data(), dev_shape.size(), device_address->GetMutablePtr());
   return acl_tensor;
 }
 
