@@ -69,6 +69,14 @@ bantao, Bingliang, BJ-WANG, Brian-K, caifubi, ccsszz, changzherui, chenfei_minds
 
 欢迎以任何形式对项目提供贡献！
 
+## MindSpore Lite 2.2.0 Release Notes
+
+### 主要特性和增强
+
+#### 支持FlashAttention算子融合
+
+- [STABLE] 在Ascend 910系列硬件上，支持LLAMA、stable diffusion系列模型的FlashAttention大算子融合。
+
 ## MindSpore 2.1.1 Release Notes
 
 ### Bug fixes
