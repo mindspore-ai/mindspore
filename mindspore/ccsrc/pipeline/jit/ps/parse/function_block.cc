@@ -340,15 +340,18 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
 
   // Handle global namespace info.
   auto syntax_support = info[flag_index].cast<int32_t>();
+  py::object py_obj = info[value_index];
   if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
+      if (ast->CallParserObjMethod(PYTHON_PARSE_IS_CLASS_TENSOR_TYPE, py_obj)) {
+        resolved_node->set_user_data<bool>(kClassTensorType, std::make_shared<bool>(true));
+      }
     }
   }
 
   auto symbol_name = info[symbol_index].cast<std::string>();
-  py::object py_obj = info[value_index];
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";
