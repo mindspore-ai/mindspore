@@ -1929,6 +1929,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('flatten')(self, order, start_dim=start_dim, end_dim=end_dim)
 
+    def unflatten(self, axis, unflattened_size):
+        r"""
+        For details, please refer to :func:`mindspore.ops.unflatten`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unflatten')(self, axis=axis, unflattened_size=unflattened_size)
+
     def float_power(self, other):
         r"""
         For details, please refer to :func:`mindspore.ops.float_power`.

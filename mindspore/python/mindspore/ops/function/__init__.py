@@ -54,6 +54,7 @@ from .array_func import (
     reverse,
     reverse_sequence,
     flatten,
+    unflatten,
     cat,
     concat,
     stack,

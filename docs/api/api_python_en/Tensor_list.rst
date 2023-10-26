@@ -333,6 +333,7 @@
     mindspore.Tensor.type
     mindspore.Tensor.type_as
     mindspore.Tensor.unbind
+    mindspore.Tensor.unflatten
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
     mindspore.Tensor.unique_with_pad

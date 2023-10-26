@@ -212,6 +212,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"itemset", std::string("itemset")},                                // P.itemset,
        {"transpose", std::string("transpose")},                            // P.transpose
        {"flatten", std::string("flatten")},                                // P.reshape(,-1)
+       {"unflatten", std::string("unflatten")},                            // P.reshape()
        {"reshape", std::string("reshape")},                                // P.reshape()
        {"reshape_as", std::string("reshape_as")},                          // P.reshape()
        {"reverse", std::string("reverse")},                                // P.ReverseV2()

@@ -749,6 +749,11 @@ def flatten(x, order='C', *, start_dim=0, end_dim=-1):
     return F.flatten(x, order, start_dim=start_dim, end_dim=end_dim)
 
 
+def unflatten(x, axis, unflattened_size):
+    """For details, please refer to :func:`mindspore.ops.unflatten`."""
+    return F.unflatten(x, axis=axis, unflattened_size=unflattened_size)
+
+
 def scatter(self, axis, index, src):
     """
     Update the value in `src` to tensor according to the specified index.

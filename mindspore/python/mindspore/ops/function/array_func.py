@@ -1626,6 +1626,51 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     return reshape_(input, new_shape)
 
 
+def unflatten(input, axis, unflattened_size):
+    r"""
+    Unflattens the specified dimenmsion `axis` of the input tensor `input`
+    and returns the tensor whose shape is `unflattened_size`.
+
+    Args:
+        input (Tensor): Input tensor.
+        axis (int): specifies the dimension of the input Tensor to be unflattened.
+        unflattened_size (Union(tuple[int], list[int])): the new shape of the unflattened tensor.
+        The product of `unflattened_size` must equal to input_shape[axis].
+
+    Returns:
+        Tensor that has been unflattend.
+
+    Raises:
+        TypeError: If `axis` is not int.
+        TypeError: If `unflattened_size` is neither tuple of ints nor list of ints.
+        TypeError: The product of `unflattened_size` does not equal to input_shape[axis].
+
+    Supported Platforms:
+    ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> input_x = Tensor(np.arange(0, 100).reshape(2, 10, 5), mindspore.float32)
+        >>> output = ops.unflatten(input_x, 1, (2, 5))
+        >>> print(f"before unflatten the input shape is {input_x.shape}")
+        before unflatten the input shape is  (2, 10, 5)
+        >>> print(f"after unflatten the output shape is {output.shape}")
+        after unflatten the output shape is (2, 2, 5, 5)
+    """
+    # Check the type of axis.
+    _check_axis_type(axis, True, False, False, "ops.unflatten")
+    # Handle the default case.
+    x_shape = shape_(input)
+    if axis != -1:
+        new_shape = x_shape[:axis] + unflattened_size + x_shape[axis + 1:]
+
+    else:
+        new_shape = x_shape[:axis] + unflattened_size
+    return reshape_(input, new_shape)
+
+
 @constexpr
 def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
     if isinstance(scalar, int) and tensor_type != mstype.int32:
