@@ -138,7 +138,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
   set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
-  set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kStrict);
+  set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
   set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_DGRAD_ALGO, "normal");
   set_param<std::string>(MS_CTX_CONV_WGRAD_ALGO, "normal");
