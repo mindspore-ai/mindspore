@@ -44,7 +44,8 @@ int SparseSegmentMeanGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
   auto y_shape = outputs.at(kIndex0)->GetShapeVector();
-  batch_rank_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  batch_rank_ =
+    primitive_->HasAttr("batch_rank") ? LongToSize(GetValue<int64_t>(primitive_->GetAttr("batch_rank"))) : 0;
   batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
   outer_size_ = LongToSize(x_shape.at(batch_rank_));
   inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});

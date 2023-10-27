@@ -55,7 +55,7 @@ int32_t PReLUFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   auto x_rank = x_shape.size();
   auto channel_num = x_rank <= 1 ? 1 : x_shape[1];
   auto weight_len = weight_shape[0];
-  if (weight_len != channel_num) {
+  if (weight_len != 1 && weight_len != channel_num) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the length of 'weight' must be equal to number of channels: " << channel_num
                              << ", but got " << weight_shape << ".";

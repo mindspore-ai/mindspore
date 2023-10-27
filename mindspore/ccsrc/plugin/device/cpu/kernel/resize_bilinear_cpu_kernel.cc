@@ -54,8 +54,17 @@ int ResizeBilinearCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     return ret;
   }
   // for ResizeBilinear, the inputs index will be out of range.
-  align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
-  half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  if (kernel_name_ == "ResizeBilinear") {
+    auto align_corners_ptr = primitive_->GetAttr(kAttrAlignCorners);
+    MS_EXCEPTION_IF_NULL(align_corners_ptr);
+    align_corners_ = GetValue<bool>(align_corners_ptr);
+    auto half_pixel_centers_ptr = primitive_->GetAttr(kAttrHalfPixelCenters);
+    MS_EXCEPTION_IF_NULL(half_pixel_centers_ptr);
+    half_pixel_centers_ = GetValue<bool>(half_pixel_centers_ptr);
+  } else {
+    align_corners_ = inputs.at(kIndex2)->GetValueWithCheck<bool>();
+    half_pixel_centers_ = inputs.at(kIndex3)->GetValueWithCheck<bool>();
+  }
   if (half_pixel_centers_ == true && align_corners_ == true) {
     MS_LOG(ERROR) << "align_corners and half_pixel_centers cannot be True at the same time.";
     return false;

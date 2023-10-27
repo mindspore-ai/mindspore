@@ -85,15 +85,8 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
   } else {
     auto segment_ids_value = input_args[kInputIndex2]->GetValue();
     MS_EXCEPTION_IF_NULL(segment_ids_value);
-    auto segment_ids_opt_temp = GetArrayValue<int64_t>(segment_ids_value);
-    if (!segment_ids_opt_temp.has_value()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
-    }
-    auto segment_ids_size = segment_ids_opt_temp.value().size();
-    auto expect_size = std::accumulate(segment_ids_shape.begin(), segment_ids_shape.end(), 1, std::multiplies{});
-    MS_EXCEPTION_IF_CHECK_FAIL(segment_ids_size == LongToSize(expect_size),
-                               "For '" + prim_name + "', something unexpected happened.");
 
+    size_t segment_ids_size;
     int64_t segment_num = 0;
     auto segment_ids_type_id = input_args[kInputIndex2]->GetType()->cast<TensorTypePtr>()->element()->type_id();
     if (segment_ids_type_id == kNumberTypeInt32) {
@@ -102,6 +95,7 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
         MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
       }
       auto segment_ids_data = segment_ids_opt.value();
+      segment_ids_size = segment_ids_data.size();
       segment_num = IntToLong(segment_ids_data[segment_ids_size - 1] + 1);
     } else if (segment_ids_type_id == kNumberTypeInt64) {
       auto segment_ids_opt = GetArrayValue<int64_t>(segment_ids_value);
@@ -109,11 +103,15 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
         MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'segment_ids' must be valid.";
       }
       auto segment_ids_data = segment_ids_opt.value();
+      segment_ids_size = segment_ids_data.size();
       segment_num = segment_ids_data[segment_ids_size - 1] + 1;
     }
     if (segment_num <= 0) {
       MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input 'segment_ids' must be non-negative.";
     }
+    auto expect_size = std::accumulate(segment_ids_shape.begin(), segment_ids_shape.end(), 1, std::multiplies{});
+    MS_EXCEPTION_IF_CHECK_FAIL(segment_ids_size == LongToSize(expect_size),
+                               "For '" + prim_name + "', something unexpected happened.");
     out_shape[LongToSize(batch_rank)] = segment_num;
     return std::make_shared<abstract::Shape>(out_shape);
   }
