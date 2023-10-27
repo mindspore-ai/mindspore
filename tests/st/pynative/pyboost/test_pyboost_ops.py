@@ -18,7 +18,8 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm
+from mindspore.ops.auto_generate import baddbmm, transpose
+import mindspore
 
 
 def test_baddbmm_ascend():
@@ -49,3 +50,12 @@ def test_baddbmm_grad():
     assert (grad[0].asnumpy() == np.ones([1, 3, 3]).astype(np.float32)).all()
     assert (grad[1].asnumpy() == np.ones([1, 3, 4]).astype(np.float32) * 3).all()
     assert (grad[2].asnumpy() == np.ones([1, 4, 3]).astype(np.float32) * 3).all()
+
+
+def test_transpose_ascend():
+    context.set_context(device_target="Ascend")
+
+    input = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    input_perm = (0, 2, 1)
+    output = transpose(input, input_perm)
+    assert (output.asnumpy() == [[[1, 4], [2, 5], [3, 6]], [[7, 10], [8, 11], [9, 12]]])

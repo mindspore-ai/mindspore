@@ -7,6 +7,7 @@
 
 #include "include/common/utils/tensor_future.h"
 #include "runtime/pynative/op_executor.h"
+#include "mindspore/core/ops/view/view_strides_calculator.h"
 #include "runtime/device/device_address_utils.h"
 
 namespace mindspore {
@@ -16,6 +17,8 @@ class BACKEND_EXPORT PyBoostUtils {
  public:
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
   static DeviceContext *GetDeviceContext(const std::string &device_type);
+  static void CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
+                                 std::vector<tensor::TensorPtr> *outputs);
 };
 KernelTensorPtr BACKEND_EXPORT TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
 KernelTensorPtr BACKEND_EXPORT ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);

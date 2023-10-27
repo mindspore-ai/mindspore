@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
-#define MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
+#include "ops/op_def.h"
 
-#include <vector>
-#include "ops/view/view_strides_calculator.h"
-#include "include/backend/visible.h"
-
-namespace mindspore {
-namespace ops {
-
-TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-BACKEND_EXPORT TensorStorageInfoPtrList TransposeCalcDirect(const tensor::TensorPtr &input, const std::vector<int64_t> &input_perm);
-
-}  // namespace ops
-}  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
+namespace mindspore::ops {
+MS_EXPORT extern OpDef gBaddbmm;
+MS_EXPORT extern OpDef gTranspose;
+}// namespace mindspore::ops

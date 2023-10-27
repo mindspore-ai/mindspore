@@ -55,6 +55,27 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
   return device_context;
 }
 
+void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
+                                      std::vector<tensor::TensorPtr> *outputs) {
+  auto output_tensor = std::make_shared<tensor::Tensor>(storage_info->data_type, storage_info->shape);
+  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+  output_tensor->set_storage_info(storage_info);
+  if (input->address_future()) {
+    output_tensor->set_address_future(input->address_future());
+  } else if (input->device_address()) {
+    output_tensor->set_device_address(input->device_address());
+  } else {
+    MS_EXCEPTION_IF_NULL(input->device_address());
+  }
+  output_tensor->set_contiguous_callback([](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
+                                                const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
+    ContiguousTensor(tensor);
+    return tensor->device_address();
+  });
+  (void)outputs->emplace_back(output_tensor);
+  MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+}
+
 KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
   // TODO (CARRY) Waiting dyn_shape_dev
   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
