@@ -25,6 +25,10 @@
 #include "transform/graph_ir/op_adapter_util.h"
 #include "transform/graph_ir/op_adapter_base.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "ops/other_ops.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 namespace mindspore {
 namespace transform {
 class OpAdapterImpl {
@@ -179,6 +183,26 @@ class OpAdapter : public BaseOpAdapter {
         MS_LOG(EXCEPTION) << "Dynamic output node:" << op->GetName() << "'s Type is a nullptr!";
       }
       auto num = GetOutputSize(type);
+
+      auto judge_node = anf;
+      if (common::AnfAlgo::CheckPrimitiveType(anf, prim::kPrimReturn)) {
+        auto cnode = anf->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        judge_node = cnode->inputs()[1];
+      }
+
+      if (common::AnfAlgo::CheckPrimitiveType(judge_node, prim::kPrimMakeTuple)) {
+        auto cnode = judge_node->cast<CNodePtr>();
+        if (cnode != nullptr) {
+          auto inputs = cnode->inputs();
+          for (const auto &input : inputs) {
+            if (common::AnfAlgo::IsNoOuputNode(input)) {
+              --num;
+            }
+          }
+        }
+      }
+
       MS_LOG(INFO) << "create_dyn_output for node:" << anf->fullname_with_scope() << ", type:" << type->ToString()
                    << ", num:" << num;
       dyn_output_map_.begin()->second.create_dyn_output(op, static_cast<unsigned int>(num));
