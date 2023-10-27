@@ -26,8 +26,8 @@ import inspect
 import importlib
 import hashlib
 import contextlib
-from collections import OrderedDict, namedtuple
 import warnings
+from collections import OrderedDict, namedtuple
 from functools import wraps
 import numpy as np
 import mindspore as ms
@@ -732,10 +732,9 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         if func.__code__.co_flags & UNSUPPORTED_CODE_TYPE:
             return func
 
-        config = {"allowed_inline_modules": ["mindspore"]}
+        config = dict()
         if jit_config is not None:
             config.update(jit_config)
-        config.get("allowed_inline_modules").append(func.__module__.split('.')[0])
         jit_mode_pi_enable()
 
         if jit_mode_pi_compile(func, config) is False:
