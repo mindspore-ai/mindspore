@@ -332,10 +332,13 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     }
 
     MS_EXCEPTION_IF_NULL(kernel_tensor_value_);
+    size_t element_num = kernel_tensor_value_->GetDataSize() / sizeof(typename T::value_type);
+    if (element_num == 0) {
+      return T();
+    }
     const typename T::value_type *data_ptr =
       reinterpret_cast<const typename T::value_type *>(kernel_tensor_value_->GetDataPtr());
     MS_EXCEPTION_IF_NULL(data_ptr);
-    size_t element_num = kernel_tensor_value_->GetDataSize() / sizeof(typename T::value_type);
 
     return T(data_ptr, data_ptr + element_num);
   }
