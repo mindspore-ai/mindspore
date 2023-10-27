@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <utility>
 
 #include "abstract/abstract_value.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
@@ -91,6 +92,8 @@ class Reshape : public InferShapeOp {
   SymbolPtr Eval() override;
   void EvalOnRun() override;
   bool ProductShape(const IListSymbol *shape);
+  std::pair<SymbolPtr, int64_t> ProductData(const IListSymbol *data);
+  void UpdateMathInfo() override;
 
   int64_t shape_size_{1LL};
   int unknown_dim_idx_{-1};

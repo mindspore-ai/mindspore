@@ -15,7 +15,6 @@
  */
 #include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
 #include <algorithm>
-#include <utility>
 #include "abstract/dshape.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
@@ -101,9 +100,10 @@ SymbolPtr RealShape::ParseTensorShape(const abstract::TensorShapePtr &shape_ptr)
     all_use_hint = false;
     auto ints = IntSymbol::Make(shared_from_this());
     result[axis] = ints;
-    auto cur_int = cur->symbols()[axis]->as<IntSymbol>();
+    auto cur_int = cur->symbols()[axis]->as_sptr<IntSymbol>();
     MS_EXCEPTION_IF_NULL(cur_int);
     ints->SetRange(cur_int->range_min(), cur_int->range_max());
+    ints->SetEqual(cur_int);
   }
   if (all_use_hint) {
     DoNotEvalOnRun();
@@ -282,19 +282,34 @@ bool Reshape::ProductShape(const IListSymbol *shape) {
   return shape_size_ < 0;
 }
 
+std::pair<SymbolPtr, int64_t> Reshape::ProductData(const IListSymbol *data) {
+  int64_t input_const_dims = 1LL;
+  SymbolPtr input_unknown_dims = nullptr;
+  for (auto &s : data->symbols()) {
+    if (s->HasData()) {
+      input_const_dims *= AsInt(s);
+    } else {
+      if (input_unknown_dims == nullptr) {
+        input_unknown_dims = s;
+      } else {
+        input_unknown_dims = Emit(std::make_shared<ScalarMul>(input_unknown_dims, s));
+      }
+    }
+  }
+  return std::make_pair(input_unknown_dims, input_const_dims);
+}
+
 SymbolPtr Reshape::Eval() {
   // only eval on Building
-  auto data = input(0)->as<IListSymbol>();
-  auto shape = input(1)->as<IListSymbol>();
-  MS_EXCEPTION_IF_NULL(shape);
+  auto data = input_as<IListSymbol>(0);
+  auto shape = input_as<IListSymbol>(1);
   if (shape->AllHaveData()) {
     if (ProductShape(shape)) {
       // no -1 in "shape", the output is static shape.
       DoNotEvalOnRun();
       return input(1);
     }
-  } else {
-    // "shape" is unknown
+  } else {  // "shape" is unknown, maybe from previous shape-calculation operators.
     if (shape->is_dyn_len()) {
       return GenVList();
     } else {
@@ -323,23 +338,12 @@ SymbolPtr Reshape::Eval() {
     result[unknown_dim_idx_] = GenVInt();
     return GenList(std::move(result));
   }
-  int64_t input_const_dims = 1LL;
-  SymbolPtr input_unknown_dims = nullptr;
-
   // do not add the inner operation to global op list.
   OperationEmitter e(&inner_ops_);
   SetEmitter(&e);
-  for (auto &s : data->symbols()) {
-    if (s->HasData()) {
-      input_const_dims *= AsInt(s);
-    } else {
-      if (input_unknown_dims == nullptr) {
-        input_unknown_dims = s;
-      } else {
-        input_unknown_dims = Emit(std::make_shared<ScalarMul>(input_unknown_dims, s));
-      }
-    }
-  }
+  SymbolPtr input_unknown_dims;
+  int64_t input_const_dims;
+  std::tie(input_unknown_dims, input_const_dims) = ProductData(data);
   // no symbol in data
   if (input_unknown_dims == nullptr) {
     result[unknown_dim_idx_] = GenInt(input_const_dims / shape_size_);
@@ -357,6 +361,56 @@ SymbolPtr Reshape::Eval() {
     result[unknown_dim_idx_] = Emit(std::make_shared<ScalarDiv>(tmp, GenInt(shape_size_)));
   }
   return GenList(std::move(result));
+}
+
+/**
+ * Reshape "(const1, s1)"" to "(const2, s2)", if both "s1" and "s2" are from input operation,
+ * it's sure that "s2 == s1 * (const1 / const2)"
+ *
+ * Only support the case that one unknown symbol in "shape" but it's positive, and others are const value.
+ * example:
+ *   data.shape = (A, 1024)
+ *   shape = (32, B, 1024)
+ *  when B > 0, the output shape is directly set to "(32, B, 1024)".
+ *  but we can also set "B == A / 32" in MathInfo.
+ */
+void Reshape::UpdateMathInfo() {
+  InferShapeOp::UpdateMathInfo();
+  if (need_eval()) {
+    return;
+  }
+  auto data = input_as<IListSymbol>(0);
+  auto shape = input_as<IListSymbol>(1);
+  if (data->is_dyn_len()) {
+    return;
+  }
+  IntSymbolPtr s2 = nullptr;
+  int64_t const2 = 1LL;
+  for (auto &shape_v : shape->symbols()) {
+    if (shape_v->HasData()) {
+      const2 *= shape_v->as<IntSymbol>()->value();
+    } else {
+      if (s2 != nullptr) {
+        return;
+      }
+      s2 = shape_v->as_sptr<IntSymbol>();
+    }
+  }
+  if (s2 == nullptr) {
+    return;
+  }
+  // do not add the inner operation to global op list.
+  OperationEmitter e(&inner_ops_);
+  SetEmitter(&e);
+  SymbolPtr s1;
+  int64_t const1;
+  std::tie(s1, const1) = ProductData(data);
+  if (s1 == nullptr) {
+    return;
+  }
+  auto tmp = Emit(std::make_shared<ScalarDiv>(Emit(std::make_shared<ScalarMul>(s1, GenInt(const1))), GenInt(const2)));
+  MS_LOG(DEBUG) << "In Reshape, the " << tmp->ToString() << " and " << s2->ToString() << " can be set equal.";
+  s2->SetEqual(tmp->as_sptr<IntSymbol>());
 }
 
 void Reshape::EvalOnRun() {

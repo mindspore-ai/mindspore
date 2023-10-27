@@ -50,6 +50,8 @@ class SymbolEngineImpl : public SymbolEngine {
   void BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine);
   void BuildSubgraphSymbol(const CNodePtr &cnode);
 
+  void BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) override;
+
   bool Infer(const AbstractBasePtrList &inputs) override;
   ListSymbolPtr QuerySymbolicShape(const AnfNodePtr &node) override;
   SymbolPtr QuerySymbolicValue(const AnfNodePtr &node) override;
@@ -65,7 +67,6 @@ class SymbolEngineImpl : public SymbolEngine {
 
  protected:
   void BuildNodesSymbol(const FuncGraphPtr &func_graph);
-  void BuildCNodeSmbl(const CNodePtr &cnode, bool infer_value = false);
   void DfsQueryDependStatus(const AnfNodePtr &node, bool depend_on_value);
 
   std::string name_;

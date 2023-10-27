@@ -44,6 +44,7 @@ class BACKEND_EXPORT SymbolEngine : public Value {
   virtual std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node) = 0;
   virtual void QuerySymbolExpr(const AnfNodePtr &node,
                                std::unordered_map<std::string, std::string> *symbol_expr_map) = 0;
+  virtual void BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) = 0;
 };
 using SymbolEnginePtr = std::shared_ptr<SymbolEngine>;
 }  // namespace mindspore
