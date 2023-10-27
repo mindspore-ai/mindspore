@@ -287,6 +287,48 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   }
 }
 
+template <typename T>
+std::vector<T> ConvertValueListToVector(const ValuePtrList &seq_values) {
+  size_t element_num = seq_values.size();
+  std::vector<T> array_data(element_num);
+  for (size_t i = 0; i < element_num; i++) {
+    const auto &element = seq_values[i];
+    MS_EXCEPTION_IF_NULL(element);
+    array_data[i] = GetValue<T>(element);
+  }
+  return array_data;
+}
+
+tensor::TensorPtr SequenceToTensor(const ValueSequencePtr &sequence) {
+  MS_EXCEPTION_IF_NULL(sequence);
+  const auto &element_values = sequence->value();
+  if (element_values.empty()) {
+    std::vector<int32_t> array_data;
+    MS_LOG(WARNING) << "The value sequence is empty.";
+    return std::make_shared<tensor::Tensor>(std::move(array_data), sequence->type());
+  }
+
+  const auto &first_element = element_values[0];
+  if (!first_element->isa<Scalar>()) {
+    MS_LOG(EXCEPTION) << "For sequence value, only sequence of scalar can convert to TensorValue, but got: "
+                      << sequence->ToString();
+  }
+
+  TypePtr data_type = first_element->type();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  switch (type_id) {
+    case kNumberTypeInt32:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int32_t>(element_values), data_type);
+    case kNumberTypeInt64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<int64_t>(element_values), data_type);
+    case kNumberTypeFloat64:
+      return std::make_shared<tensor::Tensor>(ConvertValueListToVector<double>(element_values), data_type);
+    default:
+      MS_LOG(EXCEPTION) << "When convert sequence to tensor, the sequence type: " << data_type << " is invalid.";
+  }
+}
+
 namespace {
 KernelTensorValuePtr ConvertScalarToKernelTensorValue(const ValuePtr &scalar) {
   MS_EXCEPTION_IF_NULL(scalar);

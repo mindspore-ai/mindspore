@@ -30,10 +30,11 @@ class InputsUnifyMindIR : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  CNodePtr CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
-  ValueNodePtr CreateScalarValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
-  CNodePtr CreateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   abstract::AbstractBasePtr GenerateAbsByOpInfer(const CNodePtr &tuple_to_tensor) const;
+  ValueNodePtr CreateValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr CreateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId data_type) const;
 };
 }  // namespace opt
 }  // namespace mindspore
