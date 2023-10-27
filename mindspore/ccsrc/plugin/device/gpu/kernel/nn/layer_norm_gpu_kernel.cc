@@ -19,7 +19,6 @@
 #include <functional>
 #include <numeric>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/layer_norm_impl.cuh"
-#include "mindspore/core/ops/layer_norm.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,13 +26,16 @@ namespace {
 constexpr size_t kLayerNormInputXIndex = 0;
 constexpr size_t kLayerNormInputGammaIndex = 1;
 constexpr size_t kLayerNormInputBetaIndex = 2;
+constexpr size_t kLayerNormInputBeginNormAxisIndex = 3;
+constexpr size_t kLayerNormInputBeginParamsAxisIndex = 4;
+constexpr size_t kLayerNormInputEpsilonIndex = 5;
 constexpr size_t kLayerNormOutputYIndex = 0;
 constexpr size_t kLayerNormOutputMeanIndex = 1;
 constexpr size_t kLayerNormOutputVarIndex = 2;
 }  // namespace
 bool LayerNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  epsilon_ = inputs[kLayerNormInputEpsilonIndex]->GetValueWithCheck<float_t>();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -53,8 +55,8 @@ int LayerNormGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid LayerNormGpuKernelMod input size!";
   }
-  auto begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
-  auto begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
+  auto begin_norm_axis = inputs[kLayerNormInputBeginNormAxisIndex]->GetValueWithCheck<int64_t>();
+  auto begin_params_axis = inputs[kLayerNormInputBeginParamsAxisIndex]->GetValueWithCheck<int64_t>();
   auto input_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
   if (begin_norm_axis < 0) {
     begin_norm_axis += input_shape.size();
@@ -111,6 +113,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -119,6 +124,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -127,6 +135,9 @@ std::vector<std::pair<KernelAttr, LayerNormGpuKernelMod::KernelFunc>> LayerNormG
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),

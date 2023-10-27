@@ -19,23 +19,25 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
-#include "mindspore/core/ops/layer_norm.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kLayerNormInputsNum = 3;
+constexpr size_t kLayerNormInputsNum = 6;
 constexpr size_t kLayerNormOutputsNum = 3;
 constexpr size_t kLayerNormInputXIndex = 0;
 constexpr size_t kLayerNormInputGammaIndex = 1;
 constexpr size_t kLayerNormInputBetaIndex = 2;
+constexpr size_t kLayerNormInputBeginNormAxisIndex = 3;
+constexpr size_t kLayerNormInputBeginParamsAxisIndex = 4;
+constexpr size_t kLayerNormInputEpsilonIndex = 5;
 constexpr size_t kLayerNormOutputYIndex = 0;
 constexpr size_t kLayerNormOutputMeanIndex = 1;
 constexpr size_t kLayerNormOutputVarIndex = 2;
 }  // namespace
 bool LayerNormCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  eps_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
+  eps_ = inputs[kLayerNormInputEpsilonIndex]->GetValueWithCheck<float_t>();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -57,9 +59,9 @@ int LayerNormCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(EXCEPTION) << "Invalid LayerNormCpuKernelMod input size!";
   }
   auto x_shape = inputs[kLayerNormInputXIndex]->GetShapeVector();
+  auto begin_norm_axis = inputs[kLayerNormInputBeginNormAxisIndex]->GetValueWithCheck<int64_t>();
+  auto begin_params_axis = inputs[kLayerNormInputBeginParamsAxisIndex]->GetValueWithCheck<int64_t>();
 
-  auto begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
-  auto begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
   if (begin_norm_axis < 0) {
     begin_norm_axis += SizeToLong(x_shape.size());
   }
@@ -166,6 +168,9 @@ std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormC
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -174,6 +179,9 @@ std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormC
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -182,6 +190,9 @@ std::vector<std::pair<KernelAttr, LayerNormCpuKernelMod::KernelFunc>> LayerNormC
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),

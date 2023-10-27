@@ -38,7 +38,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -1235,27 +1235,6 @@ class L2NormalizeGrad(Primitive):
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
             raise TypeError("The length of axis must be 1, later will support multiple axis!")
-
-
-class LayerNormGrad(Primitive):
-    """
-    Applies the layer Normalization to the input array.
-
-    This operator will calculate the input gradients of layernorm.
-
-    Args:
-        begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
-        begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
-
-    Returns:
-        tuple[int], tuple of 3 values (the gradients of layernorm input,  gamma, beta).
-    """
-
-    @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
-        """init"""
-        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
-        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
 
 
 class LayerNormGradGrad(Primitive):

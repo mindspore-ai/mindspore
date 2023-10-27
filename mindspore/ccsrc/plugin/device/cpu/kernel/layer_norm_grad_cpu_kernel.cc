@@ -19,18 +19,19 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
-#include "mindspore/core/ops/grad/layer_norm_grad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kLayerNormGradInputsNum = 5;
+constexpr size_t kLayerNormGradInputsNum = 7;
 constexpr size_t kLayerNormGradOutputsNum = 3;
 constexpr size_t kLayerNormGradInputXIndex = 0;
 constexpr size_t kLayerNormGradInputDyIndex = 1;
 constexpr size_t kLayerNormGradInputVarIndex = 2;
 constexpr size_t kLayerNormGradInputMeanIndex = 3;
 constexpr size_t kLayerNormGradInputGammaIndex = 4;
+constexpr size_t kLayerNormGradBeginNormAxisIndex = 5;
+constexpr size_t kLayerNormGradBeginParamsAxisIndex = 6;
 constexpr size_t kLayerNormGradOutputDxIndex = 0;
 constexpr size_t kLayerNormGradOutputDgIndex = 1;
 constexpr size_t kLayerNormGradOutputDbIndex = 2;
@@ -45,11 +46,7 @@ bool LayerNormGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LayerNormGrad>(base_operator);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast ops::LayerNormGrad failed!";
-  }
-  eps_ = kernel_ptr->get_epsilon();
+  eps_ = GetValue<float>(primitive()->GetAttr(ops::kEpsilon));
   return true;
 }
 
@@ -59,13 +56,14 @@ int LayerNormGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
+
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Invalid input size!";
   }
 
   auto x_shape = inputs[kLayerNormGradInputXIndex]->GetShapeVector();
-  auto begin_norm_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginNormAxis));
-  auto begin_params_axis = GetValue<int64_t>(primitive_->GetAttr(ops::kBeginParamsAxis));
+  auto begin_norm_axis = inputs[kLayerNormGradBeginNormAxisIndex]->GetValueWithCheck<int64_t>();
+  auto begin_params_axis = inputs[kLayerNormGradBeginParamsAxisIndex]->GetValueWithCheck<int64_t>();
   if (begin_norm_axis < 0) {
     begin_norm_axis += SizeToLong(x_shape.size());
   }
@@ -198,6 +196,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16)
      .AddOutputAttr(kNumberTypeFloat16),
@@ -208,6 +208,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32),
@@ -218,6 +220,8 @@ std::vector<std::pair<KernelAttr, LayerNormGradCpuKernelMod::KernelFunc>> LayerN
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),

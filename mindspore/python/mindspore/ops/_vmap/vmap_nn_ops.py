@@ -1795,37 +1795,39 @@ def get_max_pool_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.LayerNorm)
+@vmap_rules_getters.register("LayerNorm")
 def get_layernorm_vmap_rule(prim, axis_size):
     """VmapRule for `LayerNorm` operation."""
 
-    @constexpr
     def process_attr_axis(prim_attr_axis):
         if prim_attr_axis < 0:
             return prim_attr_axis
         return prim_attr_axis + 1
 
-    norm_axis = process_attr_axis(prim.begin_norm_axis)
-    params_axis = process_attr_axis(prim.begin_params_axis)
-    batch_prim = P.LayerNorm(norm_axis, params_axis, prim.epsilon)
-
     @_primexpr
     def get_logical_shape(var_shape):
         return var_shape[1:]
 
-    def vmap_rule(x_bdim, gamma_bdim, beta_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, gamma_bdim, beta_bdim)
+    def vmap_rule(x_bdim, gamma_bdim, beta_bdim, begin_norm_axis_bdim, begin_params_axis_bdim, epsilon_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, gamma_bdim, beta_bdim, begin_norm_axis_bdim,
+                                                      begin_params_axis_bdim, epsilon_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         g, g_dim = gamma_bdim
         b, b_dim = beta_bdim
+        begin_norm_axis, _ = begin_norm_axis_bdim
+        begin_params_axis, _ = begin_params_axis_bdim
+        epsilon, _ = epsilon_bdim
+
+        begin_norm_axis = process_attr_axis(begin_norm_axis)
+        begin_params_axis = process_attr_axis(begin_params_axis)
 
         x = _bdim_at_front(x, x_dim, axis_size)
 
         if g_dim is None and b_dim is None:
-            output, mean, var = batch_prim(x, g, b)
+            output, mean, var = prim(x, g, b, begin_norm_axis, begin_params_axis, epsilon)
             return (output, 0), (mean, 0), (var, 0)
 
         g = _bdim_at_front(g, g_dim, axis_size)
@@ -1835,7 +1837,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
 
         ones_like_g = F.ones(g_logical_shape, F.dtype(g))
         zeros_like_b = F.zeros(b_logical_shape, F.dtype(b))
-        output_tmp, mean, var = batch_prim(x, ones_like_g, zeros_like_b)
+        output_tmp, mean, var = prim(x, ones_like_g, zeros_like_b, begin_norm_axis, begin_params_axis, epsilon)
 
         x_shape = F.shape(x)
         g_shape = F.shape(g)

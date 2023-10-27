@@ -21,7 +21,6 @@ from functools import reduce
 import mindspore.numpy as mnp
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
-from mindspore.ops import constexpr
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
@@ -563,7 +562,6 @@ def get_mirror_pad_grad_grad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register('LayerNormGrad')
 def get_layernormgrad_vmap_rule(prim, axis_size):
     """VmapRule for `LayerNormGrad` operation."""
-    @constexpr
     def process_attr_axis(prim_attr_axis):
         if prim_attr_axis < 0:
             return prim_attr_axis
@@ -581,13 +579,11 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
     def get_logical_shape(var_shape):
         return var_shape[1:]
 
-    norm_axis = process_attr_axis(prim.begin_norm_axis)
-    params_axis = process_attr_axis(prim.begin_params_axis)
-    batch_prim = G.LayerNormGrad(norm_axis, params_axis)
     eps = 1e-12
 
-    def vmap_rule(x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim)
+    def vmap_rule(x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim, begin_norm_axis_bdim, begin_params_axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, var_bdim, mean_bdim, gamma_bdim,
+                                                      begin_norm_axis_bdim, begin_params_axis_bdim)
         if is_all_none:
             return result
 
@@ -596,6 +592,11 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         var, var_dim = var_bdim
         mean, mean_dim = mean_bdim
         gamma, gamma_dim = gamma_bdim
+        begin_norm_axis, _ = begin_norm_axis_bdim
+        begin_params_axis, _ = begin_params_axis_bdim
+
+        begin_norm_axis = process_attr_axis(begin_norm_axis)
+        begin_params_axis = process_attr_axis(begin_params_axis)
 
         x = _bdim_at_front(x, x_dim, axis_size)
         dy = _bdim_at_front(dy, dy_dim, axis_size)
@@ -604,7 +605,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         gamma = _bdim_at_front(gamma, gamma_dim, axis_size)
 
         dy_shape = F.shape(dy)
-        batch_params_reduce_axes = get_batch_params_reduce_axes(params_axis, dy_shape)
+        batch_params_reduce_axes = get_batch_params_reduce_axes(begin_norm_axis, dy_shape)
 
         if not batch_params_reduce_axes:
             d_beta = dy
@@ -622,7 +623,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
         dy = dy * gamma
         gamma_logical_shape = get_logical_shape(gamma_shape)
         ones_like_gamma = F.ones(gamma_logical_shape, F.dtype(gamma))
-        dx, _, _ = batch_prim(x, dy, var, mean, ones_like_gamma)
+        dx, _, _ = prim(x, dy, var, mean, ones_like_gamma, begin_norm_axis, begin_params_axis)
 
         return (dx, 0), (d_gamma, 0), (d_beta, 0)
     return vmap_rule

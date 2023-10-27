@@ -632,37 +632,49 @@ REG_BPROP_BUILDER("MirrorPad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(paddings)};
 });
 
-REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto result =
-    ib->Emit("LayerNormGrad", {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma},
-             {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")},
-              {"begin_params_axis", ib->GetAttr("begin_params_axis")},
-              {"epsilon", ib->GetAttr("epsilon")}});
+  auto begin_norm_axis = ib->GetInput(kIndex3);
+  auto begin_params_axis = ib->GetInput(kIndex4);
+  auto epsilon = ib->GetInput(kIndex5);
+  auto out = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex7);
+  DAttr attrs;
+  attrs.push_back(std::make_pair("epsilon", epsilon->BuildValue()));
+  auto result = ib->Emit("LayerNormGrad",
+                         {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma,
+                          begin_norm_axis, begin_params_axis},
+                         attrs);
   auto d_x = ib->TupleGetItem(result, 0);
   auto d_gamma = ib->TupleGetItem(result, 1);
   auto d_beta = ib->TupleGetItem(result, 2);
-  return {d_x, d_gamma, d_beta};
+  auto grad_begin_norm_axis = ib->OutZeros(begin_norm_axis);
+  auto grad_begin_params_axis = ib->OutZeros(begin_params_axis);
+  auto grad_epsilon = ib->OutZeros(epsilon);
+  return {d_x, d_gamma, d_beta, grad_begin_norm_axis, grad_begin_params_axis, grad_epsilon};
 });
 
-REG_BPROP_BUILDER("LayerNormGrad").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("LayerNormGrad").SetUnusedInputs({i7}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dy = ib->GetInput(kIndex1);
   auto variance = ib->GetInput(kIndex2);
   auto mean = ib->GetInput(kIndex3);
   auto gamma = ib->GetInput(kIndex4);
-  auto dout = ib->GetInput(kIndex6);
-  auto result = ib->Emit(
-    "LayerNormGradGrad",
-    {x, dy, variance, mean, gamma, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1), ib->TupleGetItem(dout, 2)},
-    {{"begin_norm_axis", ib->GetAttr("begin_norm_axis")}, {"begin_params_axis", ib->GetAttr("begin_params_axis")}});
+  auto begin_norm_axis = ib->GetInput(kIndex5);
+  auto begin_params_axis = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex8);
+  auto result = ib->Emit("LayerNormGradGrad",
+                         {x, dy, variance, mean, gamma, ib->TupleGetItem(dout, 0), ib->TupleGetItem(dout, 1),
+                          ib->TupleGetItem(dout, 2), begin_norm_axis, begin_params_axis},
+                         {});
+
   auto d_x = ib->TupleGetItem(result, 0);
   auto d_dy = ib->TupleGetItem(result, 1);
   auto d_gamma = ib->TupleGetItem(result, 2);
-  return {d_x, d_dy, ib->OutZeros(variance), ib->OutZeros(mean), d_gamma};
+  auto grad_begin_norm_axis = ib->OutZeros(begin_norm_axis);
+  auto grad_begin_params_axis = ib->OutZeros(begin_params_axis);
+  return {d_x, d_dy, ib->OutZeros(variance), ib->OutZeros(mean), d_gamma, grad_begin_norm_axis, grad_begin_params_axis};
 });
 
 REG_BPROP_BUILDER("L2Normalize").SetBody(BODYFUNC(ib) {

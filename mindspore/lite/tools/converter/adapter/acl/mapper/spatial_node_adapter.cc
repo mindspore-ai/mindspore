@@ -33,7 +33,6 @@
 #include "ops/instance_norm.h"
 #include "ops/stack.h"
 #include "ops/tuple_get_item.h"
-#include "ops/layer_norm.h"
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/argmax_with_value.h"
 

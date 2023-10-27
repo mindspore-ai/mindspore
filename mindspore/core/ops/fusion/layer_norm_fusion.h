@@ -20,17 +20,18 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "ops/layer_norm.h"
+#include "ops/base_operator.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
 /// \brief LayerNormFusion defined LayerNorm operator prototype of lite.
-class MIND_API LayerNormFusion : public LayerNorm {
+class MIND_API LayerNormFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LayerNormFusion);
   /// \brief Constructor.
-  LayerNormFusion() : LayerNorm(kNameLayerNormFusion) {}
+  LayerNormFusion() : BaseOperator(kNameLayerNormFusion) {}
 
   /// \brief Method to init the op's attributes.
   ///
@@ -50,6 +51,17 @@ class MIND_API LayerNormFusion : public LayerNorm {
   ///
   /// \return a boolean value.
   bool get_elementwise_affine() const;
+
+  void set_begin_norm_axis(const int &begin_norm_axis) {
+    (void)this->AddAttr("begin_norm_axis", api::MakeValue(begin_norm_axis));
+  }
+  int get_begin_norm_axis() const { return GetValue<int>(GetAttr("begin_norm_axis")); }
+  void set_begin_params_axis(const int &begin_params_axis) {
+    (void)this->AddAttr("begin_params_axis", api::MakeValue(begin_params_axis));
+  }
+  int get_begin_params_axis() const { return GetValue<int>(GetAttr("begin_params_axis")); }
+  void set_epsilon(const float &epsilon) { (void)this->AddAttr("epsilon", api::MakeValue(epsilon)); }
+  float get_epsilon() const { return GetValue<float>(GetAttr("epsilon")); }
 };
 
 abstract::AbstractBasePtr LayerNormFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

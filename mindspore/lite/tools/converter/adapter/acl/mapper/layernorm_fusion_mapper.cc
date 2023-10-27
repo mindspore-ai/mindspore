@@ -20,6 +20,7 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 namespace lite {

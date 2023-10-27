@@ -33,7 +33,7 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D)
+                             GridSampler3D, GridSampler2D, LayerNorm)
 from .manually_defined import BatchNorm
 
 
@@ -3032,79 +3032,6 @@ class ApplyCenteredRMSProp(Primitive):
         """Initialize ApplyCenteredRMSProp."""
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-
-class LayerNorm(Primitive):
-    r"""
-    Applies the Layer Normalization to the input tensor.
-
-    This operator will normalize the input tensor on given axis. LayerNorm is described in the paper
-    `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
-
-    .. math::
-        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
-
-    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
-
-    Args:
-        begin_norm_axis (int): The begin axis of the `input_x` to apply LayerNorm,
-            the value must be in [-1, rank(input_x)). Default: ``1`` .
-        begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
-            apply LayerNorm, the value must be in [-1, rank(input_x)). Default: ``1`` .
-        epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-          The input of LayerNorm. Supported dtypes: float16, float32, float64.
-        - **gamma** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
-          :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
-        - **beta** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
-          :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
-
-    Outputs:
-        tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
-
-        - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
-        - **mean** (Tensor) - The first `begin_norm_axis` dimensions of `mean` shape is the same as `input_x`,
-          and the remaining dimensions are 1. Suppose the shape of the `input_x` is :math:`(x_1, x_2, \ldots, x_R)`,
-          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)`
-          (when `begin_params_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
-        - **variance** (Tensor) - Shape is the same as `mean` .
-
-    Raises:
-        TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
-        TypeError: If `epsilon` is not a float.
-        TypeError: If `input_x`, `gamma` or `beta` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
-        >>> gamma = Tensor(np.ones([3]), mindspore.float32)
-        >>> beta = Tensor(np.ones([3]), mindspore.float32)
-        >>> layer_norm = ops.LayerNorm()
-        >>> output, mean, variance = layer_norm(input_x, gamma, beta)
-        >>> print(output)
-        [[-0.2247448  1.         2.2247448]
-         [-0.2247448  1.         2.2247448]]
-        >>> print(mean)
-        [[2.]
-         [2.]]
-        >>> print(variance)
-        [[0.6666667]
-         [0.6666667]]
-    """
-
-    @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7):
-        """Initialize LayerNorm."""
-        validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
-        validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
-        validator.check_value_type('epsilon', epsilon, [float], self.name)
 
 
 class L2Normalize(Primitive):
