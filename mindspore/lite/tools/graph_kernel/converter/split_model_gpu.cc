@@ -18,7 +18,6 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER(kGPUDevice, SplitModelGpu);
 constexpr size_t kReduceFusionDepth = 20;
 constexpr size_t kBroadcastFusionDepth = 20;
 

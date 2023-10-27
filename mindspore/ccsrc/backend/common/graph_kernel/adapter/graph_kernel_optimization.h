@@ -28,6 +28,7 @@ class GraphKernelOptimizer {
   void Run(const KernelGraphPtr &kernel_graph);
 
  private:
+  void Init() const;
   // Pre-process
   PassManagerPtr PreProcess() const;
   // Cluster kernels
