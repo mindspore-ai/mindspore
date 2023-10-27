@@ -282,6 +282,9 @@ const AnfNodePtr DealRefOutput::Process(const FuncGraphPtr &graph, const AnfNode
 
 #ifdef ASCEND_910B
   auto info = transform::GeAdapterManager::GetInstance().GetInfo(op_name, true);
+  if (info == nullptr) {
+    return nullptr;
+  }
   auto ref_infos = info->GetRefMappingInfo();
   if (ref_infos.empty()) {
     return nullptr;

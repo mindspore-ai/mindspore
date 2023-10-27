@@ -123,7 +123,7 @@ auto PackageParams(Tuple t) {
 
 // Get Workspace size and op executor.
 template <typename... Args>
-auto GenerateExecutor(const std::string &aclnn_api, Args &... args) {
+auto GenerateExecutor(const std::string &aclnn_api, const Args &... args) {
   auto workspace_func_name = aclnn_api + "GetWorkspaceSize";
   static const auto get_workspace_size_func_ptr = GetOpApiFunc(workspace_func_name.c_str());
   if (get_workspace_size_func_ptr == nullptr) {
@@ -141,7 +141,7 @@ auto GenerateExecutor(const std::string &aclnn_api, Args &... args) {
   static auto get_workspace_size_func = ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);
   auto workspace_status = call(get_workspace_size_func, converted_params);
   if (workspace_status != 0) {
-    MS_LOG(EXCEPTION) << aclnn_api << " not in " << GetOpApiLibName() << ", please check!";
+    MS_LOG(EXCEPTION) << "Call " << aclnn_api << " get_workspace_size func failed, please check error!";
   }
   constexpr auto size = std::tuple_size<decltype(converted_params)>::value - 2;
   return std::make_tuple(PackageParams<size>(converted_params), workspace_size, executor);
@@ -154,7 +154,7 @@ void RunOpApi(const std::string &aclnn_api, const aclrtStream acl_stream, void *
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
 
 #define GEN_EXECUTOR(aclnn_api, ...)                                                                    \
-  [](const std::string &api_name, auto &... args) -> auto {                                             \
+  [](const std::string &api_name, const auto &... args) -> auto {                                       \
     auto [converted_params, workspace_size, executor] = transform::GenerateExecutor(api_name, args...); \
     auto release_func = [converted_params]() -> void {                                                  \
       ReleaseConvertTypes(converted_params);                                                            \
@@ -172,7 +172,7 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
   (#aclnn_api, __VA_ARGS__)
 
 #define GEN_EXECUTOR_CUSTOM(aclnn_api, ...)                                                        \
-  [](const std::string &api_name, auto &... args) -> auto {                                        \
+  [](const std::string &api_name, const auto &... args) -> auto {                                  \
     auto converted_params = transform::GenerateExecutor(api_name, args...);                        \
     auto real_params = std::get<0>(converted_params);                                              \
     return std::make_tuple(std::get<1>(converted_params), std::get<2>(converted_params),           \

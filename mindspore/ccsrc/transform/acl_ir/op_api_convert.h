@@ -245,7 +245,7 @@ T ConvertType(T value) {
 }
 
 template <typename... Ts>
-constexpr auto ConvertTypes(Ts &... args) {
+constexpr auto ConvertTypes(const Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
 }
 
