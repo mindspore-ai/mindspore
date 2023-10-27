@@ -5,6 +5,8 @@ assign:
             dtype: tensor
         value:
             dtype: tensor
+    labels:
+        side_effect_mem: True
     returns:
         output:
             dtype: tensor

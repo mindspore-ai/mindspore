@@ -8,8 +8,8 @@ mul:
             dtype: tensor
             type_cast: number
     args_signature:
-        same_type: (x, y)
-        writable: x, y
+        rw_read: x, y
+        dtype_group: (x, y)
     returns:
         output: 
             dtype: tensor

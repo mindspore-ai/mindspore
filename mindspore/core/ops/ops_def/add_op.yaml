@@ -8,7 +8,7 @@ add:
       dtype: tensor
       type_cast: number
   args_signature:
-    same_type: (x, y)
+    dtype_group: (x, y)
   returns:
     output:
       dtype: tensor

@@ -2503,8 +2503,8 @@ std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std:
       (void)prim_init_arg_nodes.emplace_back(NewValueNode(converted_ret));
     } else {
       if (index_input >= inputs.size()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args " << index_input
-                                   << " exceeds the size of cnode inputs" << inputs.size() << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "The size of non-initial args `" << index_input
+                                   << "` exceeds the size of cnode inputs `" << inputs.size() << "`.";
       }
       auto new_input = GetNodeAfterArgHandler(inputs[index_input], op_arg, fg);
       (void)prim_input_nodes.emplace_back(new_input);
