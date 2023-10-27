@@ -45,14 +45,6 @@ void AsyncHqueue::SetThreadName() const {
 #endif
 }
 
-AsyncHqueue::AsyncHqueue(std::string name) : name_(std::move(name)) {
-  // If the fork occurs, thread resources are not forked to child processes, so
-  // we need to reinitialize threads in child processes.
-  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (AsyncHqueue::*)()>(nullptr),
-                                             static_cast<void (AsyncHqueue::*)()>(nullptr),
-                                             &AsyncHqueue::ReinitAfterFork);
-}
-
 AsyncHqueue::~AsyncHqueue() {
   try {
     WorkerJoin();
@@ -183,16 +175,19 @@ void AsyncHqueue::WorkerJoin() {
   }
 }
 
-void AsyncHqueue::ReinitAfterFork() {
-  MS_LOG(INFO) << "(AsyncHqueue)fork event detected in child process, worker thread will be recreated.";
+void AsyncHqueue::ChildAfterFork() {
+  MS_LOG(DEBUG) << "AsyncHqueue reinitialize after fork.";
   if (task_cond_var_ != nullptr) {
+    MS_LOG(DEBUG) << "Release and recreate task_cond_var_.";
     (void)task_cond_var_.release();
     task_cond_var_ = std::make_unique<std::condition_variable>();
   }
   if (worker_ != nullptr) {
+    MS_LOG(DEBUG) << "Release and recreate worker_.";
     (void)worker_.release();
     worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
   }
+  MS_LOG(DEBUG) << "AsyncHqueue reinitialize after fork done.";
 }
 
 void AsyncHqueue::CheckException() {

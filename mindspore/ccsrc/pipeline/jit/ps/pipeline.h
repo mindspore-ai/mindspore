@@ -37,6 +37,7 @@
 #include "pipeline/jit/ps/base.h"
 #include "frontend/parallel/strategy.h"
 #include "include/common/visible.h"
+#include "mindrt/include/fork_utils.h"
 
 namespace mindspore {
 // namespace to support pipeline structures definition
@@ -138,6 +139,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
                                   bool enable_tuple_broaden = false);
 
   void ClearCurConvertInput();
+  void ParentBeforeFork();
+  void ParentAfterFork();
+  void ChildAfterFork();
 
  private:
   GraphExecutorPy() = default;

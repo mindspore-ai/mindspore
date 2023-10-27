@@ -13,25 +13,25 @@
 # limitations under the License.
 # ============================================================================
 """ test fork. """
-import os
-import multiprocessing as mp
 import platform
 import pytest
 import mindspore as ms
 import mindspore.ops as ops
+import mindspore.multiprocessing as mp
+import mindspore.ops.functional as F
 import numpy as np
 
 
-def subprocess(mode, subprocess_id):
-    print(f"id:{subprocess_id} enter")
+def subprocess(mode, i, q):
     ms.set_context(mode=mode)
-    x = ms.Tensor(2, dtype=ms.float32)
+    x = q.get()
     y = ops.log(x)
-    assert np.allclose(y.asnumpy(), np.log(2), 1e-3), "subprocess id:{subprocess_id}"
-    print(f"id:{subprocess_id} exit")
+    assert np.allclose(y.asnumpy(), np.log(2), 1e-3), "subprocess id:{i}"
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -44,7 +44,6 @@ def test_fork(mode):
     """
     if platform.system() != 'Linux':
         return
-    os.environ['MS_ENABLE_FORK_UTILS'] = '1'
     ms.set_context(mode=mode)
     x = ms.Tensor(2, dtype=ms.float32)
     y = ops.log(x)
@@ -53,16 +52,111 @@ def test_fork(mode):
     mp.set_start_method('fork', force=True)
     processes = []
     for i in range(4):
-        p = mp.Process(target=subprocess, args=(mode, i))
+        q = mp.Queue()
+        p = mp.Process(target=subprocess, args=(mode, i, q))
         p.start()
-        processes.append(p)
-    for p in processes:
-        p.join(5)  # timeout:10s
-        if p.is_alive() is not True:
-            # exitcode info:
-            # None: subprocess still running
-            # 0: exit successfully
-            # 1: exit with exception
-            # -N: exit with signal N
-            assert p.exitcode == 0
-    del os.environ['MS_ENABLE_FORK_UTILS']
+        processes.append((p, i, q))
+
+    for (p, i, q) in processes:
+        q.put(ms.Tensor(2, dtype=ms.float32))
+        p.join(5) # timeout:5s
+        assert p.exitcode == 0, f"child process idx:{i}, exitcode:{p.exitcode}"
+
+
+def child_process(x):
+    return ops.log(x)
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_multiprocess_pool(mode):
+    """
+    Feature: Fork test
+    Description: Test multiprocessing with fork
+    Expectation: No exception
+    """
+    if platform.system() != 'Linux':
+        return
+    ms.set_context(mode=mode)
+    x = ms.Tensor(2, dtype=ms.float32)
+    y = ops.log(x)
+    assert np.allclose(y.asnumpy(), np.log(2), 1e-3)
+
+    mp.set_start_method('fork', force=True)
+    with mp.Pool(processes=2) as pool:
+        inputs = [ms.Tensor(2.0), ms.Tensor(2.0)]
+        outputs = pool.map(child_process, inputs)
+        assert np.allclose(outputs[0].asnumpy(), np.log(2), 1e-3)
+        assert np.allclose(outputs[1].asnumpy(), np.log(2), 1e-3)
+
+
+class Net(ms.nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.a = 1
+
+    def construct(self, x, y):
+        for k in range(1):
+            if x != 1:
+                for _ in range(1):
+                    y = k * x
+                    y = self.a + y
+                    if x > 5:
+                        break
+            if x == 5:
+                for _ in range(1):
+                    y = self.a - y
+                    if x == y:
+                        continue
+        return x + y
+
+def childprocess(mode, i, q):
+    ms.set_context(mode=mode)
+    x = np.array([-1], np.float32)
+    y = np.array([2], np.float32)
+    net = Net()
+    grad_net = F.grad(net, grad_position=(0, 1))
+    fgrad = grad_net(ms.Tensor(x), ms.Tensor(y))
+    assert np.allclose(fgrad[0].asnumpy(), np.array([1.]), 1e-3)
+    assert np.allclose(fgrad[1].asnumpy(), np.array([0.]), 1e-3)
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_fork_subgraphs(mode):
+    """
+    Feature: Fork test
+    Description: Test multiprocessing with fork when net has subgraphs
+    Expectation: No exception
+    """
+    if platform.system() != 'Linux':
+        return
+    ms.set_context(mode=mode)
+    x = np.array([-1], np.float32)
+    y = np.array([2], np.float32)
+    net = Net()
+    grad_net = F.grad(net, grad_position=(0, 1))
+    fgrad = grad_net(ms.Tensor(x), ms.Tensor(y))
+    assert np.allclose(fgrad[0].asnumpy(), np.array([1.]), 1e-3)
+    assert np.allclose(fgrad[1].asnumpy(), np.array([0.]), 1e-3)
+
+    mp.set_start_method('fork', force=True)
+    processes = []
+    for i in range(4):
+        q = mp.Queue()
+        p = mp.Process(target=childprocess, args=(mode, i, q))
+        p.start()
+        processes.append((p, i, q))
+
+    for (p, i, q) in processes:
+        q.put(ms.Tensor(2, dtype=ms.float32))
+        p.join(5) # timeout:5s
+        assert p.exitcode == 0, f"child process idx:{i}, exitcode:{p.exitcode}"

@@ -117,6 +117,7 @@ class ForwardExecutor {
     MS_EXCEPTION_IF_NULL(pyboost_cast_operation_);
     return pyboost_cast_operation_;
   }
+  void ChildAfterFork();
 
  private:
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);

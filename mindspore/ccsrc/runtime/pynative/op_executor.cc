@@ -138,4 +138,11 @@ void OpExecutor::WorkerJoin() {
   }
   async_queue_.WorkerJoin();
 }
+
+void OpExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "OpExecutor reinitialize after fork";
+  MS_LOG(DEBUG) << "Reinitialize async_queue_.";
+  async_queue_.ChildAfterFork();
+  MS_LOG(DEBUG) << "OpExecutor reinitialize after fork done.";
+}
 }  // namespace mindspore::runtime

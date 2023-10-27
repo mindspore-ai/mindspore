@@ -536,6 +536,27 @@ void ClearArgCache(const py::object &obj) {
 
 void GraphExecutorPy::ClearCurConvertInput() { cur_convert_input_.clear(); }
 
+void GraphExecutorPy::ParentBeforeFork() {
+  MS_LOG(DEBUG) << "GraphExecutorPy prepare before fork.";
+  MS_LOG(DEBUG) << "Stop AnalysisSchedule tasks.";
+  abstract::AnalysisSchedule::GetInstance().Stop();
+  MS_LOG(DEBUG) << "GraphExecutorPy prepare before fork done.";
+}
+
+void GraphExecutorPy::ParentAfterFork() {
+  MS_LOG(DEBUG) << "GraphExecutorPy in parent process reinitialize after fork.";
+  MS_LOG(DEBUG) << "Restart AnalysisSchedule tasks.";
+  abstract::AnalysisSchedule::GetInstance().Start();
+  MS_LOG(DEBUG) << "GraphExecutorPy in parent process reinitialize after fork done.";
+}
+
+void GraphExecutorPy::ChildAfterFork() {
+  MS_LOG(DEBUG) << "GraphExecutorPy in child process reinitialize after fork.";
+  MS_LOG(DEBUG) << "Restart AnalysisSchedule tasks.";
+  abstract::AnalysisSchedule::GetInstance().Start();
+  MS_LOG(DEBUG) << "GraphExecutorPy in child process reinitialize after fork done.";
+}
+
 py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple &inputs) {
   MS_LOG(DEBUG) << "Verify args size:" << inputs.size();
   if (inputs.size() != input_signature.size()) {

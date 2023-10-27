@@ -475,7 +475,7 @@ void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
 }
 
 // Reset ms context. Only called in child process after fork occurs.
-void MsContext::ResetContext() {
+void MsContext::ChildAfterFork() {
   MS_LOG(DEBUG) << "Reset context after fork.";
   // configs can be modified again.
   params_read_status_ = std::vector<bool>(

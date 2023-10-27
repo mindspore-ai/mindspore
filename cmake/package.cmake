@@ -297,6 +297,7 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )

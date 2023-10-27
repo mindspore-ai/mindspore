@@ -36,6 +36,7 @@ void RegSignatureEnumRW(const py::module *m);
 void RegValues(const py::module *m);
 void RegMsContext(const py::module *m);
 void RegSecurity(py::module *m);
+void RegForkUtils(py::module *m);
 
 namespace initializer {
 void RegRandomNormal(py::module *m);

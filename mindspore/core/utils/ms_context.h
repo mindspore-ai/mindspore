@@ -253,7 +253,7 @@ class MS_CORE_API MsContext {
     MS_LOG(EXCEPTION) << "Need to implement " << __FUNCTION__ << " for type " << typeid(T).name() << ".";
   }
 
-  void ResetContext();  // Reset ms context. Only called in child process after fork occurs.
+  void ChildAfterFork();  // Reset ms context. Only called in child process after fork occurs.
   bool EnableAoeOnline() const;
   bool EnableAoeOffline() const;
 

@@ -71,6 +71,8 @@ class MS_CORE_API ActorMgr {
   inline void SetDelegate(const std::string &d) { delegate = d; }
   void SetActorReady(const ActorReference &actor) const;
 
+  void ChildAfterFork();
+
  private:
   inline bool IsLocalAddres(const AID &id) {
     if (id.Url() == "" || id.Url().empty() || urls.find(id.Url()) != urls.end()) {

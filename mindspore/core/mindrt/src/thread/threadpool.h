@@ -125,7 +125,7 @@ class Worker {
 #endif
   inline void set_alive(bool flag) { alive_ = flag; }
   inline bool alive() const { return alive_; }
-  void ReinitAfterFork();
+  void ChildAfterFork();
 
  protected:
   void SetAffinity();
@@ -191,7 +191,7 @@ class MS_CORE_API ThreadPool {
   void SetWorkerIdMap();
   // init task queues
   int TaskQueuesInit(size_t thread_num);
-  void ReinitAfterFork();
+  void ChildAfterFork();
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
   inline size_t actor_thread_num() const { return actor_thread_num_; }
@@ -227,7 +227,7 @@ class MS_CORE_API ThreadPool {
   }
 
  protected:
-  ThreadPool();
+  ThreadPool() = default;
 
   int InitAffinityInfo();
 

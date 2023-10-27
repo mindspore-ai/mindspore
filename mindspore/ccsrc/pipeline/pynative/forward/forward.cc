@@ -1381,5 +1381,18 @@ void ForwardExecutor::ClearRes() {
   mindrt_backends_.clear();
   slice_prim_cache_.clear();
 }
+
+void ForwardExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork.";
+  if (frontend_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize frontend_queue_.";
+    frontend_queue_->ChildAfterFork();
+  }
+  if (backend_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize backend_queue_.";
+    backend_queue_->ChildAfterFork();
+  }
+  MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork done.";
+}
 }  // namespace pynative
 }  // namespace mindspore

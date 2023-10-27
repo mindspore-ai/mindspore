@@ -84,6 +84,9 @@ class BACKEND_EXPORT OpExecutor {
   // Thread join before the process exit.
   void WorkerJoin();
 
+  // Child process reinitialize resource after fork.
+  void ChildAfterFork();
+
  private:
   OpExecutor();
   ~OpExecutor();

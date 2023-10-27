@@ -1974,5 +1974,18 @@ void GradExecutor::DispatchAssistQueueTask(std::function<void(void)> task) const
     assist_queue_->CheckException();
   }
 }
+
+void GradExecutor::ChildAfterFork() {
+  MS_LOG(DEBUG) << "GradExecutor reinitialize after fork.";
+  if (bprop_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize bprop_queue_.";
+    bprop_queue_->ChildAfterFork();
+  }
+  if (assist_queue_ != nullptr) {
+    MS_LOG(DEBUG) << "Reinitialize assist_queue_.";
+    assist_queue_->ChildAfterFork();
+  }
+  MS_LOG(DEBUG) << "GradExecutor reinitialize after fork done.";
+}
 }  // namespace pynative
 }  // namespace mindspore
