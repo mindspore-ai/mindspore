@@ -981,7 +981,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   // Link the arrow in the control flow scene.
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline &&
       graph_compiler_info.control_node_parser_ != nullptr && graph_compiler_info.control_node_parser_->IsInited()) {
-    control_node_scheduler_.Link(actor_set, graph_compiler_info);
+    control_node_scheduler_.Link(actor_set, graph_compiler_info, graph_output_to_actor_);
   }
   swap_node_scheduler_.Link(graph_compiler_info, actor_set);
 
