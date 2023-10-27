@@ -34,6 +34,8 @@ tensor::TensorPtr MulCPU::Call(const tensor::TensorPtr &x, const tensor::TensorP
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
+  Contiguous(x);
+  Contiguous(y);
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
   runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");
@@ -72,6 +74,7 @@ tensor::TensorPtr MulCPU::Call(const tensor::TensorPtr &x, const ScalarPtr &y) {
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
 
+  Contiguous(x);
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, tensor_y, "y");
   runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");

@@ -174,9 +174,40 @@ kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> wo
   return workspaces;
 }
 
+tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  if (input_tensor->storage_info() == nullptr) {
+    return input_tensor;
+  }
+  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+  auto old_storage_info = input_tensor->storage_info();
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {old_device_address->device_name(), old_device_address->device_id()});
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  if (old_storage_info->data_type == kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
+  }
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape);
+  new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
+
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+        pynative::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {old_storage_info}, {new_device_address})) {
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
+  }
+
+  input_tensor->set_device_address(new_device_address);
+  input_tensor->set_storage_info(nullptr);
+  return input_tensor;
+}
+
 DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    {target_device, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);

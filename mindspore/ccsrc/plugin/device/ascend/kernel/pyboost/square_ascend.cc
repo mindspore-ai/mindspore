@@ -110,7 +110,7 @@ bool SquareAscend::LaunchByKernel(const tensor::TensorPtr &input, const tensor::
 
 tensor::TensorPtr SquareAscend::Call(const tensor::TensorPtr &input) {
   InferOutput(input);
-  Launch(input, output(0));
+  Launch(Contiguous(input), output(0));
   return output(0);
 }
 }  // namespace pyboost

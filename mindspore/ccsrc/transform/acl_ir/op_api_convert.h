@@ -231,9 +231,47 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   return acl_tensor;
 }
 
+
 inline auto ConvertType(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
   MS_LOG(EXCEPTION) << "Current not support tensor list!";
   return tensor_list;
+}
+
+inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
+  const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+
+  const auto &storage_info = tensor->storage_info();
+  // Get dev shape
+  auto get_dev_shape = [device_address, tensor](const std::string &tensor_format, const auto &tensor_shape) {
+    if (transform::AclHelper::CheckDefaultSupportFormat(tensor_format)) {
+      return tensor_shape;
+    }
+    int64_t groups = 1;
+    auto node_idx = device_address->GetNodeIndex();
+    if (node_idx.first != nullptr) {
+      groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
+    }
+    return trans::TransShapeToDevice(tensor_shape, tensor_format, tensor->data_type(), groups);
+  };
+
+  const auto &tensor_shape = tensor->shape();
+  const auto &tensor_format = device_address->format();
+  if (storage_info == nullptr) {
+    const auto &dev_shape = get_dev_shape(tensor_format, tensor_shape);
+
+    // Get contiguous strides
+    std::vector<int64_t> strides(tensor_shape.size(), 1);
+    for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
+      strides[i] = tensor_shape[i + 1] * strides[i + 1];
+    }
+
+    return std::make_tuple(tensor_shape, strides, 0, dev_shape);
+  } else {
+    const auto &dev_shape = get_dev_shape(tensor_format, storage_info->ori_shape);
+    return std::make_tuple(tensor_shape, storage_info->strides, storage_info->storage_offset, dev_shape);
+  }
 }
 
 inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
@@ -244,33 +282,13 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
-  auto shape = tensor->shape();
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  MS_EXCEPTION_IF_NULL(device_address);
+  auto [view_shape, strides, offset, ori_dev_shape] = GetViewShapeAndStride(tensor, device_address);
   const auto &tensor_format = device_address->format();
   aclFormat format = AclConverter::ConvertFormat(tensor_format);
-  auto dev_shape = shape;
-  if (transform::AclHelper::CheckDefaultSupportFormat(tensor_format)) {
-    int64_t groups = 1;
-    auto node_idx = device_address->GetNodeIndex();
-    if (node_idx.first != nullptr) {
-      groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
-    }
-    dev_shape = trans::TransShapeToDevice(shape, tensor_format, tensor->data_type(), groups);
-  }
 
-  // Create strides.
-  auto strides = shape;
-  if (!strides.empty()) {
-    strides.erase(strides.begin());
-  }
-  strides.push_back(1);
-  for (int i = static_cast<int>(strides.size()) - 2; i >= 0; i--) {
-    strides[i] = strides[i] * strides[i + 1];
-  }
-
-  auto acl_tensor = aclCreateTensor(shape.data(), shape.size(), acl_data_type, strides.data(), 0, format,
-                                    dev_shape.data(), dev_shape.size(), device_address->GetMutablePtr());
+  auto acl_tensor = aclCreateTensor(view_shape.data(), view_shape.size(), acl_data_type, strides.data(), offset, format,
+                                    ori_dev_shape.data(), ori_dev_shape.size(), device_address->GetMutablePtr());
   return acl_tensor;
 }
 

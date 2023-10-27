@@ -65,6 +65,9 @@ class BACKEND_EXPORT Op {
     outputs_.clear();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
   }
+  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) {
+    return ContiguousTensor(input_tensor);
+  }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_;

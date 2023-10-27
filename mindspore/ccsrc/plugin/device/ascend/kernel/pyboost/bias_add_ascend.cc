@@ -79,7 +79,7 @@ bool BiasAddAscend::Launch(const tensor::TensorPtr &input_x, const tensor::Tenso
 
 tensor::TensorPtr BiasAddAscend::Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias) {
   InferOutput(input_x, bias);
-  Launch(input_x, bias, output(0));
+  Launch(Contiguous(input_x), Contiguous(bias), output(0));
   return output(0);
 }
 }  // namespace pyboost
