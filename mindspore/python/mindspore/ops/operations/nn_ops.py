@@ -3918,7 +3918,6 @@ class ResizeBilinear(PrimitiveWithInfer):
     def infer_dtype(self, input_dtype):
         validator.check_tensor_dtype_valid('input_dtype', input_dtype, [mstype.float16, mstype.float32],
                                            self.name)
-        self.add_prim_attr("dtype", input_dtype)
         return input_dtype
 
 
