@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
-#define MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
+#ifndef MINDSPORE_CORE_OPS_VIEW_VIEW_STRIDES_CALC_H
+#define MINDSPORE_CORE_OPS_VIEW_VIEW_STRIDES_CALC_H
 
 #include <vector>
 #include "ops/view/view_strides_calculator.h"
@@ -22,11 +22,11 @@
 namespace mindspore {
 namespace ops {
 
-TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-MS_CORE_API TensorStorageInfoPtrList TransposeCalcDirect(const tensor::TensorPtr &input,
-                                                         const std::vector<int64_t> &input_perm);
+TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
+MS_CORE_API TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
+                                                  const std::vector<int64_t> &shape);
 
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
+#endif  // MINDSPORE_CORE_OPS_VIEW_VIEW_STRIDES_CALC_H

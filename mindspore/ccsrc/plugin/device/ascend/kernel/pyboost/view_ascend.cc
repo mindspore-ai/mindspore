@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
-#define MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H
 
-#include <vector>
-#include "ops/view/view_strides_calculator.h"
+#include "plugin/device/ascend/kernel/pyboost/view_ascend.h"
+#include "runtime/device/device_address_utils.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "transform/acl_ir/op_api_exec.h"
 
 namespace mindspore {
-namespace ops {
-
-TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-MS_CORE_API TensorStorageInfoPtrList TransposeCalcDirect(const tensor::TensorPtr &input,
-                                                         const std::vector<int64_t> &input_perm);
-
-}  // namespace ops
+namespace kernel {
+namespace pyboost {
+tensor::TensorPtr ViewAscend::Call(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape) {
+  PyboostProcessView(input, shape, kAscendDevice);
+  return outputs_[0];
+}
+}  // namespace pyboost
+}  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_VIEW_TRANSPOSE_STRIDES_CALC_H

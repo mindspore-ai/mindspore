@@ -14,27 +14,35 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op/transpose.h"
+#include "kernel/pyboost/op/view.h"
 #include "kernel/pyboost/py_boost_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include "ops/view/view_strides_calc.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Transpose::CastInput() {}
-tensor::TensorPtr Transpose::Call(const tensor::TensorPtr &input, const vector<Int64ImmPtr> &input_perm) {
-  // TODO: kernel_mod->launch
-  return mindspore::tensor::TensorPtr();
-}
-void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const vector<int64_t> &input_perm) {
+void View::CastInput() {}
+
+void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape,
+                              const std::string &device_target) {
+  MS_EXCEPTION_IF_NULL(input);
+
+  auto ori_storage_info = input->storage_info();
+  if (ori_storage_info != nullptr && !ori_storage_info->is_contiguous) {
+    MS_LOG(EXCEPTION) << "input tensor:" << input->ToString()
+                      << " is not contiguous, storage info:" << ori_storage_info->ToString();
+  }
+  std::vector<int64_t> shape_vec;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vec), [](const auto &v) { return v->value(); });
+
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  auto storage_info_list = ops::TransposeCalcDirect(input, input_perm);
+  auto storage_info_list = ops::ViewCalcImpl(primitive_, input, shape_vec);
   if (!storage_info_list.empty()) {
     storage_info_list[0]->data_type = input->data_type();
     runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
@@ -43,6 +51,11 @@ void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const vector<
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name();
   }
+}
+
+tensor::TensorPtr View::Call(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape) {
+  // TODO: kernel_mod->launch
+  return mindspore::tensor::TensorPtr();
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -55,6 +55,32 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
   return device_context;
 }
 
+device::DeviceAddressPtr ContiguousByDeviceAddress(const device::DeviceAddressPtr &old_device_address,
+                                                   const TensorStorageInfoPtr &old_storage_info) {
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  MS_EXCEPTION_IF_NULL(old_storage_info);
+
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {old_device_address->device_name(), old_device_address->device_id()});
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  if (old_storage_info->data_type == kTypeUnknown) {
+    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
+  }
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape);
+  new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
+
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+        pynative::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {old_storage_info}, {new_device_address})) {
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
+  }
+  return new_device_address;
+}
+
 void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const TensorStorageInfoPtr &storage_info,
                                       std::vector<tensor::TensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(storage_info->data_type, storage_info->shape);
@@ -69,8 +95,13 @@ void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const Tens
   }
   output_tensor->set_contiguous_callback([](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
                                             const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
-    ContiguousTensor(tensor);
-    return tensor->device_address();
+    if (tensor != nullptr) {
+      ContiguousTensor(tensor);
+      return nullptr;
+    }
+
+    auto device_addr = std::dynamic_pointer_cast<device::DeviceAddress>(device_address);
+    return ContiguousByDeviceAddress(device_addr, storage_info);
   });
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
@@ -219,25 +250,9 @@ tensor::TensorPtr ContiguousTensor(const tensor::TensorPtr &input_tensor) {
     return input_tensor;
   }
   auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(old_device_address);
   auto old_storage_info = input_tensor->storage_info();
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {old_device_address->device_name(), old_device_address->device_id()});
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
-  if (old_storage_info->data_type == kTypeUnknown) {
-    MS_LOG(EXCEPTION) << "The view op out type is kTypeUnknown";
-  }
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, address_size, kOpFormat_DEFAULT, old_storage_info->data_type, old_storage_info->shape);
-  new_device_address->set_device_shape(old_storage_info->shape);
-  new_device_address->set_original_ref_count(SIZE_MAX);
-  new_device_address->ResetRefCount();
-
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-        pynative::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {old_storage_info}, {new_device_address})) {
-    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << pynative::KernelTaskType::kCONTIGUOUS_TASK;
-  }
+  auto new_device_address = ContiguousByDeviceAddress(old_device_address, old_storage_info);
 
   input_tensor->set_device_address(new_device_address);
   input_tensor->set_storage_info(nullptr);

@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose
+from mindspore.ops.auto_generate import baddbmm, transpose, view
 import mindspore
 
 
@@ -55,7 +55,15 @@ def test_baddbmm_grad():
 def test_transpose_ascend():
     context.set_context(device_target="Ascend")
 
-    input = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    input = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
     input_perm = (0, 2, 1)
     output = transpose(input, input_perm)
-    assert (output.asnumpy() == [[[1, 4], [2, 5], [3, 6]], [[7, 10], [8, 11], [9, 12]]])
+    assert np.allclose(output.asnumpy(), [[[1, 4], [2, 5], [3, 6]], [[7, 10], [8, 11], [9, 12]]])
+
+
+def test_view_ascend():
+    context.set_context(device_target="Ascend")
+
+    input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+    output = view(input, (3, 2))
+    assert np.allclose(output.asnumpy(), [[-0.1, 0.3], [3.6, 0.4], [0.5, -3.2]])
