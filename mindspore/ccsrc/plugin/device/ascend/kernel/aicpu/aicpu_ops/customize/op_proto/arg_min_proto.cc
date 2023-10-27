@@ -67,7 +67,8 @@ IMPLEMT_COMMON_INFERFUNC(ArgMinInferShape) {
       AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), error_msg);
       return GRAPH_FAILED;
     }
-    int64_t dimension = dimension_value[0] < 0 ? dimension_value[0] + x_shape.size() : dimension_value[0];
+    int64_t dimension =
+      dimension_value[0] < 0 ? dimension_value[0] + static_cast<int64_t>(x_shape.size()) : dimension_value[0];
     if (dimension >= static_cast<int64_t>(x_shape.size())) {
       string error_msg = ConcatString("the value of input[dimension] must be range at input shape size,",
                                       " but get input[dimension] value ", dimension_value[0], ", input[x] shape size ",

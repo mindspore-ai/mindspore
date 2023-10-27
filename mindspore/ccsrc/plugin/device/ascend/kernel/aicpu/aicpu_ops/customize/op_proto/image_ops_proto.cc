@@ -99,7 +99,7 @@ IMPLEMT_INFERFUNC(ExtractGlimpse, ExtractGlimpseInfer) {
   }
   auto x_dims = op.GetInputDesc(0).GetShape().GetDims();
   auto offsets_dims = op.GetInputDesc(2).GetShape().GetDims();
-  CHECK(x_dims.size() < 4 || offsets_dims.size() < 2, OP_LOGE(TbeGetName(op), "invalid x_dims or offsets_dims."),
+  CHECK((x_dims.size() < 4 || offsets_dims.size() < 2), OP_LOGE(TbeGetName(op), "invalid x_dims or offsets_dims."),
         return GRAPH_FAILED);
   int64_t batch_dim;
   if (Merge(x_dims[0], offsets_dims[0], batch_dim) != GRAPH_SUCCESS) {

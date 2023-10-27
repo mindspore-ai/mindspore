@@ -138,7 +138,7 @@ IMPLEMT_COMMON_INFERFUNC(MatrixLogarithmInferShaper) {
   auto x_shape = op.GetInputDescByName("x").GetShape().GetDims();
   Shape input_shape = op.GetInputDescByName("x").GetShape();
   DataType input_dtype = op.GetInputDescByName("x").GetDataType();
-  int64_t size_num = op.GetInputDescByName("x").GetShape().GetDimNum();
+  int64_t size_num = static_cast<int64_t>(op.GetInputDescByName("x").GetShape().GetDimNum());
   TensorDesc td = op.GetOutputDescByName("y");
   td.SetShape(ge::Shape(input_shape));
   td.SetDataType(input_dtype);
@@ -289,7 +289,7 @@ static bool InferShapeAndTypeTrace(Operator &op, const std::string &inputName, c
 
 IMPLEMT_VERIFIER(Trace, TraceVerify) {
   AscendString op_name;
-  CHECK(op.GetName(op_name) != GRAPH_SUCCESS, OP_LOGE("", "GetName failed."), return GRAPH_FAILED);
+  CHECK((op.GetName(op_name) != GRAPH_SUCCESS), OP_LOGE("", "GetName failed."), return GRAPH_FAILED);
   ge::Shape shapeX = op.GetInputDescByName("x").GetShape();
   DataType dtypeX = op.GetInputDescByName("x").GetDataType();
   constexpr int64_t shapeDimsLimit = 2;

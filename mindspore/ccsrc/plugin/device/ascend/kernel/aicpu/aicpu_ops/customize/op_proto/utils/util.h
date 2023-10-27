@@ -21,7 +21,6 @@
 #ifndef CUSTOMIZE_OP_PROTO_UTIL_UTIL_H_
 #define CUSTOMIZE_OP_PROTO_UTIL_UTIL_H_
 
-#include <memory.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -44,13 +43,13 @@
 #include "op_log.h"
 
 #define CHECK_KEY_IN_MAP(map, key, name, re_expr)                \
-  if (map.find(key) == map.end()) {                              \
+  if ((map).find(key) == (map).end()) {                          \
     CUBE_INNER_ERR_REPORT("", "not found %s in %s", name, #map); \
     re_expr;                                                     \
   }
 
 #define CHECK_PTR_NULL(ptr, name, re_expr)             \
-  if (ptr == nullptr) {                                \
+  if ((ptr) == nullptr) {                              \
     CUBE_INNER_ERR_REPORT("", "Get %s failed.", name); \
     re_expr;                                           \
   }
@@ -384,7 +383,7 @@ class DynamicShapeInfer {
   do {                                                     \
     auto op_desc = OpDescUtils::GetOpDescFromOperator(op); \
     if (!depends_names.empty()) {                          \
-      op_desc->SetOpInferDepends(depends_names);           \
+      op_desc->SetOpInferDepends((depends_names));         \
     }                                                      \
   } while (0)
 

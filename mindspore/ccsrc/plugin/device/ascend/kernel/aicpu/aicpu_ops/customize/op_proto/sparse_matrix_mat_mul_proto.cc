@@ -37,7 +37,7 @@ CUST_IMPLEMT_INFERFUNC(SparseMatrixMatMul, SparseMatrixMatMulInfer) {
   bool transpose_B = transpose_b || adjoint_b;
   // row and col of B
   Shape shape_b = op.GetInputDescByName("x2_dense").GetShape();
-  int rank = shape_b.GetDimNum();
+  int rank = static_cast<int>(shape_b.GetDimNum());
   int64_t row_b = rank == 2 ? shape_b.GetDim(0) : shape_b.GetDim(1);
   int64_t col_b = rank == 2 ? shape_b.GetDim(1) : shape_b.GetDim(2);
 
@@ -151,7 +151,7 @@ CUST_IMPLEMT_VERIFIER(SparseMatrixMatMul, SparseMatrixMatMulVerify) {
   }
   // check3 rank
   const int rank_x1 = op.GetInputDescByName("x1_dense_shape").GetShape().GetDim(0);
-  const int rank_x2 = op.GetInputDescByName("x2_dense").GetShape().GetDimNum();
+  const int rank_x2 = static_cast<int>(op.GetInputDescByName("x2_dense").GetShape().GetDimNum());
   if ((rank_x1 != 2 && rank_x1 != 3) || (rank_x2 != 2 && rank_x2 != 3)) {
     err_msg = "both rank of two input must be 2 or 3, please check!";
     AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);

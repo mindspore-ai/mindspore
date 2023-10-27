@@ -132,12 +132,12 @@ std::string TbeGetOpType(const T &op) {
 }
 
 #define CHECK_DIVISOR_ZERO(divisor) \
-  if (divisor == 0) {               \
+  if ((divisor) == 0) {             \
     return;                         \
   }
 
 #define CHECK_DIVISOR_ZERO_RET(divisor, ret) \
-  if (divisor == 0) {                        \
+  if ((divisor) == 0) {                      \
     return ret;                              \
   }
 

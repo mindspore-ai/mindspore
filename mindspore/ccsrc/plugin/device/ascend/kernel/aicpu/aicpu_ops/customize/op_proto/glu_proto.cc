@@ -31,7 +31,7 @@ IMPLEMT_COMMON_INFERFUNC(GluInferShape) {
     split_dim = -1;
   }
 
-  int64_t dim_num = x_shape.GetDimNum();
+  int64_t dim_num = static_cast<int64_t>(x_shape.GetDimNum());
   if ((split_dim < -dim_num) || (split_dim >= dim_num)) {
     OP_LOGE(opname, "The value of the attribute axis is out of range.");
     return GRAPH_FAILED;

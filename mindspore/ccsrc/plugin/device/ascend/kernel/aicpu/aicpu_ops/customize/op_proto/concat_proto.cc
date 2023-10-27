@@ -134,7 +134,7 @@ bool ConcatInferShapeCommonStatic(Operator &op, const int64_t dynamic_input_star
     return false;
   }
   if (axis < 0) {
-    axis += output_dim;
+    axis += static_cast<int64_t>(output_dim);
   }
   int64_t concat_dim_size = output_shape.GetDim(axis);
 
@@ -237,7 +237,7 @@ static graphStatus ConcatInferShapeCommon(Operator &op, const int64_t dy_input_s
 
   int64_t non_negative_axis = axis;
   if (non_negative_axis < 0) {
-    non_negative_axis += dim_num;
+    non_negative_axis += static_cast<int64_t>(dim_num);
   }
 
   vector<int64_t> output_shape_dims;

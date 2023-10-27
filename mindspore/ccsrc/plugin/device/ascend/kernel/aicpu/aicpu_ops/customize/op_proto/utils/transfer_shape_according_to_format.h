@@ -30,7 +30,6 @@
 #include "framework/omg/omg_inner_types.h"
 #include "graph/operator.h"
 #include "graph/operator_reg.h"
-#include "graph/tensor.h"
 #include "graph/utils/op_desc_utils.h"
 
 #include "op_log.h"

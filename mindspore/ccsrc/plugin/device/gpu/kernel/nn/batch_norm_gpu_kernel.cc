@@ -276,7 +276,10 @@ void BatchNormGpuKernelMod::InitSizeLists() {
 
 void BatchNormGpuKernelMod::SetTensorDescriptor(const Format &format, const ShapeVector &shape) {
   cudnnTensorFormat_t cudnn_format;
-  int batch, channel, height, width;
+  int batch;
+  int channel;
+  int height;
+  int width;
   if (format == Format::NHWC) {
     batch = LongToInt(shape[kIndex0]);
     height = LongToInt(shape[kIndex1]);

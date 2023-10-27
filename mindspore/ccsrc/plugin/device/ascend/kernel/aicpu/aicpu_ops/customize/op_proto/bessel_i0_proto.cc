@@ -15,8 +15,6 @@
  */
 
 #include "inc/bessel_i0_op.h"
-#include <vector>
-#include <string>
 namespace ge {
 
 IMPLEMT_COMMON_INFERFUNC(BesselI0InferShape) {
