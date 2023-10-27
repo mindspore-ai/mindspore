@@ -25,7 +25,7 @@ from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P
 from mindspore.ops.operations import array_ops
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops, other_ops
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _sequence_ops, other_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
@@ -33,6 +33,9 @@ from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.composite.math_ops import mm
 from mindspore.ops.function.math_func import dot
 from mindspore.ops import auto_generate
+from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul,\
+    scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow,\
+    scalar_uadd, scalar_usub
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -63,22 +66,6 @@ partial = P.Partial()
 depend = P.Depend()
 identity = P.identity()
 # tuple/list/scalar ops
-scalar_div = _scalar_ops.ScalarDiv()
-scalar_mod = _scalar_ops.ScalarMod()
-scalar_add = _scalar_ops.ScalarAdd()
-scalar_mul = _scalar_ops.ScalarMul()
-scalar_sub = _scalar_ops.ScalarSub()
-scalar_gt = _scalar_ops.scalar_gt()
-scalar_ge = _scalar_ops.scalar_ge()
-scalar_le = _scalar_ops.scalar_le()
-scalar_lt = _scalar_ops.scalar_lt()
-scalar_eq = _scalar_ops.scalar_eq()
-scalar_floordiv = _scalar_ops.ScalarFloordiv()
-scalar_log = _scalar_ops.ScalarLog()
-scalar_pow = _scalar_ops.ScalarPow()
-scalar_uadd = _scalar_ops.ScalarUadd()
-scalar_usub = _scalar_ops.ScalarUsub()
-
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive(_constants.kTupleGetItem)
 list_getitem = Primitive('list_getitem')

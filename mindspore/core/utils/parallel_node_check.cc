@@ -37,8 +37,8 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType",
-  "ScalarAdd", "ScalarSub", "ScalarMul", "ScalarDiv", "ScalarFloordiv", "ScalarPow", "ScalarSummary", "ScalarCast",
-  "ScalarMod", "scalar_gt", "scalar_ge", "scalar_lt", "scalar_le", "scalar_eq"};
+  "ScalarAdd", "ScalarSub", "ScalarMul", "ScalarDiv", "ScalarFloorDiv", "ScalarPow", "ScalarSummary", "ScalarCast",
+  "ScalarMod", "ScalarGt", "ScalarGe", "ScalarLt", "ScalarLe", "ScalarEq"};
 #else
 static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetItemOpName, "J", "list_getitem",
   "array_getitem", "tuple_setitem", "Depend", "list_setitem", "array_setitem", "dict_getitem",
@@ -48,8 +48,8 @@ static const std::set<std::string> PARALLEL_BLACK_LIST_ = {mindspore::kTupleGetI
   "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "Debug", "col2im_v1", "resolve", "BroadcastGradientArgs",
   "InvertPermutation", "DropoutGenMask", "StatelessDropOutGenMask", "embed", "create_instance", "RefToEmbed",
   "StopGradient", "UpdateState", "Load", "Switch", "Print", "call_instance", "TensorMove", "DType",
-  "ScalarAdd", "ScalarSub", "ScalarMul", "ScalarDiv", "ScalarFloordiv", "ScalarPow", "ScalarSummary", "ScalarCast",
-  "ScalarMod", "scalar_gt", "scalar_ge", "scalar_lt", "scalar_le", "scalar_eq"};
+  "ScalarAdd", "ScalarSub", "ScalarMul", "ScalarDiv", "ScalarFloorDiv", "ScalarPow", "ScalarSummary", "ScalarCast",
+  "ScalarMod", "ScalarGt", "ScalarGe", "ScalarLt", "ScalarLe", "ScalarEq"};
 #endif
 static const std::set<PrimitivePtr> ALLGATHER_NODE_LIST_ = {prim::kPrimAllGather, prim::kPrimMiniStepAllGather,
                                                             prim::kPrimMicroStepAllGather};

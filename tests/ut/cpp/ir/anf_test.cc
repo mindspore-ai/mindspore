@@ -38,7 +38,7 @@ class TestAnf : public UT::Common {
 };
 
 TEST_F(TestAnf, test_ValueNode) {
-  auto prim = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim = std::make_shared<Primitive>("ScalarAdd");
   ValueNodePtr c = NewValueNode(prim);
   ASSERT_EQ(c->isa<ValueNode>(), true);
   ASSERT_EQ(IsValueNode<Primitive>(c), true);

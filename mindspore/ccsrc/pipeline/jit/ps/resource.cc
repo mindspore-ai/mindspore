@@ -71,12 +71,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimidentity},             // P.identity
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -93,12 +93,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimidentity},             // P.identity,
        {"__pos__", prim::kPrimScalarUadd},             // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},             // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                // P.ScalarGe,
        {"__bool__", std::string("int_bool")},          // C.int_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},  // P.scalar_to_array
      }},
@@ -115,12 +115,12 @@ BuiltInTypeMap &GetMethodMap() {
        {"__trunc__", prim::kPrimScalarTrunc},            // P.scalar_trunc,
        {"__pos__", prim::kPrimScalarUadd},               // P.scalar_uadd,
        {"__neg__", prim::kPrimScalarUsub},               // P.scalar_usub,
-       {"__eq__", prim::kPrimScalarEq},                  // P.scalar_eq,
+       {"__eq__", prim::kPrimScalarEq},                  // P.ScalarEq,
        {"__ne__", prim::kPrimScalarNe},                  // P.scalar_ne,
-       {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
-       {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
-       {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+       {"__lt__", prim::kPrimScalarLt},                  // P.ScalarLt,
+       {"__gt__", prim::kPrimScalarGt},                  // P.ScalarGt,
+       {"__le__", prim::kPrimScalarLe},                  // P.ScalarLe,
+       {"__ge__", prim::kPrimScalarGe},                  // P.ScalarGe,
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},

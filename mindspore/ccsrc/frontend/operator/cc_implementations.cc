@@ -113,7 +113,7 @@ float InnerScalarDiv(T x, T y) {
 }
 
 template <typename T>
-T InnerScalarFloordiv(T x, T y) {
+T InnerScalarFloorDiv(T x, T y) {
   auto ret = std::floor(InnerScalarDiv(x, y));
   return static_cast<T>(ret);
 }
@@ -237,7 +237,7 @@ SCALAR_OP(Mul)
 SCALAR_OP(Div)
 SCALAR_OP(Mod)
 SCALAR_OP(Pow)
-SCALAR_OP(Floordiv)
+SCALAR_OP(FloorDiv)
 
 #define LOGIC_OP(op_t)                                                                                          \
   ValuePtr Scalar##op_t(const ValuePtrList &list) {                                                             \

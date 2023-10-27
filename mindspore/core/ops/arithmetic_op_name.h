@@ -20,18 +20,8 @@
 namespace mindspore {
 // Arithmetic
 constexpr auto kScalarToTensorOpName = "ScalarToTensor";
-constexpr auto kScalarAddOpName = "ScalarAdd";
-constexpr auto kScalarSubOpName = "ScalarSub";
-constexpr auto kScalarMulOpName = "ScalarMul";
-constexpr auto kScalarDivOpName = "ScalarDiv";
-constexpr auto kScalarFloordivOpName = "ScalarFloordiv";
-constexpr auto kScalarModOpName = "ScalarMod";
-constexpr auto kScalarPowOpName = "ScalarPow";
-constexpr auto kScalarLogOpName = "ScalarLog";
 constexpr auto kScalarTruncOpName = "ScalarTrunc";
 constexpr auto kScalarFloorOpName = "ScalarFloor";
-constexpr auto kScalarUaddOpName = "ScalarUadd";
-constexpr auto kScalarUsubOpName = "ScalarUsub";
 constexpr auto kScalarBitwiseAndOpName = "bit_and";
 constexpr auto kScalarBitwiseOrOpName = "bit_or";
 constexpr auto kScalarCastOpName = "ScalarCast";

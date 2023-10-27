@@ -68,7 +68,6 @@ class COMMON_EXPORT Emitter {
   NodePtr ScalarDiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarDivOpName, {lhs, rhs}); }
   NodePtr ScalarFloordiv(const NodePtr &lhs, const NodePtr &rhs) { return Emit(kScalarFloordivOpName, {lhs, rhs}); }
   NodePtr ScalarNeg(const NodePtr &node) { return Emit(kScalarUsubOpName, {node}); }
-
   NodePtr Cast(const NodePtr &node, const TypePtr &type);
   NodePtr Cast(const NodePtr &node, TypeId type_id) { return Cast(node, TypeIdToType(type_id)); }
 
@@ -132,7 +131,7 @@ class COMMON_EXPORT Emitter {
     if (abs->isa<abstract::AbstractTensor>()) {
       return CmpOpWithCast(kEqualOpName, lhs, rhs, dst_type);
     } else if (abs->isa<abstract::AbstractScalar>()) {
-      return CmpOpWithCast(kScalarEqOpName, lhs, rhs, dst_type);
+      return CmpOpWithCast("ScalarEq", lhs, rhs, dst_type);
     }
     MS_LOG(EXCEPTION) << "'Equal' only support [Tensor] or [Scalar] input, but got: " << abs->ToString();
   }

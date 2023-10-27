@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_GT_H_
-#define MINDSPORE_CORE_OPS_SCALAR_GT_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GT_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief scalar_gt op is used to judge greater between variable scalar.
-class MIND_API scalar_gt : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(scalar_gt);
-  /// \brief Constructor.
-  scalar_gt() : BaseOperator(kScalarGtOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarGtFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarGtFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarGt", ScalarGtFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_GT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GT_H_

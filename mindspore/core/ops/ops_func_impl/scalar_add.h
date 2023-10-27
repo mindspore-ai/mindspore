@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_MUL_H_
-#define MINDSPORE_CORE_OPS_SCALAR_MUL_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_ADD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_ADD_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarMul op is used to Mul between variable scalar.
-class MIND_API ScalarMul : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(ScalarMul);
-  /// \brief Constructor.
-  ScalarMul() : BaseOperator(kScalarMulOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarAddFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarAddFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarAdd", ScalarAddFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_Mul_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_ADD_H_

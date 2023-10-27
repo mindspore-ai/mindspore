@@ -98,7 +98,7 @@ class MetaScalarAdd : public MetaFuncGraph {
     FuncGraphPtr fg = std::make_shared<FuncGraph>();
     ParameterPtr x = fg->add_parameter();
     ParameterPtr y = fg->add_parameter();
-    auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+    auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(NewValueNode(prim_scalar_add));
     inputs.push_back(x);
@@ -163,7 +163,7 @@ TEST_F(TestInfer, test_inferred_scalar_add) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
   ASSERT_TRUE(*abs_base_got->BuildValue() == *MakeValue(static_cast<int64_t>(3)));
@@ -391,7 +391,7 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   args_spec.push_back(abstract_v1);
   args_spec.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>(kScalarAddOpName);
+  auto prim_scalar_add = std::make_shared<Primitive>("ScalarAdd");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).eval_result->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));

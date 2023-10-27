@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_USUB_H_
-#define MINDSPORE_CORE_OPS_SCALAR_USUB_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_MOD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_MOD_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarUsub op is used to div between variable scalar.
-class MIND_API ScalarUsub : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(ScalarUsub);
-  /// \brief Constructor.
-  ScalarUsub() : BaseOperator(kScalarUsubOpName) { InitIOName({"x"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarModFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarModFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarMod", ScalarModFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_USUB_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_MOD_H_

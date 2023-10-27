@@ -17,17 +17,12 @@
 #include "plugin/device/cpu/kernel/sequence/scalar_bool_cpu_kernel.h"
 #include <utility>
 #include <algorithm>
-#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
-namespace {
-constexpr size_t kInputNum = 1;
-constexpr size_t kOutputNum = 1;
-}  // namespace
 
 int ScalarBoolCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
@@ -40,7 +35,6 @@ int ScalarBoolCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
 bool ScalarBoolCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -54,8 +48,6 @@ template <typename T>
 bool ScalarBoolCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &,
                                           const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   T *input_x = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   bool *output = GetDeviceAddress<bool>(outputs, 0);

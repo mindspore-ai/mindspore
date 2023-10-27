@@ -16,8 +16,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
+from math import log
 import numpy as np
-
 from mindspore.ops import signature as sig
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -25,6 +25,504 @@ from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
+
+class ScalarDiv(Primitive):
+    r"""
+    Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
+
+    .. math::
+
+        out_{i} = \frac{x_i}{y_i}
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '/' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is float.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+        ValueError: If `y` is 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarDiv"""
+
+    def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('The divisor could not be zero. But the divisor is zero now.')
+        return x / y
+
+
+class ScalarFloorDiv(Primitive):
+    r"""
+    Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
+
+    .. math::
+
+        out_{i} = \frac{x_i}{y_i}
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '//' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is float.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+        ValueError: If `y` is 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarFloorDiv"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+    def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('The divisor could not be zero. But the divisor is zero now.')
+        return x // y
+
+
+class ScalarAdd(Primitive):
+    r"""
+    Adds two input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarAdd"""
+
+    def __call__(self, x, y):
+        return x + y
+
+
+class ScalarPow(Primitive):
+    r"""
+    Pow two input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarPow"""
+
+    def __call__(self, x, y):
+        return pow(x, y)
+
+
+class ScalarLog(Primitive):
+    r"""
+    Log input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarAdd"""
+
+    def __call__(self, x):
+        return log(x)
+
+
+class ScalarUadd(Primitive):
+    r"""
+    UAdds input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarAdd"""
+
+    def __call__(self, x):
+        return x
+
+
+class ScalarUsub(Primitive):
+    r"""
+    usub input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarUsub"""
+
+    def __call__(self, x):
+        return -x
+
+
+class ScalarSub(Primitive):
+    r"""
+    Subtracts the second input Scalar from the first input Scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '-' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarSub"""
+
+    def __call__(self, x, y):
+        return x - y
+
+
+class ScalarMul(Primitive):
+    r"""
+    Muls two input scalar.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '+' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarMul"""
+
+    def __call__(self, x, y):
+        return x * y
+
+
+class ScalarEq(Primitive):
+    r"""
+    Computes the equivalence between two Scalars.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '==' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is bool.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarEq"""
+
+    def __call__(self, x, y):
+        return x == y
+
+
+class ScalarGt(Primitive):
+    r"""
+    Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '>' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is bool.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize scalar_gt"""
+
+    def __call__(self, x, y):
+        return x > y
+
+
+class ScalarLt(Primitive):
+    r"""
+    Computes the boolean value of :math:`x < y`.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '<' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is bool.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize scalar_lt"""
+
+    def __call__(self, x, y):
+        return x < y
+
+
+class ScalarGe(Primitive):
+    r"""
+    Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '>=' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is bool.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize scalar_ge"""
+
+    def __call__(self, x, y):
+        return x >= y
+
+
+class ScalarLe(Primitive):
+    r"""
+    Compare the value of the input scalars :math:`x,y`, and the output result is a bool value.
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '<=' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type of scalar is bool.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize scalar_le"""
+
+    def __call__(self, x, y):
+        return x <= y
+
+
+class ScalarMod(Primitive):
+    r"""
+    Computes the remainder of dividing the first input scalar by the second input scalar element-wise.
+
+    .. math::
+
+        out_{i} = x_{i} \text{ % } y_{i}
+
+    .. note::
+        The inputs can be constant/variable value. Usage is the same as '%' in Python.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+        - **y** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarMod"""
+
+    def __call__(self, x, y):
+        if y == 0:
+            raise ValueError('Cannot perform modulo operation on zero.')
+        return x % y
+
+
+class ScalarBool(Primitive):
+    r"""
+    Computes the input scalar true or false.
+
+    .. note::
+        The inputs can be constant/variable value.
+        This primitive only have 'CPU' implementation, for other platform, it runs using heterogeneous.
+
+    Inputs:
+        - **x** (Scalar) - A constant or variable scalar.
+
+    Outputs:
+        Scalar, the type is bool.
+
+    Raises:
+        TypeError: If `x` are not scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ScalarBool"""
+    def __call__(self, x):
+        return bool(x)
+
+scalar_div = ScalarDiv()
+scalar_mod = ScalarMod()
+scalar_add = ScalarAdd()
+scalar_mul = ScalarMul()
+scalar_sub = ScalarSub()
+scalar_gt = ScalarGt()
+scalar_ge = ScalarGe()
+scalar_le = ScalarLe()
+scalar_lt = ScalarLt()
+scalar_eq = ScalarEq()
+scalar_bool = ScalarBool()
+scalar_floordiv = ScalarFloorDiv()
+scalar_log = ScalarLog()
+scalar_pow = ScalarPow()
+scalar_uadd = ScalarUadd()
+scalar_usub = ScalarUsub()
+
 
 class BatchNorm(Primitive):
     """

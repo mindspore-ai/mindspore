@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_LOG_H_
-#define MINDSPORE_CORE_OPS_SCALAR_LOG_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_USUB_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_USUB_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic_unary.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameScalarLog = "ScalarLog";
-/// \brief ScalarDiv op is used to div between variable scalar.
-class MIND_API ScalarLog : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(ScalarLog);
-  /// \brief Constructor.
-  ScalarLog() : BaseOperator(kNameScalarLog) { InitIOName({"x"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarUsubFuncImpl : public ScalarArithmeticUnaryFuncImpl {};
+
+class ScalarUsubFrontendFuncImpl : public ScalarArithmeticUnaryFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarUsub", ScalarUsubFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_LOG_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_USUB_H_

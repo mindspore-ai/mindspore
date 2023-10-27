@@ -14,32 +14,35 @@
  * limitations under the License.
  */
 
-#include <memory>
+#include "ops/ops_func_impl/scalar_arithmetic.h"
+#include <set>
+#include <limits>
+#include <map>
 #include <string>
-#include <vector>
-
-#include "abstract/ops/op_infer.h"
-#include "include/common/utils/utils.h"
-#include "mindapi/src/helper.h"
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "mindspore/core/ops/comparison_ops.h"
+#include "ops/op_name.h"
 #include "ops/op_utils.h"
-#include "ops/scalar_add.h"
-#include "ops/scalar_div.h"
-#include "ops/scalar_eq.h"
-#include "ops/scalar_floordiv.h"
-#include "ops/scalar_ge.h"
-#include "ops/scalar_gt.h"
-#include "ops/scalar_le.h"
-#include "ops/scalar_lt.h"
-#include "ops/scalar_mod.h"
-#include "ops/scalar_mul.h"
-#include "ops/scalar_pow.h"
-#include "ops/scalar_sub.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
+BaseShapePtr ScalarArithmeticFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) const {
+  return abstract::kNoShape;
+}
+
+TypePtr ScalarArithmeticFuncImpl::InferType(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) const {
+  auto prim_name = primitive->name();
+  auto x_type = input_args[kIndex0]->GetType();
+  auto y_type = input_args[kIndex1]->GetType();
+  std::set<std::string> compare_ops = {kNameScalarEq, kNameScalarGe, kNameScalarGt, kNameScalarLt, kNameScalarLe};
+  auto iter = compare_ops.find(prim_name);
+  if (iter != compare_ops.end()) {
+    return kBool;
+  }
+  return HighPriorityType(x_type, y_type, prim_name);
+}
+
 template <typename T>
 ValuePtr AddImpl(const ValuePtr &x_value, const ValuePtr &y_value, const std::string &op_name) {
   MS_EXCEPTION_IF_NULL(x_value);
@@ -231,12 +234,10 @@ using MathImplFunc = std::function<ValuePtr(const ValuePtr &, const ValuePtr &, 
 template <typename T>
 MathImplFunc ChooseFunc(const std::string &prim_name) {
   std::map<std::string, MathImplFunc> infer_value_func_map = {
-    {mindspore::kScalarAddOpName, AddImpl<T>}, {mindspore::kScalarSubOpName, SubImpl<T>},
-    {mindspore::kScalarMulOpName, MulImpl<T>}, {mindspore::kScalarDivOpName, DivImpl<T>},
-    {mindspore::kScalarModOpName, ModImpl<T>}, {mindspore::kScalarEqOpName, EqImpl<T>},
-    {mindspore::kScalarGtOpName, GtImpl<T>},   {mindspore::kScalarLtOpName, LtImpl<T>},
-    {mindspore::kScalarGeOpName, GeImpl<T>},   {mindspore::kScalarLeOpName, LeImpl<T>},
-    {mindspore::kScalarPowOpName, PowImpl<T>}, {mindspore::kScalarFloordivOpName, FloorDivImpl<T>}};
+    {kNameScalarAdd, AddImpl<T>}, {kNameScalarSub, SubImpl<T>}, {kNameScalarMul, MulImpl<T>},
+    {kNameScalarDiv, DivImpl<T>}, {kNameScalarMod, ModImpl<T>}, {kNameScalarEq, EqImpl<T>},
+    {kNameScalarGt, GtImpl<T>},   {kNameScalarLt, LtImpl<T>},   {kNameScalarGe, GeImpl<T>},
+    {kNameScalarLe, LeImpl<T>},   {kNameScalarPow, PowImpl<T>}, {kNameScalarFloorDiv, FloorDivImpl<T>}};
   auto iter = infer_value_func_map.find(prim_name);
   if (iter == infer_value_func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
@@ -245,128 +246,66 @@ MathImplFunc ChooseFunc(const std::string &prim_name) {
   return iter->second;
 }
 
-class ScalarArithmeticInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto op_name = primitive->name();
-    const int64_t input_len = 2;
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, op_name);
-    auto elem_x = input_args[0];
-    auto elem_y = input_args[kIndex1];
-    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
-                              << " and y: " << elem_y->ToString();
-    }
-    return abstract::kNoShape;
+ValuePtr ScalarArithmeticFrontendFuncImpl::InferValue(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  auto op_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  constexpr size_t x_index = 0;
+  constexpr size_t y_index = 1;
+  auto elem_x = input_args[x_index];
+  auto elem_y = input_args[y_index];
+  if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
+    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
+                            << " and y: " << elem_y->ToString();
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
-    auto prim_name = primitive->name();
-    auto x_type = input_args[0]->GetType();
-    auto y_type = input_args[kIndex1]->GetType();
-    std::set<TypePtr> check_types = {kInt32, kInt64, kFloat32, kFloat64, kBool};
-    std::set<std::string> compare_ops = {mindspore::kScalarEqOpName, mindspore::kScalarGeOpName,
-                                         mindspore::kScalarGtOpName, mindspore::kScalarLtOpName,
-                                         mindspore::kScalarLeOpName};
-    (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_type, check_types, prim_name);
-    (void)CheckAndConvertUtils::CheckSubClass("y_dtype", y_type, check_types, prim_name);
-    auto iter = compare_ops.find(prim_name);
-    if (prim_name == mindspore::kScalarDivOpName) {
-      return kFloat32;
-    }
-    if (iter != compare_ops.end()) {
-      return kBool;
-    }
-    return HighPriorityType(x_type, y_type, prim_name);
+  auto x_value = elem_x->GetValue();
+  auto y_value = elem_y->GetValue();
+  if (x_value->ContainsValueAny() || y_value->ContainsValueAny()) {
+    return nullptr;
   }
-
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-    MS_EXCEPTION_IF_NULL(primitive);
-    const int64_t input_num = 2;
-    auto op_name = primitive->name();
-    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-    for (const auto &item : input_args) {
-      MS_EXCEPTION_IF_NULL(item);
+  auto x_type = input_args[x_index]->GetType();
+  auto y_type = input_args[y_index]->GetType();
+  auto res_type = HighPriorityType(x_type, y_type, op_name);
+  ValuePtr result;
+  switch (res_type->type_id()) {
+    case kNumberTypeInt32: {
+      auto func = ChooseFunc<int32_t>(op_name);
+      result = func(x_value, y_value, op_name);
+      break;
     }
-    constexpr size_t x_index = 0;
-    constexpr size_t y_index = 1;
-    auto elem_x = input_args[x_index];
-    auto elem_y = input_args[y_index];
-    if (!CheckAndConvertUtils::IsScalar(elem_x) && !CheckAndConvertUtils::IsScalar(elem_y)) {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input should be scalar but got x: " << elem_x->ToString()
-                              << " and y: " << elem_y->ToString();
+    case kNumberTypeInt64: {
+      auto func = ChooseFunc<int64_t>(op_name);
+      result = func(x_value, y_value, op_name);
+      break;
     }
-
-    auto x_value = elem_x->GetValue();
-    auto y_value = elem_y->GetValue();
-    if (x_value->ContainsValueAny() || y_value->ContainsValueAny()) {
-      return nullptr;
+    case kNumberTypeFloat32: {
+      auto func = ChooseFunc<float>(op_name);
+      result = func(x_value, y_value, op_name);
+      break;
     }
-    auto x_type = input_args[x_index]->GetType();
-    auto y_type = input_args[y_index]->GetType();
-    auto res_type = HighPriorityType(x_type, y_type, op_name);
-    ValuePtr result;
-    switch (res_type->type_id()) {
-      case kNumberTypeInt32: {
-        auto func = ChooseFunc<int32_t>(op_name);
-        result = func(x_value, y_value, op_name);
-        break;
-      }
-      case kNumberTypeInt64: {
-        auto func = ChooseFunc<int64_t>(op_name);
-        result = func(x_value, y_value, op_name);
-        break;
-      }
-      case kNumberTypeFloat32: {
-        auto func = ChooseFunc<float>(op_name);
-        result = func(x_value, y_value, op_name);
-        break;
-      }
-      case kNumberTypeFloat64: {
-        auto func = ChooseFunc<double>(op_name);
-        result = func(x_value, y_value, op_name);
-        break;
-      }
-      case kNumberTypeBool: {
-        auto func = ChooseFunc<bool>(op_name);
-        result = func(x_value, y_value, op_name);
-        break;
-      }
-      default: {
-        MS_EXCEPTION(TypeError) << "For '" << op_name
-                                << "', the supported type is in the list: [int32, int64, float32, float64], but got "
-                                << res_type->ToString() << ".";
-      }
+    case kNumberTypeFloat64: {
+      auto func = ChooseFunc<double>(op_name);
+      result = func(x_value, y_value, op_name);
+      break;
     }
-    return result;
+    case kNumberTypeBool: {
+      auto func = ChooseFunc<bool>(op_name);
+      result = func(x_value, y_value, op_name);
+      break;
+    }
+    default: {
+      MS_EXCEPTION(TypeError) << "For '" << op_name
+                              << "', the supported type is in the list: [int32, int64, float32, float64], but got "
+                              << res_type->ToString() << ".";
+    }
   }
-};
-MIND_API_OPERATOR_IMPL(ScalarAdd, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarSub, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarMul, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarDiv, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarFloordiv, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarMod, BaseOperator);
-MIND_API_OPERATOR_IMPL(ScalarPow, BaseOperator);
-MIND_API_OPERATOR_IMPL(scalar_eq, BaseOperator);
-MIND_API_OPERATOR_IMPL(scalar_gt, BaseOperator);
-MIND_API_OPERATOR_IMPL(scalar_ge, BaseOperator);
-MIND_API_OPERATOR_IMPL(scalar_lt, BaseOperator);
-MIND_API_OPERATOR_IMPL(scalar_le, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarAdd, prim::kPrimScalarAdd, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarSub, prim::kPrimScalarSub, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMul, prim::kPrimScalarMul, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarDiv, prim::kPrimScalarDiv, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarFloordiv, prim::kPrimScalarFloorDiv, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarMod, prim::kPrimScalarMod, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(ScalarPow, prim::kPrimScalarPow, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_eq, prim::kPrimScalarEq, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_gt, prim::kPrimScalarGt, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_ge, prim::kPrimScalarGe, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_lt, prim::kPrimScalarLt, ScalarArithmeticInfer, true);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(scalar_le, prim::kPrimScalarLe, ScalarArithmeticInfer, true);
+  return result;
+}
 }  // namespace ops
 }  // namespace mindspore

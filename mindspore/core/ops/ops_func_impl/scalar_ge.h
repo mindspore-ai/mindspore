@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_POW_H_
-#define MINDSPORE_CORE_OPS_SCALAR_POW_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GE_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarDiv op is used to div between variable scalar.
-class MIND_API ScalarPow : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(ScalarPow);
-  /// \brief Constructor.
-  ScalarPow() : BaseOperator(kScalarPowOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarGeFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarGeFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarGe", ScalarGeFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_POW_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_GE_H_

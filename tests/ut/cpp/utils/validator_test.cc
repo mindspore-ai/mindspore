@@ -36,7 +36,7 @@ class TestValidator : public UT::Common {
 };
 
 TEST_F(TestValidator, ValidateOperation01) {
-  auto node = NewValueNode(std::make_shared<Primitive>(kScalarAddOpName));
+  auto node = NewValueNode(std::make_shared<Primitive>("ScalarAdd"));
   ValidateOperation(node);
   // normally, the above statement should not exit, so expected the following statement execute
   EXPECT_TRUE(true);

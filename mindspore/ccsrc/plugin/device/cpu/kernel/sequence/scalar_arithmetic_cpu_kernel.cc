@@ -35,14 +35,14 @@ constexpr auto kScalarAdd = "ScalarAdd";
 constexpr auto kScalarSub = "ScalarSub";
 constexpr auto kScalarMul = "ScalarMul";
 constexpr auto kScalarDiv = "ScalarDiv";
-constexpr auto kScalarFloordiv = "ScalarFloordiv";
+constexpr auto kScalarFloorDiv = "ScalarFloorDiv";
 constexpr auto kScalarMod = "ScalarMod";
 constexpr auto kScalarPow = "ScalarPow";
-constexpr auto kScalarGt = "scalar_gt";
-constexpr auto kScalarGe = "scalar_ge";
-constexpr auto kScalarLt = "scalar_lt";
-constexpr auto kScalarLe = "scalar_le";
-constexpr auto kScalarEq = "scalar_eq";
+constexpr auto kScalarGt = "ScalarGt";
+constexpr auto kScalarGe = "ScalarGe";
+constexpr auto kScalarLt = "ScalarLt";
+constexpr auto kScalarLe = "ScalarLe";
+constexpr auto kScalarEq = "ScalarEq";
 constexpr size_t kInputNum = 2;
 constexpr size_t kInputx = 0;
 constexpr size_t kInputy = 1;
@@ -236,15 +236,12 @@ template <typename T, typename S, typename N>
 bool ScalarArithmeticCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &,
                                                 const std::vector<KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-
   using MathImplFunc = std::function<void(const T *x, const S *y, N *out)>;
   std::unordered_map<std::string, MathImplFunc> func_map = {
     {kScalarAdd, AddImpl<T, S, N>}, {kScalarSub, SubImpl<T, S, N>}, {kScalarMul, MulImpl<T, S, N>},
     {kScalarDiv, DivImpl<T, S, N>}, {kScalarMod, ModImpl<T, S, N>}, {kScalarEq, EqImpl<T, S, N>},
     {kScalarGt, GtImpl<T, S, N>},   {kScalarLt, LtImpl<T, S, N>},   {kScalarGe, GeImpl<T, S, N>},
-    {kScalarLe, LeImpl<T, S, N>},   {kScalarPow, PowImpl<T, S, N>}, {kScalarFloordiv, FloorDivImpl<T, S, N>}};
+    {kScalarLe, LeImpl<T, S, N>},   {kScalarPow, PowImpl<T, S, N>}, {kScalarFloorDiv, FloorDivImpl<T, S, N>}};
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_
@@ -381,19 +378,19 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarMul,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarMul); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarDiv,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarDiv); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarFloordiv,
-                                 []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarFloordiv); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarFloorDiv,
+                                 []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarFloorDiv); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarMod,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarMod); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, scalar_eq,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarEq,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarEq); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, scalar_gt,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarGt,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarGt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, scalar_ge,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarGe,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarGe); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, scalar_lt,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarLt,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarLt); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, scalar_le,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScalarLe,
                                  []() { return std::make_shared<ScalarArithmeticCpuKernelMod>(kScalarLe); });
 }  // namespace kernel
 }  // namespace mindspore

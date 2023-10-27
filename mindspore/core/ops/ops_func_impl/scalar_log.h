@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_BOOL_H_
-#define MINDSPORE_CORE_OPS_SCALAR_BOOL_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LOG_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LOG_H_
+
+#include <vector>
+#include "ops/ops_func_impl/scalar_arithmetic_unary.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameScalarBool = "ScalarBool";
-/// \brief ScalarBool op is used to calculate the input true or false.
-class MIND_API ScalarBool : public BaseOperator {
+class MIND_API ScalarLogFuncImpl : public ScalarArithmeticUnaryFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(ScalarBool);
-  /// \brief Constructor.
-  ScalarBool() : BaseOperator(kNameScalarBool) { InitIOName({"x"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
+  inline TypePtr InferType(const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args) const override {
+    return kFloat32;
+  }
 };
+
+class ScalarLogFrontendFuncImpl : public ScalarArithmeticUnaryFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarLog", ScalarLogFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_BOOL_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LOG_H_

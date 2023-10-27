@@ -34,8 +34,6 @@ namespace {
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
 constexpr auto kScalarLog = "ScalarLog";
-constexpr size_t kInputNum = 1;
-constexpr size_t kOutputNum = 1;
 }  // namespace
 
 template <typename T, typename S>
@@ -55,9 +53,6 @@ void UsubImpl(const T *in_x, S *out) {
 
 bool ScalarOneInputCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != kInputNum) {
-    MS_LOG(EXCEPTION) << "For kernel '" << kernel_type_ << "' input_num must be 1, but got " << inputs.size();
-  }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

@@ -1,0 +1,12 @@
+#operator scalar_usub
+scalar_usub:
+    args:
+        x:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true

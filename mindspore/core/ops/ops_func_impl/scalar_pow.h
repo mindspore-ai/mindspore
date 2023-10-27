@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_SUB_H_
-#define MINDSPORE_CORE_OPS_SCALAR_SUB_H_
-#include "mindspore/core/ops/arithmetic_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_POW_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_POW_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief ScalarSub op is used to add between variable scalar.
-class MIND_API ScalarSub : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(ScalarSub);
-  /// \brief Constructor.
-  ScalarSub() : BaseOperator(kScalarSubOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarPowFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarPowFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarPow", ScalarPowFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_SUB_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_POW_H_

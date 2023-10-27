@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_EQ_H_
-#define MINDSPORE_CORE_OPS_SCALAR_EQ_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LT_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief scalar_eq op is used to judge equal between variable scalar.
-class MIND_API scalar_eq : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(scalar_eq);
-  /// \brief Constructor.
-  scalar_eq() : BaseOperator(kScalarEqOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarLtFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarLtFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarLt", ScalarLtFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_EQ_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_LT_H_

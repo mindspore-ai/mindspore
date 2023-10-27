@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_LT_H_
-#define MINDSPORE_CORE_OPS_SCALAR_LT_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_BOOL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_BOOL_H_
+
+#include <vector>
+#include "ops/ops_func_impl/scalar_arithmetic_unary.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief scalar_lt op is used to judge less between variable scalar.
-class MIND_API scalar_lt : public BaseOperator {
+class MIND_API ScalarBoolFuncImpl : public ScalarArithmeticUnaryFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(scalar_lt);
-  /// \brief Constructor.
-  scalar_lt() : BaseOperator(kScalarLtOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
+  inline TypePtr InferType(const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args) const override {
+    return kBool;
+  }
 };
+
+class ScalarBoolFrontendFuncImpl : public ScalarArithmeticUnaryFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarBool", ScalarBoolFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_LT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_BOOL_H_

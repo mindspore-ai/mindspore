@@ -1,0 +1,14 @@
+#operator scalar_eq
+scalar_eq:
+    args:
+        x:
+            dtype: number
+        y:
+            dtype: number
+    returns:
+        output:
+            dtype: number
+    class:
+        disable: true
+    function:
+        disable: true

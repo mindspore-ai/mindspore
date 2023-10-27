@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_SCALAR_GE_H_
-#define MINDSPORE_CORE_OPS_SCALAR_GE_H_
-#include "mindspore/core/ops/comparison_ops.h"
-#include "ops/base_operator.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_EQ_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_EQ_H_
+
+#include "ops/ops_func_impl/scalar_arithmetic.h"
 
 namespace mindspore {
 namespace ops {
-/// \brief scalar_ge op is used to judge greaterEqual between variable scalar.
-class MIND_API scalar_ge : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(scalar_ge);
-  /// \brief Constructor.
-  scalar_ge() : BaseOperator(kScalarGeOpName) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
+class MIND_API ScalarEqFuncImpl : public ScalarArithmeticFuncImpl {};
+
+class ScalarEqFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
+
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarEq", ScalarEqFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_SCALAR_GE_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SCALAR_EQ_H_
