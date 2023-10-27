@@ -457,9 +457,10 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
   MS_EXCEPTION_IF_NULL(info);
   for (const auto &[input_idx, attr_name] : info->input_attr_map()) {
     MS_LOG(DEBUG) << "Operator " << kernel_name << " converts input " << input_idx << " to attribute " << attr_name;
-    if (input_idx > inputs.size()) {
-      MS_LOG(EXCEPTION) << "Operator " << kernel_name << " index " << input_idx << " must be less than size of inputs "
-                        << inputs.size();
+    if (input_idx >= inputs.size()) {
+      MS_LOG(DEBUG) << "Operator " << kernel_name << " index " << input_idx
+                    << " is out of range of inputs, size of which is " << inputs.size() << ", ignore it.";
+      continue;
     }
     MS_EXCEPTION_IF_NULL(inputs[input_idx]);
     ValuePtr ge_attr_value;
