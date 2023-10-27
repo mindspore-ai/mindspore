@@ -23,6 +23,7 @@
 #include "ir/anf.h"
 #include "mindapi/base/shape_vector.h"
 #include "include/backend/visible.h"
+#include "backend/common/graph_kernel/symbol_engine/symbol.h"
 
 namespace mindspore {
 constexpr auto kAttrSymbolEngine = "symbol_engine";
@@ -36,9 +37,11 @@ class BACKEND_EXPORT SymbolEngine : public Value {
 
   virtual bool ShapeEqual(const std::pair<AnfNodePtr, size_t> &a, const std::pair<AnfNodePtr, size_t> &b) = 0;
   virtual bool Infer(const AbstractBasePtrList &inputs) = 0;
+  virtual graphkernel::symbol::ListSymbolPtr QuerySymbolicShape(const AnfNodePtr &node) = 0;
+  virtual graphkernel::symbol::SymbolPtr QuerySymbolicValue(const AnfNodePtr &node) = 0;
   virtual ShapeArray QueryShape(const AnfNodePtr &node) = 0;
   virtual ShapeArray QueryValue(const AnfNodePtr &node) = 0;
-  virtual std::vector<std::string> QuerySymbolicShape(const AnfNodePtr &node) = 0;
+  virtual std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node) = 0;
   virtual void QuerySymbolExpr(const AnfNodePtr &node,
                                std::unordered_map<std::string, std::string> *symbol_expr_map) = 0;
 };

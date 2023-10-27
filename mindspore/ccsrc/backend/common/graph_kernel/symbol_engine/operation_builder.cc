@@ -220,6 +220,112 @@ SymbolPtr TupleToTensor(OperationBuilder *b) {
   return IListSymbol::Make(list_symbol->symbols());
 }
 
+SymbolPtr ConcatValue(OperationBuilder *b) {
+  SymbolPtrList result;
+  result.reserve(b->cnode()->size());
+  for (size_t i = 1; i < b->cnode()->size(); i++) {
+    // only support IntList value for shape calculation
+    auto v = b->GetInputValue(i)->as_sptr<IListSymbol>();
+    if (v != nullptr) {
+      (void)result.insert(result.end(), v->symbols().begin(), v->symbols().end());
+    } else {
+      return nullptr;
+    }
+  }
+  return IListSymbol::Make(std::move(result));
+}
+
+SymbolPtr StackValue(OperationBuilder *b) {
+  SymbolPtrList result(b->cnode()->size() - 1);
+  for (size_t i = 1; i < b->cnode()->size(); i++) {
+    result[i - 1] = b->GetInputValue(i);
+    // only support IntList value for shape calculation
+    if (!result[i - 1]->is<IntSymbol>()) {
+      return nullptr;
+    }
+  }
+  return IListSymbol::Make(std::move(result));
+}
+
+SymbolPtr NormalizeSliceValue(OperationBuilder *b) {
+  auto data_shape = b->GetInputShape(kIndex1);
+  if (!data_shape->HasData()) {
+    // does not support dynamic rank
+    return nullptr;
+  }
+  auto start = b->GetInputValue(kIndex2);
+  auto stop = b->GetInputValue(kIndex3);
+  auto step = b->GetInputValue(kIndex4);
+  auto tuple_index_axis = b->GetAttr(kAttrTupleIndexAxis);
+  auto tuple_index_types = b->GetAttr(kAttrTupleIndexTypes);
+  auto expand_dims_mask = b->GetAttr(kAttrExpandDimsMask);
+  auto init_by_none = b->GetAttr(kAttrInitByNone);
+  return b->Emit(std::make_shared<infervalue::NormalizeSlice>(
+    SymbolPtrList{data_shape, start, stop, step, tuple_index_axis, tuple_index_types, expand_dims_mask, init_by_none}));
+}
+
+SymbolPtr StridedSliceShape(OperationBuilder *b) {
+  auto data_shape = b->GetInputShape(kIndex1);
+  auto begin = b->GetInputValue(kIndex2);
+  if (begin->is<IntSymbol>()) {
+    begin = IListSymbol::Make({begin});
+  }
+  auto end = b->GetInputValue(kIndex3);
+  if (end->is<IntSymbol>()) {
+    end = IListSymbol::Make({end});
+  }
+  auto strides = b->GetInputValue(kIndex4);
+  if (strides->is<IntSymbol>()) {
+    strides = IListSymbol::Make({strides});
+  }
+  if (!data_shape->HasData() || !begin->HasData() || !end->HasData() || !strides->HasData()) {
+    // not support dynamic rank
+    return nullptr;
+  }
+  auto begin_mask = b->GetAttr(kAttrBeginMask);
+  MS_EXCEPTION_IF_NULL(begin_mask);
+  auto end_mask = b->GetAttr(kAttrEndMask);
+  MS_EXCEPTION_IF_NULL(end_mask);
+  auto ellipsis_mask = b->GetAttr(kAttrEllipsisMask);
+  MS_EXCEPTION_IF_NULL(ellipsis_mask);
+  auto new_axis_mask = b->GetAttr(kAttrNewAxisMask);
+  MS_EXCEPTION_IF_NULL(new_axis_mask);
+  auto shrink_axis_mask = b->GetAttr(kAttrShrinkAxisMask);
+  MS_EXCEPTION_IF_NULL(shrink_axis_mask);
+
+  auto out_hint = b->Emit(std::make_shared<infershape::RealShape>(InputSymbol::Make(b->cnode()->abstract())));
+  return b->Emit(std::make_shared<infershape::StridedSlice>(SymbolPtrList{
+    data_shape, begin, end, strides, begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask, out_hint}));
+}
+
+SymbolPtr StridedSliceValue(OperationBuilder *b) {
+  auto data = b->GetInputValue(kIndex1)->as_sptr<IListSymbol>();
+  if (data == nullptr || !data->HasData()) {
+    return nullptr;
+  }
+  auto begin = b->GetInputValue(kIndex2);
+  // BuildValue of StridedSlice only support getting a single item.
+  auto begin_list = begin->as<IListSymbol>();
+  int64_t idx = 0;
+  if (begin_list != nullptr) {
+    if (begin_list->size() != 1 || !begin_list->AllHaveData()) {
+      return nullptr;
+    }
+    idx = begin_list->item(0);
+  } else {
+    auto begin_int = begin->as<IntSymbol>();
+    if (begin_int == nullptr || !begin_int->HasData()) {
+      return nullptr;
+    }
+    idx = begin_int->value();
+  }
+  auto shrink = b->GetAttr(kAttrShrinkAxisMask);
+  if (shrink == nullptr || shrink->as<IntSymbol>()->value() != 1) {
+    return nullptr;
+  }
+  return data->symbol(LongToSize(NormAxis(idx, data->size())));
+}
+
 REG_OP_SYMBOL_BUILDER("Abs").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Cast").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Exp").SetShapeFunc(TransparentShape<1>);
@@ -263,7 +369,12 @@ REG_OP_SYMBOL_BUILDER("Transpose").SetShapeDepend(kDependShapeValue).SetShapeFun
 REG_OP_SYMBOL_BUILDER("Tile").SetShapeDepend(kDependShapeValue);
 REG_OP_SYMBOL_BUILDER("ExpandDims")
   .SetShapeDepend(kDependShapeValue)
-  .SetShapeFunc(BinShapeValue<infershape::ExpandDims>);
+  .SetShapeFunc(BinShapeValue<infershape::ExpandDims>)
+  .SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto v = b->GetInputValue(kIndex1);
+    // only support int to intlist for shape calculation
+    return v->is<IntSymbol>() ? IListSymbol::Make({v}) : nullptr;
+  });
 REG_OP_SYMBOL_BUILDER("DynamicBroadcastTo")
   .SetShapeDepend({DependOn::kNone, DependOn::kValue})
   .SetShapeFunc(TransparentValue<2>);
@@ -310,11 +421,39 @@ REG_OP_SYMBOL_BUILDER("ScalarMul").SetValueFunc([](OperationBuilder *b) -> Symbo
   auto y = b->GetInputValue(kIndex2);
   return b->Emit(std::make_shared<ScalarMul>(x, y));
 });
+REG_OP_SYMBOL_BUILDER("StridedSlice")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue})
+  .SetShapeFunc(StridedSliceShape)
+  .SetValueFunc(StridedSliceValue);
+REG_OP_SYMBOL_BUILDER("Gather")
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kValue})
+  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto params = b->GetInputShape(kIndex1);
+    auto indices = b->GetInputShape(kIndex2);
+    auto axis = b->GetInputValue(kIndex3);
+    auto batch_dims = b->GetAttr(kAttrBatchDims);
+    return b->Emit(std::make_shared<ops::infershape::Gather>(params, indices, axis, batch_dims));
+  });
+REG_OP_SYMBOL_BUILDER("OneHot")
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kNone, DependOn::kNone})
+  .SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
+    auto indices = b->GetInputShape(kIndex1);
+    auto depth = b->GetInputValue(kIndex2);
+    auto axis = b->GetAttr(kAttrAxis);
+    return b->Emit(std::make_shared<ops::infershape::OneHot>(indices, depth, axis));
+  });
+REG_OP_SYMBOL_BUILDER("Concat").SetValueFunc(ConcatValue);
+REG_OP_SYMBOL_BUILDER("Stack").SetValueFunc(StackValue);
+REG_OP_SYMBOL_BUILDER("NormalizeSlice")
+  .SetValueDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue})
+  .SetValueFunc(NormalizeSliceValue);
+REG_OP_SYMBOL_BUILDER("FillV2").SetShapeDepend({DependOn::kValue, DependOn::kNone}).SetShapeFunc(TransparentValue<1>);
 
 // virtual nodes
 REG_OP_SYMBOL_BUILDER("MakeTuple").SetShapeFunc(MakeTuple);
 REG_OP_SYMBOL_BUILDER("RealMakeTuple").SetShapeFunc(MakeTuple).SetValueFunc(MakeTuple);
 REG_OP_SYMBOL_BUILDER("TupleToTensor").SetValueFunc(TupleToTensor);
+REG_OP_SYMBOL_BUILDER("ScalarToTensor").SetValueFunc(TransparentValue<1>);
 REG_OP_SYMBOL_BUILDER("TupleGetItem").SetShapeFunc(TupleGetItem).SetValueFunc(TupleGetItem);
 REG_OP_SYMBOL_BUILDER("RealTupleGetItem").SetShapeFunc(TupleGetItem).SetValueFunc(TupleGetItem);
 REG_OP_SYMBOL_BUILDER("Depend").SetShapeFunc(TransparentShape<1>).SetValueFunc(TransparentValue<1>);

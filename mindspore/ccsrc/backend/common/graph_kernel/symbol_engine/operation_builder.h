@@ -148,7 +148,7 @@ class OperationBuilderRegistry {
 
   class RegHelper {
    public:
-    explicit RegHelper(const std::string &name) { builder_ = OperationBuilderRegistry::Instance().NewBuilder(name); }
+    explicit RegHelper(const std::string &name) : builder_(OperationBuilderRegistry::Instance().NewBuilder(name)) {}
     RegHelper &SetShapeDepend(const std::initializer_list<DependOn> &depends) {
       builder_->build_shape_depend = depends;
       return *this;

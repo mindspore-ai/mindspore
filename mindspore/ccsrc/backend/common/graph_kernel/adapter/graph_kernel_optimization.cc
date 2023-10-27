@@ -63,6 +63,7 @@
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
+#include "backend/common/graph_kernel/bprop_graph_optimizer.h"
 
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
@@ -99,6 +100,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
+
+  auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  pm->Add(std::make_shared<BpropGraphOptimizer>(), enable_dyn_level);
   return pm;
 }
 

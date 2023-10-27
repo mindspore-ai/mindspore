@@ -84,7 +84,7 @@ SymbolPtr RealShape::ParseTensorShape(const abstract::TensorShapePtr &shape_ptr)
   SymbolPtrList result(shape_vec.size());
   for (size_t axis = 0; axis < shape_vec.size(); axis++) {
     if (shape_vec[axis] > 0) {
-      result[axis] = IntSymbol::Make(shape_vec[axis]);
+      result[axis] = GenInt(shape_vec[axis]);
       continue;
     }
     // search the previous inputs for same symbol with current input.
@@ -156,45 +156,51 @@ SymbolPtr BinElemwise::Eval() {
 }
 
 SymbolPtrList BinElemwise::Process(const SymbolPtrList &lhs, const SymbolPtrList &rhs, const Emitter &e, size_t shift) {
-  MS_EXCEPTION_IF_CHECK_FAIL(shift <= std::min(lhs.size(), rhs.size()),
-                             "shift should not greater than the minimum size of lhs and rhs");
-  SymbolPtrList result(std::max(lhs.size(), rhs.size()) - shift);
-  int i = static_cast<int>(result.size()) - 1;
-  auto a = lhs.rbegin() + shift;
-  auto b = rhs.rbegin() + shift;
-  for (; i >= 0; i--) {
-    if (b == rhs.rend()) {
-      result[i] = *a;
-      ++a;
-    } else if (a == lhs.rend()) {
-      result[i] = *b;
-      ++b;
-    } else {
-      // broadcast rules. assume the input shape is valid.
-      // rule 1: s1 & s2 -> s3=max(s1, s2)
-      // rule 2: s1 & 1  -> s1
-      // rule 3: s1 & n  -> n  (n != 1)
-      auto int_a = (*a)->as<IntSymbol>();
-      auto int_b = (*b)->as<IntSymbol>();
-      MS_EXCEPTION_IF_NULL(int_a);
-      MS_EXCEPTION_IF_NULL(int_b);
-      if (!int_a->HasData() && !int_b->HasData()) {
-        if (int_a->range_min() > 1) {
-          result[i] = *a;
-        } else if (int_b->range_min() > 1) {
-          result[i] = *b;
-        } else {
-          result[i] = e.Emit(std::make_shared<ScalarMax>(*a, *b));
+  SymbolPtrList result;
+  size_t maxlen = std::max(lhs.size(), rhs.size());
+  result.reserve(maxlen);
+  for (size_t i = maxlen; i > shift; i--) {
+    if (i > lhs.size()) {
+      (void)result.emplace_back(rhs[rhs.size() - i]);
+      continue;
+    }
+    if (i > rhs.size()) {
+      (void)result.emplace_back(lhs[lhs.size() - i]);
+      continue;
+    }
+    // broadcast rules. assume the input shape is valid.
+    // rule 1: s1 & s2 -> s3=max(s1, s2)
+    // rule 2: s1 & 1  -> s1
+    // rule 3: s1 & n  -> n  (n != 1)
+    auto a = lhs[lhs.size() - i]->as_sptr<IntSymbol>();
+    auto b = rhs[rhs.size() - i]->as_sptr<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(a);
+    MS_EXCEPTION_IF_NULL(b);
+    if (a->EqualsTo(b)) {
+      (void)result.emplace_back(std::move(a));
+      continue;
+    }
+    if (!a->HasData() && !b->HasData()) {
+      if (a->is_greater_than(1)) {
+        (void)result.emplace_back(a);
+        if (b->is_greater_than(1)) {
+          MS_LOG(DEBUG) << "In element-wise operator, both " << a->ToString() << " and " << b->ToString()
+                        << " are greater than 1, they must be equal.";
+          a->SetEqual(b);
         }
-      } else if (int_a->HasData() && int_a->value() == 1) {
-        result[i] = *b;
-      } else if (int_b->HasData() && int_b->value() != 1) {
-        result[i] = *b;
+      } else if (b->is_greater_than(1)) {
+        (void)result.emplace_back(std::move(b));
       } else {
-        result[i] = *a;
+        (void)result.emplace_back(e.Emit(std::make_shared<ScalarMax>(a, b)));
       }
-      ++a;
-      ++b;
+      continue;
+    }
+    if (a->HasData() && a->value() == 1) {
+      (void)result.emplace_back(std::move(b));
+    } else if (b->HasData() && b->value() != 1) {
+      (void)result.emplace_back(std::move(b));
+    } else {
+      (void)result.emplace_back(std::move(a));
     }
   }
   return result;
@@ -424,17 +430,27 @@ SymbolPtr MatMul::Eval() {
   if (has_batch_) {
     result = BinElemwise::Process(a->symbols(), b->symbols(), emitter(), kMatMulRank);
   }
-  // shape of `a` is k*m(transposed) or m*k(not transposed)
-  auto m = trans_a ? a->symbols().back() : *(++a->symbols().rbegin());
-  // shape of `b` is n*k(transposed) or k*n(not transposed)
-  auto n = trans_b ? *(++b->symbols().rbegin()) : b->symbols().back();
+  // shape of a is "m * k1" (not transposed) or "k1 * n" (transposed)
+  auto m = *(++a->symbols().rbegin());
+  auto k1 = a->symbols().back();
+  if (trans_a) {
+    std::swap(m, k1);
+  }
+  // shape of b is "k2 * n" (not transposed) or "n * k2" (transposed)
+  auto k2 = *(++b->symbols().rbegin());
+  auto n = b->symbols().back();
+  if (trans_b) {
+    std::swap(n, k2);
+  }
+  // k1 should be equal to k2
+  if (!k1->HasData() && !k2->HasData()) {
+    auto k = k1->as<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(k);
+    k->SetEqual(k2->as_sptr<IntSymbol>());
+  }
   (void)result.emplace_back(std::move(m));
   (void)result.emplace_back(std::move(n));
-  if (is_building()) {
-    return GenList(std::move(result));
-  }
-  output_as<ListSymbol>()->UpdateList(std::move(result));
-  return nullptr;
+  return ResultIntList(std::move(result));
 }
 
 SymbolPtr ExpandDims::Eval() {
@@ -455,23 +471,19 @@ SymbolPtr ExpandDims::Eval() {
       MS_LOG(INTERNAL_EXCEPTION) << "The axis value should be in range [" << -rank - 1 << "," << rank << "], but got "
                                  << axis_val;
     }
-    (void)result.insert(result.begin() + static_cast<size_t>(NormAxis(axis_val, rank + 1)), const1);
+    (void)result.insert(result.begin() + LongToSize(NormAxis(axis_val, rank + 1)), const1);
   };
   auto axis_list = axis->as<IListSymbol>();
   if (axis_list == nullptr) {
-    auto axis_smbl = axis_list->as<IntSymbol>();
-    MS_EXCEPTION_IF_NULL(axis_smbl);
-    expand_dims(axis_smbl->value());
+    auto axis_int = axis->as<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(axis_int);
+    expand_dims(axis_int->value());
   } else {
     for (size_t i = 0; i < axis_list->size(); i++) {
       expand_dims(axis_list->item(i));
     }
   }
-  if (is_building()) {
-    return GenList(std::move(result));
-  }
-  output_as<ListSymbol>()->UpdateList(std::move(result));
-  return nullptr;
+  return ResultIntList(std::move(result));
 }
 
 SymbolPtr BiasAddGrad::Eval() {
@@ -508,6 +520,148 @@ SymbolPtr LayerNorm::Eval() {
   }
   auto mean_var = Emit(std::make_shared<Reduce>(input(0), axis, BoolSymbol::Make(true), BoolSymbol::Make(false)));
   return ListSymbol::Make({input(0), mean_var, mean_var}, shared_from_this());
+}
+
+SymbolPtr Gather::Eval() {
+  auto params = input_as<ListSymbol>(kIndex0);
+  auto indices = input_as<ListSymbol>(kIndex1);
+  auto axis = input_as<IntSymbol>(kIndex2);
+  auto batch_dims = input_as<IntSymbol>(kIndex3)->value();
+  if (!params->HasData() || !indices->HasData() || !axis->HasData()) {
+    return GenVList();
+  }
+  DoNotEvalOnRun();
+  auto axis_val = LongToSize(NormAxis(axis->value(), params->size()));
+  batch_dims = NormAxis(batch_dims, indices->size());
+  SymbolPtrList result;
+  result.reserve(params->size() + indices->size());
+  MS_EXCEPTION_IF_CHECK_FAIL(axis_val < params->size(), "axis out of params size.");
+  for (size_t i = 0; i < axis_val; i++) {
+    (void)result.emplace_back(params->symbols()[i]);
+  }
+  for (size_t i = LongToSize(batch_dims); i < indices->size(); i++) {
+    (void)result.emplace_back(indices->symbols()[i]);
+  }
+  for (size_t i = axis_val + 1; i < params->size(); i++) {
+    (void)result.emplace_back(params->symbols()[i]);
+  }
+  return ResultIntList(std::move(result));
+}
+
+SymbolPtr OneHot::Eval() {
+  auto indices = input_as<ListSymbol>(kIndex0);
+  auto depth = input(kIndex1);
+  auto axis = input_as<IntSymbol>(kIndex2)->value();
+  if (!indices->HasData()) {
+    return GenVList();
+  }
+  SymbolPtrList result = indices->symbols();
+  if (axis >= 0) {
+    MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(axis) <= result.size(), "axis out of range of input size");
+    (void)result.insert(result.begin() + static_cast<size_t>(axis), depth);
+  } else {
+    (void)result.emplace_back(depth);
+  }
+  return ResultIntList(std::move(result));
+}
+
+SymbolPtr StridedSlice::Eval() {
+  auto data_shape = input_as<ListSymbol>(kIndex0);
+  auto begin = input_as<IListSymbol>(kIndex1);
+  auto end = input_as<IListSymbol>(kIndex2);
+  auto strides = input_as<IListSymbol>(kIndex3);
+  if (is_building()) {
+    begin_mask_ = static_cast<size_t>(input_as<IntSymbol>(kIndex4)->value());
+    end_mask_ = static_cast<size_t>(input_as<IntSymbol>(kIndex5)->value());
+    ellipsis_mask_ = static_cast<size_t>(input_as<IntSymbol>(kIndex6)->value());
+    if (ellipsis_mask_ != 0) {
+      MS_LOG(DEBUG) << "StridedSlice infershape operation does not support ellipsis_mask yet.";
+      return nullptr;
+    }
+    new_axis_mask_ = static_cast<size_t>(input_as<IntSymbol>(kIndex7)->value());
+    shrink_axis_mask_ = static_cast<size_t>(input_as<IntSymbol>(kIndex8)->value());
+    out_hint_ = input_as<IListSymbol>(kIndex9);
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(begin->size() == end->size() && begin->size() == strides->size(),
+                             "For StridedSlice, the size of 'begin','end' and 'strides' should be equal.");
+  // refer to ComputeInferShape in "core/ops/strided_slice.cc"
+  return ComputeInferShape(data_shape, begin, end, strides);
+}
+
+SymbolPtr StridedSlice::GetSlicingLengthForPositiveStrides(IntSymbolPtr start, IntSymbolPtr end, IntSymbolPtr strides,
+                                                           IntSymbolPtr x_dim) {
+  if (start->is_negative()) {
+    start = Emit(std::make_shared<ScalarAdd>(start, x_dim))->as_sptr<IntSymbol>();
+  }
+  if (!start->is_greater_than(-1)) {
+    return GenVInt();
+  }
+
+  if (end->is_negative()) {
+    end = Emit(std::make_shared<ScalarAdd>(end, x_dim))->as_sptr<IntSymbol>();
+  }
+  if (!end->is_greater_than(-1)) {
+    return GenVInt();
+  }
+
+  if ((*start) >= (*end)) {
+    return GenInt(0);
+  }
+  if ((*start) < (*end)) {
+    // length = (end - 1 - start) / strides + 1.  (to floor)
+    auto t1 = Emit(std::make_shared<ScalarSub>(Emit(std::make_shared<ScalarSub>(end, GenInt(1))), start));
+    auto t2 = Emit(std::make_shared<ScalarDiv>(t1, strides));
+    return Emit(std::make_shared<ScalarAdd>(t2, GenInt(1)));
+  }
+  return GenVInt();
+}
+SymbolPtr StridedSlice::ComputeInferShape(const ListSymbol *x_shape, const IListSymbol *begin_v,
+                                          const IListSymbol *end_v, const IListSymbol *strides_v) {
+  int slice_len = SizeToInt(begin_v->size());
+  SymbolPtrList res_shape;
+  MS_EXCEPTION_IF_NULL(out_hint_);
+  res_shape.reserve(out_hint_->size());
+  int i = 0;
+  int j = 0;
+  for (int k = 0; k < static_cast<int>(out_hint_->size()); k++, i++, j++) {
+    auto x_dim_size = x_shape->symbol(static_cast<size_t>(i))->as_sptr<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(x_dim_size);
+    if (j >= slice_len) {
+      (void)res_shape.emplace_back(x_dim_size);
+      continue;
+    }
+    if (shrink_axis_mask(j)) {
+      k--;
+      continue;
+    }
+    if (out_hint_->symbols()[k]->HasData()) {
+      (void)res_shape.emplace_back(out_hint_->symbols()[k]);
+      if (new_axis_mask(j)) {
+        i--;
+      }
+      continue;
+    }
+    auto start = begin_v->symbols()[j]->as_sptr<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(start);
+    auto finish = end_v->symbols()[j]->as_sptr<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(finish);
+    auto strides = strides_v->symbols()[j]->as_sptr<IntSymbol>();
+    MS_EXCEPTION_IF_NULL(strides);
+    if (!strides->is_positive()) {
+      // do not support negative strides yet.
+      (void)res_shape.emplace_back(GenVInt());
+      continue;
+    }
+    if (begin_mask(j)) {
+      start = IntSymbol::Make(static_cast<int64_t>(0));
+    }
+    if (end_mask(j)) {
+      finish = x_dim_size;
+    }
+    auto slicing_len = GetSlicingLengthForPositiveStrides(start, finish, strides, x_dim_size);
+    (void)res_shape.emplace_back(std::move(slicing_len));
+  }
+  return ResultIntList(std::move(res_shape));
 }
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

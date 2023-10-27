@@ -51,12 +51,14 @@ class SymbolEngineImpl : public SymbolEngine {
   void BuildSubgraphSymbol(const CNodePtr &cnode);
 
   bool Infer(const AbstractBasePtrList &inputs) override;
+  ListSymbolPtr QuerySymbolicShape(const AnfNodePtr &node) override;
+  SymbolPtr QuerySymbolicValue(const AnfNodePtr &node) override;
   ShapeArray QueryShape(const AnfNodePtr &node) override;
   ShapeArray QueryValue(const AnfNodePtr &node) override;
   bool ShapeEqual(const std::pair<AnfNodePtr, size_t> &, const std::pair<AnfNodePtr, size_t> &) override {
     return false;
   }
-  std::vector<std::string> QuerySymbolicShape(const AnfNodePtr &node) override;
+  std::vector<std::string> QuerySymbolicShapeStr(const AnfNodePtr &node) override;
   void QuerySymbolExpr(const AnfNodePtr &node, std::unordered_map<std::string, std::string> *symbol_expr_map) override;
   std::string ToString() const override { return name_; }
   void Dump();

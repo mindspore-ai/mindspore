@@ -24,6 +24,7 @@
 #include "base/base.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
+#include "backend/common/graph_kernel/symbol_engine/math_info.h"
 
 namespace mindspore::graphkernel::symbol {
 class Symbol;
@@ -55,7 +56,7 @@ class Symbol : public Base {
   virtual bool CanUpdate() const { return true; }
 
   virtual bool operator==(const Symbol &s) const { return this == &s; }
-  inline bool EqualsTo(const SymbolPtr &other) const { return (*this) == (*other); }
+  inline bool EqualsTo(const SymbolPtr &other) const { return (other != nullptr) && ((*this) == (*other)); }
   virtual std::string ToExpr() const { return ToString(); }
 
   template <typename T>
@@ -214,45 +215,33 @@ DECLARE_SCALAR_CLASS(FloatSymbol, double);
 DECLARE_SCALAR_CLASS(StrSymbol, std::string);
 #undef DECLARE_SCALAR_CLASS
 
-constexpr int64_t kINF = 1000000000LL;  // 1e9
-
-class IntSymbol : public ScalarSymbol {
+class IntSymbol : public ScalarSymbol, public MathInfo {
  public:
-  struct MathInfo {
-    std::pair<int64_t, int64_t> range{-kINF, kINF};  // close range, represent "[first, second]" in IntSymbol.
-  };
   using ScalarSymbol::ScalarSymbol;
   ~IntSymbol() override = default;
   MS_DECLARE_PARENT(IntSymbol, ScalarSymbol)
-  static std::shared_ptr<IntSymbol> Make(int64_t val, const OpPtr &op = nullptr);
-  static inline std::shared_ptr<IntSymbol> Make(const OpPtr &op = nullptr) {
-    return std::make_shared<IntSymbol>(false, false, op);
-  }
+  static IntSymbolPtr Make(int64_t val, const OpPtr &op = nullptr);
+  inline static IntSymbolPtr Make(const OpPtr &op = nullptr) { return std::make_shared<IntSymbol>(false, false, op); }
   std::string ToExpr() const override { return has_data_ ? std::to_string(value_) : sid(); }
   std::string ToString() const override;
   bool operator==(const Symbol &s) const override;
+  bool operator<(const IntSymbol &s) const;
+  bool operator<=(const IntSymbol &s) const;
+  bool operator>(const IntSymbol &s) const { return s < *this; }
+  bool operator>=(const IntSymbol &s) const { return s <= *this; }
   void SetValue(int64_t v) {
     has_data_ = true;
     value_ = v;
   }
-  int64_t value() const { return value_; }
-
-  const MathInfo &math_info() const { return math_info_; }
-  void SetRangeMin(int64_t m) { math_info_.range.first = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
-  void SetRangeMax(int64_t m) { math_info_.range.second = (m < -kINF ? -kINF : (m > kINF ? kINF : m)); }
-  void SetRange(int64_t minv, int64_t maxv) {
-    SetRangeMin(minv);
-    SetRangeMax(maxv);
+  int64_t value() const {
+    MS_EXCEPTION_IF_CHECK_FAIL(has_data_, ToString() + "has no value.");
+    return value_;
   }
-  int64_t range_min() const { return math_info_.range.first; }
-  int64_t range_max() const { return math_info_.range.second; }
-  bool is_positive() const { return has_data_ ? value_ > 0 : range_min() > 0; }
-  bool is_negative() const { return has_data_ ? value_ < 0 : range_max() < 0; }
 
  protected:
   void UpdateImpl(const SymbolPtr &s) override;
+  IntSymbolPtr ToIntSymbol() const override { return (const_cast<IntSymbol *>(this))->shared_from_base<IntSymbol>(); }
   int64_t value_{0};
-  MathInfo math_info_;
 };
 
 std::string SymbolListToStr(const SymbolPtrList &slist, const std::string &pre, const std::string &post,
@@ -287,7 +276,9 @@ class ListSymbol : public Symbol {
 
   bool HasData() const override { return has_data_; }
   bool AllHaveData() const {
-    return has_data_ && std::all_of(symbols_.cbegin(), symbols_.cend(), [](auto &s) { return s->HasData(); });
+    return has_data_ && std::all_of(symbols_.cbegin(), symbols_.cend(), [](const SymbolPtr &s) {
+             return s->is<ListSymbol>() ? s->as<ListSymbol>()->AllHaveData() : s->HasData();
+           });
   }
   bool CanUpdate() const override {
     return is_dyn_len_ || std::any_of(symbols_.cbegin(), symbols_.cend(), [](auto &s) { return s->CanUpdate(); });
@@ -301,6 +292,12 @@ class ListSymbol : public Symbol {
       UpdateList(static_cast<const SymbolPtrList &>(slist));
     }
   }
+  const SymbolPtr &symbol(size_t i) const {
+    if (i >= symbols_.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Index " << i << " out of range of symbols size " << symbols_.size();
+    }
+    return symbols_[i];
+  }
   const SymbolPtrList &symbols() const { return symbols_; }
   size_t size() const { return symbols_.size(); }
   bool is_dyn_len() const { return is_dyn_len_; }
@@ -311,6 +308,7 @@ class ListSymbol : public Symbol {
   bool is_dyn_len_{false};
   bool has_data_{true};
 };
+using ListSymbolPtr = std::shared_ptr<ListSymbol>;
 
 // IntList symbol
 class IListSymbol : public ListSymbol {

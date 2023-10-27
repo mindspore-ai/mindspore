@@ -51,10 +51,6 @@ class SymbolVisitor {
   virtual void Visit(ops::ScalarDiv *op) { VisitInputs(op); }
   virtual void Visit(ops::ScalarMin *op) { VisitInputs(op); }
   virtual void Visit(ops::ScalarMax *op) { VisitInputs(op); }
-  virtual void Visit(ops::Product *op) { VisitInputs(op); }
-  virtual void Visit(ops::Find *op) { VisitInputs(op); }
-  virtual void Visit(ops::SetValue *op) { VisitInputs(op); }
-  virtual void Visit(ops::ListAppend *op) { VisitInputs(op); }
 
   virtual void Visit(ops::infershape::RealShape *op) { VisitInputs(op); }
   virtual void Visit(ops::infershape::BinElemwise *op) { VisitInputs(op); }

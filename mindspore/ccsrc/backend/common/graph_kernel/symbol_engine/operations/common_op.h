@@ -26,10 +26,16 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops {
-class ScalarAdd : public Operation {
+class ScalarOp : public Operation {
  public:
-  ScalarAdd(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarAdd, Operation)
+  using Operation::Operation;
+  MS_DECLARE_PARENT(ScalarOp, Operation)
+};
+
+class ScalarAdd : public ScalarOp {
+ public:
+  ScalarAdd(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) { support_commutative_law_ = true; }
+  MS_DECLARE_PARENT(ScalarAdd, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -37,10 +43,10 @@ class ScalarAdd : public Operation {
   void UpdateMathInfo() override;
 };
 
-class ScalarSub : public Operation {
+class ScalarSub : public ScalarOp {
  public:
-  ScalarSub(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarSub, Operation)
+  ScalarSub(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarSub, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -48,10 +54,10 @@ class ScalarSub : public Operation {
   void UpdateMathInfo() override;
 };
 
-class ScalarMul : public Operation {
+class ScalarMul : public ScalarOp {
  public:
-  ScalarMul(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarMul, Operation)
+  ScalarMul(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) { support_commutative_law_ = true; }
+  MS_DECLARE_PARENT(ScalarMul, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -59,10 +65,10 @@ class ScalarMul : public Operation {
   void UpdateMathInfo() override;
 };
 
-class ScalarDiv : public Operation {
+class ScalarDiv : public ScalarOp {
  public:
-  ScalarDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarDiv, Operation)
+  ScalarDiv(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) {}
+  MS_DECLARE_PARENT(ScalarDiv, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -70,10 +76,10 @@ class ScalarDiv : public Operation {
   void UpdateMathInfo() override;
 };
 
-class ScalarMax : public Operation {
+class ScalarMax : public ScalarOp {
  public:
-  ScalarMax(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarMax, Operation)
+  ScalarMax(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) { support_commutative_law_ = true; }
+  MS_DECLARE_PARENT(ScalarMax, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
@@ -81,55 +87,15 @@ class ScalarMax : public Operation {
   void UpdateMathInfo() override;
 };
 
-class ScalarMin : public Operation {
+class ScalarMin : public ScalarOp {
  public:
-  ScalarMin(const SymbolPtr &lhs, const SymbolPtr &rhs) : Operation({lhs, rhs}) {}
-  MS_DECLARE_PARENT(ScalarMin, Operation)
+  ScalarMin(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarOp({lhs, rhs}) { support_commutative_law_ = true; }
+  MS_DECLARE_PARENT(ScalarMin, ScalarOp)
 
  protected:
   SymbolPtr Eval() override;
   void EvalOnRun() override { output_as<IntSymbol>()->SetValue(std::min(AsInt(input(0)), AsInt(input(1)))); }
   void UpdateMathInfo() override;
-};
-
-class Product : public Operation {
- public:
-  explicit Product(const SymbolPtr &input) : Operation({input}) {}
-  ~Product() = default;
-  MS_DECLARE_PARENT(Product, Operation)
-
- protected:
-  SymbolPtr Eval() override;
-};
-
-class Find : public Operation {
- public:
-  Find(const SymbolPtr &input, const SymbolPtr &value) : Operation({input, value}) {}
-  ~Find() override = default;
-  MS_DECLARE_PARENT(Find, Operation)
-
- protected:
-  SymbolPtr Eval() override;
-};
-
-class SetValue : public Operation {
- public:
-  SetValue(const SymbolPtr &input, const SymbolPtr &index, const SymbolPtr &value) : Operation({input, index, value}) {}
-  ~SetValue() override = default;
-  MS_DECLARE_PARENT(SetValue, Operation)
-
- protected:
-  SymbolPtr Eval() override;
-};
-
-class ListAppend : public Operation {
- public:
-  ListAppend(const SymbolPtr &a, const SymbolPtr &b) : Operation({a, b}) {}
-  ~ListAppend() override = default;
-  MS_DECLARE_PARENT(ListAppend, Operation)
-
- protected:
-  SymbolPtr Eval() override;
 };
 }  // namespace ops
 }  // namespace mindspore::graphkernel::symbol

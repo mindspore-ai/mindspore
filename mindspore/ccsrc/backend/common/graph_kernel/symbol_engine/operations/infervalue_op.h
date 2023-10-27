@@ -25,16 +25,32 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops::infervalue {
-class RealValue : public Operation {
+class InferValueOp : public Operation {
  public:
-  explicit RealValue(const SymbolPtr &inp) : Operation({inp}) {}
+  using Operation::Operation;
+  ~InferValueOp() override = default;
+  MS_DECLARE_PARENT(InferValueOp, Operation)
+};
+
+class RealValue : public InferValueOp {
+ public:
+  explicit RealValue(const SymbolPtr &inp) : InferValueOp({inp}) {}
   ~RealValue() override = default;
-  MS_DECLARE_PARENT(RealValue, Operation)
+  MS_DECLARE_PARENT(RealValue, InferValueOp)
 
  protected:
   SymbolPtr Eval() override;
   SymbolPtr GenVarByShape(const IListSymbol &shape);
   SymbolPtr GenListVariables(const ListSymbol &list);
+};
+
+class NormalizeSlice : public InferValueOp {
+ public:
+  using InferValueOp::InferValueOp;
+  ~NormalizeSlice() override = default;
+  MS_DECLARE_PARENT(NormalizeSlice, InferValueOp)
+ protected:
+  SymbolPtr Eval() override;
 };
 }  // namespace ops::infervalue
 }  // namespace mindspore::graphkernel::symbol

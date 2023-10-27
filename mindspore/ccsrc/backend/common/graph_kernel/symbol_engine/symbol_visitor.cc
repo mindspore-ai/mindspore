@@ -46,10 +46,6 @@ void SymbolVisitor::Visit(ops::Operation *ptr) {
     SYMBOL_DISPATCH(ops::ScalarDiv)
     SYMBOL_DISPATCH(ops::ScalarMin)
     SYMBOL_DISPATCH(ops::ScalarMax)
-    SYMBOL_DISPATCH(ops::Product)
-    SYMBOL_DISPATCH(ops::Find)
-    SYMBOL_DISPATCH(ops::SetValue)
-    SYMBOL_DISPATCH(ops::ListAppend)
 
     SYMBOL_DISPATCH(ops::infershape::RealShape)
     SYMBOL_DISPATCH(ops::infershape::BinElemwise)

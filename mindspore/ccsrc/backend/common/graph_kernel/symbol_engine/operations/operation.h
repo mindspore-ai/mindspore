@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <map>
 
 #include "base/base.h"
 #include "backend/common/graph_kernel/symbol_engine/symbol.h"
@@ -32,13 +33,15 @@ class Operation : public Base {
   virtual ~Operation() = default;
   MS_DECLARE_PARENT(Operation, Base)
 
-  void Build();
+  bool Build();
   inline void Run() {
     MS_LOG(DEBUG) << ">>> Run operation " << ToString();
     MS_EXCEPTION_IF_NULL(output_);
     EvalOnRun();
     MS_LOG(DEBUG) << "<<< Run result of [" << name() << "] : " << output_->ToString();
   }
+
+  virtual bool EqualsTo(const OpPtr &other);
 
   const SymbolPtrList &inputs() const { return inputs_; }
   const SymbolPtr &input(size_t i) const {
@@ -52,6 +55,14 @@ class Operation : public Base {
   template <typename T>
   const T *input_as(size_t i) const {
     const T *p = input(i)->as<T>();
+    if (p == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << name();
+    }
+    return p;
+  }
+  template <typename T>
+  std::shared_ptr<T> input_as_sptr(size_t i) const {
+    auto p = input(i)->as_sptr<T>();
     if (p == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert failed for input " << i << " of " << name();
     }
@@ -81,19 +92,15 @@ class Operation : public Base {
    public:
     explicit Emitter(OpPtrList *op_list = nullptr) : ops_(op_list) {}
     ~Emitter() = default;
-    SymbolPtr Emit(const OpPtr &op) const {
-      op->SetEmitter(this);
-      op->Build();
-      op->SetEmitter(nullptr);
-      if (ops_ != nullptr && op->need_eval()) {
-        (void)ops_->emplace_back(op);
-      }
-      return op->output();
-    }
+    SymbolPtr Emit(const OpPtr &op) const;
+    void Clean() { Emitter::cse_cache_.clear(); }
+
     SymbolPtr RealShape(const SymbolPtr &inp_symbol) const;
     SymbolPtr RealValue(const SymbolPtr &inp_symbol) const;
 
    private:
+    void Cse(const OpPtr &op);
+    static inline std::map<std::string, OpPtrList> cse_cache_;
     OpPtrList *ops_;
   };
 
@@ -116,6 +123,14 @@ class Operation : public Base {
   }
   SymbolPtr Emit(const OpPtr &op) const { return emitter().Emit(op); }
 
+  SymbolPtr ResultIntList(SymbolPtrList &&result) {
+    if (is_building()) {
+      return GenList(result);
+    }
+    output_as<ListSymbol>()->UpdateList(result);
+    return nullptr;
+  }
+
   SymbolPtr GenInt(int64_t v) { return IntSymbol::Make(v, shared_from_this()); }
   SymbolPtr GenVInt() { return IntSymbol::Make(shared_from_this()); }
   SymbolPtr GenList(const SymbolPtrList &list) { return IListSymbol::Make(list, shared_from_this()); }
@@ -135,6 +150,7 @@ class Operation : public Base {
   }
 
   SymbolPtr output_{nullptr};
+  bool support_commutative_law_{false};
 
  private:
   const Emitter *emitter_{nullptr};

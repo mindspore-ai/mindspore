@@ -26,8 +26,6 @@
 
 namespace mindspore::graphkernel::symbol {
 namespace ops::infershape {
-inline int64_t NormAxis(int64_t axis, size_t rank) { return axis >= 0 ? axis : axis + static_cast<int64_t>(rank); }
-
 class InferShapeOp : public Operation {
  public:
   using Operation::Operation;
@@ -160,6 +158,51 @@ class LayerNorm : public InferShapeOp {
   MS_DECLARE_PARENT(LayerNorm, InferShapeOp)
  protected:
   SymbolPtr Eval() override;
+};
+
+class Gather : public InferShapeOp {
+ public:
+  Gather(const SymbolPtr &param, const SymbolPtr &indices, const SymbolPtr &axis, const SymbolPtr &batch_dims)
+      : InferShapeOp({param, indices, axis, batch_dims}) {}
+  ~Gather() override = default;
+  MS_DECLARE_PARENT(Gather, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+};
+
+class OneHot : public InferShapeOp {
+ public:
+  OneHot(const SymbolPtr &indices, const SymbolPtr &depth, const SymbolPtr &axis)
+      : InferShapeOp({indices, depth, axis}) {}
+  ~OneHot() override = default;
+  MS_DECLARE_PARENT(OneHot, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+};
+
+class StridedSlice : public InferShapeOp {
+ public:
+  using InferShapeOp::InferShapeOp;
+  ~StridedSlice() override = default;
+  MS_DECLARE_PARENT(StridedSlice, InferShapeOp)
+ protected:
+  SymbolPtr Eval() override;
+  SymbolPtr ComputeInferShape(const ListSymbol *x_shape, const IListSymbol *begin_v, const IListSymbol *end_v,
+                              const IListSymbol *strides_v);
+  SymbolPtr GetSlicingLengthForPositiveStrides(IntSymbolPtr start, IntSymbolPtr end, IntSymbolPtr strides,
+                                               IntSymbolPtr x_dim);
+
+  bool begin_mask(int bit) const { return ((begin_mask_ >> static_cast<size_t>(bit)) & 1) == 1; }
+  bool end_mask(int bit) const { return ((end_mask_ >> static_cast<size_t>(bit)) & 1) == 1; }
+  bool ellipsis_mask(int bit) const { return ((ellipsis_mask_ >> static_cast<size_t>(bit)) & 1) == 1; }
+  bool new_axis_mask(int bit) const { return ((new_axis_mask_ >> static_cast<size_t>(bit)) & 1) == 1; }
+  bool shrink_axis_mask(int bit) const { return ((shrink_axis_mask_ >> static_cast<size_t>(bit)) & 1) == 1; }
+  size_t begin_mask_{0};
+  size_t end_mask_{0};
+  size_t ellipsis_mask_{0};
+  size_t new_axis_mask_{0};
+  size_t shrink_axis_mask_{0};
+  const IListSymbol *out_hint_{nullptr};
 };
 }  // namespace ops::infershape
 }  // namespace mindspore::graphkernel::symbol

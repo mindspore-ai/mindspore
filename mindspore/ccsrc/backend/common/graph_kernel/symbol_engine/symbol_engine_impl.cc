@@ -58,6 +58,7 @@ void SymbolEngineImpl::Build() {
   emitter_ = std::make_unique<OperationEmitter>(&ops_);
   BuildNodesSymbol(func_graph);
   Dump();
+  emitter_->Clean();
 }
 
 void SymbolEngineImpl::BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine) {
@@ -174,6 +175,12 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
   return true;
 }
 
+ListSymbolPtr SymbolEngineImpl::QuerySymbolicShape(const AnfNodePtr &node) {
+  auto s = cache_.GetShape(node);
+  return s == nullptr ? nullptr : s->as_sptr<ListSymbol>();
+}
+SymbolPtr SymbolEngineImpl::QuerySymbolicValue(const AnfNodePtr &node) { return cache_.GetValue(node); }
+
 ShapeArray SymbolEngineImpl::QueryShape(const AnfNodePtr &node) {
   auto output = cache_.GetShape(node);
   if (output == nullptr) {
@@ -212,7 +219,7 @@ ShapeArray SymbolEngineImpl::QueryValue(const AnfNodePtr &node) {
   return ShapeArray();
 }
 
-std::vector<std::string> SymbolEngineImpl::QuerySymbolicShape(const AnfNodePtr &node) {
+std::vector<std::string> SymbolEngineImpl::QuerySymbolicShapeStr(const AnfNodePtr &node) {
   auto output = cache_.GetShape(node);
   if (output == nullptr) {
     output = ops::builders::OperationBuilder(emitter_.get(), &cache_, {}).RealShape(node);
@@ -303,16 +310,26 @@ void SymbolEngineImpl::BuildCNodeSmbl(const CNodePtr &cnode, bool infer_value) {
       MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " does not support BuildValue.";
       support_infer_ = false;
       v = emitter_->RealValue(InputSymbol::Make(cnode->abstract()));
+      MS_EXCEPTION_IF_NULL(v);
     }
+    MS_LOG(DEBUG) << "Set value for node: " << cnode->fullname_with_scope() << ". symbol: " << v->ToString();
     cache_.SetValue(cnode, v);
   } else {
     MS_LOG(DEBUG) << "Build shape for node " << cnode->fullname_with_scope() << ".   " << cnode->DebugString();
+    if (!cnode->abstract()->BuildShape()->IsDynamic()) {
+      auto static_shape = emitter_->RealShape(InputSymbol::Make(cnode->abstract()));
+      MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " is static shape: " << static_shape->ToString();
+      cache_.SetShape(cnode, static_shape);
+      return;
+    }
     auto s = builder->BuildShape(cnode);
     if (s == nullptr) {
-      MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " does not support BuildShape.";
       support_infer_ = false;
+      MS_LOG(DEBUG) << "Node " << cnode->fullname_with_scope() << " does not support BuildShape.";
       s = emitter_->RealShape(InputSymbol::Make(cnode->abstract()));
+      MS_EXCEPTION_IF_NULL(s);
     }
+    MS_LOG(DEBUG) << "Set shape for node: " << cnode->fullname_with_scope() << ". symbol: " << s->ToString();
     cache_.SetShape(cnode, s);
   }
 }
@@ -328,15 +345,19 @@ void SymbolEngineImpl::Dump() {
   }
   MS_LOG(INFO) << "======= Begin dump shapes of " << name_ << " ================";
   auto dump_symbol = [this](const AnfNodePtr &node) -> std::string {
-    auto output = cache_.GetShape(node);
-    if (output == nullptr) {
-      auto value = cache_.GetValue(node);
-      if (value == nullptr) {
-        return "none";
-      }
-      return value->ToString();
+    auto shape = cache_.GetShape(node);
+    auto value = cache_.GetValue(node);
+    if (shape == nullptr && value == nullptr) {
+      return " symbol: none";
     }
-    return output->ToString();
+    std::string out;
+    if (shape != nullptr) {
+      out = " shape-symbol: " + shape->ToString();
+    }
+    if (value != nullptr) {
+      out += " value-symbol: " + value->ToString();
+    }
+    return out;
   };
   for (size_t i = 0; i < cnodes_.size(); i++) {
     auto cnode = cnodes_[i]->cast<CNodePtr>();
@@ -344,9 +365,9 @@ void SymbolEngineImpl::Dump() {
     MS_LOG(INFO) << "Node" << i << ": " << cnode->fullname_with_scope();
     MS_LOG(INFO) << "  inputs shape:";
     for (size_t j = 1; j < cnode->size(); j++) {
-      MS_LOG(INFO) << "    " << j << ": " << QueryShape(cnode->input(j)) << ". symbol:" << dump_symbol(cnode->input(j));
+      MS_LOG(INFO) << "    " << j << ": " << QueryShape(cnode->input(j)) << "." << dump_symbol(cnode->input(j));
     }
-    MS_LOG(INFO) << "  output shape: " << QueryShape(cnode) << ". symbol:" << dump_symbol(cnode);
+    MS_LOG(INFO) << "  output shape: " << QueryShape(cnode) << "." << dump_symbol(cnode);
   }
   MS_LOG(INFO) << "======= Finish dumping " << name_ << " ======================";
 }
