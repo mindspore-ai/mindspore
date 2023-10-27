@@ -12,11 +12,11 @@ mindspore.nn.MarginRankingLoss
 
     参数：
         - **margin** (float, 可选) - 指定运算的调节因子。默认值： ``0.0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的平均值。
-          - ``"sum"``：计算输出元素的总和。
+          - ``'none'``：不应用规约方法。
+          - ``'mean'``：计算输出元素的平均值。
+          - ``'sum'``：计算输出元素的总和。
 
     输入：
         - **input1** (Tensor) - 输入Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。
@@ -24,7 +24,7 @@ mindspore.nn.MarginRankingLoss
         - **target** (Tensor) - 输入值为1或-1。假设 `input1` 的shape是 :math:`(x_1, x_2, x_3, ..., x_R)` ，那么 `target` 的shape必须是 :math:`(x_1, x_2, x_3, ..., x_R)` 。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为"none"，其shape与 `labels` 相同。否则，将返回为Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，其shape与 `input1` 相同。否则，将返回为Scalar。
 
     异常：
         - **TypeError** - `margin` 不是float。
@@ -33,4 +33,4 @@ mindspore.nn.MarginRankingLoss
         - **TypeError** - `input1` 和 `target` 类型不一致。
         - **ValueError** - `input1` 和 `input2` shape不一致。
         - **ValueError** - `input1` 和 `target` shape不一致。
-        - **ValueError** - `reduction` 不为 ``"none"`` ， ``"mean"`` 或 ``"sum"`` 。
+        - **ValueError** - `reduction` 不为 ``'none'`` ， ``'mean'`` 或 ``'sum'`` 。
