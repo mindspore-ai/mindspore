@@ -40,7 +40,7 @@
 #include "ops/cast.h"
 #include "ops/not_equal.h"
 #include "ops/tuple_get_item.h"
-#include "ops/less.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 
 namespace mindspore {
 

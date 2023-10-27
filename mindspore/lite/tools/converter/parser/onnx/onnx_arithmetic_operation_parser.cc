@@ -23,7 +23,6 @@
 #include "ops/fusion/div_fusion.h"
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/exp_fusion.h"
-#include "ops/less.h"
 #include "ops/tan.h"
 #include "ops/fusion/pow_fusion.h"
 #include "ops/eltwise.h"

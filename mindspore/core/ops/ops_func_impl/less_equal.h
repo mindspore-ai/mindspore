@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_LESS_H_
-#define MINDSPORE_CORE_OPS_LESS_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_EQUAL_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_EQUAL_H_
+
 #include <memory>
 #include <vector>
-
 #include "mindapi/base/types.h"
-#include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLess = "Less";
-/// \brief Computes the boolean value of \f$x<y\f$ element-wise.
-/// Refer to Python API @ref mindspore.ops.Less for more details.
-class MIND_API Less : public BaseOperator {
+class MIND_API LessEqualFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Less);
-  /// \brief Constructor.
-  Less() : BaseOperator(kNameLess) { InitIOName({"x", "y"}, {"output"}); }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-MIND_API abstract::AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_LESS_H_
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_EQUAL_H_

@@ -28,7 +28,6 @@
 #include "ops/fusion/mul_fusion.h"
 #include "ops/real_div.h"
 #include "ops/eltwise.h"
-#include "ops/less.h"
 
 namespace mindspore::lite {
 namespace {

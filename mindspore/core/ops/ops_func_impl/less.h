@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_less_or_equal_parser.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_H_
+
 #include <memory>
-#include "ops/auto_generate/gen_lite_ops.h"
-#include "nnacl/op_base.h"
+#include <vector>
+#include "mindapi/base/types.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace lite {
-PrimitiveCPtr OnnxLessOrEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::LessEqual>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
+namespace ops {
+class MIND_API LessFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 
-OnnxNodeRegistrar g_onnxLessOrEqualParser("LessOrEqual", new OnnxLessOrEqualParser());
-}  // namespace lite
+}  // namespace ops
 }  // namespace mindspore
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LESS_H_

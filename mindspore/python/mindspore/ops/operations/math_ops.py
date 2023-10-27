@@ -39,7 +39,8 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd, CumSum)
+                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
+                             CumSum, Less, LessEqual)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -2218,97 +2219,6 @@ class Lerp(Primitive):
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['start', 'end', 'weight'], outputs=['output'])
-
-
-class Less(PrimitiveWithCheck):
-    r"""
-    Computes the boolean value of :math:`x < y` element-wise.
-
-    Refer to :func:`mindspore.ops.less` for more details.
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) -  The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> less = ops.Less()
-        >>> output = less(x, y)
-        >>> print(output)
-        [False False True]
-    """
-    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
-
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.array(np.less(x, y))
-            return Tensor(out)
-        return None
-
-
-class LessEqual(PrimitiveWithCheck):
-    r"""
-    Computes the boolean value of :math:`x <= y` element-wise.
-
-    Refer to :func:`mindspore.ops.le` for more details.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> less_equal = ops.LessEqual()
-        >>> output = less_equal(x, y)
-        >>> print(output)
-        [ True False  True]
-    """
-    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
-
-    @prim_attr_register
-    def __init__(self):
-        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
-
-    def infer_value(self, x, y):
-        if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
-            out = np.array(np.less_equal(x, y))
-            return Tensor(out)
-        return None
 
 
 class IsNan(Primitive):

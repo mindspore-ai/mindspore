@@ -83,8 +83,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/hashtable_lookup.h
             ${TOP_DIR}/mindspore/core/ops/instance_norm.h
             ${TOP_DIR}/mindspore/core/ops/leaky_relu.h
-            ${TOP_DIR}/mindspore/core/ops/less.h
-            ${TOP_DIR}/mindspore/core/ops/less_equal.h
             ${TOP_DIR}/mindspore/core/ops/lp_normalization.h
             ${TOP_DIR}/mindspore/core/ops/lrn.h
             ${TOP_DIR}/mindspore/core/ops/lsh_projection.h

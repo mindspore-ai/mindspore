@@ -17,8 +17,6 @@
 #include <memory>
 #include <string>
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/less.h"
-#include "ops/less_equal.h"
 #include "ops/squared_difference.h"
 #include "ops/mod.h"
 #include "ops/fusion/add_fusion.h"

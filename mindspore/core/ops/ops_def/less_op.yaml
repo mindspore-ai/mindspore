@@ -1,0 +1,12 @@
+#operator less
+less:
+  args:
+    x:
+      dtype: tensor
+      type_cast: number, bool
+    y:
+      dtype: tensor
+      type_cast: number, bool
+  returns:
+    output:
+      dtype: tensor

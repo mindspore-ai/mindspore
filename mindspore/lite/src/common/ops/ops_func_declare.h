@@ -63,8 +63,6 @@
 #include "ops/l2_normalize.h"
 #include "ops/layer_norm.h"
 #include "ops/leaky_relu.h"
-#include "ops/less.h"
-#include "ops/less_equal.h"
 #include "ops/lp_normalization.h"
 #include "ops/lrn.h"
 #include "ops/lsh_projection.h"
