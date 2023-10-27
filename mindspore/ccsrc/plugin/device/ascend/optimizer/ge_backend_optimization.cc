@@ -41,6 +41,7 @@
 #include "plugin/device/ascend/optimizer/ge/insert_identity.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
 #include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
+#include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
@@ -78,6 +79,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   opt_ge_pm->AddPass(std::make_shared<opt::ExpandDimsForBatchNorm>());
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
+  opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
