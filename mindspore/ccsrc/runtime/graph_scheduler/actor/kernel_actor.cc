@@ -111,6 +111,10 @@ void KernelActor::InitOutputInfo() {
     MS_EXCEPTION_IF_NULL(output_address);
     (void)output_device_tensors_.emplace_back(output_address.get());
     (void)output_kernel_tensors_.emplace_back(output_address->kernel_tensor().get());
+    MS_LOG(DEBUG) << "Init output[" << i << "] info for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
+                  << " addr:" << output_address << " type:" << output_address->type_id()
+                  << ", kernel tensor addr:" << output_address->kernel_tensor().get()
+                  << ", kernel tensor: " << output_address->kernel_tensor()->ToString();
     (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
 
     // The output taken over by soma does not need to allocate memory.
