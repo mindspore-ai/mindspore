@@ -103,11 +103,11 @@ def adaptive_avg_pool2d(input, output_size):
     .. math::
 
         out\_shape = \begin{cases}
-        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
-        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
-        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
-        (h, h), & \text{if output_size is h;}\\
-        (h, w), & \text{if output_size is (h, w)}
+        input\_shape[-2] + output\_size[1], & \text{if } output\_size text{ is (None, w);}\\
+        output\_size[0] + input\_shape[-1], & \text{if } output\_size text{ is (h, None);}\\
+        input\_shape[-2:], & \text{if } output\_size text{ is (None, None);}\\
+        (h, h), & \text{if } output\_size text{ is h;}\\
+        (h, w), & \text{if } output\_size text{ is (h, w)}
         \end{cases}
 
     Raises:
@@ -1833,6 +1833,11 @@ def kl_div(logits, labels, reduction='mean'):
         labels (Tensor): The label Tensor which has the same shape and data type as `logits`.
         reduction (str): Specifies the reduction to be applied to the output.
             Its value must be one of ``'none'`` , ``'mean'`` , ``'batchmean'`` or ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+            - ``'batchmean'``: the summed output elements divided by batch size.
 
     Returns:
         Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
@@ -4452,7 +4457,7 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
+        Tensor or Scalar. if `reduction` is ``'none'``, its shape is the same as `input1`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -6031,8 +6036,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             there will be :math:`k - 1` pixels skipped for each sampling location.
             The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
             respectively. Default: ``1`` .
-        groups (int, optional):The number of groups into which the filter is divided. `in_channels`
-            and `out_channels` must be divisible by `group`. Default: ``1`` .
+        groups (int, optional):The number of groups into which the filter is divided. Default: ``1`` .
 
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.

@@ -346,7 +346,8 @@ class GRUCell(RNNCellBase):
         \end{array}
 
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
-    are learnable weights between the output and the input in the formula. For instance,
+    are learnable weights between the output and the input in the formula. :math:`h` is hidden state.
+    :math:`r` is reset gate. :math:`z` is update gate. :math:`n` is n-th layer. For instance,
     :math:`W_{ir}, b_{ir}` are the weight and bias used to transform from input :math:`x` to :math:`r`.
     Details can be found in paper
     `Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation

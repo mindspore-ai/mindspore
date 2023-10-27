@@ -494,7 +494,7 @@ class MarginRankingLoss(LossBase):
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_2, x_3, ..., x_R)`.
 
     Outputs:
-        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
+        Tensor or Scalar. if `reduction` is ``'none'``, its shape is the same as `input1`.
         Otherwise, a scalar value will be returned.
 
     Raises:

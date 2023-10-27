@@ -10,9 +10,9 @@ mindspore.ops.clamp
     .. math::
         out_i= \left\{
         \begin{array}{align}
-            max & \text{ if } x_i\ge max \\
-            x_i & \text{ if } min \lt x_i \lt max \\
-            min & \text{ if } x_i \le min \\
+            max & \text{ if } input_i\ge max \\
+            input_i & \text{ if } min \lt input_i \lt max \\
+            min & \text{ if } input_i \le min \\
         \end{array}\right.
 
     .. note::
