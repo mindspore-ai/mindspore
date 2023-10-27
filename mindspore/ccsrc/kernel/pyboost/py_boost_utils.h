@@ -7,20 +7,15 @@
 
 #include "include/common/utils/tensor_future.h"
 #include "runtime/pynative/op_executor.h"
+#include "runtime/device/device_address_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-namespace {
-using DeviceAddressPromisePtr = pynative::DeviceAddressPromisePtr;
-using DeviceAddressPromise = pynative::DeviceAddressPromise;
-using DeviceAddressFutureDataPtr = pynative::DeviceAddressFutureDataPtr;
-using DeviceAddressFuture = pynative::DeviceAddressFuture;
-}  // namespace
-
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
+  static DeviceContext *GetDeviceContext(const std::string &device_type);
 };
 KernelTensorPtr BACKEND_EXPORT TensorToKernelTensor(const TensorPtr &value, const DeviceContext *device_context);
 KernelTensorPtr BACKEND_EXPORT ScalarToKernelTensor(const ScalarPtr &value, const DeviceContext *device_context);
@@ -30,6 +25,16 @@ kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> wo
                                                           const DeviceContext *device_context);
 tensor::TensorPtr BACKEND_EXPORT ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 tensor::TensorPtr BACKEND_EXPORT ContiguousTensor(const tensor::TensorPtr &input_tensor);
+
+template <typename... Args>
+void PrepareOpInputs(DeviceContext *device_context, Args... args) {
+  [&]() { (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, args, "input"), ...); }();
+}
+
+template <typename... Args>
+void PrepareOpOutputs(DeviceContext *device_context, Args... args) {
+  [&]() { (runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, args, "output"), ...); }();
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

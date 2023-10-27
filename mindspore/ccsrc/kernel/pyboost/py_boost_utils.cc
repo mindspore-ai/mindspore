@@ -43,6 +43,18 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
 }
+
+DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {device_type, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
+
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  return device_context;
+}
+
 KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
   // TODO (CARRY) Waiting dyn_shape_dev
   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,

@@ -28,12 +28,7 @@ tensor::TensorPtr AddCPU::Call(const tensor::TensorPtr &x, const tensor::TensorP
   // TODO: (CARRY) dyn_shape_dev
   InferOutput(x, y);
   auto kernel = std::make_shared<ArithmeticCpuKernelMod>("Add");
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kCPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  auto device_context = PyBoostUtils::GetDeviceContext(kCPUDevice);
 
   Contiguous(x);
   Contiguous(y);

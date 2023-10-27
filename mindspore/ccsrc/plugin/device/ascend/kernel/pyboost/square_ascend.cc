@@ -30,13 +30,7 @@ bool SquareAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPt
   // TODO 使用pow实现square，如下代码做性能验证
   GilReleaseWithCheck release_gil;
 
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
 
   auto input_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
   auto output_address = runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");

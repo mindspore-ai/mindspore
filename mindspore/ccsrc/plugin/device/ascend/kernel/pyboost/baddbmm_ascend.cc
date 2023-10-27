@@ -22,6 +22,7 @@
 #include "runtime/device/device_address_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "transform/acl_ir/op_api_exec.h"
+#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,32 +30,11 @@ namespace pyboost {
 void BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                            const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
                            const tensor::TensorPtr &output) {
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch1, "batch1");
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, batch2, "batch2");
-  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
-
-  // 910A not support 0
-  int8_t cube_math_type = 0;
-  auto [workspace_size, executor, after_launch_func] =
-    GEN_EXECUTOR(aclnnBaddbmm, input, batch1, batch2, beta, alpha, output, cube_math_type);
-
+  auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
+  PrepareOpInputs(device_context, input, batch1, batch2);
+  PrepareOpOutputs(device_context, output);
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  if (workspace_size == 0) {
-    RUN_OP_API(aclnnBaddbmm, stream_ptr, nullptr, 0, executor, after_launch_func);
-  } else {
-    auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, workspace_size);
-    RUN_OP_API(aclnnBaddbmm, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,
-               after_launch_func);
-  }
+  LAUNCH_ACLNN(aclnnBaddbmm, stream_ptr, input, batch1, batch2, beta, alpha, output);
 }
 
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,

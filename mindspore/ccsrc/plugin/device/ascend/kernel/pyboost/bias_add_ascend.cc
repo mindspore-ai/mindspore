@@ -29,13 +29,7 @@ bool BiasAddAscend::Launch(const tensor::TensorPtr &input_x, const tensor::Tenso
                            const tensor::TensorPtr &output) {
   GilReleaseWithCheck release_gil;
 
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
 
   auto input_x_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_x, "input_x");
   auto bias_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, bias, "bias");

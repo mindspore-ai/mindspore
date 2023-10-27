@@ -23,13 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 bool MatmulAscend::Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, const tensor::TensorPtr &output) {
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
 
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
   runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");

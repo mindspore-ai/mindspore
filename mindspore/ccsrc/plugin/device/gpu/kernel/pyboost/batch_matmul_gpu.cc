@@ -27,13 +27,8 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr BatchMatmulGPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   InferOutput(x, y);
-  auto kernel = std::make_shared<MatMulGpuKernelMod>("BatchMatMul");
-  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kGPUDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+
+  auto device_context = PyBoostUtils::GetDeviceContext(kGPUDevice);
 
   Contiguous(x);
   Contiguous(y);
@@ -48,6 +43,7 @@ tensor::TensorPtr BatchMatmulGPU::Call(const tensor::TensorPtr &x, const tensor:
                                                        {"transpose_b", api::MakeValue(false)}};
   auto base_op = std::make_shared<ops::MatMul>("BatchMatMul");
   base_op->SetAttrs(attrs);
+  auto kernel = std::make_shared<MatMulGpuKernelMod>("BatchMatMul");
   kernel->Init(base_op, {input_x, input_y}, {output});
   kernel->Resize(base_op, {input_x, input_y}, {output}, {});
   auto workspace_sizes = kernel->GetWorkspaceSizeList();
