@@ -57,7 +57,7 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
     if (node == nullptr || common::AnfAlgo::IsCallNode(node)) {
       return false;
     }
-    return common::AnfAlgo::IsDynamicShape(node);
+    return common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicSequence(node);
   });
 }
 }  // namespace
