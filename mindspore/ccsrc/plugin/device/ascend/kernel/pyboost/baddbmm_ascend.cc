@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
+void BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                            const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
                            const tensor::TensorPtr &output) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -55,7 +55,6 @@ bool BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorP
     RUN_OP_API(aclnnBaddbmm, stream_ptr, workspace_device_address->GetMutablePtr(), workspace_size, executor,
                after_launch_func);
   }
-  return true;
 }
 
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,

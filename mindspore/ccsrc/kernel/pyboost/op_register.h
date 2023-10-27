@@ -59,6 +59,7 @@ class BACKEND_EXPORT Op {
 
   template <typename... T>
   inline void InferOutput(T &... args) {
+    input_abs_.clear();
     (input_abs_.emplace_back(args->ToAbstract()), ...);
     auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
     output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
