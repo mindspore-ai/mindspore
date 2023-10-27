@@ -18,8 +18,10 @@
 
 from mindspore import ops
 from mindspore.common.tensor import Tensor
-from mindspore.ops.operations._sequence_ops import TensorToScalar
+from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
 from mindspore.ops.auto_generate.gen_enum_def import OpDtype
+
+tensor_to_tuple_ = TensorToTuple()
 
 
 def int_to_float(data):
@@ -35,7 +37,7 @@ def list_to_tuple(data):
 
 
 def tensor_to_tuple(data):
-    return ops.tuple_to_array(data)
+    return tensor_to_tuple_(data)
 
 
 def scalar_to_tensor(data):
@@ -56,7 +58,7 @@ PY_DT_FLOAT = OpDtype.PY_DT_FLOAT.value
 PY_DT_BOOL = OpDtype.PY_DT_BOOL.value
 PY_DT_NUMBER = OpDtype.PY_DT_NUMBER.value
 # tuple
-PY_DT_TUPLE_BOOL = OpDtype.PY_DT_TUPLE_ANY.value
+PY_DT_TUPLE_BOOL = OpDtype.PY_DT_TUPLE_BOOL.value
 PY_DT_TUPLE_INT = OpDtype.PY_DT_TUPLE_INT.value
 PY_DT_TUPLE_FLOAT = OpDtype.PY_DT_TUPLE_FLOAT.value
 PY_DT_TUPLE_NUMBER = OpDtype.PY_DT_TUPLE_NUMBER.value
