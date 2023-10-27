@@ -40,13 +40,11 @@ bool CumMinMaxGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = func_list_[cum_op_type_][index].second;
   switch (cum_op_type_) {
     case CUMMIN: {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::Cummin>(primitive_);
-      axis_ = kernel_ptr->get_axis();
+      axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
       break;
     }
     case CUMMAX: {
-      auto kernel_ptr = std::dynamic_pointer_cast<ops::Cummax>(primitive_);
-      axis_ = kernel_ptr->get_axis();
+      axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
       break;
     }
     default: {

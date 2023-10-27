@@ -82,7 +82,7 @@ int Conv2dInputGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     auto conv_kernel_type = SelectConvolutionGpuKernel(conv_args_);
     conv_kernel_ptr =
       ConvolutionGpuKernelFactory::CreateConvolutionGpuKernel(conv_args_, conv_kernel_type, ConvType::kInputGrad);
-    MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+
     InitResource();
   }
   ResetResource();
@@ -98,7 +98,6 @@ bool Conv2dInputGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   T *w = GetDeviceAddress<T>(inputs, 1);
   T *dx = GetDeviceAddress<T>(outputs, 0);
 
-  MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
   return conv_kernel_ptr->LaunchKernel<T>(conv_args_, dy, w, dx, workspace, stream_ptr_);
 }
 

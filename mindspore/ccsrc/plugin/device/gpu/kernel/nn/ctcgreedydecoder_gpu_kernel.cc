@@ -61,8 +61,8 @@ void CTCGreedyDecoderGpuKernelMod::InitSizeLists() {
 bool CTCGreedyDecoderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CTCGreedyDecoder>(primitive_);
-  merge_repeated_ = kernel_ptr->get_merge_repeated();
+
+  merge_repeated_ = GetValue<bool>(primitive_->GetAttr("merge_repeated"));
   is_need_retrieve_output_shape_ = true;
 
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

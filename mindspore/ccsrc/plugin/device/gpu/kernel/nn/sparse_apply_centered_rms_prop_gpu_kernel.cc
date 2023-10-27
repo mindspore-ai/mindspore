@@ -43,13 +43,7 @@ bool SparseApplyCenteredRMSPropGpuKernelMod::Init(const std::vector<KernelTensor
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyCenteredRMSProp>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "SparseApplyCenteredRMSProp ops failed!";
-    return false;
-  }
-  use_locking_ = kernel_ptr->get_use_locking();
+  use_locking_ = GetValue<bool>(primitive_->GetAttr("use_locking"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

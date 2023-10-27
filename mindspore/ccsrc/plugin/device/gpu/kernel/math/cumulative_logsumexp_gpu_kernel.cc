@@ -57,12 +57,11 @@ int CumulativeLogsumexpGpuKernelMod::Resize(const std::vector<KernelTensor *> &i
   if (is_null_input_) {
     return true;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumulativeLogsumexp>(primitive_);
 
-  exclusive_ = kernel_ptr->get_exclusive();
-  reverse_ = kernel_ptr->get_reverse();
+  exclusive_ = GetValue<bool>(primitive_->GetAttr("exclusive"));
+  reverse_ = GetValue<bool>(primitive_->GetAttr("reverse"));
   if (!is_dynamic_shape_) {
-    axis_ = static_cast<int>(kernel_ptr->get_axis());
+    axis_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("axis")));
     Reshape();
   }
   return KRET_OK;

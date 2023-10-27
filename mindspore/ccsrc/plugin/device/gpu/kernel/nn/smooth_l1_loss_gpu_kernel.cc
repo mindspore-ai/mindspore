@@ -31,22 +31,19 @@ namespace mindspore {
 namespace kernel {
 bool SmoothL1LossGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1Loss>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.size() != kSmoothL1LossInputsNum || outputs.size() != kSmoothL1LossOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossInputsNum << " and "
                   << kSmoothL1LossOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
 
-  beta_ = kernel_ptr->get_beta();
+  beta_ = GetValue<float>(primitive_->GetAttr("beta"));
   if (beta_ == 0.0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
     return false;
   }
 
-  std::string reduction = kernel_ptr->get_reduction();
+  std::string reduction = GetValue<std::string>(primitive_->GetAttr("reduction"));
   if (reduction == "none") {
     reduction_ = SmoothL1LossReductionMode::NONE;
   } else if (reduction == "mean") {

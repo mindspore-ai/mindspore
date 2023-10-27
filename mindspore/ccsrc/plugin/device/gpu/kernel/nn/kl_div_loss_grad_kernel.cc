@@ -48,8 +48,7 @@ int KLDivLossGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto input_shape = inputs[kIndex1]->GetShapeVector();
   input_size_ = 1;
   input_size_ *= SizeOf(input_shape);
-  auto kl_div_loss_grad_ptr = std::dynamic_pointer_cast<ops::KLDivLossGrad>(primitive_);
-  string reduction = kl_div_loss_grad_ptr->get_reduction();
+  string reduction = GetValue<std::string>(primitive_->GetAttr("reduction"));
   reduction_ = kReductionModeMap[reduction];
 
   return KRET_OK;

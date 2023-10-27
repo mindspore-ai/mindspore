@@ -27,16 +27,15 @@ bool SolveTriangularGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SolveTriangular>(primitive_);
-  bool lower = kernel_ptr->get_lower();
+  bool lower = GetValue<bool>(primitive_->GetAttr("lower"));
   // reverting the trans flag by default, so also flip the lower flag
   lower = !lower;
   uplo_ = lower ? CUBLAS_FILL_MODE_LOWER : CUBLAS_FILL_MODE_UPPER;
 
-  bool unit_diagonal = kernel_ptr->get_unit_diagonal();
+  bool unit_diagonal = GetValue<bool>(primitive_->GetAttr("unit_diagonal"));
   unit_diagonal_ = unit_diagonal ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
 
-  const std::string trans = kernel_ptr->get_trans();
+  const std::string trans = GetValue<std::string>(primitive_->GetAttr("trans"));
   if (trans == "N") {
     trans_ = CUBLAS_OP_T;
   } else if (trans == "T") {

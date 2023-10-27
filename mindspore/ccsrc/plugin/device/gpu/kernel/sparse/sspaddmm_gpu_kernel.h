@@ -79,7 +79,6 @@ class SspaddmmGpuKernelMod : public NativeGpuKernelMod {
   int64_t y_values_num_{};
   int64_t x3_dense_col_{};
   SspaddmmFunc kernel_func_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, SspaddmmFunc>> func_list_;

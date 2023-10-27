@@ -40,13 +40,7 @@ bool SparseApplyMomentumGpuKernelMod::Init(const std::vector<KernelTensor *> &in
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyMomentum>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "SparseApplyMomentum ops failed!";
-    return false;
-  }
-  use_nesterov_ = kernel_ptr->get_use_nesterov();
+  use_nesterov_ = GetValue<bool>(primitive_->GetAttr("use_nesterov"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

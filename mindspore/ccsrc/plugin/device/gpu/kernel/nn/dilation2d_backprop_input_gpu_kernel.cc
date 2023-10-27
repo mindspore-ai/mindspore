@@ -126,17 +126,15 @@ bool Dilation2DBackpropInputGpuKernelMod::Launch(const std::vector<KernelTensor 
 
 bool Dilation2DBackpropInputGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_dilation2d_backprop_input_ptr = std::dynamic_pointer_cast<ops::Dilation2DBackpropInput>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->stride = kernel_dilation2d_backprop_input_ptr->get_stride();
-  attr_ptr_->dilation = kernel_dilation2d_backprop_input_ptr->get_dilation();
-  attr_ptr_->pad_mode = kernel_dilation2d_backprop_input_ptr->get_pad_mode();
-  attr_ptr_->format = kernel_dilation2d_backprop_input_ptr->get_format();
+  attr_ptr_->stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
+  attr_ptr_->dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
+  attr_ptr_->pad_mode = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
+  attr_ptr_->format = GetValue<std::string>(primitive_->GetAttr("format"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
 

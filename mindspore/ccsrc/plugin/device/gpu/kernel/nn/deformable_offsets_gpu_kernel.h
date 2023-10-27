@@ -47,7 +47,7 @@ class DeformableOffsetsGpuKernelMod : public NativeGpuKernelMod {
   template <class T>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs, void *stream_ptr);
-  bool CheckParam(const std::shared_ptr<ops::DeformableOffsets> &kernel);
+  bool CheckParam(const PrimitivePtr &primtive_);
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

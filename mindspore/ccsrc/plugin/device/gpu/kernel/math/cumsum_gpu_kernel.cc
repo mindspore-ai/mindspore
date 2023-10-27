@@ -52,10 +52,9 @@ int CumSumGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   if (is_null_input_) {
     return KRET_OK;
   }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CumSum>(primitive_);
 
-  exclusive_ = kernel_ptr->get_exclusive();
-  reverse_ = kernel_ptr->get_reverse();
+  exclusive_ = GetValue<bool>(primitive_->GetAttr("exclusive"));
+  reverse_ = GetValue<bool>(primitive_->GetAttr("reverse"));
   workspace_size_list_.push_back(inputs[kIndex0]->size());
   return KRET_OK;
 }

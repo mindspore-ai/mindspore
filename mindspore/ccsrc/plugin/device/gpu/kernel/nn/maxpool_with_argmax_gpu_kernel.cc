@@ -92,9 +92,8 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   output_height_ = LongToInt(output_shape[kOutputIndexForH]);
   output_width_ = LongToInt(output_shape[kOutputIndexForW]);
   std::vector<int> window;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmax>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  std::vector<int64_t> window_me = kernel_ptr->get_kernel_size();
+
+  std::vector<int64_t> window_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
   (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (window.size() < Index3) {
@@ -105,7 +104,7 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   window_width_ = window[Index2];
 
   std::vector<int> stride;
-  std::vector<int64_t> stride_me = kernel_ptr->get_strides();
+  std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (stride.size() < Index3) {
@@ -115,7 +114,11 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   stride_height_ = stride[1];
   stride_width_ = stride[Index2];
 
-  auto pad_mode_ = kernel_ptr->get_pad_mode();
+  auto mode_str = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
+  (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
+  MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),
+                             "MaxPoolGradGrad only supports pad mode same or valid, but get " + mode_str);
+  auto pad_mode_ = mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
   pad_top_ = 0;
   pad_left_ = 0;
   if (pad_mode_ == SAME) {

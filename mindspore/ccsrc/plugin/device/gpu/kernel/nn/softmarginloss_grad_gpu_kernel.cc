@@ -62,15 +62,13 @@ bool SoftMarginLossGradGpuKernelMod::Launch(const std::vector<KernelTensor *> &i
 
 bool SoftMarginLossGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftMarginLossGrad>(primitive_);
-
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
 
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   if (!is_match) {
     return false;
   }
-  attr_ptr_->reduction = kernel_ptr->get_reduction();
+  attr_ptr_->reduction = GetValue<std::string>(primitive_->GetAttr("reduction"));
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);

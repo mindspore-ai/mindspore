@@ -86,7 +86,7 @@ int Conv2dFilterGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
     auto conv_kernel_type = SelectConvolutionGpuKernel(conv_args_);
     conv_kernel_ptr =
       ConvolutionGpuKernelFactory::CreateConvolutionGpuKernel(conv_args_, conv_kernel_type, ConvType::kFilterGrad);
-    MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+
     InitResource();
   }
   ResetResource();
@@ -101,7 +101,7 @@ bool Conv2dFilterGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   T *dy = GetDeviceAddress<T>(inputs, 0);
   T *x = GetDeviceAddress<T>(inputs, 1);
   T *dw = GetDeviceAddress<T>(outputs, 0);
-  MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+
   return conv_kernel_ptr->LaunchKernel<T>(conv_args_, dy, x, dw, workspace, stream_ptr_);
 }
 

@@ -25,8 +25,6 @@ constexpr const size_t k1DElementNum = 4;
 
 bool DataFormatVecPermuteGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DataFormatVecPermute>(primitive_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -44,8 +42,8 @@ bool DataFormatVecPermuteGpuKernelMod::Init(const std::vector<KernelTensor *> &i
                   << "', the kernel type should be in [int32, int64], but got: " << kernel_attr << ".";
     return false;
   }
-  src_format = kernel_ptr->get_src_format();
-  dst_format = kernel_ptr->get_dst_format();
+  src_format = GetValue<std::string>(primitive_->GetAttr("src_format"));
+  dst_format = GetValue<std::string>(primitive_->GetAttr("dst_format"));
   if (src_format == dst_format) {
     data_map_ = kDataSameFormat;
   } else if (src_format == "NHWC" && dst_format == "NCHW") {

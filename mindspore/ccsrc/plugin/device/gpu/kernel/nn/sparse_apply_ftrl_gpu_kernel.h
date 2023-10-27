@@ -61,13 +61,11 @@ class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyFtrl>(primitive_);
-    MS_EXCEPTION_IF_NULL(kernel_ptr);
-    lr_ = kernel_ptr->get_lr();
-    l1_ = kernel_ptr->get_l1();
-    l2_ = kernel_ptr->get_l2();
-    lr_power_ = kernel_ptr->get_lr_power();
-    use_locking_ = kernel_ptr->get_use_locking();
+    lr_ = GetValue<float>(primitive_->GetAttr("lr"));
+    l1_ = GetValue<float>(primitive_->GetAttr("l1"));
+    l2_ = GetValue<float>(primitive_->GetAttr("l2"));
+    lr_power_ = GetValue<float>(primitive_->GetAttr("lr_power"));
+    use_locking_ = GetValue<bool>(primitive_->GetAttr("use_locking"));
     return true;
   }
 

@@ -134,8 +134,6 @@ const std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulPtrCreatorFunc>> 
 
 bool SparseTensorDenseMatmulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseTensorDenseMatmul>(primitive_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -145,8 +143,8 @@ bool SparseTensorDenseMatmulGpuKernelMod::Init(const std::vector<KernelTensor *>
   if (!is_match) {
     return false;
   }
-  attr_ptr_->adj_st = kernel_ptr->get_adjoint_st();
-  attr_ptr_->adj_dt = kernel_ptr->get_adjoint_dt();
+  attr_ptr_->adj_st = GetValue<bool>(primitive_->GetAttr("adjoint_st"));
+  attr_ptr_->adj_dt = GetValue<bool>(primitive_->GetAttr("adjoint_dt"));
 
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);

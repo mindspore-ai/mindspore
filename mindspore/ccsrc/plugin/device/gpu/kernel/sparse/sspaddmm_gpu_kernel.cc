@@ -24,8 +24,6 @@ constexpr int INPUT_NUM = 9;
 constexpr int OUTPUT_NUM = 3;
 
 bool SspaddmmGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  kernel_ptr_ = std::dynamic_pointer_cast<ops::Sspaddmm>(primitive_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;

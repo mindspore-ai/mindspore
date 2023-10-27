@@ -88,7 +88,6 @@ class SparseAddmmGpuKernelMod : public NativeGpuKernelMod {
   int64_t output_row_{};
   int64_t output_col_{};
   SparseAddmmFunc kernel_func_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, SparseAddmmFunc>> func_list_;

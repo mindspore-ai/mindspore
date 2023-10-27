@@ -137,7 +137,7 @@ int MirrorPadGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     ret = (ret == KRET_OK ? KRET_UNKNOWN_OUT_SHAPE : ret);
     input_size_list_.push_back(padding_type_size_);
   } else {
-    // account for paddings in input size -> passed as int64_ts
+    // account for paddings in input size -> passed as int64_t
     num_paddings_ = LongToSizeClipNeg(padding_shape[0]);
     input_size_ += (IntToSize(kSymmetricCoef) * num_paddings_ * padding_type_size_);
     input_size_list_.push_back(kLongSizeCoeff * num_paddings_ * padding_type_size_);  // for 64 bit int defined in API

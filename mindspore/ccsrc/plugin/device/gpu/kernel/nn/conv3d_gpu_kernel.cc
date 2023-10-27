@@ -72,9 +72,6 @@ const std::vector<conv3dPair> &Conv3dGpuKernelMod::GetFuncList() const {
 }
 
 bool Conv3dGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   InitResource();
   size_t input_num = inputs.size();
   const size_t kInputNum = 2;
@@ -97,8 +94,6 @@ bool Conv3dGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
 }
 
 int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3D>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   int ret = KRET_OK;
   if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
@@ -122,7 +117,7 @@ int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   old_width_ = LongToInt(in_shape[kInDimIdxForW]);
   compute_format_ = CUDNN_TENSOR_NCHW;
   SetNDDesc(in_shape, filter_shape, output_shape);
-  group_ = static_cast<int>(kernel_ptr->get_group());
+  group_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group")));
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                       "cudnnSetConvGroupCount failed");
   std::vector<int> pad_list;
@@ -133,11 +128,11 @@ int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of 'pad' must be 6, but got " << pad_list.size();
     return KRET_RESIZE_FAILED;
   }
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   SetPad(pad_list);
   if (!IsDynamicRank(in_shape) && !IsDynamicRank(filter_shape)) {
-    std::vector<int64_t> stride_me = kernel_ptr->get_stride();
-    std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
+    std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
+    std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
     SetStrideAndDilation(stride_me, dilation_me);
   }
   auto input_descriptor_real = GetInputDescReal(pad_list);

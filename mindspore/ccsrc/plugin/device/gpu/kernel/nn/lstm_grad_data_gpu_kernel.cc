@@ -34,18 +34,13 @@ bool LstmGradDataGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   type_size_ = GetTypeByte(TypeIdToType(inputs[kIndex0]->dtype_id()));
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::LSTMGradData>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast LSTMGradData ops failed!";
-    return false;
-  }
-  bidirectional_ = kernel_ptr->get_bidirectional();
-  input_size_ = kernel_ptr->get_input_size();
-  hidden_size_ = kernel_ptr->get_hidden_size();
-  num_layers_ = kernel_ptr->get_num_layers();
-  has_bias_ = kernel_ptr->get_has_bias();
-  dropout_ = kernel_ptr->get_dropout();
-  auto proj_size = kernel_ptr->get_proj_size();
+  bidirectional_ = GetValue<bool>(primitive_->GetAttr("bidirectional"));
+  input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
+  hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
+  num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
+  has_bias_ = GetValue<int64_t>(primitive_->GetAttr("has_bias"));
+  dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
+  auto proj_size = GetValue<int64_t>(primitive_->GetAttr("proj_size"));
   if (proj_size != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', 'proj_size' could only be 0 in GPU, but got proj_size=" << proj_size;

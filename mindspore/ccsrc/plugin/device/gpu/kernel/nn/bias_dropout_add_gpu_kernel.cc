@@ -46,12 +46,6 @@ bool BiasDropoutAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::BiasDropoutAdd>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast BiasDropoutAdd failed!";
-    return false;
-  }
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -60,10 +54,10 @@ bool BiasDropoutAddGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   kernel_func_ = func_list_[index].second;
 
-  keep_prob_ = kernel_ptr->get_keep_prob();
-  int64_t seed = kernel_ptr->get_seed0();
+  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
+  int64_t seed = GetValue<int64_t>(primitive_->GetAttr("seed0"));
   if (seed == 0) {
-    seed = kernel_ptr->get_seed1();
+    seed = GetValue<int64_t>(primitive_->GetAttr("seed1"));
     if (seed == 0) {
       seed = time(NULL);
     }

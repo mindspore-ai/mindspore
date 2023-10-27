@@ -26,8 +26,7 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(primitive_);
-  num_split = kernel_ptr->get_num_split();
+  num_split = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("num_split")));
 
   input_dtype_ = inputs[kIndex2]->dtype_id();
   size_t outputs_num = Kindex3 * num_split;
@@ -57,8 +56,8 @@ bool SparseSplitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int SparseSplitGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(primitive_);
-  num_split = kernel_ptr->get_num_split();
+
+  num_split = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("num_split")));
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
     auto input_indices_shape = inputs[kIndex1]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();

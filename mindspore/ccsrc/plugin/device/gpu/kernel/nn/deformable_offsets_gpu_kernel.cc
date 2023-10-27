@@ -44,9 +44,6 @@ bool DeformableOffsetsGpuKernelMod::Launch(const std::vector<KernelTensor *> &in
 
 bool DeformableOffsetsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsets>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-
   if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it should get two inputs and one output, but got " << inputs.size()
                   << "inputs and " << outputs.size() << " outputs";
@@ -59,16 +56,16 @@ bool DeformableOffsetsGpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
   }
   kernel_func_ = func_list_[index].second;
 
-  if (!CheckParam(kernel_ptr)) {
+  if (!CheckParam(primitive_)) {
     return false;
   }
   return true;
 }
 
-bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::DeformableOffsets> &kernel) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_name_ = kernel->name();
-  data_format_ = kernel->get_data_format();
+bool DeformableOffsetsGpuKernelMod::CheckParam(const PrimitivePtr &primitive_) {
+  MS_EXCEPTION_IF_NULL(primitive_);
+  auto kernel_name_ = primitive_->name();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr("data_format"));
   if (data_format_ == kOpFormat_NCHW) {
     n_axis_ = 0;
     c_axis_ = 1;
@@ -79,7 +76,7 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
     return false;
   }
   const auto to_unsigned = [](const int64_t &value) { return LongToUint(value); };
-  const auto &strides = kernel->get_strides();
+  const auto &strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   std::transform(strides.begin(), strides.end(), std::back_inserter(strides_), to_unsigned);
   if (strides_.size() != kStrideAttrNum || strides_[n_axis_] != 1 || strides_[c_axis_] != 1) {
     MS_LOG(ERROR) << "Get invalid strides attr form " << kernel_name_
@@ -87,21 +84,21 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
                   << strides_;
     return false;
   }
-  const auto &pads = kernel->get_pads();
+  const auto &pads = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
   std::transform(pads.begin(), pads.end(), std::back_inserter(pads_), to_unsigned);
   if (pads_.size() != kPadAttrNum) {
     MS_LOG(ERROR) << "Get invalid pads attr form " << kernel_name_
                   << ", padding should be a vector constructed by 4 integer, but got" << pads_;
     return false;
   }
-  const auto &kernel_size = kernel->get_kernel_size();
+  const auto &kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
   std::transform(kernel_size.begin(), kernel_size.end(), std::back_inserter(kernel_size_), to_unsigned);
   if (kernel_size_.size() != kKernelSizeAttrNum) {
     MS_LOG(ERROR) << "Get invalid ksize attr form " << kernel_name_
                   << ", ksize should be a vector constructed by 2 integer, but got" << kernel_size_;
     return false;
   }
-  const auto &dilations = kernel->get_dilations();
+  const auto &dilations = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilations"));
   std::transform(dilations.begin(), dilations.end(), std::back_inserter(dilations_), to_unsigned);
   if (dilations_.size() != kDilationAttrNum || dilations_[n_axis_] != 1 || dilations_[c_axis_] != 1) {
     MS_LOG(ERROR) << "Get invalid dilations attr form " << kernel_name_
@@ -109,12 +106,12 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const std::shared_ptr<ops::Deform
                   << dilations_;
     return false;
   }
-  deformable_groups_ = static_cast<size_t>(kernel->get_deformable_groups());
+  deformable_groups_ = static_cast<uint32_t>(GetValue<int64_t>(primitive_->GetAttr("deformable_groups")));
   if (deformable_groups_ <= 0) {
     MS_LOG(ERROR) << kernel_name_ << "'s deformable_groups should greater than 0, but got " << deformable_groups_;
     return false;
   }
-  modulated_ = kernel->get_modulated();
+  modulated_ = GetValue<bool>(primitive_->GetAttr("modulated"));
   if (!modulated_) {
     MS_LOG(ERROR) << kernel_name_ << "only support v2, and the modulated should be true, but got false";
     return false;

@@ -26,19 +26,14 @@ constexpr size_t kDropoutOutputNum = 2;
 
 bool DropoutFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast Dropout ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputNum, kernel_ptr->name());
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutInputNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutOutputNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_ptr->name()
-                      << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(primitive_->GetAttr("Seed0")));
@@ -50,7 +45,7 @@ bool DropoutFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 int DropoutFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   ResetResource();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout>(primitive_);
+
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   if (!(CHECK_SHAPE_POSITIVE(input_shape_))) {
     is_null_input_ = true;
@@ -63,7 +58,7 @@ int DropoutFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   input_size_ = abstract::TypeIdSize(inputs[kIndex0]->dtype_id()) * num_count_;
   output_size_ = abstract::TypeIdSize(outputs[kIndex0]->dtype_id()) * num_count_;
   InitSizeLists();
-  keep_prob_ = kernel_ptr->get_keep_prob();
+  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   num_count_ = std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>());
   if (num_count_ % kDropoutTileSize == 0) {

@@ -64,10 +64,10 @@ class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
     auto input_shape = inputs[kIndex0]->GetShapeVector();
     auto rank = input_shape.size();
     auto rank_int = SizeToInt(rank);
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::ConcatOffset>(primitive_);
+
     int64_t axis = 0;
-    if (kernel_ptr->HasAttr(kAttrAxis)) {
-      axis = kernel_ptr->get_axis();
+    if (primitive_->HasAttr("axis")) {
+      axis = GetValue<int64_t>(primitive_->GetAttr("axis"));
     }
     if (axis < -rank_int || axis >= rank_int) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << rank << "," << rank

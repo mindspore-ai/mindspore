@@ -23,23 +23,17 @@ namespace mindspore {
 namespace kernel {
 bool SparseFillEmptyRowsGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseFillEmptyRows>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast SparseFillEmptyRows ops failed!";
-    return false;
-  }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, kernel_ptr->name());
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, kernel_ptr->name());
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseFillEmptyRowsInputsNum, primitive_->name());
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseFillEmptyRowsOutputsNum, primitive_->name());
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_ptr->name()
-                            << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   if (abstract::TypeIdSize(inputs[kIndex1]->dtype_id()) != abstract::TypeIdSize(inputs[kIndex3]->dtype_id())) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_ptr->name()
-                             << "The datatypes of values and default_value are not same.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << ", the datatypes of values and default_value are not same.";
   }
   kernel_func_ = func_list_[index].second;
   return true;

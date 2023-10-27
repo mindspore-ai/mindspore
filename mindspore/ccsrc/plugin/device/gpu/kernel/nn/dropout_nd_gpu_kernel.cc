@@ -68,11 +68,9 @@ bool DropoutNDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   if (kernel_name_ == prim::kPrimDropout2D->name()) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout2D>(primitive_);
-    keep_prob_ = kernel_ptr->get_keep_prob();
+    keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Dropout3D>(primitive_);
-    keep_prob_ = kernel_ptr->get_keep_prob();
+    keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
   } else {
     MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod', it's must be Dropout2D or Dropout3D but get invalid kernel name : "
                   << kernel_name_;

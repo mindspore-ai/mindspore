@@ -58,11 +58,10 @@ std::vector<int> GetAttrFromOpsPrim(const std::vector<int64_t> &attr) {
 
 bool MaxPoolWithArgmaxV2FwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPoolWithArgmaxV2>(primitive_);
-  auto ksize = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
-  auto pads = kernel_ptr->get_pads();
-  auto dilation = kernel_ptr->get_dilation();
+  auto ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
 
   auto ksize_v = GetAttrFromOpsPrim(ksize);
   ksize_h_ = ksize_v[kDim0];

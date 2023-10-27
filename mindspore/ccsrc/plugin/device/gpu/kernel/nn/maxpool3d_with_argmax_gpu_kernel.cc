@@ -53,11 +53,10 @@ bool MaxPool3DWithArgmaxFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTe
 
 bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::MaxPool3DWithArgmax>(primitive_);
-  auto ksize = kernel_ptr->get_kernel_size();
-  auto strides = kernel_ptr->get_strides();
-  auto pads = kernel_ptr->get_pads();
-  auto dilation = kernel_ptr->get_dilation();
+  auto ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
+  auto pads = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
   if (ksize.size() < kMinAttrSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the attr 'ksize' dims should not less than " << kMinAttrSize
                   << ", but got " << ksize.size();

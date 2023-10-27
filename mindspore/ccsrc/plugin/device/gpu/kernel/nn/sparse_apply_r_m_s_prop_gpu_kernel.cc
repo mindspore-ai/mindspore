@@ -127,22 +127,20 @@ bool SparseApplyRMSPropGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  rho_ = kernel_ptr->get_rho();
+  rho_ = GetValue<float>(primitive_->GetAttr("rho"));
   if (rho_ > 1 || rho_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the argument rho should be between 0 and 1, but got the value of rho: " << rho_;
     return false;
   }
-  momentum_ = kernel_ptr->get_momentum();
+  momentum_ = GetValue<float>(primitive_->GetAttr("momentum"));
   if (momentum_ < 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the argument momentum should be no less than 0, but got the value of momentum: "
                              << momentum_;
     return false;
   }
-  epsilon_ = kernel_ptr->get_epsilon();
+  epsilon_ = GetValue<float>(primitive_->GetAttr("epsilon"));
   if (epsilon_ <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the argument momentum should be greater than 0, but got the value of epsilon: "
@@ -159,11 +157,6 @@ int SparseApplyRMSPropGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
-  }
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyRMSProp>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast op from BaseOperator to SparseApplyRMSProp failed.";
-    return KRET_RESIZE_FAILED;
   }
   if (!ResizedInputSize(inputs)) {
     return KRET_RESIZE_FAILED;

@@ -104,14 +104,7 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DBackpropInput>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[Conv3DBackpropInput], cast op from BaseOperator to Conv3DBackpropInput failed.";
-    }
-
     InitResource();
-
     size_t input_num = inputs.size();
     if (input_num != kDynamicInputNum) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << input_num;
@@ -127,11 +120,6 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
   }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DBackpropInput>(primitive_);
-    if (kernel_ptr == nullptr) {
-      MS_EXCEPTION(ValueError)
-        << "For primitive[Conv3DBackpropInput], cast op from BaseOperator to Conv3DBackpropInput failed.";
-    }
     int ret = KernelMod::Resize(inputs, outputs);
     if (ret != KRET_OK) {
       return ret;
@@ -152,7 +140,7 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     old_height_ = LongToInt(input_shape[kInDimIdxForH]);
     old_width_ = LongToInt(input_shape[kInDimIdxForW]);
     SetNDDesc(dy_shape, input_shape, filter_shape);
-    group_ = kernel_ptr->get_group();
+    group_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group")));
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionGroupCount(conv_desc_, group_),
                                         "cudnnSetConvGroupCount failed");
     pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
@@ -161,17 +149,20 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
     if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
       pad_list_me = {0, 0, 0, 0, 0, 0};
     } else if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
-      pad_list_me = primitive_->HasAttr("pad_list")
-                      ? GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"))
-                      : GetSameModePadList(dy_shape, input_shape, kernel_ptr->get_stride(), kernel_ptr->get_dilation(),
-                                           kernel_ptr->get_kernel_size());
+      pad_list_me =
+        primitive_->HasAttr("pad_list")
+          ? GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad_list"))
+          : GetSameModePadList(dy_shape, input_shape, GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride")),
+                               GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation")),
+                               GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size")));
     } else if (pad_mode_ == "PAD" || pad_mode_ == "pad") {
-      pad_list_me = kernel_ptr->get_pad();
+      pad_list_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pad"));
     }
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     SetPad(pad_list);
-    SetStrideAndDilation(kernel_ptr->get_stride(), kernel_ptr->get_dilation());
+    SetStrideAndDilation(GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride")),
+                         GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation")));
     auto dx_desc_real = GetDxDescReal(pad_list);
     SetConvolutionMathType(conv_desc_, cudnn_data_type_);
 

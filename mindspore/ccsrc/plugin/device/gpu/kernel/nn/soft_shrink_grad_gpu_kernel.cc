@@ -43,12 +43,7 @@ bool SoftShrinkGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SoftShrinkGrad>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast SoftShrinkGrad ops failed!";
-    return false;
-  }
-  lambd_ = kernel_ptr->get_lambd();
+  lambd_ = GetValue<float>(primitive_->GetAttr("lambd"));
 
   if (auto ret = MatchKernelFunc(kernel_name_, inputs, outputs); !ret) {
     return ret;

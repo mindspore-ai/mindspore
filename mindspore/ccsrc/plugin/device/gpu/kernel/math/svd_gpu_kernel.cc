@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace kernel {
 bool SvdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Svd>(primitive_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -30,8 +29,8 @@ bool SvdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std:
     return false;
   }
   launch_kernel_func_ = func_list_[index].second;
-  compute_uv_ = kernel_ptr->compute_uv();
-  full_matrices_ = kernel_ptr->full_matrices();
+  compute_uv_ = GetValue<bool>(primitive_->GetAttr("compute_uv"));
+  full_matrices_ = GetValue<bool>(primitive_->GetAttr("full_matrices"));
   job_ = compute_uv_ ? (full_matrices_ ? 'A' : 'S') : 'N';
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
   return true;

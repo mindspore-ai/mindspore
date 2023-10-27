@@ -46,11 +46,10 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const std::vector<KernelTensor *
 
   cusparseCreateCsrgemm2Info(&info);
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixSparseMatMul>(primitive_);
-  transpose_a = kernel_ptr->get_transpose_a();
-  transpose_b = kernel_ptr->get_transpose_b();
-  adjoint_a = kernel_ptr->get_adjoint_a();
-  adjoint_b = kernel_ptr->get_adjoint_b();
+  transpose_a = GetValue<bool>(primitive_->GetAttr("transpose_a"));
+  transpose_b = GetValue<bool>(primitive_->GetAttr("transpose_b"));
+  adjoint_a = GetValue<bool>(primitive_->GetAttr("adjoint_a"));
+  adjoint_b = GetValue<bool>(primitive_->GetAttr("adjoint_b"));
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;

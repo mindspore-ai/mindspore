@@ -30,12 +30,6 @@ namespace mindspore {
 namespace kernel {
 bool SparseReorderGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseReorder>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
-    return false;
-  }
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

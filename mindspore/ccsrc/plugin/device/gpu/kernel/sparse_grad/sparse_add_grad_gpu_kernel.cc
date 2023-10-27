@@ -85,9 +85,6 @@ std::vector<KernelAttr> SparseAddGradGpuKernelMod::GetOpSupport() {
 
 bool SparseAddGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAddGrad>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   if (inputs.size() != kSparseAddGradInputsNum || outputs.size() != kSparseAddGradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSparseAddGradInputsNum
                   << " and " << kSparseAddGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();

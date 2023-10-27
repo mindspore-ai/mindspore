@@ -94,9 +94,6 @@ const std::vector<conv3dtransPair> &Conv3dTransposeFwdGpuKernelMod::GetFuncList(
 
 bool Conv3dTransposeFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                           const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DTranspose>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
-
   InitResource();
 
   size_t input_num = inputs.size();
@@ -116,8 +113,8 @@ bool Conv3dTransposeFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
   data_format_ = kOpFormat_NCDHW;  // only support NCDHW right now
-  format_attr_ = kernel_ptr->get_data_format();
-  group_ = static_cast<int>(kernel_ptr->get_group());
+  format_attr_ = GetValue<std::string>(primitive_->GetAttr("data_format"));
+  group_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("group")));
   if (format_attr_ == kOpFormat_NDHWC) {
     data_format_ = kOpFormat_NDHWC;
   }
@@ -126,8 +123,6 @@ bool Conv3dTransposeFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
 
 int Conv3dTransposeFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                            const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Conv3DTranspose>(primitive_);
-  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
   int ret = KRET_OK;
   if ((ret = KernelMod::Resize(inputs, outputs)) != 0) {
     return ret;
@@ -161,10 +156,10 @@ int Conv3dTransposeFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &in
   (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   std::vector<int> stride_pad_list(k3DPadSize, 0);
-  std::vector<int64_t> stride_me = kernel_ptr->get_stride();
-  std::vector<int64_t> dilation_me = kernel_ptr->get_dilation();
+  std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
+  std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
   SetStrideAndDilation(stride_me, dilation_me);
-  pad_mode_ = kernel_ptr->get_pad_mode();
+  pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   SetPad(input_shape, filter_shape, &pad_list, &stride_pad_list);
   auto [input_desc_real, output_desc_real] = GetInputAndOutputDescReal(pad_list, stride_pad_list);
   SetConvolutionMathType(conv_desc_, cudnn_data_type_);

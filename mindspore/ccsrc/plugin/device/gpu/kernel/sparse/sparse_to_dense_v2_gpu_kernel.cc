@@ -33,9 +33,7 @@ constexpr size_t kSparseToDenseV2ZeroDim = 0;
 
 bool SparseToDenseV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseToDenseV2>(primitive_);
-
-  validate_indices_ = kernel_ptr_->get_validate_indices();
+  validate_indices_ = GetValue<bool>(primitive_->GetAttr("validate_indices"));
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseV2OutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);

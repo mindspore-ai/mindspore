@@ -88,12 +88,7 @@ bool DeformableOffsetsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "Cast DeformableOffsetsGrad failed!";
-    return false;
-  }
-  data_format_ = kernel_ptr->get_format();
+  data_format_ = GetValue<std::string>(primitive_->GetAttr("format"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -108,31 +103,27 @@ bool DeformableOffsetsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &
 
 void DeformableOffsetsGradGpuKernelMod::SetDims(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::DeformableOffsetsGrad>(primitive_);
-  if (kernel_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast DeformableOffsetsGrad failed!";
-  }
   auto kernel_name_ = primitive_->name();
-  dims_.deformable_group = LongToUint(kernel_ptr->get_deformable_groups());
+  dims_.deformable_group = LongToUint(GetValue<int64_t>(primitive_->GetAttr("deformable_groups")));
   if (dims_.deformable_group == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', deformable group must be greater than 0.";
   }
-  std::vector<int64_t> pad = kernel_ptr->get_pads();
+  std::vector<int64_t> pad = GetValue<std::vector<int64_t>>(primitive_->GetAttr("pads"));
   CheckSize(kernel_name_, kPadStr, kPadNum, pad.size());
   dims_.pad_top = LongToUint(pad[kPadTopIndex]);
   dims_.pad_left = LongToUint(pad[kPadLeftIndex]);
 
-  std::vector<int64_t> stride = kernel_ptr->get_strides();
+  std::vector<int64_t> stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr("strides"));
   CheckSize(kernel_name_, kStrideStr, kStrideNum, stride.size());
   dims_.stride_h = LongToUint(stride[kStrideHIndex]);
   dims_.stride_w = LongToUint(stride[kStrideWIndex]);
 
-  std::vector<int64_t> dilation = kernel_ptr->get_dilations();
+  std::vector<int64_t> dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilations"));
   CheckSize(kernel_name_, kDilationStr, kDilationNum, dilation.size());
   dims_.dilation_h = LongToUint(dilation[kDilationHIndex]);
   dims_.dilation_w = LongToUint(dilation[kDilationWIndex]);
 
-  std::vector<int64_t> ksize = kernel_ptr->get_kernel_size();
+  std::vector<int64_t> ksize = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
   CheckSize(kernel_name_, kKernelSizeStr, kKernelSizeNum, ksize.size());
   dims_.kernel_h = LongToUint(ksize[kKernelHIndex]);
   dims_.kernel_w = LongToUint(ksize[kKernelWIndex]);

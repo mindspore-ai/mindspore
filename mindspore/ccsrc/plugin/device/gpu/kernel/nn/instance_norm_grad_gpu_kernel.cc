@@ -36,10 +36,10 @@ bool InstanceNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &input
                                       "For 'InstanceNormGradGpuKernelMod', it create dx desc failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&scale_bias_diff_desc_),
                                       "For 'InstanceNormGradGpuKernelMod', it create para desc failed");
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNormGrad>(primitive_);
-  batch_rank_ = kernel_ptr->get_batch_rank();
-  epsilon_ = kernel_ptr->get_epsilon();
-  beta_data_diff_ = kernel_ptr->get_inplace_algo() == "cover" ? 0 : 1;
+
+  batch_rank_ = GetValue<int64_t>(primitive_->GetAttr("batch_rank"));
+  epsilon_ = static_cast<double>(GetValue<float>(primitive_->GetAttr("epsilon")));
+  beta_data_diff_ = GetValue<std::string>(primitive_->GetAttr("inplace_algo")) == "cover" ? 0 : 1;
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
 

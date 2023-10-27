@@ -61,7 +61,7 @@ int Conv2dFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     auto conv_kernel_type = SelectConvolutionGpuKernel(conv_args_);
     conv_kernel_ptr =
       ConvolutionGpuKernelFactory::CreateConvolutionGpuKernel(conv_args_, conv_kernel_type, ConvType::kForward);
-    MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
+
     InitResource();
   }
   ResetResource();
@@ -86,7 +86,6 @@ bool Conv2dFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
   T *filter_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  MS_EXCEPTION_IF_NULL(conv_kernel_ptr);
   return conv_kernel_ptr->LaunchKernel<T>(conv_args_, input_addr, filter_addr, output_addr, workspace, stream_ptr_);
 }
 

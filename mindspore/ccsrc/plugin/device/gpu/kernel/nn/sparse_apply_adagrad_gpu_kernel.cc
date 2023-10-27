@@ -35,14 +35,8 @@ bool SparseApplyAdagradGpuKernelMod::Init(const std::vector<KernelTensor *> &inp
     return false;
   }
 
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseApplyAdagrad>(primitive_);
-  MS_EXCEPTION_IF_NULL(kernel_ptr);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "SparseApplyAdagrad ops failed!";
-    return false;
-  }
-  lr_ = kernel_ptr->get_lr();
-  update_slots_ = kernel_ptr->get_update_slots();
+  lr_ = GetValue<float>(primitive_->GetAttr("lr"));
+  update_slots_ = GetValue<bool>(primitive_->GetAttr("update_slots"));
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

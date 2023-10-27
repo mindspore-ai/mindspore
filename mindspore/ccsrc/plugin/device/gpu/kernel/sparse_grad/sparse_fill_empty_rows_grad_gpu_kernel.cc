@@ -21,8 +21,6 @@ namespace mindspore {
 namespace kernel {
 bool SparseFillEmptyRowsGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::SparseFillEmptyRowsGrad>(primitive_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -34,8 +32,8 @@ bool SparseFillEmptyRowsGradGpuKernelMod::Init(const std::vector<KernelTensor *>
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_ptr_->name()
-                            << "', it does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;

@@ -20,9 +20,6 @@ namespace mindspore {
 namespace kernel {
 bool HammingWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr_ = std::dynamic_pointer_cast<ops::HammingWindow>(primitive_);
-  MS_ERROR_IF_NULL(kernel_ptr_);
-
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
@@ -37,9 +34,9 @@ bool HammingWindowGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = func_list_[index].second;
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
-  periodic_ = kernel_ptr_->get_periodic();
-  alpha_ = kernel_ptr_->get_alpha();
-  beta_ = kernel_ptr_->get_beta();
+  periodic_ = GetValue<bool>(primitive_->GetAttr("periodic"));
+  alpha_ = GetValue<float>(primitive_->GetAttr("alpha"));
+  beta_ = GetValue<float>(primitive_->GetAttr("beta"));
   return true;
 }
 

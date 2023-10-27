@@ -34,15 +34,9 @@ ReservoirReplayBufferCreateGpuKernel::~ReservoirReplayBufferCreateGpuKernel() {
 
 bool ReservoirReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferCreate>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferCreate ops failed!";
-    return false;
-  }
-
-  const std::vector<int64_t> &schema = kernel_ptr->get_schema();
-  const int64_t &seed0 = kernel_ptr->get_seed0();
-  const int64_t &seed1 = kernel_ptr->get_seed1();
+  const std::vector<int64_t> &schema = GetValue<std::vector<int64_t>>(primitive_->GetAttr("schema"));
+  const int64_t &seed0 = GetValue<int64_t>(primitive_->GetAttr("seed0"));
+  const int64_t &seed1 = GetValue<int64_t>(primitive_->GetAttr("seed1"));
 
   unsigned int seed = 0;
   std::random_device rd;
@@ -58,7 +52,7 @@ bool ReservoirReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *
   std::transform(schema.begin(), schema.end(), std::back_inserter(schema_in_size),
                  [](const int64_t &arg) -> size_t { return LongToSize(arg); });
 
-  const int64_t &capacity = kernel_ptr->get_capacity();
+  const int64_t &capacity = GetValue<int64_t>(primitive_->GetAttr("capacity"));
   auto &factory = ReservoirReplayBufferFactory::GetInstance();
   std::tie(handle_, reservoir_replay_buffer_) = factory.Create(seed, capacity, schema_in_size);
   MS_EXCEPTION_IF_NULL(reservoir_replay_buffer_);
@@ -95,13 +89,7 @@ ReservoirReplayBufferPushGpuKernel::~ReservoirReplayBufferPushGpuKernel() {
 
 bool ReservoirReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferPush>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferPush ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   reservior_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservior_replay_buffer_);
 
@@ -132,14 +120,8 @@ std::vector<KernelAttr> ReservoirReplayBufferPushGpuKernel::GetOpSupport() {
 
 bool ReservoirReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferSample>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast ReservoirReplayBufferSample ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
-  batch_size_ = kernel_ptr->get_batch_size();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
+  batch_size_ = GetValue<int64_t>(primitive_->GetAttr("batch_size"));
   reservior_replay_buffer_ = ReservoirReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(reservior_replay_buffer_);
 
@@ -166,13 +148,7 @@ std::vector<KernelAttr> ReservoirReplayBufferSampleGpuKernel::GetOpSupport() {
 
 bool ReservoirReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                  const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::ReservoirReplayBufferDestroy>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast ReservoirReplayBufferDestroy ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   output_size_list_.push_back(sizeof(handle_));
   return true;
 }

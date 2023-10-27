@@ -34,8 +34,8 @@ bool CTCLossV2GpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
 
   // Getting values
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::CTCLossV2>(primitive_);
-  blank_ = kernel_ptr->get_blank();
+
+  blank_ = GetValue<int64_t>(primitive_->GetAttr("blank"));
 
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;

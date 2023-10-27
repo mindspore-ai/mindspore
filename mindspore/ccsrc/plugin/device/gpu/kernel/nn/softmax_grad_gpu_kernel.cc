@@ -53,15 +53,12 @@ int SoftmaxGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   shape_size_ = input_shape.size();
   if (kernel_name_ == "LogSoftmaxGrad") {
     algo_ = CUDNN_SOFTMAX_LOG;
-    // Todo, dynamic shape
-    // auto log_soft_max_grad_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(primitive_);
-    // auto axis = LongToInt(log_soft_max_grad_ptr->get_axis());
-    // InitSizeByAxis(input_shape, axis);
+    auto axis = LongToInt(GetValue<int64_t>(primitive_->GetAttr("axis")));
+    InitSizeByAxis(input_shape, axis);
   } else {
     algo_ = CUDNN_SOFTMAX_ACCURATE;
     std::vector<int> axis;
-    auto soft_max_grad_ptr = std::dynamic_pointer_cast<ops::SoftmaxGrad>(primitive_);
-    auto axis_me = soft_max_grad_ptr->get_axis();
+    auto axis_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
     (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                          [](const int64_t &value) { return LongToInt(value); });
     if (axis.size() < 1) {

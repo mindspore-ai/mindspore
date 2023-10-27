@@ -34,17 +34,11 @@ PriorityReplayBufferCreateGpuKernel::~PriorityReplayBufferCreateGpuKernel() {
 
 bool PriorityReplayBufferCreateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferCreate>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast PriorityReplayBufferCreate ops failed!";
-    return false;
-  }
-
-  const int64_t &capacity = kernel_ptr->get_capacity();
-  const float &alpha = kernel_ptr->get_alpha();
-  const std::vector<int64_t> &schema = kernel_ptr->get_schema();
-  const int64_t &seed0 = kernel_ptr->get_seed0();
-  const int64_t &seed1 = kernel_ptr->get_seed1();
+  const int64_t &capacity = GetValue<int64_t>(primitive_->GetAttr("capacity"));
+  const float &alpha = GetValue<float>(primitive_->GetAttr("alpha"));
+  const std::vector<int64_t> &schema = GetValue<std::vector<int64_t>>(primitive_->GetAttr("schema"));
+  const int64_t &seed0 = GetValue<int64_t>(primitive_->GetAttr("seed0"));
+  const int64_t &seed1 = GetValue<int64_t>(primitive_->GetAttr("seed1"));
 
   unsigned int seed = 0;
   std::random_device rd;
@@ -96,13 +90,7 @@ PriorityReplayBufferPushGpuKernel::~PriorityReplayBufferPushGpuKernel() {
 
 bool PriorityReplayBufferPushGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                              const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferPush>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast PriorityReplayBufferPush ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
@@ -138,14 +126,8 @@ std::vector<KernelAttr> PriorityReplayBufferPushGpuKernel::GetOpSupport() {
 
 bool PriorityReplayBufferSampleGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferSample>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast PriorityReplayBufferSample ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
-  batch_size_ = kernel_ptr->get_batch_size();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
+  batch_size_ = GetValue<int64_t>(primitive_->GetAttr("batch_size"));
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
@@ -188,17 +170,11 @@ PriorityReplayBufferUpdateGpuKernel::~PriorityReplayBufferUpdateGpuKernel() {
 
 bool PriorityReplayBufferUpdateGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferUpdate>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast PriorityReplayBufferUpdate ops failed!";
-    return false;
-  }
-
   auto indices_shape = inputs[0]->GetShapeVector();
   MS_EXCEPTION_IF_CHECK_FAIL(indices_shape.size() == 1, "The indices rank should be 1.");
   batch_size_ = indices_shape[0];
 
-  handle_ = kernel_ptr->get_handle();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
   MS_EXCEPTION_IF_NULL(prioriory_replay_buffer_);
 
@@ -232,13 +208,7 @@ std::vector<KernelAttr> PriorityReplayBufferUpdateGpuKernel::GetOpSupport() {
 
 bool PriorityReplayBufferDestroyGpuKernel::Init(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::PriorityReplayBufferDestroy>(primitive_);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "cast PriorityReplayBufferDestroy ops failed!";
-    return false;
-  }
-
-  handle_ = kernel_ptr->get_handle();
+  handle_ = GetValue<int64_t>(primitive_->GetAttr("handle"));
   output_size_list_.push_back(sizeof(handle_));
   return true;
 }
