@@ -36,8 +36,7 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
     if (auto vptr = node->cast<ValueNodePtr>(); value_nodes.count(vptr) == 0) {
       auto new_node = kernel_graph->NewValueNode(vptr);
       auto ori_kernel_info = dynamic_cast<device::KernelInfo *>(vptr->kernel_info());
-      MS_EXCEPTION_IF_NULL(ori_kernel_info);
-      if (ori_kernel_info->has_build_info()) {
+      if (ori_kernel_info != nullptr && ori_kernel_info->has_build_info()) {
         const auto &ori_kernel_build_info = ori_kernel_info->GetMutableSelectKernelBuildInfo();
         AnfAlgo::SetSelectKernelBuildInfo(ori_kernel_build_info, new_node.get());
       }
