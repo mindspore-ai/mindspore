@@ -59,10 +59,10 @@ bool LpNormCpuKernelMod::GetReductionAttr() {
     MS_LOG(ERROR) << "For 'LpNorm', it's kernel name get failed, but got " << kernel_name_;
     return false;
   }
-  int64_t p = GetValue<double_t>(primitive_->GetAttr(ops::kP));
+  int64_t p = GetValue<int64_t>(primitive_->GetAttr(ops::kP));
   is_p_zero_ = (p == 0);
   p_ = LongToFloat(p);
-  epsilon_ = GetValue<double_t>(primitive_->GetAttr(ops::kEpsilon));
+  epsilon_ = GetValue<float>(primitive_->GetAttr(ops::kEpsilon));
   axis_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kAxis));
   return true;
 }
@@ -209,8 +209,6 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
 
 std::vector<std::pair<KernelAttr, LpNormCpuKernelMod::LpNromFunc>> LpNormCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &LpNormCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &LpNormCpuKernelMod::LaunchKernel<float>}};
 
 std::vector<KernelAttr> LpNormCpuKernelMod::GetOpSupport() {

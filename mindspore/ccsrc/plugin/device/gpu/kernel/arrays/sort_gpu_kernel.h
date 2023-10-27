@@ -63,7 +63,7 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
                     << ", but got " << input_rank_;
       return KRET_RESIZE_FAILED;
     }
-    descending_ = GetValue<int64_t>(primitive_->GetAttr("descending"));
+    descending_ = GetValue<bool>(primitive_->GetAttr("descending"));
     axis_ = GetValue<int64_t>(primitive_->GetAttr("axis"));
     if (axis_ < 0) {
       axis_ += input_rank_;
@@ -136,7 +136,7 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(ERROR) << "Malloc FastSortGpuKernelMod failed while Init.";
       return false;
     }
-    return fast_sort_kernel_->Init(inputs, outputs);
+    return fast_sort_kernel_->Init(primitive_, inputs, outputs);
   }
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

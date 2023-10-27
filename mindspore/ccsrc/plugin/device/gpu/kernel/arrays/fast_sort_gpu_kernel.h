@@ -47,9 +47,11 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
     delete output_value_info_;
   }
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+  bool Init(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
+            const std::vector<KernelTensor *> &outputs) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastSortInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastSortOutputsNum, kernel_name_);
+    primitive_ = primitive;
     return true;
   }
 
@@ -151,6 +153,7 @@ class FastSortGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_{false};
   std::vector<int64_t> input_shape_;
   int64_t input_rank_{0};
+  PrimitivePtr primitive_;
 
   TensorLayoutHelper *input_info_{nullptr};
   TensorLayoutHelper *output_index_info_{nullptr};
