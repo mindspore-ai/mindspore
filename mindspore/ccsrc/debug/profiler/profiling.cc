@@ -17,6 +17,7 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include <chrono>
 #include <cmath>
+#include <sstream>
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #ifdef __linux__
@@ -353,14 +354,18 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
     MS_LOG(WARNING) << "Open csv file failed, skipping saving host info to file.";
     return;
   }
-  csv.WriteToCsv(host_profile_data.tid);
-  csv.WriteToCsv(host_profile_data.pid);
-  csv.WriteToCsv(host_profile_data.parent_pid);
-  csv.WriteToCsv(host_profile_data.module_name);
-  csv.WriteToCsv(host_profile_data.event);
-  csv.WriteToCsv(host_profile_data.stage);
-  csv.WriteToCsv(host_profile_data.level);
-  csv.WriteToCsv(host_profile_data.start_end);
+  std::string row = "";
+  const std::string kSeparator = ",";
+  std::ostringstream ss_tid;
+  ss_tid << host_profile_data.tid;
+  row.append(ss_tid.str() + kSeparator);
+  row.append(std::to_string(host_profile_data.pid) + kSeparator);
+  row.append(std::to_string(host_profile_data.parent_pid) + kSeparator);
+  row.append(host_profile_data.module_name + kSeparator);
+  row.append(host_profile_data.event + kSeparator);
+  row.append(host_profile_data.stage + kSeparator);
+  row.append(std::to_string(host_profile_data.level) + kSeparator);
+  row.append(std::to_string(host_profile_data.start_end) + kSeparator);
   if (!host_profile_data.custom_info.empty()) {
     std::string custom_info_str = "{";
     for (auto it = host_profile_data.custom_info.cbegin(); it != host_profile_data.custom_info.cend(); ++it) {
@@ -370,12 +375,14 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
     if (custom_info_str.find(",") != std::string::npos) {
       custom_info_str = "\"" + custom_info_str + "\"";
     }
-    csv.WriteToCsv(custom_info_str);
+    row.append(custom_info_str + kSeparator);
   } else {
-    csv.WriteToCsv("");
+    row.append(kSeparator);
   }
-  csv.WriteToCsv(host_profile_data.memory_usage);
-  csv.WriteToCsv(host_profile_data.time_stamp, true);
+  row.append(std::to_string(host_profile_data.memory_usage) + kSeparator);
+  row.append(std::to_string(host_profile_data.time_stamp));
+
+  csv.WriteToCsv(row, true);
 }
 #endif
 }  // namespace profiler
