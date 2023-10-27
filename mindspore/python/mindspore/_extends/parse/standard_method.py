@@ -2533,8 +2533,7 @@ def get_max_min_data_len(*data):
     if isinstance(data, (dict, list, tuple)):
         len_data = len(data)
     else:
-        const_utils.raise_type_error(
-            "max() or min() does not support the data type.")
+        raise TypeError("max() or min() does not support the data type.")
     return len_data
 
 
@@ -2546,8 +2545,7 @@ def get_tensor_num(data):
             tensor_shape = F.shape(input_data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len != 0 and not (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                const_utils.raise_value_error(
-                    "The truth value of an array with more than one element is ambiguous.")
+                raise ValueError("The truth value of an array with more than one element is ambiguous.")
             tensor_num = tensor_num + 1
     return tensor_num
 
@@ -2567,9 +2565,9 @@ def check_sequence_all_variable_scalar(x, str_info):
     """Check whether x can be used in SequenceMax and SequenceMin"""
     if F.is_sequence_shape_unknown(x):
         if F.is_dynamic_sequence_element_unknown(x):
-            const_utils.raise_value_error(str_info + "() arg is an empty sequence.")
+            raise ValueError(str_info + "() arg is an empty sequence.")
         if not isinstance(x[0], (int, float)):
-            const_utils.raise_value_error(
+            raise ValueError(
                 "When the input to " + str_info + "() is dynamic length sequence, only support scalar type input")
         return True
     contain_variable_scalar = False
@@ -2581,56 +2579,37 @@ def check_sequence_all_variable_scalar(x, str_info):
     return contain_variable_scalar
 
 
-def get_data_type_str(input_data):
-    """Get the type of input."""
-    if isinstance(input_data, (int, float, bool)):
-        return "variable " + str(F.typeof(input_data))
-    return str(F.typeof(input_data))
-
-
-def check_isconstant(input_data, func_name):
-    """Check the input data of func is constant."""
-    if not F.isconstant(input_data):
-        const_utils.raise_type_error("The input of " + func_name + " only support Tensor, List, Tuple, constant Scalar,"
-                                                                   " but got " + get_data_type_str(input_data))
-
-
 def ms_max_one_element(x):
     """Implementation of `max` which inputs has only one element."""
     if isinstance(x, Tensor):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
         return x.max()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
         if check_sequence_all_variable_scalar(x, "max"):
             return SequenceMax()(x)
         if len(x) == 0:
-            const_utils.raise_value_error("max() arg is an empty sequence.")
+            raise ValueError("max() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
         if tensor_num == len(x):
             return max_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "max() cannot contain both tensor and non-tensor type.")
+            raise TypeError("max() cannot contain both tensor and non-tensor type.")
         if exist_tensor(x):
-            const_utils.raise_type_error(
-                "max() cannot support tensor in list or tuple nested now.")
-    check_isconstant(x, "max()")
-    return max_(x)
+            raise TypeError("max() cannot support tensor in list or tuple nested now.")
+    return F._py_interpret("max(x)", {}, {"x": x})
 
 
 def ms_max(*data):
     """Implementation of `max`."""
     len_data = get_max_min_data_len(data)
-    if len_data <= 0:
-        const_utils.raise_type_error("max() requires 1 argument at least.")
+    if len_data <= 0: # pylint: disable=no-else-raise
+        raise TypeError("max() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         return ms_max_one_element(x)
@@ -2640,15 +2619,11 @@ def ms_max(*data):
         if tensor_num == len_data:
             return max_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "max() cannot contain both tensor and non-tensor type.")
+            raise TypeError("max() cannot contain both tensor and non-tensor type.")
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
-    for input_data in data:
-        check_isconstant(input_data, "max()")
-    return max_(*data)
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
+    return F._py_interpret("max(data)", {}, {"data": data})
 
 
 def min_tensor(*data):
@@ -2684,36 +2659,31 @@ def ms_min_one_element(x):
         tensor_shape = F.shape(x)
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
         if tensor_shape_len >= 2:
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
         return x.min()
     # Deal with Tensor in tuple or list
     if isinstance(x, (list, tuple)):
         if check_sequence_all_variable_scalar(x, "min"):
             return SequenceMin()(x)
         if len(x) == 0:
-            const_utils.raise_value_error("min() arg is an empty sequence.")
+            raise ValueError("min() arg is an empty sequence.")
         tensor_num = get_tensor_num(x)
         if tensor_num == len(x):
             return min_tensor(x)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "min() cannot contain both tensor and non-tensor type.")
+            raise TypeError("min() cannot contain both tensor and non-tensor type.")
         if exist_tensor(x):
-            const_utils.raise_type_error(
-                "min() cannot support tensor in list or tuple nested now.")
-    check_isconstant(x, "min()")
-    return min_(x)
+            raise TypeError("min() cannot support tensor in list or tuple nested now.")
+    return F._py_interpret("min(x)", {}, {"x": x})
 
 
 def ms_min(*data):
     """Implementation of `min`."""
     len_data = get_max_min_data_len(data)
-    if len_data <= 0:
-        const_utils.raise_type_error("min() requires 1 argument at least.")
+    if len_data <= 0: # pylint: disable=no-else-raise
+        raise TypeError("min() requires 1 argument at least.")
     elif len_data == 1:
         x = data[0]
         return ms_min_one_element(x)
@@ -2723,15 +2693,11 @@ def ms_min(*data):
         if tensor_num == len_data:
             return min_tensor(*data)
         if tensor_num != 0:
-            const_utils.raise_type_error(
-                "min() cannot contain both tensor and non-tensor type.")
+            raise TypeError("min() cannot contain both tensor and non-tensor type.")
         # exist tensor in list/tuple
         if exist_tensor(data):
-            const_utils.raise_value_error(
-                "The truth value of an array with more than one element is ambiguous.")
-    for input_data in data:
-        check_isconstant(input_data, "min()")
-    return min_(*data)
+            raise ValueError("The truth value of an array with more than one element is ambiguous.")
+    return F._py_interpret("min(data)", {}, {"data": data})
 
 
 def ms_sum(*data):

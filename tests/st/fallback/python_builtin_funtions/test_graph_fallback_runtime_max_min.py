@@ -19,7 +19,48 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_max():
+    """
+    Feature: JIT Fallback
+    Description: Test max() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo():
+        return max(Tensor([1, 2, 3]).asnumpy())
+
+    out = foo()
+    assert out == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_min():
+    """
+    Feature: JIT Fallback
+    Description: Test min() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo():
+        return min(Tensor([1, 2, 3]).asnumpy())
+
+    out = foo()
+    assert out == 1
+
+
+
+@pytest.mark.skip(reason="Invalid call node")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

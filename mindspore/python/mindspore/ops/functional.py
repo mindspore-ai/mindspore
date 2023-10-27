@@ -24,7 +24,7 @@ from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P
 from mindspore.ops.operations import array_ops
 from mindspore.ops.primitive import Primitive
-from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops
+from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _scalar_ops, _sequence_ops, other_ops
 from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
@@ -48,6 +48,7 @@ tensor_range = P.Range()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 mixed_precision_cast = _inner_ops.MixedPrecisionCast()
+_py_interpret = other_ops.PyInterpret()
 
 # Dynamic shape
 is_sequence_value_unknown = Primitive("IsShapeUnKnown")
