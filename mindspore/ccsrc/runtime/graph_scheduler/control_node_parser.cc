@@ -1774,7 +1774,9 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
         // If the output is a cnode, get the device context type by the kernel.
         const auto &iter = front_to_backend_kernels_.find(output_node);
         if (iter == front_to_backend_kernels_.end()) {
-          MS_LOG(EXCEPTION) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+          MS_LOG(WARNING) << "Cannot find backend kernel for cnode:" << output_node.first->DebugString();
+          (void)return_device_contexts.emplace_back(default_context);
+          continue;
         }
         MS_EXCEPTION_IF_NULL(iter->second.second);
         (void)return_device_contexts.emplace_back(iter->second.second);
@@ -2734,8 +2736,9 @@ bool ControlNodeParser::IsInputInSameLevel(const AnfNodePtr &node) {
     }
     auto iter = node_to_level_.find(input_node);
     if (iter == node_to_level_.end()) {
-      MS_LOG(EXCEPTION) << "Failed to find level by input:" << input_node->DebugString()
-                        << " for node:" << node->DebugString();
+      MS_LOG(WARNING) << "Failed to find level by input:" << input_node->DebugString()
+                      << " for node:" << node->DebugString();
+      return true;
     }
     if (level == SIZE_MAX) {
       level = iter->second;

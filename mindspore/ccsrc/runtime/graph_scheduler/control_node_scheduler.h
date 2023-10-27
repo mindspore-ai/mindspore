@@ -40,7 +40,9 @@ class ControlNodeScheduler {
   // Transform the control nodes to control actors.
   ControlActorSetPtr Build(const GraphCompilerInfo &graph_compiler_info, const AID &memory_manager_aid);
   // Link control actors.
-  void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) const;
+  void Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info,
+            const std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>, session::KernelWithIndexCmp>
+              &graph_output_to_actor);
 
   void BuildDataSourceActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
                                           const HostTensorQueuePtr &host_queue,
@@ -106,6 +108,8 @@ class ControlNodeScheduler {
   void CollectDynamicLenIndexForArgment(const GraphCompilerInfo &graph_compiler_info) const;
   // The id of memory manager actor.
   AID memory_manager_aid_;
+  std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>, session::KernelWithIndexCmp>
+    graph_output_to_actor_;
 };
 }  // namespace runtime
 }  // namespace mindspore

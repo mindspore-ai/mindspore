@@ -19,6 +19,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
+#include "runtime/graph_scheduler/graph_scheduler.h"
 
 namespace mindspore {
 namespace runtime {
@@ -656,10 +657,13 @@ void ControlNodeScheduler::CollectDynamicLenIndexForArgment(const GraphCompilerI
   }
 }
 
-void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) const {
+void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info,
+                                const std::map<KernelWithIndex, std::pair<AbstractActor *, KernelWithIndex>,
+                                               session::KernelWithIndexCmp> &graph_output_to_actor) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
   MS_LOG(DEBUG) << "Control node scheduler link start.";
+  graph_output_to_actor_ = graph_output_to_actor;
   // Link data arrows and partial arrows between control actors.
   LinkArrowForControlActor(actor_set->control_actors_.get(), graph_compiler_info);
 
@@ -690,6 +694,7 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   SetTimeSummaryForControlActor(graph_compiler_info);
 
   CollectDynamicLenIndexForArgment(graph_compiler_info);
+  graph_output_to_actor_.clear();
   MS_LOG(DEBUG) << "Control node scheduler link end.";
 }
 
@@ -1139,7 +1144,19 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
   MS_EXCEPTION_IF_NULL(parser);
   const auto &graph = parser->FetchKernelGraphByFrontNode(from_node);
   MS_LOG(DEBUG) << "Link arrow by kernel, from mode:" << from_node->DebugString() << " to actor:" << to_actor->GetAID();
-  MS_EXCEPTION_IF_NULL(graph);
+  if (graph == nullptr) {
+    if (graph_output_to_actor_.count(from_node_with_index) != 0) {
+      const auto &pair = graph_output_to_actor_.at(from_node_with_index);
+      MS_LOG(INFO) << "actor:" << (pair.first == nullptr ? " nullptr" : pair.first->GetAID().Name())
+                   << " from node:" << (pair.second.first == nullptr ? " nullptr" : pair.second.first->DebugString());
+      if (pair.second.first != nullptr && pair.second.first->isa<ValueNode>()) {
+        LinkArrowByValueNode(pair.second.first, to_actor, from_node_with_index.second, to_node_with_index.second);
+        return;
+      }
+    }
+    MS_LOG(EXCEPTION) << "Graph for kernel is null:" << kernel->DebugString()
+                      << " output map size:" << graph_output_to_actor_.size();
+  }
   const auto &group_name = parser->FetchGroupNameByKernelGraph(graph);
 
   if (to_actor->type_ == KernelTransformType::kExitActor && to_actor->node_ == nullptr &&
