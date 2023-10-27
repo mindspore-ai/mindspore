@@ -267,6 +267,9 @@
       "ksize": "kernel_size",
       "pads": "pad_list",
       "data_format": "format"
+    },
+    "DepthToSpace": {
+      "data_format": "format"
     }
   },
   "AttrDefaultValue": {
