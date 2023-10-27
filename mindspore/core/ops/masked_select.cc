@@ -23,8 +23,8 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "mindspore/core/ops/math_ops.h"
+#include "ops/array_ops.h"
+#include "ops/math_ops.h"
 #include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
@@ -34,29 +34,16 @@ namespace ops {
 namespace {
 constexpr int64_t kMaskedSelectInputNum = 2;
 
-abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MaskedSelectFrontendInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
-
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
-  auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
-  auto x_shape = x_shape_map[kShape];
-  auto y_shape = y_shape_map[kShape];
-
-  int64_t num = -1;
-  if (!IsDynamic(x_shape) && !IsDynamic(y_shape)) {
-    auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name, "input", "mask");
-    num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
-  }
-
   ShapeVector output_shape = {abstract::Shape::kShapeDimAny};
-  ShapeVector max_shape = {num};
-  return std::make_shared<abstract::Shape>(output_shape, max_shape);
+  return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
-TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MaskedSelectFrontendInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32, kInt64,   kUInt8, kUInt16,    kUInt32,
                                          kUInt64, kFloat16, kFloat, kFloat64, kBool,  kComplex64, kComplex128};
   MS_EXCEPTION_IF_NULL(prim);
@@ -71,8 +58,10 @@ TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<Abstra
 
 AbstractBasePtr MaskedSelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_shape = MaskedSelectInferShape(primitive, input_args);
-  auto infer_type = MaskedSelectInferType(primitive, input_args);
+  MS_EXCEPTION_IF_NULL(primitive);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, primitive->name());
+  auto infer_shape = MaskedSelectFrontendInferShape(primitive, input_args);
+  auto infer_type = MaskedSelectFrontendInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
@@ -83,12 +72,25 @@ class MIND_API AGMaskedSelectInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return MaskedSelectInferShape(primitive, input_args);
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMaskedSelectInputNum, op_name);
+
+    auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape());
+    auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape());
+    auto x_shape = x_shape_map[kShape];
+    auto y_shape = y_shape_map[kShape];
+
+    auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name, "input", "mask");
+    int64_t num = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+    ShapeVector real_shape = {num};
+    return std::make_shared<abstract::Shape>(real_shape);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return MaskedSelectInferType(primitive, input_args);
+    return MaskedSelectFrontendInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return MaskedSelectInfer(engine, primitive, input_args);
