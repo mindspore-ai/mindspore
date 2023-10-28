@@ -375,6 +375,13 @@ STATUS ConverterFuncGraph::RunGeOfflineConvert(const std::shared_ptr<ConverterPa
   }
   param->config_infos[lite::kConverterParams][lite::kConverterOutputFile] = param->output_file;
   if (!run_aoe) {
+    auto config_it = param->config_infos.find(lite::kAscendContextSection);
+    if (config_it == param->config_infos.end() ||
+        config_it->second.find(lite::kParameterAsRefData) == config_it->second.end()) {
+      MS_LOG(INFO) << "Not find " << lite::kParameterAsRefData << " in " << lite::kAscendContextSection
+                   << ", skip offline build graph";
+      return RET_OK;
+    }
     MS_LOG(INFO) << "GE offline model conversion begin";
     if (!AscendGeExecutorPlugin::GetInstance().OfflineBuildGraph(func_graph, context, param->config_infos)) {
       MS_LOG(ERROR) << "Failed to call GE offline model conversion";
