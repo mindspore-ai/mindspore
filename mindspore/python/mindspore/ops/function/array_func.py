@@ -890,7 +890,7 @@ def chunk(input, chunks, axis=0):
         true_chunks = int(length_along_dim // block_size)
         length1 = true_chunks * block_size
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(input), 0, True)
+        start1 = _list_comprehensions(rank_(input), 0, True)
         size1 = _tuple_setitem(arr_shape, arr_axis, length1)
         start2 = _tuple_setitem(start1, arr_axis, length1)
         size2 = _tuple_setitem(arr_shape, arr_axis, length2)
@@ -5414,7 +5414,7 @@ def _split_int(x, split_size_or_sections, axis):
         num_sections = length_along_dim // split_size_or_sections
         length1 = num_sections * split_size_or_sections
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
@@ -5746,7 +5746,7 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
         num_short_tensor = indices_or_sections - num_long_tensor
         length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
         length2 = length_along_dim - length1
-        start1 = _list_comprehensions(rank(x), 0, True)
+        start1 = _list_comprehensions(rank_(x), 0, True)
         size1 = _tuple_setitem(arr_shape, axis, length1)
         start2 = _tuple_setitem(start1, axis, length1)
         size2 = _tuple_setitem(arr_shape, axis, length2)
