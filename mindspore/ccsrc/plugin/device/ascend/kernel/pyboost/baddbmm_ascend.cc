@@ -27,27 +27,14 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void BaddbmmAscend::Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
-                           const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha,
-                           const tensor::TensorPtr &output) {
-  auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
-  PrepareOpInputs(device_context, input, batch1, batch2);
-  PrepareOpOutputs(device_context, output);
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  LAUNCH_ACLNN(aclnnBaddbmm, stream_ptr, input, batch1, batch2, beta, alpha, output);
-}
-
 tensor::TensorPtr BaddbmmAscend::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                       const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
   MS_LOG(DEBUG) << "Call start";
   InferOutput(input, batch1, batch2, beta, alpha);
-  MS_LOG(DEBUG) << "Infer end";
-
-  if (outputs_.size() != 1) {
-    MS_LOG(EXCEPTION) << "Baddbmm output size should be 1, but got " << outputs_.size();
-  }
-
-  Launch(input, batch1, batch2, beta, alpha, outputs_[0]);
+  // Don't need to allocate memory for Scalar.
+  DeviceMalloc(input, batch1, batch2);
+  auto stream_ptr = device_context_->device_res_manager_->GetStream(kDefaultStreamIndex);
+  LAUNCH_ACLNN_CUBE(aclnnBaddbmm, stream_ptr, input, batch1, batch2, beta, alpha, output(0));
   MS_LOG(DEBUG) << "Launch end";
   return outputs_[0];
 }

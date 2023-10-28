@@ -28,7 +28,6 @@ class AddAscend : public pyboost::Add {
  public:
   AddAscend() = default;
   ~AddAscend() = default;
-  bool Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, const tensor::TensorPtr &output);
 
   tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) override;
 };

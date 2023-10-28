@@ -47,7 +47,7 @@ class BACKEND_EXPORT Op {
 
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
 
-  tensor::TensorPtr output(const size_t &idx) {
+  const tensor::TensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
       MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
     }
@@ -56,6 +56,7 @@ class BACKEND_EXPORT Op {
 
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
+  void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
 
   template <typename... T>
   inline void InferOutput(T &... args) {
@@ -66,8 +67,12 @@ class BACKEND_EXPORT Op {
     outputs_.clear();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
   }
-  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) {
-    return ContiguousTensor(input_tensor);
+  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
+
+  template <typename... T>
+  void DeviceMalloc(T &... args) {
+    PrepareOpInputs(device_context_, args...);
+    PrepareOpOutputs(device_context_, outputs_);
   }
 
  protected:
@@ -76,7 +81,8 @@ class BACKEND_EXPORT Op {
   PrimitivePtr primitive_;
   // Save abstract for grad.
   std::vector<AbstractBasePtr> input_abs_;
-  AbstractBasePtr output_abs_;
+  AbstractBasePtr output_abs_{nullptr};
+  DeviceContext *device_context_{nullptr};
 };
 
 template <typename T>
@@ -113,10 +119,13 @@ class OpRegister {
   ~OpRegister() = default;
 };
 
-#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                               \
-  static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op"); \
-  static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(       \
-    #clazz, #DEVICE, []() { return std::make_shared<clazz##DEVICE>(); });
+#define MS_REG_PYBOOST_OP_REG(DEVICE, clazz)                                                \
+  static_assert(std::is_base_of<Op, clazz>::value, " must be base of Op");                  \
+  static const OpRegister<clazz> g_##clazz##DEVICE##_##_PyBoost_reg(#clazz, #DEVICE, []() { \
+    auto op = std::make_shared<clazz##DEVICE>();                                            \
+    op->set_device_context(PyBoostUtils::GetDeviceContext(#DEVICE));                        \
+    return op;                                                                              \
+  });
 
 #define MS_REG_PYBOOST_OP(DEVICE, clazz) MS_REG_PYBOOST_OP_REG(DEVICE, clazz)
 

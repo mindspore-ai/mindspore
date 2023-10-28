@@ -28,7 +28,6 @@ class MatmulAscend : public pyboost::Matmul {
  public:
   MatmulAscend() = default;
   ~MatmulAscend() = default;
-  bool Launch(const tensor::TensorPtr &x, const tensor::TensorPtr &y, const tensor::TensorPtr &output);
 
   tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) override;
 };

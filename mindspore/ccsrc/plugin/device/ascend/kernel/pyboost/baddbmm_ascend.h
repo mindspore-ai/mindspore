@@ -31,8 +31,6 @@ class BaddbmmAscend : public pyboost::Baddbmm {
 
   tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                          const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) override;
-  void Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1, const tensor::TensorPtr &batch2,
-              const ScalarPtr &beta, const ScalarPtr &alpha, const tensor::TensorPtr &output);
 };
 
 MS_REG_PYBOOST_OP(Ascend, Baddbmm);

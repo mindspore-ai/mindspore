@@ -34,10 +34,7 @@ void PrepareOpInputs(DeviceContext *device_context, Args... args) {
   [&]() { (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, args, "input"), ...); }();
 }
 
-template <typename... Args>
-void PrepareOpOutputs(DeviceContext *device_context, Args... args) {
-  [&]() { (runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, args, "output"), ...); }();
-}
+void BACKEND_EXPORT PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

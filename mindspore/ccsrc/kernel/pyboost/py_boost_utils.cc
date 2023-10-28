@@ -68,12 +68,18 @@ void PyBoostUtils::CreateOutputTensor(const tensor::TensorPtr &input, const Tens
     MS_EXCEPTION_IF_NULL(input->device_address());
   }
   output_tensor->set_contiguous_callback([](const tensor::TensorPtr &tensor, const DeviceSyncPtr &device_address,
-                                                const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
+                                            const TensorStorageInfoPtr &storage_info) -> DeviceSyncPtr {
     ContiguousTensor(tensor);
     return tensor->device_address();
   });
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+}
+
+void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
+  for (const auto &output : outputs) {
+    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
+  }
 }
 
 KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
