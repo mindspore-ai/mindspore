@@ -33,19 +33,14 @@ constexpr size_t kOutputIndex = 0;
 
 void AbsAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]));
+  UpdateWorkspace(GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]));
 }
 
 bool AbsAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   ParseGenExecutor(GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]));
-  if (workspace_size_list_.empty()) {
-    RUN_OP_API(aclnnAbs, stream_ptr, nullptr, 0, executor_, after_launch_func_);
-  } else {
-    RUN_OP_API(aclnnAbs, stream_ptr, workspace[0]->device_ptr(), workspace_size_list_[0], executor_,
-               after_launch_func_);
-  }
+  RunOp("aclnnAbs", stream_ptr, workspace);
   return true;
 }
 MS_ACLLNN_KERNEL_FACTORY_REG(Abs, AbsAclnnKernelMod);

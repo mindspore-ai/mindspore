@@ -181,27 +181,27 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
   (#aclnn_api, __VA_ARGS__)
 
 // Async run op.
-#define RUN_OP_API(aclnn_api, acl_stream, ...)                \
-  do {                                                        \
-    transform::RunOpApi(#aclnn_api, acl_stream, __VA_ARGS__); \
+#define RUN_OP_API(aclnn_api, acl_stream, ...)               \
+  do {                                                       \
+    transform::RunOpApi(aclnn_api, acl_stream, __VA_ARGS__); \
   } while (false)
 
 // Sync run op.
-#define RUN_OP_API_SYNC(aclnn_api, acl_stream, ...)                                              \
-  do {                                                                                           \
-    transform::RunOpApi(#aclnn_api, acl_stream, __VA_ARGS__, nullptr);                           \
-    auto ret = aclrtSynchronizeStream(acl_stream);                                               \
-    if (ret != 0) {                                                                              \
-      MS_LOG(EXCEPTION) << "Sync stream " #aclnn_api " failed, detail:" << aclGetRecentErrMsg(); \
-    }                                                                                            \
-    auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();   \
-    if (release_mem_func) {                                                                      \
-      release_mem_func(nullptr, false);                                                          \
-    }                                                                                            \
-    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();     \
-    if (uninit_mem_func) {                                                                       \
-      uninit_mem_func(nullptr, false);                                                           \
-    }                                                                                            \
+#define RUN_OP_API_SYNC(aclnn_api, acl_stream, ...)                                                   \
+  do {                                                                                                \
+    transform::RunOpApi(aclnn_api, acl_stream, __VA_ARGS__, nullptr);                                 \
+    auto ret = aclrtSynchronizeStream(acl_stream);                                                    \
+    if (ret != 0) {                                                                                   \
+      MS_LOG(EXCEPTION) << "Sync stream " << aclnn_api << " failed, detail:" << aclGetRecentErrMsg(); \
+    }                                                                                                 \
+    auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();        \
+    if (release_mem_func) {                                                                           \
+      release_mem_func(nullptr, false);                                                               \
+    }                                                                                                 \
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();          \
+    if (uninit_mem_func) {                                                                            \
+      uninit_mem_func(nullptr, false);                                                                \
+    }                                                                                                 \
   } while (false)
 
 // Async execute simple micro.

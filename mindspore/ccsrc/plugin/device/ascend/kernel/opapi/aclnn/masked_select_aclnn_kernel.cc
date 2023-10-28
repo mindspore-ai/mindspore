@@ -27,27 +27,20 @@ namespace kernel {
 
 void MaskedSelectAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
-  ParseGenExecutor(GEN_EXECUTOR(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]));
+  UpdateWorkspace(GEN_EXECUTOR(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]));
 }
 
 bool MaskedSelectAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto [workspace_size, executor_, tensor_param] =
-    GEN_EXECUTOR_CUSTOM(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
-  if (workspace_size != 0) {
-    std::vector<size_t> workspace_size_list = {workspace_size};
-    SetWorkspaceSizeList(workspace_size_list);
-  }
-  if (workspace_size_list_.empty()) {
-    RUN_OP_API_SYNC(aclnnMaskedSelect, stream_ptr, nullptr, 0, executor_);
-  } else {
-    RUN_OP_API_SYNC(aclnnMaskedSelect, stream_ptr, workspace[0]->device_ptr(), workspace_size_list_[0], executor_);
-  }
+  auto res = GEN_EXECUTOR_CUSTOM(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  executor_ = std::get<1>(res);
+  auto &all_tensor = std::get<2>(res);
+  RunOpAsync("aclnnMaskedSelect", stream_ptr, workspace);
 
   // Update output shape.
-  outputs_[0]->SetShapeVector(transform::UpdateOutputShape(tensor_param.get<2>()));
+  outputs_[0]->SetShapeVector(transform::UpdateOutputShape(all_tensor.get<2>()));
   return true;
 }
 

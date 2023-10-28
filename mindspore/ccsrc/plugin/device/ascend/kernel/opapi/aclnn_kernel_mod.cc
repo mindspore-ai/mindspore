@@ -48,12 +48,53 @@ bool AclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std
   return true;
 }
 
-void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
-  auto workspace_size = static_cast<size_t>(std::get<0>(args));
-  if (workspace_size != 0) {
-    std::vector<size_t> workspace_size_list = {workspace_size};
+void AclnnKernelMod::RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace) {
+  if (workspace_size_list_.empty()) {
+    RUN_OP_API(op_type, stream_ptr, nullptr, 0, executor_, after_launch_func_);
+  } else {
+    if (workspace.empty()) {
+      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
+    }
+    auto workspace_tensor = workspace[0];
+    if (workspace_tensor->size() != workspace_size_list_[0]) {
+      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
+                        << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
+    }
+    RUN_OP_API(op_type, stream_ptr, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_,
+               after_launch_func_);
+  }
+}
+
+void AclnnKernelMod::RunOpAsync(const std::string &op_type, void *stream_ptr,
+                                const std::vector<KernelTensor *> &workspace) {
+  if (workspace_size_list_.empty()) {
+    RUN_OP_API_SYNC(op_type, stream_ptr, nullptr, 0, executor_);
+  } else {
+    if (workspace.empty()) {
+      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
+    }
+    const auto &workspace_tensor = workspace[0];
+    if (workspace_tensor->size() != workspace_size_list_[0]) {
+      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
+                        << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
+    }
+    RUN_OP_API_SYNC(op_type, stream_ptr, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_);
+  }
+}
+
+void AclnnKernelMod::UpdateWorkspace(const uint64_t workspace_size) {
+  auto real_workspace_size = static_cast<size_t>(workspace_size);
+  if (real_workspace_size != 0) {
+    std::vector<size_t> workspace_size_list = {real_workspace_size};
     SetWorkspaceSizeList(workspace_size_list);
   }
+}
+
+void AclnnKernelMod::UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
+  UpdateWorkspace(std::get<0>(args));
+}
+
+void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
   executor_ = std::get<1>(args);
   if (executor_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
