@@ -262,12 +262,6 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
 
   AddMemorySign(from_actor, to_actor);
 
-  // Ignore the input address that is not used in the kernel launch.
-  if (IsIgnoredInputAddress(to_actor, to_input_index)) {
-    MS_LOG(DEBUG) << "Ignored input to actor:" << to_actor->GetAID() << " to index:" << to_input_index;
-    return;
-  }
-
   auto data_arrow = std::make_shared<DataArrow>(from_output_index, to_actor->GetAID(), to_input_index);
   (void)from_actor->output_data_arrows_.emplace_back(data_arrow);
   (void)from_actor->output_data_nodes_.emplace_back(from_kernel);
@@ -951,8 +945,7 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
         MS_EXCEPTION_IF_NULL(kernel_actor);
         auto &kernel = kernel_actor->kernel();
         MS_EXCEPTION_IF_NULL(kernel);
-        size_t total_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-        expect_input_num = total_input_num - GetIgnoredInputAddressCount(kernel);
+        expect_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
       }
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();

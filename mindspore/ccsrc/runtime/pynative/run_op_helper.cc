@@ -587,6 +587,8 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
                                               tensor->data_c(), tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
+  } else {
+    kernel_tensor->SetValue(tensor);
   }
 
   cached_device_address->set_ptr(new_device_address->GetMutablePtr());

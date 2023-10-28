@@ -539,9 +539,16 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context),
                                                   "Invalid device context for kernel actor:" + GetAID().Name());
   }
+
   size_t input_data_index = IntToSize(input_data->index_);
   if (input_data_index >= real_input_data_infos_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
+  }
+  // The ignored input address that is not used in the kernel launch and no need copy.
+  if (!launch_ignored_inputs_.empty() && (std::find(launch_ignored_inputs_.begin(), launch_ignored_inputs_.end(),
+                                                    input_data_index) != launch_ignored_inputs_.end())) {
+    MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << input_data_index;
+    return;
   }
   auto &real_input_info = real_input_data_infos_[input_data_index];
   MS_EXCEPTION_IF_NULL(real_input_info);
@@ -697,12 +704,6 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   MS_EXCEPTION_IF_NULL(kernel_mod_);
   MS_EXCEPTION_IF_NULL(kernel_info_);
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-    // May be the ignored input address that is not used in the kernel launch.
-    if (!launch_ignored_inputs_.empty() &&
-        (std::find(launch_ignored_inputs_.begin(), launch_ignored_inputs_.end(), i) != launch_ignored_inputs_.end())) {
-      MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << i;
-      continue;
-    }
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
     MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);
     launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());

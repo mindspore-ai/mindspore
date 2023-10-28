@@ -1600,10 +1600,6 @@ void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, Abs
                                                        const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph);
-  // Ignore the input address that is not used in the kernel launch.
-  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_kernel_with_input_idx.second)) {
-    return;
-  }
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
@@ -1715,10 +1711,6 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   MS_EXCEPTION_IF_NULL(from_kernel);
   auto from_output_index = from_kernel_with_output_idx.second;
   auto to_input_index = to_kernel_with_input_idx.second;
-  // Ignore the input address that is not used in the kernel launch.
-  if (SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) {
-    return;
-  }
 
   // Get the position of from kernel in the data source actor.
   auto position = from_actor->FetchNodePosition({from_kernel, 0});
@@ -1727,7 +1719,9 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   }
 
   // The custom actor will sync the device tensor data from the data arrow and no need copy.
+  // Ignore the input address that no need copy.
   if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
+      (!SchedulerHelper::IsIgnoredInputAddress(to_actor, to_input_index)) &&
       IsNeedInsertCopyActor(from_actor->device_contexts_[position], to_actor->device_contexts_[0])) {
     LinkDataArrowForCopyActor(from_actor, to_actor, from_kernel_with_output_idx, to_kernel_with_input_idx);
   } else {
