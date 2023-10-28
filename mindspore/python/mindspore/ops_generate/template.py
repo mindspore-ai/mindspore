@@ -77,11 +77,16 @@ class CppTemplate:
 
 NEW_LINE = "\n"
 WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
+
 REGISTER_DEFINE_TEMPLATE = CppTemplate(
     "  m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");\n")
 REGISTER_TEMPLATE = CppTemplate("void RegisterPyBoostFunction(py::module *m) {\n${register_func}\n}\n")
+
 PYBOOST_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function.tpl'))
+
 PYBOOST_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/op_function/template/pyboost_function_header.tpl'))
 
+GEN_OPS_DEF_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/python/mindspore/ops_generate/gen_ops_def_header.tpl'))

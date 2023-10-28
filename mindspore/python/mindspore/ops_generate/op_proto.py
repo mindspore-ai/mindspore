@@ -68,7 +68,7 @@ class OpProto:
                 init = args_dict[arg_name]['init']
                 as_init_arg = True
             if 'type_cast' in args_dict[arg_name]:
-                type_cast = [cast_type for cast_type in args_dict[arg_name]['type_cast'].split(',').strip()]
+                type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
             arg = Arg(arg_name, arg_dtype, type_cast, as_init_arg, init)
             op_args.append(arg)
         if 'returns' not in yaml.keys():

@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/common/pybind_api/api_register.h"
-#include "pipeline/pynative/forward/forward.h"
-#include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/pynative/op_function/python_arg_parser.h"
-#include "pipeline/jit/ps/parse/data_converter.h"
-#include "pybind_api/gil_scoped_long_running.h"
-#include "pipeline/pynative/predict_out_type_map.h"
-#include "pipeline/pynative/forward/forward_task.h"
-#include "mindspore/core/ops/auto_generate/gen_ops_def.h"
-${include_op_header}
+#include "ops/op_def.h"
 
-namespace mindspore::pynative {
-${function_body}
-
-${register_function_body}
-}// namespace mindspore::pynative
+namespace mindspore::ops {
+${extern_variable}
+}// namespace mindspore::ops

@@ -481,13 +481,13 @@ namespace mindspore::ops {{"""
     gen_opdef_map = f"""
 std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
     gen_include = f"""\n
-#include \"ops/op_def.h\""""
+#include \"gen_ops_def.h\""""
 
     for operator_name, operator_data in yaml_data.items():
         args = operator_data.get('args')
         returns = operator_data.get('returns')
         class_name = get_op_name(operator_name, operator_data.get('class'))
-        #gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
+        # gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         # opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
         #            f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
         #            f"""\n  .args_ =
@@ -530,8 +530,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         cc_index_str += f"""\n    }},"""
         opdef_cc += cc_index_str
 
-        #cc_func_impl_str = f"""\n  .func_impl_ = &g{class_name}FuncImpl,"""
-        #opdef_cc += cc_func_impl_str
+        # cc_func_impl_str = f"""\n  .func_impl_ = &g{class_name}FuncImpl,"""
+        # opdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
 
@@ -617,6 +617,24 @@ def generate_ops_cc_files(work_path, yaml_str):
     check_change_and_replace_file(op_name_path, tmp_op_name_path)
 
 
+def generate_ops_header_files(work_path, yaml_data):
+    """
+    :param work_path:
+    :param yaml:
+    :return: void
+    """
+    extern_str = ''
+    extern_template = CppTemplate("MS_EXPORT extern OpDef g${op_name};\n")
+    for operator_name, operator_data in yaml_data.items():
+        extern_str += extern_template.replace(op_name=gen_utils.convert_python_func_name_to_c(operator_name))
+    ops_header_file = template.GEN_OPS_DEF_HEADER_TEMPLATE.replace(extern_variable=extern_str)
+    dir_path = os.path.join(work_path, "mindspore/core/ops/auto_generate")
+    pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+    file_path = os.path.join(dir_path, "gen_ops_def.h")
+    with open(file_path, "w") as f:
+        f.write(ops_header_file)
+
+
 def generate_py_labels(yaml_data):
     """
     Generate python labels
@@ -669,6 +687,8 @@ def generate_pyboost_functions(work_path, yaml_data):
     """
     pyboost_func_str = ''
     pyboost_func_pybind_def = ''
+    pyboost_func_include_headers_str = ''
+    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/op/${operator_name}.h\"\n")
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         func_name_str = op_proto.pyboost_function_name
@@ -695,14 +715,18 @@ def generate_pyboost_functions(work_path, yaml_data):
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                        op_def_name=op_def_name_str,
                                                                        parser_body=parser_body_str, op_name=op_name_str,
-                                                                       convert_stub=convert_stub_str, call_args=call_args_str,
+                                                                       convert_stub=convert_stub_str,
+                                                                       call_args=call_args_str,
                                                                        op_args=op_args_str)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(
             pyboost_op_name=get_pyboost_name(op_proto.operator_name),
             pyboost_cfunc_name=op_proto.pyboost_function_name)
+        pyboost_func_include_headers_str += pyboost_func_include_header_template.replace(operator_name=operator_name)
     register_func_str = template.REGISTER_TEMPLATE.replace(register_func=pyboost_func_pybind_def)
-    pyboost_func_file = template.PYBOOST_HEADER_TEMPLATE.replace(function_body=pyboost_func_str,
+
+    pyboost_func_file = template.PYBOOST_HEADER_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
+                                                                 function_body=pyboost_func_str,
                                                                  register_function_body=register_func_str)
     dir_path = os.path.join(work_path, "mindspore/ccsrc/pipeline/pynative/op_function/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
@@ -828,6 +852,8 @@ def main():
     all_ops_str = {**safe_load_yaml(ops_yaml_path)}
     # generate ops c++ files
     generate_ops_cc_files(work_path, all_ops_str)
+    # generate ops header file
+    generate_ops_header_files(work_path, safe_load_yaml(ops_yaml_path))
     # generate ops label python files
     generate_labels_file(work_path, all_ops_str)
     # generate pyboost functions

@@ -329,8 +329,9 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
     (void)host_shape.emplace_back(1);
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (format() == kOpFormat_NCHW || format() == kOpFormat_DEFAULT || format() == kOpFormat_NCDHW) {
-    if (type_id() == type) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW ||
+      format_ == kOpFormat_ND) {
+    if (type_id_ == type) {
       CopyDeviceToHost(host_ptr, size);
       sync_ok = true;
     } else if (type_id() == kNumberTypeFloat32 && type == kNumberTypeFloat64) {

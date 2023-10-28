@@ -65,7 +65,7 @@ struct OpDef {
   std::unordered_map<std::string, size_t> indexes_;
   OpFuncImpl &func_impl_;
 };
-MS_EXPORT extern OpDef gBaddbmm;
+
 using OpDefPtr = OpDef *;
 
 MS_CORE_API OpDefPtr GetOpDef(const std::string &op_name);
