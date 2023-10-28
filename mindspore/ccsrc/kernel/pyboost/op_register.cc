@@ -28,6 +28,7 @@
 #include "kernel/pyboost/op/bmm.h"
 #include "kernel/pyboost/op/exp.h"
 #include "kernel/pyboost/op/erf.h"
+#include "kernel/pyboost/op/silu.h"
 
 namespace mindspore {
 namespace kernel {
@@ -67,6 +68,7 @@ template class OpFactory<View>;
 template class OpFactory<Bmm>;
 template class OpFactory<Exp>;
 template class OpFactory<Erf>;
+template class OpFactory<SiLU>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

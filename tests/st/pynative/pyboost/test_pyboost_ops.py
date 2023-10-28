@@ -18,8 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm
-from mindspore.ops.auto_generate import baddbmm, transpose, view, exp, erf
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu
 import mindspore
 
 
@@ -93,3 +92,10 @@ def test_erf_ascend():
     x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
     output = erf(x)
     assert np.allclose(output.asnumpy(), [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765])
+
+def test_silu_ascend():
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float32)
+    output = silu(x)
+    assert np.allclose(output.asnumpy(), [-0.26894143, 1.761594, -0.14227761, 1.761594, -0.26894143])
+

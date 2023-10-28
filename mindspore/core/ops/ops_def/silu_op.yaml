@@ -8,3 +8,4 @@ silu:
             dtype: tensor
     class:
         name: SiLU
+    pyboost: True
