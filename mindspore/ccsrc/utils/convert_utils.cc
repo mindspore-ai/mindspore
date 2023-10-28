@@ -343,7 +343,7 @@ KernelTensorValuePtr ConvertSequenceToKernelTensorValue(const ValueSequencePtr &
   const auto &element_values = value_seq->value();
   std::vector<uint8_t> array_data;
   if (element_values.empty()) {
-    MS_LOG(WARNING) << "The value sequence is empty.";
+    MS_LOG(INFO) << "The value sequence is empty.";
     return std::make_shared<KernelTensorValue>(std::move(array_data), value_seq->type());
   }
 

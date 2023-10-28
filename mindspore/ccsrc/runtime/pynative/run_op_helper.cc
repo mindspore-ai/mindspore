@@ -205,9 +205,13 @@ void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const
   // Copy data from host to device.
   const auto &kernel_tensor = device_address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto data_size = kernel_tensor->size();
+  if (data_size == 0) {
+    MS_LOG(INFO) << "Node " << node->DebugString() << " is empty.";
+    return;
+  }
   const void *node_value = kernel_tensor->GetValuePtr();
   MS_EXCEPTION_IF_NULL(node_value);
-  auto data_size = kernel_tensor->size();
   auto data_type_id = kernel_tensor->dtype_id();
   auto format = kernel_tensor->GetStringFormat();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
