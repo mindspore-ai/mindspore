@@ -121,6 +121,7 @@ mindspore/core/ops/auto_generate/gen_ops_name.h
 mindspore/core/ops/auto_generate/gen_ops_primitive.h
 mindspore/core/ops/auto_generate/gen_enum_def.h
 mindspore/core/ops/auto_generate/gen_ops_def.cc
+mindspore/core/ops/auto_generate/gen_ops_def.h
 mindspore/python/mindspore/ops_generate/ops.yaml
 mindspore/python/mindspore/ops_generate/ops_doc.yaml
 mindspore/python/mindspore/ops_generate/inner_ops.yaml

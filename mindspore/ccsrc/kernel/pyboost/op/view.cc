@@ -23,7 +23,7 @@ namespace kernel {
 namespace pyboost {
 void View::CastInput() {}
 
-void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape,
+void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &shape,
                               const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(input);
 
@@ -32,8 +32,6 @@ void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<
     MS_LOG(EXCEPTION) << "input tensor:" << input->ToString()
                       << " is not contiguous, storage info:" << ori_storage_info->ToString();
   }
-  std::vector<int64_t> shape_vec;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vec), [](const auto &v) { return v->value(); });
 
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
@@ -42,7 +40,7 @@ void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  auto storage_info_list = ops::ViewCalcImpl(primitive_, input, shape_vec);
+  auto storage_info_list = ops::ViewCalcImpl(primitive_, input, shape);
   if (!storage_info_list.empty()) {
     storage_info_list[0]->data_type = input->data_type();
     runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
@@ -53,7 +51,7 @@ void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<
   }
 }
 
-tensor::TensorPtr View::Call(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape) {
+tensor::TensorPtr View::Call(const tensor::TensorPtr &input, const ValueTuplePtr &shape) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();
 }

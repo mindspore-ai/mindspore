@@ -703,7 +703,6 @@ def generate_pyboost_functions(work_path, yaml_data):
             "auto ${arg_name}_tensor = PyNativeAlgo::Common::StubNodeToTensorList(${arg_name});\n")
         convert_value_tuple_template = CppTemplate("parser.ToValueTuple(${arg})")
         call_args_str = []
-        do_grad_args_str = []
         convert_stub_str = ''
         for op_arg in op_proto.op_args:
             call_arg = ''
@@ -716,14 +715,10 @@ def generate_pyboost_functions(work_path, yaml_data):
             else:
                 call_arg = op_arg.arg_name
             call_args_str.append(call_arg)
-            if gen_utils.is_list(op_arg):
-                call_arg = convert_value_tuple_template.replace(arg=call_arg)
-            do_grad_args_str.append(call_arg)
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                        op_def_name=op_def_name_str,
                                                                        parser_body=parser_body_str, op_name=op_name_str,
                                                                        convert_stub=convert_stub_str, call_args=call_args_str,
-                                                                       do_grad_args=do_grad_args_str,
                                                                        op_args=op_args_str)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(

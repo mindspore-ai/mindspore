@@ -22,10 +22,10 @@ namespace kernel {
 namespace pyboost {
 bool TransposeAscend::Launch(const tensor::TensorPtr &input, const vector<int64_t> &input_perm) { return true; }
 
-tensor::TensorPtr TransposeAscend::Call(const tensor::TensorPtr &input, const vector<Int64ImmPtr> &input_perm) {
-  vector<int64_t> axis;
-  for (auto &dim:input_perm) {
-    (void)axis.emplace_back(dim->value());
+tensor::TensorPtr TransposeAscend::Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) {
+  std::vector<int64_t> axis;
+  for (const auto &val : input_perm->value()) {
+    (void)axis.emplace_back(GetValue<int64_t>(val));
   }
   PyboostProcessView(input, axis);
   return outputs_[0];

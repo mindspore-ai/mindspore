@@ -29,7 +29,7 @@ class ViewAscend : public pyboost::View {
   ViewAscend() = default;
   ~ViewAscend() = default;
 
-  tensor::TensorPtr Call(const tensor::TensorPtr &input, const std::vector<Int64ImmPtr> &shape) override;
+  tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &shape) override;
 };
 MS_REG_PYBOOST_OP(Ascend, View);
 }  // namespace pyboost

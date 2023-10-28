@@ -29,8 +29,8 @@ class BACKEND_EXPORT Transpose : public pyboost::Op {
   ~Transpose() = default;
 
   void CastInput() override;
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const vector<Int64ImmPtr> &input_perm);
-  void PyboostProcessView(const tensor::TensorPtr &input, const vector<int64_t> &input_perm);
+  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm);
+  void PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &input_perm);
 };
 }  // namespace pyboost
 }  // namespace kernel

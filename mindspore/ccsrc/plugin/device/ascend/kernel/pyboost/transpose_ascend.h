@@ -30,7 +30,7 @@ class TransposeAscend : public pyboost::Transpose {
   ~TransposeAscend() = default;
   bool Launch(const tensor::TensorPtr &input, const vector<int64_t> &input_perm);
 
-  tensor::TensorPtr Call(const tensor::TensorPtr &input, const vector<Int64ImmPtr> &input_perm);
+  tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm);
 };
 MS_REG_PYBOOST_OP(Ascend, Transpose);
 }  // namespace pyboost

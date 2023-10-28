@@ -25,23 +25,26 @@ namespace mindspore {
 namespace pynative {
 class Parser {
  public:
-  explicit Parser(const ops::OpDefPtr op_def) : op_def_(op_def) {}
+  explicit Parser(const ops::OpDef &op_def);
   void Parse(py::list args);
   ValuePtr ToTensor(size_t i);
-  ValuePtrList ToTensorList(size_t i);
+  template <typename T>
+  ValueTuplePtr ToTensorList(size_t i);
   Int64ImmPtr ToInt(size_t i);
-  std::vector<Int64ImmPtr> ToIntList(size_t i);
+  template <typename T>
+  ValueTuplePtr ToIntList(size_t i);
   BoolImmPtr ToBool(size_t i);
-  std::vector<BoolImmPtr> ToBoolList(size_t i);
-  FloatImmPtr ToFloat(size_t i);
-  std::vector<FloatImmPtr> ToFloatList(size_t i);
+  template <typename T>
+  ValueTuplePtr ToBoolList(size_t i);
+  FP64ImmPtr ToFloat(size_t i);
+  template <typename T>
+  ValueTuplePtr ToFloatList(size_t i);
   ScalarPtr ToScalar(size_t i);
-  ValueTuplePtr ToValueTuple(const std::vector<Int64ImmPtr> &value);
   py::object Wrap(const TensorPtr &tensor);
 
  private:
   void PrintError(size_t i);
-  ops::OpDefPtr op_def_;
+  ops::OpDef op_def_;
   py::list *python_args_;
 };
 }  // namespace pynative
