@@ -417,44 +417,18 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSDBSH() cons
 }
 
 const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForPg() const {
-  // Q reshape
-  auto reshape_q_input_1 = std::make_shared<Var>();  // input Q
-  MS_CHECK_TRUE_RET(reshape_q_input_1 != nullptr, {});
-  auto reshape_q_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reshape_q_input_2 != nullptr, {});
-  auto is_reshape_q = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
-  MS_CHECK_TRUE_RET(is_reshape_q != nullptr, {});
-  auto reshape_q = VectorRef({is_reshape_q, reshape_q_input_1, reshape_q_input_2});
-  // Q transpose
-  auto is_transpose_q_param = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(is_transpose_q_param != nullptr, {});
-  auto is_transpose_q = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  MS_CHECK_TRUE_RET(is_transpose_q != nullptr, {});
-  auto transpose_q = VectorRef({is_transpose_q, reshape_q, is_transpose_q_param});
   // q div
+  auto q = std::make_shared<Var>();  // input Q
   auto is_div_q_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_div_q_param != nullptr, {});
   auto is_div_q = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimRealDiv>);
   MS_CHECK_TRUE_RET(is_div_q != nullptr, {});
-  auto div_q = VectorRef({is_div_q, transpose_q, is_div_q_param});
-  // K reshape
-  auto reshape_k_input_1 = std::make_shared<Var>();  // input K
-  MS_CHECK_TRUE_RET(reshape_k_input_1 != nullptr, {});
-  auto reshape_k_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reshape_k_input_2 != nullptr, {});
-  auto is_reshape_k = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
-  MS_CHECK_TRUE_RET(is_reshape_k != nullptr, {});
-  auto reshape_k = VectorRef({is_reshape_k, reshape_k_input_1, reshape_k_input_2});
-  // K transpose
-  auto is_transpose_k_param = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(is_transpose_k_param != nullptr, {});
-  auto is_transpose_k = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  MS_CHECK_TRUE_RET(is_transpose_k != nullptr, {});
-  auto transpose_k = VectorRef({is_transpose_k, reshape_k, is_transpose_k_param});
+  auto div_q = VectorRef({is_div_q, q, is_div_q_param});
   // matmul 1
+  auto k = std::make_shared<Var>();  // input K
   auto is_matmul_1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBatchMatMul>);
   MS_CHECK_TRUE_RET(is_matmul_1 != nullptr, {});
-  auto matmul_1 = VectorRef({is_matmul_1, div_q, transpose_k});
+  auto matmul_1 = VectorRef({is_matmul_1, div_q, k});
   // cast 1
   auto is_cast_1_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_cast_1_param != nullptr, {});
@@ -463,19 +437,13 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForPg() const {
   auto cast_1 = VectorRef({is_cast_1, matmul_1, is_cast_1_param});
   // ===== attention mask =====
   // sub
-  auto sub_mask_input_1 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(sub_mask_input_1 != nullptr, {});
-  auto sub_mask_input_2 = std::make_shared<Var>();  // input attention mask
-  MS_CHECK_TRUE_RET(sub_mask_input_2 != nullptr, {});
-  auto is_mask_sub = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSub>);
-  MS_CHECK_TRUE_RET(is_mask_sub != nullptr, {});
-  auto mask_sub = VectorRef({is_mask_sub, sub_mask_input_1, sub_mask_input_2});
+  auto atten_mask = std::make_shared<Var>();
   // mul
   auto is_mask_mul_param = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(is_mask_mul_param != nullptr, {});
   auto is_mask_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
   MS_CHECK_TRUE_RET(is_mask_mul != nullptr, {});
-  auto mask_mul = VectorRef({is_mask_mul, mask_sub, is_mask_mul_param});
+  auto mask_mul = VectorRef({is_mask_mul, atten_mask, is_mask_mul_param});
   // ===== end attention mask =====
   // add
   auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
@@ -491,24 +459,13 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForPg() const {
   auto is_cast_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimCast>);
   MS_CHECK_TRUE_RET(is_cast_2 != nullptr, {});
   auto cast_2 = VectorRef({is_cast_2, softmax, is_cast_2_param});
-  // V reshape
-  auto reshape_v_input_1 = std::make_shared<Var>();  // input V
-  MS_CHECK_TRUE_RET(reshape_v_input_1 != nullptr, {});
-  auto reshape_v_input_2 = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(reshape_v_input_2 != nullptr, {});
-  auto is_reshape_v = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
-  MS_CHECK_TRUE_RET(is_reshape_v != nullptr, {});
-  auto reshape_v = VectorRef({is_reshape_v, reshape_v_input_1, reshape_v_input_2});
-  // V transpose
-  auto is_transpose_v_param = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(is_transpose_v_param != nullptr, {});
-  auto is_transpose_v = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  MS_CHECK_TRUE_RET(is_transpose_v != nullptr, {});
-  auto transpose_v = VectorRef({is_transpose_v, reshape_v, is_transpose_v_param});
+
   // matmul 2
+  auto v = std::make_shared<Var>();  // input V
   auto is_matmul_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBatchMatMul>);
   MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
-  auto matmul_2 = VectorRef({is_matmul_2, cast_2, transpose_v});
+  //  auto reshape_v_input_1 = std::make_shared<Var>();  // input V
+  auto matmul_2 = VectorRef({is_matmul_2, cast_2, v});
   return matmul_2;
 }
 
