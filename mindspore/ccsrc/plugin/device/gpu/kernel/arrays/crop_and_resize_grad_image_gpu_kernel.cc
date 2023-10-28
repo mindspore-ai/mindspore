@@ -92,7 +92,14 @@ bool CropAndResizeGradImageGpuKernelMod::Init(const std::vector<KernelTensor *> 
   if (!is_match) {
     return false;
   }
-  attr_ptr_->method_ = static_cast<ResizeMethod>(GetValue<int64_t>(primitive_->GetAttr("method")));
+  std::string method = GetValue<std::string>(primitive_->GetAttr("method"));
+  if (method == "bilinear") {
+    attr_ptr_->method_ = ResizeMethod::LINEAR;
+  } else if (method == "nearest") {
+    attr_ptr_->method_ = ResizeMethod::NEAREST;
+  } else {  //  bilinear-v2
+    attr_ptr_->method_ = ResizeMethod::CUBIC;
+  }
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   Resize(inputs, outputs);

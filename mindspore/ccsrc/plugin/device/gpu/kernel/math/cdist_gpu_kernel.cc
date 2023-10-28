@@ -38,7 +38,7 @@ bool CdistGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   kernel_func_ = func_list_[index].second;
   batch_ = 0;
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  p_ = GetValue<int64_t>(primitive_->GetAttr("p"));
+  p_ = GetValue<float>(primitive_->GetAttr("p"));
   return true;
 }
 

@@ -81,6 +81,6 @@ std::vector<KernelAttr> BoolNotCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, BoolNotFunc> &item) { return item.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, bool_not, BoolNotCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BoolNot, BoolNotCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -138,15 +138,15 @@ int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return OP_CHECK_RETRY;
   }
   MS_CHECK_VALUE(epsilon_value.value() > 0 && epsilon_value.value() <= 1,
-                 CheckAndConvertUtils::FormatCheckInRangeMsg<double>("epsilon", epsilon_value.value(), kIncludeRight,
-                                                                     {0., 1.}, primitive));
+                 CheckAndConvertUtils::FormatCheckInRangeMsg<float>("epsilon", epsilon_value.value(), kIncludeRight,
+                                                                    {0., 1.}, primitive));
 
   auto momentum_value = GetScalarValue<pyfloat>(input_args[attr_pos + 2]->GetValue());
   if (MS_UNLIKELY(!momentum_value.has_value())) {
     return OP_CHECK_RETRY;
   }
   auto momentum = momentum_value.value();
-  MS_CHECK_VALUE(momentum >= 0 && momentum <= 1, CheckAndConvertUtils::FormatCheckInRangeMsg<double>(
+  MS_CHECK_VALUE(momentum >= 0 && momentum <= 1, CheckAndConvertUtils::FormatCheckInRangeMsg<float>(
                                                    "momentum", momentum, kIncludeRight, {0., 1.}, primitive));
 
   auto format_opt = GetScalarValue<int64_t>(input_args[attr_pos + 3]->GetValue());

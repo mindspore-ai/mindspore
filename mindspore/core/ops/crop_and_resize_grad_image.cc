@@ -85,22 +85,20 @@ void CheckShapes(const std::string &prim_name, const ShapeVector &input_shape0, 
   }
 }
 
-abstract::ShapePtr GetReturnShape(const std::string &prim_name, const AbstractBasePtr &output_size, int64_t max_len,
+abstract::ShapePtr GetReturnShape(const PrimitivePtr &primitive, const AbstractBasePtr &output_size, int64_t max_len,
                                   int64_t image_k_dep) {
   // Infer max shape of output
   if (CheckAndConvertUtils::IsTensor(output_size)) {
     const std::set<TypePtr> output_size_valid_types = {kInt32};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output_size dtype", output_size->GetType(),
-                                                     output_size_valid_types, prim_name);
+                                                     output_size_valid_types, primitive->name());
     auto output_size_value = output_size->GetValue();
     MS_EXCEPTION_IF_NULL(output_size_value);
     if (IsValueKnown(output_size_value)) {
-      auto output_size_tensor = output_size_value->cast<tensor::TensorPtr>();
-      const std::vector<int64_t> const_output_size_shape = output_size_tensor->shape_c();
+      const std::vector<int64_t> const_output_size_shape = output_size->GetShape()->GetShapeVector();
       std::vector<int64_t> output_size_value_vec(ImagekOutputSizeLen);
       if (const_output_size_shape.size() == ImagekOutputSizeD) {
-        auto value = static_cast<int *>(output_size_tensor->data_c());
-        MS_EXCEPTION_IF_NULL(value);
+        auto value = GetShapeValue(primitive, output_size);
         for (int64_t i = 0; i < ImagekOutputSizeLen; ++i) {
           if (value[i] <= 0) {
             MS_EXCEPTION(ValueError) << "CropAndResizeGradImage expected output_size to have "
@@ -160,7 +158,7 @@ abstract::ShapePtr CropAndResizeGradImageInferShape(const PrimitivePtr &primitiv
   auto output_size = input_args[ImagekImagesSize];
   MS_EXCEPTION_IF_NULL(output_size);
 
-  return GetReturnShape(prim_name, output_size, max_len, input_shape0[ImagekDepth]);
+  return GetReturnShape(primitive, output_size, max_len, input_shape0[ImagekDepth]);
 }
 
 TypePtr CropAndResizeGradImageInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

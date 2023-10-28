@@ -35,10 +35,10 @@ bool InstanceNormGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
                                       "For 'InstanceNormGpuKernelMod', it create para desc failed");
   if (primitive_->HasAttr(ops::kBatchRank)) {
-    batch_rank_ = GetValue<bool>(primitive_->GetAttr(ops::kBatchRank));
+    batch_rank_ = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr(ops::kBatchRank)));
   }
-  exp_avg_factor_ = GetValue<float>(primitive_->GetAttr(kAttrMomentum));
-  epsilon_ = GetValue<float>(primitive_->GetAttr(kAttrEpsilon));
+  exp_avg_factor_ = static_cast<double>(GetValue<float>(primitive_->GetAttr(kAttrMomentum)));
+  epsilon_ = static_cast<double>(GetValue<float>(primitive_->GetAttr(kAttrEpsilon)));
 
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
 
