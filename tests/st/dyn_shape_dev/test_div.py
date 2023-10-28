@@ -36,6 +36,46 @@ def div_dyn_shape_func(x1, x2):
     return ops.auto_generate.div_(x1, x2)
 
 
+@test_utils.run_with_cell
+def div_infer_value():
+    x = ms.Tensor(np.array([[2, 2], [3, 3]]).astype(np.float32))
+    y = ms.Tensor(np.array([[1, 2], [3, 6]]).astype(np.float32))
+
+    return div_forward_func(x, y)
+
+@test_utils.run_with_cell
+def div_infer_value1():
+    x = ms.Tensor(np.array([[2, 2], [3, 3]]).astype(np.int64))
+    y = ms.Tensor(np.array([3]).astype(np.int64))
+
+    return div_forward_func(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_div_infer_value(mode):
+    """
+    Feature: Ops.
+    Description: test op div infer value.
+    Expectation: expect correct result.
+    """
+    out1 = div_infer_value()
+    np_x1 = np.array([[2, 2], [3, 3]]).astype(np.float32)
+    np_y1 = np.array([[1, 2], [3, 6]]).astype(np.float32)
+    expect1 = np.divide(np_x1, np_y1)
+    assert np.allclose(out1.asnumpy(), expect1)
+
+    out2 = div_infer_value1()
+    np_x2 = np.array([[2, 2], [3, 3]]).astype(np.int64)
+    np_y2 = np.array([3]).astype(np.int64)
+    expect2 = (np_x2 / np_y2).astype(np.int64)
+    assert np.allclose(out2.asnumpy(), expect2)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
