@@ -570,7 +570,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   }
 #endif
   // launch kernel
-  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end()) {
+  if (nop_op_to_memcpy_.find(kernel) != nop_op_to_memcpy_.end() || is_dynamic_shape_skip_execute) {
     if (!MemoryCopyAsync(kernel, inputs, outputs)) {
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
       return false;

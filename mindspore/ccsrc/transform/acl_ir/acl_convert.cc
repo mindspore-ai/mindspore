@@ -18,7 +18,6 @@
 #include <map>
 #include <algorithm>
 #include "transform/acl_ir/acl_adapter_info.h"
-#include "transform/graph_ir/op_adapter_util.h"
 #include "include/common/utils/convert_utils.h"
 #include "transform/acl_ir/acl_helper.h"
 
@@ -189,7 +188,13 @@ void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, T trans_str
   const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
   ShapeVector shape;
   TypePtr type_ptr = nullptr;
-  GetValueSequenceDataTypeAndShape(value_sequence, &type_ptr, &shape);
+  bool is_ge_datatype = false;
+  auto sub_converter = static_cast<ConvertType *>(this);
+  GetValueSequenceDataTypeAndShape(value_sequence, &type_ptr, &shape, &is_ge_datatype);
+  if (is_ge_datatype) {
+    sub_converter->ConvertValue(value, AttrDeclType<std::vector<::ge::DataType>>(), trans_struct);
+    return;
+  }
   if (type_ptr == nullptr) {
     return;
   }
@@ -201,7 +206,6 @@ void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, T trans_str
     trans_struct->dev_shape = shape;
   }
 
-  auto sub_converter = static_cast<ConvertType *>(this);
   if (shape.size() > 1) {
     if (type_id == TypeId::kNumberTypeInt64) {
       sub_converter->ConvertValue(value, AttrDeclType<std::vector<std::vector<int64_t>>>(), shape, trans_struct);
@@ -231,7 +235,7 @@ void AttrHelper<ConvertType>::ConvertListAttr(const ValuePtr &value, T trans_str
 
 template <typename ConvertType>
 void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrList &value_sequence, TypePtr *data_type,
-                                                               ShapeVector *shape) {
+                                                               ShapeVector *shape, bool *is_ge_datatype) {
   MS_EXCEPTION_IF_NULL(data_type);
   MS_EXCEPTION_IF_NULL(shape);
   if (value_sequence.size() == 0) {
@@ -240,12 +244,16 @@ void AttrHelper<ConvertType>::GetValueSequenceDataTypeAndShape(const ValuePtrLis
   }
   (void)shape->push_back(value_sequence.size());
   auto val = value_sequence[0];
+  if (val->isa<GeDataTypeImm>()) {
+    *is_ge_datatype = true;
+    return;
+  }
   if (val->isa<Scalar>()) {
     *data_type = val->type();
   }
   if (val->isa<ValueSequence>()) {
     const auto &sub_sequence = val->cast<ValueSequencePtr>()->value();
-    GetValueSequenceDataTypeAndShape(sub_sequence, data_type, shape);
+    GetValueSequenceDataTypeAndShape(sub_sequence, data_type, shape, is_ge_datatype);
   }
 }
 

@@ -90,6 +90,7 @@ class AclAttrMaker {
   static void SetAttr(const string &attr_name, const std::vector<std::string> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const std::vector<std::vector<int64_t>> &value, aclopAttr *attr);
   static void SetAttr(const string &attr_name, const ::ge::DataType value, aclopAttr *attr);
+  static void SetAttr(const string &attr_name, const std::vector<::ge::DataType> value, aclopAttr *attr);
 };  // class AclAttrMaker
 
 class AclTensorDescMaker {

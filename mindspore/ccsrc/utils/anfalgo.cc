@@ -468,6 +468,11 @@ std::string AnfAlgo::GetCNodeName(const AnfNodePtr &node) {
   return AnfUtils::GetCNodeName(node);
 }
 
+bool AnfAlgo::IsGetNextNode(const AnfNodePtr &node) {
+  auto node_name = AnfUtils::GetCNodeName(node);
+  return node_name == kGetNextOpName || node_name == kDynamicGetNextV2OpName;
+}
+
 std::string AnfAlgo::GetNodeDebugString(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return node->DebugString();
@@ -1187,7 +1192,7 @@ bool AnfAlgo::IsFusedCommunicationOp(const AnfNodePtr &node) {
 
 bool AnfAlgo::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
-  return kernel_name == kGetNextOpName;
+  return kernel_name == kGetNextOpName || kernel_name == kDynamicGetNextV2OpName;
 }
 
 bool AnfAlgo::IsGraphKernel(const AnfNodePtr &node) {
@@ -2127,6 +2132,28 @@ std::string AnfAlgo::GetJitLevel(const FuncGraphPtr &func_graph) {
   auto jit_level_value = func_graph->get_attr(kAttrJitLevel);
   auto jit_level = GetValue<std::string>(jit_level_value);
   return jit_level;
+}
+
+bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  // Check if the node is mutable scalar by all_inputs are scalar or output is scalar.
+  const auto &is_mutable_scalar_func = [](const AnfNodePtr &cur_node) {
+    const auto &abstract = cur_node->abstract();
+    if (abstract == nullptr || (!abstract->isa<abstract::AbstractScalar>())) {
+      return false;
+    }
+    return true;
+  };
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  bool is_all_inputs_mutable_scalar = std::all_of(
+    inputs.begin(), inputs.end(), [is_mutable_scalar_func](const auto &iter) { return is_mutable_scalar_func(iter); });
+  bool is_output_mutable_scalar = is_mutable_scalar_func(node);
+  return is_all_inputs_mutable_scalar || is_output_mutable_scalar;
 }
 
 bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {

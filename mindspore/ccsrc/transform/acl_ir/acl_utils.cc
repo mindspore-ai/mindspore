@@ -229,6 +229,18 @@ void AclAttrMaker::SetAttr(const string &attr_name, const ::ge::DataType value, 
   }
 }
 
+void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<::ge::DataType> value, aclopAttr *attr) {
+  auto list_size = value.size();
+  std::vector<aclDataType> data;
+  (void)std::transform(value.begin(), value.end(), std::back_inserter(data), [](const ::ge::DataType &val) {
+    return AclConverter::ConvertType(TransformUtil::ConvertGeDataType(val));
+  });
+  auto ret = aclopSetAttrListDataType(attr, attr_name.c_str(), list_size, data.data());
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Set node attr '" << attr_name << "' with value " << value << " failed!";
+  }
+}
+
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {

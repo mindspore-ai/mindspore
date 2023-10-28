@@ -32,6 +32,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "ops/dynamic_getnext_v2.h"
 
 namespace mindspore {
 namespace ops {
@@ -113,5 +114,6 @@ class MIND_API AGGetnextInfer : public abstract::OpInferBase {
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(GetNext, prim::kPrimGetNext, AGGetnextInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicGetNextV2, prim::kPrimDynamicGetNextV2, AGGetnextInfer, false);
 }  // namespace ops
 }  // namespace mindspore
