@@ -7,6 +7,8 @@ real_div:
         other:
             dtype: tensor
             type_cast: number
+    args_signature:
+        dtype_group: (input, other)
     returns:
         output:
             dtype: tensor
