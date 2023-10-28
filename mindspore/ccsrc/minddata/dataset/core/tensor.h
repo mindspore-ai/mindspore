@@ -430,8 +430,7 @@ class DATASET_API Tensor {
 
   /// Get the exact length of string / bytes
   Status GetStringLength(uint32_t *length) {
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      type().IsString(), "The type is not string/bytes, and the length cannot be obtained through GetStringLength.");
+    CHECK_FAIL_RETURN_UNEXPECTED(type().IsString(), "Only support to get the length of string or bytes Tensor.");
     *length = data_end_ - data_ - (Size() + 1) * kOffsetSize - Size();
     return Status::OK();
   }
