@@ -2704,17 +2704,15 @@ def ms_sum(*data):
     """Implementation of `sum`."""
     len_data = len(data)
     if len_data <= 0 or len_data > 2:
-        const_utils.raise_type_error("sum() requires 1 or 2 arguments.")
+        raise TypeError("sum() requires 1 or 2 arguments.")
     x = data[0]
-    if not isinstance(x, Tensor) and not hasattr(x, "__ms_iter__"):
+    if isinstance(x, (int, float, bool)):
         data_type = F.typeof(x)
-        const_utils.raise_type_error(
-            str(data_type) + " object is not iterable.")
+        raise TypeError(str(data_type) + " object is not iterable.")
     if isinstance(x, Tensor):
         tensor_shape = F.shape(x)
         if len(tensor_shape) == 0:
-            const_utils.raise_type_error(
-                "Cannot iterate over a scalar tensor.")
+            raise TypeError("Cannot iterate over a scalar tensor.")
     if isinstance(x, dict):
         x = x.keys()
     result = 0
