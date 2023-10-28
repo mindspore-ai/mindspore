@@ -21,7 +21,6 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 import mindspore.ops.operations as op
 
-
 def test_net_infer():
     """ test_net_infer """
 
