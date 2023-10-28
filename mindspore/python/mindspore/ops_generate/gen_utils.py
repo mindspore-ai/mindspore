@@ -20,6 +20,7 @@ import glob
 import hashlib
 import yaml
 from template import CppTemplate
+
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,10 +59,20 @@ def is_tensor(op_arg):
         return True
     return False
 
+
 def is_tensor_list(op_arg):
     if op_arg.arg_dtype in ['list[tensor]', 'tuple[tensor]']:
         return True
     return False
+
+
+def is_list(op_arg):
+    if op_arg.arg_dtype in ['tuple[int]', 'tuple[float]', 'tuple[bool]',
+                            'tuple[tensor]', 'list[int]', 'list[bool]', 'list[tensor]']:
+        return True
+    return False
+
+
 def get_index(index: int):
     """
     get index
@@ -83,6 +94,7 @@ def get_index(index: int):
     if index in index_map:
         return index_map[index]
     raise TypeError(f"""Unsupported index {index} for index map.""")
+
 
 def get_convert_type_str(dtype: str):
     """

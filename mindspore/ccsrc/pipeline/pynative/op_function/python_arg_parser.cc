@@ -253,8 +253,6 @@ ScalarPtr Parser::ToScalar(size_t i) {
   return nullptr;
 }
 
-std::vector<ScalarPtr> Parser::ToScalarList(size_t i) { return {}; }
-
 py::object Parser::Wrap(const TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedWait()) {
@@ -264,6 +262,12 @@ py::object Parser::Wrap(const TensorPtr &tensor) {
   py::tuple v(1);
   v[0] = tensor;
   return v[0];
+}
+
+template <typename T>
+ValueTuplePtr Parser::ToValueTuple(const std::vector<T> &value) {
+  ValuePtrList value_list{value};
+  return std::make_shared<ValueTuple>(value_list);
 }
 
 void Parser::PrintError(size_t i) { return; }

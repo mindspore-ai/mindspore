@@ -30,7 +30,7 @@ py::object ${func_name}(const py::args &args) {
           PyNativeAlgo::PyBoost::DoGrad(op_run_info, inputs, output, input_abs, output_abs);
         });
 
-        op->DoGrad({${call_args}});
+        op->DoGrad({${do_grad_args}});
       }
 
       MS_LOG(DEBUG) << "Dispatch ${func_name} end";
