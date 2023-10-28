@@ -25,7 +25,6 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/op_utils.h"
-// #include "ops/assign.h"
 #include "ops/depend.h"
 #include "ops/sequence_ops.h"
 #include "tools/common/func_graph_utils.h"

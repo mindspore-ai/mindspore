@@ -19,7 +19,6 @@
 #include <vector>
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/zeros_like.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

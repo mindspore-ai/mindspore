@@ -25,8 +25,6 @@
 #include "ops/op_utils.h"
 #include "ops/manually_defined_lite_ops.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/batch_norm.h"
-// #include "ops/elu.h"
 #include "ops/fused_batch_norm.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/div_fusion.h"
@@ -56,27 +54,13 @@
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
 #include "ops/grad/activation_grad.h"
-// #include "ops/grad/avg_pool_grad.h"
-// #include "ops/grad/batch_norm_grad.h"
 #include "ops/grad/max_pool_grad.h"
-// #include "ops/gelu.h"
 #include "ops/leaky_relu.h"
 #include "ops/fusion/mat_mul_fusion.h"
-// #include "ops/reduce_all.h"
 #include "ops/reduce_asum.h"
-// #include "ops/reduce_max.h"
-// #include "ops/reduce_mean.h"
-// #include "ops/reduce_min.h"
-// #include "ops/reduce_prod.h"
-// #include "ops/reduce_sum.h"
 #include "ops/reduce_sum_square.h"
-// #include "ops/relu.h"
-// #include "ops/relu6.h"
 #include "ops/resize.h"
 #include "ops/resize_bilinear.h"
-// #include "ops/resize_nearest_neighbor.h"
-// #include "ops/shape.h"
-// #include "ops/sigmoid.h"
 #include "ops/stack.h"
 #include "ops/tanh.h"
 #include "ops/softplus.h"
@@ -92,7 +76,6 @@ using mindspore::ops::kNameArgmax;
 using mindspore::ops::kNameArgmin;
 using mindspore::ops::kNameAvgPool;
 using mindspore::ops::kNameAvgPoolGrad;
-// using mindspore::ops::kNameBatchNorm;
 using mindspore::ops::kNameConv2D;
 using mindspore::ops::kNameConv2DBackpropFilter;
 using mindspore::ops::kNameConv2DBackpropInput;

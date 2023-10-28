@@ -20,11 +20,11 @@
 #include <algorithm>
 #include <vector>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/bias_add.h"
 #include "common/anf_util.h"
 #include "common/op_attr.h"
 #include "common/op_enum.h"
 #include "op/bias_operator.h"
+#include "include/api/format.h"
 
 namespace mindspore {
 namespace dpico {
@@ -87,9 +87,9 @@ STATUS BiasMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr> 
     bias_operator->SetAxis(static_cast<int32_t>(api::GetValue<int64_t>(prim->GetAttr(ops::kAxis))));
   } else if (CheckPrimitiveType(cnode, api::MakeShared<ops::BiasAdd>())) {
     auto format = api::GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-    if (format == static_cast<int64_t>(mindspore::NCHW)) {
+    if (format == static_cast<int64_t>(mindspore::Format::NCHW)) {
       bias_operator->SetAxis(1);
-    } else if (format == static_cast<int64_t>(mindspore::NHWC)) {
+    } else if (format == static_cast<int64_t>(mindspore::Format::NHWC)) {
       bias_operator->SetAxis(-1);
     } else {
       MS_LOG(ERROR) << "invalid format: " << format;

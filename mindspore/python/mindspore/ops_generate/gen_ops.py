@@ -400,30 +400,45 @@ def generate_lite_ops(yaml_data):
     """
     Generate BaseOperator parameter set and get func
     """
-    lite_ops_head = f"""
+    lite_ops_h_head = f"""
 #ifndef MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 #define MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 
 #include <vector>
 #include "ops/base_operator.h"
 #include "ops/auto_generate/gen_ops_name.h"
-#include "abstract/abstract_value.h"
 
 namespace mindspore::ops {{
 """
 
-    lite_ops_end = f"""}}  // namespace mindspore::ops
+    lite_ops_h_end = f"""}}  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_GEN_LITE_OPS_H_
 """
 
-    lite_ops_gen = ''
-    lite_ops_gen += lite_ops_head
+    lite_ops_cc_head = """
+#include "ops/auto_generate/gen_lite_ops.h"
+#include "mindapi/src/helper.h"
+#include "ops/primitive_c.h"
+#include "ops/base_operator.h"
+#include "abstract/abstract_value.h"
+
+namespace mindspore::ops {
+"""
+
+    lite_ops_cc_end = f"""}}  // namespace mindspore::ops
+    """
+
+    lite_ops_h_gen = ''
+    lite_ops_cc_gen = ''
+
+    lite_ops_h_gen += lite_ops_h_head
+    lite_ops_cc_gen += lite_ops_cc_head
     for operator_name, operator_data in yaml_data.items():
-        OpName = get_op_name(operator_name, operator_data.get('class'))
-        lite_ops_gen += f"""class MIND_API {OpName} : public BaseOperator {{
+        op_name = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_h_gen += f"""class MIND_API {op_name} : public BaseOperator {{
  public:
-  MIND_API_BASE_MEMBER({OpName});
-  {OpName}() : BaseOperator(kName{OpName}) {{}}\n"""
+  MIND_API_BASE_MEMBER({op_name});
+  {op_name}() : BaseOperator(kName{op_name}) {{}}\n"""
         args = operator_data.get('args')
         for _, (arg_name, arg_info) in enumerate(args.items()):
             init = arg_info.get('init')
@@ -435,35 +450,18 @@ namespace mindspore::ops {{
                 dtype = "std::string"
             if dtype == "tuple[int]":
                 dtype = "std::vector<int64_t>"
-            lite_ops_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n"""
-            lite_ops_gen += f"""  {dtype} get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n"""
+            lite_ops_h_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name});\n"""
+            lite_ops_h_gen += f"""  {dtype} get_{arg_name}() const;\n"""
 
-        lite_ops_gen += f"""}};\n\n"""
-    lite_ops_gen += lite_ops_end
-    return lite_ops_gen
+            lite_ops_cc_gen += f"""void {op_name}::set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n\n"""
+            lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
 
-
-def generate_cc_lite_ops(yaml_data):
-    """
-    Generate BaseOperator register cc file content.
-    """
-    lite_ops_head = """
-#include "mindapi/src/helper.h"
-#include "ops/primitive_c.h"
-#include "ops/base_operator.h"
-#include "ops/auto_generate/gen_lite_ops.h"
-    
-namespace mindspore::ops {
-"""
-
-    lite_ops_end = f"""}}  // namespace mindspore::ops
-    """
-    lite_ops_gen = ''
-    for operator_name, operator_data in yaml_data.items():
-        op_name = get_op_name(operator_name, operator_data.get('class'))
-        lite_ops_gen += f"""
-  MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n"""
-    return lite_ops_head + lite_ops_gen + lite_ops_end
+            op_name = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_cc_gen += f"""MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n\n"""
+        lite_ops_h_gen += f"""}};\n\n"""
+    lite_ops_h_gen += lite_ops_h_end
+    lite_ops_cc_gen += lite_ops_cc_end
+    return lite_ops_h_gen, lite_ops_cc_gen
 
 
 def generate_cc_opdef(yaml_data):
@@ -586,7 +584,7 @@ def generate_ops_cc_files(work_path, yaml_str):
     # lite_h_ops
     lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
     tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
-    lite_ops_h_code = generate_lite_ops(yaml_str)
+    lite_ops_h_code, lite_ops_cc_code = generate_lite_ops(yaml_str)
     with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
         lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
     check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
@@ -594,7 +592,6 @@ def generate_ops_cc_files(work_path, yaml_str):
     # lite_cc_ops
     lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
     tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
-    lite_ops_cc_code = generate_cc_lite_ops(yaml_str)
     with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
         lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
     check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)

@@ -17,7 +17,6 @@
 #include "tools/converter/parser/pytorch/pytorch_flatten_parser.h"
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/flatten.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

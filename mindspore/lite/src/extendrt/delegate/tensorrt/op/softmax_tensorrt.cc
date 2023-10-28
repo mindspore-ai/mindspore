@@ -16,7 +16,6 @@
 
 #include "src/extendrt/delegate/tensorrt/op/softmax_tensorrt.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/log_softmax.h"
 
 namespace mindspore::lite {
 int SoftMaxTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

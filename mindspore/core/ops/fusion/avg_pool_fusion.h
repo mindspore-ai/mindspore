@@ -21,7 +21,6 @@
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 #include "mindapi/base/format.h"
-#include "ir/anf.h"
 
 namespace mindspore {
 namespace ops {
@@ -49,6 +48,44 @@ class MIND_API AvgPoolFusion : public BaseOperator {
             const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = FLOOR,
             const bool global = false, const ActivationType activation_type = NO_ACTIVATION);
 
+  /// \brief Set pad_mode.
+  void set_pad_mode(const int &pad_mode);
+  /// \brief Set kernel_size.
+  void set_kernel_size(const std::vector<int64_t> &kernel_size);
+  /// \brief Set strides.
+  void set_strides(const std::vector<int64_t> &strides);
+  /// \brief Set format.
+  void set_data_format(const int &data_format);
+  /// \brief Set pad.
+  void set_pad(const std::vector<int64_t> &pad);
+  /// \brief Set round_mode.
+  void set_round_mode(const int &round_mode);
+
+  /// \brief Get kernel_size.
+  ///
+  /// \return kernel_size.
+  std::vector<int64_t> get_kernel_size() const;
+  /// \brief Get strides.
+  ///
+  /// \return strides.
+  std::vector<int64_t> get_strides() const;
+  /// \brief Get pad_mode.
+  ///
+  /// \return pad_mode.
+  int get_pad_mode() const;
+  /// \brief Get format.
+  ///
+  /// \return format.
+  int get_data_format() const;
+  /// \brief Get pad.
+  ///
+  /// \return pad.
+  std::vector<int64_t> get_pad() const;
+  /// \brief Get round_mode.
+  ///
+  /// \return round_mode.
+  int get_round_mode() const;
+
   /// \brief Method to set global attribute.
   ///
   /// \param[in] global Define a boolean value to indicate whether to do global pooling. If true, kernel_size will be
@@ -59,21 +96,6 @@ class MIND_API AvgPoolFusion : public BaseOperator {
   ///
   /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType activation_type);
-
-  void set_kernel_size(const std::vector<int64_t> &kernel_size) {
-    (void)this->AddAttr("kernel_size", api::MakeValue(kernel_size));
-  }
-  std::vector<int64_t> get_kernel_size() const { return GetValue<std::vector<int64_t>>(GetAttr("kernel_size")); }
-  void set_strides(const std::vector<int64_t> &strides) { (void)this->AddAttr("strides", api::MakeValue(strides)); }
-  std::vector<int64_t> get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr("strides")); }
-  void set_pad_mode(const int &pad_mode) { (void)this->AddAttr("pad_mode", api::MakeValue(pad_mode)); }
-  int get_pad_mode() const { return GetValue<int>(GetAttr("pad_mode")); }
-  void set_data_format(const int &data_format) { (void)this->AddAttr("data_format", api::MakeValue(data_format)); }
-  int get_data_format() const { return GetValue<int>(GetAttr("data_format")); }
-  void set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr("pad", api::MakeValue(pad)); }
-  std::vector<int64_t> get_pad() const { return GetValue<std::vector<int64_t>>(GetAttr("pad")); }
-  void set_round_mode(const int &round_mode) { (void)this->AddAttr("round_mode", api::MakeValue(round_mode)); }
-  int get_round_mode() const { return GetValue<int>(GetAttr("round_mode")); }
 
   /// \brief Method to get global attribute.
   ///

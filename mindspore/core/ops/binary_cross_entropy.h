@@ -22,6 +22,7 @@
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ir/primal_attr.h"
 
 namespace mindspore {
 namespace ops {

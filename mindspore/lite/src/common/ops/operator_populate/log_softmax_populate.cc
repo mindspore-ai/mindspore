@@ -16,7 +16,7 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/softmax_parameter.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/log_softmax.h"
+
 using mindspore::ops::kNameLogSoftmax;
 using mindspore::schema::PrimitiveType_LogSoftmax;
 namespace mindspore {

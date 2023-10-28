@@ -17,7 +17,6 @@
 #include "tools/converter/parser/onnx/onnx_gridsample_parser.h"
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/grid_sampler_2d.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

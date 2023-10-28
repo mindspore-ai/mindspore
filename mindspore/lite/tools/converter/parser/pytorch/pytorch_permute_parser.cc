@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/transpose.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

@@ -20,7 +20,6 @@
 #include <vector>
 #include "common/fetch_content.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/greater_equal.h"
 #include "op/cmp_operator.h"
 
 namespace mindspore {

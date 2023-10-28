@@ -16,7 +16,7 @@
 
 #include "src/litert/cxx_api/kernel_executor/op_converter.h"
 #include "ops/manually_defined_lite_ops.h"
-#include "ops/relu.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/arg_max_fusion.h"

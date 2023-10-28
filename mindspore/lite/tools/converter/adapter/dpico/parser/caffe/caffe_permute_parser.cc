@@ -18,7 +18,6 @@
 #include <memory>
 #include "common/op_attr.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/transpose.h"
 
 namespace mindspore {
 namespace lite {

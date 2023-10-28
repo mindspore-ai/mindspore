@@ -45,30 +45,24 @@ include(${TOP_DIR}/cmake/package_micro.cmake)
 
 function(__install_white_list_ops)
     install(FILES
-            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
-            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
             ${TOP_DIR}/mindspore/core/ops/manually_defined_lite_ops.h
-        #     ${TOP_DIR}/mindspore/core/ops/abs.h
+            ${TOP_DIR}/mindspore/core/ops/manually_defined_ops_name.h
+            ${TOP_DIR}/mindspore/core/ops/nn_op_name.h
             ${TOP_DIR}/mindspore/core/ops/adam.h
             ${TOP_DIR}/mindspore/core/ops/addn.h
             ${TOP_DIR}/mindspore/core/ops/all.h
             ${TOP_DIR}/mindspore/core/ops/apply_momentum.h
             ${TOP_DIR}/mindspore/core/ops/assert.h
-        #     ${TOP_DIR}/mindspore/core/ops/assign.h
             ${TOP_DIR}/mindspore/core/ops/assign_add.h
             ${TOP_DIR}/mindspore/core/ops/audio_spectrogram.h
-        #     ${TOP_DIR}/mindspore/core/ops/batch_norm.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space.h
             ${TOP_DIR}/mindspore/core/ops/batch_to_space_nd.h
-        #     ${TOP_DIR}/mindspore/core/ops/bias_add.h
             ${TOP_DIR}/mindspore/core/ops/binary_cross_entropy.h
             ${TOP_DIR}/mindspore/core/ops/broadcast.h
             ${TOP_DIR}/mindspore/core/ops/cast.h
-        #     ${TOP_DIR}/mindspore/core/ops/ceil.h
             ${TOP_DIR}/mindspore/core/ops/clip.h
             ${TOP_DIR}/mindspore/core/ops/concat.h
             ${TOP_DIR}/mindspore/core/ops/attention.h
-        #     ${TOP_DIR}/mindspore/core/ops/cos.h
             ${TOP_DIR}/mindspore/core/ops/constant_of_shape.h
             ${TOP_DIR}/mindspore/core/ops/crop.h
             ${TOP_DIR}/mindspore/core/ops/custom_extract_features.h
@@ -78,66 +72,35 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/depth_to_space.h
             ${TOP_DIR}/mindspore/core/ops/detection_post_process.h
             ${TOP_DIR}/mindspore/core/ops/dropout.h
-        #     ${TOP_DIR}/mindspore/core/ops/elu.h
             ${TOP_DIR}/mindspore/core/ops/eltwise.h
-        #     ${TOP_DIR}/mindspore/core/ops/equal.h
-        #     ${TOP_DIR}/mindspore/core/ops/expand_dims.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars_per_channel.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars.h
             ${TOP_DIR}/mindspore/core/ops/fft_real.h
             ${TOP_DIR}/mindspore/core/ops/fft_imag.h
-        #     ${TOP_DIR}/mindspore/core/ops/flatten.h
-        #     ${TOP_DIR}/mindspore/core/ops/floor.h
-        #     ${TOP_DIR}/mindspore/core/ops/floor_div.h
-        #     ${TOP_DIR}/mindspore/core/ops/floor_mod.h
             ${TOP_DIR}/mindspore/core/ops/fill.h
             ${TOP_DIR}/mindspore/core/ops/fused_batch_norm.h
-        #     ${TOP_DIR}/mindspore/core/ops/gather.h
-        #     ${TOP_DIR}/mindspore/core/ops/gather_nd.h
-        #     ${TOP_DIR}/mindspore/core/ops/greater.h
-        #     ${TOP_DIR}/mindspore/core/ops/greater_equal.h
             ${TOP_DIR}/mindspore/core/ops/hashtable_lookup.h
             ${TOP_DIR}/mindspore/core/ops/instance_norm.h
             ${TOP_DIR}/mindspore/core/ops/leaky_relu.h
             ${TOP_DIR}/mindspore/core/ops/less.h
             ${TOP_DIR}/mindspore/core/ops/less_equal.h
-        #     ${TOP_DIR}/mindspore/core/ops/log.h
-        #     ${TOP_DIR}/mindspore/core/ops/logical_and.h
-        #     ${TOP_DIR}/mindspore/core/ops/logical_not.h
-        #     ${TOP_DIR}/mindspore/core/ops/logical_or.h
             ${TOP_DIR}/mindspore/core/ops/lp_normalization.h
             ${TOP_DIR}/mindspore/core/ops/lrn.h
             ${TOP_DIR}/mindspore/core/ops/lsh_projection.h
             ${TOP_DIR}/mindspore/core/ops/lstm.h
-        #    ${TOP_DIR}/mindspore/core/ops/maximum.h
             ${TOP_DIR}/mindspore/core/ops/switch_layer.h
             ${TOP_DIR}/mindspore/core/ops/mfcc.h
-        #     ${TOP_DIR}/mindspore/core/ops/minimum.h
             ${TOP_DIR}/mindspore/core/ops/mod.h
-        #     ${TOP_DIR}/mindspore/core/ops/neg.h
-        #     ${TOP_DIR}/mindspore/core/ops/not_equal.h
             ${TOP_DIR}/mindspore/core/ops/non_max_suppression.h
-        #     ${TOP_DIR}/mindspore/core/ops/one_hot.h
-        #     ${TOP_DIR}/mindspore/core/ops/ones_like.h
             ${TOP_DIR}/mindspore/core/ops/prior_box.h
             ${TOP_DIR}/mindspore/core/ops/quant_dtype_cast.h
-        #     ${TOP_DIR}/mindspore/core/ops/rank.h
-        #     ${TOP_DIR}/mindspore/core/ops/range.h
-        #     ${TOP_DIR}/mindspore/core/ops/reciprocal.h
-        #     ${TOP_DIR}/mindspore/core/ops/real_div.h
-        #     ${TOP_DIR}/mindspore/core/ops/reshape.h
             ${TOP_DIR}/mindspore/core/ops/resize.h
             ${TOP_DIR}/mindspore/core/ops/reverse_sequence.h
-        #     ${TOP_DIR}/mindspore/core/ops/reverse_v2.h
             ${TOP_DIR}/mindspore/core/ops/rfft.h
             ${TOP_DIR}/mindspore/core/ops/roi_pooling.h
-        #     ${TOP_DIR}/mindspore/core/ops/round.h
-        #     ${TOP_DIR}/mindspore/core/ops/rsqrt.h
-        #     ${TOP_DIR}/mindspore/core/ops/scatter_nd.h
             ${TOP_DIR}/mindspore/core/ops/sgd.h
             ${TOP_DIR}/mindspore/core/ops/sigmoid_cross_entropy_with_logits.h
-        #     ${TOP_DIR}/mindspore/core/ops/sin.h
             ${TOP_DIR}/mindspore/core/ops/skip_gram.h
             ${TOP_DIR}/mindspore/core/ops/smooth_l1_loss.h
             ${TOP_DIR}/mindspore/core/ops/softmax_cross_entropy_with_logits.h
@@ -146,10 +109,7 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/space_to_depth.h
             ${TOP_DIR}/mindspore/core/ops/sparse_softmax_cross_entropy_with_logits.h
             ${TOP_DIR}/mindspore/core/ops/sparse_to_dense.h
-        #     ${TOP_DIR}/mindspore/core/ops/split.h
-        #     ${TOP_DIR}/mindspore/core/ops/sqrt.h
             ${TOP_DIR}/mindspore/core/ops/squeeze.h
-        #     ${TOP_DIR}/mindspore/core/ops/square.h
             ${TOP_DIR}/mindspore/core/ops/squared_difference.h
             ${TOP_DIR}/mindspore/core/ops/stack.h
             ${TOP_DIR}/mindspore/core/ops/strided_slice.h
@@ -159,27 +119,21 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/tensor_list_reserve.h
             ${TOP_DIR}/mindspore/core/ops/tensor_list_set_item.h
             ${TOP_DIR}/mindspore/core/ops/tensor_list_stack.h
-        #     ${TOP_DIR}/mindspore/core/ops/transpose.h
             ${TOP_DIR}/mindspore/core/ops/unique.h
             ${TOP_DIR}/mindspore/core/ops/unsorted_segment_sum.h
             ${TOP_DIR}/mindspore/core/ops/unsqueeze.h
             ${TOP_DIR}/mindspore/core/ops/unstack.h
             ${TOP_DIR}/mindspore/core/ops/where.h
-        #     ${TOP_DIR}/mindspore/core/ops/zeros_like.h
             ${TOP_DIR}/mindspore/core/ops/select.h
             ${TOP_DIR}/mindspore/core/ops/scatter_nd_update.h
             ${TOP_DIR}/mindspore/core/ops/gru.h
-        #     ${TOP_DIR}/mindspore/core/ops/non_zero.h
             ${TOP_DIR}/mindspore/core/ops/invert_permutation.h
             ${TOP_DIR}/mindspore/core/ops/size.h
             ${TOP_DIR}/mindspore/core/ops/random_standard_normal.h
             ${TOP_DIR}/mindspore/core/ops/crop_and_resize.h
-        #     ${TOP_DIR}/mindspore/core/ops/erf.h
             ${TOP_DIR}/mindspore/core/ops/is_finite.h
-        #     ${TOP_DIR}/mindspore/core/ops/lin_space.h
             ${TOP_DIR}/mindspore/core/ops/uniform_real.h
             ${TOP_DIR}/mindspore/core/ops/splice.h
-        #     ${TOP_DIR}/mindspore/core/ops/log_softmax.h
             ${TOP_DIR}/mindspore/core/ops/call.h
             ${TOP_DIR}/mindspore/core/ops/custom.h
             ${TOP_DIR}/mindspore/core/ops/split_with_overlap.h
@@ -193,25 +147,16 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/reduce_scatter.h
             ${TOP_DIR}/mindspore/core/ops/dynamic_quant.h
             ${TOP_DIR}/mindspore/core/ops/random_normal.h
-        #     ${TOP_DIR}/mindspore/core/ops/nllloss.h
             ${TOP_DIR}/mindspore/core/ops/op_name.h
             ${TOP_DIR}/mindspore/core/ops/tuple_get_item.h
-        #     ${TOP_DIR}/mindspore/core/ops/add.h
-        #     ${TOP_DIR}/mindspore/core/ops/div.h
-        #     ${TOP_DIR}/mindspore/core/ops/mul.h
             ${TOP_DIR}/mindspore/core/ops/tuple_get_item.h
             ${TOP_DIR}/mindspore/core/ops/scale.h
             ${TOP_DIR}/mindspore/core/ops/sub.h
-        #     ${TOP_DIR}/mindspore/core/ops/avg_pool.h
-        #     ${TOP_DIR}/mindspore/core/ops/exp.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
-        #     ${TOP_DIR}/mindspore/core/ops/pow.h
             ${TOP_DIR}/mindspore/core/ops/topk.h
             ${TOP_DIR}/mindspore/core/ops/reduce.h
-        #     ${TOP_DIR}/mindspore/core/ops/arg_max.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
-        #     ${TOP_DIR}/mindspore/core/ops/prelu.h
             ${TOP_DIR}/mindspore/core/ops/make_tuple.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/return.h
@@ -250,6 +195,12 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/fusion/tile_fusion.h
             ${TOP_DIR}/mindspore/core/ops/fusion/topk_fusion.h
             DESTINATION ${CONVERTER_ROOT_DIR}/include/ops/fusion
+            COMPONENT ${RUNTIME_COMPONENT_NAME}
+            )
+    install(FILES
+            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
+            ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
+            DESTINATION ${CONVERTER_ROOT_DIR}/include/ops/auto_generate
             COMPONENT ${RUNTIME_COMPONENT_NAME}
             )
 endfunction()
@@ -1112,7 +1063,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
             ${TOP_DIR}/mindspore/core/ops/custom.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
-        #     ${TOP_DIR}/mindspore/core/ops/div.h
             ${TOP_DIR}/mindspore/core/ops/mat_mul.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
             ${TOP_DIR}/mindspore/core/ops/pad.h

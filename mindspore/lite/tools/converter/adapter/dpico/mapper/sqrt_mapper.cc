@@ -20,7 +20,6 @@
 #include <vector>
 #include "common/anf_util.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/sqrt.h"
 #include "op/sqrt_operator.h"
 
 namespace mindspore {

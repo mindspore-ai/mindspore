@@ -17,7 +17,6 @@
 #include "parser/caffe/caffe_log_parser.h"
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/log.h"
 #include "ops/op_name.h"
 
 namespace mindspore {

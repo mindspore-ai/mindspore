@@ -10,7 +10,7 @@ execute_process(COMMAND "${PYTHON_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../mindspore/python/mindspore/ops_generate/gen_ops.py"
         RESULT_VARIABLE STATUS)
 if(NOT STATUS EQUAL "0")
-    message(FATAL_ERROR "Generate operator python/c++ definitions FAILED!")
+    message(FATAL_ERROR "Generate operator python/c++ definitions FAILED.")
 else()
     message("Generate operator python/c++ definitions SUCCESS!")
 endif()

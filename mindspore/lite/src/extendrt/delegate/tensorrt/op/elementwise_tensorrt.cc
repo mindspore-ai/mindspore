@@ -27,16 +27,8 @@
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/real_div.h"
-// #include "ops/floor_div.h"
 #include "ops/eltwise.h"
-// #include "ops/minimum.h"
-// #include "ops/maximum.h"
-// #include "ops/bias_add.h"
-// #include "ops/equal.h"
-// #include "ops/not_equal.h"
 #include "ops/less.h"
-// #include "ops/greater.h"
-// #include "ops/floor_mod.h"
 
 namespace mindspore::lite {
 namespace {

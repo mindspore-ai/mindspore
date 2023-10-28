@@ -24,7 +24,6 @@
 #include "common/fetch_content.h"
 #include "common/op_attr.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/transpose.h"
 #include "op/permute_operator.h"
 
 namespace mindspore {

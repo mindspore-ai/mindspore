@@ -17,7 +17,6 @@
 #include "parser/caffe/caffe_reverse_parser.h"
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
-// #include "ops/reverse_v2.h"
 
 namespace mindspore {
 namespace lite {

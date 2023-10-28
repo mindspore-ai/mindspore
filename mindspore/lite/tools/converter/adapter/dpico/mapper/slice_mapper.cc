@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
+#include "common/op_attr.h"
 #include "common/anf_util.h"
 #include "common/op_enum.h"
 #include "common/check_base.h"
@@ -67,8 +68,8 @@ STATUS SliceMapper::Map(const api::CNodePtr &cnode, std::vector<BaseOperatorPtr>
     return RET_ERROR;
   }
   slice_operator->SetAxis(static_cast<int32_t>(split_axis));
-  if (split_prim->GetAttr(ops::"size_splits") != nullptr) {
-    auto sizes = GetValue<std::vector<int64_t>>(split_prim->GetAttr("size_splits"));
+  if (split_prim->GetAttr(ops::kSizeSplits) != nullptr) {
+    auto sizes = api::GetValue<std::vector<int64_t>>(split_prim->GetAttr("size_splits"));
     if (sizes.empty()) {
       MS_LOG(ERROR) << "sizes shouldn't be empty." << cnode->fullname_with_scope();
       return RET_ERROR;
