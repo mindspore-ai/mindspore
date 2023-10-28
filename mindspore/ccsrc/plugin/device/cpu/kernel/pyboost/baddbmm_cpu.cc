@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/pyboost/baddbmm_cpu.h"
-#include "kernel/pyboost/op/add.h"
+#include "kernel/pyboost/op/add_ext.h"
 #include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
 #include "ops/math_ops.h"
@@ -26,7 +26,7 @@ namespace pyboost {
 tensor::TensorPtr BaddbmmCPU::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                    const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) {
   // input * beta + alpha * (batch1 @ batch2)
-  auto add = CREATE_PYBOOST_OP(Add, "CPU");
+  auto add = CREATE_PYBOOST_OP(AddExt, "CPU");
   add->set_primitive(prim::kPrimAdd->Clone());
   auto mul = CREATE_PYBOOST_OP(Mul, "CPU");
   mul->set_primitive(prim::kPrimMul->Clone());

@@ -1,0 +1,59 @@
+add_ext:
+  description: |  
+    Adds two input tensors element-wise with alpha.
+    
+    Note:
+      - The two inputs must be a Tensor, when the two inputs have different shapes,
+        they must be able to broadcast to a common shape.
+      - The two inputs comply with the implicit type conversion rules to make the data types
+        consistent.
+      - When input is Tensor, it's dimension should be greater than or equal to 1.
+    
+    Inputs:
+      - **self** (Tensor) - The first input must be a tensor 
+      - **other** (Tensor) - The second input must be a tensor
+      - **alpha** (number.Number) -
+    
+    Outputs:
+      Tensor, the shape is the same as the one of the input `self` , `other` after broadcasting,
+      and the data type is the one with higher precision or higher digits among the two inputs.
+    
+    Supported Platforms:
+      ``Ascend`` ``GPU`` ``CPU``
+    
+    Examples:
+      >>> import mindspore
+      >>> import numpy as np
+      >>> from mindspore import Tensor, ops
+      >>> # case 1: x and y are both Tensor.
+      >>> add = ops.Add()
+      >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+      >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+      >>> output = add(x, y)
+      >>> print(output)
+      [5. 7. 9.]
+      >>> # case 2: x is a scalar and y is a Tensor
+      >>> add = ops.Add()
+      >>> x = Tensor(1, mindspore.int32)
+      >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+      >>> output = add(x, y)
+      >>> print(output)
+      [5. 6. 7.]
+      >>> # the data type of x is int32, the data type of y is float32,
+      >>> # and the output is the data format of higher precision float32.
+      >>> print(output.dtype)
+      Float32
+      >>> # case 3: one of x and y is a bool scalar
+      >>> add = ops.Add()
+      >>> x = True
+      >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+      >>> output = add(x, y)
+      >>> print(output)
+      [5. 6. 7.]
+      >>> # case 4: one of x and y is a bool Tensor
+      >>> add = ops.Add()
+      >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+      >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+      >>> output = add(x, y)
+      >>> print(output)
+      [5. 5. 7.]

@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_ADD_GPU_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_ADD_GPU_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
 
-#include "kernel/pyboost/op/add.h"
-#include "ir/tensor.h"
-#include "ir/scalar.h"
+#include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class AddGPU : public pyboost::Add {
+class BACKEND_EXPORT AddExt : public pyboost::Op {
  public:
-  AddGPU() = default;
-  ~AddGPU() = default;
+  AddExt() = default;
+  ~AddExt() = default;
 
-  tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) override;
+  virtual tensor::TensorPtr Call(const tensor::TensorPtr &self, const tensor::TensorPtr &other,
+                                 const ScalarPtr &alpha = kOneScalar);
 };
-MS_REG_PYBOOST_OP(GPU, Add);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_ADD_GPU_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_

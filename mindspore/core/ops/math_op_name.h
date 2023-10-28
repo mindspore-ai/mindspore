@@ -26,6 +26,7 @@ constexpr auto kLogGradOpName = "LogGrad";
 constexpr auto kLogitOpName = "Logit";
 constexpr auto kLogitGradOpName = "LogitGrad";
 constexpr auto kAddOpName = "Add";
+constexpr auto kAddExtOpName = "AddExt";
 constexpr auto kTensorAddOpName = "Add";
 constexpr auto kAddV2OpName = "AddV2";
 constexpr auto kAddcdivOpName = "Addcdiv";

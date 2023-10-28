@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+static const auto kOneScalar = std::make_shared<Int64Imm>(1);
 class BACKEND_EXPORT Op {
  public:
   using GradFunc = std::function<void(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &output,

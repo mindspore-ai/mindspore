@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-#include "kernel/pyboost/op/add.h"
-#include "kernel/pyboost/py_boost_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_ADD_CPU_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_ADD_CPU_H_
+
+#include "kernel/pyboost/op/add_ext.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr Add::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  // TODO: kernel_mod->launch
-  return mindspore::tensor::TensorPtr();
-}
+class AddExtCPU : public pyboost::AddExt {
+ public:
+  AddExtCPU() = default;
+  ~AddExtCPU() = default;
+
+  tensor::TensorPtr Call(const tensor::TensorPtr &self, const tensor::TensorPtr &other,
+                         const ScalarPtr &alpha = kOneScalar) override;
+};
+MS_REG_PYBOOST_OP(CPU, AddExt);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_PYBOOST_ADD_CPU_H_

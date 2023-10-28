@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/add_ascend.h"
-#include "runtime/device/device_address_utils.h"
-#include "runtime/hardware/device_context_manager.h"
-#include "transform/acl_ir/op_api_exec.h"
-#include "kernel/pyboost/py_boost_utils.h"
-#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ADD_ASCEND_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ADD_ASCEND_H_
+
+#include "kernel/pyboost/op/add_ext.h"
+#include "ir/tensor.h"
+#include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AddAscend::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
-  InferOutput(x, y);
-  DeviceMalloc(x, y);
-  auto stream = device_context_->device_res_manager_->GetStream(kDefaultStreamIndex);
-  LAUNCH_ACLNN(aclnnAdd, stream, x, y, output(0));
-  return output(0);
-}
+class AddExtAscend : public pyboost::AddExt {
+ public:
+  AddExtAscend() = default;
+  ~AddExtAscend() = default;
+
+  tensor::TensorPtr Call(const tensor::TensorPtr &self, const tensor::TensorPtr &other,
+                         const ScalarPtr &alpha) override;
+};
+MS_REG_PYBOOST_OP(Ascend, AddExt);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ADD_ASCEND_H_

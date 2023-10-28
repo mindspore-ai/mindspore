@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/pyboost/baddbmm_gpu.h"
-#include "kernel/pyboost/op/add.h"
+#include "kernel/pyboost/op/add_ext.h"
 #include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
 #include "ops/math_ops.h"

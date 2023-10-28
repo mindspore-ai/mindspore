@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_
-
-#include "kernel/pyboost/op_register.h"
+#include "kernel/pyboost/op/add_ext.h"
+#include "kernel/pyboost/py_boost_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT Add : public pyboost::Op {
- public:
-  Add() = default;
-  ~Add() = default;
-
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y);
-};
+tensor::TensorPtr AddExt::Call(const tensor::TensorPtr &self, const tensor::TensorPtr &other, const ScalarPtr &alpha) {
+  // TODO: kernel_mod->launch
+  return mindspore::tensor::TensorPtr();
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_ADD_H_

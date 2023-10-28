@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/kernel/pyboost/add_gpu.h"
+#include "plugin/device/gpu/kernel/pyboost/add_ext_gpu.h"
 #include "mindspore/ccsrc/plugin/device/gpu/kernel/math/binary_ops_gpu_kernel.h"
 #include "runtime/device/device_address_utils.h"
 #include "kernel/pyboost/py_boost_utils.h"
@@ -24,19 +24,20 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr AddGPU::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
+tensor::TensorPtr AddExtGPU::Call(const tensor::TensorPtr &self, const tensor::TensorPtr &other,
+                                  const ScalarPtr &alpha) {
   // TODO: (CARRY) dyn_shape_dev
-  InferOutput(x, y);
+  InferOutput(self, other);
 
   auto device_context = PyBoostUtils::GetDeviceContext(kGPUDevice);
 
-  Contiguous(x);
-  Contiguous(y);
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, x, "x");
-  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, y, "y");
+  Contiguous(self);
+  Contiguous(other);
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, self, "self");
+  runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, other, "other");
   runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs_[0], "out");
-  auto input_x = TensorToKernelTensor(x, device_context);
-  auto input_y = TensorToKernelTensor(y, device_context);
+  auto input_x = TensorToKernelTensor(self, device_context);
+  auto input_y = TensorToKernelTensor(other, device_context);
   auto output = TensorToKernelTensor(outputs_[0], device_context);
   auto base_op = std::make_shared<ops::Add>("Add");
   auto kernel = std::make_shared<BroadcastOptGpuKernelMod>("Add");

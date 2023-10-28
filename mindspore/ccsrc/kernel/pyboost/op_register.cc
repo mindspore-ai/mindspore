@@ -16,7 +16,7 @@
 
 #include "kernel/pyboost/op_register.h"
 #include "kernel/pyboost/op/baddbmm.h"
-#include "kernel/pyboost/op/add.h"
+#include "kernel/pyboost/op/add_ext.h"
 #include "kernel/pyboost/op/mul.h"
 #include "kernel/pyboost/op/batch_matmul.h"
 #include "kernel/pyboost/op/matmul.h"
@@ -56,7 +56,7 @@ void Op::DoGrad(const std::vector<ValuePtr> &inputs) {
 }
 
 template class OpFactory<Baddbmm>;
-template class OpFactory<Add>;
+template class OpFactory<AddExt>;
 template class OpFactory<Mul>;
 template class OpFactory<BatchMatmul>;
 template class OpFactory<BiasAdd>;

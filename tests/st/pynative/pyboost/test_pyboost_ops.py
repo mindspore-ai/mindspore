@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu
+from mindspore.ops.auto_generate import baddbmm, transpose, view, exp, erf, add_ext, bmm, silu
 import mindspore
 
 
@@ -68,6 +68,7 @@ def test_view_ascend():
     output = view(input, (3, 2))
     assert np.allclose(output.asnumpy(), [[-0.1, 0.3], [3.6, 0.4], [0.5, -3.2]])
 
+
 def test_bmm_ascend():
     context.set_context(device_target="Ascend")
     input = Tensor(np.ones([1, 3, 4]).astype(np.float32))
@@ -93,9 +94,17 @@ def test_erf_ascend():
     output = erf(x)
     assert np.allclose(output.asnumpy(), [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765])
 
+
 def test_silu_ascend():
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float32)
     output = silu(x)
     assert np.allclose(output.asnumpy(), [-0.26894143, 1.761594, -0.14227761, 1.761594, -0.26894143])
 
+
+def test_add_ascend():
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    y = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    output = add_ext(x, y)
+    assert np.allclose(output.asnumpy(), [[[2, 6, 6], [8, 10, 12]], [[14, 16, 18], [20, 22, 24]]])
