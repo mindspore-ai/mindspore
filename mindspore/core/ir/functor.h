@@ -106,6 +106,30 @@ class MS_CORE_API ShapeCalcFunctor : public Functor {
 };
 using ShapeCalcFunctorPtr = std::shared_ptr<ShapeCalcFunctor>;
 
+class MS_CORE_API InferShapeFunctor : public Functor {
+ public:
+  /// \brief Constructor of InferShapeFunctor.
+  explicit InferShapeFunctor(const std::string &name) : Functor(name) {}
+
+  /// \brief Destructor of InferShapeFunctor.
+  ~InferShapeFunctor() override = default;
+  MS_DECLARE_PARENT(InferShapeFunctor, Functor)
+
+  /// \brief Infer output shape for the given cnode.
+  /// \param[in] cnode The cnode whose output shape needs to be inferred.
+  /// \param[in] args_spec_list AbstractBasePtrList of the cnode inputs.
+  /// \return Result ture if inference success, return false otherwise.
+  virtual bool InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) { return false; }
+
+  /// \brief Pack functor name to a Value
+  /// \return The name of this infershape functor.
+  ValuePtr ToValue() const override { return MakeValue(name_); };
+
+  /// \brief Rename the functor.
+  void FromValue(const ValuePtr &value) override { name_ = GetValue<std::string>(value); };
+};
+using InferShapeFunctorPtr = std::shared_ptr<InferShapeFunctor>;
+
 // common code to declare ShapeCalcFunctor
 #define DECLARE_SHAPE_CALC(reg_name, cls) \
   cls() : ShapeCalcFunctor(reg_name) {}   \
