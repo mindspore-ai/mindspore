@@ -529,7 +529,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 gpu_start_time = int(lines[1].strip().split(':')[-1])
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {start_time_file_path}: {err}')
-            raise ProfilerIOException()
+            raise ProfilerIOException() from err
         time_diff = gpu_start_time * 1000 - host_monotonic_start_time
         for idx, time_item in enumerate(timeline_list):
             timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff

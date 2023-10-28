@@ -54,7 +54,10 @@ CNodePtr NewMatMulNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &mat
 }
 
 BMNK GetBatchMNK(const CNodePtr &matmul) {
-  int64_t b, m, n, k = 0;
+  int64_t b = 0;
+  int64_t m = 0;
+  int64_t n = 0;
+  int64_t k = 0;
   auto shape_a = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex0);
   auto shape_b = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex1);
   auto [trans_a, trans_b] = GetMatMulTransposeAttr(matmul);
@@ -89,7 +92,10 @@ ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) const
   }
 
   auto [trans_a, trans_b] = GetMatMulTransposeAttr(matmul);
-  int64_t b, m, n, k;
+  int64_t b = 0;
+  int64_t m = 0;
+  int64_t n = 0;
+  int64_t k = 0;
   std::tie(b, m, n, k) = GetBatchMNK(matmul);
   if (is_a_shared) {
     auto shape_b = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex1);

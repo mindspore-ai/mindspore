@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ class ProfilingUtils {
   inline static constexpr char kNotify[] = "notify";
   inline static constexpr char kProfilerTraceId[] = "profiler_trace_id";
   inline static constexpr char kFlags[] = "flags";
+  static std::mutex profiler_mutex;
 
  private:
   static NotNull<CNodePtr> CreateProfilingCNode(const ProfilingContent &profiling_content,
@@ -179,12 +180,10 @@ class ProfilingUtils {
   inline static std::map<std::string, uint64_t> task_launch_begin_;
   inline static bool is_prof_type_registered_ = False;
 
-  inline static std::vector<MsprofEvent> report_event;
-  inline static std::vector<MsprofCompactInfo> report_compact_info;
-  inline static std::vector<MsprofAdditionalInfo> report_additional_info;
-  inline static std::vector<MsprofApi> report_api;
-
-  static std::mutex profiler_mutex;
+  inline static std::vector<MsprofEvent> report_event_;
+  inline static std::vector<MsprofCompactInfo> report_compact_info_;
+  inline static std::vector<MsprofAdditionalInfo> report_additional_info_;
+  inline static std::vector<MsprofApi> report_api_;
 };
 }  // namespace ascend
 }  // namespace device

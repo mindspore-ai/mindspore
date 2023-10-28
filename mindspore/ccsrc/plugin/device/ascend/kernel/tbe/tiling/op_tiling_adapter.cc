@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "graph/utils/tensor_utils.h"
 #include "kernel/oplib/super_bar.h"
+#include "common/plugin/opp_so_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -52,6 +53,15 @@ bool SkipOpConvert(const std::string &op_type) {
   return false;
 }
 }  // namespace
+
+OpTilingCalculateAdapter::OpTilingCalculateAdapter() {
+  static bool init = false;
+  if (!init) {
+    // for tiling rt2 operator to register
+    ::ge::OppSoManager::GetInstance().LoadOppPackage();
+    init = true;
+  }
+}
 
 std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) const {
   static const std::map<std::string, std::string> kOpTypeMap = {

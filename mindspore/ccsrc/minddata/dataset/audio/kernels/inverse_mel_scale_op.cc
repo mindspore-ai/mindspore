@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ Status InverseMelScaleOp::OutputShape(const std::vector<TensorShape> &inputs, st
   input_size.pop_back();
   TensorShape out = TensorShape(input_size);
   outputs.emplace_back(out);
-  if (!outputs.empty()) return Status::OK();
+  if (!outputs.empty()) {
+    return Status::OK();
+  }
   return Status(StatusCode::kMDUnexpectedError, "InverseMelScale: invalid input shape.");
 }
 

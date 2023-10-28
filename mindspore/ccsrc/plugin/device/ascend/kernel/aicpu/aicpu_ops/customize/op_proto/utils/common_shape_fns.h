@@ -28,7 +28,6 @@
 #include "graph/op_desc.h"
 #include "graph/ge_tensor.h"
 #include "graph/resource_context.h"
-#include "error_code.h"
 
 namespace ge {
 

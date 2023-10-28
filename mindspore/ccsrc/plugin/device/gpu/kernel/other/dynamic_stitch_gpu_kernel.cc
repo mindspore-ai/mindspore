@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/other/dynamic_stitch_gpu_kernel.h"
-#include <functional>
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dynamic_stitch_impl.cuh"
 #include "plugin/device/gpu/hal/device/gpu_common.h"

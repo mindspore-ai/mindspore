@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <limits>
+
 #include "utils/ms_context.h"
 #include "ir/anf.h"
 
@@ -58,6 +59,7 @@ class AscendMemAdapter {
 
  private:
   AscendMemAdapter() = default;
+
   struct MemoryBlock {
     MemoryBlock(void *ptr, const size_t size, const std::string &tag) {
       mem_ptr = ptr;
@@ -71,9 +73,8 @@ class AscendMemAdapter {
   };
 
   uint8_t *MallocFromRts(size_t size) const;
-  bool FreeToRts(void *devPtr) const;
+  bool FreeToRts(void *devPtr, const size_t size) const;
   size_t GetDeviceMemSizeFromContext() const;
-
   bool initialized_{false};
 
   // Support multi-thread.
@@ -82,7 +83,7 @@ class AscendMemAdapter {
   // rts Memory INFO
   size_t device_hbm_total_size_{0};
   size_t device_hbm_free_size_{0};
-  size_t max_available_ms_hbm_size_{0};
+  int64_t max_available_ms_hbm_size_{0};
   uint8_t *device_mem_base_addr_{nullptr};
   int64_t ms_used_hbm_size_{0};
 

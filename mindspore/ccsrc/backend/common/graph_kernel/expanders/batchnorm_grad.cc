@@ -59,17 +59,12 @@ class BatchNormGrad : public OpDesc {
     int64_t num;
     auto shape_x = input_x->shape;
     if (input_x->format == kOpFormat_NHWC) {
-      constexpr size_t idx_n = 0;
-      constexpr size_t idx_h = 1;
-      constexpr size_t idx_w = 2;
-      reduce_axis = {idx_n, idx_h, idx_w};
-      num = shape_x[idx_n] * shape_x[idx_h] * shape_x[idx_w];
+      // reduce_axis: idx_n, idx_h, idx_w
+      reduce_axis = {kDim0, kDim1, kDim2};
+      num = shape_x[kDim0] * shape_x[kDim1] * shape_x[kDim2];
     } else {
-      constexpr size_t idx_n = 0;
-      constexpr size_t idx_h = 2;
-      constexpr size_t idx_w = 3;
-      reduce_axis = {idx_n, idx_h, idx_w};
-      num = shape_x[idx_n] * shape_x[idx_h] * shape_x[idx_w];
+      reduce_axis = {kDim0, kDim2, kDim3};
+      num = shape_x[kDim0] * shape_x[kDim2] * shape_x[kDim3];
     }
     auto ori_type = input_x->type;
     auto x = input_x;

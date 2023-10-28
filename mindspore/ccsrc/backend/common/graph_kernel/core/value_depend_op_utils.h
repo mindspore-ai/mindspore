@@ -40,7 +40,6 @@ class ValueDependOpUtils {
     return iter->second;
   }
 
- private:
   static const std::unordered_map<std::string, HashSet<size_t>> &GetOpIndexInfo();
 };
 }  // namespace mindspore::graphkernel

@@ -16,9 +16,6 @@
 
 #include "plugin/device/gpu/hal/device/gpu_tensor_array.h"
 #include <cuda_runtime_api.h>
-#include <vector>
-#include <string>
-#include <memory>
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 

@@ -219,6 +219,7 @@ class MiniStepAllGatherPass : public AnfVisitor {
     }
     (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     CNodePtr new_node = func_graph->NewCNode(node_input);
     if (node->cast<CNodePtr>()->HasPrimalAttr(kAttrSegment)) {
       new_node->AddPrimalAttr(kAttrSegment, node->cast<CNodePtr>()->GetPrimalAttr(kAttrSegment));
@@ -267,6 +268,7 @@ class MicroStepAllGatherPass : public AnfVisitor {
     }
     (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
   }

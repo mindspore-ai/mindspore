@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 #include "minddata/dataset/core/cv_tensor.h"
 
-#include <memory>
-#include <vector>
-
-#include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
 namespace dataset {
-
 CVTensor::CVTensor(std::shared_ptr<Tensor> tensor) : Tensor(std::move(*tensor)) {
   (void)this->MatInit(GetMutableBuffer(), shape_, type_, &mat_);
 }

@@ -145,7 +145,9 @@ class ForwardExecutor {
                                                     const TensorStorageInfoPtr &storage_info);
 
   void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                              const TensorStorageInfoPtr &storage_info, const TypePtr &real_type);
+                              const TensorStorageInfoPtr &storage_info,
+                              const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
+                              const DeviceSyncPtr &input_origin_device_address, const TypePtr &real_type);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                const size_t &input_idx, bool need_wait = false);
@@ -155,8 +157,10 @@ class ForwardExecutor {
   PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
   FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
                                               const stub::StubNodePtr &stub_output);
-  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const TensorStorageInfoPtrList &storage_infos,
-                           bool is_tuple_output);
+  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &view_input_tensor,
+                           const TensorStorageInfoPtrList &storage_infos,
+                           const std::shared_ptr<tensor::FutureBase<DeviceSync>> &input_origin_address_future,
+                           const DeviceSyncPtr &input_origin_device_address, bool is_tuple_output);
 
  private:
   bool init_{false};

@@ -23,6 +23,7 @@
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/dtype.h"
 #include "utils/check_convert_utils.h"
 
@@ -165,10 +166,16 @@ CNodePtr CreateStringFormat(const FuncGraphPtr &graph, const CNodePtr &print_nod
       auto valut_ptr = GetValueNode(input_node);
       str_template = str_template + GetValue<std::string>(valut_ptr) + "\n";
     } else {
+      if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+        new_make_tuple_node = input_node->cast<CNodePtr>();
+        break;
+      }
       std::string str_dtype;
       auto abstract = input_node->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      auto shape = abstract->GetShapeTrack()->cast<abstract::ShapePtr>()->shape();
+      auto shape_ptr = abstract->GetShapeTrack()->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape_ptr);
+      auto shape = shape_ptr->shape();
       // For dynamic shape input tensor, insert TensorShape ops to get real shape.
       if (IsDynamic(shape)) {
         auto shape_node = CreateShape(graph, input_node);
@@ -186,7 +193,9 @@ CNodePtr CreateStringFormat(const FuncGraphPtr &graph, const CNodePtr &print_nod
   if (!str_template.empty()) {
     str_template.pop_back();
   }
-  new_make_tuple_node = CreateNewMakeTuple(graph, make_tuple_inputs);
+  if (new_make_tuple_node == nullptr) {
+    new_make_tuple_node = CreateNewMakeTuple(graph, make_tuple_inputs);
+  }
   std::vector<AnfNodePtr> string_format_inputs{NewValueNode(std::make_shared<Primitive>("StringFormat"))};
   string_format_inputs.emplace_back(new_make_tuple_node);
   auto string_format_node = graph->NewCNode(string_format_inputs);

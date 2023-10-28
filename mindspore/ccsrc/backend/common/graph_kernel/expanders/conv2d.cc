@@ -35,6 +35,10 @@ constexpr size_t kIdxN = 0;
 constexpr size_t kIdxH = 1;
 constexpr size_t kIdxW = 2;
 constexpr size_t kIdxC = 3;
+constexpr size_t kTop = 0;
+constexpr size_t kBottom = 1;
+constexpr size_t kLeft = 2;
+constexpr size_t kRight = 3;
 
 using inner::DFormat;
 // Conv2D expander
@@ -118,7 +122,8 @@ class Conv2D : public OpDesc {
     auto pad_list = GetAxisList(attrs_["pad_list"]);
     auto shape_0 = inputs_info_[0].shape;
     auto shape_1 = inputs_info_[1].shape;
-    if ((pad_list.size() != 4) || (shape_0.size() != 4) || (shape_1.size() != 4) || (stride_.size() != 4)) {
+    constexpr size_t i4 = 4;
+    if ((pad_list.size() != i4) || (shape_0.size() != i4) || (shape_1.size() != i4) || (stride_.size() != i4)) {
       MS_LOG(INFO)
         << "For 'Conv2D', pad_list, shape of input0, shape of input1 and stride all should be of size 4, but got "
         << pad_list.size() << ", " << shape_0.size() << ", " << shape_1.size() << ", " << stride_.size();
@@ -156,8 +161,8 @@ class Conv2D : public OpDesc {
     // h0, w0 pad
     has_pad_ = inner::Conv2dOp::HadPad(pad_list, GetValue<std::string>(attrs_["pad_mode"]));
     if (has_pad_) {
-      h0 = h0 + pad_list[0] + pad_list[1];
-      w0 = w0 + pad_list[2] + pad_list[3];
+      h0 = h0 + pad_list[kTop] + pad_list[kBottom];
+      w0 = w0 + pad_list[kLeft] + pad_list[kRight];
     }
 
     // c0, c1 pad
@@ -172,8 +177,7 @@ class Conv2D : public OpDesc {
     n_ = n1;
     k_ = c1;
     can_optimize_to_matmul_ = OptimizeToMatmul();
-
-    // expander requirement:
+    // expand requirement
     if (can_optimize_to_matmul_) {
       if (k_ > K_LIMIT) {
         MS_LOG(INFO) << "For 'Conv2D', if transformed to 'MatMul', C0 should not be larger than " << K_LIMIT
@@ -219,8 +223,8 @@ class Conv2D : public OpDesc {
     ShapeVector input_0_pad_after = {0, 0, 0, 0};
     if (has_pad_) {
       auto pad_list = GetAxisList(attrs_["pad_list"]);
-      input_0_pad_before = {0, pad_list[0], pad_list[2], 0};
-      input_0_pad_after = {0, pad_list[1], pad_list[3], 0};
+      input_0_pad_before = {0, pad_list[kTop], pad_list[kLeft], 0};
+      input_0_pad_after = {0, pad_list[kBottom], pad_list[kRight], 0};
     }
     input_0_pad_after[kIdxN] = shape_0_pad_[kIdxN] - shape_0[kIdxN];
     input_0_pad_after[kIdxC] = shape_0_pad_[kIdxC] - shape_0[kIdxC];

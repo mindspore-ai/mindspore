@@ -687,6 +687,9 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
     if (HasAbstractMonad(output_node)) {
       continue;
     }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
+      continue;
+    }
     auto real_index = output_node->isa<ValueNode>() ? 0 : index;
     auto shapes = trans::GetRuntimePaddingShape(output_node, real_index);
     auto host_type = common::AnfAlgo::GetOutputInferDataType(output_node, real_index);
@@ -1004,6 +1007,9 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     if (HasAbstractMonad(output_node)) {
       continue;
     }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
+      continue;
+    }
     real_output_size++;
     if (is_dynamic_shape) {
       auto real_index = output_node->isa<ValueNode>() ? 0 : idx;
@@ -1195,7 +1201,7 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       size_t type_size = GetTypeByte(TypeIdToType(host_type));
       memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
     }
-    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
+    (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {

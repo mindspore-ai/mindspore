@@ -49,11 +49,11 @@ std::vector<int64_t> GetOriStrides(const std::vector<int64_t> &shape) {
     return {};
   }
 
-  std::vector<int64_t> ret{1};
+  std::vector<int64_t> ret(shape.size(), 1);
   int64_t strides = 1;
-  for (size_t i = shape.size() - 1; i > 0; i--) {
+  for (size_t i = shape.size() - 1; i > 0; --i) {
     strides *= shape[i];
-    (void)ret.emplace(ret.begin(), strides);
+    ret[i - 1] = strides;
   }
   return ret;
 }
@@ -66,11 +66,11 @@ bool IsContiguous(const ShapeVector &shape, const std::vector<int64_t> &strides)
     MS_LOG(EXCEPTION) << "shape.size() != strides.size()";
   }
   int64_t expected_strides = 1;
-  for (int64_t i = static_cast<int64_t>(strides.size() - 1); i >= 0; i--) {
+  for (int64_t i = SizeToLong(strides.size() - 1); i >= 0; --i) {
     if (expected_strides != strides[i]) {
       return false;
     }
-    expected_strides *= static_cast<int64_t>(shape[i]);
+    expected_strides *= shape[i];
   }
   return true;
 }
@@ -86,23 +86,13 @@ int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr) {
 }
 
 OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor) {
-  OldTensorInfo old_tensor_info;
   if (tensor->storage_info() == nullptr) {
-    auto shape = tensor->shape();
-    auto strides = GetOriStrides(shape);
-    old_tensor_info.old_shape = shape;
-    old_tensor_info.ori_shape = shape;
-    old_tensor_info.ori_strides = strides;
-    old_tensor_info.old_strides = strides;
-    old_tensor_info.old_offset = 0;
+    auto old_strides = GetOriStrides(tensor->shape());
+    return std::make_shared<OldTensorInfo>(tensor->shape(), old_strides, tensor->shape(), old_strides, 0);
   } else {
     auto storage_info = tensor->storage_info();
-    old_tensor_info.old_shape = storage_info->shape;
-    old_tensor_info.old_strides = storage_info->strides;
-    old_tensor_info.ori_shape = storage_info->ori_shape;
-    old_tensor_info.ori_strides = storage_info->ori_strides;
-    old_tensor_info.old_offset = storage_info->storage_offset;
+    return std::make_shared<OldTensorInfo>(storage_info->shape, storage_info->strides, storage_info->ori_shape,
+                                           storage_info->ori_strides, storage_info->storage_offset);
   }
-  return std::make_shared<OldTensorInfo>(old_tensor_info);
 }
 }  // namespace mindspore::ops

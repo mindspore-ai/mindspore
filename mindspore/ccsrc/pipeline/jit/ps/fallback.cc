@@ -266,6 +266,19 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
   return interpreted_cnode;
 }
 
+CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
+                                       const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
+                                       const NodeDebugInfoPtr &debug_info) {
+  auto script = std::make_shared<parse::Script>(script_text);
+  auto script_node = NewValueNode(script);
+  parse::PyObjectWrapperPtr global_dict_wrapper = std::make_shared<parse::InterpretedObject>(global_dict_obj);
+  auto global_dict_node = NewValueNode(global_dict_wrapper);
+  auto node =
+    fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  node->set_debug_info(debug_info);
+  return node;
+}
+
 void SetPyObjectToLocalVariable(const std::string &key, const py::object &value) {
   py::module mod = python_adapter::GetPyModule("mindspore.common._jit_fallback_utils");
   constexpr auto set_local_variable = "set_local_variable";
@@ -456,8 +469,8 @@ std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &scri
   return res;
 }
 
-AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
-                                              const AnfNodePtrList &node_inputs, std::string script_str) {
+AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, const TypePtrList &types,
+                                                const AnfNodePtrList &node_inputs, std::string script_str) {
   // Pack local parameters keys.
   auto input_str_list = GetPyExecuteInputFromUnicodeStr(script_str);
   if (input_str_list.empty()) {
@@ -492,6 +505,7 @@ AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, co
   const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
 
   // Pack the local parameters values.
+  bool has_list_dict = false;
   std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
   for (size_t i = 0; i < node_inputs.size(); ++i) {
     auto input = node_inputs[i];
@@ -505,13 +519,26 @@ AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, co
     } else {
       (void)key_value_list.emplace_back(input);
     }
+    if (!has_list_dict && (types[i]->isa<List>() || types[i]->isa<Dictionary>())) {
+      has_list_dict = true;
+    }
   }
   const auto key_value_tuple = func_graph->NewCNode(key_value_list);
 
-  // Build the PyExecute node.
-  auto res = CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
-                                         key_value_name_tuple->debug_info());
-  MS_LOG(DEBUG) << "Generate PyExecute node: " << res;
+  if (has_list_dict) {
+    // If the multitype-fg has list or dict input, they may include inplace operation.
+    // So, we directly convert it to PyExecute.
+    auto res = CreatePyExecuteCNodeInOrder(func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple,
+                                           key_value_name_tuple->debug_info());
+    MS_LOG(DEBUG) << "Generate PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // Generate PyInterpret node with
+  auto local_dict = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_value_name_tuple, key_value_tuple});
+  auto res =
+    CreatePyInterpretCNodeInOrder(func_graph, script_str, py::dict(), local_dict, key_value_name_tuple->debug_info());
+  MS_LOG(DEBUG) << "Generate PyInterpret node: " << res->DebugString();
   return res;
 }
 
@@ -532,8 +559,8 @@ std::string GetNodeExprSrc(const AnfNodePtr &node) {
   return node_location->expr_src();
 }
 
-std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const std::string &right,
-                                                const std::string &op) {
+std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
+                                                  const std::string &op) {
   auto real_left = ConvertToRealStr(left);
   auto real_right = ConvertToRealStr(right);
   auto unicode_left = ConvertRealStrToUnicodeStr(real_left, 0);
@@ -543,7 +570,7 @@ std::string GeneratePyExecuteScriptForBinOrComp(const std::string &left, const s
   return res;
 }
 
-std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const std::string &op) {
+std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op) {
   auto real_operand = ConvertToRealStr(operand);
   auto unicode_operand = ConvertRealStrToUnicodeStr(real_operand, 0);
   auto res = op + " " + unicode_operand;
@@ -551,7 +578,7 @@ std::string GeneratePyExecuteScriptForUnary(const std::string &operand, const st
   return res;
 }
 
-std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice) {
+std::string GeneratePyInterpretScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice) {
   auto real_value = ConvertToRealStr(value);
   auto unicode_value = ConvertRealStrToUnicodeStr(real_value, 0);
   std::string res;
@@ -565,7 +592,7 @@ std::string GeneratePyExecuteScriptForSubscript(const std::string &value, const 
   return res;
 }
 
-std::string GeneratePyExecuteScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id) {
+std::string GeneratePyInterpretScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id) {
   auto call_cnode = call_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(call_cnode);
   std::string new_expr_src = name_id + "(";

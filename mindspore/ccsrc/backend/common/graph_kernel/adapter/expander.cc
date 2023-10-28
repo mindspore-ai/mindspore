@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,11 @@
 #include "mindspore/core/ops/op_name.h"
 
 namespace mindspore::graphkernel {
-ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
-  ExpanderPtr expander = abstract ? std::make_shared<LitegraphExpander>(std::static_pointer_cast<Callback>(
-                                      std::make_shared<CallbackImplWithInferShape>()))
-                                  : std::make_shared<LitegraphExpander>(Callback::Instance());
+ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr &init) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(init);
   if (IsComplexOp(node)) {
-    return ComplexOpDecorator::Creator(expander);
+    return ComplexOpDecorator::Creator(init);
   }
 
   constexpr size_t kAssignInputIdx = 1;
@@ -81,6 +80,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimGather->name(), {DependValueDeco::GetCreator({2})}},
     {prim::kPrimAddN->name(), {UnfoldMakeTupleDeco::Creator}}};
 
+  ExpanderPtr expander = init;
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
     expander = WrapExpander(expander, iter->second);
@@ -90,6 +90,15 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     expander = SetDynamicShapeAttrDeco::Creator(expander);
   }
   return expander;
+}
+
+ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
+  ExpanderPtr expander =
+    abstract
+      ? std::make_shared<LitegraphExpander>(
+          std::static_pointer_cast<Callback>(std::make_shared<CallbackImplWithInferShape>()))
+      : std::make_shared<LitegraphExpander>(std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>()));
+  return GetExpander(node, expander);
 }
 
 bool CanExpandFallback(const AnfNodePtr &node) {

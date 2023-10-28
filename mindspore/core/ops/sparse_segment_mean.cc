@@ -29,6 +29,15 @@
 namespace mindspore {
 namespace ops {
 namespace {
+
+bool IsEmptyTensor(const std::vector<int64_t> &dims) {
+  if (dims.size() == 1 && dims[0] == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
@@ -49,7 +58,9 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     constexpr int64_t unknown_shape = -2;
     return std::make_shared<abstract::Shape>(ShapeVector{unknown_shape});
   }
-
+  if (IsEmptyTensor(x_shape)) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'x' can not be an empty Tensor.";
+  }
   constexpr int64_t number_one = 1;
   (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterEqual,
                                            batch_rank + number_one, prim_name);

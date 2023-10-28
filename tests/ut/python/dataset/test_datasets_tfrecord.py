@@ -1061,6 +1061,18 @@ def test_tfrecord_exception():
             pass
     assert "map operation: [PyFunc] failed. The corresponding data file is" in str(info.value)
 
+    with pytest.raises(RuntimeError) as info:
+        dataset = ds.TFRecordDataset(FILES, num_shards=4, shard_id=3, shard_equal_rows=False)
+        # pipeline mode
+        for data in dataset:
+            pass
+    assert "numbers of tfrecord file should not less than num_shards" in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
+        dataset = ds.TFRecordDataset(FILES, num_shards=4, shard_id=3, shard_equal_rows=False)
+        # pull mode
+        dataset.output_shapes()
+    assert "numbers of tfrecord file should not less than num_shards" in str(info.value)
 
 if __name__ == '__main__':
     test_tfrecord_shape()

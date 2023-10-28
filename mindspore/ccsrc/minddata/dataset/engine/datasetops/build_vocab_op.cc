@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
 
-#include <algorithm>
-#include <iomanip>
-#include <limits>
-#include <string>
-#include <unordered_map>
-#include <utility>
 #include "minddata/dataset/core/config_manager.h"
 
 namespace mindspore {
 namespace dataset {
-
 BuildVocabOp::BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names,
                            std::pair<int64_t, int64_t> freq_r, int64_t top_k, const std::vector<std::string> &tokens,
                            bool prepend, int32_t num_workers, int32_t op_conn_size)
@@ -175,7 +168,8 @@ Status BuildVocabOp::CollectorThread() {
   // this would take the top-k most frequent words
   std::partial_sort(words.begin(), words.begin() + num_words, words.end(),
                     [this](const std::string &w1, const std::string &w2) {
-                      int64_t f1 = word_cnt_[w1], f2 = word_cnt_[w2];
+                      int64_t f1 = word_cnt_[w1];
+                      int64_t f2 = word_cnt_[w2];
                       return f1 == f2 ? w1 < w2 : f1 > f2;
                     });
 

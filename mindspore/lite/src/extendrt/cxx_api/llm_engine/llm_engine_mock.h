@@ -23,6 +23,12 @@
 #include <map>
 #include "ge/ge_ir_build.h"
 #include "external/llm_engine_types.h"
+#include "common/ge_common/ge_inner_error_codes.h"
+
+namespace ge {
+GE_ERRORNO_COMMON(LLM_WAIT_PROC_TIMEOUT_LITE, 102, "wait to be processed failed!");
+GE_ERRORNO_COMMON(LLM_NOT_RECV_KV_CACHE_LITE, 103, "not receive kv cache!");
+}  // namespace ge
 
 namespace llm {
 class DecoderManager;

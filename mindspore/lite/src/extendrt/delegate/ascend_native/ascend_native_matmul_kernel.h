@@ -36,6 +36,8 @@ class AscendNativeMatmulKernel : public AscendNativeBaseKernel {
   int Prepare() override;
 
   int Run() override;
+
+  int ReSize() override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_MATMUL_KERNEL_H_

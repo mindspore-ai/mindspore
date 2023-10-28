@@ -378,6 +378,8 @@ bool CheckCmpValid(const AbstractBasePtr &cmp) {
       return cmp_closure_fn->ToString() == ms_class_type_fn_name;
     }
     return cmp_type_id == kMetaTypeTypeType;
+  } else if (cmp->isa<abstract::AbstractAny>()) {
+    return true;
   }
   return std::find(kSparsePrimStr.cbegin(), kSparsePrimStr.cend(), cmp->ToString()) != kSparsePrimStr.cend();
 }
@@ -390,13 +392,9 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   py::gil_scoped_acquire gil;
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   auto x = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(x);
   auto cmp = args_abs_list[1];
-  bool result = false;
-
-  // If exist AbstractAny, return AbstractAny. Then the IsInstance will convert PyExecute in fallback_rewriter.
-  if (fallback::ContainsSequenceAnyType(cmp) || fallback::ContainsSequenceAnyType(x)) {
-    return std::make_shared<abstract::AbstractAny>();
-  }
+  MS_EXCEPTION_IF_NULL(cmp);
 
   if (!CheckCmpValid(cmp)) {
     auto cmp_type = cmp->BuildType();
@@ -406,9 +404,17 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
     MS_EXCEPTION(TypeError) << "isinstance() arg 2 must be a type or tuple of types.";
   }
 
-  // x is Cell object.
+  // If x is AbstractAny the result of isinstance can not determined in frontend,
+  // isinstance should be converted to pyexecute later.
+  // So we set the abstract of instance to variable boolean scalar.
+  if (x->isa<abstract::AbstractAny>()) {
+    return std::make_shared<AbstractScalar>(kValueAny, kBool);
+  }
+
   MS_EXCEPTION_IF_NULL(x);
+  bool result = false;
   if (x->isa<abstract::FuncGraphAbstractClosure>()) {
+    // x is Cell object.
     auto x_fg = x->cast<abstract::FuncGraphAbstractClosurePtr>()->func_graph();
     MS_EXCEPTION_IF_NULL(x_fg);
     auto wrapper_obj = x_fg->python_obj();
@@ -420,58 +426,48 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
       auto x_py_obj = wrapper_obj->cast<parse::PyObjectWrapperPtr>()->obj();
       result = CheckIsInstanceForFunc(x_py_obj, cmp, mod);
     }
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
-  }
-
-  // x is Primitive.
-  if (x->isa<abstract::PrimitiveAbstractClosure>()) {
+  } else if (x->isa<abstract::PrimitiveAbstractClosure>()) {
+    // x is Primitive.
     auto x_py_obj = GetPrimitivePyObj(x->cast<abstract::PrimitiveAbstractClosurePtr>());
     result = CheckIsInstanceForFunc(x_py_obj, cmp, mod);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
-  }
-
-  // x is ms_class.
-  if (x->isa<abstract::AbstractClass>()) {
+  } else if (x->isa<abstract::AbstractClass>()) {
+    // x is ms_class.
     auto class_value = x->BuildValue();
     MS_EXCEPTION_IF_NULL(class_value);
     auto x_py = ValueToPyData(class_value);
     result = CheckIsInstanceForFunc(x_py, cmp, mod);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
-  }
-
-  // x is sparse tensor, now support RowTensor, CSRTensor, COOTensor.
-  if (x->isa<abstract::AbstractCSRTensor>()) {
+  } else if (x->isa<abstract::AbstractCSRTensor>()) {
+    // x is sparse tensor with type CSRTensor.
     const size_t csr_index = 0;
     result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[csr_index]);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
   } else if (x->isa<abstract::AbstractCOOTensor>()) {
+    // x is sparse tensor with type COOTensor.
     const size_t coo_index = 1;
     result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[coo_index]);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
   } else if (x->isa<abstract::AbstractRowTensor>()) {
+    // x is sparse tensor with type RowTensor.
     const size_t row_index = 2;
     result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[row_index]);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
-  }
-
-  // x is adapter tensor.
-  if (IsAdapterTensor(x)) {
+  } else if (IsAdapterTensor(x)) {
+    // x is adapter tensor.
     result = CheckIsInstanceForAdapter(x, cmp);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
-  }
-
-  auto x_value = x->BuildValue();
-  // x is variable built-in type.
-  if (x_value == kValueAny) {
+  } else if (x->BuildValue() == kValueAny) {
+    // x is variable built-in type.
     auto x_abs_type = std::make_shared<AbstractType>(x->BuildType());
     auto py_x_type = ValueToPyData(x_abs_type->BuildValue());
     result = CheckPythonIsInstance(py_x_type, cmp, mod, false);
-    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  } else {
+    // x is python built-in constant type or external type.
+    py::object x_py_obj = ValueToPyData(x->BuildValue());
+    result = CheckPythonIsInstance(x_py_obj, cmp, mod, true);
   }
 
-  // x is python built-in constant type or external type.
-  py::object x_py_obj = ValueToPyData(x_value);
-  result = CheckPythonIsInstance(x_py_obj, cmp, mod, true);
+  // If no constant type in cmp match the type of x and cmp contains AbstractAny,
+  // the result of isinstance can not determined in frontend, should be converted to pyexecute later.
+  // So we set the abstract of instance to variable boolean scalar.
+  if (!result && fallback::ContainsSequenceAnyType(cmp)) {
+    return std::make_shared<AbstractScalar>(kValueAny, kBool);
+  }
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
 }
 

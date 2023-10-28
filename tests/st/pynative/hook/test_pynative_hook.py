@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ class LeNet5(nn.Cell):
         self.batch_size = 32
         self.conv1 = conv(1, 6, 5)
         self.conv2 = conv(6, 16, 5)
-        self.conv1.register_backward_hook(cell_hook_function)
+        self.conv2.register_backward_hook(cell_hook_function)
         self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
         self.fc2 = fc_with_initialize(120, 84)
         self.fc3 = fc_with_initialize(84, self.num_class)

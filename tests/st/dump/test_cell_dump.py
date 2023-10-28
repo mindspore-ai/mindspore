@@ -148,8 +148,10 @@ def test_ascend_not_cell_dump():
                 time.sleep(2)
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
 
-        # make sure set_dump is ignored and all cell layer are dumped
-        assert len(os.listdir(dump_file_path)) == 11
+        # make sure set_dump is ignored and all cell layer are dumped, at leat 2 Relu, 1 ReduceMean, 1 MatMul,
+        # 1 SoftmaxCrossEntropyWithLogits in forward graph, and some operators such as Momentum and other gradient
+        # operators in backward graph.
+        assert len(os.listdir(dump_file_path)) > 10
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 

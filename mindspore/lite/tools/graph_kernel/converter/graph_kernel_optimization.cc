@@ -45,6 +45,7 @@
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
+#include "tools/graph_kernel/converter/update_kernel_info.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -137,6 +138,7 @@ GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
 GkPassManagerPtr GraphKernelOptimizer::PostProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePostProcess, "postprocess");
   pm->Add(std::make_shared<RenameFullnameWithScope>(), OptLevel_1);
+  pm->Add(std::make_shared<UpdateKernelInfo>(), OptLevel_1);
   return pm;
 }
 

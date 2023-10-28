@@ -270,7 +270,7 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
                           const void *_wblock, const PaddBorderType borderType,
                           const std::vector<uint8_t> &borderValue) {
   const int cn = _src.channel_;
-  const auto *wblock = (const int16_t *)_wblock;
+  const auto *wblock = static_cast<const int16_t *>(_wblock);
   const uint8_t *src_ptr = _src.ptr<uint8_t>(0);
   size_t src_step = _src.steps_[0];
   unsigned src_width = std::max(_src.width_ - 1, 0);
@@ -399,6 +399,7 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
     return false;
   }
 
+  // 0, 1, 2, 3, 4, 5 is the Affine matrix index of IM
   double IM[6];
   const double *M_Ptr = M;
   for (int i = 0; i < 6; i++) {

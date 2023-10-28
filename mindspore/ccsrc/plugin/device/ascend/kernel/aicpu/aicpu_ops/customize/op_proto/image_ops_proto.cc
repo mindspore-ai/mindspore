@@ -99,7 +99,7 @@ IMPLEMT_INFERFUNC(ExtractGlimpse, ExtractGlimpseInfer) {
   }
   auto x_dims = op.GetInputDesc(0).GetShape().GetDims();
   auto offsets_dims = op.GetInputDesc(2).GetShape().GetDims();
-  CHECK(x_dims.size() < 4 || offsets_dims.size() < 2, OP_LOGE(TbeGetName(op), "invalid x_dims or offsets_dims."),
+  CHECK((x_dims.size() < 4 || offsets_dims.size() < 2), OP_LOGE(TbeGetName(op), "invalid x_dims or offsets_dims."),
         return GRAPH_FAILED);
   int64_t batch_dim;
   if (Merge(x_dims[0], offsets_dims[0], batch_dim) != GRAPH_SUCCESS) {
@@ -157,18 +157,12 @@ INFER_FUNC_REG(ResizeArea, ResizeAreaInfer);
 
 // ----------------ResizeBicubic-------------------
 IMPLEMT_INFERFUNC(ResizeBicubic, ResizeBicubicInfer) {
-  TensorDesc desc = op.GetOutputDescByName("y");
+  TensorDesc x_desc = op.GetInputDescByName("images");
+  TensorDesc y_desc = op.GetOutputDescByName("y");
 
-  DataType data_type = DT_FLOAT;
-  // Update DataType when Attr "dtype" is set
-  if (op.GetAttr("dtype", data_type) == GRAPH_SUCCESS) {
-    CHECK(((data_type != DT_FLOAT) && (data_type != DT_UINT8)),
-          OP_LOGE(TbeGetName(op), "Attr dtype should only be DT_FLOAT or DT_UNIT8"), return GRAPH_FAILED);
-    OP_LOGI(TbeGetName(op), "Update Bicubic DataType from attr, which is %d", data_type);
-  }
-
-  desc.SetDataType(data_type);
-  if (op.UpdateOutputDesc("y", desc) != GRAPH_SUCCESS) {
+  DataType data_type = x_desc.GetDataType();
+  y_desc.SetDataType(data_type);
+  if (op.UpdateOutputDesc("y", y_desc) != GRAPH_SUCCESS) {
     return GRAPH_FAILED;
   }
   return ResizeShapeFn(op, "images", "size", "y");

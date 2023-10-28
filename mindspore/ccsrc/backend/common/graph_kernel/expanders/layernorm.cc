@@ -55,7 +55,7 @@ class LayerNorm : public OpDesc {
 
     auto begin_norm_axis = GetValue<int64_t>(attrs_["begin_norm_axis"]);
     if (begin_norm_axis < 0) {
-      begin_norm_axis += ori_shape_x.size();
+      begin_norm_axis += static_cast<int64_t>(ori_shape_x.size());
     }
 
     ShapeVector reduce_axis;

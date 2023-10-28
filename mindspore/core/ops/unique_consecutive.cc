@@ -55,10 +55,14 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
 
   auto axis_ptr = primitive->GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(axis_ptr);
-  abstract::ShapePtr output_shape, idx_shape, counts_shape;
-  ShapeVector output_vec, output_max_vec;
+  abstract::ShapePtr output_shape;
+  abstract::ShapePtr idx_shape;
+  abstract::ShapePtr counts_shape;
+  ShapeVector output_vec;
+  ShapeVector output_max_vec;
   ShapeVector idx_shape_vec;
-  ShapeVector counts_shape_vec, counts_max_vec;
+  ShapeVector counts_shape_vec;
+  ShapeVector counts_max_vec;
   // dynamic shape, the infershape function will be called two times. In the second time, the attribute
   // axis may be deleted so as to axis_ptr is nullptr.
   if (axis_ptr->isa<None>() || GetValue<int64_t>(axis_ptr) == kAxisIsNone) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,9 @@ int MDToDApi_pathTest(const char *path) {
     Path v = dir_it->next();
     MS_LOG(INFO) << v.toString() << "\n";
     i++;
-    if (i > path_len_limit) break;
+    if (i > path_len_limit) {
+      break;
+    }
   }
   return 0;
 }
@@ -155,7 +157,7 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
   }
 
   // Create objects for the tensor ops
-  MS_LOG(INFO) << " Create pipline parameters";
+  MS_LOG(INFO) << " Create pipeline parameters";
   MS_LOG(INFO) << "floder path: " << folder_path << " , schema json: " << schema_file;
   MS_LOG(INFO) << "Reading columns:";
   for (auto str : column_names) {
@@ -312,7 +314,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
     // IS FOR TRAIN
     GetValue<int32_t>(row, "_isForTrain", &results->isForTrain);
     GetValue<int32_t>(row, "_noOfFaces", &results->noOfFaces);
-    results->orientation = (int32_t)orientation;
+    results->orientation = static_cast<int32_t>(orientation);
     // String and Tensors
     GetTensorToBuff(row, "image_filename", pMDToDApi->_hasBatch, &results->fileNameBuff);
     GetTensorToBuff(row, "image", pMDToDApi->_hasBatch, &results->imageBuff);
@@ -331,14 +333,14 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
 
 extern "C" int MDToDApi_Stop(MDToDApi *pMDToDApi) {
   // Manually terminate the pipeline
-  MS_LOG(INFO) << "pipline stopped";
+  MS_LOG(INFO) << "pipeline stopped";
   return 0;
 }
 
 extern "C" int MDToDApi_Destroy(MDToDApi *pMDToDApi) {
-  MS_LOG(INFO) << "pipline deleted start";
+  MS_LOG(INFO) << "pipeline deleted start";
   delete pMDToDApi;
-  MS_LOG(INFO) << "pipline deleted end";
+  MS_LOG(INFO) << "pipeline deleted end";
   return 0;
 }
 
@@ -433,7 +435,9 @@ extern "C" int MDToDApi_UpdateIsForTrain(MDToDApi *pMDToDApi, int32_t isForTrain
   int64_t file_id = pMDToDApi->_file_id;
   MS_LOG(INFO) << "Start Update isForTRain for id: " << file_id << " To " << isForTrain;
 
-  if (file_id < 0) return -1;
+  if (file_id < 0) {
+    return -1;
+  }
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
   mindspore::dataset::DataHelper dh;
@@ -450,7 +454,9 @@ extern "C" int MDToDApi_UpdateNoOfFaces(MDToDApi *pMDToDApi, int32_t noOfFaces) 
   int64_t file_id = pMDToDApi->_file_id;
   MS_LOG(INFO) << "Start Update noOfFaces for id: " << file_id << " To " << noOfFaces;
 
-  if (file_id < 0) return -1;
+  if (file_id < 0) {
+    return -1;
+  }
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
   mindspore::dataset::DataHelper dh;

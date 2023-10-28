@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
 }
 
 ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {
-  auto e = GetExpander(node, false);
+  auto e = GetExpander(node, std::make_shared<LitegraphExpander>(Callback::Instance()));
   return e;
 }
 }  // namespace mindspore::graphkernel

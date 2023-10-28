@@ -150,7 +150,6 @@ class Custom(ops.PrimitiveWithInfer):
 
     .. warning::
         - This is an experimental API that is subject to change.
-        - Currently, the functionality of Custom does not support Ascend 910B.
 
     .. note::
         The supported platforms are determined by the input `func_type`. The supported platforms are as follows:
@@ -454,7 +453,7 @@ class Custom(ops.PrimitiveWithInfer):
     custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
     def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
-        ops.PrimitiveWithInfer.__init__(self, "Custom")
+        super().__init__("Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
         self.supported_func_type = ["hybrid", "akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]

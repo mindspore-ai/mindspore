@@ -15,9 +15,6 @@
  */
 
 #include "plugin/device/cpu/hal/device/cpu_tensor_array.h"
-#include <vector>
-#include <string>
-#include <memory>
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
 
 namespace mindspore {

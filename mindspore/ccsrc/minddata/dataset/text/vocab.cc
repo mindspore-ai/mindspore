@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 
 #include "minddata/dataset/include/dataset/text.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 #include "utils/file_utils.h"
-#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

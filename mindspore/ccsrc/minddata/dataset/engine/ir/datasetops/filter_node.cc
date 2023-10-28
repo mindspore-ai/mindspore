@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 
 #include "minddata/dataset/engine/ir/datasetops/filter_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for FilterNode
 FilterNode::FilterNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<TensorOp> predicate,
                        std::vector<std::string> input_columns)

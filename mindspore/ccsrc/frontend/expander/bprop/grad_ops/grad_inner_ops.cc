@@ -24,9 +24,9 @@ namespace mindspore::expander::bprop {
 
 NodePtr GetMatrixDiagPartAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
   auto base_eye = ib->Emit(
-    "Eye", {ib->Value(x_shape[x_shape.size() - 2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
+    "Eye", {ib->Value(x_shape[x_shape.size() - i2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
-  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - 2);
+  ShapeVector tile_shape(x_shape.begin(), x_shape.end() - i2);
   auto tile = ib->Tile(base_eye, tile_shape);
   auto assist = ib->Reshape(tile, x_shape);
   return assist;
@@ -45,37 +45,6 @@ NodePtr GetMatrixDiagAssit(BpropIRBuilder *ib, const ShapeVector &x_shape, TypeP
 }
 
 REG_BPROP_BUILDERS_BEGIN(GradInnerOps)
-REG_BPROP_BUILDER("DSDMatmul.NotReady").SetBody(BODYFUNC(ib) {
-  auto w1_gm = ib->GetInput(kIndex0);
-  auto w2_gm = ib->GetInput(kIndex1);
-  auto v_gm = ib->GetInput(kIndex2);
-  auto out = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex4);
-  auto tmp = ib->Emit("DSDGrad", {w1_gm, w2_gm, v_gm, out, dout});
-  auto d_w1_gm = ib->TupleGetItem(tmp, kIndex0);
-  auto d_w2_gm = ib->TupleGetItem(tmp, kIndex1);
-  auto d_v_gm = ib->TupleGetItem(tmp, kIndex2);
-  return {d_w1_gm, d_w2_gm, d_v_gm};
-});
-
-REG_BPROP_BUILDER("MatmulDDS.NotReady").SetUnusedInputs({i2, i3, i5}).SetBody(BODYFUNC(ib) {
-  auto q = ib->GetInput(kIndex0);
-  auto k = ib->GetInput(kIndex1);
-  auto local_mask = ib->GetInput(kIndex2);
-  auto global_mask = ib->GetInput(kIndex3);
-  auto out = ib->GetInput(kIndex4);
-  auto lc = ib->TupleGetItem(out, kIndex0);
-  auto gc = ib->TupleGetItem(out, kIndex1);
-  auto d_lc = ib->TupleGetItem(out, kIndex0);
-  auto d_gc = ib->TupleGetItem(out, kIndex1);
-  auto tmp = ib->Emit("MatmulDDSGrad", {q, k, lc, gc, d_lc, d_gc});
-  auto dq = ib->TupleGetItem(tmp, kIndex0);
-  auto dk = ib->TupleGetItem(tmp, kIndex1);
-  ShapeVector shape = {1, 0, 3, 2};
-  dk = ib->Transpose(dk, shape);
-  return {dq, dk, ib->OutZeros(local_mask), ib->OutZeros(global_mask)};
-});
-
 REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto size = ib->GetInput(kIndex1);
@@ -89,12 +58,6 @@ REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC
 REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
   return {dout};
-});
-
-REG_BPROP_BUILDER("_VirtualPipelineEnd.NotReady").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("_VirtualPipelineEnd", {dout});
-  return {dx};
 });
 
 REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -234,9 +197,9 @@ REG_BPROP_BUILDER("DSDMatmul").SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex4);
   auto tmp = ib->Emit("DSDGrad", {w1_gm, w2_gm, v_gm, out, dout});
-  auto d_w1_gm = ib->TupleGetItem(tmp, 0);
-  auto d_w2_gm = ib->TupleGetItem(tmp, 1);
-  auto d_v_gm = ib->TupleGetItem(tmp, 2);
+  auto d_w1_gm = ib->TupleGetItem(tmp, kIndex0);
+  auto d_w2_gm = ib->TupleGetItem(tmp, kIndex1);
+  auto d_v_gm = ib->TupleGetItem(tmp, kIndex2);
   return {d_w1_gm, d_w2_gm, d_v_gm};
 });
 

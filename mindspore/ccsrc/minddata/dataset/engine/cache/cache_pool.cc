@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-#include "utils/ms_utils.h"
 #include "minddata/dataset/engine/cache/cache_pool.h"
+
 #include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/services.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {

@@ -62,8 +62,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
 
   CNodePtr CreateIncreFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
-                                                 const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                 float scale_value) const;
+                                                 const AnfNodePtr &atten_mask, int64_t num_heads, float scale_value,
+                                                 int64_t num_key_value_heads) const;
 
   CNodePtr CreateFlashAttentionNodeForSD(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const;
@@ -75,6 +75,19 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                      const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForBaiChuanPattern(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                       const AnfNodePtr &node, const EquivPtr &equiv) const;
+
+  CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size) const;
+  CNodePtr CreateSliceCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t slice_size) const;
+  CNodePtr GetSDDynamicShapeParam(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;
+  CNodePtr CreateFAForSD15(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
+                           const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
+                           float scale_value) const;
+  CNodePtr CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const CNodePtr &matmul_1,
+                                 const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul) const;
+  CNodePtr CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                        const CNodePtr &qk_matmul, const CNodePtr &v_matmul,
+                                        const CNodePtr &attention_mask_mul) const;
 
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;
   const VectorRef DefineFlashAttentionPatternForSDBSH() const;

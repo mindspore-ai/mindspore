@@ -40,6 +40,8 @@ constexpr size_t kIndexGrad = 8;
 
 constexpr size_t kApplyAdaMaxInputsNum = 9;
 constexpr size_t kApplyAdaMaxOutputsNum = 3;
+
+bool CheckShapeIsScalar(const ShapeVector &shape) { return shape.empty() || (shape.size() == 1 && shape[0] == 1); }
 }  // namespace
 
 namespace mindspore {
@@ -60,13 +62,23 @@ int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
+  std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
+  std::vector<int64_t> v_shape = inputs[kIndexV]->GetShapeVector();
+  std::vector<int64_t> beta1_power_shape = inputs[kIndexBeta1Power]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();
+  std::vector<int64_t> beta1_shape = inputs[kIndexBeta1]->GetShapeVector();
+  std::vector<int64_t> beta2_shape = inputs[kIndexBeta2]->GetShapeVector();
+  std::vector<int64_t> epsilon_shape = inputs[kIndexEpsilon]->GetShapeVector();
+  std::vector<int64_t> grad_shape = inputs[kIndexGrad]->GetShapeVector();
 
   if (batch_rank_ == 0) {
-    if (lr_shape.size() != 0 && lr_shape.size() != 1) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << lr_shape
-                    << " and 'batch_rank': " << batch_rank_;
+    if (!CheckShapeIsScalar(beta1_power_shape) || !CheckShapeIsScalar(lr_shape) || !CheckShapeIsScalar(beta1_shape) ||
+        !CheckShapeIsScalar(beta2_shape) || !CheckShapeIsScalar(epsilon_shape)) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'beta1_power'(shape: " << beta1_power_shape
+                    << "), 'lr'(shape: " << lr_shape << "), 'beta1'(shape: " << beta1_shape
+                    << "), 'beta2'(shape: " << beta2_shape << "), 'epsilon'(shape: " << epsilon_shape
+                    << ") must be scalar";
+      return KRET_RESIZE_FAILED;
     }
   } else {
     if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
@@ -80,6 +92,11 @@ int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (var_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
+    return KRET_RESIZE_FAILED;
+  }
+  if (m_shape != var_shape || v_shape != var_shape || grad_shape != var_shape) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var': " << var_shape << ", 'm': " << m_shape
+                  << ", 'v': " << v_shape << ", and 'grad': " << grad_shape << " must be equal.";
     return KRET_RESIZE_FAILED;
   }
 

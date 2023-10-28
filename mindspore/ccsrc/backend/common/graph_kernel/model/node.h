@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ class BACKEND_EXPORT Node : public NodeBase, public std::enable_shared_from_this
   void RemoveUser(Node *const user, size_t index);
 };
 
-class ConstTensorNode : public Node {
+class BACKEND_EXPORT ConstTensorNode : public Node {
  public:
   explicit ConstTensorNode(const tensor::TensorPtr &data)
       : Node({data->DataSize() == 1 ? DShape({1}) : data->shape(), data->data_type(), kOpFormat_DEFAULT}),

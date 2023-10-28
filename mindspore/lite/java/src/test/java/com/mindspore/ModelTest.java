@@ -182,7 +182,7 @@ public class ModelTest {
         MSTensor output = liteModel.getOutputByTensorName(outputTensorName);
         assertEquals(80, output.size());
         output = liteModel.getOutputByTensorName("Default/network-WithLossCell/_loss_fn-L1Loss/ReduceMean-op112");
-        assertEquals(0, output.size());
+        assertTrue(output == null);
         List<MSTensor> inputs = liteModel.getInputs();
         for (MSTensor input : inputs) {
             System.out.println(input.tensorName());

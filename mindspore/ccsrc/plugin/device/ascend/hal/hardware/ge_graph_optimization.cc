@@ -18,6 +18,8 @@
 #include <string>
 #include <memory>
 #include "backend/common/optimizer/common_backend_optimization.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/backend_common_unify_mindir.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
@@ -40,6 +42,10 @@ void GEGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
   }
   opt::GEBackendOptimizeACL(graph);
   opt::GEBackendOptimization(graph);
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    graphkernel::GraphKernelOptimize(graph);
+    graph->SetExecOrderByDefault();
+  }
   MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
 }
 

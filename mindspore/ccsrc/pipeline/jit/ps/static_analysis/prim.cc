@@ -193,7 +193,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(engine);
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   MS_EXCEPTION_IF_NULL(prim_);
@@ -402,7 +402,7 @@ EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList
   AbstractBasePtrList args_abs_list;
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();
@@ -472,7 +472,7 @@ EvalResultPtr SwitchLayerEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AbstractBasePtrList args_abs_list;
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+  if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
   auto out_node = out_conf->node()->cast<CNodePtr>();

@@ -40,7 +40,6 @@
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "kernel/oplib/op_info_utils.h"
-#include "common/plugin/opp_so_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #ifndef ENABLE_SECURITY
@@ -180,6 +179,19 @@ void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   if (runtime_core_ != nullptr) {
     runtime_core_->UnloadModelCore(graph_id);
   }
+}
+
+void AscendKernelRuntime::ResetStreamAndCtx() {
+  // 1 destroy stream and ctx;
+  AscendStreamMng::GetInstance().DestroyAllStreams();
+  stream_ = nullptr;
+  rt_context_ = nullptr;
+  // 2 re-create stream and ct
+  auto ret = aclrtCreateContext(&rt_context_, device_id_);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtCreateContext failed, ret: " << ret;
+  }
+  CreateDefaultStream();
 }
 
 void *AscendKernelRuntime::GetModelStream(uint32_t graph_id) const {
@@ -331,14 +343,6 @@ bool AscendKernelRuntime::Init() {
     }
     if (!PlatformInfoUtil::GetInstance().Init(soc_version)) {
       MS_LOG(EXCEPTION) << "PlatformInfo Initialization failed.";
-    }
-
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    const bool is_enable_ge = context_ptr->backend_policy() == "ge";
-    if (!is_enable_ge) {
-      // for tiling rt2 operator to register
-      ::ge::OppSoManager::GetInstance().LoadOppPackage();
     }
     uint32_t op_execute_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
     std::string hccl_exec_timeout = common::GetEnv("HCCL_EXEC_TIMEOUT");

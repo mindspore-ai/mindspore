@@ -39,7 +39,7 @@ inline void GetDataToVector(const uint8_t *const_data, size_t data_size, std::ve
   result.resize(size);
   const T2 *data = reinterpret_cast<const T2 *>(const_data);
   for (size_t i = 0; i < size; i++) {
-    result[i] = *(data + i);
+    result[i] = static_cast<T1>(*(data + i));
   }
 }
 

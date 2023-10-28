@@ -251,9 +251,9 @@ int64_t GetDynInputNum(const OpAdapterPtr &adpt, bool is_call, std::vector<int64
       // which should not be members of input args, so the dyn_input_num need to minus 2 in default.
       if (IsPrimitiveCNode(input, prim::kPrimUpdateState)) {
         // For PartitionedCall, Monod should not be a member of input args, so here dyn_input_num need to minus 3.
-        dyn_input_num = input_size - 3;
+        dyn_input_num = SizeToLong(input_size) - 3;
       } else {
-        dyn_input_num = input_size - 2;
+        dyn_input_num = SizeToLong(input_size) - 2;
       }
       return dyn_input_num;
     }
@@ -316,6 +316,64 @@ bool IsOverFlowNode(const AnfNodePtr &node, const AnfNodePtr &input) {
          IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2) ||
          IsPrimitiveCNode(node, prim::kPrimNPUGetFloatStatusV2);
 }
+
+std::string SelectParamOriFormat(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<AnfNodePtr> visited;
+  auto node_users_map = manager->node_users();
+  for (const auto &node_pair : node_users_map[node]) {
+    if (AnfUtils::IsRealKernel(node_pair.first) && node_pair.first->isa<CNode>()) {
+      visited.push_back(node_pair.first);
+    }
+  }
+
+  auto ori_format = std::any_of(visited.begin(), visited.end(),
+                                [](const AnfNodePtr &node) { return GetOpIOFormat(node) == kOpFormat_NCHW; })
+                      ? kOpFormat_NCHW
+                      : kOpFormat_DEFAULT;
+  return ori_format;
+}
+
+bool IsTupleInput(const AnfNodePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  auto abs = input->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    return true;
+  }
+  return false;
+}
+
+void GetUnfoldInput(const AnfNodePtr &node, std::vector<AnfNodePtr> *unfold_nodes) {
+  std::vector<AnfNodePtr> nodes;
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  for (size_t idx = 1; idx < inputs.size(); ++idx) {
+    auto input_node = inputs[idx];
+    if (IsTupleInput(input_node)) {
+      GetUnfoldInput(input_node, &nodes);
+    } else {
+      nodes.push_back(input_node);
+    }
+  }
+  unfold_nodes->insert(unfold_nodes->end(), nodes.begin(), nodes.end());
+}
+
+bool IsNestedTuple(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto inputs = cnode->inputs();
+  for (size_t idx = 1; idx < inputs.size(); ++idx) {
+    auto input = inputs[idx];
+    if (IsTupleInput(input)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 DfGraphPtr GenExampleGraph(const std::string &name) {
@@ -351,23 +409,29 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
   return false;
 }
 
-void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
+bool DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   MS_EXCEPTION_IF_NULL(init_input);
   if (!this->training_) {
-    return;
+    return false;
   }
+  bool is_sink_size_repeat = false;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   int64_t value = 0;
   if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    static int64_t sink_size = 0;
     if (!ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
-      return;
+      return false;
     }
     value = ConfigManager::GetInstance().iter_num();
+    if (sink_size == value) {
+      is_sink_size_repeat = true;
+    }
+    sink_size = value;
   } else {
     MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
     ConfigManager::GetInstance().ResetIterNum();
-    return;
+    return false;
   }
   GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
   auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
@@ -428,6 +492,7 @@ void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   init_ops_.push_back(assign_loop_cond);
   init_ops_.push_back(assign_one);
   init_ops_.push_back(assign_zero);
+  return is_sink_size_repeat;
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {
@@ -451,7 +516,8 @@ void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfN
 }
 
 void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
-                                              const std::vector<::ge::Operator> *const init_input) {
+                                              const std::vector<::ge::Operator> *const init_input,
+                                              bool is_sink_size_repeat) {
   DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
@@ -491,13 +557,11 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 
   // set up init sub graph
-  static bool is_inited = false;
-  if (init_input->size() != 0 && !is_inited) {
+  if (!init_input->empty() && !is_sink_size_repeat) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(*init_input);
     this->init_graph_ = init_graph;
-    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }
@@ -531,14 +595,12 @@ void DfGraphConvertor::SetupParamInitSubGraph() {
 
   // set up init sub graph
   std::vector<::ge::Operator> init_input;
-  InitLoopVar(&init_input);
-  static bool is_inited = false;
-  if (!init_input.empty() && !is_inited) {
+  bool is_sink_size_repeat = InitLoopVar(&init_input);
+  if (!init_input.empty() && !is_sink_size_repeat) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(init_input);
     this->init_graph_ = init_graph;
-    is_inited = true;
   } else {
     this->init_graph_ = nullptr;
   }
@@ -571,7 +633,7 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
     return true;
   }
   const auto &node_users = manager->node_users();
-  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr};
+  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr, prim::kPrimScatterUpdate};
   auto user_it = node_users.find(node);
   if (user_it != node_users.end()) {
     auto &users = user_it->second;
@@ -589,8 +651,7 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
-  auto manager = Manage(anf_graph_, true);
-  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(graph_manager_);
   auto &infer_need_update_parameter_names =
     Singleton<mindspore::device::ascend::InferNeedUpdateParaNames>::Instance().GetInferParameterNames();
   for (const auto &it : tensors) {
@@ -613,14 +674,16 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (op_itor == op_cache_.end()) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
-    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(), kOpFormat_NCHW);
+
+    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(),
+                                               SelectParamOriFormat(graph_manager_, node));
     if (desc == nullptr) {
       MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
       continue;
     }
     bool as_ref_data = false;
     bool as_constant = false;
-    auto node_will_update = NodeInputKeepUpdate(manager, node);
+    auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
     if (ref_mode_) {
       if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
         as_ref_data = true;
@@ -688,8 +751,8 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   if (ref_mode_) {
     SetupParamInitSubGraph();
   } else {
-    InitLoopVar(&init_input);
-    SetupParamInitSubGraph(tensors, &init_input);
+    bool is_sink_size_repeat = InitLoopVar(&init_input);
+    SetupParamInitSubGraph(tensors, &init_input, is_sink_size_repeat);
   }
 }
 
@@ -801,7 +864,7 @@ DfGraphConvertor &DfGraphConvertor::GenerateBroadcastGraph(const TensorOrderMap 
         auto shape_ge = tensor->shape_c();
 
         // create tensor descriptor for output descriptor
-        auto desc = TransformUtil::GetGeTensorDesc(shape_ge, tensor->data_type(), kOpFormat_NCHW);
+        auto desc = TransformUtil::GetGeTensorDesc(shape_ge, tensor->data_type(), kOpFormat_DEFAULT);
         if (desc == nullptr) {
           MS_LOG(ERROR) << "Create variable " << name << " output descriptor failed!";
           continue;
@@ -1016,7 +1079,7 @@ std::shared_ptr<std::vector<Operator>> DfGraphConvertor::GetWhileSubGraphInput()
       name += name_app;
       auto const_op = adpt_const->generate(name);
       (void)adpt_const->setAttr(const_op, "value", value);
-      auto const_op_desc = TransformUtil::GetGeTensorDesc(value->shape_c(), value->data_type(), kOpFormat_NCHW);
+      auto const_op_desc = TransformUtil::GetGeTensorDesc(value->shape_c(), value->data_type(), kOpFormat_DEFAULT);
       if (const_op_desc == nullptr) {
         MS_LOG(WARNING) << "Create variable " << name << " output descriptor failed!";
         continue;
@@ -2056,14 +2119,14 @@ void DfGraphConvertor::UpdateConstOpDesc(const AnfNodePtr &it, const OperatorPtr
   }
   auto para = it->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para);
-  std::string format = kOpFormat_NCHW;
+  std::string format = SelectParamOriFormat(graph_manager_, it);
   std::string param_debug_info = para->DebugString();
   auto param_format = param_format_.find(param_debug_info);
   if (param_format != param_format_.end()) {
     format = param_format->second;
     MS_LOG(DEBUG) << "Parameter debug info: " << param_debug_info << ", format is " << format;
   }
-  if (format == kOpFormat_NCHW) {
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_NCHW) {
     MS_LOG(DEBUG) << "Format is not changed, no need to update op desc, name: " << param_debug_info;
     return;
   }
@@ -2110,7 +2173,7 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   std::ostringstream buf;
   buf << "[" << shape << "]";
   MS_LOG(INFO) << "input shape is " << buf.str() << ", type is " << me_type;
-  std::string format = "NCHW";
+  std::string format = SelectParamOriFormat(graph_manager_, it);
   if (it->isa<Parameter>()) {
     auto param = it->cast<ParameterPtr>();
     std::string param_name = param->DebugString();
@@ -2342,40 +2405,48 @@ std::vector<OutHandler> DfGraphConvertor::GetInputHandles(const AnfNodePtr &node
   }
 
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    uint64_t output_index = 0;
     std::vector<OutHandler> return_handles;
-    TraceTupleGetItem(node->cast<CNodePtr>(), &output_index);
-    if (IsPrimitiveCNode(input, prim::kPrimTupleGetItem)) {
-      MS_EXCEPTION_IF_ZERO("handles_size", handles.size());
-      auto abs = input->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      if (abs->isa<abstract::AbstractSequence>()) {
-        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-        size_t abs_size = abs_seq->size();
-        if (output_index >= abs_size) {
-          MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << abs_size
-                            << "), node: " << node->fullname_with_scope()
-                            << ", input node: " << input->fullname_with_scope();
-        }
-        auto real_node = common::AnfAlgo::VisitKernelWithReturnType(node, output_index).first;
-        MS_EXCEPTION_IF_NULL(real_node);
-        auto real_opt = Convert(real_node);
-        MS_EXCEPTION_IF_NULL(real_opt);
-        OutHandler real_handler;
-        real_handler.op = real_opt;
-        real_handler.node = real_node;
-        return std::vector<OutHandler>{real_handler};
+    CNodePtr cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    size_t tuplegetitem_idx = common::AnfAlgo::GetTupleGetItemOutIndex(cnode);
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractSequence>()) {
+      // TupleGetItem has tuple output, its input must be a nested tuple.
+      std::vector<AnfNodePtr> unfold_nodes;
+      CNodePtr input_cnode = input->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_cnode);
+      if (LongToSize(tuplegetitem_idx) >= input_cnode->inputs().size()) {
+        MS_LOG(EXCEPTION) << "TupleGetitem node: " << node->fullname_with_scope() << "'s index: " << tuplegetitem_idx
+                          << " is out of range, [0," << input_cnode->inputs().size() << ").";
       }
-      MS_LOG(EXCEPTION) << "Node:" << node->fullname_with_scope()
-                        << " is a nested tuplegetitem with input node: " << input->fullname_with_scope()
-                        << ", but input node's abstract is not a tuple.";
-    } else if (output_index >= handles.size()) {
-      MS_LOG(EXCEPTION) << "Node output index " << output_index << "is out of range [0," << handles.size()
+      auto real_maketuple_node = input_cnode->input(tuplegetitem_idx + kIndex1);
+      GetUnfoldInput(real_maketuple_node, &unfold_nodes);
+      for (const AnfNodePtr &unfold_node : unfold_nodes) {
+        OutHandler input_handle;
+        auto op = Convert(unfold_node);
+        input_handle.op = op;
+        input_handle.node = unfold_node;
+        return_handles.push_back(input_handle);
+      }
+      return return_handles;
+    } else if (IsNestedTuple(input)) {
+      // TupleGetItem has single output, but its input is nested tuple, its real index is changed.
+      AnfNodePtr real_node = common::AnfAlgo::VisitKernelWithReturnType(node, tuplegetitem_idx).first;
+      MS_EXCEPTION_IF_NULL(real_node);
+      auto op = Convert(real_node);
+      OutHandler input_handle;
+      input_handle.op = op;
+      input_handle.node = real_node;
+      return std::vector<OutHandler>{input_handle};
+    } else if (tuplegetitem_idx >= handles.size()) {
+      MS_LOG(EXCEPTION) << "Node output index " << tuplegetitem_idx << "is out of range [0," << handles.size()
                         << "), node: " << node->fullname_with_scope()
                         << ", input node: " << input->fullname_with_scope();
+    } else {
+      return_handles.emplace_back(handles[tuplegetitem_idx]);
+      return return_handles;
     }
-    return_handles.emplace_back(handles[output_index]);
-    return return_handles;
   }
 
   return handles;
@@ -2556,6 +2627,11 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
     int ms_input_idx = ge_input_to_ms_input.at(ge_input_idx) + kIndex1;
     // ge_tensor_idx: the ge input idx of unfold mindspore inputs
     int ge_tensor_idx = ge_tensor_orders[ge_input_idx] + kIndex1;
+    if (ge_tensor_idx >= static_cast<int>(inputs.size())) {
+      MS_LOG(INFO) << "ge tensor index is more than ms inputs size, ge_tensor_idx:" << ge_tensor_idx
+                   << ", input size: " << inputs.size();
+      continue;
+    }
     AnfNodePtr pred = inputs[ge_tensor_idx];
     if (!IsDataInput(node, pred, ge_input_idx)) {
       SetNodeControlInput(node, pred);
@@ -2576,7 +2652,7 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
       }
       size_t dyn_input_begin_idx = 0;
       for (size_t i = 0; i < IntToSize(ge_input_idx); ++i) {
-        dyn_input_begin_idx += new_dyn_input_sizes[i] == -1 ? 1 : new_dyn_input_sizes[i];
+        dyn_input_begin_idx += new_dyn_input_sizes[i] == -1 ? 1 : LongToSize(new_dyn_input_sizes[i]);
       }
       ret = adpt->setInput(src, SizeToInt(ms_input_idx), std::make_shared<std::vector<OutHandler>>(handles), true,
                            dyn_input_begin_idx);
@@ -2669,7 +2745,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
         handles.insert(handles.end(), dyn_input_handle.begin(), dyn_input_handle.end());
       }
       ret = adpt->setInput(src, SizeToInt(real_input_idx), std::make_shared<std::vector<OutHandler>>(handles));
-      input_idx += dyn_input_num;
+      input_idx += LongToSize(dyn_input_num);
     } else {
       if (handles.size() != 1) {
         MS_LOG(EXCEPTION) << "Input handles size " << handles.size() << " is not equal to 1, "
@@ -3586,25 +3662,6 @@ void DfGraphConvertor::ConvertOCRRecPreHandle(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
-AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *index) {
-  MS_EXCEPTION_IF_NULL(node);
-  const int TUPLE_GET_ITEM_INDEX = 2;
-  if (node->inputs().size() < 3) {  // "tuple_getitem" primitive must have 3 inputs
-    MS_LOG(EXCEPTION) << "length of inputs of TupleGetItem is less than 3";
-  }
-  auto index_node = node->inputs()[TUPLE_GET_ITEM_INDEX];
-  if (!index_node->isa<ValueNode>()) {
-    error_ = INVALID_ARGUMENT;
-    MS_LOG(EXCEPTION) << "can't convert get item with non-constant index";
-  }
-  auto index_vec = CastToInt(GetValueNode(index_node));
-  if (index_vec.empty()) {
-    MS_LOG(EXCEPTION) << "Get index failed from index node of tuple get item.";
-  }
-  *index = LongToUlong(index_vec[0]);
-  return node->inputs()[1];
-}
-
 OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "Get nullptr while getting handler from node";
@@ -3832,7 +3889,7 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
   for (size_t i = 0; i < vec.size(); i++) {
     MS_EXCEPTION_IF_NULL(vec[i]);
     if (vec[i]->isa<MeTensor>()) {
-      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_NCHW);
+      GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_DEFAULT);
       MS_EXCEPTION_IF_NULL(ge_tensor);
       auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
       AddGraphConstInput(const_op);

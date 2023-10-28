@@ -140,7 +140,8 @@ Status ConcatenateOperation::to_json(nlohmann::json *out_json) {
   RETURN_UNEXPECTED_IF_NULL(out_json);
   nlohmann::json args;
   args["axis"] = axis_;
-  nlohmann::json prepend, append;
+  nlohmann::json prepend;
+  nlohmann::json append;
   RETURN_IF_NOT_OK(prepend_->to_json(&prepend));
   RETURN_IF_NOT_OK(append_->to_json(&append));
   args["prepend"] = prepend;
@@ -155,7 +156,8 @@ Status ConcatenateOperation::from_json(const nlohmann::json &op_params, std::sha
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "prepend", kConcatenateOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "append", kConcatenateOperation));
   int8_t axis = op_params["axis"];
-  std::shared_ptr<Tensor> prepend, append;
+  std::shared_ptr<Tensor> prepend;
+  std::shared_ptr<Tensor> append;
   RETURN_IF_NOT_OK(Tensor::from_json(op_params["prepend"], &prepend));
   RETURN_IF_NOT_OK(Tensor::from_json(op_params["append"], &append));
   *operation = std::make_shared<transforms::ConcatenateOperation>(axis, prepend, append);

@@ -394,14 +394,14 @@ class Compose(CompoundOperation):
 
 class Concatenate(TensorOperation):
     """
-    Tensor operation that concatenates all columns into a single tensor, only 1D tenspr is supported.
+    Concatenate data with input array along given axis, only 1D data is supported.
 
     Args:
-        axis (int, optional): Concatenate the tensors along given axis. Default: ``0``.
-        prepend (numpy.ndarray, optional): NumPy array to be prepended to the already concatenated tensors.
-            Default: ``None``.
-        append (numpy.ndarray, optional): NumPy array to be appended to the already concatenated tensors.
-            Default: ``None``.
+        axis (int, optional): The axis along which the arrays will be concatenated. Default: ``0``.
+        prepend (numpy.ndarray, optional): NumPy array to be prepended to the input array.
+            Default: ``None``, not to prepend array.
+        append (numpy.ndarray, optional): NumPy array to be appended to the input array.
+            Default: ``None``, not to append array.
 
     Raises:
         TypeError: If `axis` is not of type int.

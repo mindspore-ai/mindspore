@@ -13356,7 +13356,8 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
 
 def batch_dot(x1, x2, axes=None):
     """
-    Computation of batch dot product between samples in two tensors containing batch dims.
+    Computation of batch dot product between samples in two tensors containing batch dims, i.e. `x1` or `x2` 's
+    first dimension is batch size.
 
     .. math::
         output = x1[batch, :] * x2[batch, :]

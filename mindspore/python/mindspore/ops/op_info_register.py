@@ -37,12 +37,12 @@ BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
 BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
 
-def _get_reg_info_attr(op_info, attr_name):
+def _get_reg_info_attr(op_info, attr_name, default_value=None):
     """get attr value"""
     for _, item in enumerate(op_info.get("attr", [])):
         if item.get("name") == attr_name:
             return item.get("defaultValue")
-    return None
+    return default_value
 
 
 class _CustomInstaller:
@@ -94,11 +94,11 @@ class _CustomInstaller:
         _CustomInstaller.copied_paths.append(src_path)
         if os.path.isfile(src_path):
             lock_file = os.path.join(dst_dir, "file.lock")
-            with open(lock_file, "w") as f:
+            with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
                 shutil.copy(src_path, dst_dir)
 
-    def _check(self):
+    def check(self):
         """check if the reg info need written"""
         if platform.system() != "Linux":
             return False
@@ -181,7 +181,8 @@ class _CustomInstaller:
                 op_info[key]["format"] = ",".join(formats)
         return op_info
 
-    def _gen_ai_cpu_reg_info(self, so_file):
+    @staticmethod
+    def _gen_ai_cpu_reg_info(so_file):
         """generate reg info"""
         op_info = {"opInfo": {"computeCost": "100",
                               "engine": "DNN_VM_AICPU",
@@ -198,7 +199,7 @@ class _CustomInstaller:
         repo = {}
         save_path = os.path.join(dst_dir, file_name)
         lock_file = os.path.join(dst_dir, "file.lock")
-        with open(lock_file, "w") as f:
+        with os.fdopen(os.open(lock_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), 'w') as f:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             if os.path.isfile(save_path):
                 with open(save_path, 'r') as fr:
@@ -211,7 +212,7 @@ class _CustomInstaller:
 
     def run(self):
         """save reg info to file"""
-        if not self._check():
+        if not self.check():
             return
         so_name = _get_reg_info_attr(self.op_info, "cust_aicpu")
         if so_name:

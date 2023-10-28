@@ -127,8 +127,10 @@ ConcatenatePlan ParallelOpConcatenater::GetElemWiseFollowingPlan(const Group &br
   auto cb = Callback::Instance();
   for (auto it : unique_inputs) {
     for (auto in : it.second) {
+      if (!ew_plan.in_shape.empty()) {
+        break;
+      }
       ew_plan.in_shape = cb->GetOutputInferShape(in, 0);
-      break;
     }
   }
   auto UpdateIdx = [](ShapeVector &base_shape, ShapeVector &new_shape, int base_idx) -> int {

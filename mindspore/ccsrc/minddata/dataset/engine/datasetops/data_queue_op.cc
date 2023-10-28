@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -755,7 +755,8 @@ std::vector<std::vector<double>> DataQueueOp::GetSendInfo() {
                                                     send_info.first_data_time, send_info.fetch_data_time};
                        });
   // history message control
-  while (send_info_per_epoch.size() > 5) {
+  constexpr auto kMaxInfoSize = 5;
+  while (send_info_per_epoch.size() > kMaxInfoSize) {
     send_info_per_epoch.erase(send_info_per_epoch.begin());
   }
   return send_info_per_epoch;
@@ -1163,7 +1164,8 @@ Status DataQueueOp::DetectFirstBatch() {
 void DataQueueOp::DetectPerBatchTime(const uint64_t *start_time, uint64_t *end_time) {
   *end_time = ProfilingTime::GetCurMilliSecond();
   auto interval = *end_time - *start_time;
-  send_summary_.back().record_data(interval / 1000.);
+  constexpr auto kTimeMilliSeconds = 1000.;
+  send_summary_.back().record_data(interval / kTimeMilliSeconds);
   if (interval > kTimeOutMilliSeconds) {
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
                        "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"

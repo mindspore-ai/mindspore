@@ -816,7 +816,7 @@ class SummaryLandscape:
             #device_id should be between 0 and 7.
             if i < 0 or i > 7:
                 raise ValueError(f'For "{self.__class__.__name__}.gen_landscapes_with_multi_process", the parameter '
-                                 f'"device_ids" should be between 0 and 7,but got {i}.')
+                                 f'"device_ids" should be between 0 and 7, but got {i}.')
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""

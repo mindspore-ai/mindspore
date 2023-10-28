@@ -1648,6 +1648,7 @@ AnfNodePtr AutoGradCellImpl::TraceShape(const FunctionNodePtr &fn, const ValuePt
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     auto value_seq = out_value->cast<ValueSequencePtr>();
     auto abs_seq = out_abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
     int index = -1;
     for (size_t i = 0; i < value_seq->size(); ++i) {
       // Find the value's din, if value equal to sub_value, means value be used, is it will get din; Otherwise value's

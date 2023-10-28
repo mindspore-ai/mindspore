@@ -43,10 +43,10 @@ class AnfNodeHolder : public Node {
 class AnfNodeHolderWithHostInfo : public AnfNodeHolder {
  public:
   using AnfNodeHolder::AnfNodeHolder;
-  BaseShapePtr GetShapePtr() override { return nullptr; }
-  ShapeVector GetShape() override { return {}; }
-  TypePtr GetDtype() override { return nullptr; }
-  std::string GetFormat() override { return ""; }
+  BaseShapePtr GetShapePtr() override;
+  ShapeVector GetShape() override;
+  TypePtr GetDtype() override;
+  std::string GetFormat() override;
 };
 
 class AnfNodeHolderWithDeviceInfo : public AnfNodeHolder {

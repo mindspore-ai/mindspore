@@ -30,7 +30,7 @@
 #define MAX_CROSS_ELEMS (ASCEND_UB_NUM_ELEM / (ASCEND_CROSS_NUM_ELEM))
 #define ACEND_LB_UB_BUFFER_SIZE = 25600;
 // 938 for FP16
-#define CeilDiv(x, y) ((x + y - 1) / y)
+#define CeilDiv(x, y) (((x) + (y)-1) / (y))
 
 namespace mindspore::ascend_native {
 void *CreateStream();
@@ -52,6 +52,11 @@ void PrintInt32(void *x, size_t elem_num, void *stream);
 void printChecksumFp16(void *x, size_t elem_num, void *stream);
 void printChecksumFp32(void *x, size_t elem_num, void *stream);
 void printChecksumInt32(void *x, size_t elem_num, void *stream);
+void PreapreVSL(void *batch_valid_len, int batch_size, int *token_num, void *q);
 void PrintInfo(void *stream);
+template <typename T>
+void printVector(void *x, int elem_num, void *q);
+void GetTokenNum(void *batch_valid_len, int batch_size, int *token_num, void *q);
+
 }  // namespace mindspore::ascend_native
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_UTILS_H_

@@ -1328,7 +1328,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterCNode(const CNodePtr &
   }
   auto attrs = std::make_shared<AttrValueMap>();
   for (size_t i = 0; i < partial_closure->args().size(); i++) {
-    auto old_node = partial_cnode->input(i + 2);
+    auto old_node = partial_cnode->input(i + extra_args_size);
     MS_EXCEPTION_IF_NULL(old_node);
     auto possibile_value_node = BuildPossibleValueNode(old_node, partial_closure->args()[i], attrs);
     if (possibile_value_node != nullptr) {
@@ -1511,9 +1511,9 @@ void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeP
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
-
+  constexpr auto recursive_level = 2;
   // Only success processed node can be added to seen.
-  MS_LOG(DEBUG) << "New CNode: " << cnode->DebugString(2);
+  MS_LOG(DEBUG) << "New CNode: " << cnode->DebugString(recursive_level);
   specializer_->AddSeen(cnode);
 }
 
@@ -1595,11 +1595,10 @@ bool FuncGraphSpecializer::ProcessSwitchAppCNode(const CNodePtr &cnode) {
       partial_value_node->set_abstract(FromValueInside(prim::kPrimPartial));
       partial_value_node->set_debug_info(switch_input_node->debug_info());
       AnfNodePtrList partial_node_list = {partial_value_node, specialized_func_node};
-      (void)std::copy(switch_input_cnode->inputs().cbegin() + 2, switch_input_cnode->inputs().cend(),
-                      std::back_inserter(partial_node_list));
-
       // Specialize Partial CNode func graph inputs.
       constexpr auto partial_arg_start_index = 2;
+      (void)std::copy(switch_input_cnode->inputs().cbegin() + partial_arg_start_index,
+                      switch_input_cnode->inputs().cend(), std::back_inserter(partial_node_list));
       for (size_t j = partial_arg_start_index; j < partial_node_list.size(); ++j) {
         auto &old_node = partial_node_list[j];
         if (CanSpecializeValueNode(old_node)) {
@@ -1857,11 +1856,7 @@ static PrimitivePtr BuildPrimtiveValueWithAttributes(const PrimitivePtr &prim, c
   return prim;
 }
 
-AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node,
-                                                                   const AbstractBasePtr &ival,
-                                                                   const AttrValueMapPtr &attrs,
-                                                                   const AnfNodePtr &cnode,
-                                                                   const AbstractFunctionPtr &abs) {
+ValuePtr GetValueForAbstractFunction(const AbstractFunctionPtr &abs, const AttrValueMapPtr &attrs) {
   ValuePtr value = nullptr;
   if (abs->isa<PrimitiveAbstractClosure>()) {
     auto real_fn = dyn_cast_ptr<PrimitiveAbstractClosure>(abs);
@@ -1881,7 +1876,18 @@ AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNode
   } else {
     return nullptr;
   }
-  MS_EXCEPTION_IF_NULL(value);
+  return value;
+}
+
+AnfNodePtr FuncGraphSpecializer::BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node,
+                                                                   const AbstractBasePtr &ival,
+                                                                   const AttrValueMapPtr &attrs,
+                                                                   const AnfNodePtr &cnode,
+                                                                   const AbstractFunctionPtr &abs) {
+  ValuePtr value = GetValueForAbstractFunction(abs, attrs);
+  if (value == nullptr) {
+    return nullptr;
+  }
   if (value->isa<FuncGraph>() && value->cast_ptr<FuncGraph>()->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH)) {
     return nullptr;
   }

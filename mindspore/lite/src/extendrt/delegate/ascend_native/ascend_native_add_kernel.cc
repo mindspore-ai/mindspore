@@ -25,19 +25,14 @@ using mindspore::ops::kNameAddFusion;
 
 int AscendNativeAddKernel::InferShape() {
   if (out_tensors_[0]->shape().size() == 0) {
-    if (in_tensors_[0] != nullptr) out_tensors_[0]->set_shape(in_tensors_[0]->shape());
+    if (in_tensors_[0] != nullptr) {
+      out_tensors_[0]->set_shape(in_tensors_[0]->shape());
+    }
   }
   return kSuccess;
 }
 
-int AscendNativeAddKernel::Prepare() {
-  auto ret = InferShape();
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
-    return kLiteError;
-  }
-  return kSuccess;
-}
+int AscendNativeAddKernel::Prepare() { return kSuccess; }
 
 int AscendNativeAddKernel::Run() {
   MS_LOG(INFO) << "AscendNativeAddKernel::Execute";
@@ -47,5 +42,7 @@ int AscendNativeAddKernel::Run() {
                          aBufSize, const_cast<void *>(get_stream()));
   return kSuccess;
 }
+
+int AscendNativeAddKernel::ReSize() { return kSuccess; }
 REGISTER_ASCEND_NATIVE_CREATOR(kNameAddFusion, AscendNativeAddKernel)
 }  // namespace mindspore::kernel

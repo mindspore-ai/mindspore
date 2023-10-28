@@ -352,7 +352,7 @@ bool NodePass::ProcessPass(const FuncGraphPtr &func_graph, const FuncGraphManage
       }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      ModifyOutputAndCallerToMap(cnode, fg, &subgraph_out_caller_map);
+      ModifyOutputAndCallerToMap(cnode, fg, &subgraph_out_caller_map, is_add_);
       auto inputs = cnode->inputs();
       (void)std::for_each(inputs.begin(), inputs.end(),
                           [&fg, &todo](AnfNodePtr &node) { (void)todo.emplace_back(node, fg); });

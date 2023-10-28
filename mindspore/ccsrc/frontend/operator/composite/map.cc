@@ -293,7 +293,7 @@ FuncGraphPtr Map::GenerateFromTypes(const TypePtrList &args_abs_list) {
       node_inputs.push_back(func_graph->add_parameter());
     }
     auto ret_node =
-      fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, args_abs_list, node_inputs, node_expr_src_);
+      fallback::GeneratePyInterpretNodeWithScriptSrc(func_graph, args_abs_list, node_inputs, node_expr_src_);
     func_graph->set_output(ret_node);
     return func_graph;
   }

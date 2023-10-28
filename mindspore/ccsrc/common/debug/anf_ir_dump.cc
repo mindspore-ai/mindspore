@@ -437,6 +437,20 @@ int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, Ordere
   return para_num;
 }
 
+void DumpParameterOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub, const AnfNodePtr &op) {
+  if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
+    gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
+  }
+  gsub->buffer << op->ToString();
+  if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
+    gsub->buffer << ")";
+  }
+  std::string func_str = GetNodeFuncStr(op);
+  if (!func_str.empty()) {
+    gsub->buffer << "[@" << func_str << "]";
+  }
+}
+
 void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (gsub == nullptr) {
     MS_LOG(INFO) << "Parameter \'gsub\' should not be null.";
@@ -479,17 +493,7 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     }
   } else {
     // It's Parameter.
-    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
-      gsub->buffer << "$(@" << op->func_graph()->ToString() << ":";
-    }
-    gsub->buffer << op->ToString();
-    if (op->func_graph() != nullptr && op->func_graph() != node->func_graph()) {
-      gsub->buffer << ")";
-    }
-    std::string func_str = GetNodeFuncStr(op);
-    if (!func_str.empty()) {
-      gsub->buffer << "[@" << func_str << "]";
-    }
+    DumpParameterOperator(node, gsub, op);
   }
 }
 

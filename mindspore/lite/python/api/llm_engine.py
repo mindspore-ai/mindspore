@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.tensor import Tensor
-from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_
+from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -118,6 +118,14 @@ class LLMRole(Enum):
     """
     Prompt = 0
     Decoder = 1
+
+
+class LLMKVCacheNotExist(RuntimeError):
+    pass
+
+
+class LLMWaitProcessTimeOut(RuntimeError):
+    pass
 
 
 class LLMEngine:
@@ -234,7 +242,12 @@ class LLMEngine:
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
         # pylint: disable=protected-access
-        outputs = self.engine_.predict(llm_req.llm_request_, _inputs)
+        outputs, status = self.engine_.predict(llm_req.llm_request_, _inputs)
+        status_code = status.StatusCode()
+        if status_code == StatusCode.kLiteLLMWaitProcessTimeOut:
+            raise LLMWaitProcessTimeOut("Waiting for processing timeout")
+        if status_code == StatusCode.kLiteLLMKVCacheNotExist:
+            raise LLMKVCacheNotExist("KV Cache not exist")
         if not outputs:
             raise RuntimeError(f"predict failed!")
         predict_outputs = []

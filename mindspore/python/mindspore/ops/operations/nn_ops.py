@@ -3765,10 +3765,10 @@ class LayerNorm(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
           The input of LayerNorm. Supported dtypes: float16, float32, float64.
-        - **gamma** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
-          The learnable parameter :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
-        - **beta** (Tensor) - Tensor of shape :math:`(P_\text{begin_params_axis}, \ldots, P_\text{rank(input_x)-1})`.
-          The learnable parameter :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
+        - **gamma** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
+          :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
+        - **beta** (Tensor) - Tensor of shape :math:`input_x_shape[begin_params_axis:]`. The learnable parameter
+          :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
@@ -11353,8 +11353,6 @@ class PromptFlashAttention(Primitive):
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
 
-    Supported Platforms:
-        ``Ascend910B``
     """
     @prim_attr_register
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
@@ -11392,13 +11390,13 @@ class FlashAttentionScore(Primitive):
         Currently, only BSH is supported. Default: "BSH".
 
     Inputs:
-        - **query** (Tensor) - The query tensor with data type of float16 or float32.
+        - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **key** (Tensor) - The key tensor with data type of float16 or float32.
+        - **key** (Tensor) - The key tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **value** (Tensor) - The value tensor with data type of float16 or float32.
+        - **value** (Tensor) - The value tensor with data must be in [float16, float32, bfloat16].
           Input tensor of shape :math:`(B, S, H)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or float32.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or uint8.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         - **drop_mask** (Tensor) - The dropout mask tensor with data type of UInt8.
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.

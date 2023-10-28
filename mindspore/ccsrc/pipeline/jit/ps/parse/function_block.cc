@@ -495,7 +495,7 @@ AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const An
                                         const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node) {
   MS_LOG(DEBUG) << "MakeInterpret for " << script_text;
   MS_EXCEPTION_IF_NULL(orig_node);
-  auto script = std::make_shared<Script>(script_text);
+  auto script = std::make_shared<parse::Script>(script_text);
   auto script_node = NewValueNode(script);
   auto node = func_graph_->NewCNodeInOrder(
     {NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
@@ -862,7 +862,7 @@ CNodePtr FunctionBlock::GetJumpNode(FunctionBlock *target_block) {
   return it->second;
 }
 
-void FunctionBlock::SetReturnStatementInside() { is_return_statement_inside_ = true; }
-void FunctionBlock::SetBreakContinueStatementInside() { is_break_continue_statement_inside_ = true; }
+void FunctionBlock::set_is_return_statement_inside() { is_return_statement_inside_ = true; }
+void FunctionBlock::set_break_continue_statement_inside() { is_break_continue_statement_inside_ = true; }
 }  // namespace parse
 }  // namespace mindspore

@@ -125,7 +125,7 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
   ConvertNegToPos(&begin, &end, old_shape);
 
   for (size_t i = 0; i < begin.size(); ++i) {
-    old_storage_offset += static_cast<size_t>(begin[i] * old_strides[i]);
+    old_storage_offset += LongToSize(begin[i] * old_strides[i]);
   }
   ShapeVector new_shape;
   auto new_strides = old_strides;

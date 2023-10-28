@@ -883,7 +883,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Determines whether the memory of tensor is contiguous.
   ///
   /// \return True if tensor memory is contiguous, false otherwise.
-  bool is_contiguous();
+  bool is_contiguous() const;
 
  private:
   void ExecuteLazyTask() const;

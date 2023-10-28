@@ -296,8 +296,7 @@ def cat(tensors, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(tensors)
+    return concat(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -1734,7 +1733,11 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         raise TypeError(f"For 'flatten', both 'start_dim' and 'end_dim' must be int.")
     check_flatten_order_const(order)
     if order == 'F':
-        perm = ops.make_range(0, ops.rank(input))
+        x_rank = rank_(input)
+        # If input is a 0-dimensional Tensor, a 1-dimensional Tensor will be returned.
+        if x_rank in (0, 1):
+            return reshape_(input, (-1,))
+        perm = ops.make_range(0, x_rank)
         new_order = ops.tuple_reversed(perm)
         input = _get_cache_prim(P.Transpose)()(input, new_order)
 
@@ -2168,7 +2171,8 @@ def concat(tensors, axis=0):
         - `Sentiment Classification Implemented by RNN - Dense
           <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
     """
-    return cat(tensors, axis)
+    _concat = _get_cache_prim(P.Concat)(axis)
+    return _concat(tensors)
 
 
 def stack(tensors, axis=0):
@@ -5945,11 +5949,11 @@ def tensor_split(input, indices_or_sections, axis=0):
 
             - If `indices_or_sections` is an integer n, input tensor will be split into n sections.
 
-              - If :math:`input.shape(axis)` can be divisible by n, sub-sections will have equal size
-                :math:`input.shape(axis) / n` .
-              - If :math:`input.shape(axis)` is not divisible by n, the first :math:`input.shape(axis) % n` sections
-                will have size :math:`input.shape(axis) // n + 1` , and the rest will have
-                size :math:`input.shape(axis) // n` .
+              - If :math:`input.shape[axis]` can be divisible by n, sub-sections will have equal size
+                :math:`input.shape[axis] / n` .
+              - If :math:`input.shape[axis]` is not divisible by n, the first :math:`input.shape[axis] \bmod n` sections
+                will have size :math:`input.shape[axis] // n + 1` , and the rest will have
+                size :math:`input.shape[axis] // n` .
             - If `indices_or_sections` is of type tuple(int) or list(int), the input tensor will be split at the
               indices in the list or tuple. For example, given parameters :math:`indices\_or\_sections=[1, 4]`
               and :math:`axis=0` , the input tensor will be split into sections :math:`input[:1]` ,
@@ -6828,7 +6832,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     """
     x_ndim = input.ndim
     if x_ndim < 2:
-        raise ValueError(f"ops.diagonal requires an array of at least two dimensions")
+        raise ValueError(f"For 'ops.diagonal', the original tensor requires at least two dimensions, but got {x_ndim}")
     _check_attr_dtype("dim1", dim1, [int], "diagonal")
     _check_attr_dtype("dim2", dim2, [int], "diagonal")
     dtype = input.dtype

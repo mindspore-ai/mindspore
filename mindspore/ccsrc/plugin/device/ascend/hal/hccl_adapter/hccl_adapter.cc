@@ -35,7 +35,6 @@
 #include "ops/framework_op_name.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
-static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
 static constexpr const auto kHcclAlgoEnv = "HCCL_ALGO";
 static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
 
@@ -58,21 +57,12 @@ static std::string GenerateCMChiefWorkDevice() {
 
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
                                                          std::string_view rank_file = "") {
-  auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
-  if (env_deploy_mode.empty()) {
-    MS_LOG(WARNING) << "The environment variable " << kHcclDeployModeEnv << " is not set. Now set to default value 0";
-    env_deploy_mode = "0";
-  }
-
-  std::map<std::string, std::string> default_options_map = {{ge::OPTION_EXEC_IS_USEHCOM, "1"},
-                                                            {ge::OPTION_EXEC_IS_USEHVD, "0"},
-                                                            {ge::OPTION_EXEC_HCCL_FLAG, "1"},
-                                                            {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
-                                                            {ge::OPTION_EXEC_RANK_ID, rank_id.data()},
-                                                            {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
-                                                            {ge::OPTION_GRAPH_RUN_MODE, "1"},
-                                                            {ge::OPTION_EXEC_HCCL_FLAG, "1"},
-                                                            {ge::OPTION_EXEC_DEPLOY_MODE, env_deploy_mode}};
+  std::map<std::string, std::string> default_options_map = {
+    {ge::OPTION_EXEC_IS_USEHCOM, "1"},         {ge::OPTION_EXEC_IS_USEHVD, "0"},
+    {ge::OPTION_EXEC_HCCL_FLAG, "1"},          {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
+    {ge::OPTION_EXEC_RANK_ID, rank_id.data()}, {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
+    {ge::OPTION_GRAPH_RUN_MODE, "1"},          {ge::OPTION_EXEC_HCCL_FLAG, "1"},
+    {ge::OPTION_EXEC_DEPLOY_MODE, "0"}};
 
   auto env_hccl_algo = mindspore::common::GetEnv(kHcclAlgoEnv);
   if (!env_hccl_algo.empty()) {

@@ -39,6 +39,7 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "toolchain/adx_datadump_server.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
+#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -63,6 +64,7 @@ bool IsDynamicShapeFuncGraph(const FuncGraphPtr &func_graph) {
 
 bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    opt::GEDynamicUnifyMindIR(func_graph);
     bool all_support = true;
     auto mng = func_graph->manager();
     MS_EXCEPTION_IF_NULL(mng);
@@ -114,7 +116,13 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
     auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
     return enable_ge == "1" ? RunMode::kGraphMode : RunMode::kKernelMode;
   }
-  return RunMode::kGraphMode;
+  if (common::GetEnv("GRAPH_OP_RUN") == "1") {
+    MS_LOG(INFO) << "RunMode::kKernelMode";
+    return RunMode::kKernelMode;
+  } else {
+    MS_LOG(INFO) << "RunMode::kGraphMode";
+    return RunMode::kGraphMode;
+  }
 }
 
 void GeDeviceContext::Initialize() {
@@ -141,6 +149,13 @@ void GeDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
+
+  // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
+  int32_t is_heterogenous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogenous);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
+  InitGe(ms_context);
+
   if (IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
     GetKernelExecutor(false)->Initialize();
@@ -151,11 +166,6 @@ void GeDeviceContext::Initialize() {
     GetKernelExecutor(true)->Initialize();
   }
 
-  // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
-  InitGe(ms_context);
   InitDump();
   if (ms_context->EnableAoeOnline()) {
     transform::InitializeAoeUtil();
@@ -322,12 +332,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   }
 
   (*ge_options)["rank_table_file"] = "";
-  auto env_ddk_version = common::GetEnv("DDK_VERSION");
-  if (!env_ddk_version.empty()) {
-    (*ge_options)["ge.DDK_version"] = env_ddk_version;
-  } else {
-    (*ge_options)["ge.DDK_version"] = "1.60.T17.B830";
-  }
   (*ge_options)["graphType"] = "1";
 
   SetDisableReuseMemoryFlag(ge_options);
@@ -340,18 +344,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   } else {
     (*ge_options)["ge.exec.jobId"] = "0";
     MS_LOG(INFO) << "JOB_ID is not set in ENV. Now set to default value 0";
-  }
-
-  auto env_fe_flag = common::GetEnv("FE_FLAG");
-  if (!env_fe_flag.empty()) {
-    (*ge_options)["ge.feFlag"] = env_fe_flag;
-    MS_LOG(INFO) << "Use FE, make sure fe lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
-  }
-
-  auto env_aicpu_flag = common::GetEnv("AICPU_FLAG");
-  if (!env_aicpu_flag.empty()) {
-    (*ge_options)["ge.aicpuFlag"] = env_aicpu_flag;
-    MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
   if (CompileCacheEnable()) {
@@ -486,15 +478,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
     MS_LOG(INFO) << "No hccl mode. "
-                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID,DEPLOY_MODE] all be set in ENV.";
-  }
-
-  auto env_deploy_mode = common::GetEnv("DEPLOY_MODE");
-  if (!env_deploy_mode.empty()) {
-    (*ge_options)["ge.exec.deployMode"] = env_deploy_mode;
-  } else {
-    (*ge_options)["ge.exec.deployMode"] = "0";
-    MS_LOG(INFO) << "DEPLOY_MODE is not set in ENV. Now set to default value 0";
+                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID] all be set in ENV.";
   }
 }
 

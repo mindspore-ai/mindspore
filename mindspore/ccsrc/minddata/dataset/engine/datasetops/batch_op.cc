@@ -111,7 +111,7 @@ Status BatchOp::operator()() {
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(op_current_epochs_, batch_num, cnt)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && ENABLE_PYTHON
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && defined(ENABLE_PYTHON)
     if ((num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
       MS_LOG(WARNING) << "Memory consumption is more than " << (GetMemoryUsage() * 100) << "%, "
                       << "which may cause OOM. Please reduce num_parallel_workers size / "
@@ -209,20 +209,16 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
         std::stringstream shape1, shape2;
         first_shape.Print(shape1);
         old_tensor->shape().Print(shape2);
-        RETURN_STATUS_UNEXPECTED(
-          "Inconsistent batch shapes, batch operation expects same shape for each data row, "
-          "but got inconsistent shape in column " +
-          std::to_string(column_index) + ", expected shape for this column is:" + shape1.str() +
-          ", got shape:" + shape2.str());
+        RETURN_STATUS_UNEXPECTED("Cannot batch tensors with different shapes in column " +
+                                 std::to_string(column_index) + ". First element had shape " + shape1.str() +
+                                 " and this element had shape " + shape2.str());
       } else {  // newly popped rows have different type
         std::string type1;
         std::string type2;
         type1 = first_type.ToString();
         type2 = old_tensor->type().ToString();
-        RETURN_STATUS_UNEXPECTED(
-          "Inconsistent batch type, batch operation expects same type for each data row, "
-          "but got inconsistent type in column " +
-          std::to_string(column_index) + ", expected type for this column is:" + type1 + ", got type:" + type2);
+        RETURN_STATUS_UNEXPECTED("Cannot batch tensors with different types in column " + std::to_string(column_index) +
+                                 ". First element had type " + type1 + " and this element had type " + type2);
       }
     }
 #ifdef ENABLE_PYTHON

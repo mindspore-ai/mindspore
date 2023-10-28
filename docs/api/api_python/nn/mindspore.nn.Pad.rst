@@ -20,7 +20,7 @@ mindspore.nn.Pad
               # 输出的第二个维度是paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7。
               # 所以最终的输出shape为(5, 7)
 
-        - **mode** (str) - 指定填充模式。取值为 ``"CONSTANT"`` ，``"REFLECT"`` ，``"SYMMETRIC"`` 。默认值：``"CONSTANT"`` 。
+        - **mode** (str) - 指定填充模式。取值为 ``"CONSTANT"`` (常数填充) ，``"REFLECT"`` (反射填充) ，``"SYMMETRIC"`` (对称填充) 。默认值：``"CONSTANT"`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor。

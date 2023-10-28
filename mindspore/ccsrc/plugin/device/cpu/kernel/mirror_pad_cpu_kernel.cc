@@ -63,19 +63,19 @@ void extract_paddings(const T *paddings_arg, int64_t padd_dim, int64_t *extracte
 
 void CheckPaddingValue(int64_t *paddings, const std::vector<int64_t> &input_shape, const int64_t mode) {
   int64_t input_shape_size = static_cast<int64_t>(input_shape.size());
-  for (int64_t i = 0; i < input_shape_size * 2; i++) {
+  for (int64_t i = 0; i < input_shape_size * PADDING_SIZE; i++) {
     if (paddings[i] < 0) {
       MS_LOG(EXCEPTION) << "For 'MirrorPad', all elements of paddings must be >= 0.";
     }
     if (mode == MODE_SYMMETRIC) {
-      if (paddings[i] > static_cast<int64_t>(input_shape[i / 2])) {
+      if (paddings[i] > static_cast<int64_t>(input_shape[i / PADDING_SIZE])) {
         MS_LOG(EXCEPTION) << "For 'MirrorPad', paddings must be no greater than the dimension size: " << paddings[i]
-                          << " greater than " << static_cast<int64_t>(input_shape[i / 2]);
+                          << " greater than " << static_cast<int64_t>(input_shape[i / PADDING_SIZE]);
       }
     } else if (mode == MODE_REFLECT) {
-      if (paddings[i] >= static_cast<int64_t>(input_shape[i / 2])) {
+      if (paddings[i] >= static_cast<int64_t>(input_shape[i / PADDING_SIZE])) {
         MS_LOG(EXCEPTION) << "For 'MirrorPad', paddings must be no greater than the dimension size: " << paddings[i]
-                          << " not less than " << static_cast<int64_t>(input_shape[i / 2]);
+                          << " not less than " << static_cast<int64_t>(input_shape[i / PADDING_SIZE]);
       }
     }
   }

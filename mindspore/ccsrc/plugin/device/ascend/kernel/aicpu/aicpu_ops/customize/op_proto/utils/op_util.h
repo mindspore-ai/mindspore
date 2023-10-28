@@ -34,10 +34,10 @@
 
 namespace ops {
 template <typename _T, typename... _Args>
-inline std::shared_ptr<_T> make_shared_nothrow(_Args &&... __args) noexcept(
-  noexcept(_T(std::forward<_Args>(__args)...))) {
+inline std::shared_ptr<_T> make_shared_nothrow(_Args &&... _args) noexcept(
+  noexcept(_T(std::forward<_Args>(_args)...))) {
   try {
-    return std::make_shared<_T>(std::forward<_Args>(__args)...);
+    return std::make_shared<_T>(std::forward<_Args>(_args)...);
   } catch (...) {
     return std::shared_ptr<_T>();
   }

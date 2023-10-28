@@ -140,6 +140,7 @@ def test_getattr_for_classtype_object():
     Description: Graph syntax getattr support class type object.
     Expectation: No Exception
     """
+
     class User:
         x = 1
 
@@ -165,6 +166,7 @@ def test_getattr_for_other_cell_method():
     Description: Graph syntax getattr support nn.Cell.
     Expectation: No Exception
     """
+
     class NetBase(nn.Cell):
         def construct(self, x):
             return x * 2
@@ -190,6 +192,7 @@ class SubCellClass1(nn.Cell):
         @jit
         def add(x):
             return x + self.a
+
         return add(x)
 
 
@@ -200,9 +203,11 @@ class SubCellClass2(nn.Cell):
 
     def construct(self, x):
         b = self
+
         @jit
         def add(x):
             return x + b.a
+
         return add(x)
 
 
@@ -214,6 +219,7 @@ class PlainClass():
         @jit
         def add(x):
             return x + self.a
+
         return add(x)
 
 
@@ -227,3 +233,56 @@ def test_getattr_from_self_in_function_closure():
     SubCellClass1()(1)
     SubCellClass2()(1)
     PlainClass().construct(1)
+
+
+def test_getattr_from_no_called_cell():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr from a cell instance which will not be called.
+    Expectation: No Exception
+    """
+
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.attr = 1111
+
+        def construct(self):
+            global undefined_symbol  # pylint: disable=global-variable-not-assigned
+            return undefined_symbol
+
+    net = MyNet()
+
+    @jit
+    def func(a, b):
+        print(net.attr)
+        return a + b
+
+    out = func(Tensor(1), Tensor(1))
+    assert out == 2
+
+
+def test_getattr_from_called_cell():
+    """
+    Feature: Syntax getattr.
+    Description: Graph syntax getattr from a cell instance which will be called.
+    Expectation: No Exception
+    """
+
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.attr = 1111
+
+        def construct(self):
+            return 2
+
+    net = MyNet()
+
+    @jit
+    def func():
+        print(net.attr)
+        return net()
+
+    out = func()
+    assert out == 2

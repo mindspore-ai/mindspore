@@ -10,15 +10,18 @@ mindspore.ops.interpolate
         - **size** (Union[int, tuple[int], list[int]], 可选) - 目标大小。如果 `size` 为tuple或list，那么其长度应该和 `input` 去掉 `N, C` 的维度相同。 `size` 和 `scale_factor` 同时只能指定一个。默认值： ``None`` 。
         - **scale_factor** (Union[float, tuple[float], list[float]]，可选) - 每个维度的缩放系数。如果 `scale_factor` 为tuple或list，那么其长度应该和 `input` 去掉 `N, C` 的维度相同。 `size` 和 `scale_factor` 同时只能指定一个。默认值： ``None`` 。
         - **mode** (str) - 采样算法。以下采样方式的一种，'nearest'(最近邻插值)， 'linear' (线性插值，仅三维)，'bilinear' (双线性插值，仅四维)，'trilinear'(三线性插值，仅五维)，'bicubic' (双三次插值，仅四维)，'area'(区域插值)，'nearest-exact'(此方法类似于Scikit-Image和PIL最邻插值，可解决一些最邻插值的问题，三维和四维)。默认值： ``"nearest"`` 。
-        - **align_corners** (bool) - 如果为True，缩放比例系数使用 :math:`(new\_height - 1) / (height - 1)` 计算，此种方式调整的数据与原始数据边角对齐。如果为False，缩放系数通过 :math:`new\_height / height` 计算。默认值： ``None`` 。
+        - **align_corners** (bool) - 是否使用角对齐进行坐标映射。假设对输入Tensor沿x轴进行变换，具体计算公式如下：
 
           .. code-block::
 
-              old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' 为 True
+              ori_i = new_length != 1 ? new_i * (ori_length - 1) / (new_length - 1) : 0   # 'align_corners' 为 True
 
-              old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' 为 False
+              ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' 为 False
 
-          此选项只对'linear'、'bilinear'和'bicubic'模式有效。默认值： ``False`` 。
+          其中， :math:`ori\_length` 与 :math:`new\_length` 分别表示Tensor在x轴方向上转换前、后的长度， :math:`new\_i` 表示转换后沿x轴第i个元素的坐标， :math:`ori\_i` 表示沿x轴原始数据的对应坐标。
+
+          此选项只对 ``'linear'`` 、 ``'bilinear'`` 和 ``'bicubic'`` 模式有效，默认值： ``False``。
+
         - **recompute_scale_factor** (bool, 可选) - 重计算 `scale_factor` 。如果为True，会使用参数 `scale_factor` 计算参数 `size`，最终使用 `size` 的值进行缩放。如果为False，将使用 `size` 或 `scale_factor` 直接进行插值。默认值： ``None`` 。
 
     .. note:: 'nearest-exact'模式与scikit-image和PIL的最近邻插值算法相同。'nearest'模式与OpenCV的INTER_NEAREST插值算法结果相同。

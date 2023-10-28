@@ -32,14 +32,7 @@ int AscendNativeLayernormKernel::InferShape() {
   return kSuccess;
 }
 
-int AscendNativeLayernormKernel::Prepare() {
-  auto ret = InferShape();
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Ascend native copy kernel inferShape failed.";
-    return kLiteError;
-  }
-  return kSuccess;
-}
+int AscendNativeLayernormKernel::Prepare() { return kSuccess; }
 
 int AscendNativeLayernormKernel::Run() {
   MS_LOG(INFO) << "AscendNativeLayernormKernel::Execute";
@@ -63,5 +56,8 @@ int AscendNativeLayernormKernel::Run() {
 
   return kSuccess;
 }
+
+int AscendNativeLayernormKernel::ReSize() { return kSuccess; }
+
 REGISTER_ASCEND_NATIVE_CREATOR(kNameLayerNormFusion, AscendNativeLayernormKernel)
 }  // namespace mindspore::kernel

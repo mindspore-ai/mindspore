@@ -223,6 +223,9 @@ std::vector<Format> ModelProcess::GetInputFormat() {
     auto iter = acl_format_map.find(format);
     if (iter != acl_format_map.end()) {
       input_formats.emplace_back(iter->second);
+    } else {
+      MS_LOG(INFO) << "aclFormat " << format << " not found in map, please double check and add...using default format";
+      input_formats.emplace_back(DEFAULT_FORMAT);
     }
     MS_LOG(DEBUG) << "Format of Input " << i << " is " << static_cast<int32_t>(format);
   }
@@ -242,6 +245,9 @@ std::vector<Format> ModelProcess::GetOutputFormat() {
     auto iter = acl_format_map.find(format);
     if (iter != acl_format_map.end()) {
       output_formats.emplace_back(iter->second);
+    } else {
+      MS_LOG(INFO) << "aclFormat " << format << " not found in map, please double check and add...using default format";
+      output_formats.emplace_back(DEFAULT_FORMAT);
     }
     MS_LOG(DEBUG) << "Format of Output " << i << " is " << static_cast<int32_t>(format);
   }
@@ -1171,7 +1177,8 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
   aclError acl_ret;
   struct timeval start_time;
   auto env = std::getenv("GLOG_v");
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  bool output_timecost = (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel));
+  if (output_timecost) {
     (void)gettimeofday(&start_time, nullptr);
   }
 
@@ -1184,7 +1191,7 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
     MS_LOG(DEBUG) << "Unlock after aclmdlExecute.";
     AclMemManager::GetInstance().Unlock();
   }
-  if (env != nullptr && (env[0] == kINFOLogLevel || env[0] == kDEBUGLogLevel)) {
+  if (output_timecost) {
     struct timeval end_time;
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;

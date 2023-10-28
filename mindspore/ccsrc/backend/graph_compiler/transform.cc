@@ -603,12 +603,6 @@ void SetMindRTEnable() {
   }
 #endif
 
-  std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (common::GetEnv("DISABLE_ASCEND_MINDRT") == "1" && target == kAscendDevice) {
-    context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-    return;
-  }
-
   MS_LOG(DEBUG) << "Enable mindRT.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, true);
 }

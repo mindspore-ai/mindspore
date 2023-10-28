@@ -103,11 +103,11 @@ def adaptive_avg_pool2d(input, output_size):
     .. math::
 
         out\_shape = \begin{cases}
-        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
-        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
-        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
-        (h, h), & \text{if output_size is h;}\\
-        (h, w), & \text{if output_size is (h, w)}
+        input\_shape[-2] + output\_size[1], & \text{if } output\_size text{ is (None, w);}\\
+        output\_size[0] + input\_shape[-1], & \text{if } output\_size text{ is (h, None);}\\
+        input\_shape[-2:], & \text{if } output\_size text{ is (None, None);}\\
+        (h, h), & \text{if } output\_size text{ is h;}\\
+        (h, w), & \text{if } output\_size text{ is (h, w)}
         \end{cases}
 
     Raises:
@@ -1834,6 +1834,11 @@ def kl_div(logits, labels, reduction='mean'):
         reduction (str): Specifies the reduction to be applied to the output.
             Its value must be one of ``'none'`` , ``'mean'`` , ``'batchmean'`` or ``'sum'`` . Default: ``'mean'`` .
 
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+            - ``'batchmean'``: the summed output elements divided by batch size.
+
     Returns:
         Tensor or Scalar, if `reduction` is ``'none'``, then output is a tensor and has the same shape as `logits`.
         Otherwise, it is a scalar.
@@ -2238,17 +2243,21 @@ def interpolate(input,
             'area', 'nearest-exact'(matches Scikit-Image and PIL nearest neighbours interpolation algorithms and fixes
             knows issues with `nearest`, 3D and 4D). Default: ``"nearest"`` .
 
-        align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
-            aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
-            Default: ``None`` .
+        align_corners (bool): Whether to use corner alignment for coordinate mapping. Assuming a transformation is
+            applied to the input Tensor along the x-axis, the specific calculation formula is as follows:
 
             .. code-block::
 
-                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
+                ori_i = new_length != 1 ? new_i * (ori_length - 1) / (new_length - 1) : 0   # 'align_corners' = True
 
-                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # 'align_corners' = False
+                ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' = False
 
-            This is only valid for 'linear', 'bilinear', or 'bicubic' modes. Default: ``False`` .
+            Among them, :math:`ori\_length` and :math:`new\_length` represent the length of the Tensor before and after
+            transformation along the x-axis respectively; :math:`new_i` represents the coordinate of the i-th element
+            along the x-axis after transformation; :math:`ori_i` represents the corresponding coordinate of the original
+            data along the x-axis.
+
+            This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``False`` .
         recompute_scale_factor (bool, optional): Recalculate `scale_factor`.
             If True, the parameter `size` will be calculated using the value of the `scale_factor`,
             and finally scaled using the value of `size`.
@@ -4448,7 +4457,7 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar. if `reduction` is ``"none"``, its shape is the same as `labels`.
+        Tensor or Scalar. if `reduction` is ``'none'``, its shape is the same as `input1`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -6027,8 +6036,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             there will be :math:`k - 1` pixels skipped for each sampling location.
             The value ranges for the depth, height, and width dimensions are [1, D], [1, H], and [1, W],
             respectively. Default: ``1`` .
-        groups (int, optional):The number of groups into which the filter is divided. `in_channels`
-            and `out_channels` must be divisible by `group`. Default: ``1`` .
+        groups (int, optional):The number of groups into which the filter is divided. Default: ``1`` .
 
     Returns:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -6037,20 +6045,20 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
-                H_{out} ＝ \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
-                W_{out} ＝ \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
+                D_{out} = \left \lceil{\frac{D_{in}}{\text{stride[0]}}} \right \rceil \\
+                H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[1]}}} \right \rceil \\
+                W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[2]}}} \right \rceil \\
             \end{array}
 
         `pad_mode` is ``"valid"``:
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
+                D_{out} = \left \lfloor{\frac{D_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) }
                 {\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
+                H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) }
                 {\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
+                W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[2]} \times (\text{kernel_size[2]} - 1) }
                 {\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 
@@ -6058,11 +6066,11 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
         .. math::
             \begin{array}{ll} \\
-                D_{out} ＝ \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
+                D_{out} = \left \lfloor{\frac{D_{in} + padding[0] + padding[1] - (\text{dilation[0]} - 1) \times
                 \text{kernel_size[0]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                H_{out} ＝ \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[2] + padding[3] - (\text{dilation[1]} - 1) \times
                 \text{kernel_size[1]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-                W_{out} ＝ \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[4] + padding[5] - (\text{dilation[2]} - 1) \times
                 \text{kernel_size[2]} - 1 }{\text{stride[2]}} + 1} \right \rfloor \\
             \end{array}
 

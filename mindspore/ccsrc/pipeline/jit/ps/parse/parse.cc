@@ -786,6 +786,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
   ScopeGuard scope_guard(scope);
   TraceGuard trace_guard(std::make_shared<TraceParse>(std::make_shared<DebugInfo>(GetLocation(node))));
   FunctionBlockPtr func_block = MakeFunctionBlock();
+  MS_EXCEPTION_IF_NULL(func_block);
   if (block != nullptr) {
     func_block->AddPrevBlock(block);
   } else {
@@ -851,13 +852,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     if (sub_block != block && sub_block->is_return_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has return statement inside, propagate flag back to block: " << block->ToString();
-      block->SetReturnStatementInside();
+      block->set_is_return_statement_inside();
     }
     // Propagate flag of break or continue statement back;
     if (sub_block != block && sub_block->is_break_continue_statement_inside()) {
       MS_LOG(DEBUG) << "Sub block: " << sub_block->ToString()
                     << " has break or continue statement inside, propagate flag back to block: " << block->ToString();
-      block->SetBreakContinueStatementInside();
+      block->set_break_continue_statement_inside();
     }
     sub_block = next_block;
 
@@ -879,10 +880,13 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
         // Skip statements after 'return' (or 'break', 'continue').
         break;
       }
-    } else {
-      if (sub_block->func_graph()->get_return() != nullptr && i != count - 1) {
-        sub_block->func_graph()->set_return(nullptr);
-      }
+    }
+    // If the current block has multi return statements,
+    // only parse the statements before first return statement.
+    // Statements after the continue and break statements are also not parsed.
+    if (ast_->GetNodeType(node)->node_name() == "Break" || ast_->GetNodeType(node)->node_name() == "Continue" ||
+        ast_->GetNodeType(node)->node_name() == "Return") {
+      break;
     }
   }
   return sub_block;
@@ -1128,7 +1132,7 @@ FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::ob
   CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
   func_graph->set_return(return_cnode);
   MS_LOG(DEBUG) << "Inside the block has return statement, block: " << block->ToString();
-  block->SetReturnStatementInside();
+  block->set_is_return_statement_inside();
   return block;
 }
 
@@ -1192,7 +1196,7 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
 
   return new_node;
@@ -1571,6 +1575,7 @@ ValuePtr Parser::GetParameterValue(const AnfNodePtr &parameter) const {
 
 bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const {
   MS_EXCEPTION_IF_NULL(bool_res);
+  MS_EXCEPTION_IF_NULL(block);
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() != 1) {
     return false;
@@ -1730,7 +1735,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
           call_cnode = HandleInterpret(block, call_cnode, node);
         }
       }
-      auto new_expr_src = fallback::GeneratePyExecuteScriptForCallNode(call_cnode, name_id);
+      auto new_expr_src = fallback::GeneratePyInterpretScriptForCallNode(call_cnode, name_id);
       fallback::SetNodeExprSrc(call_cnode, new_expr_src);
       return call_cnode;
     } else if (syntax_support != SYNTAX_SUPPORTED) {
@@ -2147,7 +2152,7 @@ AnfNodePtr Parser::ParseSingleCompare(const FunctionBlockPtr &block, const py::o
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(left_node, left);
   std::string right_str = GetExprStr(right_node, right);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2217,7 +2222,8 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
       false_block = MakeFunctionBlock();
     }
     MakeConditionBlocks(block, true_block, false_block);
-    FunctionBlockPtr b1, b2;
+    FunctionBlockPtr b1;
+    FunctionBlockPtr b2;
 
     // If it is and, we need to process the rest nodes;
     // If it is or, we continue to next
@@ -2359,7 +2365,7 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   auto slice_type = ast_->GetNodeType(slice_node);
   std::string slice_type_name = slice_type->node_name();
   bool is_slice = slice_type_name == "Slice";
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript(value_str, slice_str, is_slice);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript(value_str, slice_str, is_slice);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2431,7 +2437,7 @@ AnfNodePtr Parser::ParseUnaryOp(const FunctionBlockPtr &block, const py::object 
 
   // Generate expression script for binary operation node.
   std::string operand_str = GetExprStr(operand_node, operand);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForUnary(operand_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForUnary(operand_str, op_str);
   fallback::SetNodeExprSrc(new_node, new_expr_src);
   return new_node;
 }
@@ -2528,7 +2534,7 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   // Generate expression script for binary operation node.
   std::string left_str = GetExprStr(target_node, target_object);
   std::string right_str = GetExprStr(value_node, value_object);
-  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_str);
+  auto new_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp(left_str, right_str, op_str);
   fallback::SetNodeExprSrc(augassign_app, new_expr_src);
   return block;
 }
@@ -2551,7 +2557,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
     MS_LOG(DEBUG)
       << "Inside the branch block has return statement, ignore for transformation to parallel-if call, branch block:"
       << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
     return;
   }
   if (branch_block->is_break_continue_statement_inside()) {
@@ -2561,7 +2567,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
                   << ", block: " << block->ToString();
     MS_LOG(DEBUG) << "Propagate flag of break or continue statement from branch block to block, branch block:"
                   << branch_block->ToString() << ", block: " << block->ToString();
-    block->SetBreakContinueStatementInside();
+    block->set_break_continue_statement_inside();
   } else if (branch_end->func_graph()->get_return() != nullptr) {
     // Currently, this can only happen with raise statement inside. As try/expect is not supported now,
     // and contional for raise will be evaluated in Compile time. If raise condition is met, it will
@@ -2683,6 +2689,7 @@ bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::ob
 bool Parser::GetConstantConditionFromComment(const FunctionBlockPtr &block, const py::object &if_node,
                                              bool *is_true_cond) const {
   auto location = GetLocation(if_node);
+  MS_EXCEPTION_IF_NULL(location);
   const auto &comments = location->comments();
   if (comments.empty()) {
     return false;
@@ -2879,7 +2886,7 @@ void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBloc
   if (body_block->is_return_statement_inside()) {
     MS_LOG(DEBUG) << "Propagate flag of return statement in body_block back, body_block: " << body_block->ToString()
                   << ", block: " << block->ToString();
-    block->SetReturnStatementInside();
+    block->set_is_return_statement_inside();
   }
 }
 
@@ -3063,7 +3070,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   std::string less_module_name = "mindspore.ops.composite.multitype_ops.less_impl";
   ValuePtr less_op = prim::GetPythonOps("less", less_module_name);
   CNodePtr cond_node = header_block->func_graph()->NewCNodeInOrder({NewValueNode(less_op), loop_var, scalar_len});
-  auto less_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "less_right_str", "<");
+  auto less_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "less_right_str", "<");
   CloneInnerNodeLocation(cond_node);
   fallback::SetNodeExprSrc(cond_node, less_expr_src);
 
@@ -3073,6 +3080,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   body_block->AddPrevBlock(header_block);
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
+  MS_EXCEPTION_IF_NULL(body_func_graph);
   bool interpret_without_internal =
     IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
   CNodePtr target_var = nullptr;
@@ -3081,7 +3089,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   } else {
     CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
     target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
-    auto new_expr_src = fallback::GeneratePyExecuteScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
+    auto new_expr_src = fallback::GeneratePyInterpretScriptForSubscript("for_in_value_str", "for_in_slice_str", false);
     CloneInnerNodeLocation(target_var);
     fallback::SetNodeExprSrc(target_var, new_expr_src);
   }
@@ -3094,7 +3102,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
   auto add_one = NewValueNode(static_cast<int64_t>(1));
   CNodePtr loop_var_inc = body_func_graph->NewCNodeInOrder({NewValueNode(add_op), loop_var, add_one});
-  auto add_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp("less_left_str", "add_right_str", "+");
+  auto add_expr_src = fallback::GeneratePyInterpretScriptForBinOrComp("less_left_str", "add_right_str", "+");
   CloneInnerNodeLocation(loop_var_inc);
   fallback::SetNodeExprSrc(loop_var_inc, add_expr_src);
 
@@ -4039,73 +4047,45 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   return true;
 }
 
-// Remove space character, newline character, tab character, carriage character, so on.
-string ProcessStrip(const string &str) {
-  const string &chars = " \n\r\t\\+";
-  constexpr int64_t str_len = 2;
-  size_t end = str.find_last_not_of(chars);
-  if (end == std::string::npos) {
-    return "";
+size_t GetSubStrNum(const string &script_text, const string &sub) {
+  size_t count = 0;
+  size_t pos = script_text.find(sub);
+  while (pos != string::npos) {
+    count++;
+    pos = script_text.find(sub, pos + 1);
   }
-  auto remove_str = str.substr(0, end + 1);
-  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
-      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
-    remove_str = remove_str.substr(1, remove_str.size() - str_len);
-  }
-
-  end = remove_str.find_first_not_of(chars);
-  if (end == std::string::npos) {
-    return "";
-  }
-  remove_str = remove_str.substr(end);
-  if ((remove_str.substr(0, 1) == "\"" && remove_str.substr(remove_str.size() - 1, 1) == "\"") ||
-      (remove_str.substr(0, 1) == "'" && remove_str.substr(remove_str.size() - 1, 1) == "'")) {
-    remove_str = remove_str.substr(1, remove_str.size() - str_len);
-  }
-  return remove_str;
+  return count;
 }
 
-string RemoveExcessFString(const string &script_text, int64_t begin, int64_t end) {
-  string update_str = "";
-  constexpr int64_t str_len = 2;
-  if (begin == 0 && begin < end) {
-    update_str = script_text.substr(begin + str_len, end - begin);
-  } else if (begin > 0 && begin < end) {
-    auto temp_str = script_text.substr(0, begin);
-    auto remove_str = ProcessStrip(temp_str);
-    update_str = remove_str + script_text.substr(begin + str_len, end - begin);
+std::string UpdateString(const string &str) {
+  string temp = "";
+  std::string new_string = "";
+  for (size_t i = 0; i < str.length(); i++) {
+    if (str[i] != '\n') {
+      temp += str[i];
+    } else {
+      if (temp[temp.length() - 1] != '\\') {
+        temp += "+\\";
+      }
+      auto pos = temp.find_first_not_of(" ");
+      temp = temp.substr(pos) + '\n';
+      new_string += temp;
+      temp = "";
+    }
   }
-  if (end + str_len < SizeToLong(script_text.size())) {
-    auto temp_str = script_text.substr(end + str_len + 1, script_text.size() - end - str_len - 1);
-    auto remove_str = ProcessStrip(temp_str);
-    update_str = update_str + remove_str;
-  }
-  return update_str;
+  auto pos = temp.find_first_not_of(" ");
+  new_string += temp.substr(pos);
+  return new_string;
 }
 
 string ProcessIndentationInScript(const string &script_text) {
-  if (script_text.find("\n") == string::npos) {
+  const size_t f_string_num = 2;
+  size_t num1 = GetSubStrNum(script_text, "f'");
+  size_t num2 = GetSubStrNum(script_text, "f\"");
+  if (script_text.find("\n") == string::npos || num1 + num2 < f_string_num) {
     return script_text;
   }
-  const string &old_script = script_text;
-  string new_script = script_text;
-  const size_t str_len = 2;
-  while (new_script.find("f'") != string::npos) {
-    int64_t begin = new_script.find("f'");
-    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
-    int64_t end = begin + sub.find("'");
-    new_script = RemoveExcessFString(new_script, begin, end);
-  }
-  while (new_script.find("f\"") != string::npos) {
-    int64_t begin = new_script.find("f\"");
-    string sub = new_script.substr(begin + str_len, new_script.size() - begin - str_len);
-    int64_t end = begin + sub.find("\"");
-    new_script = RemoveExcessFString(new_script, begin, end);
-  }
-  if (new_script != old_script) {
-    new_script = "f\"" + new_script + "\"";
-  }
-  return new_script;
+  return UpdateString(script_text);
 }
 
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
@@ -4246,7 +4226,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
     TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock();
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has break statement, block: " << block->ToString();
 
   // Jump to the end_block.
@@ -4265,7 +4245,7 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
   if (loop.iterator != nullptr) {
     (void)args.emplace_back(loop.iterator);
   }
-  block->SetBreakContinueStatementInside();
+  block->set_break_continue_statement_inside();
   MS_LOG(DEBUG) << "Inside the block has continue statement, block: " << block->ToString();
 
   block->Jump(loop.header, args);

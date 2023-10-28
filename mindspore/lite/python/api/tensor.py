@@ -352,6 +352,8 @@ class Tensor:
                 self._tensor = _c_lite_wrapper.create_tensor_by_numpy(numpy_data, device_type, device_id)
             # use numpy to init tensor
             elif isinstance(tensor, numpy.ndarray):
+                if not tensor.flags['FORC']:
+                    tensor = numpy.ascontiguousarray(tensor)
                 numpy_shape = tensor.shape
                 numpy_dtype = tensor.dtype
                 if numpy_dtype.type not in numpy_data_type_map:

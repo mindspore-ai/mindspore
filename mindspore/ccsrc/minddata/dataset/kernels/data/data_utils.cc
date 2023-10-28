@@ -414,7 +414,7 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
               const std::shared_ptr<Tensor> &pad_val) {
   if (pad_val == nullptr) {
     if (src->type().IsNumeric()) {
-      return PadEndNumeric(src, dst, pad_shape, 0.);
+      return PadEndNumeric(src, dst, pad_shape, 0.0);
     } else {
       return PadEndString(src, dst, pad_shape, "");
     }

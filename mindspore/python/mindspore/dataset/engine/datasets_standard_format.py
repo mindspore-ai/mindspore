@@ -232,6 +232,9 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
     The columns of generated dataset depend on the source TFRecord files.
 
+    Note:
+        'TFRecordDataset' is not support on Windows platform yet.
+
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
             pattern of files. The list will be sorted in lexicographical order.
@@ -318,6 +321,8 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
                  cache=None, compression_type=None):
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
+        if platform.system().lower() == "windows":
+            raise NotImplementedError("TFRecordDataset is not supported for windows.")
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
 

@@ -25,6 +25,7 @@
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace kernel {
@@ -246,7 +247,14 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   MS_LOG(DEBUG) << this->DebugString();
   MS_LOG(DEBUG) << converter_->DebugString();
-  converter_->Run(stream_ptr);
+  // release gil before run
+  GilReleaseWithCheck release_gil;
+  try {
+    converter_->Run(stream_ptr);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Kernel launch failed, msg: " << e.what();
+    return false;
+  }
   return true;
 }
 

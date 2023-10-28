@@ -41,19 +41,9 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
-
-  void SyncOutputShape() override;
-
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
 
  private:
-  ShapeVector GetInt64ValueFromAddr(void *addr, size_t idx);
-
-  ShapeCalcFunctorPtr functor_{nullptr};
-  std::vector<bool> value_depend_;
-  std::vector<int64_t> inputs_size_;
-  std::vector<TypeId> inputs_type_;
-  ShapeArray input_shapes_;
   ShapeArray outs_shape_;
 };
 }  // namespace kernel

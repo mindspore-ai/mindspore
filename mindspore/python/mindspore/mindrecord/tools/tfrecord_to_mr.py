@@ -326,7 +326,6 @@ class TFRecordToMR:
             MRMValidateDataError: If data does not match blob fields.
             MRMSetHeaderError: If failed to set header.
             MRMWriteDatasetError: If failed to write dataset.
-            TypeError: If `parallel_writer` is not bool.
         """
 
         t = ExceptionThread(target=self.run)

@@ -13,13 +13,21 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
+import pytest
 from mindspore import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
+from mindspore.nn import Cell
+import mindspore as ms
 
+ms.set_context(mode=ms.GRAPH_MODE)
 
 def test_nest_range_transpose():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
     batch_size = 2
     num_layers = 5
     batch_tuple = tuple(Tensor(np.array(np.ones((2, 3)) * 0.01)) for i in range(batch_size))
@@ -45,6 +53,11 @@ def test_nest_range_transpose():
 
 
 def test_nest_range_simple():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
     batch_size = 2
     num_layers = 5
     batch_tuple = tuple(Tensor(np.array(np.ones((2, 3)) * 0.01)) for i in range(batch_size))
@@ -62,3 +75,29 @@ def test_nest_range_simple():
         return out1
 
     print(invoke_range())
+
+
+def test_parser_raise_error_in_for_condition():
+    """
+    Feature: range()
+    Description: Test range() in graph mode.
+    Expectation: No exception
+    """
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.relu = P.ReLU()
+
+        def construct(self, x):
+            out = x
+            for _ in range(x):
+                out = self.relu(x)
+            return out
+
+    with pytest.raises(TypeError) as error_log:
+        input_np_x = np.random.rand(2, 3, 4, 5).astype(np.float32)
+        input_me_x = Tensor(input_np_x)
+        net = Net()
+        net(input_me_x)
+    assert "the 0th input should be a int scalar" in str(error_log.value)
+    assert "for _ in range(x)" in str(error_log.value)

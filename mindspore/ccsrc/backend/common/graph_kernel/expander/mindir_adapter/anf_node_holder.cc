@@ -23,4 +23,8 @@ BaseShapePtr AnfNodeHolderWithDeviceInfo::GetShapePtr() { return nullptr; }
 ShapeVector AnfNodeHolderWithDeviceInfo::GetShape() { return Callback::Instance()->GetOutputShape(node_, 0); }
 TypePtr AnfNodeHolderWithDeviceInfo::GetDtype() { return TypeIdToType(Callback::Instance()->GetOutputType(node_, 0)); }
 std::string AnfNodeHolderWithDeviceInfo::GetFormat() { return Callback::Instance()->GetOutputFormat(node_, 0); }
+BaseShapePtr AnfNodeHolderWithHostInfo::GetShapePtr() { return nullptr; }
+ShapeVector AnfNodeHolderWithHostInfo::GetShape() { return Callback::Instance()->GetOutputShape(node_, 0); }
+TypePtr AnfNodeHolderWithHostInfo::GetDtype() { return TypeIdToType(Callback::Instance()->GetOutputType(node_, 0)); }
+std::string AnfNodeHolderWithHostInfo::GetFormat() { return Callback::Instance()->GetOutputFormat(node_, 0); }
 }  // namespace mindspore::graphkernel::expander

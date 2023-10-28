@@ -49,8 +49,8 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
     input_shapes.push_back(std::move(shape));
   }
   for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf_node); ++i) {
-    const auto &shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
-    output_shapes.push_back(std::move(shape));
+    auto shape = common::AnfAlgo::GetOutputInferShape(anf_node, i);
+    output_shapes.push_back(shape);
   }
   kernel_ptr->SetInputsInfo(input_types, input_shapes);
   kernel_ptr->SetOutputsInfo(output_types, output_shapes);

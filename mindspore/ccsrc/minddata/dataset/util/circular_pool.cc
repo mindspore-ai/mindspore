@@ -15,9 +15,6 @@
  */
 #include "minddata/dataset/util/circular_pool.h"
 
-#include <algorithm>
-#include <limits>
-#include <utility>
 #include "./securec.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/system_pool.h"

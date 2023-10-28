@@ -43,7 +43,7 @@ AscendKernelRuntime *AscendRuntimeManager::GetAscendRuntime(const std::string &d
     ascend_runtime->set_device_id(device_id);
     runtime_map_[runtime_key] = ascend_runtime;
   } else {
-    MS_LOG(WARNING) << "No ascend runtime creator for " << device_name << " with device id " << device_id;
+    MS_LOG(INFO) << "No ascend runtime creator for " << device_name << " with device id " << device_id;
   }
   return ascend_runtime.get();
 }

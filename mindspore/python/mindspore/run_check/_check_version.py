@@ -398,11 +398,13 @@ class AscendEnvChecker(EnvChecker):
 
     def set_env(self):
         curr_path = os.path.abspath(os.path.dirname(__file__))
+        cust_aicpu_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicpu_ops"))
+        cust_aicore_path = os.path.abspath(os.path.join(curr_path, "../lib/plugin/ascend/custom_aicore_ops"))
         if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
-                                                   curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
+                                                   cust_aicore_path + ":" + cust_aicpu_path
         else:
-            os.environ['ASCEND_CUSTOM_OPP_PATH'] = curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = cust_aicore_path + ":" + cust_aicpu_path
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
         AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
@@ -500,13 +502,6 @@ def check_env(device, _):
 
 def set_env(device, library_path):
     """callback function for setting environment variables"""
-    if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
-        if device in os.environ["MS_DEV_CLOSE_VERSION_CHECK"]:
-            return
-        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = os.environ["MS_DEV_CLOSE_VERSION_CHECK"] + ":" + device
-    else:
-        os.environ["MS_DEV_CLOSE_VERSION_CHECK"] = device
-
     if device.lower() == "ascend":
         env_checker = AscendEnvChecker(library_path)
     elif device.lower() == "gpu":
@@ -532,8 +527,6 @@ def check_version_and_env_config():
             logger.warning("Pre-Load Library libgomp.so.1 failed, which might cause TLS memory allocation failure. If "
                            "the failure occurs, please refer to the FAQ for a solution: "
                            "https://www.mindspore.cn/docs/en/master/faq/installation.html.")
-        if not os.getenv("MS_DEV_CLOSE_VERSION_CHECK") is None:
-            return
         MSContext.get_instance().register_check_env_callback(check_env)
         MSContext.get_instance().register_set_env_callback(set_env)
         MSContext.get_instance().set_device_target_inner(MSContext.get_instance().get_param(ms_ctx_param.device_target))

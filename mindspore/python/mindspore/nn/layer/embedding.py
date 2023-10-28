@@ -181,8 +181,7 @@ class EmbeddingLookup(Cell):
             is specified. Default: ``'normal'`` .
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
-        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
-            :class:`mindspore.nn.EmbeddingLookup`. Default: ``'batch_slice'`` .
+        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. Default: ``'batch_slice'`` .
         manual_shapes (tuple): The accompaniment array in field slice mode. Default: ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: ``None`` .
@@ -504,8 +503,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
             is specified. Default: ``'normal'`` .
         target (str): Specifies the target where the op is executed. The value must in
             [ ``'DEVICE'`` , ``'CPU'`` ]. Default: ``'CPU'`` .
-        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
-            :class:`mindspore.nn.EmbeddingLookup`. Default: ``'batch_slice'``.
+        slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. Default: ``'batch_slice'``.
         feature_num_list (tuple): The accompaniment array in field slice mode. This is unused currently.
             Default:  ``None`` .
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32.

@@ -23,19 +23,20 @@
 #include "include/api/types.h"
 
 namespace mindspore::opt {
-class InputDTypeTransPass : public Pass {
+class InOutDTypeTransPass : public Pass {
  public:
-  explicit InputDTypeTransPass(DataType dst_input_data_type, DataType src_input_data_type)
-      : Pass("input_data_type_trans_pass"),
-        dst_input_data_type_(dst_input_data_type),
-        src_input_data_type_(src_input_data_type) {}
-  ~InputDTypeTransPass() override = default;
+  explicit InOutDTypeTransPass(DataType dst_input_data_type, DataType dst_output_data_type)
+      : Pass("inout_data_type_trans_pass"),
+        dst_input_data_type_(static_cast<TypeId>(dst_input_data_type)),
+        dst_output_data_type_(static_cast<TypeId>(dst_output_data_type)) {}
+  ~InOutDTypeTransPass() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
   STATUS HandleGraphInput(const FuncGraphPtr &graph);
-  DataType dst_input_data_type_ = DataType::kTypeUnknown;
-  DataType src_input_data_type_ = DataType::kTypeUnknown;
+  STATUS HandleGraphOutput(const FuncGraphPtr &graph);
+  TypeId dst_input_data_type_ = kTypeUnknown;
+  TypeId dst_output_data_type_ = kTypeUnknown;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_INPUT_DATA_TYPE_TRANS_PASS_H_

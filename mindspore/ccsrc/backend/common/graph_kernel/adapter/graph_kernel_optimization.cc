@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/set_infershape_functor.h"
 #include "backend/common/graph_kernel/bprop_graph_optimizer.h"
-
+#include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -135,25 +135,25 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   pm->Add(std::make_shared<CastMatmulFusion>(), OptLevel_2, is_ascend);
 
   // Reorder Cast and Type-insensitive node
-  pm->Add(std::make_shared<ReorderOps>(), OptLevel_2);
+  pm->Add(std::make_shared<ReorderOps>(), OptLevel_2, !is_ge);
 
   // normalize the Reduce axis
   pm->Add(std::make_shared<AxisNormalizer>(), OptLevel_1);
 
   // Cast the input of ReduceSum from float16 to float32 for higher precision
-  pm->Add(std::make_shared<RaiseReductionPrecision>(), OptLevel_2);
+  pm->Add(std::make_shared<RaiseReductionPrecision>(), OptLevel_2, !is_ge);
 
   // Insert PadAkg and UnPadAkg Ops for MatMul
   pm->Add(std::make_shared<InsertPadOps>(), OptLevel_1, is_gpu);
 
   // Universal arithmetic simplify
-  pm->Add(std::make_shared<ArithmeticSimplify>(), OptLevel_2, is_gpu || is_cpu);
+  pm->Add(std::make_shared<ArithmeticSimplify>(), OptLevel_2);
 
   // Common subexpression elimination
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_2);
 
   // Eliminate unnecessary transform ops
-  pm->Add(std::make_shared<TransformOpOptimizer>(), OptLevel_2, is_gpu || is_cpu);
+  pm->Add(std::make_shared<TransformOpOptimizer>(), OptLevel_2);
   return pm;
 }
 
@@ -188,7 +188,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->Add(std::make_shared<GraphKernelRecompute>(), recompute_lv);
 
   // Enable atomic add
-  pm->Add(std::make_shared<AtomicCleanInserter>(), OptLevel_2, is_gpu || is_ascend);
+  pm->Add(std::make_shared<AtomicCleanInserter>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
 
   // Enable atomic add for stitch nodes.
   auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_stitch_fusion);
@@ -245,8 +245,9 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(true), enable_dyn_level, is_gpu);
 #ifdef ENABLE_AKG
-  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
 #endif
+  pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
   pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || is_ascend);
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
@@ -276,6 +277,11 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  is_ge = (is_ascend && (context_ptr->backend_policy() == "ge"));
+  auto cb = Callback::Instance();
+  if (is_ge) {
+    Callback::RegImpl(std::make_shared<CallbackImplWithInferShape>());
+  }
 
   auto parent_graph = kernel_graph->parent_graph().lock();
   FuncGraphManagerPtr parent_manager = nullptr;
@@ -299,6 +305,11 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
 
   if (parent_graph != nullptr) {
     parent_graph->set_manager(parent_manager);
+  }
+
+  if (is_ge) {
+    // need recover the original call back instance for other sub graph processing
+    Callback::RegImpl(cb);
   }
 }
 

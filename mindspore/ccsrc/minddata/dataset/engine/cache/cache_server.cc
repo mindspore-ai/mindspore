@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -438,6 +438,7 @@ Status CacheServer::InternalFetchRow(CacheRequest *rq) {
 Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   auto p = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
+  RETURN_UNEXPECTED_IF_NULL(p);
   const auto num_elements = p->rows()->size();
   auto connection_id = p->connection_id();
   auto batch_wait = std::make_shared<BatchWait>(num_elements);
@@ -502,6 +503,7 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     CHECK_FAIL_RETURN_UNEXPECTED(!rq->buf_data().empty(), "Missing row id");
     auto &row_id_buf = rq->buf_data(0);
     auto p = flatbuffers::GetRoot<TensorRowIds>(row_id_buf.data());
+    RETURN_UNEXPECTED_IF_NULL(p);
     std::vector<row_id_type> row_id;
     auto sz = p->row_id()->size();
     row_id.reserve(sz);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,6 @@
  */
 
 #include "minddata/dataset/engine/ir/datasetops/source/yahoo_answers_node.h"
-
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"

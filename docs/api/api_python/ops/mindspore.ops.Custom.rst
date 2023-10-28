@@ -9,7 +9,6 @@ mindspore.ops.Custom
 
     .. warning::
         - 这是一个实验性API，后续可能修改或删除。
-        - 当前自定义算子功能不支持Ascend 910B。
 
     .. note::
         不同自定义算子的函数类型（func_type）支持的平台类型不同。每种类型支持的平台如下：

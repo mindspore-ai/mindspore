@@ -10,6 +10,7 @@ function PrePareLocal() {
   cp ./scripts/run_benchmark_python.sh ${benchmark_test_path} || exit 1
   cp -r ./python ${benchmark_test_path} || exit 1
   cp -r ./cpp ${benchmark_test_path} || exit 1
+  cp -r ./java ${benchmark_test_path} || exit 1
   cp ./scripts/ascend/*.sh ${benchmark_test_path} || exit 1
   cp ./scripts/cloud_infer/run_benchmark_cloud_ascend.sh ${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
@@ -20,6 +21,7 @@ function PrePareLocal() {
       cp ${models_ascend_config} ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/models_python_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${benchmark_test_path} || exit 1
+      cp ./../${config_folder}/cloud_infer/models_mindir_cloud_java_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/cloud_infer/models_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/ascend/*.config ${benchmark_test_path} || exit 1
       cp ./../${config_folder}/models_ascend_on_the_fly_quant_ge_cloud.cfg ${benchmark_test_path} || exit 1
@@ -54,6 +56,7 @@ function PrePareRemote() {
   scp ./scripts/base_functions.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp -r ./python ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp -r ./cpp ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+  scp -r ./java ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   scp ./scripts/ascend/*.sh ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   if [[ ${backend} =~ "_cloud" ]]; then
       models_ascend_config=./../${config_folder}/models_ascend_cloud.cfg
@@ -63,6 +66,7 @@ function PrePareRemote() {
       scp ${models_ascend_config} ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/models_python_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/cloud_infer/models_mindir_cloud_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
+      scp ./../${config_folder}/cloud_infer/models_mindir_cloud_java_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/cloud_infer/models_with_config_cloud_ascend.cfg ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
       scp ./../${config_folder}/ascend/*.config ${user_name}@${device_ip}:${benchmark_test_path} || exit 1
   else

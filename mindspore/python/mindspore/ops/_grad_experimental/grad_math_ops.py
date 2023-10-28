@@ -21,12 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import Polar
-from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops.operations.math_ops import Lgamma
-from mindspore.ops.operations.math_ops import Digamma
-from mindspore.ops.operations.math_ops import Polygamma
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixSolveLs
@@ -35,7 +30,6 @@ from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
-from mindspore.ops.operations.math_ops import InplaceIndexAdd
 from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.math_ops import Diagonal
 from mindspore.ops.operations.math_ops import EuclideanNorm
@@ -378,31 +372,10 @@ def get_bprop_nan_to_num(self):
     return bprop
 
 
-@bprop_getters.register(Angle)
-def get_bprop_angle(self):
-    """Grad definition for `Angle` operation."""
-    real_op = Real()
-    imag_op = Imag()
-    reciprocal_op = P.Reciprocal()
-    complex_op = Complex()
-    neg_op = P.Neg()
-
-    def bprop(x, out, dout):
-        re = real_op(x)
-        im = imag_op(x)
-        re = complex_op(im, re)
-        z = reciprocal_op(re)
-        zero = zeros_like(dout)
-        complex_dout = complex_op(dout, zero)
-        return (neg_op(complex_dout * z),)
-
-    return bprop
-
-
 @bprop_getters.register(Polar)
 def get_bprop_polar(self):
     """Grad definition for `Polar` operation."""
-    complex_op = Complex()
+    complex_op = P.Complex()
     conj = P.Conj()
     real = P.Real()
     sig = P.Sign()
@@ -442,63 +415,6 @@ def get_bprop_tridiagonalsolve(self):
         a = (P.Stack(-2)([superdiag2, diag2, subdiag2]))
         grad_diags = 0 - a
         return grad_diags, grad_rhs
-
-    return bprop
-
-
-@bprop_getters.register(Lgamma)
-def get_bprop_lgamma(self):
-    """Grad definition for `Lgamma` operation."""
-    digamma = Digamma()
-
-    def bprop(x, out, dout):
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * digamma(x)
-            dx = F.cast(dx, mstype.float16)
-        elif x.dtype in (mstype.int32,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * digamma(x)
-        else:
-            dx = dout * digamma(x)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Digamma)
-def get_bprop_digamma(self):
-    """Grad definition for `Digamma` operation."""
-    polygamma = Polygamma()
-    a = Tensor(1)
-
-    def bprop(x, out, dout):
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float32)
-            dx = dout * polygamma(a, x)
-            dx = F.cast(dx, mstype.float16)
-        else:
-            dx = dout * polygamma(a, x)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Polygamma)
-def get_bprop_polygamma(self):
-    """Grad definition for `Polygamma` operation."""
-    polygamma = Polygamma()
-
-    def bprop(a, x, out, dout):
-        one = Tensor(1)
-        a = a + one
-        if x.dtype in (mstype.float16,):
-            x = F.cast(x, mstype.float64)
-            dx = dout * polygamma(a, x)
-            dx = F.cast(dx, mstype.float16)
-        else:
-            dx = dout * polygamma(a, x)
-        return zeros_like(a), dx
 
     return bprop
 
@@ -592,45 +508,6 @@ def get_bprop_diagonal(self):
         else:
             dx = zeros_like(x)
         return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Cholesky)
-def get_bprop_cholesky(self):
-    """Grad definition for `Cholesky` operation."""
-    upper = self.upper
-    choleskygrad = G.CholeskyGrad()
-
-    def bprop(x, out, dout):
-        out = cholesky_transpose(out) if upper else out
-        dout = cholesky_transpose(dout) if upper else dout
-        dx = choleskygrad(out, dout)
-        return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(InplaceIndexAdd)
-def get_bprop_inplace_index_add(self):
-    """Generate bprop for InplaceIndexAdd"""
-    gather = P.Gather()
-    _axis = self.axis
-
-    def bprop(var, indices, updates, out, dout):
-        return dout, zeros_like(indices), gather(dout, indices, _axis)
-
-    return bprop
-
-
-@bprop_getters.register(P.Zeta)
-def get_bprop_zeta(self):
-    """Generate bprop for Zeta"""
-    zeta = P.Zeta()
-
-    def bprop(x, q, out, dout):
-        dq = -x * zeta(x + 1, q) * dout
-        return zeros_like(x), dq
 
     return bprop
 

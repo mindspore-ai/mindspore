@@ -581,6 +581,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+      res_manager_->ResetStreamAndCtx();
       return false;
     }
   }

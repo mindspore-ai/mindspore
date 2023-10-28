@@ -579,7 +579,12 @@ std::vector<DShape> UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAtt
 }
 
 bool Conv2dOp::HadPad(const ShapeVector &pad_list, const std::string &pad_mode) {
-  if (pad_list[0] != pad_list[1] || pad_list[2] != pad_list[3]) {
+  constexpr size_t kTop = 0;
+  constexpr size_t kBottom = 1;
+  constexpr size_t kLeft = 2;
+  constexpr size_t kRight = 3;
+
+  if (pad_list[kTop] != pad_list[kBottom] || pad_list[kLeft] != pad_list[kRight]) {
     return true;
   }
   if (pad_mode != "VALID" && pad_mode != "valid") {
@@ -590,7 +595,7 @@ bool Conv2dOp::HadPad(const ShapeVector &pad_list, const std::string &pad_mode) 
 
 std::vector<DShape> Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   // get the output shape when format is NHWC/NCHW
-  if (inputs[0]->shape.size() == 4) {
+  if (inputs[0]->shape.size() == kDim4) {
     CHECK_ATTR(attrs, "format");
     if (inputs[0]->format == kOpFormat_NHWC || inputs[1]->format == kOpFormat_NHWC ||
         GetValue<std::string>(attrs.find("format")->second) == kOpFormat_NHWC) {
@@ -607,9 +612,12 @@ std::vector<DShape> Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs
       auto kernel_size = GetListInt(attrs.find("kernel_size")->second);
       auto stride = GetListInt(attrs.find("stride")->second);
       auto dilation = GetListInt(attrs.find("dilation")->second);
-
-      if (x_shape.size() != 4 || w_shape.size() != 4 || pad_list.size() != 4 || kernel_size.size() != 2 ||
-          stride.size() != 4 || dilation.size() != 4) {
+      constexpr size_t kPadSize = 4;
+      constexpr size_t kKernelSize = 2;
+      constexpr size_t kStrideSize = 4;
+      constexpr size_t kDilationSize = 4;
+      if (x_shape.size() != kDim4 || w_shape.size() != kDim4 || pad_list.size() != kPadSize ||
+          kernel_size.size() != kKernelSize || stride.size() != kStrideSize || dilation.size() != kDilationSize) {
         MS_LOG(EXCEPTION) << "For 'Conv2D', got sizes of x_shape, w_shape, pad_list, kernel_size, stride and dilation: "
                           << x_shape.size() << ", " << w_shape.size() << ", " << pad_list.size() << ", "
                           << kernel_size.size() << ", " << stride.size() << ", " << dilation.size()
@@ -661,14 +669,14 @@ std::vector<DShape> Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs
 }
 
 std::vector<TypeId> Conv2dOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
-  if (inputs[0]->shape.size() == 4) {
+  if (inputs[0]->shape.size() == kDim4) {
     return PrimOp::InferType(inputs, attrs);
   }
   return {inputs[0]->type};
 }
 
 DFormat Conv2dOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
-  if (inputs[0]->shape.size() == 4) {
+  if (inputs[0]->shape.size() == kDim4) {
     return PrimOp::InferFormat(inputs, attrs);
   }
   CHECK_ATTR(attrs, "conv_out_format");
@@ -970,7 +978,9 @@ std::vector<DShape> Pool2DOp::InferShape(const NodePtrList &inputs, const DAttrs
   std::vector<int64_t> input_shape = inputs[0]->shape;
   bool is_nhwc = input_shape.size() == 4;
   int64_t n = input_shape[0];
-  int64_t c, h, w;
+  int64_t c;
+  int64_t h;
+  int64_t w;
   if (is_nhwc) {
     constexpr size_t h_idx = 1;
     constexpr size_t w_idx = 2;

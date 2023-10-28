@@ -94,7 +94,9 @@ def test_range_with_wrong_input():
         step = mutable(4)
         return range(start, end, step)
 
-    foo()
+    with pytest.raises(TypeError) as ex:
+        foo()
+    assert "input should be a int scalar but got" in str(ex.value)
 
 
 def test_range_with_wrong_input_2():
