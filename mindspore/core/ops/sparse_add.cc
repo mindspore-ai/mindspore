@@ -152,8 +152,8 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
   MS_EXCEPTION_IF_NULL(b_indices_type_);
   auto b_indices_type = b_indices_type_->element();
   const std::set<TypePtr> indices_valid_types = {kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices_type, indices_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices_type, indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->GetType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->GetType(), indices_valid_types, op_name);
   // a_shape and b_shape should be int64
   auto a_shape_type_ = a_shape->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(a_shape_type_);
@@ -161,8 +161,8 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto b_shape_type_ = b_shape->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(b_shape_type_);
   auto b_shape_type = b_shape_type_->element();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape_type, indices_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape_type, indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->GetType(), indices_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->GetType(), indices_valid_types, op_name);
   // check a_values and b_values
   auto a_value_type_ = a_values->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(a_value_type_);
@@ -172,14 +172,14 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto b_value_type = b_value_type_->element();
   const std::set<TypePtr> value_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_value_type, value_valid_types, op_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_value_type, value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->GetType(), value_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->GetType(), value_valid_types, op_name);
   // Check thresh
   auto thresh_type_ = thresh->GetType()->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(thresh_type_);
   auto thresh_type = thresh_type_->element();
   const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh_type, thresh_valid_types, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->GetType(), thresh_valid_types, op_name);
 
   // Check same type
   // value

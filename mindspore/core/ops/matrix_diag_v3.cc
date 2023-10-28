@@ -32,7 +32,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 bool IsValueUnKnown(const AbstractBasePtr &arg) {
-  if (arg->GetType()->object_type() != kObjectTypeTensorType || IsValueKnown(arg->GetValue())) {
+  if (arg->GetType()->object_type() != kObjectTypeTensorType || !IsValueKnown(arg->GetValue())) {
     return true;
   }
   return false;

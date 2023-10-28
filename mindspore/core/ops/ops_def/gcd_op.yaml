@@ -5,6 +5,8 @@ gcd:
             dtype: tensor
         x2:
             dtype: tensor
+    args_signature:
+        dtype_group: (x1, x2)
     returns:
         output: 
             dtype: tensor

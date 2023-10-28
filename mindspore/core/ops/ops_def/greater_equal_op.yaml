@@ -7,6 +7,8 @@ greater_equal:
         y:
             dtype: tensor
             type_cast: number
+    args_signature:
+        dtype_group: (x, y)
     returns:
         output: 
             dtype: tensor
