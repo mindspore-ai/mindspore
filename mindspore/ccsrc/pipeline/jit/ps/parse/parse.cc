@@ -1705,10 +1705,28 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   }
   MS_LOG(DEBUG) << "Process ast Call, name_id: " << name_id;
   auto call_function_node = ParseExprNode(block, function_ast_node);
+
   // Function call arguments should be passed in as groups and unpacked later using unpack call
   ArgsContext args_context = ArgsContext();
   ParseArgsInCall(block, args, &args_context);
   ParseKeywordsInCall(block, node, &args_context);
+
+  auto is_class_tensor = call_function_node->user_data<bool>(kClassTensorType);
+  if (is_class_tensor != nullptr && *is_class_tensor) {
+    // Convert Tensor(...) to functional tensor(...) to use annotation to get type.
+    auto call_debug_info = call_function_node->debug_info();
+    MS_EXCEPTION_IF_NULL(call_debug_info);
+    auto call_location = call_debug_info->location();
+    MS_EXCEPTION_IF_NULL(call_location);
+    const auto &comments = call_location->comments();
+    if (comments.empty()) {
+      const std::string tensor_func_str = "__ms_tensor_func__";
+      auto new_call_function_node = block->MakeResolveSymbol(tensor_func_str);
+      MS_LOG(INFO) << "Convert Tensor call node " << call_function_node->DebugString()
+                   << " to functional tensor call node " << new_call_function_node->DebugString();
+      return GenerateAnfNodeForCall(block, new_call_function_node, args_context);
+    }
+  }
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, args_context);
   UpdateInterpretForUserNode(call_cnode, call_function_node);

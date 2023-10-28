@@ -522,6 +522,9 @@ constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
 
+// graph parse
+constexpr auto kClassTensorType = "class_tensor_type";
+
 // graph type
 constexpr auto kFuncGraphTypeName = "FuncGraph";
 constexpr auto kKernelGraphTypeName = "KernelGraph";

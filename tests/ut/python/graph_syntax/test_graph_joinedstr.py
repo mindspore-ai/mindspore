@@ -90,4 +90,5 @@ def test_joinedstr_inner_tensor():
         return res
 
     out = joined_net()
-    assert out == "x: (1, 2, 3, 4, 5), inner_tensor_1: [1 2 3 4 5], inner_tensor_2: 2"
+    assert out == "x: (1, 2, 3, 4, 5), inner_tensor_1: Tensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])," \
+                  " inner_tensor_2: Tensor(shape=[], dtype=Int64, value=2)"

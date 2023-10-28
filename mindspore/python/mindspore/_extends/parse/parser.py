@@ -37,6 +37,7 @@ from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
 from mindspore import context
+from mindspore import tensor
 from mindspore.common.api import _MindsporeFunctionExecutor
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
@@ -111,10 +112,6 @@ _builtin_function_or_method_type = type(abs)
 # Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
     set, dict, slice, complex, reversed, type,
-)
-
-_unsupported_internal_type = (
-    Tensor,
 )
 
 _hybrid_type = (
@@ -1004,6 +1001,8 @@ class Parser:
 
         # Used to resolve the function's globals namespace.
         self.global_namespace = CellNamespace(self.fn.__module__)
+        self.global_namespace.dicts[0]["__ms_tensor_func__"] = tensor
+
         self.function_module = self.fn.__module__
         # Used to resolve the function's nonlocals.
         self.closure_namespace = ClosureNamespace(self.fn)
@@ -1028,12 +1027,16 @@ class Parser:
         return unsupported
 
     @staticmethod
+    def is_tensor_class_type(value):
+        """To check if is class Tensor type"""
+        return value == Tensor
+
+    @staticmethod
     def is_unsupported_internal_type(value):
         """To check if not supported internal type, such as Tensor"""
-        for item in _unsupported_internal_type:
-            if value == item:
-                logger.debug(f"Found unsupported internal type: '{value}'.")
-                return True
+        if value == Tensor:
+            logger.debug(f"Found unsupported internal type: '{value}'.")
+            return True
         if ms_adapter_registry.is_registered and value == ms_adapter_registry.tensor:
             return True
         return False
