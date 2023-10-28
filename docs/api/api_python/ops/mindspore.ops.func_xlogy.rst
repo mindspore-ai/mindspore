@@ -21,7 +21,7 @@ mindspore.ops.xlogy
 
     **返回：**
 
-    Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。
+    Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数值较高的类型。
 
     **异常：**
 
