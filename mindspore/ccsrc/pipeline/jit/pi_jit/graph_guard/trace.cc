@@ -1084,6 +1084,7 @@ PyObject *GetObjectFromTrace(PyFrameObject *frame, TracePtr trace) {
     py::object py_obj = py::reinterpret_borrow<py::object>(obj);
     if (IsStubTensor(py_obj)) {
       py_obj = python_adapter::CallPyObjMethod(py_obj, "stub_sync");
+      Py_DECREF(obj);
       obj = py_obj.ptr();
       Py_INCREF(obj);
     }
