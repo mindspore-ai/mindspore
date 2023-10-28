@@ -1596,6 +1596,9 @@ bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
     }
     if (reg_input_num == real_input_num) {
       for (auto i = depend_list.begin(); i != depend_list.end(); i++) {
+        if (*i >= SizeToInt(real_input_num)) {
+          continue;
+        }
         if (!cnode->input(*i + 1)->isa<ValueNode>()) {
           cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
           return true;
