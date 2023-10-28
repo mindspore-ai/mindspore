@@ -1558,6 +1558,24 @@ void CheckObjAttrValid(const TypePtr &data_type, const std::string &item_name, c
   }
 }
 
+AnfNodePtr SetTypeForGetAttr(const AnfNodePtr &getattr_node, const AbstractBasePtr &value_abs) {
+  // Set setattr's abstract as getattr's abstract.
+  if (value_abs != nullptr &&
+      (value_abs->isa<abstract::AbstractTensor>() || value_abs->isa<abstract::AbstractScalar>())) {
+    auto type = value_abs->BuildType();
+    auto shape = value_abs->BuildShape();
+    fallback::SetRealType<AnfNode, Type>(getattr_node, type);
+    fallback::SetRealShape<AnfNode, abstract::BaseShape>(getattr_node, shape);
+    auto abs_tensor = value_abs->cast_ptr<abstract::AbstractTensor>();
+    if (abs_tensor != nullptr) {
+      if (abs_tensor != nullptr && abs_tensor->is_adapter()) {
+        getattr_node->set_user_data<bool>("is_adapter", std::make_shared<bool>(true));
+      }
+    }
+  }
+  return getattr_node;
+}
+
 EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
   auto out_node = out_conf->node();
@@ -1609,6 +1627,8 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
       auto getattr_cnode = getattr_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(getattr_cnode);
       getattr_cnode->add_input(cnode->input(args_size));
+      constexpr auto value_index = 2;
+      getattr_node = SetTypeForGetAttr(getattr_cnode, args_abs_list[value_index]);
     }
   } else {
     getattr_node = fallback::ConvertGetAttrNodeToPyInterpret(fg, cnode, attr_name);
@@ -1677,6 +1697,17 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   const auto setattr_node =
     fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_setattr_str), NewValueNode(key_tuple), value_tuple_node);
   MS_LOG(DEBUG) << "setattr_node: " << setattr_node->DebugString(debug_recursive_level);
+
+  // Save abstract for getattr.
+  constexpr auto value_abs_index = 2;
+  auto value_abs = args_abs_list[value_abs_index];
+  if (value_abs != nullptr &&
+      (value_abs->isa<abstract::AbstractTensor>() || value_abs->isa<abstract::AbstractScalar>())) {
+    auto type = value_abs->BuildType();
+    auto shape = value_abs->BuildShape();
+    fallback::SetRealType<AnfNode, Type>(setattr_node, type);
+    fallback::SetRealShape<AnfNode, abstract::BaseShape>(setattr_node, shape);
+  }
 
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -2700,6 +2731,36 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   return res;
 }
 
+AbstractBasePtr CreateRealAbstract(const TypePtr &preset_type, const BaseShapePtr &shape, const AnfNodePtr &node,
+                                   const AbstractBasePtrList &args_abs_list) {
+  AbstractBasePtr res = nullptr;
+  if (preset_type->isa<Scalar>()) {
+    res = std::make_shared<AbstractScalar>(preset_type);
+  } else if (preset_type->isa<List>() || preset_type->isa<Tuple>()) {
+    res = fallback::GenerateAbstractSequence(shape, preset_type, true);
+  } else if (preset_type->isa<TensorType>() && !preset_type->isa<AnyType>()) {
+    auto tensor_type = preset_type->cast_ptr<TensorType>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
+    res = std::make_shared<abstract::AbstractTensor>(element, shape);
+    auto abs_tensor = res->cast_ptr<abstract::AbstractTensor>();
+    if (node->has_user_data("is_adapter")) {
+      abs_tensor->set_is_adapter(true);
+    }
+  } else {
+    const auto any_abstract = std::make_shared<AbstractAny>();
+    // If no annotation dtype, try to use unique tensor dtype.
+    auto dtype = GetLocalArgsUniqueDtype(node, args_abs_list);
+    if (dtype != nullptr) {
+      MS_EXCEPTION_IF_NULL(any_abstract->element());
+      any_abstract->element()->set_type(dtype);
+      any_abstract->set_supposed_tensor_dtype(true);
+    }
+    res = any_abstract;
+  }
+  return res;
+}
+
 EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(out_conf);
@@ -2749,11 +2810,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     MS_LOG(DEBUG) << "preset_type: " << preset_type->ToString();
     const auto &shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
-    if (preset_type->isa<List>()) {
-      res = fallback::GenerateAbstractSequence(shape, preset_type, true);
-    } else {
-      res = std::make_shared<AbstractTensor>(preset_type, shape);
-    }
+    res = CreateRealAbstract(preset_type, shape, node, args_abs_list);
   } else if (fallback::HasRealType(node) && fallback::GetRealType<AnfNode, Type>(node)->isa<NegligibleType>()) {
     res = std::make_shared<AbstractNegligible>();
   } else {
@@ -3880,8 +3937,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
       new_node =
         fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
-      fallback::SetRealType(new_node, kBool);
-
+      fallback::SetRealType<AnfNode, Type>(new_node, std::make_shared<TensorType>(kBool));
       fallback::SetRealShape(new_node, std::make_shared<abstract::Shape>(std::vector<int64_t>{Shape::kShapeDimAny}));
     } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
       // When the condition of while is a tensor, do not use standard_method.tensor_bool
