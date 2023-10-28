@@ -14,14 +14,11 @@
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
 import os
-import re
 import operator
 import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 from mindspore import dtype as mstype
-from mindspore.common import mutable
-from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -410,44 +407,3 @@ def test_builtin_function_max_with_tensor_elements_in_two_tuple(mode):
     with pytest.raises(ValueError, match="The truth value of an array with more than one element is ambiguous."):
         context.set_context(mode=mode)
         foo()
-
-
-def test_min_mutable():
-    """
-    Feature: Check the arg of min.
-    Description: Test max()/min() in graph mode.
-    Expectation: No exception.
-    """
-    class Net(Cell):
-        def construct(self, x):
-            out = min(x)
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of min() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
-    with pytest.raises(TypeError, match=re.escape(info)):
-        x = mutable(1)
-        net = Net()
-        out = net(x)
-        print(out)
-
-
-def test_max_mutable():
-    """
-    Feature: Check the arg of max.
-    Description: Test max()/min() in graph mode.
-    Expectation: No exception.
-    """
-    class Net(Cell):
-        def construct(self, x, y):
-            out = max(x, y)
-            return out
-
-    context.set_context(mode=context.GRAPH_MODE)
-    info = "The input of max() only support Tensor, List, Tuple, constant Scalar, but got variable Int64"
-    with pytest.raises(TypeError, match=re.escape(info)):
-        x = mutable(1)
-        y = mutable(2)
-        net = Net()
-        out = net(x, y)
-        print(out)

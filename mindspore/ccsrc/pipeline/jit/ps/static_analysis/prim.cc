@@ -2488,15 +2488,22 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     ValuePtr value_track = args_abs_list[0]->GetValueTrack();
     MS_EXCEPTION_IF_NULL(value_track);
 
-    auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
-    if (script_obj == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Cast value failed, not PyObjectWrapper: " << value_track->ToString() << ".";
-    }
-
     // Make global and local parameters.
     non_const_err_ = false;
-    const std::string &script = script_obj->script();
-    py::tuple params = MakeParameters(args_abs_list, script);
+    std::string script;
+    auto new_args_abs_list = args_abs_list;
+    auto script_obj = dyn_cast_ptr<parse::Script>(value_track);
+    if (script_obj != nullptr) {
+      script = script_obj->script();
+    } else {
+      // Process the PyInterpret operator defined by the frontend.
+      // Its global information is empty, and its script input is string.
+      script = value_track->ToString();
+      parse::PyObjectWrapperPtr empty_global_dict = std::make_shared<parse::InterpretedObject>(py::dict());
+      new_args_abs_list[1] =
+        std::make_shared<abstract::AbstractScalar>(empty_global_dict, std::make_shared<External>());
+    }
+    py::tuple params = MakeParameters(new_args_abs_list, script);
     // Would convert PyInterpret to PyExecute then.
     if (non_const_err_ || fallback::GetJitAnnotationSideEffectFromComment(node)) {
       // Make abstract by type and shape.

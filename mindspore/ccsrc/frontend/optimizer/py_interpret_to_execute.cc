@@ -82,9 +82,18 @@ std::vector<AnfNodePtr> ConvertValueTupleToList(const AnfNodePtr &node) {
 
 std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnzipGlobalDict(const AnfNodePtr &dict_node) {
   MS_EXCEPTION_IF_NULL(dict_node);
+  std::vector<AnfNodePtr> keys;
+  std::vector<AnfNodePtr> values;
   if (!dict_node->isa<ValueNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret global dict should be a InterpretedObject value node, but got "
                                << dict_node->DebugString();
+  }
+  // Process the PyInterpret operator defined by the frontend and its global information is empty.
+  if (IsValueNode<ValueDictionary>(dict_node)) {
+    auto dict_input = GetValueNode<ValueDictionaryPtr>(dict_node);
+    if (dict_input->value().empty()) {
+      return std::make_pair(keys, values);
+    }
   }
   auto interpreted_object = GetValueNode<parse::InterpretedObjectPtr>(dict_node);
   MS_EXCEPTION_IF_NULL(interpreted_object);
@@ -98,8 +107,6 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> UnzipGlobalDict(cons
     MS_LOG(INTERNAL_EXCEPTION) << "The PyInterpret local dict or global dict should be a dictionary, but got "
                                << dict_value->ToString();
   }
-  std::vector<AnfNodePtr> keys;
-  std::vector<AnfNodePtr> values;
   for (auto item : dict_value->value()) {
     (void)keys.emplace_back(NewValueNodeWithAbstract(item.first));
     (void)values.emplace_back(NewValueNodeWithAbstract(item.second));
@@ -199,15 +206,16 @@ CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager) {
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->CloneUserData(cnode);
   new_cnode->set_input(0, NewValueNode(prim::kPrimPyExecute));
-
-  if (!IsValueNode<parse::Script>(cnode->input(input_index_one))) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The first input should be a Script, but got "
+  auto &first_input = cnode->input(input_index_one);
+  if (IsValueNode<parse::Script>(first_input)) {
+    const auto &script = GetValueNode<std::shared_ptr<parse::Script>>(first_input);
+    const auto &script_str = script->script();
+    const auto &script_strimm_node = NewValueNode(std::make_shared<StringImm>(script_str));
+    new_cnode->set_input(input_index_one, script_strimm_node);
+  } else if (!IsValueNode<StringImm>(first_input)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The first input should be a Script or string, but got "
                                << cnode->input(input_index_one)->DebugString();
   }
-  const auto &script = GetValueNode<std::shared_ptr<parse::Script>>(cnode->input(input_index_one));
-  const auto &script_str = script->script();
-  const auto &script_strimm_node = NewValueNode(std::make_shared<StringImm>(script_str));
-  new_cnode->set_input(input_index_one, script_strimm_node);
   auto global_dict_node = cnode->input(input_index_two);
   auto local_dict_node = cnode->input(input_index_three);
 
