@@ -16,12 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/squad_node.h"
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/source/squad_op.h"
 #include "minddata/dataset/util/status.h"
 

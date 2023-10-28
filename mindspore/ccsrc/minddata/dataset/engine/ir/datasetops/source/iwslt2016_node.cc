@@ -16,11 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/iwslt2016_node.h"
 
-#include <algorithm>
-#include <memory>
-#include <utility>
-#include <vector>
-
 #include "include/common/debug/common.h"
 #include "minddata/dataset/engine/datasetops/source/iwslt_op.h"
 #include "utils/file_utils.h"

@@ -15,9 +15,6 @@
  */
 #include "minddata/dataset/engine/ir/datasetops/source/amazon_review_node.h"
 
-#include <utility>
-#include <vector>
-
 namespace mindspore {
 namespace dataset {
 // Constructor for AmazonReviewNode

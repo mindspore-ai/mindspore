@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,10 @@
  */
 #include "minddata/dataset/engine/datasetops/source/yahoo_answers_op.h"
 
-#include <algorithm>
-#include <iomanip>
-#include <stdexcept>
-
 #include "include/common/debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {

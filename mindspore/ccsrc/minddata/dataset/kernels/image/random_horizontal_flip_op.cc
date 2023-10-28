@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 
-#include <vector>
-
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"

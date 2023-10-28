@@ -15,10 +15,7 @@
  */
 #include "minddata/dataset/core/config_manager.h"
 
-#include <exception>
 #include <fstream>
-#include <ostream>
-#include <string>
 
 #include "include/dataset/constants.h"
 #include "minddata/dataset/util/log_adapter.h"

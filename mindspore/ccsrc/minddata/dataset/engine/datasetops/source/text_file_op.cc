@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#include <algorithm>
+#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
+
 #include <fstream>
-#include <memory>
-#include <string>
-#include <utility>
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
-#include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/wait_post.h"
