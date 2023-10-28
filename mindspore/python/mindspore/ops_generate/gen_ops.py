@@ -194,7 +194,9 @@ def generate_py_op_func(yaml_data, doc_data):
             init_value = arg_info.get('init')
 
             if init_value is None:
-                func_args.append(arg_name)
+                default_value = arg_info.get('default')
+                default_value = '=' + default_value if default_value else ''
+                func_args.append(arg_name + default_value)
                 input_args.append(arg_name)
             else:
                 if init_value == 'NO_VALUE':
@@ -225,6 +227,7 @@ def process_args(args):
     args_name = []
     args_assign = []
     init_args_with_default = []
+    call_args_with_default = []
     for arg_name, arg_info in args.items():
         dtype = arg_info.get('dtype')
 
@@ -233,7 +236,14 @@ def process_args(args):
             inputs_name.append(arg_name)
             input_assign_str = gen_utils.get_assign_str_by_type_it(arg_info, arg_name, dtype)
             inputs_assign.append(input_assign_str)
+
+            default_value = arg_info.get('default')
+            if default_value:
+                call_args_with_default.append(f"""{arg_name}={default_value}""")
+            else:
+                call_args_with_default.append(arg_name)
             continue
+
         if init_value == 'NO_VALUE':
             init_args_with_default.append(f"""{arg_name}""")
         elif init_value == 'None':
@@ -250,7 +260,7 @@ def process_args(args):
 
         assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
         args_assign.append(assign_str)
-    return inputs_name, inputs_assign, args_name, args_assign, init_args_with_default
+    return inputs_name, inputs_assign, args_name, args_assign, init_args_with_default, call_args_with_default
 
 
 def generate_py_primitive(yaml_data):
@@ -269,7 +279,7 @@ def generate_py_primitive(yaml_data):
 
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
-        inputs_args, _, init_args, args_assign, init_args_with_default = process_args(args)
+        inputs_args, _, init_args, args_assign, init_args_with_default, call_args_with_default = process_args(args)
         init_code = '\n'.join(args_assign)
 
         labels = operator_data.get('labels')
@@ -294,7 +304,7 @@ class {class_name}(Primitive):\n"""
         primitive_code += f"""):
 {init_code}
 
-    def __call__(self, {', '.join(inputs_args) if inputs_args else ''}):
+    def __call__(self, {', '.join(call_args_with_default) if call_args_with_default else ''}):
         return super().__call__("""
         if inputs_args:
             primitive_code += ', '.join(inputs_args)

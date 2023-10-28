@@ -6,6 +6,7 @@ reduce_mean:
     axis:
       dtype: tuple[int]
       type_cast: int, list[int]
+      default: ()
     keep_dims:
       dtype: bool
       init: False

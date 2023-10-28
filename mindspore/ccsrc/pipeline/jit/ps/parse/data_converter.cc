@@ -635,14 +635,14 @@ ValuePtr ConvertIntegerWithType(const py::object &obj, const TypePtr &dtype = nu
 }
 
 ValuePtr ConvertFloatWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
-  auto obj_float32 = py::cast<float>(obj);
+  auto obj_float32 = py::cast<pyfloat>(obj);
   if (dtype == nullptr) {
     auto obj_double = py::cast<double>(obj);
     auto ret = std::make_shared<FP32Imm>(obj_float32);
     ret->set_prim_value(obj_double);
     return ret;
   }
-  return ConvertNumberWithType<float>(obj_float32, dtype);
+  return ConvertNumberWithType<pyfloat>(obj_float32, dtype);
 }
 
 template <typename T, typename U>
@@ -952,6 +952,12 @@ ValuePtr DataConverter::ConvertData(const py::object &obj) {
   return ConvertOtherObj(obj, forbid_reuse_);
 }
 
+inline ValuePtr ConvertPythonFloatToScalarValue(double value) {
+  auto ret = std::make_shared<FP32Imm>(static_cast<float>(value));
+  ret->set_prim_value(value);
+  return ret;
+}
+
 ValuePtr ConvertBool(const py::object &obj) {
   if (!py::isinstance<py::bool_>(obj)) {
     return nullptr;
@@ -960,7 +966,8 @@ ValuePtr ConvertBool(const py::object &obj) {
 }
 
 ValuePtr ConvertInt(const py::object &obj) {
-  if (!py::isinstance<py::int_>(obj)) {
+  // bool is also an instance of py::int_
+  if (py::isinstance<py::bool_>(obj) || !py::isinstance<py::int_>(obj)) {
     return nullptr;
   }
   return ConvertIntegerWithType(obj);
@@ -974,16 +981,16 @@ ValuePtr ConvertFloat(const py::object &obj) {
 }
 
 ValuePtr ConvertNumber(const py::object &obj) {
+  if (py::isinstance<py::bool_>(obj)) {
+    return PyCast<BoolImm, bool>(obj);
+  }
+
   if (py::isinstance<py::int_>(obj)) {
     return ConvertIntegerWithType(obj);
   }
 
   if (py::isinstance<py::float_>(obj)) {
     return ConvertFloatWithType(obj);
-  }
-
-  if (py::isinstance<py::bool_>(obj)) {
-    return PyCast<BoolImm, bool>(obj);
   }
 
   return nullptr;
@@ -1048,18 +1055,18 @@ ValuePtr ConvertSingleElementToTensor(const py::object &obj) {
 }
 
 ValuePtr ConvertNumberToTensor(const py::object &obj) {
+  if (py::isinstance<py::bool_>(obj)) {
+    auto v = py::cast<bool>(obj);
+    return std::make_shared<tensor::Tensor>(v);
+  }
+
   if (py::isinstance<py::int_>(obj)) {
     auto v = py::cast<int64_t>(obj);
     return std::make_shared<tensor::Tensor>(v);
   }
 
   if (py::isinstance<py::float_>(obj)) {
-    auto v = py::cast<double>(obj);
-    return std::make_shared<tensor::Tensor>(v);
-  }
-
-  if (py::isinstance<py::bool_>(obj)) {
-    auto v = py::cast<bool>(obj);
+    auto v = py::cast<pyfloat>(obj);
     return std::make_shared<tensor::Tensor>(v);
   }
 
@@ -1146,6 +1153,36 @@ ValuePtr ConvertTensorToSequence(const py::object &obj) {
 }
 
 template <typename TD>
+ValuePtr ConvertTensorToSequenceFloat(const py::object &obj) {
+  auto tensor_value = ConvertTensor(obj);
+  if (tensor_value == nullptr) {
+    return nullptr;
+  }
+
+  auto float_tensor = tensor_value->cast<tensor::TensorPtr>();
+  auto data_type = float_tensor->data_type();
+  if (data_type != kNumberTypeFloat64) {
+    return nullptr;
+  }
+
+  auto shape = float_tensor->shape();
+  if (shape.size() > 1) {
+    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
+                 << shape;
+    return nullptr;
+  }
+
+  auto data = static_cast<double *>(float_tensor->data_c());
+  auto size = float_tensor->DataSize();
+  std::vector<ValuePtr> value_list(size);
+  for (size_t i = 0; i < size; i++) {
+    value_list.emplace_back(ConvertPythonFloatToScalarValue(data[i]));
+  }
+
+  return std::make_shared<TD>(value_list);
+}
+
+template <typename TD>
 ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
   auto tensor_value = ConvertTensor(obj);
   if (tensor_value == nullptr) {
@@ -1171,7 +1208,7 @@ ValuePtr ConvertTensorToSequenceAny(const py::object &obj) {
   } else if (data_type == kNumberTypeFloat64) {
     auto data = static_cast<double *>(tensor->data_c());
     for (size_t i = 0; i < size; i++) {
-      value_list.emplace_back(std::make_shared<FP64Imm>(data[i]));
+      value_list.emplace_back(ConvertPythonFloatToScalarValue(data[i]));
     }
   } else if (data_type == kNumberTypeBool) {
     auto data = static_cast<bool *>(tensor->data_c());
@@ -1214,7 +1251,7 @@ ValuePtr ConvertTensorToFloat(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to float";
     return nullptr;
   }
-  return MakeValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+  return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
 }
 
 ValuePtr ConvertTensorToBool(const py::object &obj) {
@@ -1250,7 +1287,7 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
     case kNumberTypeInt64:
       return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
     case kNumberTypeFloat64:
-      return MakeValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+      return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
     default:
       MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to number";
       return nullptr;
@@ -1330,7 +1367,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TENSOR),
    ConvertSingleElementToTensor<py::int_, int64_t>},
   {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSingleElementToTensor<py::float_, double>},
+   ConvertSingleElementToTensor<py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TENSOR),
    ConvertSingleElementToTensor<py::bool_, bool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_NUMBER, mindspore::ops::DT_TENSOR), ConvertNumberToTensor},
@@ -1339,20 +1376,20 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_TENSOR),
    ConvertSequenceToTensor<py::tuple, py::int_, int64_t>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::tuple, py::float_, double>},
+   ConvertSequenceToTensor<py::tuple, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_TENSOR),
    ConvertSequenceBoolToTensor<py::tuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TENSOR),
    ConvertSequenceToTensor<py::list, py::int_, int64_t>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::list, py::float_, double>},
+   ConvertSequenceToTensor<py::list, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TENSOR),
    ConvertSequenceBoolToTensor<py::list>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_INT),
    ConvertTensorToSequence<ValueTuple, int64_t, Int64Imm, kNumberTypeInt64>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_FLOAT),
-   ConvertTensorToSequence<ValueTuple, double, FP64Imm, kNumberTypeFloat64>},
+   ConvertTensorToSequenceFloat<ValueTuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_BOOL),
    ConvertTensorToSequence<ValueTuple, bool, BoolImm, kNumberTypeBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_BOOL),
@@ -1361,7 +1398,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_INT),
    ConvertTensorToSequence<ValueList, int64_t, Int64Imm, kNumberTypeInt64>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_FLOAT),
-   ConvertTensorToSequence<ValueList, double, FP64Imm, kNumberTypeFloat64>},
+   ConvertTensorToSequenceFloat<ValueList>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),
    ConvertTensorToSequence<ValueList, bool, BoolImm, kNumberTypeBool>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),

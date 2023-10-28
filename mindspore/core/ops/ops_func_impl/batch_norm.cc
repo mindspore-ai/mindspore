@@ -133,7 +133,7 @@ TypePtr BatchNormFuncImpl::InferType(const PrimitivePtr &prim, const std::vector
 int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
   const size_t attr_pos = GetAttrPosZero();
-  auto epsilon_value = GetScalarValue<double>(input_args[attr_pos + 1]->GetValue());
+  auto epsilon_value = GetScalarValue<pyfloat>(input_args[attr_pos + 1]->GetValue());
   if (MS_UNLIKELY(!epsilon_value.has_value())) {
     return OP_CHECK_RETRY;
   }
@@ -141,7 +141,7 @@ int32_t BatchNormFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                  CheckAndConvertUtils::FormatCheckInRangeMsg<double>("epsilon", epsilon_value.value(), kIncludeRight,
                                                                      {0., 1.}, primitive));
 
-  auto momentum_value = GetScalarValue<double>(input_args[attr_pos + 2]->GetValue());
+  auto momentum_value = GetScalarValue<pyfloat>(input_args[attr_pos + 2]->GetValue());
   if (MS_UNLIKELY(!momentum_value.has_value())) {
     return OP_CHECK_RETRY;
   }

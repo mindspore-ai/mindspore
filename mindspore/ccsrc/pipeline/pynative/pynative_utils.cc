@@ -768,16 +768,16 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
 }
 
 static std::string BuilidPyInputTypeString(const py::object &obj) {
+  if (py::isinstance<py::bool_>(obj)) {
+    return "bool";
+  }
+
   if (py::isinstance<py::int_>(obj)) {
     return "int";
   }
 
   if (py::isinstance<py::float_>(obj)) {
     return "float";
-  }
-
-  if (py::isinstance<py::bool_>(obj)) {
-    return "bool";
   }
 
   if (py::isinstance<py::str>(obj)) {

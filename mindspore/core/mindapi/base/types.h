@@ -124,5 +124,8 @@ enum PoolMode : int64_t {
   MAX_POOLING = 0,
   MEAN_POOLING = 1,
 };
+
+// float is a float64 in python. But for some historical reason, python float is converted to float32 in
+using pyfloat = float;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_TYPES_H_
