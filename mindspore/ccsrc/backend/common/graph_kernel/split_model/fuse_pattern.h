@@ -128,6 +128,23 @@ class FuseElemwiseBroadcastFwd : public FusePattern {
   FuseType fuse_type_;
 };
 
+class FuseDynElemwiseBroadcastFwd : public FusePattern {
+ public:
+  explicit FuseDynElemwiseBroadcastFwd(FuseType fuse_type)
+      : FusePattern("elemwise_broadcast_fwd"), fuse_type_(fuse_type) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseDynElemwiseBroadcastFwd() = default;
+  static FusePatternPtr CreateDepthMatcher() { return std::make_shared<FuseDynElemwiseBroadcastFwd>(FuseType::kDepth); }
+  static FusePatternPtr CreateWidthMatcher() { return std::make_shared<FuseDynElemwiseBroadcastFwd>(FuseType::kWidth); }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+};
+
 class FuseReduceFwd : public FusePattern {
  public:
   FuseReduceFwd(FuseType fuse_type, size_t size_limit)
@@ -141,6 +158,28 @@ class FuseReduceFwd : public FusePattern {
   }
   static FusePatternPtr CreateWidthMatcher(size_t size_limit) {
     return std::make_shared<FuseReduceFwd>(FuseType::kWidth, size_limit);
+  }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+  size_t size_limit_;
+};
+
+class FuseDynReduceFwd : public FusePattern {
+ public:
+  FuseDynReduceFwd(FuseType fuse_type, size_t size_limit)
+      : FusePattern("reduce_fwd"), fuse_type_(fuse_type), size_limit_(size_limit) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseDynReduceFwd() = default;
+  static FusePatternPtr CreateDepthMatcher(size_t size_limit) {
+    return std::make_shared<FuseDynReduceFwd>(FuseType::kDepth, size_limit);
+  }
+  static FusePatternPtr CreateWidthMatcher(size_t size_limit) {
+    return std::make_shared<FuseDynReduceFwd>(FuseType::kWidth, size_limit);
   }
 
  protected:
