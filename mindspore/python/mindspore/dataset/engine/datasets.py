@@ -1462,14 +1462,14 @@ class Dataset:
              - Type in `mindrecord`
              - Details
            * - bool
-             - None
-             - Not supported
+             - int32
+             - transform to int32
            * - int8
              - int32
              -
            * - uint8
-             - bytes(1D uint8)
-             - Drop dimension
+             - int32
+             -
            * - int16
              - int32
              -
@@ -1486,8 +1486,8 @@ class Dataset:
              - int64
              -
            * - uint64
-             - None
-             - Not supported
+             - int64
+             - Maybe reverse
            * - float16
              - float32
              -
@@ -1500,6 +1500,9 @@ class Dataset:
            * - string
              - string
              - Multi-dimensional string not supported
+           * - bytes
+             - bytes
+             - Multi-dimensional bytes not supported
 
         Note:
             1. To save the samples in order, set dataset's `shuffle` to ``False`` and `num_files` to ``1``.
@@ -1507,8 +1510,7 @@ class Dataset:
                with random attribute in map operation.
             3. When array dimension is variable, one-dimensional arrays or
                multi-dimensional arrays with variable dimension 0 are supported.
-            4. MindRecord does not support uint64, multi-dimensional uint8(drop dimension) nor
-               multi-dimensional string.
+            4. MindRecord does not support multi-dimensional string or multi-dimensional bytes.
 
         Args:
             file_name (str): Path to dataset file.

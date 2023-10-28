@@ -84,7 +84,7 @@ class CVTensor : public Tensor {
   /// \param shape [in] TensorShape
   /// \param type [in] DataType
   /// \return std::pair of OpenCV shape and type
-  static std::pair<std::array<int, 2>, int> IsValidImage(const TensorShape &shape, const DataType &type);
+  static std::pair<std::array<int, 2>, int> IsValidImage(uchar *data, const TensorShape &shape, const DataType &type);
 
   Status Reshape(const TensorShape &shape) override;
 

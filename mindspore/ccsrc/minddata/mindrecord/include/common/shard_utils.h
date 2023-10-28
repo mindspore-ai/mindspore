@@ -152,9 +152,9 @@ const std::set<std::string> kScalarFieldTypeSet = {"string", "int32", "int64", "
 const std::set<std::string> kNumberFieldTypeSet = {"int32", "int64", "float32", "float64"};
 
 const std::unordered_map<std::string, std::string> kTypesMap = {
-  {"bool", "int32"},      {"int8", "int32"},      {"uint8", "bytes"},     {"int16", "int32"},
-  {"uint16", "int32"},    {"int32", "int32"},     {"uint32", "int64"},    {"int64", "int64"},
-  {"float16", "float32"}, {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}};
+  {"bool", "int32"},      {"int8", "int32"},      {"uint8", "int32"},   {"int16", "int32"},  {"uint16", "int32"},
+  {"int32", "int32"},     {"uint32", "int64"},    {"int64", "int64"},   {"uint64", "int64"}, {"float16", "float32"},
+  {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}, {"bytes", "bytes"}};
 
 /// \brief the max number of samples to enable lazy load
 const uint32_t LAZY_LOAD_THRESHOLD = 5000000;

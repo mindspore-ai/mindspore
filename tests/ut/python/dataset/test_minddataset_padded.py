@@ -134,7 +134,7 @@ def test_cv_minddataset_reader_basic_padded_samples():
             num_padded_iter += 1
             assert item['file_name'] == padded_sample['file_name']
             assert item['label'] == padded_sample['label']
-            assert (item['data'] == np.array(list(padded_sample['data']))).all()
+            assert item['data'] == padded_sample['data']
         num_iter += 1
     assert num_padded_iter == 5
     assert num_iter == 15
@@ -167,7 +167,7 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast():
             num_padded_iter += 1
             assert item['file_name'] == padded_sample['file_name']
             assert item['label'] == padded_sample['label']
-            assert (item['data'] == np.array(list(padded_sample['data']))).all()
+            assert item['data'] == padded_sample['data']
         num_iter += 1
     assert num_padded_iter == 5
     assert num_iter == 15
@@ -209,7 +209,7 @@ def test_cv_minddataset_partition_padded_samples():
                     num_padded_iter += 1
                     assert item['file_name'] == padded_sample['file_name']
                     assert item['label'] == padded_sample['label']
-                    assert (item['data'] == np.array(list(padded_sample['data']))).all()
+                    assert item['data'] == padded_sample['data']
                 num_iter += 1
         assert num_padded_iter == num_padded
         return num_iter == dataset_size * num_shards
@@ -264,7 +264,7 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch():
                     num_padded_iter += 1
                     assert item['file_name'] == padded_sample['file_name']
                     assert item['label'] == padded_sample['label']
-                    assert (item['data'] == np.array(list(padded_sample['data']))).all()
+                    assert item['data'] == padded_sample['data']
                 if local_index < dataset_size:
                     epoch1_shuffle_result.append(item["file_name"])
                 elif local_index < dataset_size * 2:
