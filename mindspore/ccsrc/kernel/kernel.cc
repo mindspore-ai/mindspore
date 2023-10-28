@@ -256,8 +256,12 @@ bool KernelTensor::SyncDataFromDevieToHost() const {
   if (!kernel_tensor_value_) {
     kernel_tensor_value_ = std::make_shared<KernelTensorValue>(size_, type_);
   }
-
   kernel_tensor_value_->Resize(size_);
+
+  if (size_ == 0) {
+    return true;
+  }
+
   void *host_ptr = kernel_tensor_value_->GetMutableDataPtr();
   MS_EXCEPTION_IF_NULL(host_ptr);
 
@@ -548,7 +552,8 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
                                    << " is too big, mindspore cannot apply for such a large amount of memory.";
         }
       }
-      tensor_size = std::max(tensor_size, type_size);
+      bool is_sequence_type = (output->type_id() == kObjectTypeTuple) || (output->type_id() == kObjectTypeList);
+      tensor_size = !is_sequence_type ? std::max(tensor_size, type_size) : tensor_size;
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }

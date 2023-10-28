@@ -1014,10 +1014,12 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
     MS_EXCEPTION_IF_NULL(kernel_tensor_value);
 
-    const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
-    MS_EXCEPTION_IF_NULL(data_ptr);
     size_t element_size = kernel_tensor_value->GetDataSize() / sizeof(T);
-    array_data.assign(data_ptr, data_ptr + element_size);
+    if (element_size != 0) {
+      const T *data_ptr = reinterpret_cast<const T *>(kernel_tensor_value->GetDataPtr());
+      MS_EXCEPTION_IF_NULL(data_ptr);
+      array_data.assign(data_ptr, data_ptr + element_size);
+    }
   } else if (value->isa<ValueSequence>()) {
     // Sequence structure: Data is stored discretely.
     auto value_seq = value->cast<ValueSequencePtr>();
