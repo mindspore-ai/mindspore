@@ -21,6 +21,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,6 +60,16 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   }
   kernel_ptr->SetInputsInfo(input_types, input_shapes);
   kernel_ptr->SetOutputsInfo(output_types, output_shapes);
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (CheckResizeCondition(cnode)) {
+    if (kernel_ptr->Resize(input_kernel_tensors, output_kernel_tensors) == KRET_RESIZE_FAILED) {
+      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#hostapi kernel op[" << cnode->fullname_with_scope()
+                        << "] Resize failed.";
+    }
+  }
+
   return kernel_ptr;
 }
 

@@ -31,9 +31,6 @@ namespace kernel {
 
 bool AclnnKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "AclnnKernelMod Init";
-  input_tensors_.resize(inputs.size());
-  output_tensors_.resize(outputs.size());
-  GetWorkSpaceInfo(inputs, outputs);
   return true;
 }
 
@@ -90,16 +87,12 @@ void AclnnKernelMod::UpdateWorkspace(const uint64_t workspace_size) {
   }
 }
 
-void AclnnKernelMod::UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
-  UpdateWorkspace(std::get<0>(args));
-}
-
-void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
-  executor_ = std::get<1>(args);
+void AclnnKernelMod::ParseGenExecutor(const std::tuple<aclOpExecutor *, CallBackFunc> &args) {
+  executor_ = std::get<0>(args);
   if (executor_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
   }
-  after_launch_func_ = std::get<2>(args);
+  after_launch_func_ = std::get<1>(args);
   if (after_launch_func_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's call back func!";
   }

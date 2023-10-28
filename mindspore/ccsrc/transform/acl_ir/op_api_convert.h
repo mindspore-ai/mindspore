@@ -203,7 +203,7 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
-  auto shape = tensor->host_shape();
+  auto shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {

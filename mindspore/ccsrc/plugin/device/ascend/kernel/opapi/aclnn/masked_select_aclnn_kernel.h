@@ -31,10 +31,11 @@ class MaskedSelectAclnnKernelMod : public AclnnKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  bool IsNeedRetrieveOutputShape() override { return true; }
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
 
  protected:
-  aclTensor *output_tensor_{nullptr};
+  std::vector<ShapeVector> outputs_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

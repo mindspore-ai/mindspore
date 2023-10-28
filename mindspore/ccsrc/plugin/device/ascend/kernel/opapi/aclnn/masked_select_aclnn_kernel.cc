@@ -27,7 +27,8 @@ namespace kernel {
 
 void MaskedSelectAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
-  UpdateWorkspace(GEN_EXECUTOR(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]));
+  auto workspace_size = GEN_WORKSPACE(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  UpdateWorkspace(workspace_size);
 }
 
 bool MaskedSelectAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
@@ -35,13 +36,19 @@ bool MaskedSelectAclnnKernelMod::Launch(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto res = GEN_EXECUTOR_CUSTOM(aclnnMaskedSelect, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
-  executor_ = std::get<1>(res);
-  auto &all_tensor = std::get<2>(res);
+  executor_ = std::get<0>(res);
+  auto &all_tensor = std::get<1>(res);
   RunOpAsync("aclnnMaskedSelect", stream_ptr, workspace);
 
   // Update output shape.
-  outputs_[0]->SetShapeVector(transform::UpdateOutputShape(all_tensor.get<2>()));
+  outputs_shape_.resize(1);
+  outputs_shape_[kIndex0] = transform::UpdateOutputShape(all_tensor.get<2>());
   return true;
+}
+
+void MaskedSelectAclnnKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  outputs[kIndex0]->SetShapeVector(outputs_shape_[kIndex0]);
 }
 
 MS_ACLLNN_KERNEL_FACTORY_REG(MaskedSelect, MaskedSelectAclnnKernelMod);

@@ -49,14 +49,13 @@ class AclnnKernelMod : public KernelMod {
   void SetInputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
   void SetOutputsInfo(const std::vector<TypeId> &type_ids, const ShapeArray &shapes);
 
-  void ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
+  void ParseGenExecutor(const std::tuple<aclOpExecutor *, CallBackFunc> &args);
   virtual void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   }
   bool IsNeedRetrieveOutputShape() override { return false; }
   std::vector<KernelAttr> GetOpSupport() override { MS_LOG(EXCEPTION) << "This interface is not support in aclnn."; }
 
   void UpdateWorkspace(const uint64_t workspace_size);
-  void UpdateWorkspace(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args);
 
   void RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
   void RunOpAsync(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace);
@@ -64,8 +63,6 @@ class AclnnKernelMod : public KernelMod {
  protected:
   aclOpExecutor *executor_{nullptr};
   CallBackFunc after_launch_func_{nullptr};
-  std::vector<aclTensor *> input_tensors_;
-  std::vector<aclTensor *> output_tensors_;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;

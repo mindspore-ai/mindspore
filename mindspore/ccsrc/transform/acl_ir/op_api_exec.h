@@ -141,7 +141,7 @@ auto GenerateExecutor(const std::string &aclnn_api, const Args &... args) {
   static auto get_workspace_size_func = ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);
   auto workspace_status = call(get_workspace_size_func, converted_params);
   if (workspace_status != 0) {
-    MS_LOG(EXCEPTION) << "Call " << aclnn_api << " get_workspace_size func failed, please check error!";
+    MS_LOG(EXCEPTION) << "Call " << aclnn_api << " get workspace size failed, please check error!";
   }
   constexpr auto size = std::tuple_size<decltype(converted_params)>::value - 2;
   return std::make_tuple(PackageParams<size>(converted_params), workspace_size, executor);
@@ -153,8 +153,35 @@ void RunOpApi(const std::string &aclnn_api, const aclrtStream acl_stream, void *
 // Get output shape from acl tensor.
 ShapeVector UpdateOutputShape(const aclTensor *tensor);
 
-#define GEN_EXECUTOR(aclnn_api, ...)                                                                    \
-  [](const std::string &api_name, const auto &... args) -> auto {                                       \
+#define GEN_WORKSPACE(aclnn_api, ...)                                       \
+  [](const std::string &api_name, auto &... args) -> auto {                 \
+    auto converted_params = transform::GenerateExecutor(api_name, args...); \
+    return std::get<1>(converted_params);                                   \
+  }                                                                         \
+  (#aclnn_api, __VA_ARGS__)
+
+#define GEN_EXECUTOR(aclnn_api, ...)                                                             \
+  [](const std::string &api_name, auto &... args) -> auto {                                      \
+    auto all_params = transform::GenerateExecutor(api_name, args...);                            \
+    auto converted_params = std::get<0>(all_params);                                             \
+    auto executor = std::get<2>(all_params);                                                     \
+    auto release_func = [converted_params]() -> void {                                           \
+      ReleaseConvertTypes(converted_params);                                                     \
+      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func(); \
+      if (release_mem_func) {                                                                    \
+        release_mem_func(nullptr, false);                                                        \
+      }                                                                                          \
+      auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();   \
+      if (uninit_mem_func) {                                                                     \
+        uninit_mem_func(nullptr, false);                                                         \
+      }                                                                                          \
+    };                                                                                           \
+    return std::make_tuple(executor, release_func);                                              \
+  }                                                                                              \
+  (#aclnn_api, __VA_ARGS__)
+
+#define GEN_ACLNN_CALL(aclnn_api, ...)                                                                  \
+  [](const std::string &api_name, auto &... args) -> auto {                                             \
     auto [converted_params, workspace_size, executor] = transform::GenerateExecutor(api_name, args...); \
     auto release_func = [converted_params]() -> void {                                                  \
       ReleaseConvertTypes(converted_params);                                                            \
@@ -175,7 +202,7 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
   [](const std::string &api_name, const auto &... args) -> auto {                                  \
     auto converted_params = transform::GenerateExecutor(api_name, args...);                        \
     auto real_params = std::get<0>(converted_params);                                              \
-    return std::make_tuple(std::get<1>(converted_params), std::get<2>(converted_params),           \
+    return std::make_tuple(std::get<2>(converted_params),                                          \
                            transform::OpApiParams<decltype(real_params)>(std::move(real_params))); \
   }                                                                                                \
   (#aclnn_api, __VA_ARGS__)
