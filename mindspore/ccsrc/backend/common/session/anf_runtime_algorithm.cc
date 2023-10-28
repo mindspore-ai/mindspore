@@ -2271,7 +2271,8 @@ bool AnfRuntimeAlgorithm::IsSequenceOutputOfScalar(const AnfNodePtr &node) {
   const auto &elements = abs_seq->elements();
 
   return std::all_of(elements.begin(), elements.end(), [](const AbstractBasePtr &element) {
-    return (element != nullptr) && (element->isa<abstract::AbstractScalar>());
+    return (element != nullptr) && (element->isa<abstract::AbstractScalar>()) &&
+           (element->BuildValue() == nullptr || (!element->BuildValue()->isa<StringImm>()));
   });
 }
 

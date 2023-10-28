@@ -35,6 +35,11 @@
 namespace mindspore {
 namespace kernel {
 void PyExecuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  const auto &primitive = GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  primitive_ = primitive->Clone();
+  MS_EXCEPTION_IF_NULL(primitive_);
+  kernel_name_ = primitive_->name();
   MS_LOG(DEBUG) << "kernel_node: " << kernel_node << ", " << kernel_node->DebugString();
   py::gil_scoped_acquire gil_acquire;
   inputs_info_.clear();

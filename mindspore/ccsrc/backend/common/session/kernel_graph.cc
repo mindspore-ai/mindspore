@@ -28,6 +28,7 @@
 #include "kernel/framework_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "ops/array_ops.h"
+#include "ops/op_def.h"
 #include "ops/framework_ops.h"
 #include "ops/nn_optimizer_ops.h"
 #include "ops/other_ops.h"
@@ -1430,6 +1431,18 @@ void KernelGraph::InferType() {
     std::optional<abstract::StandardPrimitiveImplReg> eval_impl;
     const auto &primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(primitive);
+
+    auto op_def = mindspore::ops::GetOpDef(primitive->name());
+    if (op_def) {
+      (void)op_def->func_impl_.CheckValidation(primitive, abstracts);
+      auto shape = op_def->func_impl_.InferShape(primitive, abstracts);
+      auto type = op_def->func_impl_.InferType(primitive, abstracts);
+      auto abstract = mindspore::abstract::MakeAbstract(shape, type);
+      cnode->set_abstract(abstract);
+      MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
+      return;
+    }
+
     auto find = abstract::GetPrimitiveInferImpl(primitive);
     if (find.has_value()) {
       eval_impl = find.value();

@@ -25,6 +25,7 @@
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "kernel/framework_utils.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace runtime {
@@ -735,6 +736,13 @@ void KernelActor::InferShapeAndResize() {
   MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope();
   // 1. Infer operator's output's Shape.
   auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  if (common::AnfAlgo::CheckPrimitiveType(kernel_, prim::kPrimPyExecute)) {
+    MS_LOG(DEBUG) << "Infer shape for pyexecute kernel:" << kernel_->DebugString();
+
+    opt::dynamic_shape::InferOp(kernel_, &input_device_tensors_);
+    MS_EXCEPTION_IF_NULL(kernel_->abstract());
+    base_shape = kernel_->abstract()->BuildShape();
+  }
   MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(base_shape);
 

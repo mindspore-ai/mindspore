@@ -109,7 +109,25 @@ TypeId GetSequenceType(const abstract::AbstractSequencePtr &seq_abs) {
   return fixed_type;
 }
 
-tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index) {
+tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_node_with_index, const AnfNodePtr &node,
+                                  size_t i, void *args) {
+  if (node != nullptr && common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPyExecute)) {
+    MS_EXCEPTION_IF_NULL(args);
+    auto input_list = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
+    MS_EXCEPTION_IF_NULL(input_list);
+    if (i >= input_list->size() || input_list->at(i) == nullptr) {
+      MS_LOG(EXCEPTION) << "Failed to get device address by input num:" << i << " for node:" << node->DebugString();
+    }
+    const auto &device_address = input_list->at(i);
+    MS_EXCEPTION_IF_NULL(device_address->kernel_tensor());
+    MS_LOG(DEBUG) << "input node:" << input_node_with_index.first->DebugString()
+                  << " abstract:" << input_node_with_index.first->abstract()->ToString()
+                  << " device address:" << device_address << " type id:" << device_address->kernel_tensor()->dtype_id()
+                  << " shape vector:" << device_address->kernel_tensor()->GetShapeVector();
+    return std::make_shared<tensor::Tensor>(device_address->kernel_tensor()->dtype_id(),
+                                            device_address->kernel_tensor()->GetShapeVector());
+  }
+
   auto real_input = input_node_with_index.first;
   MS_EXCEPTION_IF_NULL(real_input);
   auto real_input_index = input_node_with_index.second;
@@ -170,7 +188,7 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
       return ScalarToTensor(value->cast<ScalarPtr>());
     }
   }
-  auto depended_value = CreateTensorMem(input_node_with_index);
+  auto depended_value = CreateTensorMem(input_node_with_index, node, i, args);
   MS_EXCEPTION_IF_NULL(depended_value);
   // First use the data of args.
   if (args != nullptr) {
