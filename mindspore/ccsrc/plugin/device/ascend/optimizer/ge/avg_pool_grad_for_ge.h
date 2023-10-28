@@ -27,6 +27,9 @@ class AvgPoolGradForGE : public PatternProcessPass {
   ~AvgPoolGradForGE() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  CNodePtr CreateTensorShapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

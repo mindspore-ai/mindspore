@@ -1486,5 +1486,26 @@ void InferOp(const CNodePtr &node, void *args) { dynamic_shape::InferOp(node, ar
 void SetCppInferPyHanbdler(const InfPyHandler &infer_handler) {
   dynamic_shape::set_cpp_infer_py_handler(infer_handler);
 }
+
+AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &op_name = primitive->name();
+  std::vector<AbstractBasePtr> input_args;
+  std::for_each(input_list.begin(), input_list.end(),
+                [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
+  auto shape_optional = abstract::InferAbstractByFuncImpl(primitive, input_args);
+  if (shape_optional.has_value()) {
+    return shape_optional.value();
+  }
+
+  auto infer_impl = abstract::GetBackendPrimitiveInferImpl(primitive);
+  if (infer_impl.has_value()) {
+    auto infer = infer_impl.value();
+    if (infer.IsImplInferShapeAndType()) {
+      return infer.InferShapeAndType(nullptr, primitive, input_args);
+    }
+  }
+  MS_LOG(EXCEPTION) << "The InferAbstract function of [" << op_name << "] is not defined.";
+}
 }  // namespace opt
 }  // namespace mindspore

@@ -273,6 +273,8 @@ BACKEND_EXPORT void InferOp(const CNodePtr &node, void *args = nullptr);
 
 using InfPyHandler = abstract::AbstractBasePtr (*)(const CNodePtr &, const PrimitivePtr &, const AbstractBasePtrList &);
 BACKEND_EXPORT void SetCppInferPyHanbdler(const InfPyHandler &infer_handler);
+
+BACKEND_EXPORT AbstractBasePtr InferAbstract(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &input_list);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

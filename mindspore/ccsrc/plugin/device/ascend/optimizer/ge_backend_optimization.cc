@@ -43,6 +43,7 @@
 #include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
+#include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
@@ -85,6 +86,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::DropoutGenMaskDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_ge_pm->AddPass(std::make_shared<opt::AscendConvertTupleInputToDynamicInput>(true, true));
+  opt_ge_pm->AddPass(std::make_shared<opt::AvgPoolGradForGE>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
