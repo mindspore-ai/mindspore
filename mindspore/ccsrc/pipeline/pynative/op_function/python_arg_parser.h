@@ -36,8 +36,7 @@ class Parser {
   FloatImmPtr ToFloat(size_t i);
   std::vector<FloatImmPtr> ToFloatList(size_t i);
   ScalarPtr ToScalar(size_t i);
-  template <typename T>
-  ValueTuplePtr ToValueTuple(const std::vector<T> &value);
+  ValueTuplePtr ToValueTuple(const std::vector<Int64ImmPtr> &value);
   py::object Wrap(const TensorPtr &tensor);
 
  private:

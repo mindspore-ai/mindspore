@@ -23,6 +23,7 @@
 #include "kernel/pyboost/op/bias_add.h"
 #include "kernel/pyboost/op/linear.h"
 #include "kernel/pyboost/op/square.h"
+#include "kernel/pyboost/op/transpose.h"
 
 namespace mindspore {
 namespace kernel {
@@ -57,6 +58,7 @@ template class OpFactory<BiasAdd>;
 template class OpFactory<Matmul>;
 template class OpFactory<Linear>;
 template class OpFactory<Square>;
+template class OpFactory<Transpose>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

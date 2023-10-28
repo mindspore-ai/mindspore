@@ -264,9 +264,10 @@ py::object Parser::Wrap(const TensorPtr &tensor) {
   return v[0];
 }
 
-template <typename T>
-ValueTuplePtr Parser::ToValueTuple(const std::vector<T> &value) {
-  ValuePtrList value_list{value};
+ValueTuplePtr Parser::ToValueTuple(const std::vector<Int64ImmPtr> &value) {
+  ValuePtrList value_list;
+  (void)std::transform(value.begin(), value.end(), std::back_inserter(value_list),
+                       [](const ValuePtr &value) { return value; });
   return std::make_shared<ValueTuple>(value_list);
 }
 
