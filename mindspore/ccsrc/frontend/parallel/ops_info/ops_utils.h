@@ -583,7 +583,7 @@ constexpr char LIN_SPACE[] = "LinSpace";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 constexpr char WKV[] = "WKV";
-constexpr char MOE_FFN[] = "MoeFFN";
+constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 
 // pipeline

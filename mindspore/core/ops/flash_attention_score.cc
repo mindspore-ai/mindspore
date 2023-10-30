@@ -99,6 +99,9 @@ TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vecto
   if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreInputRealShiftIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'real_shift' must be None currently.";
   }
+  if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreInputPrefix])) {
+    MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None currently.";
+  }
 
   auto keep_prob_value_ptr = prim->GetAttr("keep_prob");
   MS_EXCEPTION_IF_NULL(keep_prob_value_ptr);

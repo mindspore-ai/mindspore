@@ -11390,6 +11390,7 @@ class FlashAttentionScore(Primitive):
         performance mode. Default: 0.
         input_layout (str, optional): Specifies the layout of `query`, the value must be one of ["BSH", "SBH"].
         Currently, only BSH is supported. Default: "BSH".
+        sparse_mode (int): Default 0.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type must be in [float16, float32, bfloat16].
@@ -11404,6 +11405,7 @@ class FlashAttentionScore(Primitive):
           Input tensor of shape :math:`(B, N, S, S // 8) or ()`.
         - **real_shift** (None) - The position embedding code of float16 or float32, not implemented yet.
         - **padding_mask** (None) - The padding mask of float16 or float32, not implemented yet.
+        - **prefix** (None) - Not implemented yet.
 
     Outputs:
         - **attention_out** (Tensor) - (B, S, H)
@@ -11415,7 +11417,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=0,
-                 input_layout="BSH"):
+                 input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -11425,11 +11427,12 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
+        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
         if inner_precise not in [0, 1]:
             raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         if input_layout not in ["BSH"]:
             raise ValueError(f"Attribute 'input_layout' must be either 'bsh' or 'sbh', but got {input_layout}")
         self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask'],
+            inputs=['query', 'key', 'value', 'attn_mask', 'drop_mask', 'real_shift', 'padding_mask', 'prefix'],
             outputs=['attention_out', 'softmax_max', 'softmax_sum'])
