@@ -366,7 +366,7 @@ void StridedSliceGradGpuKernelMod::FillEmptyDims(const std::string &kernel_name,
 
 void StridedSliceGradGpuKernelMod::ComputeBeginMask(std::vector<int64_t> *begin, const std::vector<int64_t> &stride,
                                                     const ShapeVector &input_shape, const PrimitivePtr &primitive_) {
-  auto begin_mask_value = primitive_->GetAttr("attr_begin_mask");
+  auto begin_mask_value = primitive_->GetAttr("begin_mask");
   MS_EXCEPTION_IF_NULL(begin_mask_value);
   auto begin_mask_int = GetValue<int64_t>(begin_mask_value);
   std::vector<int64_t> &_begin = *begin;

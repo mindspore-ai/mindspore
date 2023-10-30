@@ -424,7 +424,7 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
   auto ind_shp = ib->GetShape(indices);
 
   if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+    dout = ib->ExpandDims(dout, -1);
   }
 
   int64_t axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
@@ -435,7 +435,7 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
       (is_axis_mutable && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)))) {
     auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
-      indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+      indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
@@ -459,7 +459,7 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
   }
 
   if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    indices = ib->ExpandDims(indices, -1);
     ind_shp = ib->GetShape(indices);
     auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
     dout = ib->Reshape(dout, out_shp1);
@@ -1465,7 +1465,6 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto indices = ib->Tensor(GetIntValue(idx), kInt64);
   auto ori_indices = indices;  // indices may be changed latter.
   auto ind_shp = ib->GetShape(indices);
-
   int64_t axis_v = 0;
   MS_EXCEPTION_IF_NULL(axis);
   MS_EXCEPTION_IF_NULL(axis->abstract());
@@ -1475,7 +1474,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   int64_t batch_dims = 0;
 
   if (out_shp.empty()) {
-    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+    dout = ib->ExpandDims(dout, -1);
   } else {
     dout = ib->ExpandDims(dout, axis_v);
   }
@@ -1485,7 +1484,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
       (is_axis_mutable && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)))) {
     auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
     if (ind_shp.empty()) {
-      indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+      indices = ib->ExpandDims(indices, -1);
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
@@ -1509,7 +1508,7 @@ REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   }
 
   if (ind_shp.empty()) {
-    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    indices = ib->ExpandDims(indices, -1);
     ind_shp = ib->GetShape(indices);
     auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
     dout = ib->Reshape(dout, out_shp1);
