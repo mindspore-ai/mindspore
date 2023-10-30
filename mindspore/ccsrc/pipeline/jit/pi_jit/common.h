@@ -116,6 +116,7 @@ typedef struct CodeExtra {
   struct {
     PyObject *callable;
     NativeFunc cFunc;
+    OptCodePtr code;
   } compiled;
 
   Tracebackes *tbs;
