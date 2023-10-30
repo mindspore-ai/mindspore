@@ -926,7 +926,7 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
     const auto &index_abs = tuple_abs_ptr->elements()[i];
     AnfNodePtr new_index_node =
       res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), index_node, NewValueNode(SizeToLong(i))});
-    AnfNodePtr index_item = NewValueNode(index_abs->BuildValue());
+
     const TypeId index_type_id = index_abs->BuildType()->type_id();
     bool empty_sequence = false;
     new_index_node =
@@ -965,10 +965,14 @@ void PreSetitemByTuple::RemoveExpandedDims(const AnfNodePtr &data_node, const An
       (void)indices_out_list.emplace_back(new_index_node);
     } else if (index_type_id == kNumberTypeBool) {
       (void)normalized_tensors.emplace_back(sub_tensor_node);
-      has_true = has_true || GetValue<bool>(GetValueNode(index_item));
-      has_false_node = res_graph_->NewCNode({add_vnode, has_false_node,
-                                             NewValueNode(std::make_shared<tensor::Tensor>(
-                                               static_cast<int64_t>(!GetValue<bool>(GetValueNode(index_item)))))});
+      auto index_item_value = index_abs->BuildValue();
+      if (index_item_value->ContainsValueAny()) {
+        MS_LOG(EXCEPTION) << "Index item value not support variable number, value:" << index_item_value->ToString();
+      }
+      has_true = has_true || GetValue<bool>(index_item_value);
+      has_false_node = res_graph_->NewCNode(
+        {add_vnode, has_false_node,
+         NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int64_t>(!GetValue<bool>(index_item_value))))});
     } else if (index_type_id == kObjectTypeList || index_type_id == kObjectTypeTuple) {
       (void)normalized_tensors.emplace_back(new_index_node);
       (void)indices_out_list.emplace_back(new_index_node);
@@ -1135,8 +1139,6 @@ AnfNodePtr TensorIndex::ExpandDimsByTupleIndex(const AnfNodePtr &input_data_node
   size_t data_dim = data_shape_.size() + expand_dims_cnt;
   for (size_t i = 0; i < tuple_abs_ptr->size(); i++) {
     const auto &index_abs = tuple_abs_ptr->elements()[i];
-    AnfNodePtr index_item;
-    index_item = NewValueNode(index_abs->BuildValue());
     const TypeId index_type_id = index_abs->BuildType()->type_id();
     if (index_type_id == kMetaTypeNone || index_type_id == kNumberTypeBool) {
       if (!IsDynamicRank(data_shape_)) {
@@ -1272,7 +1274,6 @@ FuncGraphPtr HandleBoolTensor::GenerateFuncGraph(const AbstractBasePtrList &args
     const auto &index_abs = tuple_abs_ptr->elements()[i];
     AnfNodePtr new_index_node =
       res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), index_node, NewValueNode(SizeToLong(i))});
-    AnfNodePtr index_item = NewValueNode(index_abs->BuildValue());
     const TypeId index_type_id = index_abs->BuildType()->type_id();
     if (index_type_id == kObjectTypeTensorType) {
       auto tensor_abs = dyn_cast<abstract::AbstractTensor>(index_abs);

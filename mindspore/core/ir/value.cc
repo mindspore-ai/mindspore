@@ -233,6 +233,10 @@ std::string ValueNamedTuple::ToString() const {
   return buffer.str();
 }
 
+bool ValueNamedTuple::ContainsValueAny() const {
+  return std::any_of(keys_.cbegin(), keys_.cend(), [](const ValuePtr &value) { return value->ContainsValueAny(); });
+}
+
 std::size_t ValueSlice::hash() const {
   MS_EXCEPTION_IF_NULL(start_);
   MS_EXCEPTION_IF_NULL(stop_);

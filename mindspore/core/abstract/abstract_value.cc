@@ -221,12 +221,12 @@ std::string AbstractBase::ToString(bool verbose) const {
   auto type = BuildType();
   if (shape != nullptr && type != nullptr) {
     buffer << type << ", " << shape->ToString();
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   } else if (type != nullptr) {
     buffer << type;
-    if (tensor_value != nullptr && tensor_value != kValueAny) {
+    if (tensor_value != nullptr && !tensor_value->ContainsValueAny()) {
       buffer << ", value=...";
     }
   }
@@ -1411,7 +1411,7 @@ bool AbstractTuple::ContainsAllConstants() const {
     MS_EXCEPTION_IF_NULL(element_value);
     // Check if tuple contains only constants, i.e. string, number, constant tensor and tuple.
     if (!(element_value->isa<StringImm>() || element_value->isa<Scalar>() ||
-          (element->isa<abstract::AbstractTensor>() && element_value != kValueAny) ||
+          (element->isa<abstract::AbstractTensor>() && !element_value->ContainsValueAny()) ||
           element->isa<abstract::AbstractTuple>())) {
       return false;
     }
