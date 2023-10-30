@@ -227,6 +227,14 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
   const auto &value_nodes = graph->graph_value_nodes();
   for (const auto &value_node : value_nodes) {
     MS_EXCEPTION_IF_NULL(value_node);
+    const auto &node_value = value_node->value();
+    MS_EXCEPTION_IF_NULL(node_value);
+    if (!node_value->isa<tensor::Tensor>() && !node_value->isa<ValueTuple>() && !node_value->isa<Scalar>() &&
+        !node_value->isa<StringImm>()) {
+      MS_LOG(INFO) << "Unknown value node type:" << value_node->DebugString();
+      continue;
+    }
+
     const auto &node_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
     MS_EXCEPTION_IF_NULL(node_address);
     node_address->SetNodeIndex(value_node, 0);
