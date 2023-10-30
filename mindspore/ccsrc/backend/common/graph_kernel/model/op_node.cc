@@ -34,6 +34,7 @@
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "utils/log_adapter.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 
 namespace mindspore::graphkernel::inner {
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
@@ -687,6 +688,45 @@ DFormat Conv2dOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   }
   CHECK_ATTR(attrs, "conv_out_format");
   return GetValue<std::string>(attrs.find("conv_out_format")->second);
+}
+
+void ConcatOp::RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) {
+  AbstractBasePtrList rectifyed_abs_list;
+  (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(*input_abstract_ptr));
+  input_abstract_ptr->swap(rectifyed_abs_list);
+}
+
+void ReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "keep_dims");
+  (void)abs_list->emplace_back(prim->GetAttr("keep_dims")->ToAbstract());
+  if (prim->name() == prim::kPrimReduceSum->name()) {
+    CHECK_ATTR(prim->attrs(), "skip_mode");
+    (void)abs_list->emplace_back(prim->GetAttr("skip_mode")->ToAbstract());
+  }
+}
+
+void OneHotOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "axis");
+  (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
+}
+
+void CumSumOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "exclusive");
+  (void)abs_list->emplace_back(prim->GetAttr("exclusive")->ToAbstract());
+  CHECK_ATTR(prim->attrs(), "reverse");
+  (void)abs_list->emplace_back(prim->GetAttr("reverse")->ToAbstract());
+}
+
+void GatherOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "batch_dims");
+  (void)abs_list->emplace_back(prim->GetAttr("batch_dims")->ToAbstract());
+}
+
+void ArgReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  CHECK_ATTR(prim->attrs(), "axis");
+  (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
+  CHECK_ATTR(prim->attrs(), "output_type");
+  (void)abs_list->emplace_back(prim->GetAttr("output_type")->ToAbstract());
 }
 
 std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {

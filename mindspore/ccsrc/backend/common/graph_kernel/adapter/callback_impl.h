@@ -39,6 +39,7 @@ class BACKEND_EXPORT CallbackImpl : public Callback {
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;
   void ResetKernelInfo(const AnfNodePtr &node) override;
+  void ResetKernelInfoInputs(const AnfNodePtr &node) override;
 
  private:
   std::string GetTargetFromContextImpl(bool detail) override;
@@ -58,6 +59,7 @@ class BACKEND_EXPORT CallbackImplWithInferShape : public CallbackImpl {
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void ResetKernelInfo(const AnfNodePtr &node) override {}
   bool IsUseDeviceInfo() override { return false; }
+  void ResetKernelInfoInputs(const AnfNodePtr &node) override {}
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_CALLBACK_IMPL_H_

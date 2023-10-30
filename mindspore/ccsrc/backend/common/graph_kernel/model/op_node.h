@@ -128,6 +128,7 @@ class ReduceOp : public PrimOp {
 
  protected:
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
 
 class ArgReduceOp : public ReduceOp {
@@ -138,6 +139,7 @@ class ArgReduceOp : public ReduceOp {
  protected:
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &attrs) override;
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
 
 class OpaqueOp : public PrimOp {
@@ -169,7 +171,20 @@ class OneHotOp : public OpaqueOp {
  public:
   explicit OneHotOp(const std::string &op) : OpaqueOp(op) {}
   ~OneHotOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
+
+class CumSumOp : public OpaqueOp {
+ public:
+  explicit CumSumOp(const std::string &op) : OpaqueOp(op) {}
+  ~CumSumOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
+};
+
 class LayoutTransformOp : public OpaqueOp {
  public:
   explicit LayoutTransformOp(const std::string &op) : OpaqueOp(op) {}
@@ -264,6 +279,7 @@ class GatherOp : public OpaqueOp {
   template <typename TM>
   tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs) const;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
 
 class ConcatOp : public OpaqueOp {
@@ -276,6 +292,7 @@ class ConcatOp : public OpaqueOp {
   template <typename TM>
   tensor::TensorPtr CalcConcat(const NodePtrList &inputs, const DAttrs &attrs);
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
 
 class CImagRealOp : public ElemwiseOp {

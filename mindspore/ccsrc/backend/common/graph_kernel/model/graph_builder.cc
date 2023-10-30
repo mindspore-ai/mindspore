@@ -52,7 +52,7 @@ NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) c
 NodePtr GraphBuilder::ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
   auto reduce_axis = Tensor(axis);
   auto keep_dims_value = MakeValue(keep_dims);
-  return Emit("ReduceSum", {input, reduce_axis}, {{"keep_dims", keep_dims_value}});
+  return Emit("ReduceSum", {input, reduce_axis}, {{"keep_dims", keep_dims_value}, {"skip_mode", MakeValue(false)}});
 }
 NodePtr GraphBuilder::ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
   auto reduce_axis = Tensor(axis);
