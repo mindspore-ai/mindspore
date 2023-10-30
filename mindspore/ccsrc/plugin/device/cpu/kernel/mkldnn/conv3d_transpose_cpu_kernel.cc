@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/conv3d_transpose_cpu_kernel.h"
+#include <map>
 #include <string>
 #include <algorithm>
 #include "ops/conv3d_transpose.h"
@@ -31,7 +32,17 @@ bool Conv3DTransposeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   group = LongToSize(GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP)));
   format = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
-  pad_mode = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
+  auto pad_mode_str = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  std::map<std::string, mindspore::PadMode> str2padmode_map = {
+    {PAD_MODE_LOWER_SAME, PadMode::SAME},   {PAD_MODE_UPPER_SAME, PadMode::SAME},
+    {PAD_MODE_LOWER_VALID, PadMode::VALID}, {PAD_MODE_UPPER_VALID, PadMode::VALID},
+    {PAD_MODE_LOWER_PAD, PadMode::PAD},     {PAD_MODE_UPPER_PAD, PadMode::PAD}};
+  auto iter = str2padmode_map.find(pad_mode_str);
+  if (iter == str2padmode_map.end()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad_mode is illegal, got " << pad_mode_str;
+  } else {
+    pad_mode = iter->second;
+  }
   strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
   dilation_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(DILATIONS));
   return true;

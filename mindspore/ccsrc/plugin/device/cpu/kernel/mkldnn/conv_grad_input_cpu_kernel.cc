@@ -44,7 +44,17 @@ bool ConvGradInputCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   const auto stride_attr = format_ == NCHW ? STRIDE : STRIDES;
   const auto dilation_attr = format_ == NCHW ? DILATION : DILATIONS;
-  pad_mode_ = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
+  auto pad_mode_str = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  std::map<std::string, mindspore::PadMode> str2padmode_map = {
+    {PAD_MODE_LOWER_SAME, PadMode::SAME},   {PAD_MODE_UPPER_SAME, PadMode::SAME},
+    {PAD_MODE_LOWER_VALID, PadMode::VALID}, {PAD_MODE_UPPER_VALID, PadMode::VALID},
+    {PAD_MODE_LOWER_PAD, PadMode::PAD},     {PAD_MODE_UPPER_PAD, PadMode::PAD}};
+  auto iter = str2padmode_map.find(pad_mode_str);
+  if (iter == str2padmode_map.end()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad_mode is illegal, got " << pad_mode_str;
+  } else {
+    pad_mode_ = iter->second;
+  }
   strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(stride_attr));
   dilation_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(dilation_attr));
   return true;

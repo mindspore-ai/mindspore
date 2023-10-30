@@ -59,9 +59,7 @@ int64_t GetNumSegmentsValue(const PrimitivePtr &primitive, const std::vector<Abs
   MS_EXCEPTION_IF_NULL(num_segments_type);
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
     if (IsValueKnown(value)) {
-      auto n_value = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(n_value);
-      auto n_value_ptr = n_value->GetValue();
+      auto n_value_ptr = input_args[kInputIndex2]->GetValue();
       MS_EXCEPTION_IF_NULL(n_value_ptr);
       auto n_value_ptr_tensor =
         CheckAndConvertUtils::CheckTensorIntValue("num_segments", n_value_ptr, op_name, num_segments_type);

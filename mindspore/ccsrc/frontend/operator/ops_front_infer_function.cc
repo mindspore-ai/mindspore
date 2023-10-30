@@ -1085,7 +1085,7 @@ AbstractBasePtr InferImplDtypeToEnum(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(val_type);
   auto dtype = val_type->cast<TypePtr>();
   MS_EXCEPTION_IF_NULL(dtype);
-  int type_id = GetTypeId(dtype->type_id());
+  int64_t type_id = GetTypeId(dtype->type_id());
   return std::make_shared<AbstractScalar>(type_id);
 }
 

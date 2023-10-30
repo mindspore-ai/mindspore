@@ -36,7 +36,17 @@ bool ConvGradFilterCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
   group_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(GROUP));
-  pad_mode_ = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
+  auto pad_mode_str = GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE));
+  std::map<std::string, mindspore::PadMode> str2padmode_map = {
+    {PAD_MODE_LOWER_SAME, PadMode::SAME},   {PAD_MODE_UPPER_SAME, PadMode::SAME},
+    {PAD_MODE_LOWER_VALID, PadMode::VALID}, {PAD_MODE_UPPER_VALID, PadMode::VALID},
+    {PAD_MODE_LOWER_PAD, PadMode::PAD},     {PAD_MODE_UPPER_PAD, PadMode::PAD}};
+  auto iter = str2padmode_map.find(pad_mode_str);
+  if (iter == str2padmode_map.end()) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", pad_mode is illegal, got " << pad_mode_str;
+  } else {
+    pad_mode_ = iter->second;
+  }
   if (format_ != NCHW && format_ != NCDHW) {
     MS_LOG(ERROR) << kernel_name_ << " only supports " << NCHW << " or " << NCDHW << " format "
                   << ", but got format: " << format_;

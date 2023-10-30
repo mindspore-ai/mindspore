@@ -104,15 +104,29 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                              {-params_shape_rank, params_shape_rank}, primitive));
   batch_dims = batch_dims < 0 ? batch_dims + params_shape_rank : batch_dims;
 
-  auto axis_value = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
   int64_t axis;
-  if (!axis_value.has_value()) {
+  bool is_axis_known = false;
+  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
+    // the axis from bprop may be a tensor.
+    auto axis_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]->GetValue());
+    if (MS_LIKELY(axis_opt.has_value() && !axis_opt.value().HasUnknownValue())) {
+      MS_CHECK_VALUE(axis_opt.value().size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                                     "axis size", axis_opt.value().size(), kEqual, 1, primitive));
+      axis = axis_opt.value()[kIndex0];
+      is_axis_known = true;
+    }
+  } else {
+    auto axis_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
+    if (MS_LIKELY(axis_opt.has_value())) {
+      axis = axis_opt.value();
+      is_axis_known = true;
+    }
+  }
+  if (!is_axis_known) {
     std::vector<int64_t> dyn_output;
     int64_t output_rank = params_shape_rank + indices_shape_rank - batch_dims - 1;
     dyn_output.resize(output_rank, abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::TensorShape>(dyn_output);
-  } else {
-    axis = axis_value.value();
   }
   MS_CHECK_VALUE(-params_shape_rank <= axis && axis < params_shape_rank,
                  CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis, kIncludeBoth,
