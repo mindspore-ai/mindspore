@@ -45,25 +45,25 @@ void AvgPoolFusion::set_strides(const std::vector<int64_t> &strides) {
 
 std::vector<int64_t> AvgPoolFusion::get_strides() const { return GetValue<std::vector<int64_t>>(GetAttr("strides")); }
 
-void AvgPoolFusion::set_pad_mode(const int &pad_mode) { (void)this->AddAttr("pad_mode", api::MakeValue(pad_mode)); }
+void AvgPoolFusion::set_pad_mode(const int64_t &pad_mode) { (void)this->AddAttr("pad_mode", api::MakeValue(pad_mode)); }
 
-int AvgPoolFusion::get_pad_mode() const { return GetValue<int>(GetAttr("pad_mode")); }
+int64_t AvgPoolFusion::get_pad_mode() const { return GetValue<int64_t>(GetAttr("pad_mode")); }
 
-void AvgPoolFusion::set_data_format(const int &data_format) {
+void AvgPoolFusion::set_data_format(const int64_t &data_format) {
   (void)this->AddAttr("data_format", api::MakeValue(data_format));
 }
 
-int AvgPoolFusion::get_data_format() const { return GetValue<int>(GetAttr("data_format")); }
+int64_t AvgPoolFusion::get_data_format() const { return GetValue<int64_t>(GetAttr("data_format")); }
 
 void AvgPoolFusion::set_pad(const std::vector<int64_t> &pad) { (void)this->AddAttr("pad", api::MakeValue(pad)); }
 
 std::vector<int64_t> AvgPoolFusion::get_pad() const { return GetValue<std::vector<int64_t>>(GetAttr("pad")); }
 
-void AvgPoolFusion::set_round_mode(const int &round_mode) {
+void AvgPoolFusion::set_round_mode(const int64_t &round_mode) {
   (void)this->AddAttr("round_mode", api::MakeValue(round_mode));
 }
 
-int AvgPoolFusion::get_round_mode() const { return GetValue<int>(GetAttr("round_mode")); }
+int64_t AvgPoolFusion::get_round_mode() const { return GetValue<int64_t>(GetAttr("round_mode")); }
 
 void AvgPoolFusion::set_global(const bool global) { (void)AddAttr(kGlobal, api::MakeValue(global)); }
 

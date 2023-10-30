@@ -450,6 +450,8 @@ namespace mindspore::ops {
                 dtype = "std::string"
             if dtype == "tuple[int]":
                 dtype = "std::vector<int64_t>"
+            if dtype == "int":
+                dtype = "int64_t"
             lite_ops_h_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name});\n"""
             lite_ops_h_gen += f"""  {dtype} get_{arg_name}() const;\n"""
 
@@ -457,6 +459,7 @@ namespace mindspore::ops {
             lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
 
             op_name = get_op_name(operator_name, operator_data.get('class'))
+        lite_ops_cc_gen += f"""REGISTER_PRIMITIVE_C(kName{op_name}, {op_name});\n"""
         lite_ops_cc_gen += f"""MIND_API_OPERATOR_IMPL({op_name}, BaseOperator);\n\n"""
         lite_ops_h_gen += f"""}};\n\n"""
     lite_ops_h_gen += lite_ops_h_end

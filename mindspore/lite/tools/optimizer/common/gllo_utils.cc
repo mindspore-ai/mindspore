@@ -556,7 +556,26 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     abstract = value_node->abstract();
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
-    abstract = input_cnode->abstract();
+    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
+      auto tuple_inputs = input_cnode->inputs();
+      MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
+      auto get_item_input_cnode = tuple_inputs.at(1);
+      MS_ASSERT(get_item_input_cnode != nullptr);
+      auto idx = GetTupleGetItemOutIndex(input_cnode);
+      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+        MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
+        return nullptr;
+      }
+      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+      auto abstract_list = abstract_tuple->elements();
+      if (abstract_list.size() <= idx) {
+        MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
+        return nullptr;
+      }
+      abstract = abstract_list[idx];
+    } else {
+      abstract = input_cnode->abstract();
+    }
   } else {
     MS_LOG(ERROR) << "unsupported input node type";
     return nullptr;

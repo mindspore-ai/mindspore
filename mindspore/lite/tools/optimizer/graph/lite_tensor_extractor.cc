@@ -352,6 +352,11 @@ int LiteTensorExtractor::GetCNodeInputAbstractLists(const CNodePtr &cnode, Abstr
     cnode->set_inputs(origin_inputs);
     return RET_ERROR;
   }
+  if (lite::RemoveIfMakeTuple(cnode)) {
+    MS_LOG(ERROR) << "remove makeTuple failed.";
+    cnode->set_inputs(origin_inputs);
+    return RET_ERROR;
+  }
   RemoveIfMonad(cnode);
   abs_list->clear();
   abs_list->reserve(cnode->size());
@@ -408,6 +413,10 @@ int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector
   auto origin_inputs = cnode->inputs();
   if (lite::RemoveIfDepend(cnode) != RET_OK) {
     MS_LOG(ERROR) << "remove depend failed.";
+    return RET_ERROR;
+  }
+  if (lite::RemoveIfMakeTuple(cnode)) {
+    MS_LOG(ERROR) << "remove makeTuple failed.";
     return RET_ERROR;
   }
   RemoveIfMonad(cnode);

@@ -49,17 +49,17 @@ class MIND_API AvgPoolFusion : public BaseOperator {
             const bool global = false, const ActivationType activation_type = NO_ACTIVATION);
 
   /// \brief Set pad_mode.
-  void set_pad_mode(const int &pad_mode);
+  void set_pad_mode(const int64_t &pad_mode);
   /// \brief Set kernel_size.
   void set_kernel_size(const std::vector<int64_t> &kernel_size);
   /// \brief Set strides.
   void set_strides(const std::vector<int64_t> &strides);
   /// \brief Set format.
-  void set_data_format(const int &data_format);
+  void set_data_format(const int64_t &data_format);
   /// \brief Set pad.
   void set_pad(const std::vector<int64_t> &pad);
   /// \brief Set round_mode.
-  void set_round_mode(const int &round_mode);
+  void set_round_mode(const int64_t &round_mode);
 
   /// \brief Get kernel_size.
   ///
@@ -72,11 +72,11 @@ class MIND_API AvgPoolFusion : public BaseOperator {
   /// \brief Get pad_mode.
   ///
   /// \return pad_mode.
-  int get_pad_mode() const;
+  int64_t get_pad_mode() const;
   /// \brief Get format.
   ///
   /// \return format.
-  int get_data_format() const;
+  int64_t get_data_format() const;
   /// \brief Get pad.
   ///
   /// \return pad.
@@ -84,7 +84,7 @@ class MIND_API AvgPoolFusion : public BaseOperator {
   /// \brief Get round_mode.
   ///
   /// \return round_mode.
-  int get_round_mode() const;
+  int64_t get_round_mode() const;
 
   /// \brief Method to set global attribute.
   ///

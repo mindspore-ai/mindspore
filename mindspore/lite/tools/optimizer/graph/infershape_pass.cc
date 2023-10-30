@@ -207,7 +207,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
-    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
+    if (IsSpecialType(cnode)) {
       continue;
     }
     if (lite::IsCall(cnode) || lite::IsPartialFusion(node)) {
@@ -298,7 +298,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
-    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
+    if (IsSpecialType(cnode)) {
       continue;
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimIf) || opt::CheckPrimitiveType(node, prim::kPrimWhile)) {
