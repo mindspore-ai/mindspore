@@ -60,7 +60,7 @@ static const std::unordered_map<std::string, GraphJitConfig::Options> int_key_ma
 
 GraphJitConfig::GraphJitConfig() {
   bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
-  bool_conf[kCapturedMSadapterForward - kBoolConf] = true;
+  bool_conf[kCapturedMSadapterForward - kBoolConf] = false;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
   bool_conf[kPrintTraceback - kBoolConf] = false;
   bool_conf[kPrintBB - kBoolConf] = false;
