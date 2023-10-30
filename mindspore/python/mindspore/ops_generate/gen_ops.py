@@ -626,7 +626,8 @@ def generate_ops_header_files(work_path, yaml_data):
     extern_str = ''
     extern_template = CppTemplate("MS_EXPORT extern OpDef g${op_name};\n")
     for operator_name, operator_data in yaml_data.items():
-        extern_str += extern_template.replace(op_name=gen_utils.convert_python_func_name_to_c(operator_name))
+        op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        extern_str += extern_template.replace(op_name=op_proto.class_name)
     ops_header_file = template.GEN_OPS_DEF_HEADER_TEMPLATE.replace(extern_variable=extern_str)
     dir_path = os.path.join(work_path, "mindspore/core/ops/auto_generate")
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
@@ -692,8 +693,8 @@ def generate_pyboost_functions(work_path, yaml_data):
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         func_name_str = op_proto.pyboost_function_name
-        op_def_name_str = f"g{op_proto.op_name}"
-        op_name_str = op_proto.op_name
+        op_def_name_str = f"g{op_proto.class_name}"
+        op_name_str = op_proto.class_name
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         parser_body_str = generate_parser_func(op_proto)
 
