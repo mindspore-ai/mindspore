@@ -64,6 +64,8 @@ class BACKEND_EXPORT Op {
     (input_abs_.emplace_back(args->ToAbstract()), ...);
     auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
     output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
+    MS_EXCEPTION_IF_NULL(output_abs_);
+    MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     outputs_.clear();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
   }

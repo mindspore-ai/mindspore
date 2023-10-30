@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm
 import mindspore
 
 
@@ -67,3 +67,13 @@ def test_view_ascend():
     input = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
     output = view(input, (3, 2))
     assert np.allclose(output.asnumpy(), [[-0.1, 0.3], [3.6, 0.4], [0.5, -3.2]])
+
+def test_bmm_ascend():
+    context.set_context(device_target="Ascend")
+    input = Tensor(np.ones([1, 3, 4]).astype(np.float32))
+    mat2 = Tensor(np.ones([1, 4, 3]).astype(np.float32))
+    output = bmm(input, mat2)
+    output = bmm(mat2, output)
+    except_data = np.ones([1, 4, 3]).astype(np.float32) * 12
+    assert (output.asnumpy() == except_data).all()
+

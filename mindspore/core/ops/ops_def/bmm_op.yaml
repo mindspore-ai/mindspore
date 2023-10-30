@@ -1,0 +1,13 @@
+#operator bmm
+bmm:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Bmm
+  pyboost: True
