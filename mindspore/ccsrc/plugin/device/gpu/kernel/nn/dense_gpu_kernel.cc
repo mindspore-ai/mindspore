@@ -46,7 +46,7 @@ bool DenseGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
-  auto dtype_str = TypeIdLabel(inputs[kIndex0]->GetDtype());
+  auto dtype_str = TypeIdLabel(inputs[kIndex0]->dtype_id());
   const std::vector<std::string> need_cast_dtypes = {"Int8", "Int16", "Int32", "Int64", "UInt8"};
   auto it = std::find(need_cast_dtypes.begin(), need_cast_dtypes.end(), dtype_str);
   need_cast_ = it != need_cast_dtypes.end();

@@ -173,7 +173,7 @@ void UniqueConsecutiveGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<K
                                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   for (size_t i = 0; i < output_num; ++i) {
     outputs[i]->SetShapeVector(std::vector<int64_t>(dyn_out.shapes[i].begin(), dyn_out.shapes[i].end()));
