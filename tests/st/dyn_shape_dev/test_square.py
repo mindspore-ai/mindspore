@@ -19,6 +19,7 @@ from mindspore import ops
 import mindspore as ms
 import test_utils
 
+
 @test_utils.run_with_cell
 def square_forward_func(x):
     return ops.auto_generate.square_(x)
@@ -27,6 +28,7 @@ def square_forward_func(x):
 @test_utils.run_with_cell
 def square_backward_func(x):
     return ops.grad(square_forward_func, (0,))(x)
+
 
 @test_utils.run_with_cell
 def square_dyn_shape_func(x):
@@ -66,7 +68,7 @@ def test_square_backward(mode):
     """
     ms.context.set_context(mode=mode)
     x = ms.Tensor(np.array([[1.0, 2.0, 4.0]]).astype(np.float32))
-    expect_out = np.array([[1.0, 4.0, 16.0]]).astype(np.float32)
+    expect_out = np.array([[2.0, 4.0, 8.0]]).astype(np.float32)
     grads = square_backward_func(x)
     print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect_out, 1e-04, 1e-04)
@@ -87,7 +89,7 @@ def test_square_vmap(mode):
     ms.context.set_context(mode=mode)
     in_axes = -1
     x = ms.Tensor(np.array([[[1.0, 2.0, 4.0]]]).astype(np.float32))
-    expect_out = np.array([[[1.0, 4.0, 16.0]]]).astype(np.float32)
+    expect_out = np.array([[[1.0]], [[4.0]], [[16.0]]]).astype(np.float32)
     nest_vmap = ops.vmap(ops.vmap(
         square_forward_func, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x)

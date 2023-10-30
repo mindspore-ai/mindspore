@@ -84,6 +84,14 @@ def test_gelu_grad_dynamic(mode):
     print("out:", out)
     expect = np.array([1.1728112, 1.1796116, 1.0233028]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    dy1 = Tensor(
+        np.array([1.0829641, 1.0860993, 1.0115843, 1.0]).astype('float32'))
+    x1 = Tensor(np.array([1.0, 2.0, 3.0, 4.0]).astype('float32'))
+    y1 = Tensor(np.array([1.0, 2.0, 3.0, 4.0]).astype('float32'))
+    output1 = test_cell(dy1, x1, y1)
+    expect1 = np.array(
+        [1.172811, 1.1796113, 1.0233024, 1.000335]).astype('float32')
+    assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level0
