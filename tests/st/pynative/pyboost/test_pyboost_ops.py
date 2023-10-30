@@ -17,7 +17,8 @@ import numpy as np
 from mindspore import Tensor, context
 from mindspore import nn
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext 
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext, split_tensor, split_with_size
+from mindspore.ops import split
 import mindspore
 
 
@@ -242,3 +243,62 @@ def test_cast_ascend():
     dtype_dist = mindspore.int32
     out = cast(self, dtype_dist)
     assert np.allclose(out.asnumpy(), self.astype(np.int32).asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_split_tensor_ascend():
+    """
+    Feature: test split_tensor operator
+    Description: test cast run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x = np.arange(9).astype("float32")
+    outputs = split_tensor(Tensor(input_x), 3)
+    assert np.allclose(outputs[0].asnumpy(), [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy(), [3, 4, 5])
+    assert np.allclose(outputs[2].asnumpy(), [6, 7, 8])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_split_with_size_ascend():
+    """
+    Feature: test split_with_size operator
+    Description: test cast run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x = np.arange(9).astype("float32")
+    outputs = split_with_size(Tensor(input_x), (3, 3, 3))
+    assert np.allclose(outputs[0].asnumpy(), [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy(), [3, 4, 5])
+    assert np.allclose(outputs[2].asnumpy(), [6, 7, 8])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_split_ascend():
+    """
+    Feature: test split operator
+    Description: test cast run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x = np.arange(9).astype("float32")
+    outputs = split(Tensor(input_x), (3, 3, 3))
+    assert np.allclose(outputs[0].asnumpy(), [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy(), [3, 4, 5])
+    assert np.allclose(outputs[2].asnumpy(), [6, 7, 8])
+    outputs = split(Tensor(input_x), 3)
+    assert np.allclose(outputs[0].asnumpy(), [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy(), [3, 4, 5])
+    assert np.allclose(outputs[2].asnumpy(), [6, 7, 8])
+

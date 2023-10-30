@@ -40,6 +40,7 @@ typedef struct aclIntArray aclIntArray;
 typedef struct aclFloatArray aclFloatArray;
 typedef struct aclBoolArray aclBoolArray;
 typedef struct aclTensorList aclTensorList;
+
 // Create operator.
 using _aclCreateTensor = aclTensor *(*)(const int64_t *view_dims, uint64_t view_dims_num, aclDataType data_type,
                                         const int64_t *stride, int64_t offset, aclFormat format,
@@ -293,6 +294,25 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   return acl_tensor;
 }
 
+inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
+  if (int_array.empty()) {
+    MS_LOG(ERROR) << "int array is empty!";
+  }
+  static const auto aclCreateIntArray = GET_OP_API_FUNC(aclCreateIntArray);
+  return aclCreateIntArray(int_array.data(), int_array.size());
+}
+
+inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](const tensor::TensorPtr &tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
 inline aclScalar *ConvertType(const ScalarPtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   aclScalar *acl_scalar;
@@ -301,9 +321,9 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
+  } else if (value->isa<FP64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
-    converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
-  } else if (value->isa<FP32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<StringImm>()) {
     converter.ConvertValue(value, AttrDeclType<std::string>(), &acl_scalar);

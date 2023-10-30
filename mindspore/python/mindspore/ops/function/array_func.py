@@ -60,6 +60,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
+from mindspore.ops.auto_generate.gen_ops_def import split_tensor, split_with_size
 
 from mindspore.ops.auto_generate import concat_
 from mindspore.ops.operations.manually_defined import tile
@@ -5485,32 +5486,16 @@ def split(tensor, split_size_or_sections, axis=0):
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
-    if not isinstance(tensor, Tensor):
-        raise TypeError(f'expect `tensor` is a Tensor, but got {type(tensor)}')
-    if type(axis) is not int:
-        raise TypeError(f"Type of Argument `axis` should be integer but got {type(axis)}")
-    arr_axis = _canonicalize_axis(axis, tensor.ndim)
-
     if type(split_size_or_sections) is int:
         if split_size_or_sections > 0:
-            res = _split_int(tensor, split_size_or_sections, arr_axis)
+            res = split_tensor(tensor, split_size_or_sections, axis)
         else:
             raise ValueError(f"For split, the value of 'split_size_or_sections' must be more than zero, "
                              f"but got {split_size_or_sections}.")
-    elif isinstance(split_size_or_sections, (list, tuple)):
-        for item in split_size_or_sections:
-            if type(item) is not int:
-                raise TypeError(f"Each element in 'split_size_or_sections' should be integer, but got {type(item)}.")
-            if item < 0:
-                raise TypeError(f"Each element in 'split_size_or_sections' should be non-negative, "
-                                f"but got {split_size_or_sections}.")
-
-        if sum(split_size_or_sections) != tensor.shape[arr_axis]:
-            raise ValueError(f"The sum of 'split_size_or_sections' should be equal to {tensor.shape[arr_axis]}, "
-                             f"but got {sum(split_size_or_sections)}.")
-        res = _split_sub_tensors(tensor, split_size_or_sections, arr_axis)
+    elif isinstance(split_size_or_sections, tuple):
+        res = split_with_size(tensor, split_size_or_sections, axis)
     else:
-        raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int) or list(int), " \
+        raise TypeError(f"Type of Argument `split_size_or_sections` should be integer, tuple(int)" \
                         f"but got {type(split_size_or_sections)}")
     return tuple(res)
 

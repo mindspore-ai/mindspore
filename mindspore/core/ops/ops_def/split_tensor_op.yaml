@@ -1,0 +1,18 @@
+#operator split_tensor
+split_tensor:
+  args:
+    input:
+      dtype: tensor
+    split_sections:
+      dtype: int
+    axis:
+      dtype: int
+      init: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  class:
+    name: SplitTensor
+  pyboost: True
+
+

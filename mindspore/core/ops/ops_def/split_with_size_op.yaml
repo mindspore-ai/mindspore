@@ -1,0 +1,16 @@
+#operator split_tensor
+split_with_size:
+  args:
+    input:
+      dtype: tensor
+    split_size:
+      dtype: tuple[int]
+    axis:
+      dtype: int
+      init: 0
+  returns:
+    output:
+      dtype: tuple[tensor]
+  class:
+    name: SplitWithSize
+  pyboost: True

@@ -22,7 +22,30 @@ namespace mindspore {
 namespace pynative {
 namespace {
 using OP_DTYPE = mindspore::ops::OP_DTYPE;
-
+std::string CTypeToPythonType(const OP_DTYPE &type) {
+  static std::unordered_map<OP_DTYPE, std::string> convert_map = {{OP_DTYPE::DT_BOOL, "bool"},
+                                                                  {OP_DTYPE::DT_INT, "int"},
+                                                                  {OP_DTYPE::DT_FLOAT, "float"},
+                                                                  {OP_DTYPE::DT_NUMBER, "number"},
+                                                                  {OP_DTYPE::DT_TENSOR, "tensor"},
+                                                                  {OP_DTYPE::DT_STR, "str"},
+                                                                  {OP_DTYPE::DT_TUPLE_BOOL, "tuple[bool]"},
+                                                                  {OP_DTYPE::DT_TUPLE_INT, "tuple[int]"},
+                                                                  {OP_DTYPE::DT_TUPLE_FLOAT, "tuple[float]"},
+                                                                  {OP_DTYPE::DT_TUPLE_NUMBER, "tuple[number]"},
+                                                                  {OP_DTYPE::DT_TUPLE_TENSOR, "tuple[tensor]"},
+                                                                  {OP_DTYPE::DT_TUPLE_STR, "tuple[str]"},
+                                                                  {OP_DTYPE::DT_LIST_BOOL, "list[bool]"},
+                                                                  {OP_DTYPE::DT_LIST_INT, "list[int]"},
+                                                                  {OP_DTYPE::DT_LIST_FLOAT, "list[float]"},
+                                                                  {OP_DTYPE::DT_LIST_NUMBER, "list[number]"},
+                                                                  {OP_DTYPE::DT_LIST_TENSOR, "list[tensor]"},
+                                                                  {OP_DTYPE::DT_LIST_STR, "list[str]"}};
+  if (convert_map.find(type) == convert_map.end()) {
+    MS_LOG(EXCEPTION) << "Can not found type in convert map" << type;
+  }
+  return convert_map[type];
+}
 OP_DTYPE ListToTuple(const OP_DTYPE &type) {
   static std::unordered_map<OP_DTYPE, OP_DTYPE> convert_map = {
     {OP_DTYPE::DT_LIST_BOOL, OP_DTYPE::DT_TUPLE_BOOL},     {OP_DTYPE::DT_LIST_INT, OP_DTYPE::DT_TUPLE_INT},
@@ -136,7 +159,7 @@ ValuePtr Parser::ToTensor(size_t i) {
       return convert;
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -155,7 +178,7 @@ ValueTuplePtr Parser::ToTensorList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -172,7 +195,7 @@ Int64ImmPtr Parser::ToInt(size_t i) {
       return convert;
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -190,7 +213,7 @@ ValueTuplePtr Parser::ToIntList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -207,7 +230,7 @@ BoolImmPtr Parser::ToBool(size_t i) {
       return convert;
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -225,7 +248,7 @@ ValueTuplePtr Parser::ToBoolList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -242,7 +265,7 @@ FP64ImmPtr Parser::ToFloat(size_t i) {
       return convert;
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -260,7 +283,7 @@ ValueTuplePtr Parser::ToFloatList(size_t i) {
       return convert_value->cast<ValueTuplePtr>();
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -277,7 +300,7 @@ ScalarPtr Parser::ToScalar(size_t i) {
       return convert;
     }
   }
-  PrintError(i);
+  ThrowException(i);
   return nullptr;
 }
 
@@ -300,8 +323,10 @@ py::object Parser::Wrap(const TensorPtr &tensor) {
   return v[0];
 }
 
-void Parser::PrintError(size_t i) {
-  MS_LOG(EXCEPTION) << "For op " << op_def_.name_ << ", the " << i << " th arg dtype is not right!";
+void Parser::ThrowException(size_t i) {
+  MS_LOG(EXCEPTION) << "For op " << op_def_.name_ << ", the " << i << "th arg dtype is not right!"
+                    << "expect dtype: " << CTypeToPythonType(op_def_.args_[i].arg_dtype_)
+                    << "but got dtype: " << py::type((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.

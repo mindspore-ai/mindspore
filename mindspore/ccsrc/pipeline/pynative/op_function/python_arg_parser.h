@@ -44,7 +44,7 @@ class Parser {
   py::object Wrap(const TensorPtr &tensor);
 
  private:
-  void PrintError(size_t i);
+  void ThrowException(size_t i);
   ops::OpDef op_def_;
   py::list *python_args_;
 };
