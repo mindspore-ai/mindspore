@@ -167,20 +167,7 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPattern() const {
   MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
   auto matmul_2 = VectorRef({is_matmul_2, softmax, v_input});
 
-  // Transpose 2
-  auto is_transpose_2_param = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(is_transpose_2_param != nullptr, {});
-  auto is_transpose_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
-  MS_CHECK_TRUE_RET(is_transpose_2 != nullptr, {});
-  auto transpose_2 = VectorRef({is_transpose_2, matmul_2, is_transpose_2_param});
-
-  // Reshape
-  auto new_shape = std::make_shared<Var>();
-  MS_CHECK_TRUE_RET(new_shape != nullptr, {});
-  auto is_reshape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
-  MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
-  auto reshape = VectorRef({is_reshape, transpose_2, new_shape});
-  return reshape;
+  return matmul_2;
 }
 
 const BaseRef FlashAttentionFusion::DefinePattern() const {
@@ -237,11 +224,7 @@ CNodePtr FlashAttentionFusion::CreatePromptFlashAttentionCnodeForBNSD(const Func
 
 CNodePtr FlashAttentionFusion::CreateFlashAttentionNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                         const EquivPtr &equiv) const {
-  auto reshape = node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(reshape != nullptr, nullptr);
-  auto transpose_2 = reshape->input(kNumIndex1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(transpose_2 != nullptr, nullptr);
-  auto matmul_2 = transpose_2->input(kNumIndex1)->cast<CNodePtr>();
+  auto matmul_2 = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_2 != nullptr, {});
   auto softmax = matmul_2->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(softmax != nullptr, {});
