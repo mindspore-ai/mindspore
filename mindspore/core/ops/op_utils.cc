@@ -39,6 +39,7 @@
 #include "ops/op_def.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {
@@ -890,6 +891,7 @@ bool IsValueKnown(const ValuePtr &value) {
 }
 
 std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
+  MS_EXCEPTION_IF_NULL(op_prim);
   std::set<int64_t> depend_list;
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_prim->name());
   if (op_def == nullptr) {

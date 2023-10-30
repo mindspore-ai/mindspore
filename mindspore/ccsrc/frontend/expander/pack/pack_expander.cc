@@ -114,18 +114,32 @@ bool IsTensorSequence(const py::object &arg) {
 
 std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
                                                         const bool &need_infer_value) {
-  auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
   AbstractBasePtr infer_res = nullptr;
   ValuePtr val = nullptr;
-  // C++ InferShape and InferValue.
-  if (found.has_value()) {
-    if (need_infer_value && found->IsImplInferValue()) {
-      val = found->InferValue(prim, abs_list);
-    } else if (found->IsImplInferShapeAndType()) {
-      infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
-      val = infer_res->BuildValue();
+  if (need_infer_value) {
+    auto value_opt = InferValueByFuncImpl(prim, abs_list);
+    if (value_opt.has_value()) {
+      val = value_opt.value();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferValue()) {
+        val = found->InferValue(prim, abs_list);
+      }
+    }
+  } else {
+    auto out_abs_opt = InferAbstractByFuncImpl(prim, abs_list);
+    if (out_abs_opt.has_value()) {
+      infer_res = out_abs_opt.value();
+      val = infer_res->GetValue();
+    } else {
+      auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
+      if (found.has_value() && found->IsImplInferShapeAndType()) {
+        infer_res = found->InferShapeAndType(nullptr, prim, abs_list);
+        val = infer_res->BuildValue();
+      }
     }
   }
+
   // Python InferShape and InferValue.
   if ((infer_res == nullptr || need_infer_value) && !IsHasValue(val)) {
     py::gil_scoped_acquire acquire;

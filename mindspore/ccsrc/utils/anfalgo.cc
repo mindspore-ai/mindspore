@@ -1587,6 +1587,11 @@ bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Node is not a cnode.";
     return false;
   }
+  if (AnfAlgo::IsGraphKernel(node)) {
+    MS_LOG(DEBUG) << "Node(" << node->fullname_with_scope() << ") is GraphKernel node, it's not dynamic value type.";
+    return false;
+  }
+
   auto cnode = node->cast<CNodePtr>();
   if (cnode->HasAttr(ops::kHasDynamicValue)) {
     return true;
