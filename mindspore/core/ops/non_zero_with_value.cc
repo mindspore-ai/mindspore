@@ -46,7 +46,7 @@ AbstractBasePtr NonZeroWithValueInfer(const abstract::AnalysisEnginePtr &, const
   const std::string &op_name = primitive->name();
   constexpr size_t input_num = 1;
   abstract::CheckArgsSize(op_name, input_args, input_num);
-  abstract::AbstractTensorPtr x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
 
   MS_EXCEPTION_IF_NULL(x);
   auto x_shape = x->GetShape();
@@ -62,7 +62,7 @@ AbstractBasePtr NonZeroWithValueInfer(const abstract::AnalysisEnginePtr &, const
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
 
-  auto value = std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape));
+  auto value = std::make_shared<abstract::AbstractTensor>(x->GetType(), std::make_shared<abstract::Shape>(y_shape));
   auto index = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
   auto count = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
   AbstractBasePtrList result = {value, index, count};

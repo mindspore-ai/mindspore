@@ -47,14 +47,14 @@ AbstractBasePtr NonZeroWithValueShapeInfer(const abstract::AnalysisEnginePtr &, 
   const std::string &op_name = primitive->name();
   constexpr size_t input_num = 3;
   abstract::CheckArgsSize(op_name, input_args, input_num);
-  abstract::AbstractTensorPtr x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  const auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
 
   MS_EXCEPTION_IF_NULL(x);
-  auto x_shape = x->shape();
+  auto x_shape = x->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
   ShapeVector y_shape;
 
-  int64_t rank_base = SizeToLong(x_shape->shape().size());
+  int64_t rank_base = SizeToLong(x_shape->GetShapeVector().size());
   auto shape_vec = x_shape->GetShapeVector();
   if (shape_vec.size() == 1 && shape_vec[0] == abstract::TensorShape::kShapeRankAny) {
     rank_base = abstract::Shape::kShapeDimAny;
@@ -63,7 +63,7 @@ AbstractBasePtr NonZeroWithValueShapeInfer(const abstract::AnalysisEnginePtr &, 
   // Indices of elements that are non-zero
   (void)y_shape.emplace_back(abstract::Shape::kShapeDimAny);
 
-  auto value = std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(y_shape));
+  auto value = std::make_shared<abstract::AbstractTensor>(x->GetType(), std::make_shared<abstract::Shape>(y_shape));
   auto index = std::make_shared<abstract::AbstractTensor>(kInt32, std::make_shared<abstract::Shape>(y_shape));
   AbstractBasePtrList result = {value, index};
   return std::make_shared<abstract::AbstractTuple>(result);
@@ -77,15 +77,16 @@ class MIND_API AGNonZeroWithValueShapeInfer : public abstract::OpInferBase {
     const std::string &op_name = primitive->name();
     constexpr size_t input_num = 3;
     abstract::CheckArgsSize(op_name, input_args, input_num);
-    abstract::AbstractTensorPtr x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
 
     MS_EXCEPTION_IF_NULL(x);
-    auto x_shape = x->shape();
+    auto x_shape = x->GetShape();
     MS_EXCEPTION_IF_NULL(x_shape);
     ShapeVector y_shape;
 
-    int64_t rank_base = SizeToLong(x_shape->shape().size());
-    int64_t max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
+    int64_t rank_base = SizeToLong(x_shape->GetShapeVector().size());
+    int64_t max_size = std::accumulate(x_shape->GetShapeVector().begin(), x_shape->GetShapeVector().end(), 1,
+                                       std::multiplies<int64_t>());
     (void)y_shape.emplace_back(rank_base);
     // Set as max shape when in running process.
     (void)y_shape.emplace_back(max_size);

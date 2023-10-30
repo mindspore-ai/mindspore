@@ -122,8 +122,7 @@ class EmbeddingLookupInfer : public abstract::OpInferBase {
     (void)CheckAndConvertUtils::CheckTypeValid("offset", input_args[kInputIndex2]->GetType(), int_type, op_name);
 
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 0, op_name);
-    abstract::AbstractTensorPtr params =
-      CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+    auto params = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(params);
     return params->GetType();
   }
