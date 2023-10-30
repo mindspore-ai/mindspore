@@ -1029,7 +1029,7 @@ bool GraphBuilder::DoMergeOp(const Instr &instr) {
   int opcode = instr.op();
   int oparg = instr.arg();
 
-  auto &container = seek(oparg);
+  auto &container = seek(oparg + (opcode == MAP_ADD));
   if (opcode == MAP_ADD) {
     auto v = pop();
     auto k = pop();

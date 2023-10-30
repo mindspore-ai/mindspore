@@ -65,6 +65,7 @@ static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __g
 
 // ------------------------------mindspore functions-------------------------------
 static constexpr const char *kMindsporeNameGetCachePrim = "_get_cache_prim";
+static constexpr const char *kMindsporeNameConstexpr = "CompileOp";
 /**
  * NOTE: mindspore/ops/composite/base.py, after_grad decorated by '_warp_func'
  * code name is 'wrapper', not 'after_grad', it only called by pynative
@@ -82,13 +83,39 @@ static constexpr const char *kMindsporeNameMsCell = "mindspore.nn.Cell";
 static constexpr const char *kMindsporeNameConvertMap = "mindspore._extends.parse.resources.convert_object_map";
 // ------------------------------mindspore functions-------------------------------
 
-static constexpr const char *kJitForbidden = ".jit_forbidden";
+static constexpr const char *kJitForbidden = ".pijit_forbidden";
+static constexpr const char *kJitConstexpr = ".pijit_constexpr";
 
 static py::object GetGradClass() { return Utils::GetModuleAttr("mindspore._c_expression", "GradOperation_"); }
 
 template <AObject::Type type>
 bool SetCallResType(CallNode *call_node) {
   call_node->SetVobj(AObject::MakeAObject(type));
+  call_node->SetSubGraph(nullptr);
+  return false;
+}
+
+bool JustCallAndSetRes(CallNode *call_node) {
+  py::object func = call_node->input(0)->GetVobj()->GetPyObject();
+  if (func.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  std::vector<py::object> args;
+  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
+  if (pair.first.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
+  if (PyErr_Occurred()) {
+    MS_LOG(ERROR) << "got an error while call the <pijit.constexpr> " << std::string(py::str(func.ptr())) << " "
+                  << py::error_already_set().what();
+    PyErr_Clear();
+  }
+  call_node->SetVobj(AObject::Convert(value));
   call_node->SetSubGraph(nullptr);
   return false;
 }
@@ -702,6 +729,14 @@ static bool check_JitForbidden(const py::object &func) {
   return forbidden;
 }
 
+static bool check_JitConstexpr(const py::object &func) { return kPIJitConfigDefault.CheckJitConstexpr(func); }
+static bool check_MSConstexpr(const py::object &func) {
+  std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
+  constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
+  constexpr const int size = sizeof(name) - 1;
+  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size, size, name) : false;
+}
+
 // special function list
 // special function that mindspore support and not inline,
 // the return values or type can be infer
@@ -732,6 +767,8 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   // object convert map
   {kMindsporeNameConvertMap, {check_ConvertMap, infer_ConvertMap}},
   {kJitForbidden, {check_JitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
+  {kJitConstexpr, {check_JitConstexpr, JustCallAndSetRes}},
+  {kMindsporeNameConstexpr, {check_MSConstexpr, JustCallAndSetRes}},
 };
 
 static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {
@@ -741,6 +778,7 @@ static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyM
   {check_Cell, kMindsporeNameMsCell},
   {check_ConvertMap, kMindsporeNameConvertMap},
   {check_JitForbidden, kJitForbidden},
+  {check_JitConstexpr, kJitConstexpr},
 };
 
 static const char *GetFuncName(const py::object &f) {

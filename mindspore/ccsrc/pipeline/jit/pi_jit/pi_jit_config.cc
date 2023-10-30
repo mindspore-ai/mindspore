@@ -65,6 +65,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"allowed_inline_modules", &GraphJitConfig::AddAllowedInlineModules},
   {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
+  {"pijit_constexpr", &GraphJitConfig::AddJitConstexpr},
 };
 
 GraphJitConfig::GraphJitConfig() {
@@ -108,6 +109,32 @@ GraphJitConfig::GraphJitConfig() {
 
   set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};
   set_conf[kPSJitStrictCells - kStrListConf] = {};
+}
+
+static py::object GetObjectsMap() {
+  py::str mod_name("mindspore");
+  py::str key_name("<pijit.registry>");
+  // can't import module while the module is deallocated
+  py::object ms = py::reinterpret_steal<py::object>(PyImport_GetModule(mod_name.ptr()));
+  if (ms.ptr() == nullptr || !PyModule_Check(ms.ptr())) {
+    return py::object();
+  }
+  PyObject *registry = PyObject_GetAttr(ms.ptr(), key_name.ptr());
+  if (registry != nullptr) {
+    MS_EXCEPTION_IF_CHECK_FAIL(PyDict_CheckExact(registry), "got duplicate attribute for <pijit.registry>");
+    return py::reinterpret_steal<py::object>(registry);
+  }
+  PyErr_Clear();
+
+  // just set once, module reload will not rewrite attribute.
+  static bool init = false;
+  if (init) {
+    return py::object();
+  }
+  init = true;
+  registry = PyDict_New();
+  PyObject_SetAttr(ms.ptr(), key_name.ptr(), registry);
+  return py::reinterpret_steal<py::object>(registry);
 }
 
 bool GraphJitConfig::AddAllowedInlineModules(PyObject *list) {
@@ -162,9 +189,12 @@ bool GraphJitConfig::SetAutoJitFilter(PyObject *callable) {
                     << std::string(py::str(callable));
     return false;
   }
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
+    return false;
+  }
   (void)SetBool<kAutoJit>(Py_True);
-  py::object func = Utils::GetModuleAttr("mindspore", "jit", false, true);
-  func.attr("__auto_pijit_filter__") = callable;
+  PyDict_SetItemString(map.ptr(), "<auto jit filter>", callable);
   return true;
 }
 
@@ -172,15 +202,19 @@ bool GraphJitConfig::ShouldAutoJit(PyFrameObject *f) {
   if (!GetBoolConfig(kAutoJit)) {
     return false;
   }
-  py::object func = Utils::GetModuleAttr("mindspore", "jit", false, false);
-  if (func.ptr() == nullptr) {
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
     // mindspore module is unload
     (void)SetBool<kAutoJit>(Py_False);
     return false;
   }
-  py::object filter = func.attr("__auto_pijit_filter__");
+  PyObject *filter = PyDict_GetItemString(map.ptr(), "<auto jit filter>");
+  if (filter == nullptr) {
+    (void)SetBool<kAutoJit>(Py_False);
+    return false;
+  }
   PyObject *arg = reinterpret_cast<PyObject *>(f);
-  PyObject *res = PyObject_Vectorcall(filter.ptr(), &arg, 1, nullptr);
+  PyObject *res = PyObject_Vectorcall(filter, &arg, 1, nullptr);
   if (PyErr_Occurred()) {
     MS_LOG(ERROR) << "***" << py::error_already_set().what() << "*** at " << std::string(py::str(filter)) << " ignored";
     PyErr_Clear();
@@ -218,6 +252,38 @@ bool GraphJitConfig::CheckJitForbidden(const py::object &code) {
   }
   const auto &s = set_conf[kJitForbidden - kStrListConf];
   return s.find(GetCodeKey(co)) != s.end();
+}
+
+bool GraphJitConfig::AddJitConstexpr(PyObject *list) {
+  py::set constexpr_callable;
+  for (const py::handle &i : py::iter(list)) {
+    if (!PyFunction_Check(i.ptr())) {
+      MS_LOG(WARNING) << "config pijit_constexpr, all values must be function";
+      return false;
+    }
+    constexpr_callable.add(i);
+  }
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
+    return false;
+  }
+  PyDict_SetItemString(map.ptr(), "<constexpr>", constexpr_callable.ptr());
+  return true;
+}
+
+bool GraphJitConfig::CheckJitConstexpr(const py::object &code) {
+  if (!PyFunction_Check(code.ptr())) {
+    return false;
+  }
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
+    return false;
+  }
+  PyObject *set = PyDict_GetItemString(map.ptr(), "<constexpr>");
+  if (set == nullptr) {
+    return false;
+  }
+  return PySet_Contains(set, code.ptr());
 }
 
 GraphJitConfig::GraphJitConfig(const py::object &c) {
