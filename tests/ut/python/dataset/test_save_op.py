@@ -531,8 +531,8 @@ def test_case_10():
 def test_case_all_types():
     """
     Feature: Save op
-    Description: Test all the types from dataset to mindrecord file
-    Expectation: Success
+    Description: Test converting datasets of various data types to MindRecord
+    Expectation: Data read from the saved MindRecord is still of the original data type
     """
 
     dumpy_data = [{"bool": True, "int8": 4, "uint8": 255, "int16": 1000, "uint16": 9999, "int32": 12345,
