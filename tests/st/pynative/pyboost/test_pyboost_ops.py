@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, exp, erf, add_ext, bmm, silu
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, add_ext
 import mindspore
 
 
@@ -108,3 +108,11 @@ def test_add_ascend():
     y = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
     output = add_ext(x, y)
     assert np.allclose(output.asnumpy(), [[[2, 6, 6], [8, 10, 12]], [[14, 16, 18], [20, 22, 24]]])
+
+
+def test_sin_ascend():
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+    output = sin(x)
+    assert np.allclose(output.asnumpy(), [0.5810352, 0.27635565, 0.41687083, 0.5810352])
+
