@@ -33,12 +33,12 @@ ATTR_MAP(FlashAttention) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FlashAttention) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FlashAttention, ops::kNameFlashAttention, ADPT_DESC(FlashAttention))
 
-// MoeFFN
-INPUT_MAP(MoeFFN) = {{1, INPUT_DESC(x)},          {2, INPUT_DESC(expert_tokens)}, {3, INPUT_DESC(weight1)},
+// FFN
+INPUT_MAP(FFN) = {{1, INPUT_DESC(x)},          {2, INPUT_DESC(expert_tokens)}, {3, INPUT_DESC(weight1)},
                      {4, INPUT_DESC(bias1)},      {5, INPUT_DESC(weight2)},       {6, INPUT_DESC(bias2)},
                      {7, INPUT_DESC(scale)},      {8, INPUT_DESC(offset)},        {9, INPUT_DESC(deq_scale1)},
                      {10, INPUT_DESC(deq_scale2)}};
-ATTR_MAP(MoeFFN) = {{"activation", ATTR_DESC(activation, AnyTraits<string>())}};
-OUTPUT_MAP(MoeFFN) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MoeFFN, kNameMoeFFN, ADPT_DESC(MoeFFN))
+ATTR_MAP(FFN) = {{"activation", ATTR_DESC(activation, AnyTraits<string>())}};
+OUTPUT_MAP(FFN) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFN, kNameFFN, ADPT_DESC(FFN))
 }  // namespace mindspore::transform
