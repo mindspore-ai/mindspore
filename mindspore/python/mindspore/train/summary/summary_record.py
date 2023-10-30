@@ -64,28 +64,20 @@ def _cache_summary_tensor_data(summary):
         return True
 
 
-def _get_summary_tensor_data(step_index=-1):
+def _get_summary_tensor_data(end_flag=None, del_end_flag=False):
     """Get summary tensor data."""
     global SUMMARY_TENSOR_CACHE
-    step_end_flag = "step_end_flag_" + str(step_index) + "[:Tensor]"
+    if end_flag:
+        for _ in range(0, 100):
+            if SUMMARY_TENSOR_CACHE.get(end_flag):
+                break
+            time.sleep(0.01)
+        if del_end_flag and SUMMARY_TENSOR_CACHE.get(end_flag):
+            del SUMMARY_TENSOR_CACHE[end_flag]
     with _summary_lock:
-        if step_index >= 0:
-            for _ in range(0, 10):
-                if _summary_step_end(step_end_flag):
-                    break
-                time.sleep(0.1)
-        if SUMMARY_TENSOR_CACHE.get(step_end_flag):
-            del SUMMARY_TENSOR_CACHE[step_end_flag]
         data = SUMMARY_TENSOR_CACHE
         SUMMARY_TENSOR_CACHE = {}
         return data
-
-
-def _summary_step_end(step_end_flag):
-    for summary_item in SUMMARY_TENSOR_CACHE:
-        if summary_item == step_end_flag:
-            return True
-    return False
 
 
 def _record_summary_tensor_data():
@@ -468,7 +460,10 @@ class SummaryRecord:
     def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
         _record_summary_tensor_data()
-        summary_data = _get_summary_tensor_data(step_index)
+        end_flag = None
+        if step_index >= 0:
+            end_flag = "step_end_flag_" + str(step_index) + "[:Tensor]"
+        summary_data = _get_summary_tensor_data(end_flag=end_flag, del_end_flag=True)
         if not summary_data:
             logger.debug(f'No summary data bubbled from the network.')
         for name, tensor in summary_data.items():
