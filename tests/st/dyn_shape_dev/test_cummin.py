@@ -52,8 +52,6 @@ def test_cummin_forward(context_mode, dtype):
     x = Tensor(np.array([[3, 1, 4, 1], [1, 5, 9, 2]]).astype(dtype))
     axis = -2
     values, indices = cummin_forward_func(x, axis)
-    print("values:\n", values)
-    print("indices:\n", indices)
     expect_values = np.asarray([[3, 1, 4, 1], [1, 1, 4, 1]]).astype(dtype)
     expect_indices = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0]]).astype(np.int64)
     assert np.allclose(values.asnumpy(), expect_values)

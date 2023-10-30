@@ -54,12 +54,8 @@ TEST_P(TestCummax, dyn_shape) {
   auto prim = std::make_shared<Primitive>("Cummax");
 
   auto out_dtype = cummax_func_impl.InferType(prim, {x, axis});
-  std::cout << "out_dtype: " << out_dtype->ToString() << "\n";
-  std::cout << "expect_type: " << expect_type->ToString() << "\n";
   ASSERT_TRUE(*out_dtype == *expect_type);
   auto out_shape = cummax_func_impl.InferShape(prim, {x, axis});
-  std::cout << "out_shape: " << out_shape->ToString() << "\n";
-  std::cout << "expect_shape: " << expect_shape->ToString() << "\n";
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 

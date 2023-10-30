@@ -23,7 +23,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def cumprod_forward_func(x, axis, exclusive, reverse):
-    return ops.auto_generate.cumprod(x, axis, exclusive, reverse)
+    return ops.auto_generate.cumprod_(x, axis, exclusive, reverse)
 
 
 @test_utils.run_with_cell
@@ -33,7 +33,7 @@ def cumprod_backward_func(x, axis, exclusive, reverse):
 
 @test_utils.run_with_cell
 def cumprod_dyn_shape_func(x, axis, exclusive, reverse):
-    return ops.auto_generate.cumprod(x, axis, exclusive, reverse)
+    return ops.auto_generate.cumprod_(x, axis, exclusive, reverse)
 
 @pytest.mark.level0
 @pytest.mark.env_onecard

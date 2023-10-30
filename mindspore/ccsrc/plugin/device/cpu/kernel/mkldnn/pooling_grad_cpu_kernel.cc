@@ -27,6 +27,10 @@ namespace kernel {
 namespace {
 constexpr size_t kMaxPoolingGradWorkSpaceNum = 2;
 constexpr size_t kAvgPoolingGradWorkSpaceNum = 1;
+constexpr size_t kPoolingGradInputsNum = 3;
+constexpr size_t kAvgPooling3DGradInputsNum = 1;
+constexpr size_t kAvgPooling3DGradDynamicInputsNum = 2;
+constexpr size_t kPoolingGradOutputsNum = 1;
 // avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
 constexpr size_t kKernelSizeIdx = 3;
@@ -60,7 +64,7 @@ constexpr size_t kMax3DDataFormatIdx = 8;
 bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kAvgPoolGradOpName) {
-    if (kernel_name_ == kAvgPool3DGradOpName || kernel_name_ == kMaxPool3DGradOpName) {
+    if (KernelMod::primitive_->HasAttr(CEIL_MODE)) {
       ValuePtr ceil_mode = KernelMod::primitive_->GetAttr(CEIL_MODE);
       ceil_mode_ = (ceil_mode->isa<BoolImm>() && GetValue<bool>(ceil_mode)) ||
                    (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
@@ -76,7 +80,6 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
         divisor_override_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE));
       }
     }
-    algorithm_ = dnnl::algorithm::pooling_avg;
     grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 1 : kGradIndex;
     format_ = static_cast<mindspore::Format>(
       ops::FormatStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
@@ -84,12 +87,12 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
       ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
     kernel_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
     strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
-    dtype_ = inputs[grad_index_]->GetDtype();
+    dtype_ = inputs[grad_index_]->dtype_id();
     return true;
   }
   grad_index_ = kGradIndex;
   dtype_ = inputs[grad_index_]->dtype_id();
-  // avgpoolgrad input
+  // AvgPoolGrad input
   algorithm_ = dnnl::algorithm::pooling_avg;
   pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
   kernel_include_nc_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
@@ -318,7 +321,6 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &
     ExecutePrimitive();
     return true;
   }
-
   if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {

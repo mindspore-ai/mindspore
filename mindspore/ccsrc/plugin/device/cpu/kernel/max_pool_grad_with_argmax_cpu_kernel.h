@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/grad/max_pool_grad_with_argmax.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {

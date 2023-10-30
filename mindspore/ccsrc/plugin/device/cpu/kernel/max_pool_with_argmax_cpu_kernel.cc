@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/max_pool_with_argmax_cpu_kernel.h"
 #include <algorithm>
+#include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/max_pool_with_argmax.h"
 
@@ -31,7 +32,8 @@ constexpr int kPadHalf = 2;
 
 bool MaxPoolWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  data_format_ = Format(GetValue<int64_t>(primitive_->GetAttr(ops::kFormat)));
+  data_format_ =
+    static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<std::string>(primitive_->GetAttr(ops::kFormat))));
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   if (kernel_size.size() < kIndex3 || strides.size() < kIndex3) {
@@ -58,7 +60,8 @@ bool MaxPoolWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
                                 "but got the window height: "
                              << window_height_ << ", and the window width: " << window_width_;
   }
-  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
+  pad_mode_ =
+    static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive_->GetAttr(ops::kPadMode))));
   if (pad_mode_ == PadMode::SAME) {
     int tmp_height = (input_height_ / stride_height_) * stride_height_ == input_height_
                        ? (input_height_ / stride_height_)

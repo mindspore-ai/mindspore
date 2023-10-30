@@ -294,6 +294,8 @@ mindspore/mindspore/core/ops/sparse_to_dense_v2.cc:mindspore::ops::SparseToDense
 mindspore/mindspore/core/ops/ops_func_impl/div.cc:mindspore::ops::DivFrontendFuncImpl::InferValue
 mindspore/mindspore/ccsrc/plugin/device/gpu/kernel/math/cumprod_gpu_kernel.cc:mindspore::kernel::CumProdGpuKernelMod::GetFuncList
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/cumprod_cpu_kernel.cc:mindspore::kernel::CumProdCpuKernelMod::GetFuncList
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.cc:mindspore::kernel::PoolingCpuKernelMod::InitPoolingFields
+mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel_nnacl.cc:mindspore::kernel::PoolingCpuKernelNnaclMod::Resize
 
 # AICPU migration
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute

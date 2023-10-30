@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/max_pool_grad_with_argmax_cpu_kernel.h"
 #include <algorithm>
+#include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/grad/max_pool_grad_with_argmax.h"
 
@@ -39,7 +40,8 @@ bool MaxPoolGradWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &
                                 "but got the window height: "
                              << stride_height_ << ", and the window width: " << stride_height_;
   }
-  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
+  pad_mode_ =
+    static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive_->GetAttr(ops::kPadMode))));
   // pair = [is_match, index]
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());

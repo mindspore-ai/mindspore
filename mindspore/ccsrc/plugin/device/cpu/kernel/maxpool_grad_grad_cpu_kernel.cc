@@ -50,7 +50,8 @@ bool MaxPoolGradGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 
   kernels_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   strides_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
-  pad_mode_ = PadMode(GetValue<int64_t>(primitive_->GetAttr(ops::kPadMode)));
+  pad_mode_ =
+    static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive_->GetAttr(ops::kPadMode))));
   if (pad_mode_ != PadMode::SAME && pad_mode_ != PadMode::VALID) {
     MS_LOG(ERROR) << kernel_name_ << " only support pad mode same or valid, but get " << pad_mode_;
     return false;

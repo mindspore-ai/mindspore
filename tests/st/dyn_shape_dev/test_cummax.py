@@ -52,8 +52,6 @@ def test_cummax_forward(context_mode, dtype):
     x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(dtype))
     axis = -2
     values, indices = cummax_forward_func(x, axis)
-    print("values:\n", values)
-    print("indices:\n", indices)
     expect_values = np.asarray([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(dtype)
     expect_indices = np.asarray([[0, 0, 0, 0], [1, 1, 1, 1]]).astype(np.int64)
     assert np.allclose(values.asnumpy(), expect_values)
@@ -80,8 +78,6 @@ def test_cummax_vmap(context_mode, dtype):
     axis = 0
     nest_vmap = ops.vmap(ops.vmap(cummax_forward_func, in_axes=(0, None)), in_axes=(0, None))
     values, indices = nest_vmap(x, axis)
-    print("values:\n", values)
-    print("indices:\n", indices)
     expect_values = np.array([[[1, 2, 3, 4], [5, 6, 7, 8]]]).astype(dtype)
     expect_indices = np.array([[[0, 1, 2, 3], [0, 1, 2, 3]]]).astype(np.int64)
     assert (values.asnumpy() == expect_values).all()

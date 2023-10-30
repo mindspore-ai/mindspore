@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <map>
 #include <string>
-
+#include "mindspore/core/ops/op_utils.h"
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -59,7 +59,7 @@ class PoolingCpuKernelMod : public MKLCpuKernelMod {
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
   std::string format_;
-  mindspore::PadMode pad_mode;
+  mindspore::PadMode pad_mode_;
   std::vector<int64_t> kernel_include_nc{};
   std::vector<int64_t> strides_include_nc{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};

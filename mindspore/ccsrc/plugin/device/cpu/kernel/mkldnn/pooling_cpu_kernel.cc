@@ -31,13 +31,26 @@ constexpr size_t kPoolingOutputsNum = 1;
 void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
   dtype_ = inputs[0]->dtype_id();
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  if (kernel_name_ == kAvgPoolOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 5, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
-  format_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT));
-  pad_mode = static_cast<mindspore::PadMode>(GetValue<int64_t>(KernelMod::primitive_->GetAttr(PAD_MODE)));
-  kernel_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
-  strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
+  if (kernel_name_ == kAvgPoolOpName) {
+    kernel_include_nc = inputs[1]->GetValue<std::vector<int64_t>>().value();
+    strides_include_nc = inputs[2]->GetValue<std::vector<int64_t>>().value();
+    pad_mode_ = inputs[3]->GetValue<PadMode>().value();
+    format_ = inputs[4]->GetValue<Format>().value();
+  } else {
+    kernel_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
+    strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
+    pad_mode_ = static_cast<mindspore::PadMode>(
+      ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
+    format_ = static_cast<mindspore::Format>(
+      ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
+  }
 
   if (KernelMod::primitive_->HasAttr(CEIL_MODE)) {
     ValuePtr ceil_mode = KernelMod::primitive_->GetAttr(CEIL_MODE);
@@ -45,14 +58,14 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
                  (ceil_mode->isa<Int64Imm>() && GetValue<int64_t>(ceil_mode) == 1);
   }
 
-  if (kernel_name_ == kAvgPool3DOpName && (pad_mode == mindspore::PadMode::PAD) &&
+  if (kernel_name_ == kAvgPool3DOpName && (pad_mode_ == mindspore::PadMode::PAD) &&
       KernelMod::primitive_->HasAttr(DIVISOR_OVERRIDE) &&
       GetValue<int64_t>(KernelMod::primitive_->GetAttr(DIVISOR_OVERRIDE)) != 0 &&
       KernelMod::primitive_->HasAttr(COUNT_INCLUDE_PAD) &&
       !GetValue<bool>(KernelMod::primitive_->GetAttr(COUNT_INCLUDE_PAD))) {
     auto pad = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(PAD_LIST));
     if (std::any_of(pad.begin(), pad.end(), [](int64_t pad) { return pad > 0; })) {
-      MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode
+      MS_LOG(EXCEPTION) << kernel_name_ << "does not support the scenes while padmode == " << pad_mode_
                         << " && padding > 0 && count_include_pad == False && divisor_override != None";
     }
   }
@@ -110,7 +123,8 @@ int PoolingCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   dnnl::memory::dims padding_l;
   dnnl::memory::dims padding_r;
   kernel_ = kernel;
-  PaddingInfo padding_info{pad_mode, kernel_, strides, dilation, &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
+  PaddingInfo padding_info{pad_mode_,  kernel_,    strides,           dilation,
+                           &padding_l, &padding_r, &padding_invalid_, ceil_mode_};
   GetPadding(src_shape, padding_info);
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_inference, algorithm_, src_desc,
                                                             dst_desc, strides, kernel, padding_l, padding_r);
@@ -196,7 +210,14 @@ void PoolingCpuKernelMod::ReComputeDivisor(T *dst) {
 std::vector<KernelAttr> PoolingCpuKernelMod::GetOpSupport() {
   static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
     {kMaxPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-    {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
+    {kAvgPoolOpName,
+     {KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+        .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+        .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32)}},
     {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}},
     {kAvgPoolOpName, {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)}}};
   auto iter = support_list_map.find(kernel_type_);

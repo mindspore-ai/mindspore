@@ -54,12 +54,8 @@ TEST_P(TestCumProd, dyn_shape) {
   auto prim = std::make_shared<Primitive>("CumProd");
 
   auto out_dtype = cumprod_func_impl.InferType(prim, {x, axis, exclusive, reverse});
-  std::cout << "out_dtype: " << out_dtype->ToString() << "\n";
-  std::cout << "expect_type: " << expect_dtype->ToString() << "\n";
   ASSERT_TRUE(*out_dtype == *expect_dtype);
   auto out_shape = cumprod_func_impl.InferShape(prim, {x, axis, exclusive, reverse});
-  std::cout << "out_shape: " << out_shape->ToString() << "\n";
-  std::cout << "expect_shape: " << expect_shape->ToString() << "\n";
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 

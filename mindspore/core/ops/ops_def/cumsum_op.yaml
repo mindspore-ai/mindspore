@@ -16,3 +16,5 @@ cumsum:
       dtype: tensor
   class:
       name: CumSum
+  function:
+      name: cumsum_

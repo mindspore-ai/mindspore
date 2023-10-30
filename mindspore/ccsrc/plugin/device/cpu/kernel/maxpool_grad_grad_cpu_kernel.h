@@ -28,6 +28,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/pooling_parameter.h"
 #include "plugin/device/cpu/kernel/nnacl/kernel/pooling.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
