@@ -148,7 +148,7 @@ class MS_CORE_API AbstractBase : public Base {
   /// \note Use this function to get the actual type, while track type is not enough accurate.
   ///
   /// \return A pointer to the Type.
-  virtual TypePtr BuildType() const { MS_LOG(EXCEPTION) << "The method 'Clone()' doesn't implement"; }
+  virtual TypePtr BuildType() const { MS_LOG(EXCEPTION) << "The method 'BuildType()' doesn't implement"; }
 
   /// \brief Build the shape of the abstract.
   ///

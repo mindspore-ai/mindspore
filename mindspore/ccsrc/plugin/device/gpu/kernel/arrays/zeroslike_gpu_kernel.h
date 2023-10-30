@@ -37,7 +37,11 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
+    return True;
+  }
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
