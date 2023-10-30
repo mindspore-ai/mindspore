@@ -21,12 +21,16 @@ import test_utils
 
 @test_utils.run_with_cell
 def square_forward_func(x):
-    return ops.auto_generate.square(x)
+    return ops.auto_generate.square_(x)
 
 
 @test_utils.run_with_cell
 def square_backward_func(x):
     return ops.grad(square_forward_func, (0,))(x)
+
+@test_utils.run_with_cell
+def square_dyn_shape_func(x):
+    return ops.auto_generate.square_(x)
 
 
 @pytest.mark.level0
@@ -90,3 +94,58 @@ def test_square_vmap(mode):
     print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_square_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of square.
+    Description: test dynamic tensor and dynamic scalar of square.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(square_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    x = ms.Tensor(np.array([[1.0, 2.0, 4.0]]).astype(np.float32))
+    expect_out = np.array([[1.0, 4.0, 16.0]]).astype(np.float32)
+    output = test_cell(x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    np_x1 = np.array([[1.0, 2.0, 3.0, 4.0]])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect_out1 = np.array([[1.0, 4.0, 9.0, 16.0]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_square_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of square.
+    Description: test dynamic rank tensor of square.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(square_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    x = ms.Tensor(np.array([[1.0, 2.0, 4.0]]).astype(np.float32))
+    expect_out = np.array([[1.0, 4.0, 16.0]]).astype(np.float32)
+    output = test_cell(x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    np_x1 = np.array([[1.0, 2.0, 3.0, 4.0]])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect_out1 = np.array([[1.0, 4.0, 9.0, 16.0]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)

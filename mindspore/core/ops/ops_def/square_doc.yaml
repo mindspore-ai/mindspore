@@ -2,27 +2,27 @@ square:
     description: |  
         Returns square of a tensor element-wise.
 
-        .. math::
+            .. math::
 
-            out_{i} = (x_{i})^2
+                out_{i} = (x_{i})^2
 
-        Inputs:
-            - **x** (Tensor) - The input tensor.
+            Inputs:
+                - **x** (Tensor) - The input tensor.
 
-        Returns:
-            Tensor, has the same shape and dtype as `x`.
+            Returns:
+                Tensor, has the same shape and dtype as `x`.
 
-        Raises:
-            TypeError: If `x` is not a Tensor.
+            Raises:
+                TypeError: If `x` is not a Tensor.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-            >>> output = ops.square(x)
-            >>> print(output)
-            [1. 4. 9.]
+            Examples:
+                >>> import mindspore
+                >>> import numpy as np
+                >>> from mindspore import Tensor, ops
+                >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+                >>> output = ops.square(x)
+                >>> print(output)
+                [1. 4. 9.]

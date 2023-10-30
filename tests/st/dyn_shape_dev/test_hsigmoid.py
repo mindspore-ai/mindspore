@@ -109,16 +109,49 @@ def test_hsigmoid_vmap(mode):
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_hsigmoid_dynamic(mode):
     """
-    Feature: test dynamic tensor and dynamic scalar of avg pool.
-    Description: test dynamic tensor and dynamic scalar of avg pool.
+    Feature: test dynamic tensor and dynamic scalar of hsigmoid.
+    Description: test dynamic tensor and dynamic scalar of hsigmoid.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
-    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
-    x = ms.Tensor(np.array([1.0, 2.0, 3.0]), ms.float32)
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    x = ms.Tensor(np.array([[1.0, 2.0, 3.0]]), ms.float32)
     test_cell = test_utils.to_cell_obj(hsigmoid_dyn_shape_func)
     test_cell.set_inputs(x_dyn)
     out = test_cell(x)
     print("out:", out)
-    expect = np.array([0.6666667, 0.8333333, 1.]).astype('float32')
+    expect = np.array([[0.6666667, 0.8333333, 1.]]).astype('float32')
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    x1 = ms.Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]), ms.float32)
+    out1 = test_cell(x1)
+    print("out:", out1)
+    expect1 = np.array([[0.6666667, 0.8333333, 1., 1.]]).astype('float32')
+    assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_hsigmoid_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of hsigmoid.
+    Description: test dynamic rank tensor of hsigmoid.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    x = ms.Tensor(np.array([[1.0, 2.0, 3.0]]), ms.float32)
+    test_cell = test_utils.to_cell_obj(hsigmoid_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    out = test_cell(x)
+    print("out:", out)
+    expect = np.array([[0.6666667, 0.8333333, 1.]]).astype('float32')
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    x1 = ms.Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]), ms.float32)
+    out1 = test_cell(x1)
+    print("out:", out1)
+    expect1 = np.array([[0.6666667, 0.8333333, 1., 1.]]).astype('float32')
+    assert np.allclose(out1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)

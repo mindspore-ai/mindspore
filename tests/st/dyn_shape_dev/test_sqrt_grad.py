@@ -25,6 +25,11 @@ def sqrt_grad_forward_func(dy, x):
     return ops.auto_generate.sqrt_grad(dy, x)
 
 
+@test_utils.run_with_cell
+def sqrt_grad_dyn_shape_func(dy, x):
+    return ops.auto_generate.sqrt_grad(dy, x)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -70,3 +75,67 @@ def test_sqrt_grad_vmap(mode):
     out = nest_vmap(dy, x)
     print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_sqrt_grad_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of sqrt_grad.
+    Description: test dynamic tensor and dynamic scalar of sqrt_grad.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    dy_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(sqrt_grad_dyn_shape_func)
+    test_cell.set_inputs(dy_dyn, x_dyn)
+    x_np = np.array([[0.02595769, 0.25027096]]).astype(np.float32)
+    dy = ms.Tensor(x_np)
+    x = ms.Tensor(x_np * x_np)
+    expect_out = np.array([[0.0129776, 0.12512207]]).astype(np.float32)
+    output = test_cell(dy, x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    x_np1 = np.array([[2.0, 5.0], [4.0, 3.0]]).astype(np.float32)
+    dy1 = ms.Tensor(x_np1)
+    x1 = ms.Tensor(x_np1 * x_np1)
+    output1 = test_cell(dy1, x1)
+    expect_out1 = np.array([[1.0, 2.5], [2.0, 1.5]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_sqrt_grad_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of sqrt_grad.
+    Description: test dynamic rank tensor of sqrt_grad.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    dy_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(sqrt_grad_dyn_shape_func)
+    test_cell.set_inputs(dy_dyn, x_dyn)
+    x_np = np.array([[0.02595769, 0.25027096]]).astype(np.float32)
+    dy = ms.Tensor(x_np)
+    x = ms.Tensor(x_np * x_np)
+    expect_out = np.array([[0.0129776, 0.12512207]]).astype(np.float32)
+    output = test_cell(dy, x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    x_np1 = np.array([[2.0, 5.0], [4.0, 3.0]]).astype(np.float32)
+    dy1 = ms.Tensor(x_np1)
+    x1 = ms.Tensor(x_np1 * x_np1)
+    output1 = test_cell(dy1, x1)
+    expect_out1 = np.array([[1.0, 2.5], [2.0, 1.5]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)

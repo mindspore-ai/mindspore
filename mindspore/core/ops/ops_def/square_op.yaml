@@ -6,3 +6,5 @@ square:
     returns:
         output: 
             dtype: tensor
+    function:
+        name: square_

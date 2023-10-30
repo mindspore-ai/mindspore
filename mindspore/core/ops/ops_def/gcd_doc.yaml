@@ -4,29 +4,29 @@ gcd:
         The shape of two inputs should be broadcastable, and data type of them should be
         one of: int32, int64.
 
-        .. warning::
-            This is an experimental API that is subject to change or deletion.
+            .. warning::
+                This is an experimental API that is subject to change or deletion.
 
-        Args:
-            - **x1** (Tensor) - The first input tensor.
-            - **x2** (Tensor) - The second input tensor.
+            Args:
+                - **x1** (Tensor) - The first input tensor.
+                - **x2** (Tensor) - The second input tensor.
 
-        Returns:
-            Tensor, the shape is the same as the one after broadcasting, and the data type is one
-            with higher precision in the two inputs.
+            Returns:
+                Tensor, the shape is the same as the one after broadcasting, and the data type is one
+                with higher precision in the two inputs.
 
-        Raises:
-            TypeError: If data type `x1` or `x2` is not int32 or int64.
-            ValueError: If shape of two inputs are not broadcastable.
+            Raises:
+                TypeError: If data type `x1` or `x2` is not int32 or int64.
+                ValueError: If shape of two inputs are not broadcastable.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x1 = Tensor(np.array([7, 8, 9]))
-            >>> x2 = Tensor(np.array([14, 6, 12]))
-            >>> y = ops.gcd(x1, x2)
-            >>> print(y)
-            [7 2 3]
+            Examples:
+                >>> import numpy as np
+                >>> from mindspore import Tensor, ops
+                >>> x1 = Tensor(np.array([7, 8, 9]))
+                >>> x2 = Tensor(np.array([14, 6, 12]))
+                >>> y = ops.gcd(x1, x2)
+                >>> print(y)
+                [7 2 3]

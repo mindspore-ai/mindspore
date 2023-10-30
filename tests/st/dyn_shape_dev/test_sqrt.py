@@ -22,12 +22,17 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def sqrt_forward_func(x):
-    return ops.auto_generate.sqrt(x)
+    return ops.auto_generate.sqrt_(x)
 
 
 @test_utils.run_with_cell
 def sqrt_backward_func(x):
     return ops.grad(sqrt_forward_func, (0,))(x)
+
+
+@test_utils.run_with_cell
+def sqrt_dyn_shape_func(x):
+    return ops.auto_generate.sqrt_(x)
 
 
 @pytest.mark.level0
@@ -91,3 +96,59 @@ def test_sqrt_vmap(mode):
     out = nest_vmap(x)
     print("out:", out)
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_sqrt_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of sqrt.
+    Description: test dynamic tensor and dynamic scalar of sqrt.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(sqrt_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    x = ms.Tensor(np.array([[1.0, 4.0, 16.0]]).astype(np.float32))
+    expect_out = np.array([[1.0, 2.0, 4.0]]).astype(np.float32)
+    output = test_cell(x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    np_x1 = np.array([[1.0, 4.0, 9.0, 16.0]])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect_out1 = np.array([[1.0, 2.0, 3.0, 4.0]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_sqrt_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of sqrt.
+    Description: test dynamic rank tensor of sqrt.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(sqrt_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    x = ms.Tensor(np.array([[1.0, 4.0, 16.0]]).astype(np.float32))
+    expect_out = np.array([[1.0, 2.0, 4.0]]).astype(np.float32)
+    output = test_cell(x)
+    assert np.allclose(output.asnumpy(), expect_out, rtol=1e-4, atol=1e-4)
+    np_x1 = np.array([[1.0, 4.0, 9.0, 16.0]])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect_out1 = np.array([[1.0, 2.0, 3.0, 4.0]]).astype(np.float32)
+    assert np.allclose(output1.asnumpy(), expect_out1, rtol=1e-4, atol=1e-4)

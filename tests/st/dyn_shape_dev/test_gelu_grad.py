@@ -32,12 +32,17 @@ def gelu_grad_backward_func(dy, x, y):
     return ops.grad(gelu_grad_forward_func, (0,))(dy, x, y)
 
 
+@test_utils.run_with_cell
+def gelu_grad_dyn_shape_func(dy, x, y):
+    return ops.auto_generate.gelu_grad(dy, x, y)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_gelu_grad_forward(mode):
     """
     Feature: Ops.
@@ -52,3 +57,66 @@ def test_gelu_grad_forward(mode):
     print("out: ", out)
     expect = np.array([1.1728112, 1.1796116, 1.0233028]).astype('float32')
     assert np.allclose(out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_gelu_grad_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of avg pool.
+    Description: test dynamic tensor and dynamic scalar of avg pool.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    dy_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    dy = Tensor(np.array([1.0829641, 1.0860993, 1.0115843]).astype('float32'))
+    x = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))
+    y = Tensor(np.array([1.0, 2.0, 3.0]).astype('float32'))
+    test_cell = test_utils.to_cell_obj(gelu_grad_dyn_shape_func)
+    test_cell.set_inputs(dy_dyn, x_dyn, y_dyn)
+    out = test_cell(dy, x, y)
+    print("out:", out)
+    expect = np.array([1.1728112, 1.1796116, 1.0233028]).astype('float32')
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_gelu_grad_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of gelu.
+    Description: test dynamic rank tensor of gelu.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    dy_dyn = ms.Tensor(shape=[None, None], dtype=ms.float32)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    y_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(gelu_grad_dyn_shape_func)
+    dy = Tensor(
+        np.array([[1.0829641, 1.0860993, 1.0115843]]).astype('float32'))
+    x = Tensor(np.array([[1.0, 2.0, 3.0]]).astype('float32'))
+    y = Tensor(np.array([[1.0, 2.0, 3.0]]).astype('float32'))
+    test_cell.set_inputs(dy_dyn, x_dyn, y_dyn)
+    output = test_cell(dy, x, y)
+    expect = np.array([[1.1728112, 1.1796116, 1.0233028]]).astype('float32')
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    dy1 = Tensor(
+        np.array([[1.0829641, 1.0860993, 1.0115843, 1.0]]).astype('float32'))
+    x1 = Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]).astype('float32'))
+    y1 = Tensor(np.array([[1.0, 2.0, 3.0, 4.0]]).astype('float32'))
+    output1 = test_cell(dy1, x1, y1)
+    expect1 = np.array(
+        [[1.172811, 1.1796113, 1.0233024, 1.000335]]).astype('float32')
+    assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)

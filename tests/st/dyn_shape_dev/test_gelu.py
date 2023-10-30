@@ -24,7 +24,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def gelu_forward_func(x):
-    return ops.auto_generate.gelu(x)
+    return ops.auto_generate.gelu_(x)
 
 
 @test_utils.run_with_cell
@@ -32,12 +32,17 @@ def gelu_backward_func(x):
     return ops.grad(gelu_forward_func, (0,))(x)
 
 
+@test_utils.run_with_cell
+def gelu_dyn_shape_func(x):
+    return ops.auto_generate.gelu_(x)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_gelu_forward(mode):
     """
     Feature: Ops.
@@ -57,7 +62,7 @@ def test_gelu_forward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_gelu_backward(mode):
     """
     Feature: Auto grad.
@@ -78,7 +83,7 @@ def test_gelu_backward(mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_gelu_vmap(mode):
     """
     Feature: test vmap function.
@@ -94,3 +99,62 @@ def test_gelu_vmap(mode):
     expect = np.array(
         [[0.345714, 0.26216117, -0.11462908, -0.08414857]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
+def test_gelu_dynamic(mode):
+    """
+    Feature: test dynamic tensor and dynamic scalar of gelu.
+    Description: test dynamic tensor and dynamic scalar of gelu.
+    Expectation: expect correct result.
+    """
+
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(gelu_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.array([1.0, 2.0, 3.0])
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.array([0.841192, 1.9545976, 2.9963627]).astype('float32')
+    assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    np_x1 = np.array([1.0, 2.0, 3.0, 4.0])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.array(
+        [0.841192, 1.9545976, 2.9963627, 3.99993]).astype('float32')
+    assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
+def test_gelu_dynamic_rank(mode):
+    """
+    Feature: test dynamic rank tensor of gelu.
+    Description: test dynamic rank tensor of gelu.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
+    test_cell = test_utils.to_cell_obj(gelu_dyn_shape_func)
+    test_cell.set_inputs(x_dyn)
+    np_x = np.array([[1.0, 2.0, 3.0]])
+    x = ms.Tensor(np_x, ms.float32)
+    output = test_cell(x)
+    expect = np.array([[0.841192, 1.9545976, 2.9963627]]).astype('float32')
+    assert np.allclose(output.asnumpy(), expect)
+    np_x1 = np.array([1.0, 2.0, 3.0, 4.0])
+    x1 = ms.Tensor(np_x1, ms.float32)
+    output1 = test_cell(x1)
+    expect1 = np.array(
+        [0.841192, 1.9545976, 2.9963627, 3.99993]).astype('float32')
+    assert np.allclose(output1.asnumpy(), expect1)

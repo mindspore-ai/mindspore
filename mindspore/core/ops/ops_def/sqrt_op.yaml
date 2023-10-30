@@ -6,3 +6,5 @@ sqrt:
     returns:
         output: 
             dtype: tensor
+    function:
+        name: sqrt_

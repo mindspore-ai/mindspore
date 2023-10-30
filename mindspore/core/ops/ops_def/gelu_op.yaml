@@ -9,4 +9,4 @@ gelu:
     class:
         name: GeLU
     function:
-    name: gelu_
+        name: gelu_
