@@ -153,8 +153,8 @@ void DoTypeConversionWithOpDef(AnalysisEnginePtr engine, const PrimitivePtr &pri
     auto input = (*params_list)[i];
     auto op_arg = op_def->args_[i];
     if (op_arg.as_init_arg_) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Expect an arg whose as_init_arg_ is 0, but got " << op_arg.arg_name_ << " in "
-                                 << prim->name();
+      MS_LOG(INTERNAL_EXCEPTION) << "Expect an input instead of an init argument, but got " << op_arg.arg_name_
+                                 << " in " << prim->name();
     }
     auto new_input = GetNodeAfterTypeConversion(input, op_arg, out_conf->node()->func_graph());
     if (new_input != input) {
@@ -1359,7 +1359,7 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
 }
 }  // namespace
 
-PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitiveFunctionPtr &prim_func)
+PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitivePtr &prim_func)
     : TrivialPrimEvaluator("PrimitiveFunctionEvaluator"), prim_func_(prim_func) {
   frontend_func_impl_ = mindspore::ops::GetOpFrontendFuncImplPtr(prim_func->name());
   op_def_ = mindspore::ops::GetOpDef(prim_func->name());
@@ -2408,7 +2408,7 @@ TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrLis
   return res;
 }
 
-void AddLabelsToPrimitiveFunction(const PrimitiveFunctionPtr &prim_func) {
+void AddLabelsToPrimitiveFunction(const PrimitivePtr &prim_func) {
   auto prim_name = prim_func->name();
   py::module mod = py::module::import(parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_MODULE);
   if (!py::hasattr(mod, parse::PYTHON_MOD_PRIMITIVE_OP_LABELS_DICT)) {
@@ -2437,7 +2437,7 @@ void AddLabelsToPrimitiveFunction(const PrimitiveFunctionPtr &prim_func) {
   }
 }
 
-CNodePtr ConvertArgsForPrimitiveClassType(const PrimitiveFunctionPtr &prim_func, const ops::OpDefPtr &op_def,
+CNodePtr ConvertArgsForPrimitiveClassType(const PrimitivePtr &prim_func, const ops::OpDefPtr &op_def,
                                           const CNodePtr &cnode, const AnalysisEnginePtr &engine,
                                           const AnfNodeConfigPtr &out_conf) {
   // Handle primitive labels.
@@ -2511,7 +2511,7 @@ std::vector<AnfNodePtr> ConvertArgsToInputs(const PrimitivePtr &prim, const std:
       index_input++;
     }
   }
-  AnfNodePtrList input_nodes{NewValueNode(std::make_shared<PrimitiveFunction>(prim))};
+  AnfNodePtrList input_nodes{NewValueNode(std::make_shared<Primitive>(*prim))};
   (void)std::copy(prim_input_nodes.begin(), prim_input_nodes.end(), std::back_inserter(input_nodes));
   (void)std::copy(prim_init_arg_nodes.begin(), prim_init_arg_nodes.end(), std::back_inserter(input_nodes));
   return input_nodes;
@@ -3398,7 +3398,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
                                                         const AnalysisEnginePtr &engine,
                                                         const AnfNodeConfigPtr &out_conf) const {
     // Create Primitive instance with variable arguments.
-    auto prim_func = std::make_shared<PrimitiveFunction>(cls_name);
+    auto prim_func = std::make_shared<Primitive>(cls_name);
     // Handle primitive signatures.
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::tuple prim_signatures = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_PRIMITIVE_SIGNATURES, cls_obj);

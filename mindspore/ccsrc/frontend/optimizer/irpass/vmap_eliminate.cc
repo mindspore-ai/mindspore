@@ -332,7 +332,7 @@ ValuePtr CreatePrimtivePy(const mindspore::HashMap<std::string, ValuePtr> &attrs
   return op_instance;
 }
 
-py::object CreatePrimitiveFunctionAdapterPyObj(const PrimitiveFunctionPtr &prim_func) {
+py::object CreatePrimitiveFunctionAdapterPyObj(const PrimitivePtr &prim_func) {
   const auto op_path = "mindspore.ops.primitive";
   const auto func = "_create_primitive_function_obj";
   py::object prim_func_adapter_obj = python_adapter::CallPyFn(op_path, func);
@@ -363,9 +363,8 @@ AnfNodePtr GetVmapRule(const PrimitivePtr &prim, const pipeline::ResourceBasePtr
   }
 
   // Get vmap rule for specific primitive.
-  if (prim->isa<PrimitiveFunction>()) {
-    auto prim_func = prim->cast<PrimitiveFunctionPtr>();
-    auto new_prim_func_adapter_py_obj = CreatePrimitiveFunctionAdapterPyObj(prim_func);
+  if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+    auto new_prim_func_adapter_py_obj = CreatePrimitiveFunctionAdapterPyObj(prim);
     vmap_rule_fn = GetVmapRuleFunctionByObj(new_prim_func_adapter_py_obj, axis_size);
   } else if (prim->is_base()) {
     if (prim->attrs().empty()) {

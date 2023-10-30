@@ -27,6 +27,8 @@ OpDefPtr GetOpDef(const std::string &op_name) {
 
 void AddOpDef(const std::string &op_name, const OpDefPtr op_def) { (void)gOpDefTable.emplace(op_name, op_def); }
 
+bool IsPrimitiveFunction(const std::string &op_name) { return GetOpDef(op_name) != nullptr; }
+
 std::string EnumToString(OP_DTYPE dtype) {
   static const std::unordered_map<OP_DTYPE, std::string> kEnumToStringMap = {
     {DT_BOOL, "bool"},

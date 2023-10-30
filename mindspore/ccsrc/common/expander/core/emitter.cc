@@ -93,8 +93,8 @@ ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
   PrimitivePtr prim = nullptr;
-  if (mindspore::ops::GetOpDef(op_name) != nullptr) {
-    prim = std::make_shared<PrimitiveFunction>(op_name);
+  if (mindspore::ops::IsPrimitiveFunction(op_name)) {
+    prim = std::make_shared<Primitive>(op_name);
   } else {
     auto &func = Emitter::primc_func_cache()[op_name];
     if (func == nullptr) {

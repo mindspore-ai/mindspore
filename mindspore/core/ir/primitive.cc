@@ -19,6 +19,7 @@
 #include <utility>
 #include "abstract/abstract_function.h"
 #include "utils/ms_utils.h"
+#include "ops/op_def.h"
 
 namespace mindspore {
 static uint64_t MakeId() {
@@ -56,6 +57,7 @@ Primitive::Primitive(const Primitive &prim)
       prim_type_(prim.prim_type_),
       is_base_(prim.is_base_),
       has_signature_(prim.has_signature_),
+      signatures_(prim.signatures()),
       record_evaluate_add_attr_(false),
       const_prim_(false),
       inplace_prim_(prim.inplace_prim_),
@@ -123,26 +125,15 @@ std::string Primitive::GetAttrsText() const {
   return oss.str();
 }
 
-PrimitiveFunction::PrimitiveFunction(const PrimitivePtr &prim) : Primitive(*prim) {}
-
-PrimitiveFunction::PrimitiveFunction(const std::string &name) : Primitive(name, false) {}
-
-abstract::AbstractBasePtr PrimitiveFunction::ToAbstract() {
-  return std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<PrimitiveFunction>(), nullptr);
+void Primitive::set_signatures(const std::vector<Signature> &signatures) {
+  signatures_ = signatures;
+  set_has_signature(!signatures.empty());
 }
 
-bool PrimitiveFunction::operator==(const Value &other) const {
-  if (other.isa<PrimitiveFunction>()) {
-    auto other_prim = static_cast<const PrimitiveFunction &>(other);
-    return *this == other_prim;
+std::string Primitive::ToString() const {
+  if (mindspore::ops::IsPrimitiveFunction(name())) {
+    return "PrimFunc_" + name();
   }
-  return false;
-}
-
-bool PrimitiveFunction::operator==(const PrimitiveFunction &other) const {
-  if (name() != other.name()) {
-    return false;
-  }
-  return common::IsAttrsEqual(attrs_, other.attrs_);
+  return name();
 }
 }  // namespace mindspore

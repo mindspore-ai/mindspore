@@ -131,17 +131,16 @@ using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
 
 class DoTransPrimitiveFunction : public Primitive {
  public:
-  explicit DoTransPrimitiveFunction(const PrimitiveFunctionPtr &prim)
-      : Primitive("T-PrimFunc-" + prim->name()), prim_(prim) {}
+  explicit DoTransPrimitiveFunction(const PrimitivePtr &prim) : Primitive("T-PrimFunc-" + prim->name()), prim_(prim) {}
 
   ~DoTransPrimitiveFunction() override = default;
 
   MS_DECLARE_PARENT(DoTransPrimitiveFunction, Primitive)
 
-  const PrimitiveFunctionPtr function() const { return prim_; }
+  const PrimitivePtr function() const { return prim_; }
 
  private:
-  PrimitiveFunctionPtr prim_;
+  PrimitivePtr prim_;
 };
 using DoTransPrimitiveFunctionPtr = std::shared_ptr<DoTransPrimitiveFunction>;
 }  // namespace prim

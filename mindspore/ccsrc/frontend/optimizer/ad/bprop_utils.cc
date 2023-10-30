@@ -56,7 +56,7 @@ FuncGraphPtr GetBprop(const PrimitivePtr &prim, const pipeline::ResourceBasePtr 
   py::function fn;
   if (prim->is_base()) {
     fn = GetBpropFunction(prim_name);
-  } else if (prim->isa<PrimitiveFunction>()) {
+  } else if (mindspore::ops::IsPrimitiveFunction(prim_name)) {
     fn = GetBpropFunction(prim_name);
   } else if (prim->isa<PrimitivePy>()) {
     fn = prim->cast_ptr<PrimitivePy>()->GetBpropFunction();

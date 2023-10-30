@@ -49,9 +49,8 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto prim_func = GetPrimitiveFunction(cnode);
-    if (prim_func == nullptr) {
-      // cnode is attr primitive node, do nothing
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (prim == nullptr) {
       continue;
     }
 
@@ -59,12 +58,7 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
     std::vector<AnfNodePtr> new_node_inputs;
 
     // change PrimtiveFunction into Primitive
-    auto op_type = prim_func->name();
-    auto prim = CreatePrimitive(op_type);
-    if (prim == nullptr) {
-      MS_LOG(ERROR) << "create primitive failed";
-      return false;
-    }
+    auto op_type = prim->name();
     auto op_def = mindspore::ops::GetOpDef(op_type);
     if (op_def == nullptr) {
       MS_LOG(DEBUG) << "cannot get op def for " << op_type;
@@ -106,42 +100,6 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
     }
   }
   return true;
-}
-
-PrimitiveFunctionPtr ArgsToAttrPass::GetPrimitiveFunction(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-
-  auto prim_input = cnode->input(0);
-  if (!IsValueNode<Primitive>(prim_input)) {
-    return nullptr;
-  }
-  auto prim = GetValuePtr<Primitive>(prim_input);
-  if (!prim->isa<PrimitiveFunction>()) {
-    return nullptr;
-  }
-  return prim->cast<PrimitiveFunctionPtr>();
-}
-
-PrimitivePtr ArgsToAttrPass::CreatePrimitive(const std::string &op_type) {
-#if 0
-  static auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  std::shared_ptr<mindspore::Primitive> prim;
-  auto it = op_primc_fns.find(op_type);
-  if (it == op_primc_fns.end()) {
-    MS_LOG(WARNING) << "unsupported op primitive type: " << op_type;
-    return nullptr;
-  }
-  prim = it->second();
-  prim->set_instance_name(op_type);
-  return prim;
-#else
-  auto base_operator = std::make_shared<ops::BaseOperator>(op_type);
-  if (base_operator == nullptr) {
-    MS_LOG(ERROR) << "create base operator failed";
-    return nullptr;
-  }
-  return base_operator->GetPrim();
-#endif
 }
 }  // namespace opt
 }  // namespace mindspore

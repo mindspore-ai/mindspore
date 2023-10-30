@@ -193,10 +193,8 @@ class OpPrimPyRegister {
 class PrimitiveFunctionAdapter {
  public:
   PrimitiveFunctionAdapter() = default;
-  void set_attached_primitive_function(const PrimitiveFunctionPtr &prim_func) {
-    attached_primitive_function_ = prim_func;
-  }
-  PrimitiveFunctionPtr attached_primitive_function() { return attached_primitive_function_.lock(); }
+  void set_attached_primitive_function(const PrimitivePtr &prim_func) { attached_primitive_function_ = prim_func; }
+  PrimitivePtr attached_primitive_function() { return attached_primitive_function_.lock(); }
   py::object name() { return py::str(attached_primitive_function_.lock()->name()); }
   py::object has_label(const std::string &label) {
     return py::bool_(attached_primitive_function_.lock()->HasAttr(label));
@@ -209,7 +207,7 @@ class PrimitiveFunctionAdapter {
   const bool parse_info_ = true;
 
  private:
-  std::weak_ptr<PrimitiveFunction> attached_primitive_function_;
+  std::weak_ptr<Primitive> attached_primitive_function_;
 };
 using PrimitiveFunctionAdapterPtr = std::shared_ptr<PrimitiveFunctionAdapter>;
 }  // namespace mindspore

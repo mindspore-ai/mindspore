@@ -390,7 +390,7 @@ namespace mindspore::prim {{
     ops_prim_gen += ops_prim_head
     for operator_name, operator_data in yaml_data.items():
         k_name_op = get_op_name(operator_name, operator_data.get('class'))
-        ops_prim_gen += f"""GVAR_DEF(PrimitivePtr, kPrim{k_name_op}, std::make_shared<PrimitiveFunction>(ops::kName{k_name_op}))
+        ops_prim_gen += f"""GVAR_DEF(PrimitivePtr, kPrim{k_name_op}, std::make_shared<Primitive>(ops::kName{k_name_op}))
 """
     ops_prim_gen += ops_prim_end
     return ops_prim_gen

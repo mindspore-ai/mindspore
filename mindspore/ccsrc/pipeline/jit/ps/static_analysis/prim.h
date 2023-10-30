@@ -34,7 +34,7 @@ namespace mindspore {
 namespace abstract {
 class PrimitiveFunctionEvaluator final : public TrivialPrimEvaluator {
  public:
-  explicit PrimitiveFunctionEvaluator(const PrimitiveFunctionPtr &primitive);
+  explicit PrimitiveFunctionEvaluator(const PrimitivePtr &primitive);
   ~PrimitiveFunctionEvaluator() override = default;
   MS_DECLARE_PARENT(PrimitiveFunctionEvaluator, TrivialPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
@@ -45,7 +45,7 @@ class PrimitiveFunctionEvaluator final : public TrivialPrimEvaluator {
 
  private:
   AbstractBasePtr CheckAndInfer(const AbstractBasePtrList &args);
-  PrimitiveFunctionPtr prim_func_;
+  PrimitivePtr prim_func_;
   mindspore::ops::OpDefPtr op_def_{nullptr};
   mindspore::ops::OpFrontendFuncImplPtr frontend_func_impl_{nullptr};
 };

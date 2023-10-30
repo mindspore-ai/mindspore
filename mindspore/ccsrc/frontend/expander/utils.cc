@@ -23,6 +23,7 @@
 #include <set>
 #include "ops/nn_op_name.h"
 #include "ops/structure_ops.h"
+#include "ops/op_def.h"
 #include "ops/math_ops.h"
 #include "ops/array_ops.h"
 #include "mindspore/core/utils/anf_utils.h"
@@ -68,7 +69,7 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
     return nullptr;
   }
   // If it is primitive function, no need convert because primitive function are all C++ infer.
-  if (primc->isa<PrimitiveFunction>()) {
+  if (mindspore::ops::IsPrimitiveFunction(primc->name())) {
     return nullptr;
   }
   if (abstract::GetFrontendPrimitiveInferImpl(primc).has_value()) {

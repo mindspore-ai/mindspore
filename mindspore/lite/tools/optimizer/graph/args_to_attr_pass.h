@@ -31,11 +31,6 @@ class ArgsToAttrPass : public Pass {
   explicit ArgsToAttrPass(const std::string &name = "InferShapePass") : Pass(name) {}
   ~ArgsToAttrPass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
-
- private:
-  PrimitiveFunctionPtr GetPrimitiveFunction(const CNodePtr &cnode);
-  // bool Test();
-  PrimitivePtr CreatePrimitive(const std::string &op_type);
 };
 }  // namespace opt
 }  // namespace mindspore

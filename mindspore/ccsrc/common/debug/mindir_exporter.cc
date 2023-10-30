@@ -22,6 +22,7 @@
 #include <utility>
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
+#include "mindspore/core/ops/op_def.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
@@ -157,7 +158,7 @@ bool IrExportBuilder::BuildPrimitives() {
 
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
-    if (prim->isa<PrimitiveFunction>()) {
+    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION);
     } else {
       prim_proto->set_prim_type(mind_ir::PrimitiveProto_PrimType_PRIMITIVE);

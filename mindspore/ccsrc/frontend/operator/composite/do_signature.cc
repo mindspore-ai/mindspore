@@ -26,6 +26,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
+#include "ops/op_def.h"
 #include "mindspore/core/utils/flags.h"
 
 namespace mindspore {
@@ -40,8 +41,11 @@ const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
   if (function->isa<PrimitivePy>() && function->cast<PrimitivePyPtr>()->has_signature()) {
     return function->cast<PrimitivePyPtr>()->signatures();
-  } else if (function->isa<PrimitiveFunction>() && function->cast<PrimitiveFunctionPtr>()->has_signature()) {
-    return function->cast<PrimitiveFunctionPtr>()->signatures();
+  } else if (function->isa<Primitive>()) {
+    auto prim = function->cast<PrimitivePtr>();
+    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
+      return prim->signatures();
+    }
   } else if (function->isa<MetaFuncGraph>()) {
     return function->cast<MetaFuncGraphPtr>()->signatures();
   }

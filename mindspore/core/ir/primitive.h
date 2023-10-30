@@ -100,7 +100,7 @@ class MS_CORE_API Primitive : public Named {
   Primitive &operator=(const Primitive &other);
   MS_DECLARE_PARENT(Primitive, Named);
   abstract::AbstractBasePtr ToAbstract() override;
-  std::string ToString() const override { return name(); }
+  std::string ToString() const override;
   /// \brief Ready to recording the attribute if the attribute needs to be added when deducing shape and type.
   /// This attributes has been recorded needs to add in infer cache.
   void BeginRecordAddAttr() {
@@ -277,6 +277,14 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \return Return true if primitive has signature flag , else return false.
   bool has_signature() const { return has_signature_; }
+  /// \brief Set signatures of primitive.
+  ///
+  /// \param[in] signatures Set signatures of primitive.
+  void set_signatures(const std::vector<Signature> &signatures);
+  /// \brief Get signatures of primitive.
+  ///
+  /// \return Return signatures of primitive.
+  const std::vector<Signature> &signatures() const { return signatures_; }
   /// \brief Check whether the primitive is a basic primitive.
   ///
   /// \return Return true if the primitive is basic, else return false.
@@ -335,6 +343,7 @@ class MS_CORE_API Primitive : public Named {
   PrimType prim_type_;
   bool is_base_;
   bool has_signature_;
+  std::vector<Signature> signatures_;
   bool record_evaluate_add_attr_;
   bool const_prim_;
   bool inplace_prim_;
@@ -347,24 +356,6 @@ inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
   os << *p;
   return os;
 }
-
-class MS_CORE_API PrimitiveFunction : public Primitive {
- public:
-  explicit PrimitiveFunction(const PrimitivePtr &prim);
-  explicit PrimitiveFunction(const std::string &name);
-  ~PrimitiveFunction() override = default;
-  MS_DECLARE_PARENT(PrimitiveFunction, Primitive);
-  bool operator==(const Value &other) const override;
-  bool operator==(const PrimitiveFunction &other) const;
-  abstract::AbstractBasePtr ToAbstract() override;
-  std::string ToString() const override { return "PrimFunc_" + name(); }
-  void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
-  const std::vector<Signature> &signatures() const { return signatures_; }
-
- private:
-  std::vector<Signature> signatures_;
-};
-using PrimitiveFunctionPtr = std::shared_ptr<PrimitiveFunction>;
 
 /// \brief Equal operator for Primitive.
 struct MS_CORE_API PrimitiveEqual {

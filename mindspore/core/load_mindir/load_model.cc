@@ -2326,7 +2326,7 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
       prim = std::make_shared<prim::DoSignaturePrimitive>(op_name, std::make_shared<Primitive>(op_name));
     } else if (type == mind_ir::PrimitiveProto_PrimType_PRIMITIVE_FUNCTION) {
       MS_LOG(DEBUG) << "PrimitiveFunction special node_type: " << prim_type;
-      prim = std::make_shared<PrimitiveFunction>(prim_type);
+      prim = std::make_shared<Primitive>(prim_type);
     } else {
       MS_LOG(DEBUG) << "Special node_type: " << prim_type;
       prim = std::make_shared<Primitive>(prim_type);
