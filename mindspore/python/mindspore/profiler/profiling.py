@@ -276,8 +276,10 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
 
 def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
     try:
+        ProfilerInfo.set_export_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         msprof_exporter = AscendMsprofExporter(source_path)
         msprof_exporter.export(model_iteration_dict)
+        ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     except ProfilerException as err:
         logger.warning(err.message)
     finally:
@@ -646,7 +648,6 @@ class Profiler:
                 logger.warning("The parameter 'profile_framework' is not support for CPU, so there no host_info"
                                " directory in the output path.")
         logger.info("Profiling: all the data have been analyzed.")
-        self._init_profiler_info()
         self._is_support_step_info_collect()
         parallel_mode = get_auto_parallel_context("parallel_mode")
         stage_num = get_auto_parallel_context("pipeline_stages")
@@ -725,6 +726,7 @@ class Profiler:
             if self._data_process:
                 self._md_profiler.start()
             self._ascend_graph_start()
+        self._init_profiler_info()
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     def stop(self):
@@ -786,6 +788,7 @@ class Profiler:
 
             self._stop_time = int(time.time() * 10000000)
         ProfilerInfo.set_profiling_stop_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        ProfilerInfo.save(self._output_path)
         logger.info("Profiling: stop time: %d", self._stop_time)
 
     def _profiler_init(self, kwargs):
