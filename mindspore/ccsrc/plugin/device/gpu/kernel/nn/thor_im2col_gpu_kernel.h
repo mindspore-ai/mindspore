@@ -94,7 +94,7 @@ class ThorIm2ColFwdGpuKernelMod : public NativeGpuKernelMod {
   }
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     InitResource();
-    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->GetDtype()));
+    cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[kIndex0]->dtype_id()));
     pad_height_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("pad")));
     pad_width_n = pad_height_;
     pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));

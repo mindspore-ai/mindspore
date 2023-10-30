@@ -180,10 +180,10 @@ void ListDiffGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTens
                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   auto num_out = dyn_out.shapes[kIndex0][kIndex0];
-  std::vector<int64_t> shape = outputs_[kIndex0]->GetShapeVector();
+  std::vector<int64_t> shape = outputs[kIndex0]->GetShapeVector();
   shape[kIndex0] = num_out;
   for (size_t i = 0; i < output_num; ++i) {
     outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));

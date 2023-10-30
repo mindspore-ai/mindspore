@@ -38,6 +38,7 @@ class UniqueWithPadGpuKernelMod : public UniqueGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+  bool IsNeedUpdateOutputShapeAndSize() override { return false; }
 };
 }  // namespace kernel
 }  // namespace mindspore

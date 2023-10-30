@@ -119,9 +119,9 @@ void CoalesceGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTens
                                                     const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "Coalesce cudaStreamSynchronized failed");
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
+    std::vector<int64_t> shape = outputs[i]->GetShapeVector();
     std::replace(std::begin(shape), std::end(shape), -1, dyn_out.shapes[0][0]);
     outputs[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
     outputs[i]->set_size(LongToSize(std::accumulate(shape.begin(), shape.end(), UnitSizeInBytes(outputs[i]->dtype_id()),

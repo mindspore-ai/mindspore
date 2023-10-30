@@ -201,7 +201,7 @@ void NMSWithOverlapsFwdGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
 
-  std::vector<int64_t> shape = outputs_[kIndex0]->GetShapeVector();
+  std::vector<int64_t> shape = outputs[kIndex0]->GetShapeVector();
   shape[kIndex0] = num_output_;
   outputs[kIndex0]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
   outputs[kIndex0]->set_size(LongToSize(std::accumulate(

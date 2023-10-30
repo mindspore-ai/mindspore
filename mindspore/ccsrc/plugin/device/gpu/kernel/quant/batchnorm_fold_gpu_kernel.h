@@ -147,7 +147,7 @@ class BatchNormFoldGpuKernelMod : public NativeGpuKernelMod {
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     output_size_ = sizeof(T) * channel_;
 
-    cudnnDataType_t cudnnDataType = GetCudnnDataType(TypeIdLabel(inputs[0]->GetDtype()));
+    cudnnDataType_t cudnnDataType = GetCudnnDataType(TypeIdLabel(inputs[0]->dtype_id()));
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnnDataType, batch_, channel_, height_, width_),
       "Set x desc failed");

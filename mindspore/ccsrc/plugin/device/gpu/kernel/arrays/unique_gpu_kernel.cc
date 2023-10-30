@@ -100,9 +100,9 @@ void UniqueGpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor
                                                   const std::vector<KernelTensor *> &outputs) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
-  size_t output_num = outputs_.size();
+  size_t output_num = outputs.size();
   for (size_t i = 0; i < output_num; ++i) {
-    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
+    std::vector<int64_t> shape = outputs[i]->GetShapeVector();
     if (i == 0) {
       auto dyn_out = helper_ptr_->GetOutputTensorInfo();
       MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,

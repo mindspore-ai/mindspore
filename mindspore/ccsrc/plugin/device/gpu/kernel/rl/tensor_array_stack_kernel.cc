@@ -74,8 +74,8 @@ void TensorArrayStackKernelMod::UpdateOutputShapeAndSize(const std::vector<Kerne
   shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
   // common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
-  outputs_[0]->SetShapeVector(Convert2Long(shape));
-  outputs_[0]->set_size(value_size_);
+  outputs[0]->SetShapeVector(Convert2Long(shape));
+  outputs[0]->set_size(value_size_);
 }
 
 void TensorArrayStackKernelMod::ResetResource() noexcept {
