@@ -43,6 +43,8 @@ std::shared_ptr<OptOption> OptOption::CreateOptionByPoint(void *ptr) {
 
 OptCode::OptCode() : phase_(""), cFunc_(nullptr), rFunc_(nullptr), pFunc_(NULL) {
   guard_ = std::make_shared<OptGuard>();
+  graph_perf_ = std::make_shared<OptPerf>();
+  pynative_perf_ = std::make_shared<OptPerf>();
 }
 
 OptCode::~OptCode() {
@@ -79,6 +81,17 @@ OptGuardPtr OptCode::GetGuard() { return guard_; }
 void OptCode::SetOption(OptOptionPtr option) { option_ = option; }
 
 OptOptionPtr OptCode::GetOption() { return option_; }
+
+OptPerfPtr OptCode::GetPerf(OptPerf::PerfKind kind) {
+  switch (kind) {
+    case OptPerf::PerfKind::kPerfGraph:
+      return graph_perf_;
+    case OptPerf::PerfKind::kPerfPyNative:
+      return pynative_perf_;
+    default:
+      return nullptr;
+  }
+}
 
 OptCodePtr OptCodeHub::AddOptTarget(OptOptionPtr option) {
   OptCodePtr ret;

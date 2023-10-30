@@ -23,6 +23,7 @@
 #include <Python.h>
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pi_jit/graph_guard/guard.h"
+#include "pipeline/jit/pi_jit/graph_guard/perf.h"
 
 namespace mindspore {
 namespace jit {
@@ -62,6 +63,7 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   virtual OptGuardPtr GetGuard();
   virtual void SetOption(OptOptionPtr option);
   virtual OptOptionPtr GetOption();
+  virtual OptPerfPtr GetPerf(OptPerf::PerfKind kind);
 
  protected:
   std::string phase_;
@@ -70,6 +72,8 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
   PyObject *pFunc_;
   OptGuardPtr guard_;
   OptOptionPtr option_;
+  OptPerfPtr graph_perf_;
+  OptPerfPtr pynative_perf_;
 };
 using OptCodePtr = std::shared_ptr<OptCode>;
 using OptCodeSet = std::vector<OptCodePtr>;

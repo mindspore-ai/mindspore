@@ -49,6 +49,7 @@ class GraphJitConfig {
     kLoopUnrolling,
     kInferPrimitive,
     kStrictTrace,
+    kPerfStatistics,
     kLogGraphBreak,
     kEnableOptimizeForAttrItem,
     kEnableEliminateUnusedOperation,
@@ -57,6 +58,8 @@ class GraphJitConfig {
     kMaxInlineDepth,
     kMaxPruneCase,
     kMaxLoopUnrolling,
+    kStaticGraphBytecodeMin,
+    kPerfStatisticsScale10000x,
     kInferPrimitiveMask,
     kInferPrimitiveMax,
     /* ------------------------------ */

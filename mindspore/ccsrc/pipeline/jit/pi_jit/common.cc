@@ -30,6 +30,7 @@
 #include "pipeline/jit/pi_jit/graph_compiler/parser/byte_code_parser.h"
 #include "pipeline/jit/pi_jit/graph_compiler/utils.h"
 #include "pipeline/jit/pi_jit/utils/utils.h"
+#include "pipeline/jit/pi_jit/graph_guard/strategy.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/jit/pi_jit/ms_adapter/infer.h"
@@ -776,8 +777,23 @@ static std::vector<py::object> PackArgs(const PyFrameObject *frame) {
   return {args, vargs, kwvargs};
 }
 
+static PyObject *CallWrapper(std::function<PyObject *(void)> func, const JitCompileResults *c, bool is_graph) {
+  PyObject *res;
+  bool enable_statistics = c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics);
+  if (enable_statistics) {
+    res = CallFunction<PyObject *>(
+      c->compiled.code->GetPerf(is_graph ? OptPerf::PerfKind::kPerfGraph : OptPerf::PerfKind::kPerfPyNative), func);
+  } else {
+    res = func();
+  }
+  return res;
+}
+
 static py::object CallGraph(const JitCompileResults *c, const py::object &args, const py::object &kwvargs) {
-  PyObject *res = c->compiled.cFunc(args.ptr(), kwvargs.ptr());
+  PyObject *py_args = args.ptr();
+  PyObject *py_kwvargs = kwvargs.ptr();
+  PyObject *res =
+    CallWrapper([c, py_args, py_kwvargs]() -> PyObject * { return c->compiled.cFunc(py_args, py_kwvargs); }, c, true);
   if (res == NULL && !PyErr_Occurred()) {
     PyErr_SetString(PyExc_RuntimeError, "compiled graph execute failed");
   }
@@ -785,14 +801,60 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
 }
 
 static py::object CallCompiledCallable(PyThreadState *tstate, const PyFrameObject *f, const JitCompileResults *c) {
-  PyObject *res;
-  PyFrameObject *new_f = PrepareCallCompiledCallable(tstate, f, c);
-  res = _PyEval_EvalFrameDefault(tstate, new_f, 0);
-  if (res == NULL && !PyErr_Occurred()) {
-    PyErr_Format(PyExc_RuntimeError, "compiled function failed with unknown error, error bci %d", new_f->f_lasti);
-  }
-  Py_DECREF(new_f);
+  PyObject *res = CallWrapper(
+    [tstate, f, c]() -> PyObject * {
+      PyObject *ret;
+      int bci;
+      if (c->compiled.cFunc) {
+        ret = _PyEval_EvalFrameDefault(tstate, const_cast<PyFrameObject *>(f), 0);
+        bci = f->f_lasti;
+      } else {
+        PyFrameObject *new_f = PrepareCallCompiledCallable(tstate, f, c);
+        ret = _PyEval_EvalFrameDefault(tstate, new_f, 0);
+        bci = new_f->f_lasti;
+        Py_DECREF(new_f);
+      }
+      if (ret == NULL && !PyErr_Occurred()) {
+        PyErr_Format(PyExc_RuntimeError, "compiled function failed with unknown error, error bci %d", bci);
+      }
+      return ret;
+    },
+    c, false);
   return py::reinterpret_steal<py::object>(res);
+}
+
+static bool PreferCallGraph(const JitCompileResults *c) {
+  bool enable_statistics = c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics);
+  int scale_statistics = c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsScale10000x);
+  bool graph_preferred = true;
+  if (enable_statistics && c->compiled.cFunc) {
+    constexpr auto kStatisticsScale = 10000.0;
+    graph_preferred = OptStrategy::ExecKind::kExecGraph ==
+                      OptStrategy::MakeExecStrategyByPerf(c->compiled.code->GetPerf(OptPerf::PerfKind::kPerfGraph),
+                                                          c->compiled.code->GetPerf(OptPerf::PerfKind::kPerfPyNative),
+                                                          scale_statistics / kStatisticsScale);
+  }
+  int graph_bytecode_min = c->conf->getIntConfig(GraphJitConfig::kStaticGraphBytecodeMin);
+  if (graph_bytecode_min > 0) {
+    graph_preferred =
+      graph_preferred && (OptStrategy::ExecKind::kExecGraph ==
+                          OptStrategy::MakeExecStrategyByComplex(c->compiled.callable, graph_bytecode_min));
+  }
+  return graph_preferred;
+}
+
+static void SetExecStatus(const JitCompileResults *c, bool graph_preferred) {
+  bool enable_statistics = c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics);
+  int graph_bytecode_min = c->conf->getIntConfig(GraphJitConfig::kStaticGraphBytecodeMin);
+  if (enable_statistics || (graph_bytecode_min > 0)) {
+    if (c->func != nullptr) {
+      if (graph_preferred) {
+        PyObject_SetAttrString(c->func, "__graph_exec__", Py_True);
+      } else {
+        PyObject_SetAttrString(c->func, "__graph_exec__", Py_False);
+      }
+    }
+  }
 }
 
 static py::object CallCompiledResults(PyThreadState *tstate, const PyFrameObject *f, const JitCompileResults *c) {
@@ -806,8 +868,9 @@ static py::object CallCompiledResults(PyThreadState *tstate, const PyFrameObject
   }
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
-  py::object res = c->compiled.cFunc ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
-
+  bool graph_preferred = (c->compiled.cFunc && PreferCallGraph(c));
+  SetExecStatus(c, graph_preferred);
+  py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   // dump traceback
   if (c->conf->GetBoolConfig(GraphJitConfig::kPrintTraceback) && c->func != nullptr) {
     // dump all traceback for the root function
@@ -833,6 +896,7 @@ static bool CheckGuard(JitCompileResults *c, PyFrameObject *f) {
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
     if (guard != nullptr && guard->Check(f, print_guard)) {
       c->compiled.cFunc = oc->GetNativeFunc();
+      c->compiled.code = oc;
       PyObject *new_ref = oc->GetPythonCallable();
       Py_XINCREF(new_ref);
       Py_XSETREF(c->compiled.callable, new_ref);
