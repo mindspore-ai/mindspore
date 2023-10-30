@@ -46,6 +46,7 @@ static const std::unordered_map<std::string, GraphJitConfig::Options> bool_key_m
   {"loop_unrolling", GraphJitConfig::kLoopUnrolling},
   {"infer_primitive", GraphJitConfig::kInferPrimitive},
   {"strict_trace", GraphJitConfig::kStrictTrace},
+  {"perf_statistics", GraphJitConfig::kPerfStatistics},
   {"LOG_GRAPH_BREAK", GraphJitConfig::kLogGraphBreak}
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
@@ -57,6 +58,8 @@ static const std::unordered_map<std::string, GraphJitConfig::Options> int_key_ma
   {"MAX_LOOP_UNROLLING", GraphJitConfig::kMaxLoopUnrolling},
   {"INFER_PRIMITIVE_MASK", GraphJitConfig::kInferPrimitiveMask},
   {"INFER_PRIMITIVE_MAX", GraphJitConfig::kInferPrimitiveMax},
+  {"STATIC_GRAPH_BYTECODE_MIN", GraphJitConfig::kStaticGraphBytecodeMin},
+  {"PERF_STATISTICS_SCALE_10000X", GraphJitConfig::kPerfStatisticsScale10000x},
 };
 
 GraphJitConfig::GraphJitConfig() {
@@ -80,6 +83,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kLoopUnrolling - kBoolConf] = true;
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
+  bool_conf[kPerfStatistics - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the
    *__getattr__, __getitem__ function of the user-defined object do not affect the correctness.
@@ -92,6 +96,8 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kMaxLoopUnrolling - kIntConf] = 100;
   int_conf[kInferPrimitiveMask - kIntConf] = 7;
   int_conf[kInferPrimitiveMax - kIntConf] = 0;
+  int_conf[kStaticGraphBytecodeMin - kIntConf] = 0;
+  int_conf[kPerfStatisticsScale10000x - kIntConf] = 1000;
 
   set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};
 }
