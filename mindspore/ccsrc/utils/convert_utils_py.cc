@@ -74,6 +74,8 @@ py::object SetAdaptedAttrToTensor(const py::object &tensor, const AbstractBasePt
   auto tensor_abs = abs->cast<abstract::AbstractTensorPtr>();
   if (tensor_abs->is_adapter()) {
     py::setattr(tensor, "adapter_flag", py::bool_(true));
+  } else {
+    py::setattr(tensor, "adapter_flag", py::bool_(false));
   }
   return tensor;
 }
