@@ -47,14 +47,12 @@ def test_call_interpret_obj_in_jit_function():
     Expectation: The PyExecute seemingly be eliminated, and last call a ClassType eventually cause this error.
     """
     @jit
-    def func():
+    def func(x):
         a = AnyCallable(Tensor([1, 2, 4]))
-        return a()
+        return a(x)
 
-    with pytest.raises(ValueError) as raise_info:
-        a = func()
-        assert a == ms.int64
-    assert "The object is not callable. Please check code" in str(raise_info.value)
+    a = func(Tensor([1, 2]))
+    assert a == ms.int64
 
 
 @pytest.mark.level0

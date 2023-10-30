@@ -815,7 +815,10 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
 
   if (possible_func->isa<AbstractAny>()) {
-    return ConvertToPyInterpretCall(cnode, conf);
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+    if (allow_fallback_runtime) {
+      return ConvertToPyExecuteCall(cnode, conf);
+    }
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
