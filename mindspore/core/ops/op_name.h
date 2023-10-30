@@ -114,6 +114,7 @@ constexpr auto kIncludeALLGrams = "include_all_grams";
 constexpr auto kInputSize = "input_size";
 constexpr auto kInChannel = "in_channel";
 constexpr auto kInputShape = "input_shape";
+constexpr auto kInnerPrecise = "inner_precise";
 constexpr auto kIoFormat = "io_format";
 constexpr auto kIsScale = "is_scale";
 constexpr auto kIsTraining = "is_training";

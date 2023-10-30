@@ -24,6 +24,10 @@ opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR ${BUILD_INC_9
 add_library(cust_ascendc_op_proto SHARED ${ops_srcs} ${ASCEND_AUTOGEN_PATH}/op_proto.cc)
 target_compile_definitions(cust_ascendc_op_proto PRIVATE OP_PROTO_LIB)
 target_compile_options(cust_ascendc_op_proto PRIVATE -fvisibility=hidden)
+target_link_directories(cust_ascendc_op_proto PRIVATE
+                        ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                        ${CMAKE_COMPILE_RUNTIME_LIBRARY}
+)
 target_link_libraries(
   cust_ascendc_op_proto
   PRIVATE intf_pub
@@ -38,6 +42,10 @@ set_target_properties(cust_ascendc_op_proto PROPERTIES OUTPUT_NAME cust_opsproto
 add_library(cust_optiling SHARED ${ops_srcs})
 target_compile_definitions(cust_optiling PRIVATE OP_TILING_LIB)
 target_compile_options(cust_optiling PRIVATE -fvisibility=hidden)
+target_link_directories(cust_optiling PRIVATE
+                        ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                        ${CMAKE_COMPILE_RUNTIME_LIBRARY}
+)
 target_link_libraries(
   cust_optiling
   PRIVATE intf_pub
@@ -52,6 +60,10 @@ set_target_properties(cust_optiling PROPERTIES OUTPUT_NAME cust_opmaster_rt2.0)
 file(GLOB aclnn_src ${ASCEND_AUTOGEN_PATH}/aclnn_*.cpp)
 file(GLOB aclnn_inc ${ASCEND_AUTOGEN_PATH}/aclnn_*.h)
 add_library(cust_opapi SHARED ${aclnn_src})
+target_link_directories(cust_opapi PRIVATE
+                        ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                        ${CMAKE_COMPILE_RUNTIME_LIBRARY}
+)
 target_link_libraries(cust_opapi PRIVATE intf_pub ascendcl nnopbase)
 
 add_custom_target(
