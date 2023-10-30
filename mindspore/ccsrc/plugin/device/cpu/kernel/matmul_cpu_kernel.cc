@@ -161,7 +161,7 @@ int MatMulCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   auto shape0 = inputs[kIndex0]->GetShapeVector();
   is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
   if (is_empty_tensor_) {
-    auto dtype = inputs[kIndex0]->GetDtype();
+    auto dtype = inputs[kIndex0]->dtype_id();
     auto iter = empty_tensor_map_.find(dtype);
     if (iter == empty_tensor_map_.end()) {
       MS_LOG(EXCEPTION) << "Does not support " << TypeIdLabel(dtype) << "!";

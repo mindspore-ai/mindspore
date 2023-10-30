@@ -37,7 +37,7 @@ bool CumProdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return false;
   }
 
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   is_dynamic_shape_ = inputs[kIndex0]->IsDynamicShape();
 
   auto input_num = inputs.size();

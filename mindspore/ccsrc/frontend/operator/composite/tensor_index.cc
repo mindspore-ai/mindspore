@@ -126,9 +126,7 @@ static ValueNodePtr MakeGatherNode() {
   auto prim = std::make_shared<Primitive>(kPrimGather->name());
   const std::vector<std::string> &input_names = {"params", "indices", "axis"};
   const std::vector<std::string> &output_names = {"output"};
-  prim->SetAttrs({{"batch_dims", MakeValue(kZeroAnfValue)},
-                  {kAttrInputNames, MakeValue(input_names)},
-                  {kAttrOutputNames, MakeValue(output_names)}});
+  prim->SetAttrs({{kAttrInputNames, MakeValue(input_names)}, {kAttrOutputNames, MakeValue(output_names)}});
   return NewValueNode(prim);
 }
 
@@ -1288,8 +1286,9 @@ FuncGraphPtr HandleBoolTensor::GenerateFuncGraph(const AbstractBasePtrList &args
         for (size_t j = 0; j < tensor_shape.size(); j++) {
           auto gather_index_tensor = std::make_shared<tensor::Tensor>(SizeToLong(j));
           auto gather_index_tensor_node = NewValueNode(gather_index_tensor->ToAbstract()->BuildValue());
-          auto bool_tensor_index_node = res_graph_->NewCNode(
-            {MakeGatherNode(), new_index_node, gather_index_tensor_node, NewValueNode(SizeToLong(1))});
+          auto bool_tensor_index_node =
+            res_graph_->NewCNode({MakeGatherNode(), new_index_node, gather_index_tensor_node,
+                                  NewValueNode(SizeToLong(1)), NewValueNode(kZeroAnfValue)});
           bool_tensor_index_node =
             res_graph_->NewCNode({MakeReshapeNode(), bool_tensor_index_node, NewValueNode(std::vector<int64_t>{-1})});
           (void)indices_out_list.emplace_back(bool_tensor_index_node);

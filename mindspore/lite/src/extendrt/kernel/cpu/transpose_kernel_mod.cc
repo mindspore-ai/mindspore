@@ -83,7 +83,7 @@ bool TransposeKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     }
     axes_.emplace_back(p);
   }
-  dtype_ = inputs[kIndex0]->GetDtype();
+  dtype_ = inputs[kIndex0]->dtype_id();
   if (axes_.size() > MAX_TRANSPOSE_DIM_SIZE) {
     MS_LOG(EXCEPTION) << "Transpose support max dimension is " << MAX_TRANSPOSE_DIM_SIZE << "D, but got "
                       << axes_.size() << "D.";
