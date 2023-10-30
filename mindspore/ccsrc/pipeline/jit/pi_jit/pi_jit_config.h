@@ -80,10 +80,13 @@ class GraphJitConfig {
 
   bool ShouldAutoJit(PyFrameObject *f);
   bool CheckJitForbidden(const py::object &callable);
+  py::object GetJitConstexpr(const py::object &code);
+  bool CheckJitConstexpr(const py::object &code);
 
   void AddAllowedInlineModules(const std::string &module_name);
   void AddPSJitStrictCells(const std::string &type_str);
 
+  bool AddJitConstexpr(PyObject *list);
   bool AddJitForbidden(PyObject *callable_list);
   bool AddAllowedInlineModules(PyObject *list);
   bool AddPSJitStrictCells(PyObject *list);
