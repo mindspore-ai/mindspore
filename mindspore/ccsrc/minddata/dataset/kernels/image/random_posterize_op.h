@@ -21,18 +21,15 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/kernels/image/posterize_op.h"
+#include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {
 namespace dataset {
-class RandomPosterizeOp : public PosterizeOp {
+class RandomPosterizeOp : public RandomTensorOp {
  public:
-  /// Default values
-  static const std::vector<uint8_t> kBitRange;
-
   /// \brief Constructor
   /// \param[in] bit_range: Minimum and maximum bits in range
-  explicit RandomPosterizeOp(const std::vector<uint8_t> &bit_range = kBitRange);
+  explicit RandomPosterizeOp(const std::vector<uint8_t> &bit_range);
 
   ~RandomPosterizeOp() override = default;
 
@@ -42,9 +39,7 @@ class RandomPosterizeOp : public PosterizeOp {
 
   /// Member variables
  private:
-  std::string kRandomPosterizeOp = "RandomPosterizeOp";
   std::vector<uint8_t> bit_range_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

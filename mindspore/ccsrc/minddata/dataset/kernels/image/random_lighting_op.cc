@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-const float RandomLightingOp::kAlpha = 0.05;
-
 Status RandomLightingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
 
@@ -29,9 +27,9 @@ Status RandomLightingOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
   RETURN_IF_NOT_OK(ValidateLowRank("RandomLighting", input, kMinImageRank, "<height, width, ...>"));
   RETURN_IF_NOT_OK(ValidateTensorNumeric("RandomLighting", input));
 
-  float rnd_r = dist_(rnd_rgb_);
-  float rnd_g = dist_(rnd_rgb_);
-  float rnd_b = dist_(rnd_rgb_);
+  float rnd_r = dist_(random_generator_);
+  float rnd_g = dist_(random_generator_);
+  float rnd_b = dist_(random_generator_);
   return RandomLighting(input, output, rnd_r, rnd_g, rnd_b);
 }
 }  // namespace dataset

@@ -16,26 +16,20 @@
 
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
 
-#include <opencv2/imgcodecs.hpp>
-
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
-const std::vector<uint8_t> RandomPosterizeOp::kBitRange = {4, 8};
-
-RandomPosterizeOp::RandomPosterizeOp(const std::vector<uint8_t> &bit_range)
-    : PosterizeOp(bit_range[0]), bit_range_(bit_range) {
-  rnd_.seed(GetSeed());
-  is_deterministic_ = false;
-}
+RandomPosterizeOp::RandomPosterizeOp(const std::vector<uint8_t> &bit_range) : bit_range_(bit_range) {}
 
 Status RandomPosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  bit_ = (bit_range_[0] == bit_range_[1])
-           ? bit_range_[0]
-           : static_cast<uint8_t>(std::uniform_int_distribution<uint32_t>(bit_range_[0], bit_range_[1])(rnd_));
-  return PosterizeOp::Compute(input, output);
+  uint8_t bits =
+    (bit_range_[0] == bit_range_[1])
+      ? bit_range_[0]
+      : static_cast<uint8_t>(std::uniform_int_distribution<uint32_t>(bit_range_[0], bit_range_[1])(random_generator_));
+  return Posterize(input, output, bits);
 }
 }  // namespace dataset
 }  // namespace mindspore

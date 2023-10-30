@@ -15,14 +15,14 @@
  */
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 
+#include <vector>
+
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-const float RandomHorizontalFlipOp::kDefProbability = 0.5;
-
 Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   const auto output_count = input.size();
@@ -32,7 +32,7 @@ Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output
     RETURN_IF_NOT_OK(ValidateImage(image, "RandomHorizontalFlip", {1, 2, 3, 4, 5, 6, 10, 11, 12}));
   }
 
-  if (distribution_(rnd_)) {
+  if (distribution_(random_generator_)) {
     for (dsize_t i = 0; i < output_count; ++i) {
       auto input_shape = input[i]->shape();
       dsize_t rank = input_shape.Rank();

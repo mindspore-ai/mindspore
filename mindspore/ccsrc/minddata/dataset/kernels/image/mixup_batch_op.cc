@@ -36,7 +36,7 @@ constexpr size_t dimension_three = 3;
 constexpr int64_t value_one = 1;
 constexpr int64_t value_three = 3;
 
-MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); }
+MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) {}
 
 Status MixUpBatchOp::ComputeLabels(const std::shared_ptr<Tensor> &label, std::shared_ptr<Tensor> *out_labels,
                                    std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape, float lam,
@@ -47,7 +47,7 @@ Status MixUpBatchOp::ComputeLabels(const std::shared_ptr<Tensor> &label, std::sh
   for (int64_t i = 0; i < static_cast<int64_t>(images_size); i++) {
     rand_indx->push_back(i);
   }
-  std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
+  std::shuffle(rand_indx->begin(), rand_indx->end(), random_generator_);
 
   std::shared_ptr<Tensor> float_label;
   RETURN_IF_NOT_OK(TypeCast(label, &float_label, DataType(DataType::DE_FLOAT32)));
@@ -117,8 +117,8 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // If x1 is a random variable from Gamma(a1, 1) and x2 is a random variable from Gamma(a2, 1)
   // then x = x1 / (x1+x2) is a random variable from Beta(a1, a2)
   std::gamma_distribution<float> distribution(alpha_, 1);
-  float x1 = distribution(rnd_);
-  float x2 = distribution(rnd_);
+  float x1 = distribution(random_generator_);
+  float x2 = distribution(random_generator_);
   CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
                                "multiplication out of bounds, with multipliers: " + std::to_string(x1) + " and " +
                                  std::to_string(x2) +

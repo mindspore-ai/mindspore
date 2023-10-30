@@ -26,16 +26,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomAdjustSharpnessOp : public SharpnessOp {
+class RandomAdjustSharpnessOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kDefProbability;
-
-  explicit RandomAdjustSharpnessOp(float degree, float prob = kDefProbability)
-      : SharpnessOp(degree), distribution_(prob) {
-    is_deterministic_ = false;
-    rnd_.seed(GetSeed());
-  }
+  RandomAdjustSharpnessOp(float degree, float prob) : degree_(degree), distribution_(prob) {}
 
   ~RandomAdjustSharpnessOp() override = default;
 
@@ -50,7 +43,7 @@ class RandomAdjustSharpnessOp : public SharpnessOp {
   std::string Name() const override { return kRandomAdjustSharpnessOp; }
 
  private:
-  std::mt19937 rnd_;
+  float degree_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

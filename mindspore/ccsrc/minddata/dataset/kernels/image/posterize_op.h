@@ -19,9 +19,7 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
@@ -30,12 +28,9 @@ namespace mindspore {
 namespace dataset {
 class PosterizeOp : public TensorOp {
  public:
-  /// Default values
-  static const uint8_t kBit;
-
   /// \brief Constructor
   /// \param[in] bit: bits to use
-  explicit PosterizeOp(uint8_t bit = kBit);
+  explicit PosterizeOp(uint8_t bit);
 
   ~PosterizeOp() override = default;
 
@@ -43,11 +38,7 @@ class PosterizeOp : public TensorOp {
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
-  /// Member variables
  private:
-  std::string kPosterizeOp = "PosterizeOp";
-
- protected:
   uint8_t bit_;
 };
 }  // namespace dataset

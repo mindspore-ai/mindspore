@@ -36,11 +36,11 @@ class MindDataTestRandomResizeWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomResizeWithBBoxOp, TestOp) {
   MS_LOG(INFO) << "Doing testRandomResizeWithBBox.";
-  //setting seed here
+  // setting seed here
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(120);
   TensorTable results;
-  auto op = std::make_unique<RandomResizeWithBBoxOp>(500);
+  auto op = std::make_unique<RandomResizeWithBBoxOp>(500, 0);
   for (const auto &tensor_row_ : images_and_annotations_) {
     // selected a tensorRow
     TensorRow output_row;

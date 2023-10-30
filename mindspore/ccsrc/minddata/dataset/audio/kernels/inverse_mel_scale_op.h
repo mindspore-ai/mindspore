@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-class InverseMelScaleOp : public TensorOp {
+class InverseMelScaleOp : public RandomTensorOp {
  public:
   InverseMelScaleOp(int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
                     float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
@@ -45,9 +45,7 @@ class InverseMelScaleOp : public TensorOp {
         sgd_lr_(sgd_lr),
         sgd_momentum_(sgd_momentum),
         norm_(norm),
-        mel_type_(mel_type) {
-    rnd_.seed(GetSeed());
-  }
+        mel_type_(mel_type) {}
 
   ~InverseMelScaleOp() override = default;
 
@@ -72,7 +70,6 @@ class InverseMelScaleOp : public TensorOp {
   float sgd_momentum_;
   NormType norm_;
   MelType mel_type_;
-  std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore

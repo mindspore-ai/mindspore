@@ -21,6 +21,11 @@
 
 namespace mindspore {
 namespace dataset {
+RandomApplyOp::RandomApplyOp(const std::vector<std::shared_ptr<TensorOp>> &ops, double prob)
+    : prob_(prob), rand_double_(0.0, 1.0) {
+  compose_ = std::make_unique<ComposeOp>(ops);
+}
+
 uint32_t RandomApplyOp::NumOutput() {
   if (compose_->NumOutput() != NumInput()) {
     MS_LOG(WARNING) << "NumOutput!=NumInput (randomApply would randomly affect number of outputs).";
@@ -50,18 +55,12 @@ Status RandomApplyOp::OutputType(const std::vector<DataType> &inputs, std::vecto
 
 Status RandomApplyOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  if (rand_double_(gen_) <= prob_) {
+  if (rand_double_(random_generator_) <= prob_) {
     RETURN_IF_NOT_OK(compose_->Compute(input, output));
   } else {
     *output = input;  // copy over the tensors
   }
   return Status::OK();
-}
-
-RandomApplyOp::RandomApplyOp(const std::vector<std::shared_ptr<TensorOp>> &ops, double prob)
-    : prob_(prob), gen_(GetSeed()), rand_double_(0.0, 1.0) {
-  compose_ = std::make_unique<ComposeOp>(ops);
-  is_deterministic_ = false;
 }
 }  // namespace dataset
 }  // namespace mindspore

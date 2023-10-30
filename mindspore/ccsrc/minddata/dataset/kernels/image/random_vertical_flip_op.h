@@ -27,15 +27,9 @@
 
 namespace mindspore {
 namespace dataset {
-class RandomVerticalFlipOp : public TensorOp {
+class RandomVerticalFlipOp : public RandomTensorOp {
  public:
-  // Default values, also used by python_bindings.cc
-  static const float kDefProbability;
-
-  explicit RandomVerticalFlipOp(float prob = kDefProbability) : distribution_(prob) {
-    rnd_.seed(GetSeed());
-    is_deterministic_ = false;
-  }
+  explicit RandomVerticalFlipOp(float prob) : distribution_(prob) {}
 
   ~RandomVerticalFlipOp() override = default;
 
@@ -48,7 +42,6 @@ class RandomVerticalFlipOp : public TensorOp {
   uint32_t NumOutput() override { return 1; }
 
  private:
-  std::mt19937 rnd_;
   std::bernoulli_distribution distribution_;
 };
 }  // namespace dataset

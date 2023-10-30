@@ -763,10 +763,10 @@ class RandomApply(CompoundOperation):
 
 class RandomChoice(CompoundOperation):
     """
-    Randomly select one transform from a list of transforms to perform operation.
+    Randomly select one transform from a list to apply.
 
     Args:
-        transforms (list): List of transformations to be chosen from to apply.
+        transforms (list): List of transforms to be selected from.
 
     Raises:
         TypeError: If `transforms` is not of type list.
