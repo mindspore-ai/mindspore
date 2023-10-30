@@ -120,7 +120,7 @@ int Graph::GetStackSize() const {
   return c ? (c->co_stacksize + 2 + ((c->co_flags & CO_VARKEYWORDS) ? 1 : 0)) : 0;
 }
 
-static TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth);
+TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth);
 static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv, int depth, bool *has_unsupported,
                               bool strict, bool print) {
   for (auto it : *inputs) {
@@ -135,37 +135,31 @@ static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv,
   return true;
 }
 
-static TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0) {
+TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0) {
   if (depth > 8) {
     MS_LOG(DEBUG) << "too deep trace for guard";
     return nullptr;
   }
+  TraceVector tv;
+  ValueNode *p = node;
+  bool has_unsupported = false;
+  if (node->GetVobj() == nullptr ||
+      !PrepareTraceParam(&(node->getInputs()), &tv, depth, &has_unsupported, strict, print)) {
+    return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, p->GetOpcode(), p->GetOparg());
+  }
+  TracePtr ret = nullptr;
   switch (node->GetType()) {
     case AbstractNode::Type::Value: {
-      ValueNode *p = reinterpret_cast<ValueNode *>(node);
-      TraceVector tv;
-      bool has_unsupported = false;
-      if (!PrepareTraceParam(&(p->getInputs()), &tv, depth, &has_unsupported, strict, print)) {
-        return nullptr;
-      }
-      TracePtr ret = nullptr;
       if (!has_unsupported) {
         ret = CreateOpTrace(p->GetVobj()->GetPyObject().ptr(), p->GetOpcode(), p->GetOparg(), tv,
                             node->GetGraph()->GetModuleName(), p->GetName(), strict, print);
       }
       if (ret == nullptr && !strict) {
-        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv);
+        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv, p->GetOpcode(), p->GetOparg());
       }
       return ret;
     } break;
     case AbstractNode::Type::Call: {
-      CallNode *p = reinterpret_cast<CallNode *>(node);
-      TraceVector tv;
-      bool has_unsupported = false;
-      if (!PrepareTraceParam(&(p->getInputs()), &tv, depth, &has_unsupported, strict, print)) {
-        return nullptr;
-      }
-      TracePtr ret = nullptr;
       if (!has_unsupported) {
         if (p->GetOpcode() == CALL_FUNCTION) {
           ret = CreateOpTrace(p->GetVobj()->GetPyObject().ptr(), p->GetOpcode(), p->GetOparg(), tv,
@@ -176,23 +170,20 @@ static TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0
         }
       }
       if (ret == nullptr && !strict) {
-        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv);
+        ret = std::make_shared<UnsupportedTrace>(p->GetVobj()->GetPyObject().ptr(), tv, p->GetOpcode(), p->GetOparg());
       }
       return ret;
     } break;
-    case AbstractNode::Type::Merged:
-      break;
     case AbstractNode::Type::Param: {
-      ParamNode *p = reinterpret_cast<ParamNode *>(node);
       return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::jit::graph::TraceType::Param,
                                          p->GetOparg(), p->GetName());
     }
     case AbstractNode::Type::CellVar:
     case AbstractNode::Type::FreeVar: {
-      CellVarNode *p = reinterpret_cast<CellVarNode *>(node);
       return std::make_shared<RootTrace>(p->GetVobj()->GetPyObject().ptr(), mindspore::jit::graph::TraceType::Param,
                                          p->GetOparg(), p->GetName());
     }
+    case AbstractNode::Type::Merged:
     case AbstractNode::Type::Unbound:
       break;
     default:

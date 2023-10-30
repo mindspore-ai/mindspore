@@ -188,7 +188,7 @@ using CustomizedTracePtr = std::shared_ptr<CustomizedTrace>;
 
 class UnsupportedTrace : public Trace {
  public:
-  UnsupportedTrace(PyObject *obj, TraceVector params);
+  UnsupportedTrace(PyObject *obj, TraceVector params, int op, int arg);
   virtual ~UnsupportedTrace() = default;
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
@@ -196,6 +196,8 @@ class UnsupportedTrace : public Trace {
 
  protected:
   TraceVector params_;
+  int op_;
+  int arg_;
 };
 using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 
