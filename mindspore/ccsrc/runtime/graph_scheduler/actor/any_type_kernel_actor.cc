@@ -331,6 +331,8 @@ void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphInput(OpContext<Devi
       const auto &obj = user_data_obj->obj;
       auto abstract = pyexecute::GenerateAbstractFromPyObject(obj);
       MS_EXCEPTION_IF_NULL(abstract);
+      MS_EXCEPTION_IF_NULL(abstract->BuildType());
+      MS_EXCEPTION_IF_NULL(abstract->BuildShape());
       MS_LOG(DEBUG) << "actor:" << GetAID() << " set shape by abstract:" << abstract->ToString()
                     << " shape:" << abstract->BuildShape()->ToString() << " type:" << abstract->BuildType()->ToString()
                     << " for device address:" << input_device_tensors_[i];

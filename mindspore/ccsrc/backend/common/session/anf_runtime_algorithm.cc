@@ -482,7 +482,7 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   auto format = build_info->GetInputFormat(input_idx);
   if (format == kernel::KernelBuildInfo::kInvalidFormat) {
     MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
-                      << " has a invalid input format\n"
+                      << " input index:" << input_idx << " has a invalid input format\n"
                       << trace::DumpSourceLines(node);
   }
   return format;

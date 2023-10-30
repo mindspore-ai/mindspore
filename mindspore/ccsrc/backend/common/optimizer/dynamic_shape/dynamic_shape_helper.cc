@@ -124,8 +124,15 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
                   << " abstract:" << input_node_with_index.first->abstract()->ToString()
                   << " device address:" << device_address << " type id:" << device_address->kernel_tensor()->dtype_id()
                   << " shape vector:" << device_address->kernel_tensor()->GetShapeVector();
-    return std::make_shared<tensor::Tensor>(device_address->kernel_tensor()->dtype_id(),
-                                            device_address->kernel_tensor()->GetShapeVector());
+    auto type_id = device_address->kernel_tensor()->dtype_id();
+    if (device_address->kernel_tensor()->GetType() != nullptr &&
+        ((device_address->kernel_tensor()->GetType()->isa<Tuple>() &&
+          device_address->kernel_tensor()->GetType()->cast<TuplePtr>()->size() == 0) ||
+         (device_address->kernel_tensor()->GetType()->isa<List>() &&
+          device_address->kernel_tensor()->GetType()->cast<ListPtr>()->size() == 0))) {
+      type_id = TypeId::kNumberTypeInt64;
+    }
+    return std::make_shared<tensor::Tensor>(type_id, device_address->kernel_tensor()->GetShapeVector());
   }
 
   auto real_input = input_node_with_index.first;

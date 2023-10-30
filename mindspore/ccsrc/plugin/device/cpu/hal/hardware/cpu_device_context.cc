@@ -44,6 +44,7 @@
 #include "plugin/device/cpu/optimizer/matmul_biasadd_fusion.h"
 #include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
 #include "backend/common/pass/insert_type_transform_op.h"
+#include "backend/common/pass/flatten_value_sequence_in_value_node.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
@@ -295,6 +296,7 @@ void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+  pm->AddPass(std::make_shared<opt::FlattenValueSequenceInValueNode>("flatten_value_sequence_in_value_node"));
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
