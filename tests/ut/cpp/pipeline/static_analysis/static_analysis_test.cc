@@ -433,8 +433,8 @@ void TestEvalCNode::TearDown() {
   // destroy resource
 }
 
-abstract::AbstractBasePtr EvalFunction(const CNodePtr &cnode, const abstract::AbstractBasePtrList &args_abs) {
-  return pipeline::AbstractAnalyze(cnode, args_abs).eval_result->abstract();
+abstract::AbstractBasePtr EvalFunction(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs) {
+  return pipeline::AbstractAnalyze(value, args_abs).eval_result->abstract();
 }
 
 /// Feature: Test EvalCNodePrim.
@@ -451,28 +451,30 @@ TEST_F(TestEvalCNode, test_eval_cnode) {
     if (item->isa<CNode>()) {
       auto cnode = item->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
+      auto func = GetValueNode(cnode->input(0));
+      MS_EXCEPTION_IF_NULL(func);
       if (counter == 0) {
         auto inputs = std::vector<AbstractBasePtr>{x, y};
         // S-Prim-Add  Test DoSignature Eval
-        auto reno_abs = pipeline::Renormalize(cnode, inputs)->abstract();
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
         assert((*reno_abs) == (*y));
-        auto res = EvalFunction(cnode, inputs);
+        auto res = EvalFunction(func, inputs);
         assert((*res) == (*y));
       }
       if (counter == 1) {
         auto inputs = std::vector<AbstractBasePtr>{x, y};
-        auto reno_abs = pipeline::Renormalize(cnode, inputs)->abstract();
+        // S-Prim-Add  Test DoSignature Eval
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
         assert((*reno_abs) == (*y));
-        // S-Prim-add  Test MetaFuncGraph Eval
-        auto res = EvalFunction(cnode, inputs);
+        auto res = EvalFunction(func, inputs);
         assert((*res) == (*y));
       }
       if (counter == 2) {
         auto inputs = std::vector<AbstractBasePtr>{y};
-        auto reno_abs = pipeline::Renormalize(cnode, inputs)->abstract();
+        // S-Prim-Add  Test DoSignature Eval
+        auto reno_abs = pipeline::Renormalize(func, inputs)->return_node()->abstract();
         assert((*reno_abs) == (*y));
-        // S-Prim-relu  Test common primitive Eval
-        auto res = EvalFunction(cnode, std::vector<AbstractBasePtr>{y});
+        auto res = EvalFunction(func, inputs);
         assert((*res) == (*y));
       }
       ++counter;
