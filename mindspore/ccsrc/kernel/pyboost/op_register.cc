@@ -26,6 +26,8 @@
 #include "kernel/pyboost/op/transpose.h"
 #include "kernel/pyboost/op/view.h"
 #include "kernel/pyboost/op/bmm.h"
+#include "kernel/pyboost/op/exp.h"
+#include "kernel/pyboost/op/erf.h"
 
 namespace mindspore {
 namespace kernel {
@@ -63,6 +65,8 @@ template class OpFactory<Square>;
 template class OpFactory<Transpose>;
 template class OpFactory<View>;
 template class OpFactory<Bmm>;
+template class OpFactory<Exp>;
+template class OpFactory<Erf>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

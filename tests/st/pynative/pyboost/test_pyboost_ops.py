@@ -19,6 +19,7 @@ from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
 from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm
+from mindspore.ops.auto_generate import baddbmm, transpose, view, exp, erf
 import mindspore
 
 
@@ -77,3 +78,18 @@ def test_bmm_ascend():
     except_data = np.ones([1, 4, 3]).astype(np.float32) * 12
     assert (output.asnumpy() == except_data).all()
 
+
+def test_exp_ascend():
+    context.set_context(device_target="Ascend")
+
+    x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+    output = exp(x)
+    assert np.allclose(output.asnumpy(), [2.718282, 7.389056, 54.598152])
+
+
+def test_erf_ascend():
+    context.set_context(device_target="Ascend")
+
+    x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+    output = erf(x)
+    assert np.allclose(output.asnumpy(), [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765])
