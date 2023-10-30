@@ -16,6 +16,7 @@
 # ============================================================================
 """Operator argument data type cast function."""
 
+import mindspore as ms
 from mindspore import ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations._sequence_ops import TensorToScalar, TensorToTuple
@@ -41,6 +42,12 @@ def tensor_to_tuple(data):
 
 
 def scalar_to_tensor(data):
+    if isinstance(data, bool):
+        return ops.scalar_to_tensor(data, ms.bool_)
+    if isinstance(data, int):
+        return ops.scalar_to_tensor(data, ms.int32)
+    if isinstance(data, float):
+        return ops.scalar_to_tensor(data, ms.float32)
     return ops.scalar_to_tensor(data)
 
 
