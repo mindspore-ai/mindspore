@@ -50,13 +50,13 @@ std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
 abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool is_load_resoure,
                                          bool clear = false);
-abstract::AnalysisResult AbstractAnalyze(const CNodePtr &cnode, const abstract::AbstractBasePtrList &args_abs,
+abstract::AnalysisResult AbstractAnalyze(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs,
                                          bool clear = false);
 FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context);
 FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                          const abstract::AbstractBasePtrList &args_abs);
-CNodePtr Renormalize(const CNodePtr &node, const abstract::AbstractBasePtrList &args_abs);
+FuncGraphPtr Renormalize(const ValuePtr &value, const abstract::AbstractBasePtrList &args_abs);
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr);
 AbstractBasePtr GetDefaultValueAbstract(const ParameterPtr &param);
 }  // namespace pipeline
