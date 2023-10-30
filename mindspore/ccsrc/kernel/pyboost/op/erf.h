@@ -27,7 +27,6 @@ class BACKEND_EXPORT Erf : public pyboost::Op {
   Erf() = default;
   ~Erf() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x);
 };
 }  // namespace pyboost

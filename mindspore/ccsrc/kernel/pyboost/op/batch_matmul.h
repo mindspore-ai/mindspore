@@ -27,7 +27,6 @@ class BACKEND_EXPORT BatchMatmul : public pyboost::Op {
   BatchMatmul() = default;
   ~BatchMatmul() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) = 0;
 };
 }  // namespace pyboost

@@ -27,7 +27,6 @@ class BACKEND_EXPORT Linear : public pyboost::Op {
   Linear() = default;
   ~Linear() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
                                  const ValuePtr &bias_opt);
 };

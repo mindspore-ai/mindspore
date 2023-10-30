@@ -27,8 +27,6 @@ class BACKEND_EXPORT Baddbmm : public pyboost::Op {
   Baddbmm() = default;
   ~Baddbmm() override = default;
 
-  void CastInput() override;
-
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &batch1,
                                  const tensor::TensorPtr &batch2, const ScalarPtr &beta, const ScalarPtr &alpha) = 0;
 

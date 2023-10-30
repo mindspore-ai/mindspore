@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Square::CastInput() {}
-
 tensor::TensorPtr Square::Call(const tensor::TensorPtr &input) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

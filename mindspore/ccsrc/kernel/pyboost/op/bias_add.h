@@ -27,7 +27,6 @@ class BACKEND_EXPORT BiasAdd : public pyboost::Op {
   BiasAdd() = default;
   ~BiasAdd() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias);
 };
 }  // namespace pyboost

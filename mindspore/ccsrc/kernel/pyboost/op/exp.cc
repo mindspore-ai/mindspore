@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Exp::CastInput() {}
-
 tensor::TensorPtr Exp::Call(const tensor::TensorPtr &x) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

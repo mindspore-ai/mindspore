@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void View::CastInput() {}
-
 void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &shape,
                               const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(input);

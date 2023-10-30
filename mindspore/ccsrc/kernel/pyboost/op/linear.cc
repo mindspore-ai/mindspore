@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Linear::CastInput() {}
-
 tensor::TensorPtr Linear::Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
                                const ValuePtr &bias_opt) {
   // TODO: kernel_mod->launch

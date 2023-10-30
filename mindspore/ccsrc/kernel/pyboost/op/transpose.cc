@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Transpose::CastInput() {}
 tensor::TensorPtr Transpose::Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

@@ -26,7 +26,6 @@ class BACKEND_EXPORT View : public pyboost::Op {
  public:
   View() = default;
   ~View() = default;
-  void CastInput() override;
 
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &shape);
   void PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &shape,

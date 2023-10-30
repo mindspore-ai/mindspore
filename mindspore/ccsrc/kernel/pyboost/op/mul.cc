@@ -21,8 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-
-void Mul::CastInput() {}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

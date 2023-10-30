@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void BatchMatmul::CastInput() {}
 tensor::TensorPtr BatchMatmul::Call(const tensor::TensorPtr &x, const tensor::TensorPtr &y) {
   // TODO: kernel_mod->launch
   return mindspore::tensor::TensorPtr();

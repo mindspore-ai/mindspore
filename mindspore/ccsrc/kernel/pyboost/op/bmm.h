@@ -15,7 +15,6 @@ class BACKEND_EXPORT Bmm : public pyboost::Op {
   Bmm() = default;
   ~Bmm() = default;
 
-  void CastInput() override {}
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &mat2) = 0;
 };
 }  // namespace pyboost

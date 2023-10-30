@@ -27,7 +27,6 @@ class BACKEND_EXPORT Exp : public pyboost::Op {
   Exp() = default;
   ~Exp() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &x);
 };
 }  // namespace pyboost

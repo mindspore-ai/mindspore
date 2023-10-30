@@ -27,7 +27,6 @@ class BACKEND_EXPORT Square : public pyboost::Op {
   Square() = default;
   ~Square() = default;
 
-  void CastInput() override;
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input);
 };
 }  // namespace pyboost

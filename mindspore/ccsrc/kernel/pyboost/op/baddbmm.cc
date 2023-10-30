@@ -21,9 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Baddbmm::CastInput() {
-  // todo
-}
+
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
