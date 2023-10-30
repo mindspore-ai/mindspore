@@ -303,20 +303,21 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
+    const auto &kernel_tensor = input_device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    auto new_kernel_tensor = kernel_tensor->Clone();
+    MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+    new_kernel_tensor->set_device_ptr(nullptr);
     DeviceTensorPtr new_device_tensor = nullptr;
     if (!is_dynamic_shapes_[i]) {
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        input_device_tensor->host_shape(), input_device_tensor->user_data());
+      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
     } else {
       // If there is a dynamic shape, the shape in the kernel should be used.
       MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
                     << " for actor:" << GetAID();
-      const auto &host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
-        host_shape, input_device_tensor->user_data());
+      new_kernel_tensor->set_host_shape(new_kernel_tensor->GetShapeVector());
+      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
     }
     MS_EXCEPTION_IF_NULL(new_device_tensor);

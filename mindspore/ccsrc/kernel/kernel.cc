@@ -247,7 +247,7 @@ const std::string &KernelTensor::padding_type() const { return padding_type_; }
 
 void KernelTensor::set_padding_type(const std::string &padding_type) { padding_type_ = padding_type; }
 
-bool KernelTensor::SyncDataFromDevieToHost() const {
+bool KernelTensor::SyncDataFromDeviceToHost() const {
   if (device_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed.";
     return false;
@@ -268,7 +268,7 @@ bool KernelTensor::SyncDataFromDevieToHost() const {
   MS_EXCEPTION_IF_NULL(device_synchronizer_);
   if (!device_synchronizer_->SyncDeviceToHost(host_ptr, device_ptr_, size_, format_, shape_vector_, stream_id_,
                                               user_data_)) {
-    MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
+    MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
   }
   return true;
 }

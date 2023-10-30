@@ -258,8 +258,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     }
 
     // Sync value data from device.
-    if (!SyncDataFromDevieToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
+    if (!SyncDataFromDeviceToHost()) {
+      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
     }
     return kernel_tensor_value_->GetDataPtr();
   }
@@ -276,8 +276,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     }
 
     // Sync value data from device.
-    if (!SyncDataFromDevieToHost()) {
-      MS_LOG(EXCEPTION) << "Sync data form devie to host side failed";
+    if (!SyncDataFromDeviceToHost()) {
+      MS_LOG(EXCEPTION) << "Sync data form device to host side failed";
     }
     return kernel_tensor_value_;
   }
@@ -293,8 +293,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       }
     } else {
       // Sync value data from device.
-      if (!SyncDataFromDevieToHost()) {
-        MS_LOG(ERROR) << "Sync data form devie to host side failed";
+      if (!SyncDataFromDeviceToHost()) {
+        MS_LOG(ERROR) << "Sync data form device to host side failed";
         return std::nullopt;
       }
     }
@@ -325,8 +325,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
       }
     } else {
       // Sync value data from device.
-      if (!SyncDataFromDevieToHost()) {
-        MS_LOG(ERROR) << "Sync data form devie to host side failed";
+      if (!SyncDataFromDeviceToHost()) {
+        MS_LOG(ERROR) << "Sync data form device to host side failed";
         return std::nullopt;
       }
     }
@@ -506,7 +506,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetSequenceDType(const TypePtr &element_type);
 
   // Synchronize value data from device to host side.
-  bool SyncDataFromDevieToHost() const;
+  bool SyncDataFromDeviceToHost() const;
 
   // Calculate memory size need by the KernelTensor.
   void CalculateMemSize();
