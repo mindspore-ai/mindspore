@@ -240,7 +240,7 @@ def process_args(args):
     args_assign = []
     inputs_default = {}
     init_args_with_default = []
-    call_args_with_default = []
+    args_handlers = {}
     for arg_name, arg_info in args.items():
         dtype = arg_info.get('dtype')
 
@@ -250,9 +250,11 @@ def process_args(args):
             default_value = arg_info.get('default')
             if default_value:
                 inputs_default[arg_name] = default_value
-                call_args_with_default.append(f"""{arg_name}={default_value}""")
-            else:
-                call_args_with_default.append(arg_name)
+
+            arg_handler = arg_info.get('arg_handler')
+            if arg_handler:
+                args_handlers[arg_name] = arg_handler
+
             continue
 
         if init_value == 'NO_VALUE':
@@ -269,7 +271,7 @@ def process_args(args):
 
         assign_str = f"""        self._set_prim_arg("{arg_name}", {assign_str})"""
         args_assign.append(assign_str)
-    return inputs_name, inputs_default, args_name, args_assign, init_args_with_default, call_args_with_default
+    return inputs_name, inputs_default, args_name, args_assign, init_args_with_default, args_handlers
 
 
 def generate_py_primitive(yaml_data):
@@ -285,8 +287,7 @@ def generate_py_primitive(yaml_data):
 
         args = operator_data.get('args')
         class_name = get_op_name(operator_name, class_def)
-        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, call_args_with_default = \
-            process_args(args)
+        inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
         init_code = '\n'.join(args_assign)
         signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args, inputs_default)
         deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
@@ -310,13 +311,22 @@ class {class_name}(Primitive):\n"""
     def __init__(self,"""
         if init_args_with_default:
             primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
+        call_args = []
+        for name in inputs_args:
+            call_args.append(f"""{name}={inputs_default[name]}""" if name  in inputs_default else name)
         primitive_code += f"""):
 {init_code}
 
-    def __call__(self, {', '.join(call_args_with_default) if call_args_with_default else ''}):
+    def __call__(self, {', '.join(call_args)}):
         return super().__call__("""
         if inputs_args:
-            primitive_code += ', '.join(inputs_args)
+            args_with_handler = []
+            for arg in inputs_args:
+                if arg in args_handlers:
+                    args_with_handler.append(f"""{args_handlers[arg]}({arg})""")
+                else:
+                    args_with_handler.append(arg)
+            primitive_code += ', '.join(args_with_handler)
 
         if init_args:
             primitive_code += ', '

@@ -801,12 +801,14 @@ static std::string BuilidPyInputTypeString(const py::object &obj) {
     ss << "tuple<";
     auto tuple = obj.cast<py::tuple>();
     for (size_t i = 0; i < tuple.size(); i++) {
-      ss << BuilidPyInputTypeString(tuple[i]) << ", ";
+      if (i == 0) {
+        ss << BuilidPyInputTypeString(tuple[i]);
+      } else {
+        ss << ", " << BuilidPyInputTypeString(tuple[i]);
+      }
     }
     ss << ">";
-    auto str = ss.str();
-    str.replace(str.end() - 3, str.end() - 1, "");
-    return str;
+    return ss.str();
   }
 
   if (py::isinstance<py::list>(obj)) {
@@ -814,15 +816,19 @@ static std::string BuilidPyInputTypeString(const py::object &obj) {
     ss << "list<";
     auto list = obj.cast<py::list>();
     for (size_t i = 0; i < list.size(); i++) {
-      ss << BuilidPyInputTypeString(list[i]) << ", ";
+      if (i == 0) {
+        ss << BuilidPyInputTypeString(list[i]);
+      } else {
+        ss << ", " << BuilidPyInputTypeString(list[i]);
+      }
     }
     ss << ">";
-    auto str = ss.str();
-    str.replace(str.end() - 3, str.end() - 1, "");
-    return str;
+    return ss.str();
   }
 
-  MS_LOG(EXCEPTION) << "Unsupported python type: ";
+  std::stringstream ss;
+  ss << obj.get_type();
+  return ss.str();
 }
 
 std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
@@ -846,8 +852,8 @@ std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inpu
 
   auto init_arg_str = init_arg_ss.str();
   auto input_arg_str = input_arg_ss.str();
-  init_arg_str.replace(init_arg_str.end() - 2, init_arg_str.end(), "");
-  input_arg_str.replace(input_arg_str.end() - 2, input_arg_str.end(), "");
+  init_arg_str = init_arg_str.empty() ? "" : init_arg_str.replace(init_arg_str.end() - 2, init_arg_str.end(), "");
+  input_arg_str = input_arg_str.empty() ? "" : input_arg_str.replace(input_arg_str.end() - 2, input_arg_str.end(), "");
 
   std::stringstream real_init_arg_ss;
   std::stringstream real_input_arg_ss;
@@ -863,8 +869,12 @@ std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inpu
   }
   auto real_init_arg_str = real_init_arg_ss.str();
   auto real_input_arg_str = real_input_arg_ss.str();
-  real_init_arg_str.replace(real_init_arg_str.end() - 2, real_init_arg_str.end(), "");
-  real_input_arg_str.replace(real_input_arg_str.end() - 2, real_input_arg_str.end(), "");
+  real_init_arg_str = real_init_arg_str.empty()
+                        ? ""
+                        : real_init_arg_str.replace(real_init_arg_str.end() - 2, real_init_arg_str.end(), "");
+  real_input_arg_str = real_input_arg_str.empty()
+                         ? ""
+                         : real_input_arg_str.replace(real_input_arg_str.end() - 2, real_input_arg_str.end(), "");
 
   std::stringstream ss;
   ss << "Failed calling " << op_def->name_ << " with \"" << op_def->name_ << "(" << real_init_arg_str << ")("

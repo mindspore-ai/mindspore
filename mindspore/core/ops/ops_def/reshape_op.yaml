@@ -5,7 +5,7 @@ reshape:
       dtype: tensor
     shape:
       dtype: tuple[int]
-      type_cast: tensor
+      type_cast: tensor, list[int]
   returns:
     output:
       dtype: tensor
