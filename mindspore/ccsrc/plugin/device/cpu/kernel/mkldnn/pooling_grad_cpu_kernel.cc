@@ -20,6 +20,7 @@
 #include "ops/conv_pool_op_name.h"
 #include "utils/profile.h"
 #include "kernel/ops_utils.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -56,36 +57,6 @@ constexpr size_t kMax3DDataFormatIdx = 8;
 
 }  // namespace
 
-int64_t FormatStringToInt(std::string format) {
-  int64_t zero{0};
-  int64_t one{1};
-  int64_t eighteen{18};
-  if (format == "NHWC" || format == "nhwc") {
-    return one;
-  } else if (format == "NCHW" || format == "nchw") {
-    return zero;
-  } else if (format == "NDHWC" || format == "ndhwc") {
-    return eighteen;
-  } else {
-    MS_LOG(EXCEPTION) << "'format' must be one of 'NCHW' or 'NHWC', but got " << format << ".";
-  }
-}
-
-int64_t PadModeStringToInt(std::string pad_mode) {
-  int64_t zero{0};
-  int64_t one{1};
-  int64_t two{2};
-  if (pad_mode == "Valid" || pad_mode == "VALID" || pad_mode == "valid") {
-    return two;
-  } else if (pad_mode == "Same" || pad_mode == "SAME" || pad_mode == "same") {
-    return one;
-  } else if (pad_mode == "Pad" || pad_mode == "PAD" || pad_mode == "pad") {
-    return zero;
-  } else {
-    MS_LOG(EXCEPTION) << "'pad_mode' must be one of 'Valid', 'Same' or 'Pad', but got " << pad_mode << ".";
-  }
-}
-
 bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kAvgPoolGradOpName) {
@@ -107,10 +78,10 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     }
     algorithm_ = dnnl::algorithm::pooling_avg;
     grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 1 : kGradIndex;
-    format_ =
-      static_cast<mindspore::Format>(FormatStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
+    format_ = static_cast<mindspore::Format>(
+      ops::FormatStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
     pad_mode_ = static_cast<mindspore::PadMode>(
-      FormatStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
+      ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
     kernel_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
     strides_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));
     dtype_ = inputs[grad_index_]->GetDtype();

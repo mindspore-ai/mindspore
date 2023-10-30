@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/grad/pool_grad.h"
 #include "mindspore/core/ops/grad/avg_pool_3d_grad.h"
 #include "mindspore/core/ops/grad/max_pool_3d_grad.h"
+#include "mindspore/core/ops/op_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
 #include "ops/op_name.h"
@@ -61,41 +62,13 @@ constexpr size_t kMax3DPadsIdx = 6;
 constexpr size_t kMax3DCeilModeIdx = 7;
 constexpr size_t kMax3DDataFormatIdx = 8;
 
-int64_t get_pad_mode(const PrimitivePtr &prim) {
-  auto value_ptr = prim->GetAttr(ops::kPadMode);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  if (!value_ptr->isa<mindspore::api::StringImm>()) {
-    return GetValue<int64_t>(value_ptr);
-  }
-  auto attr_value_str = GetValue<std::string>(value_ptr);
-  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
-  auto iter = pad_map.find(attr_value_str);
-  if (iter == pad_map.end()) {
-    MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use CALCULATED, PAD, VALID or SAME";
-  }
-  return iter->second;
-}
-
-int64_t get_format(const PrimitivePtr &prim) {
-  auto value_ptr = prim->GetAttr(ops::kFormat);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  if (!value_ptr->isa<mindspore::api::StringImm>()) {
-    return Format(GetValue<int64_t>(value_ptr));
-  }
-  auto attr_value_str = GetValue<std::string>(value_ptr);
-  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
-  auto iter = dataformat_map.find(attr_value_str);
-  if (iter == dataformat_map.end()) {
-    MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << " use NCHW, NHWC NCDHW or NDHWC";
-  }
-  return iter->second;
-}
-
 bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kAvgPoolGradOpName) {
-    format_attr_ = static_cast<mindspore::Format>(get_format(primitive_));
-    pad_mode_ = static_cast<mindspore::PadMode>(get_pad_mode(primitive_));
+    format_attr_ =
+      static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<string>(primitive_->GetAttr(ops::kFormat))));
+    pad_mode_ =
+      static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<string>(primitive_->GetAttr(ops::kPadMode))));
     stride_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
     window_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
     if (kernel_name_ == kMaxPool3DGrad) {
