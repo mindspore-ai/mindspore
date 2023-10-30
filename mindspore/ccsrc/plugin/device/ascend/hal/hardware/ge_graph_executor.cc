@@ -339,17 +339,26 @@ std::multimap<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPt
   return ret;
 }
 
+void SetParameterKernelInfo(const AnfNodePtr &node, const std::shared_ptr<device::KernelInfo> &kernel_info) {
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
+  if (!build_info) {
+    MS_LOG(ERROR) << "Parameter doesn't have build info: " << node->DebugString()
+                  << ", full name: " << node->fullname_with_scope();
+    return;
+  }
+  std::vector<TypeId> refresh_output_types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
+  build_info->SetOutputsDeviceType(refresh_output_types);
+}
+
 void SetKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   // If kernel build info has been set up. skip
   std::shared_ptr<device::KernelInfo> kernel_info =
     std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
-  kernel::KernelBuildInfoPtr build_info = nullptr;
-  if (kernel_info) {
-    build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-    if (build_info) {
-      return;
-    }
+  if (utils::isa<ParameterPtr>(node)) {
+    SetParameterKernelInfo(node, kernel_info);
+    return;
   }
 
   if (!kernel_info) {
@@ -357,6 +366,8 @@ void SetKernelInfo(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(kernel_info);
     node->set_kernel_info(kernel_info);
   }
+
+  auto build_info = kernel_info->GetMutableSelectKernelBuildInfo();
   if (!build_info) {
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     MS_EXCEPTION_IF_NULL(builder);

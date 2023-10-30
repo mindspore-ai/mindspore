@@ -27,6 +27,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_info.h"
 #include "transform/graph_ir/transform_util.h"
+#include "ops/framework_op_name.h"
 
 namespace mindspore::transform {
 namespace {
@@ -43,7 +44,8 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   while (!anf_queue.empty()) {
     auto queue_front = anf_queue.front();
     anf_queue.pop();
-    if (AnfUtils::IsRealKernel(queue_front.first) && common::AnfAlgo::GetCNodeName(queue_front.first) != kCastOpName) {
+    if (AnfUtils::IsRealKernel(queue_front.first) && common::AnfAlgo::GetCNodeName(queue_front.first) != kCastOpName &&
+        common::AnfAlgo::GetCNodeName(queue_front.first) != kTensorMoveOpName) {
       res.push_back(queue_front);
       continue;
     }
@@ -74,13 +76,16 @@ bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, co
     MS_LOG(INFO) << "Please attention: init Param kernel info failed.";
     return false;
   }
-  if (!set_format.empty() && IsOneOfHWSpecialFormat(set_format)) {
-    MS_LOG(INFO) << "Update desc format from set format: " << set_format << ", ori format: " << ori_format
-                 << ", param: " << param->DebugString() << ", full name: " << param->fullname_with_scope();
+  if (set_format.empty()) {
+    // The weight change storage format first time.
+    SetStorageFormatFromConfig(anf_graph, param, desc);
+  } else if (IsOneOfHWSpecialFormat(set_format)) {
+    // The weight or data is from other subgraph or pynative node which has been set storage format.
+    MS_LOG(INFO) << "Update desc format from set format: graph: " << anf_graph->ToString()
+                 << ", storage format: " << set_format << ", pre param: " << param->DebugString()
+                 << ", full name: " << param->ToString();
     auto format = GetGeFormat(param, set_format, desc->GetOriginShape().GetDimNum());
     UpdateTensorDesc(desc, format);
-  } else {
-    SetStorageFormatFromConfig(anf_graph, param, desc);
   }
   return true;
 }
@@ -117,9 +122,10 @@ void StorageFormatConvertor::SetStorageFormatFromConfig(const AnfGraphPtr &anf_g
     }
     // Step 4: update desc and param format
     auto format = GetGeFormat(param, user_node.first, storage_format_info.format_, desc->GetOriginShape().GetDimNum());
-    MS_LOG(INFO) << "Update desc format from config:" << storage_format_info.format_
-                 << ", cnode: " << user_node.first->DebugString() << ",input idx: " << user_node.second
-                 << ", pre param: " << param->DebugString() << ", full name: " << param->fullname_with_scope();
+    MS_LOG(INFO) << "Update desc format from config, graph: " << anf_graph->ToString()
+                 << ", used node: " << user_node.first->DebugString() << ", full name: " << user_node.first->ToString()
+                 << ",input idx: " << user_node.second << ", storage format: " << storage_format_info.format_
+                 << ", pre param: " << param->DebugString() << ", full name: " << param->ToString();
     UpdateTensorDesc(desc, format);
     if (!storage_format_info.expand_dims_.empty()) {
       MS_LOG(INFO) << "Set expand dims rule stub.";
@@ -141,31 +147,28 @@ bool StorageFormatConvertor::InitParameterKernelInfo(const AnfNodePtr &param, st
   MS_EXCEPTION_IF_NULL(format);
   const auto &output_with_indexes = common::AnfAlgo::GetAllOutputWithIndex(param);
   if (output_with_indexes.size() != 1) {
-    MS_LOG(ERROR) << "Param: " << param->fullname_with_scope() << "'s output size is not 1.";
+    MS_LOG(ERROR) << "Param: " << param->ToString() << "'s output size is not 1.";
     return false;
   }
   std::shared_ptr<device::KernelInfo> kernel_info =
     std::dynamic_pointer_cast<device::KernelInfo>(param->kernel_info_ptr());
   if (!kernel_info) {
     // create parameter node should create kernel info
-    MS_LOG(INFO) << "Please attention, param: " << param->fullname_with_scope() << "don't have kernel info.";
+    MS_LOG(INFO) << "Please attention, param: " << param->ToString() << "don't have kernel info.";
     return false;
   }
   kernel::KernelBuildInfoPtr build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  if (build_info) {
+  if (build_info && build_info->GetOutputDeviceType(0) != kTypeUnknown) {
     (*format) = build_info->GetOutputFormat(0);
-    MS_LOG(INFO) << "Param: " << param->fullname_with_scope()
-                 << " node has been setup, build info: " << build_info->ToString();
+    MS_LOG(INFO) << "Param: " << param->ToString() << " node has been setup, build info: " << build_info->ToString();
     return true;
   }
 
-  MS_LOG(WARNING) << "Param: " << param->fullname_with_scope() << " build info is null.";
-  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   if (!build_info) {
-    MS_LOG(ERROR) << "Create builder failed, param: " << param->fullname_with_scope();
+    MS_LOG(ERROR) << "Param: " << param->ToString() << " build info is null.";
     return false;
   }
-  build_info = builder->Build();
+
   MS_EXCEPTION_IF_NULL(build_info);
   std::vector<TypeId> output_infer_types;
   std::vector<std::string> output_formats;
