@@ -1026,7 +1026,11 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weigh
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(j);
   for (size_t i = 0; i < forward_graph_params.size(); ++i) {
-    inputs.push_back(k_child->add_parameter());
+    auto old_para = dyn_cast<Parameter>(forward_graph_params[i]);
+    MS_EXCEPTION_IF_NULL(old_para);
+    auto para = k_child->add_parameter();
+    para->set_name(old_para->name());
+    inputs.push_back(para);
   }
   auto k_app = k_child->NewCNodeInOrder(inputs);
 

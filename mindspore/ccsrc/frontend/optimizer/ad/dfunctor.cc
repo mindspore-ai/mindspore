@@ -693,6 +693,7 @@ AnfNodePtr DFunctor::MapParameterToK(const AnfNodePtr &primal) {
   // Map Parameter to K
   TraceGuard trace_guard(std::make_shared<TraceGradFprop>(primal->debug_info()));
   auto ret = k_graph_->add_parameter();
+  ret->cast_ptr<Parameter>()->set_name(primal->cast_ptr<Parameter>()->name());
   return ret;
 }
 
