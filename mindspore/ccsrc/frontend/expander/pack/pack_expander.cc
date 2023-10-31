@@ -195,7 +195,7 @@ py::object PackNode::GetDtype() const {
 }
 
 py::object PackNode::GetValue() const {
-  if (node_->abstract()->BuildValue() != kValueAny) {
+  if (!node_->abstract()->BuildValue()->ContainsValueAny()) {
     return ValueToPyData(node_->abstract()->BuildValue());
   }
   return py::none();

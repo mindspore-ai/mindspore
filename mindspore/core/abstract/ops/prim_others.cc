@@ -85,7 +85,7 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
   auto dependant_abstract = args_abs_list[1];
   auto dependant_value = dependant_abstract->BuildValue();
   MS_EXCEPTION_IF_NULL(dependant_value);
-  if (dependant_value != kValueAny) {
+  if (!dependant_value->ContainsValueAny()) {
     return args_abs_list[0];
   }
   auto depends = args_abs_list[0];

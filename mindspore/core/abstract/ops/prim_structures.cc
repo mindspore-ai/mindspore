@@ -29,7 +29,8 @@ void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
   if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
-        (key->isa<abstract::AbstractTensor>() && key_value != kValueAny) || key->isa<abstract::AbstractTuple>())) {
+        (key->isa<abstract::AbstractTensor>() && !key_value->ContainsValueAny()) ||
+        key->isa<abstract::AbstractTuple>())) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
                       << key->BuildValue()->ToString();
   }

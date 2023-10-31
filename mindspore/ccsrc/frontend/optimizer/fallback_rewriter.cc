@@ -783,7 +783,7 @@ AnfNodePtr ConvertSequenceGetItemInner(const CNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimDictGetItem)) {
     auto target_node = node_inputs[target_index];
     auto target_abs = target_node->abstract();
-    if (target_abs == nullptr || target_abs->BuildValue() != kValueAny) {
+    if (target_abs == nullptr || !target_abs->BuildValue()->ContainsValueAny()) {
       return nullptr;
     }
   }

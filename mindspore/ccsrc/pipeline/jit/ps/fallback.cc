@@ -996,7 +996,8 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
   if (has_variable) {
     auto cnode = input->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(cnode);
-    bool not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+    bool not_variable =
+      (!arg->BuildValue()->ContainsValueAny()) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
     for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
       auto &element = arg_tuple_elements[index];
       const auto &inputs = cnode->inputs();

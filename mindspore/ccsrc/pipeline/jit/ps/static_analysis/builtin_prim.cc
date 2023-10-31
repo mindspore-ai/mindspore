@@ -47,7 +47,7 @@ bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) con
   if (args_abs_list[0]->isa<AbstractScalar>()) {
     auto const_abstract_value = args_abs_list[0]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
-    return const_abstract_value->BuildValue() != kValueAny;
+    return !const_abstract_value->BuildValue()->ContainsValueAny();
   }
   return false;
 }
@@ -75,7 +75,7 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   // Process constants.
   if (CheckConst(args_abs_list)) {
     auto const_value = args_abs_list[0]->BuildValue();
-    if (const_value != kValueAny) {
+    if (!const_value->ContainsValueAny()) {
       auto type = args_abs_list[0]->BuildType();
       MS_EXCEPTION_IF_NULL(type);
       auto py_x_data = ValueToPyData(const_value);
@@ -123,7 +123,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
     auto const_abstract_value = args_abs_list[0]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
     if (args_abs_list.size() == 1) {
-      return const_abstract_value->BuildValue() != kValueAny;
+      return !const_abstract_value->BuildValue()->ContainsValueAny();
     }
   }
   if (args_abs_list.size() == 1) {
@@ -133,7 +133,7 @@ bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) c
   if (args_abs_list[1]->isa<AbstractScalar>()) {
     auto const_abstract_value = args_abs_list[1]->cast_ptr<AbstractScalar>();
     MS_EXCEPTION_IF_NULL(const_abstract_value);
-    return const_abstract_value->BuildValue() != kValueAny;
+    return !const_abstract_value->BuildValue()->ContainsValueAny();
   }
   return args_abs_list[1]->isa<AbstractNone>();
 }
