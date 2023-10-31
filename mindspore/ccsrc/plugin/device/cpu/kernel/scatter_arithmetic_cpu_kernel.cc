@@ -66,6 +66,11 @@ int ScatterArithmeticCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   auto updates_shape_null = CheckNullInput(updates_shape);
   has_null_input_ = (input_shape_null || indices_shape_null || updates_shape_null);
   if (has_null_input_) {
+    if (output_size_list_.size() != 1) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got "
+                        << output_size_list_.size();
+    }
+    output_size_list_[0] = input_shape_null ? 0 : output_size_list_[0];
     return KRET_OK;
   }
 
