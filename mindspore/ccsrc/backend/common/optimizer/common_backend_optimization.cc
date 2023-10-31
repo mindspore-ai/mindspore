@@ -80,6 +80,7 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
   // Disable const to tensor pass, ascend platform need to match the change in the future.
   // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   // Disable const to tensor pass, ascend platform need to match the change in the future.
@@ -148,6 +149,7 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
   // Disable const to tensor pass, ascend platform need to match the change in the future.
   // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
+  common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AccumulateNV2Fusion>());
   common_pm->AddPass(std::make_shared<AddNFusion>());
