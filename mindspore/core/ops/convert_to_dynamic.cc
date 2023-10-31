@@ -63,14 +63,11 @@ class ConvertToDynamicRankInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     CheckConvertToDynamicRankArgs(primitive, input_args);
-    const std::string &op_name = primitive->name();
-    auto input = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, 0);
-    MS_EXCEPTION_IF_NULL(input);
-    auto input_shape = input->GetShape()->GetShapeVector();
+    const auto &input_shape = input_args[0]->GetShape()->GetShapeVector();
     if (IsDynamic(input_shape)) {
       MS_LOG(EXCEPTION) << "It should not be dynamic shape, but got " << input_shape;
     }
-    return input->GetShape()->Clone();
+    return input_args[0]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

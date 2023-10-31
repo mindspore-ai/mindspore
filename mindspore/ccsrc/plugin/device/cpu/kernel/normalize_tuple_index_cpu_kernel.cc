@@ -214,6 +214,14 @@ std::vector<KernelAttr> NormalizeTupleIndexCpuKernelMod::GetOpSupport() {
                              .AddOutputAttr(kNumberTypeInt64),
                            &NormalizeTupleIndexCpuKernelMod::LaunchKernel<bool>};
                  });
+  std::transform(data_type_ids.begin(), data_type_ids.end(), std::back_inserter(func_list_),
+                 [](TypeId data_type_id) -> std::pair<KernelAttr, NormalizeTupleIndexFunc> {
+                   return {KernelAttr()
+                             .AddInputAttr(data_type_id)
+                             .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+                             .AddOutputAttr(kNumberTypeInt64),
+                           &NormalizeTupleIndexCpuKernelMod::LaunchKernel<bool>};
+                 });
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, NormalizeTupleIndexFunc> &item) { return item.first; });
   return support_list;
