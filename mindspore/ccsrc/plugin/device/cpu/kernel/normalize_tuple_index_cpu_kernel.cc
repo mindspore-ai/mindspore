@@ -156,11 +156,11 @@ void NormalizeTupleIndexCpuKernelMod::NormalizeEllipsisIndex(int64_t *output_add
 }
 
 template <typename T>
-bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs) {
-  const auto index_val_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  auto output_addr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &workspace,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  const auto index_val_addr = static_cast<int64_t *>(inputs[1]->device_ptr());
+  auto output_addr = static_cast<int64_t *>(outputs[0]->device_ptr());
   const ShapeVector &data_shape = data_shapes_[0];
   output_sizes_.clear();
   if (index_types_ == kIntIndex) {
@@ -179,9 +179,9 @@ bool NormalizeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-bool NormalizeTupleIndexCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool NormalizeTupleIndexCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                             const std::vector<KernelTensor *> &workspace,
+                                             const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

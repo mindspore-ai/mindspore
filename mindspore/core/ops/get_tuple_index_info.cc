@@ -301,7 +301,11 @@ AbstractBasePtr GetTupleIndexInfoInferInner(const PrimitivePtr &primitive,
   ShapeVector broadcast_shape;
   ShapeVector final_shape;
   ShapeVector index_tensor_new_shape;
-  int64_t fancy_position = GetValue<int64_t>(fancy_position_abs->GetValue());
+  auto fancy_position_opt = GetScalarValue<int64_t>(fancy_position_abs->GetValue());
+  if (!fancy_position_opt.has_value()) {
+    MS_EXCEPTION(ValueError) << "The value of fancy_position should not be none.";
+  }
+  auto fancy_position = fancy_position_opt.value();
   auto new_slice_shapes = GetTupleIndexInfo::ConstGetTupleIndexInfo(
     data_shape, tensor_indices_shapes, tuple_index_types, &broadcast_shape, &final_shape, &index_tensor_new_shape,
     reinterpret_cast<size_t *>(&fancy_position), tuple_index_info_type);

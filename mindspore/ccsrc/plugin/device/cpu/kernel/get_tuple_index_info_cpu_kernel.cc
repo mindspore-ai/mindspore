@@ -65,10 +65,10 @@ static inline void CheckCopy(void *dest, size_t destMax, const void *src, size_t
   }
 }
 
-bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) {
-  const auto *input1 = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
+                                                 const std::vector<KernelTensor *> &workspace,
+                                                 const std::vector<KernelTensor *> &outputs) {
+  const auto *input1 = static_cast<int64_t *>(inputs[1]->device_ptr());
   ShapeVector broadcast_shape;
   ShapeVector final_shape;
   ShapeVector index_tensor_new_shape;
@@ -101,22 +101,23 @@ bool GetTupleIndexInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   for (size_t i = 0; i < out_shapes_.size(); i++) {
     const size_t out_size = out_shapes_[i].size() * sizeof(int64_t);
     if (i == kIndex3) {
-      CheckCopy(reinterpret_cast<int64_t *>(outputs[i]->addr), sizeof(int64_t), &fancy_position, sizeof(int64_t),
+      CheckCopy(static_cast<int64_t *>(outputs[i]->device_ptr()), sizeof(int64_t), &fancy_position, sizeof(int64_t),
                 kernel_name_);
     } else if (i == kIndex4) {
-      if (memset_s(outputs[i]->addr, sizeof(int64_t), 0, sizeof(int64_t)) != EOK) {
+      if (memset_s(outputs[i]->device_ptr(), sizeof(int64_t), 0, sizeof(int64_t)) != EOK) {
         MS_LOG(EXCEPTION) << kernel_name_ << " memset error";
       }
     } else {
-      CheckCopy(reinterpret_cast<int64_t *>(outputs[i]->addr), out_size, out_shapes_[i].data(), out_size, kernel_name_);
+      CheckCopy(static_cast<int64_t *>(outputs[i]->device_ptr()), out_size, out_shapes_[i].data(), out_size,
+                kernel_name_);
     }
   }
   return true;
 }
 
-bool GetTupleIndexInfoCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &workspace,
-                                           const std::vector<AddressPtr> &outputs) {
+bool GetTupleIndexInfoCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                           const std::vector<KernelTensor *> &workspace,
+                                           const std::vector<KernelTensor *> &outputs) {
   return kernel_func_(this, inputs, workspace, outputs);
 }
 

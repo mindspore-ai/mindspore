@@ -35,11 +35,12 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
+                    const std::vector<kernel::KernelTensor *> &workspace,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -65,8 +66,8 @@ class GetTupleIndexInfoCpuKernelMod : public NativeCpuKernelMod {
   }
 
   using GetTupleIndexInfoFunc =
-    std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(GetTupleIndexInfoCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
+                       const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   static std::vector<std::pair<KernelAttr, GetTupleIndexInfoFunc>> func_list_;
   GetTupleIndexInfoFunc kernel_func_;
 

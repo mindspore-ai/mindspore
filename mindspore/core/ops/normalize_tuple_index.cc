@@ -259,8 +259,12 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(ShapeVector{});
     }
     if (index_types == kTensorIndexSequenceIndex) {
-      auto tensor = GetValue<tensor::TensorPtr>(input_args[1]->GetValue());
-      return std::make_shared<abstract::Shape>(tensor->shape());
+      auto input_shape = input_args[1]->GetShape();
+      if (input_shape->isa<abstract::TensorShape>()) {
+        return input_shape->Clone();
+      }
+      auto tuple_shape = input_shape->cast<abstract::TupleShapePtr>()->shape();
+      return std::make_shared<abstract::Shape>(ShapeVector({SizeToLong(tuple_shape.size())}));
     }
     if (index_types == kNoneIndex) {
       ShapeVector shape = ShapeVector({abstract::Shape::kShapeDimAny});
@@ -281,7 +285,7 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NormalizeTupleIndexInferInner(prim, input_args)->GetType();
+    return std::make_shared<TensorType>(kInt64);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,

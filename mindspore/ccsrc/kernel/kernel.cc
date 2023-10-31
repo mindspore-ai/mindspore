@@ -535,6 +535,9 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
     size_t tensor_size = 0;
     MS_EXCEPTION_IF_NULL(output);
     size_t type_size = GetTypeByte(output->dtype());
+    if (type_size == 0) {
+      MS_LOG(WARNING) << "The type size is 0, type: " << output->dtype()->ToString();
+    }
     const auto &shape = output->GetShapeVector();
     if (!IsValidShape(shape)) {
       // Note:
