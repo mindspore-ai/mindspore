@@ -563,9 +563,7 @@ static py::object DeleteGradSensArgs(const py::object &args, const py::object &k
 static AObject *InferGradFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
                                     const GraphJitConfig &conf) {
   auto jcr = getJitCompileResults(func.ptr());
-  if (jcr->conf == nullptr) {
-    jcr->conf = new GraphJitConfig(conf);
-  }
+  *jcr->conf = conf;
   return InferFuncResult(func, args, kwargs, conf, true);
 }
 

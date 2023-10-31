@@ -185,7 +185,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
                     v->GetGraph()->GetCodeObj()->co_filename, v->GetLineNo());
     GRAPH_JIT_LOG_F("parameters");
     for (auto &i : v->getInputs()) {
-      GRAPH_JIT_LOG_F("%s", i->GetVobj() ? "<nil>" : i->GetVobj()->ToString().c_str());
+      GRAPH_JIT_LOG_F("%s", i->GetVobj() ? i->GetVobj()->ToString().c_str() : "<nil>");
     }
   }
 

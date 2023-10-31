@@ -84,6 +84,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;
+  bool_conf[kLogGraphBreak - kBoolConf] = false;
 
   /*'EnableOptimizeForAttrItem' options must be ensure that multiple calls of the
    *__getattr__, __getitem__ function of the user-defined object do not affect the correctness.
