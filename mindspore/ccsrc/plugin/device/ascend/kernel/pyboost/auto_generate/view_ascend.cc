@@ -23,11 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr ViewAscend::Call(const tensor::TensorPtr &input, const ValueTuplePtr &shape) {
-  std::vector<int64_t> shape_vec;
-  for (auto &val : shape->value()) {
-    (void)shape_vec.emplace_back(GetValue<int64_t>(val));
-  }
-  PyboostProcessView(input, shape_vec, kAscendDevice);
+  PyboostProcessView(input, shape, kAscendDevice);
   return outputs_[0];
 }
 }  // namespace pyboost

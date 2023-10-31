@@ -28,7 +28,7 @@ class BACKEND_EXPORT View : public pyboost::Op {
   ~View() = default;
 
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &shape) = 0;
-  void PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &shape,
+  void PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &shape,
                           const std::string &device_target);
 };
 }  // namespace pyboost

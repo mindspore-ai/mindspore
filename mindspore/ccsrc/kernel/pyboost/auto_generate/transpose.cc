@@ -21,9 +21,10 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) {
+void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm,
+                                   const std::string &device_target) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
 

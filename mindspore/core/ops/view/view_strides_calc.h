@@ -22,9 +22,7 @@
 namespace mindspore {
 namespace ops {
 
-TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-MS_CORE_API TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
-                                                  const std::vector<int64_t> &shape);
+MS_CORE_API TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
 
 }  // namespace ops
 }  // namespace mindspore

@@ -23,7 +23,7 @@ namespace pyboost {
 bool TransposeAscend::Launch(const tensor::TensorPtr &input, const vector<int64_t> &input_perm) { return true; }
 
 tensor::TensorPtr TransposeAscend::Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) {
-  PyboostProcessView(input, input_perm);
+  PyboostProcessView(input, input_perm, kAscendDevice);
   return outputs_[0];
 }
 }  // namespace pyboost

@@ -54,17 +54,6 @@ ShapeVector update_shape(const ShapeVector &input_shape, ShapeVector shape) {
   return shape;
 }
 
-TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kViewInputsNum) {
-    return {};
-  }
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
-
-  auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
-
-  return ViewCalcImpl(prim, input_tensor, shape);
-}
-
 TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
                                       const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -78,6 +67,17 @@ TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::Te
     std::make_shared<TensorStorageInfo>(new_shape, new_strides, storage_offset, old_tensor_info->ori_shape,
                                         old_tensor_info->ori_strides, IsContiguous(new_shape, new_strides));
   return {new_storage_info};
+}
+
+TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+  if (inputs.size() != kViewInputsNum) {
+    return {};
+  }
+  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+
+  auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
+
+  return ViewCalcImpl(prim, input_tensor, shape);
 }
 
 REG_VIEW_STRIDES_CALC_FUN(View, ViewCalc);

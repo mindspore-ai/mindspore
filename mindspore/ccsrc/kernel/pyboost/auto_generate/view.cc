@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &shape,
+void View::PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &shape,
                               const std::string &device_target) {
   MS_EXCEPTION_IF_NULL(input);
 
@@ -38,7 +38,7 @@ void View::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  auto storage_info_list = ops::ViewCalcImpl(primitive_, input, shape);
+  auto storage_info_list = ops::ViewCalc(primitive_, {input, shape});
   if (!storage_info_list.empty()) {
     storage_info_list[0]->data_type = input->data_type();
     runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
