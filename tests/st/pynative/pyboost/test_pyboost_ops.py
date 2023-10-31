@@ -17,9 +17,9 @@ import numpy as np
 from mindspore import Tensor, context
 from mindspore import nn
 from mindspore.ops.composite import GradOperation
-from mindspore.ops import split
+from mindspore.ops import split, conv2d
 from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext, sub_ext, \
-    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul
+    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d_ext
 import mindspore
 
 
@@ -402,3 +402,25 @@ def test_matmul_ascend():
     input_x2 = Tensor(np.array([[2, 3], [4, 5]]).astype(np.float32))
     output = matmul(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [[10, 13], [22, 29]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_conv2d_ext_ascend():
+    """
+    Feature: test conv2d_ext operator
+    Description: test conv2d_ext run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+
+    np.random.seed(1)
+    filters = Tensor(np.random.randn(8, 4, 3, 3).astype(dtype=np.float32))
+    inputs = Tensor(np.random.randn(1, 4, 5, 5).astype(dtype=np.float32))
+    bias = Tensor(np.random.randn(8).astype(dtype=np.float32))
+
+    pyboost_out = conv2d_ext(inputs, filters, padding=1, bias=bias)
+    old_out = conv2d(inputs, filters, pad_mode="pad", padding=1, bias=bias)
+    assert np.allclose(pyboost_out.asnumpy(), old_out.asnumpy(), 0.003, 0.003)

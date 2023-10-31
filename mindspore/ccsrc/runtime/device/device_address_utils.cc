@@ -505,6 +505,21 @@ size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr
   return tensor_size;
 }
 
+std::string GetFormatByTensorShape(const DeviceContext *device_context, const ShapeVector &tensor_shape) {
+  if (device_context->GetDeviceType() != device::DeviceType::kAscend) {
+    return kOpFormat_DEFAULT;
+  }
+
+  switch (tensor_shape.size()) {
+    case kShape4dDims:
+      return kOpFormat_NCHW;
+    case kShape5dDims:
+      return kOpFormat_NCDHW;
+    default:
+      return kOpFormat_ND;
+  }
+}
+
 vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddress(
   const OpCompilerInfoPtr &op_compiler_info, const abstract::AbstractBasePtr &out_abstract) {
   MS_LOG(DEBUG) << "CreateGraphOutputDeviceAddress";
@@ -760,9 +775,10 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   if (device_address == nullptr) {
     auto tensor_size = LongToSize(tensor->data().nbytes());
-    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+    device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, format,
                                                                               tensor->data_type(), tensor->shape());
 
     device_address->set_from_persistent_mem(tensor->is_parameter());
@@ -778,7 +794,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
 
   // Default format no need to padding shape
   if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                        tensor->data_c(), kOpFormat_DEFAULT)) {
+                                        tensor->data_c(), format)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "input_name:" << input_name << " ptr:" << device_address->GetPtr();
@@ -792,31 +808,11 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const Dev
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
-  auto get_format_by_tensor_shape = [device_context, tensor](const auto &format) -> std::string {
-    if (!format.empty()) {
-      // ori_format is not empty, use ori_format.
-      return format;
-    }
-
-    if (device_context->GetDeviceType() != device::DeviceType::kAscend) {
-      return kOpFormat_DEFAULT;
-    }
-
-    switch (tensor->shape().size()) {
-      case kShape4dDims:
-        return kOpFormat_NCHW;
-      case kShape5dDims:
-        return kOpFormat_NCDHW;
-      default:
-        return kOpFormat_ND;
-    }
-  };
-
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   if (device_address == nullptr) {
     auto tensor_size = LongToSize(tensor->data().nbytes());
 
-    const auto &device_format = get_format_by_tensor_shape(format);
+    const auto &device_format = format.empty() ? GetFormatByTensorShape(device_context, tensor->shape()) : format;
     device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, device_format,
                                                                               tensor->data_type(), tensor->shape());
     tensor->set_device_address(device_address);

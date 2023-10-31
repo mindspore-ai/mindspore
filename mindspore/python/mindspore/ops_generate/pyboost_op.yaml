@@ -174,3 +174,10 @@ MatMul:
     cube: True
     aclnn: aclnnMatmul
 
+Conv2DExt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: customize
