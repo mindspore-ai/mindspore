@@ -136,10 +136,14 @@ bool AkgGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const st
     (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
                          [](const KernelTensor *addr) { return reinterpret_cast<void *>(addr->device_ptr()); });
   }
+  std::vector<void *> runtimeargs_addr;
+  for (size_t i = 0; i < runtimeargs.size(); i++) {
+    runtimeargs_addr.emplace_back(reinterpret_cast<void *>(reinterpret_cast<void **>(runtimeargs.data()) + i));
+  }
   result = cuLaunchKernel(kernel_addr_, thread_info_[AKG_KERNEL_MOD_BX_IDX], thread_info_[AKG_KERNEL_MOD_BY_IDX],
                           thread_info_[AKG_KERNEL_MOD_BZ_IDX], thread_info_[AKG_KERNEL_MOD_TX_IDX],
                           thread_info_[AKG_KERNEL_MOD_TY_IDX], thread_info_[AKG_KERNEL_MOD_TZ_IDX], 0,
-                          reinterpret_cast<CUstream>(stream_ptr), reinterpret_cast<void **>(&runtimeargs[0]), 0);
+                          reinterpret_cast<CUstream>(stream_ptr), reinterpret_cast<void **>(&runtimeargs_addr[0]), 0);
   if (result != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(result, &msg);
