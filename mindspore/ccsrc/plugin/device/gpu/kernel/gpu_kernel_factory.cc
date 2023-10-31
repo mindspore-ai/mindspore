@@ -197,7 +197,7 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     }
     // data type matching check of all input parameters of kernel
     size_t cur_all_same_input_num = cur_kernel_attr.GetAllSameInputNum();  // default 0; else >=1 when allsame=true
-    size_t cur_standalone_input_num = input_size - cur_all_same_input_num;
+    size_t cur_standalone_input_num = cur_kernel_attr.GetInputSize() - cur_all_same_input_num;
     size_t each_attr_input_num =
       (input_size - cur_standalone_input_num) / (cur_all_same_input_num == 0 ? 1 : cur_all_same_input_num);
     // deal with the allsame inputs

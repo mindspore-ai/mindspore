@@ -1591,30 +1591,16 @@ bool AnfAlgo::IsDynamicValue(const AnfNodePtr &node) {
   if (cnode->HasAttr(ops::kHasDynamicValue)) {
     return true;
   }
-  auto depend_list = mindspore::ops::GetInputDependValueList(GetCNodePrimitive(cnode));
+  auto depend_list = abstract::GetValueDependArgIndices(cnode);
   if (!depend_list.empty()) {
-    mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(GetCNodeName(cnode));
-    size_t reg_input_num = depend_list.size();
     size_t real_input_num = cnode->size() - 1;  // exclude primitive in input[0]
-    if (op_def != nullptr) {
-      reg_input_num = op_def->args_.size();
-    }
-    if (reg_input_num == real_input_num) {
-      for (auto i = depend_list.begin(); i != depend_list.end(); i++) {
-        if (*i >= SizeToInt(real_input_num)) {
-          continue;
-        }
-        if (!cnode->input(*i + 1)->isa<ValueNode>()) {
-          cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
-          return true;
-        }
+    for (auto i = depend_list.begin(); i != depend_list.end(); i++) {
+      if (*i >= SizeToInt(real_input_num)) {
+        continue;
       }
-    } else {
-      for (size_t i = 1; i < depend_list.size() + 1; i++) {
-        if (!cnode->input(real_input_num - i + 1)->isa<ValueNode>()) {
-          cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
-          return true;
-        }
+      if (!cnode->input(*i + 1)->isa<ValueNode>()) {
+        cnode->AddAttr(mindspore::ops::kHasDynamicValue, MakeValue(true));
+        return true;
       }
     }
   }
