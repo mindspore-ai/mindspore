@@ -58,6 +58,7 @@ class Tracebackes {
     int depth;
     int line;
   };
+  Tracebackes() = default;
   Tracebackes(const std::string &raw_func_name, const std::string &raw_func_info_name, int raw_code_size)
       : raw_func_name_(raw_func_name), raw_func_info_name_(raw_func_info_name), raw_code_size_(raw_code_size) {}
   ~Tracebackes() { Clear(); }
@@ -119,11 +120,11 @@ typedef struct CodeExtra {
     OptCodePtr code;
   } compiled;
 
-  Tracebackes *tbs;
+  std::shared_ptr<Tracebackes> tbs;
 
   mindspore::jit::graph::OptCodeHubPtr codehub;
 
-  GraphJitConfig *conf;
+  std::shared_ptr<GraphJitConfig> conf;
 
   bool sub_routine;
 

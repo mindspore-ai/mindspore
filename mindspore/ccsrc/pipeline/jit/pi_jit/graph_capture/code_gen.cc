@@ -757,7 +757,7 @@ void CodeGenerator::CutoffBytecodesIfGraphBreak() {
 
   if (stop_trace_at->GetGraph() && this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     auto sub = stop_trace_at->GetGraph();
-    PyObject *file = sub->GetCodeObj()->co_name;
+    PyObject *file = sub->GetCodeObj()->co_filename;
     GRAPH_JIT_LOG_F("break graph at [ %U : %d ] operation %s", file, stop_trace_at->GetLineNo(),
                     GetStopTraceReasonDesc(sub->GetStopTraceReason()).c_str());
   }
