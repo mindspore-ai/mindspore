@@ -639,7 +639,10 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
       if (input_device_tensors_[input_index] != input_data->data_) {
         input_device_tensors_[input_index] = input_data->data_;
         memory_free_list_[input_index] = input_data->data_;
-        // Collect the input kernel tensor.
+      }
+
+      // Collect the input kernel tensor.
+      if (input_kernel_tensors_[input_index] != input_device_tensors_[input_index]->kernel_tensor().get()) {
         input_kernel_tensors_[input_index] = input_device_tensors_[input_index]->kernel_tensor().get();
         if (is_dynamic_shape_) {
           input_kernel_tensors_for_infer_[input_index] = input_device_tensors_[input_index]->kernel_tensor();

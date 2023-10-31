@@ -380,7 +380,8 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
 
       auto new_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
       MS_EXCEPTION_IF_NULL(new_address);
-      MS_LOG(DEBUG) << "Create device tensor:" << new_address << " type:" << new_address->type_id();
+      MS_LOG(DEBUG) << "Create device tensor:" << new_address << " type:" << new_address->type_id()
+                    << ", kernel tensor addr:" << new_kernel_tensor.get();
       new_address->set_original_ref_count(old_address->original_ref_count());
       new_address->ResetRefCount();
       new_address->set_flag(old_address->flag());
