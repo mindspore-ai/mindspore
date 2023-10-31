@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -623,12 +623,23 @@ std::pair<bool, std::pair<std::string, ExceptionType>> GetSelectKernelObjectType
     kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(kernel_name);
   }
 
-  // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold.
+  // Some dynamic kernels may not set the kernel attrs on GPU. Skip check only supports the tuple fold when KeepTuple
+  // is not apply target.
   if (kernel_attrs.empty() || kernel_attrs[0].GetSkipCheck()) {
-    auto input_object_types =
-      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
-    auto output_object_types =
-      kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    std::vector<kernel::KernelObjectType> input_object_types;
+    std::vector<kernel::KernelObjectType> output_object_types;
+    if (!kernel_attrs.empty() && common::AnfAlgo::HasNodeAttr(kInputRealTuple, kernel_node)) {
+      input_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
+    } else {
+      input_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
+    }
+
+    if (!kernel_attrs.empty() && common::AnfAlgo::HasNodeAttr(kOutputRealTuple, kernel_node)) {
+      output_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    } else {
+      output_object_types =
+        kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
+    }
     kernel::SetKernelObjectTypeBuildInfo(kernel_node, input_object_types, output_object_types);
     if (!kernel_attrs.empty()) {
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);

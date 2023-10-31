@@ -149,10 +149,8 @@ CNodePtr NewSplitCNodeAndSetAbstract(const FuncGraphPtr &func_graph, const AnfNo
 CNodePtr NewConcatCNodeAndSetAbstract(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node0,
                                       const AnfNodePtr &input_node1, int64_t axis, int64_t input_num) {
   auto make_tuple_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimMakeTuple->Clone()), input_node0, input_node1});
-  auto concat_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimConcat->Clone()), make_tuple_cnode});
-  AddCNodePrimAttr(concat_cnode, kAttrAxis, MakeValue(axis));
-  AddCNodePrimAttr(concat_cnode, "N", MakeValue(input_num));
-  AddCNodePrimAttr(concat_cnode, kAttrInputNums, MakeValue(input_num));
+  auto concat_cnode =
+    func_graph->NewCNode({NewValueNode(prim::kPrimConcat->Clone()), make_tuple_cnode, NewValueNode(MakeValue(axis))});
 
   auto input_node0_dtype = common::AnfAlgo::GetOutputInferDataType(input_node0, kIndex0);
   auto input_node0_shape = common::AnfAlgo::GetOutputInferShape(input_node0, kIndex0);

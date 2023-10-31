@@ -667,11 +667,11 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       ellipsis_count += 1;
     }
   }
-  auto concat_prim = std::make_shared<Primitive>(kPrimConcat->name());
-  concat_prim->set_attr(ops::kAxis, MakeValue(static_cast<int64_t>(0)));
-  AnfNodePtr begin_stride = res_graph_->NewCNode({NewValueNode(concat_prim), res_graph_->NewCNode(begin_strides)});
-  AnfNodePtr end_stride = res_graph_->NewCNode({NewValueNode(concat_prim), res_graph_->NewCNode(end_strides)});
-  AnfNodePtr step_stride = res_graph_->NewCNode({NewValueNode(concat_prim), res_graph_->NewCNode(step_strides)});
+  auto prim = std::make_shared<Primitive>(kPrimConcat->name());
+  auto axis_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  AnfNodePtr begin_stride = res_graph_->NewCNode({NewValueNode(prim), res_graph_->NewCNode(begin_strides), axis_node});
+  AnfNodePtr end_stride = res_graph_->NewCNode({NewValueNode(prim), res_graph_->NewCNode(end_strides), axis_node});
+  AnfNodePtr step_stride = res_graph_->NewCNode({NewValueNode(prim), res_graph_->NewCNode(step_strides), axis_node});
   if (IsDynamic(data_shape_) && has_int && has_ellipsis) {
     shrink_axis = kZeroAnfValue;
   }
@@ -715,8 +715,8 @@ void TensorIndex::RemakeTupleIndex(bool has_ellipsis, const std::vector<int64_t>
     (void)remake_tuple_inputs.insert(remake_tuple_inputs.begin(), NewValueNode(prim::kPrimMakeTuple));
     auto remake_tuple = NewCNode(remake_tuple_inputs, res_graph_);
     auto concat_prim = std::make_shared<Primitive>(kPrimConcat->name());
-    concat_prim->set_attr(ops::kAxis, MakeValue(static_cast<int64_t>(-1)));
-    AnfNodePtr indices_node = res_graph_->NewCNode({NewValueNode(concat_prim), remake_tuple});
+    auto axis_node = NewValueNode(MakeValue(static_cast<int64_t>(-1)));
+    AnfNodePtr indices_node = res_graph_->NewCNode({NewValueNode(concat_prim), remake_tuple, axis_node});
     auto gather_nd_node = NewCNode({NewValueNode(kPrimGatherNd), data_node, indices_node}, res_graph_);
     res_graph_->set_output(gather_nd_node);
   }
@@ -1095,8 +1095,8 @@ void TensorIndexSetitem::SetItemByTuple(const AnfNodePtr &input_data_node, const
     auto remake_tuple = NewCNode(remake_tuple_inputs, res_graph_);
 
     auto concat_prim = std::make_shared<Primitive>(kPrimConcat->name());
-    concat_prim->set_attr(ops::kAxis, MakeValue(static_cast<int64_t>(-1)));
-    AnfNodePtr indices_node = res_graph_->NewCNode({NewValueNode(concat_prim), remake_tuple});
+    auto axis_node = NewValueNode(MakeValue(static_cast<int64_t>(-1)));
+    AnfNodePtr indices_node = res_graph_->NewCNode({NewValueNode(concat_prim), remake_tuple, axis_node});
     res_graph_->set_output(indices_node);
   }
   MS_LOG(DEBUG) << "Tuple index types in TensorIndexing is: " << tuple_index_types;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCATV2_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCATV2_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCAT_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCAT_GPU_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -24,14 +24,13 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ConcatV2FwdGpuKernelMod> {
+class ConcatGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ConcatGpuKernelMod> {
  public:
-  ConcatV2FwdGpuKernelMod() = default;
-  ~ConcatV2FwdGpuKernelMod() override = default;
+  ConcatGpuKernelMod() = default;
+  ~ConcatGpuKernelMod() override = default;
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
@@ -41,7 +40,6 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
@@ -50,8 +48,7 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
                     const std::vector<KernelTensor *> &outputs);
 
   int axis_{0};
-  int ori_axis_{0};
-  int input_num_{1};
+  size_t input_tensor_num_{1};
   size_t output_size_{0};
   int all_size_before_axis_{1};
   int all_size_axis_{1};
@@ -59,10 +56,9 @@ class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
   std::vector<int> not_null_input_index_;
   std::vector<int> len_axis_;
   std::vector<void *> inputs_host_;
-  std::string origin_data_format_;
   void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCATV2_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_CONCAT_GPU_KERNEL_H_

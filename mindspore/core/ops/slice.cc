@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,19 +51,20 @@ namespace {
 constexpr size_t kSliceInputNum = 3;
 std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive,
                                                      const AbstractBasePtr &input_value) {
-  std::vector<int64_t> tmp_input;
   MS_EXCEPTION_IF_NULL(input_value);
-  if (CheckAndConvertUtils::IsTensor(input_value) && IsValueKnown(input_value->GetValue())) {
+  if (auto value_ptr = input_value->GetValue(); value_ptr == nullptr || !IsValueKnown(value_ptr)) {
+    MS_EXCEPTION(TypeError) << "For Slice, the 'begin' and 'size' must be Tuple or List. And currently, it is not "
+                               "supported when 'begin' and/or 'size' has unknown value(s).";
+  }
+  std::vector<int64_t> tmp_input;
+  if (CheckAndConvertUtils::IsTensor(input_value)) {
     auto input_value_type = input_value->GetType();
     tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value->GetValue(),
                                                           primitive->name(), input_value_type);
-  } else if (CheckAndConvertUtils::IsTuple(input_value) && IsValueKnown(input_value->GetValue())) {
+  } else if (CheckAndConvertUtils::IsTuple(input_value)) {
     tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value->GetValue(), primitive->name());
-  } else if (CheckAndConvertUtils::IsList(input_value) && IsValueKnown(input_value->GetValue())) {
+  } else if (CheckAndConvertUtils::IsList(input_value)) {
     tmp_input = CheckAndConvertUtils::CheckListInt("slice args value", input_value->GetValue(), primitive->name());
-  } else {
-    MS_EXCEPTION(TypeError) << "For Slice, the 'begin' and 'size' must be Tuple or List. And currently, it is not "
-                               "supported when 'begin' and/or 'size' has unknown value(s).";
   }
 
   return tmp_input;

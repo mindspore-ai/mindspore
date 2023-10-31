@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1119,9 +1119,8 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
     auto out_idx = ib->Cast(ib->Range(res[2]), kInt32);
     out_idx = ib->Reshape(out_idx, res[3]);
-    auto idx_tensor =
-      ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
-               {{"axis", MakeValue<int64_t>(-1)}});
+    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
+                                          ib->Value<int64_t>(-1)});
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
     auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
@@ -1155,9 +1154,8 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
     auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
     out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
-    auto idx_tensor =
-      ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)})},
-               {{"axis", MakeValue<int64_t>(-1)}});
+    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
+                                          ib->Value<int64_t>(-1)});
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
     std::vector<int64_t> ones(out_indices_num, 1);

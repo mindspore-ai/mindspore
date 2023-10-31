@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::sup
 std::vector<void *> ConvertPtrs(const std::vector<KernelTensor *> &input_ptrs) {
   std::vector<void *> out_ptrs;
   std::transform(input_ptrs.begin(), input_ptrs.end(), std::back_inserter(out_ptrs),
-                 [](const auto &cur_addr) { return cur_addr->device_ptr(); });
+                 [](const auto &cur_addr) { return (cur_addr == nullptr) ? nullptr : cur_addr->device_ptr(); });
   return out_ptrs;
 }
 

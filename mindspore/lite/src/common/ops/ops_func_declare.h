@@ -40,7 +40,6 @@
 #include "ops/custom_normalize.h"
 #include "ops/custom_predict.h"
 #include "ops/custom_extract_features.h"
-#include "ops/concat.h"
 #include "ops/constant_of_shape.h"
 #include "ops/crop.h"
 #include "ops/depth_to_space.h"

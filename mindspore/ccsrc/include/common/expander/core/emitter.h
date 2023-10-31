@@ -86,7 +86,7 @@ class COMMON_EXPORT Emitter {
   NodePtr Tile(const NodePtr &node, const NodePtr &multiples);
   NodePtr Tile(const NodePtr &node, const ShapeVector &multiples) { return Tile(node, Value(multiples)); }
   NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
-    return Emit(kConcatOpName, {MakeTuple(inputs)}, {{kAttrAxis, MakeValue(axis)}});
+    return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
 
   NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs); }
@@ -265,14 +265,14 @@ class COMMON_EXPORT Emitter {
   /// \brief Shape calculation. This interface is used to unify the code between static-shape and dynamic-shape
   /// situation, the output type is depend on types of inputs.
   ///
-  /// \param[in] functor The ShapeCalcFunctor object.
+  /// \param[in] functor The ShapeCalcBaseFunctor object.
   /// \param[in] inputs The input tensors.
   /// \param[in] value_depend If index i exists in 'value_depend', the value of inputs[i] is sent to 'functor'.
   ///                         otherwise the shape of inputs[i] is sent.
   /// \param[in] valid_func The function to check whether the index and input shape is valid.
   /// \return NodePtrList, the outputs shape list. When inputs are all static-shape tensors, shape vectors are returned.
   /// otherwise CNode tensors are returned.
-  NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
+  NodePtrList ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
                         const std::vector<int64_t> &value_depend = {}, const ShapeValidFunc &valid_func = nullptr);
 
   /// \brief Emit a TensorToTuple node.
@@ -345,42 +345,88 @@ COMMON_EXPORT NodePtr operator*(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator/(const NodePtr &lhs, const NodePtr &rhs);
 COMMON_EXPORT NodePtr operator-(const NodePtr &node);
 
-class PureShapeCalc : public ShapeCalcFunctor {
+class PureShapeCalc : public ShapeCalcBaseFunctor {
  public:
+  // CalcFunc/InferFunc/CalcWithTupleFunc/InferWithTupleFunc are defined as pure function pointer other than a
+  // std::function, meaning that they should be a lambda function without any capture.
   using CalcFunc = ShapeArray (*)(const ShapeArray &);
   using InferFunc = std::vector<int64_t> (*)(const ShapeArray &, const HashSet<size_t> &);
-  explicit PureShapeCalc(const std::string &name) : ShapeCalcFunctor(name) {
+  using CalcWithTupleFunc = ShapeArray (*)(const ShapeArray &, const ElemPosIdx &);
+  using InferWithTupleFunc = InferOutputInfo (*)(const ShapeArray &, const HashSet<size_t> &, const ElemPosIdx &);
+
+  explicit PureShapeCalc(const std::string &name) : ShapeCalcBaseFunctor(name) {
     FunctorRegistry::Instance().Register(name, [this]() { return shared_from_base<Functor>(); });
   }
+
   PureShapeCalc(const PureShapeCalc &) = delete;
   PureShapeCalc(PureShapeCalc &&) = delete;
   PureShapeCalc &operator=(const PureShapeCalc &) = delete;
   PureShapeCalc &operator=(PureShapeCalc &&) = delete;
   ~PureShapeCalc() override = default;
-  MS_DECLARE_PARENT(PureShapeCalc, ShapeCalcFunctor)
+  MS_DECLARE_PARENT(PureShapeCalc, ShapeCalcBaseFunctor)
 
   ValuePtr ToValue() const override { return nullptr; }
   void FromValue(const ValuePtr &) override {}
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    MS_EXCEPTION_IF_CHECK_FAIL(calc_func_ != nullptr, "The calc_func of " + name() + " is nullptr");
-    return calc_func_(inputs);
+
+  ShapeArray Calc(const ShapeArray &inputs, const ElemPosIdx &pos_idx) const override {
+    ShapeArray calc_res;
+    if (calc_func_ != nullptr) {
+      calc_res = calc_func_(inputs);
+    } else if (cal_with_tuple_func_ != nullptr) {
+      calc_res = cal_with_tuple_func_(inputs, pos_idx);
+    } else {
+      MS_LOG(EXCEPTION) << "The calc_func of " << name() << " is nullptr";
+    }
+
+    return calc_res;
   }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const override {
-    MS_EXCEPTION_IF_CHECK_FAIL(infer_func_ != nullptr, "The infer_func of " + name() + " is nullptr");
-    return infer_func_(inputs, unknown_inputs);
+
+  InferOutputInfo Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs,
+                        const ElemPosIdx &pos_idx) const override {
+    InferOutputInfo infer_res;
+    if (infer_func_ != nullptr) {
+      auto output_shapes = infer_func_(inputs, unknown_inputs);
+      infer_res = std::make_pair(output_shapes, false);
+    } else if (infer_with_tuple_func_ != nullptr) {
+      infer_res = infer_with_tuple_func_(inputs, unknown_inputs, pos_idx);
+    } else {
+      MS_LOG(EXCEPTION) << "The infer_func of " << name() << " is nullptr";
+    }
+
+    return infer_res;
   }
 
   PureShapeCalc &SetCalc(const CalcFunc &calc_func) {
     calc_func_ = calc_func;
     return *this;
   }
+
   std::shared_ptr<PureShapeCalc> SetInfer(const InferFunc &infer_func) {
     infer_func_ = infer_func;
+    if (calc_func_ == nullptr || cal_with_tuple_func_ != nullptr) {
+      MS_LOG(EXCEPTION) << "The Calc Function and Infer Function should all not support tuple!";
+    }
     return shared_from_base<PureShapeCalc>();
   }
 
+  PureShapeCalc &SetCalc(const CalcWithTupleFunc &calc_func) {
+    cal_with_tuple_func_ = calc_func;
+    return *this;
+  }
+
+  std::shared_ptr<PureShapeCalc> SetInfer(const InferWithTupleFunc &infer_func) {
+    infer_with_tuple_func_ = infer_func;
+    if (cal_with_tuple_func_ == nullptr || calc_func_ != nullptr) {
+      MS_LOG(EXCEPTION) << "The Calc Function and Infer Function should all support tuple!";
+    }
+    return shared_from_base<PureShapeCalc>();
+  }
+
+ private:
   CalcFunc calc_func_{nullptr};
   InferFunc infer_func_{nullptr};
+  CalcWithTupleFunc cal_with_tuple_func_{nullptr};
+  InferWithTupleFunc infer_with_tuple_func_{nullptr};
 };
 
 #define DEF_PURE_SHAPE_CALC(name) \

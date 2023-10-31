@@ -41,7 +41,7 @@ from mindspore._c_expression import COOTensor as COOTensor_
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
-                             Cummax, CumSum, CumProd, CumMax, CumMin, Argmin)
+                             Cummax, CumSum, CumProd, CumMax, CumMin, Argmin, Concat)
 from .manually_defined import Rank, Shape, Tile
 
 
@@ -2068,62 +2068,6 @@ class UnsortedSegmentProd(Primitive):
     def __init__(self):
         """Initialize UnsortedSegmentProd"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
-
-
-class Concat(PrimitiveWithCheck):
-    r"""
-    Connect tensor in the specified axis.
-
-    Refer to :func:`mindspore.ops.concat` for more details.
-
-    Args:
-        axis (int, optional): The specified axis. Default: ``0`` .
-
-    Inputs:
-        - **input_x** (Union[tuple, list]) - A tuple or a list of input tensors.
-          Suppose there are two tensors in this tuple or list, namely x1 and x2.
-          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
-          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]`,
-          where the :math:`R` indicates the last axis.
-
-    Outputs:
-        - Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
-        >>> op = ops.Concat()
-        >>> output = op((input_x1, input_x2))
-        >>> print(output)
-        [[0. 1.]
-         [2. 1.]
-         [0. 1.]
-         [2. 1.]]
-        >>> op = ops.Concat(1)
-        >>> output = op((input_x1, input_x2))
-        >>> print(output)
-        [[0. 1. 0. 1.]
-         [2. 1. 2. 1.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=0):
-        """Initialize Concat"""
-        self.axis = axis
-        validator.check_value_type("axis", axis, [int], self.name)
-
-    def infer_value(self, input_x):
-        """Implement Concat infer value"""
-        value = None
-        if input_x is not None and None not in input_x:
-            value = Tensor(np.concatenate([x.asnumpy() for x in input_x], axis=self.axis))
-        return value
 
 
 class ConcatOffsetV1(Primitive):

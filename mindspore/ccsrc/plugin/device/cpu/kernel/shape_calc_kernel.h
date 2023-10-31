@@ -22,7 +22,7 @@
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/shape_calc.h"
+#include "ir/functor.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,12 +41,9 @@ class ShapeCalcCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
 
-  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
-  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                const std::vector<KernelTensor *> &outputs) override;
-
  private:
   ShapeArray outs_shape_;
+  bool is_dynamic_len_out_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

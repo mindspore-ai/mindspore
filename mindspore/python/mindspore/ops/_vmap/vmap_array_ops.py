@@ -254,33 +254,36 @@ def get_tile_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Concat)
+@vmap_rules_getters.register("Concat")
 def get_concat_vmap_rule(prim, axis_size):
     """VmapRule for `Concat` operation."""
-    if isinstance(prim, str):
-        prim = P.Concat(0)
-        new_axis = 0
-    else:
-        new_axis = prim.axis
-    if new_axis >= 0:
-        new_axis += 1
+    @_primexpr
+    def _get_concat_batch_axis(axis):
+        new_axis = axis
+        if new_axis >= 0:
+            new_axis += 1
+        return new_axis
 
-    def vmap_rule(*inputs_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+    def vmap_rule(inputs_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, inputs_bdim, axis_bdim)
         if is_all_none:
             return result
 
         if not isinstance(inputs_bdim, (tuple, list)):
-            _raise_value_error("The 'x' of P.Concat is neither tuple nor list.")
+            _raise_value_error("The 'x' of Concat is neither tuple nor list.")
 
-        args = inputs_bdim[0]
         vals = ()
-        for each_arg in args:
+        for each_arg in inputs_bdim:
             x, bdim = each_arg
             x = _bdim_at_front(x, bdim, axis_size)
             vals = vals + (x,)
 
-        out = P.Concat(new_axis)(vals)
+        axis, axis_dim = axis_bdim
+        if axis_dim is not None:
+            _raise_value_error("The source axis of `axis` in P.Concat must be None, but got {}.".format(axis_dim))
+        axis = _get_concat_batch_axis(axis)
+
+        out = prim(vals, axis)
         return out, 0
 
     return vmap_rule

@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "ir/dtype/tensor_type.h"
@@ -92,8 +93,15 @@ std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, cons
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kIndex1]);
-  auto x_shape = GetShapeFromTensor(input_args[0]);
-  auto y_shape = GetShapeFromTensor(input_args[1]);
+  ShapeVector x_shape;
+  if (!input_args[0]->GetShape()->isa<abstract::NoShape>()) {
+    x_shape = GetShapeFromTensor(input_args[0]);
+  }
+
+  ShapeVector y_shape;
+  if (!input_args[1]->GetShape()->isa<abstract::NoShape>()) {
+    y_shape = GetShapeFromTensor(input_args[1]);
+  }
 
   auto broadcast_shape = CalBroadCastShape(x_shape, y_shape, op_name);
   return std::make_shared<abstract::Shape>(broadcast_shape);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include "base/base.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -63,19 +64,16 @@ CNodePtr NewFlattenNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_
 CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vector<AnfNodePtr>, int64_t> &node_info,
                        TypeId type_id) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto concat_node = NewCNode(node_info.first, func_graph);
+  std::vector<AnfNodePtr> cnode_inputs(node_info.first.begin(), node_info.first.end());
+  cnode_inputs.push_back(NewValueNode(MakeValue<int64_t>(0)));
+  auto concat_node = NewCNode(cnode_inputs, func_graph);
 
   ShapeVector shape{node_info.second};
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape);
   MS_EXCEPTION_IF_NULL(concat_node);
   concat_node->set_abstract(abstract);
 
-  size_t input_num = node_info.first.size() - 1;
-  auto axis_node = concat_node->input(input_num);
-  axis_node->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0), kInt64));
-
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(UlongToLong(input_num)), concat_node);
+  size_t input_num = node_info.first.size() - 1;  // One for primitive.
   std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
@@ -183,8 +181,7 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
     auto iter = type_id_to_node_info.find(input_type_id);
     if (iter == type_id_to_node_info.end()) {
       std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
-                                               flatten_node,
-                                               NewValueNode(MakeValue<int64_t>(0))};  // concat(input, axis)
+                                               flatten_node};
       type_id_to_node_info[input_type_id] = std::make_pair(concat_inputs, elem_num);
       (void)output_type_id_order.emplace_back(input_type_id);
     } else {
@@ -195,8 +192,7 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
         concat_node->set_scope(cnode->scope());
         (void)concat_nodes.emplace_back(concat_node);
         iter->second.second = elem_num;
-        iter->second.first = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())), flatten_node,
-                              NewValueNode(MakeValue<int64_t>(0))};  // concat(input, axis)
+        iter->second.first = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())), flatten_node};
       } else {
         (void)iter->second.first.emplace_back(flatten_node);
         iter->second.second += elem_num;

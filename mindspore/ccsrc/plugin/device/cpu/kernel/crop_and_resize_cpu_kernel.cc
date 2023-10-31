@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -374,7 +374,7 @@ void CropAndResizeCpuKernelMod::InitFunc(const CNodePtr &kernel_node) {
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Concat does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "CropAndResize does not support this kernel data type: " << kernel_attr;
   }
 
   kernel_func_ = func_list_[index].second;

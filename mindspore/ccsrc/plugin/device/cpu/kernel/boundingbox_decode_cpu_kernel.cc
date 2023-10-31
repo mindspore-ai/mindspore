@@ -44,20 +44,11 @@ bool BoundingBoxDecodeCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
                       << "', the input 'means' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
-<<<<<<< HEAD
-  auto stds = base_operator->GetAttr("stds");
-  MS_EXCEPTION_IF_NULL(stds);
-  if (stds->isa<api::ValueSequence>()) {
-    stds_ = api::GetValue<std::vector<float>>(stds);
-  } else if (stds->isa<api::FloatImm>()) {
-    float std = api::GetValue<float>(stds);
-=======
   auto stds = primitive_->GetAttr("stds");
   if (stds->isa<ValueSequence>()) {
     stds_ = GetValue<std::vector<float>>(stds);
   } else if (stds->isa<FloatImm>()) {
     float std = GetValue<float>(stds);
->>>>>>> modify common cpu kernelMod
     for (size_t i = 0; i < coordinate_size; i++) {
       (void)stds_.emplace_back(std);
     }

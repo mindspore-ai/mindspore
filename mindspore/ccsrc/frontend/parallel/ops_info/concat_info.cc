@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,27 +30,17 @@
 namespace mindspore {
 namespace parallel {
 Status ConcatInfo::GetAttrs() {
-  int64_t axis = 0;
-  auto axis_iter = attrs_.find(AXIS);
-  if (axis_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(axis_iter->second);
-    if (axis_iter->second->isa<Int64Imm>()) {
-      axis = axis_iter->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t";
-      return FAILED;
-    }
-  } else {
-    MS_LOG(ERROR) << name_ << ": Can not find the axis attr";
-    return FAILED;
-  }
-
   if (inputs_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
   }
   int64_t dim = SizeToLong(inputs_shape_[0].size());
 
+  if (input_value_.size() < kSizeTwo || input_value_[input_value_.size() - 1] == nullptr) {
+    MS_LOG(ERROR) << name_ << ": Can not get the axis value.";
+    return FAILED;
+  }
+  auto axis = GetValue<int64_t>(input_value_[input_value_.size() - 1]);
   if (axis < 0) {
     axis = axis + dim;
   }

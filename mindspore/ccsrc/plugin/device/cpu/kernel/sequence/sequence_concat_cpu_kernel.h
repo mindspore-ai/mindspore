@@ -51,7 +51,6 @@ class SequenceConcatCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs);
   std::vector<int64_t> tuple_shape_;
-  int ori_axis_{0};
   int axis_{0};
   size_t output_dim_{1};
   size_t input_num_{1};

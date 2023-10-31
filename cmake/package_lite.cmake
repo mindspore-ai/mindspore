@@ -59,7 +59,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/broadcast.h
             ${TOP_DIR}/mindspore/core/ops/cast.h
             ${TOP_DIR}/mindspore/core/ops/clip.h
-            ${TOP_DIR}/mindspore/core/ops/concat.h
             ${TOP_DIR}/mindspore/core/ops/attention.h
             ${TOP_DIR}/mindspore/core/ops/constant_of_shape.h
             ${TOP_DIR}/mindspore/core/ops/crop.h
@@ -1052,7 +1051,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
-            ${TOP_DIR}/mindspore/core/ops/concat.h
             ${TOP_DIR}/mindspore/core/ops/strided_slice.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/custom.h

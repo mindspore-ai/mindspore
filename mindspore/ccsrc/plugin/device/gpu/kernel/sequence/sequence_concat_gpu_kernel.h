@@ -24,7 +24,6 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -57,7 +56,6 @@ class SequenceConcatGpuKernelMod : public NativeGpuKernelMod, public MatchKernel
                     const std::vector<KernelTensor *> &outputs);
   int all_size_before_axis_{1};
   int all_size_axis_{1};
-  int ori_axis_{0};
   int axis_{0};
   size_t output_dim_{1};
   int input_num_{1};

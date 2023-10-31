@@ -737,7 +737,8 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::InferShapeAndResize() {
-  MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope();
+  MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope()
+                << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape.
   if (common::AnfAlgo::CheckPrimitiveType(kernel_, prim::kPrimPyExecute)) {
     MS_LOG(DEBUG) << "Infer shape for pyexecute kernel:" << kernel_->DebugString();

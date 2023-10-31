@@ -50,15 +50,19 @@ inline size_t SizeOf(const ShapeVector &shape) {
 }
 
 inline bool IsDynamicRank(const ShapeVector &shape) {
-  for (auto &s : shape) {
-    if (s > abstract::Shape::kShapeRankAny) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] > abstract::Shape::kShapeRankAny) {
       continue;
     }
 
     if (shape.size() == abstract::Shape::kDynamicRankLen) {
       return true;
+    } else if (i == 1) {
+      MS_LOG(DEBUG) << "Shape(" << ShapeVectorToString(shape) << ") is a valid shape for real tuple tensor.";
+      return true;
     } else {
-      MS_EXCEPTION(ValueError) << "Shape should have only one -2 or no -2 at all but got ("
+      MS_EXCEPTION(ValueError) << "Shape should have only one -2 for normal tensor,or [not -2, -2] for real tuple "
+                                  "tensor, or no -2 at all, but got ("
                                << ShapeVectorToString(shape) << ").";
     }
   }

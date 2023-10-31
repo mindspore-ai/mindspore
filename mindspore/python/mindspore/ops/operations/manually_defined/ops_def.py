@@ -885,8 +885,22 @@ def tile(input, multiples):
     return tile_op(input, multiples)
 
 
+# Following is Python Infer Value.
+# A valid infer value function should be:
+#
+# 1. named as infer_value_for_OpName
+# 2. All inputs should pass without default value.
+# 3. If not const input is given, return None. (for now)
+
 def infer_value_for_Tile(x, multiples):
     """Infer value for Tile op."""
     if x is None or multiples is None or None in multiples:
         return None
     return Tensor(np.tile(x.asnumpy(), multiples))
+
+
+def infer_value_for_Concat(input_x, axis):
+    """Infer value for Concat op."""
+    if input_x is None or None in input_x or axis is None:
+        return None
+    return Tensor(np.concatenate([x.asnumpy() for x in input_x], axis))

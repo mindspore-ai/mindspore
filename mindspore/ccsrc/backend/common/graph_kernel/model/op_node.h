@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,6 @@ class ConcatOp : public OpaqueOp {
   NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
   template <typename TM>
   tensor::TensorPtr CalcConcat(const NodePtrList &inputs, const DAttrs &attrs);
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };

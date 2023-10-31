@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -689,12 +689,6 @@ DFormat Conv2dOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   return GetValue<std::string>(attrs.find("conv_out_format")->second);
 }
 
-void ConcatOp::RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) {
-  AbstractBasePtrList rectifyed_abs_list;
-  (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(*input_abstract_ptr));
-  input_abstract_ptr->swap(rectifyed_abs_list);
-}
-
 std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
   std::vector<size_t> new_shape;
   size_t accu = 1;
@@ -841,8 +835,10 @@ tensor::TensorPtr ConcatOp::CalcConcat(const NodePtrList &inputs, const DAttrs &
   constexpr size_t second_dim = 1;
   constexpr size_t third_dim = 2;
   int64_t axis = 0;
-  if (attrs.count("axis") > 0) {
-    axis = GetValue<int64_t>(attrs.find("axis")->second);
+  auto axis_node = inputs.back();
+  if (axis_node->NodeType() == NType::Scalar) {
+    auto scalar_node = axis_node->As<ConstScalarNode>();
+    axis = GetValue<int64_t>(scalar_node->data());
   } else {
     return nullptr;
   }

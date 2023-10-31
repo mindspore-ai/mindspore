@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <numeric>
 #include <vector>
+#include "ops/op_utils.h"
 #include "ops/array_op_name.h"
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
@@ -494,8 +495,7 @@ ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
   return res;
 }
 
-NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis,
-                              bool is_list) {
+NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
   auto rank = input_shapes[0].size();
   auto axis_s = LongToSize(NormalizeAxis(axis, rank));
 
@@ -512,30 +512,19 @@ NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const Sha
     }
   }
 
-  NodePtrList res;
   if (is_uniform) {
     auto long_nums = SizeToLong(input_nums);
     auto dx = ib->Emit(kSplitOpName, {dout, ib->EmitValue(MakeValue(axis)), ib->EmitValue(MakeValue(long_nums))},
                        {{"num_split", MakeValue(long_nums)}});
-    // Split output is a tuple.
-    if (!is_list) {
-      return {dx};
-    }
-
-    for (size_t i = 0; i < input_nums; ++i) {
-      res.push_back(ib->TupleGetItem(dx, i));
-    }
-  } else {
-    auto offsets = ConcatOffsetCal(input_shapes, axis_s);
-    for (size_t i = 0; i < input_nums; ++i) {
-      auto offset_value = ib->Value(offsets[i]);
-      auto slice_out = ib->Emit(kSliceOpName, {dout, offset_value, ib->Value(input_shapes[i])});
-      res.push_back(slice_out);
-    }
+    return {dx};
   }
 
-  if (is_list) {
-    return {ib->MakeList(res)};
+  NodePtrList res;
+  auto offsets = ConcatOffsetCal(input_shapes, axis_s);
+  for (size_t i = 0; i < input_nums; ++i) {
+    auto offset_value = ib->Value(offsets[i]);
+    auto slice_out = ib->Emit(kSliceOpName, {dout, offset_value, ib->Value(input_shapes[i])});
+    res.push_back(slice_out);
   }
   return {ib->MakeTuple(res)};
 }
@@ -638,31 +627,6 @@ class SortShapeCalc1 : public ShapeCalcFunctor {
   int64_t axis_{0};
 };
 REG_FUNCTOR("ShapeCalc_Sort_1", SortShapeCalc1);
-
-class ConcatShapeCalc : public ShapeCalcFunctor {
- public:
-  DECLARE_SHAPE_CALC("ShapeCalc_Concat", ConcatShapeCalc)
-  explicit ConcatShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_Concat"), axis_(axis) {}
-  ValuePtr ToValue() const override { return MakeValue(axis_); }
-  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
-  ShapeArray Calc(const ShapeArray &inputs) const override {
-    auto rank = inputs[0].size();
-    auto axis_s = LongToSize(NormalizeAxis(axis_, rank));
-    return ConcatOffsetCal(inputs, axis_s);
-  }
-  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) const override {
-    auto x = inputs.at(0);
-    auto input_num = inputs.size();
-    if (!unknown_inputs.empty() || IsDynamicRank(x)) {
-      return ShapeVector(input_num, -1);
-    }
-    return ShapeVector(input_num, SizeToLong(x.size()));
-  }
-
- protected:
-  int64_t axis_{0};
-};
-REG_FUNCTOR("ShapeCalc_Concat", ConcatShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradArrayOps)
 REG_BPROP_BUILDER("GatherD").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -1021,41 +985,99 @@ REG_BPROP_BUILDER("TensorScatterAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODY
   return {dout, ib->OutZeros(indices), update_grad};
 });
 
-REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto axis = ib->GetAttr<int64_t>(kAttrAxis);
-  auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex2);
-  auto input_shapes = ib->GetShapes(x);
-  if (input_shapes.empty()) {
-    MS_EXCEPTION(ValueError) << "For gradient of 'Concat', 'x' can not be empty";
-  }
+DEF_PURE_SHAPE_CALC(g_concat)
+  .SetCalc([](const ShapeArray &inputs, const ElemPosIdx &pos_idx) -> ShapeArray {
+    auto axis = inputs[pos_idx[1].front()][0];
+    auto rank = inputs[0].size();
+    auto axis_s = LongToSize(NormalizeAxis(axis, rank));
+    ShapeArray input_shapes;
+    input_shapes.reserve(pos_idx[0].size());
+    for (auto idx : pos_idx[0]) {
+      input_shapes.push_back(inputs[idx]);
+    }
+    return ConcatOffsetCal(input_shapes, axis_s);
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs,
+               const ElemPosIdx &pos_idx) -> InferOutputInfo {
+    auto x = inputs[0];
+    auto x_rank = IsDynamicRank(x) ? abstract::TensorShape::kShapeDimAny : SizeToLong(x.size());
+    if (unknown_inputs.count(0) != 0) {
+      return std::make_pair(ShapeVector{x_rank}, true);
+    }
 
-  bool is_dynamic = std::any_of(input_shapes.cbegin(), input_shapes.cend(),
-                                [](const std::vector<int64_t> &shape) { return IsDynamic(shape); });
+    auto input_num = pos_idx[0].size();
+    return std::make_pair(ShapeVector(input_num, x_rank), false);
+  });
+REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex3);
+
+  auto axis_node = ib->GetInput(kIndex1);
+
   auto x_abs = x->get()->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
-  bool is_list = x_abs->isa<abstract::AbstractList>();
+  auto base_shape = x_abs->GetShape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  auto x_is_dyn_seq = base_shape->isa<abstract::DynamicSequenceShape>();
+  if (!x_is_dyn_seq) {
+    auto input_shapes = ib->GetShapes(x);
+    if (input_shapes.empty()) {
+      MS_EXCEPTION(ValueError) << "For gradient of 'Concat', 'x' can not be empty";
+    }
+    if (!std::any_of(input_shapes.cbegin(), input_shapes.cend(),
+                     [](const std::vector<int64_t> &shape) { return IsDynamic(shape); })) {
+      auto axis_res = ops::GetScalarValue<int64_t>(axis_node->BuildValue());
+      if (!axis_res.has_value()) {
+        auto axis = axis_res.value();
+        return ConcatBpropStatic(ib, dout, input_shapes, axis);
+      }
+    }
 
-  if (!is_dynamic) {
-    return ConcatBpropStatic(ib, dout, input_shapes, axis, is_list);
-  }
-  auto input_nums = input_shapes.size();
-  NodePtrList x_tuple;
-  for (size_t i = 0; i < input_nums; ++i) {
-    x_tuple.push_back(ib->TupleGetItem(x, i));
-  }
-  auto concat_offset = ib->ShapeCalc(std::make_shared<ConcatShapeCalc>(axis), x_tuple);
-  NodePtrList res;
-  for (size_t i = 0; i < input_nums; ++i) {
-    auto input = ib->Shape(ib->TupleGetItem(x, i));
-    auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset.at(i), input});
-    res.push_back(slice_out);
+    auto concat_offset = ib->ShapeCalc(g_concat, {x, axis_node}, {1});
+    auto input_nums = input_shapes.size();
+    if (concat_offset.size() != input_nums) {
+      MS_LOG(EXCEPTION) << "The number of ConcatOffset's ShapeCalc(" << concat_offset.size()
+                        << ") is not equal to input(" << input_nums << ")!";
+    }
+
+    NodePtrList tuple_out;
+    for (size_t i = 0; i < input_nums; ++i) {
+      auto input = ib->Shape(ib->TupleGetItem(x, i));
+      auto slice_out = ib->Emit(kSliceOpName, {dout, concat_offset[i], input});
+      tuple_out.push_back(slice_out);
+    }
+    auto res = ib->MakeTuple(tuple_out);
+    return {res, ib->OutZeros(axis_node)};
   }
 
-  if (is_list) {
-    return {ib->MakeList(res)};
-  }
-  return {ib->MakeTuple(res)};
+  // Here the x is a dynamic sequence, so the infer out is a dynamic sequence too!
+  auto concat_offset = ib->ShapeCalc(g_concat, {x, axis_node}, {1})[0];
+  auto first_input = ib->Shape(ib->TupleGetItem(x, 0));
+  auto offset = ib->TupleGetItem(concat_offset, 0);
+  auto first_slice_out = ib->Emit(kSliceOpName, {dout, offset, first_input});
+  auto res_list = ib->MakeList({first_slice_out});
+
+  // Cannot use `auto i = ib->Tensor(1, kInt64);`.
+  // If so, the i will be treat as a const Tensor but variable expected which will be not caught as a while body
+  // parameter.
+  // Here Emit a `ScalarToTensor` to make it a fake-variable-in-logit node.
+  auto i = ib->Emit("ScalarToTensor", {ib->Value(1L), ib->EmitValue(kInt64)});
+  auto len = ib->Emit("ScalarToTensor", {ib->Emit("sequence_len", {x}), ib->EmitValue(kInt64)});
+  auto while_body = [&x, &dout, &concat_offset, &i, &res_list](Emitter *e) -> NodePtrList {
+    auto scalar_i = e->Emit("TensorToScalar", {i});
+    auto input = e->Shape(e->Emit(kTupleGetItemOpName, {x, scalar_i}));
+    auto offset = e->Emit(kTupleGetItemOpName, {concat_offset, scalar_i});
+    auto slice_out = e->Emit(kSliceOpName, {dout, offset, input});
+    auto new_list = e->Emit("ListAppend", {res_list, slice_out});
+    auto new_i = e->Emit("Add", {i, e->Tensor(1, kInt64)});
+    return {x, dout, concat_offset, new_i, new_list};
+  };
+  auto cond = ib->Less(i, len);
+  auto while_block = ib->While(cond, while_body, {x, dout, concat_offset, i, res_list});
+  // The `res_list` is a list, it should return a Tuple type rigorously.
+  // Because there are no ListToTuple, and list type is ok for now.....
+  auto dyn_list = ib->TupleGetItem(while_block, kIndex4);
+  return {dyn_list, ib->OutZeros(axis_node)};
 });
 
 REG_BPROP_BUILDER("Mvlgamma").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
@@ -1404,7 +1426,7 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto axis_ptr = axis->BuildValue();
   MS_EXCEPTION_IF_NULL(axis_ptr);
   auto axis_value = GetValue<int64_t>(axis_ptr);
-  auto dx = ib->Emit("Concat", {dout}, {{"axis", MakeValue(axis_value)}});
+  auto dx = ib->Emit("Concat", {dout, ib->Value(axis_value)});
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
@@ -1770,7 +1792,7 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout}, {{"axis", MakeValue(split_dim)}});
+  auto dx = ib->Emit("Concat", {dout, ib->Value(split_dim)});
   return {dx};
 });
 
@@ -1820,9 +1842,8 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
   auto out_indices_num = ((((out_d * out_h) * out_w) * ksize_d) * ksize_h) * ksize_w;
   auto out_idx = ib->Tensor(Range(0, out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_d, out_h, out_w, (ksize_d * ksize_h) * ksize_w});
-  auto idx_tensor =
-    ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)})},
-             {{"axis", MakeValue<int64_t>(-1)}});
+  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}),
+                                        ib->Value<int64_t>(-1)});
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
   std::vector<int64_t> ones(out_indices_num, 1);

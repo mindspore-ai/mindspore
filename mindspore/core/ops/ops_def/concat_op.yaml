@@ -1,0 +1,14 @@
+#operator concat
+concat:
+    args:
+        x:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+        axis:
+            dtype: int
+            init: 0
+    returns:
+        output:
+            dtype: tensor
+    function:
+        name: concat_

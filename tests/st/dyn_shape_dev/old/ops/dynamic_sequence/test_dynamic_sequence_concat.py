@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.common import mutable
-from mindspore.ops.operations._sequence_ops import SequenceConcat
+from mindspore.ops.auto_generate.gen_inner_ops_def import SequenceConcat
 from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)

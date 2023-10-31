@@ -32,6 +32,7 @@
 #include "utils/ms_context.h"
 #include "ops/op_def.h"
 #include "ir/primitive.h"
+#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace expander {
@@ -392,37 +393,64 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
 }
 
-NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
+NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
                                const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
-  ShapeArray const_args;
-  const_args.reserve(inputs.size());
-  std::vector<bool> value_index(inputs.size());
-  for (auto &i : value_depend) {
-    value_index[i] = true;
+  std::vector<bool> is_value_depend(inputs.size(), false);
+  for (auto idx : value_depend) {
+    is_value_depend[LongToSize(idx)] = true;
   }
+
+  // Try to get all const input shapes or values, and call the shape calc function when success.
+  bool all_const = true;
+  ShapeArray const_args;
+  std::vector<std::vector<size_t>> pos_idx;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    if (!value_index[i]) {
-      // input[i]'s shape is used
-      auto input_shape = inputs[i]->shape();
-      auto input_valid = valid_func ? valid_func(i, input_shape) : !IsDynamic(input_shape);
-      if (!input_valid) {
-        break;
-      }
-      (void)const_args.emplace_back(input_shape);
-    } else {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+    if (is_value_depend[i]) {
       // input[i]'s value is used
       auto [success, vec] = GetIntList(inputs[i]);
       if (!success) {
+        all_const = false;
         break;
       }
-      (void)const_args.emplace_back(std::move(vec));
+      pos_idx.push_back({const_args.size()});
+      const_args.push_back(vec);
+    } else {
+      // input[i]'s shape is used
+      auto abs = inputs[i]->get()->abstract();
+      if (auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>(); sequence_abs != nullptr) {
+        auto begin_idx = const_args.size();
+        auto is_const = ops::TryGetShapeArg(sequence_abs, &const_args, &pos_idx);
+        if (is_const) {
+          for (size_t j = begin_idx; j < const_args.size(); ++j) {
+            is_const = valid_func ? valid_func(j, const_args[j]) : !IsDynamic(const_args[j]);
+            if (!is_const) {
+              break;
+            }
+          }
+        }
+
+        if (!is_const) {
+          all_const = false;
+          break;
+        }
+      } else {
+        auto input_shape = inputs[i]->shape();
+        auto input_valid = valid_func ? valid_func(i, input_shape) : !IsDynamic(input_shape);
+        if (!input_valid) {
+          all_const = false;
+          break;
+        }
+        pos_idx.push_back({const_args.size()});
+        const_args.push_back(input_shape);
+      }
     }
   }
 
   NodePtrList res;
   // all inputs are static-shape tensors,
-  if (const_args.size() == inputs.size()) {
-    auto out = functor->Calc(const_args);
+  if (all_const) {
+    auto out = functor->Calc(const_args, pos_idx);
     res.reserve(out.size());
     (void)std::transform(out.begin(), out.end(), std::back_inserter(res),
                          [this](const ShapeVector &sh) { return Value(sh); });
@@ -431,16 +459,14 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
 
   auto out = Emit(kShapeCalcOpName, inputs,
                   {{kAttrFunctor, functor},
-                   {ops::kAttrValueDepend, MakeValue(value_index)},
+                   {ops::kAttrValueDepend, MakeValue(is_value_depend)},
                    {kAttrInputIsDynamicShape, MakeValue(true)}});
   MS_EXCEPTION_IF_NULL(out);
   auto abs = out->abstract();
   MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractTuple>()) {
-    auto abstract_tuple = abs->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(abstract_tuple);
-    res.reserve(abstract_tuple->size());
-    for (size_t i = 0; i < abstract_tuple->size(); ++i) {
+  if (auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>(); tuple_abs != nullptr && !tuple_abs->dynamic_len()) {
+    res.reserve(tuple_abs->size());
+    for (size_t i = 0; i < tuple_abs->size(); ++i) {
       res.push_back(TupleGetItem(out, i));
     }
   } else {

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ from .sub import _sub_cpu
 from .pow import _pow_cpu
 from .real_div import _real_div_cpu
 from .div import _div_cpu
-from .concat import _concat_cpu
 from .concat_offset import _concat_offset_cpu
 from .dynamic_shape import _dynamic_shape_cpu
 from .dynamic_stitch import _dynamic_stitch_cpu

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include "ops/apply_momentum.h"
 #include "ops/batch_to_space.h"
 #include "ops/cast.h"
-#include "ops/concat.h"
 #include "ops/crop.h"
 #include "ops/depth_to_space.h"
 #include "ops/fused_batch_norm.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include "ops/conv2d.h"
 #include "ops/mat_mul.h"
 #include "ops/topk.h"
-#include "ops/concat.h"
 #include "ops/conv2d_transpose.h"
 #include "ops/max_pool.h"
 #include "ops/pad.h"

@@ -908,36 +908,6 @@ class SequenceUnstack(Primitive):
             validator.check_value_type("num", num, [int], self.name)
 
 
-class SequenceConcat(Primitive):
-    r"""
-    Support sequence Concat operation.
-
-    .. note::
-        This is only for internal used.
-
-    Args:
-        axis (Int): The axis to be concat.
-
-    Inputs:
-        - **sequence** (Union[List, Tuple]) - A sequence of Tensor objects with same shape and type..
-
-    Outputs:
-        The concat of all input.
-
-    Raises:
-        TypeError: The 'sequence' is not list or tuple.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    @prim_attr_register
-    def __init__(self, axis=0):
-        """Initialize SequenceConcat"""
-        super(SequenceConcat, self).__init__("axis")
-        self.axis = axis
-        validator.check_value_type("axis", axis, [int], self.name)
-
-
 class tuple_greater_than(Primitive):
     r"""
     Support tuple_greater_than operation 'greater_than(target)'.

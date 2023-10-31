@@ -26,6 +26,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/graph_utils.h"
@@ -38,6 +39,7 @@
 #include "ops/math_op_name.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -388,12 +390,19 @@ bool HasOutputElementsKernelObjectType(const std::vector<KernelObjectType> &outp
 void SetKernelObjectTypeWithSelectedAttr(const CNodePtr &kernel_node, const kernel::KernelAttr &selected_kernel_attr) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<KernelObjectType> input_kernel_object_types;
-  if (selected_kernel_attr.GetRealTuple()) {
+  if (common::AnfAlgo::HasNodeAttr(kInputRealTuple, kernel_node)) {
     input_kernel_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllInputObjectType(kernel_node));
   } else {
     input_kernel_object_types = CalInputKernelObjectTypes(kernel_node, selected_kernel_attr);
   }
-  auto output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
+
+  std::vector<KernelObjectType> output_kernel_object_types;
+  if (common::AnfAlgo::HasNodeAttr(kOutputRealTuple, kernel_node)) {
+    output_kernel_object_types = kernel::TypeIdToKernelObjectType(AnfAlgo::GetAllOutputObjectType(kernel_node));
+  } else {
+    output_kernel_object_types = CalOutputKernelObjectTypes(kernel_node, selected_kernel_attr);
+  }
+
   std::vector<KernelObjectType> output_element_object_types;
   if (HasOutputElementsKernelObjectType(output_kernel_object_types)) {
     output_element_object_types = CalOutputElementObjectTypes(kernel_node, selected_kernel_attr);
@@ -478,9 +487,6 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr) {
   ss << "[Kernel Attr] all same: " << kernel_attr.GetAllSame();
   if (kernel_attr.GetSkipCheck()) {
     ss << ", skip check: true";
-  }
-  if (kernel_attr.GetRealTuple()) {
-    ss << ", keep tuple target: inputs";
   }
   size_t input_num = kernel_attr.GetInputSize();
   if (input_num > 0) {

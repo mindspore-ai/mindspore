@@ -22,7 +22,6 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "include/common/thread_pool.h"
-#include "mindspore/core/ops/sequence_concat.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,14 +35,12 @@ using complex128 = std::complex<double>;
 bool SequenceConcatCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  ori_axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 int SequenceConcatCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  int ret = KernelMod::Resize(inputs, outputs);
-  if (ret != 0) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -60,7 +57,7 @@ int SequenceConcatCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     inputs_shape_.push_back(shape_vec_item);
   }
 
-  axis_ = ori_axis_;
+  axis_ = LongToInt(inputs[kIndex1]->GetValueWithCheck<int64_t>());
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(inputs_shape_[0].size());
   }
@@ -124,10 +121,13 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   return true;
 }
 
-#define SEQUENCE_CONCAT_REG(ms_type, builtin_type)                               \
-  {                                                                              \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type), \
-      &SequenceConcatCpuKernelMod::LaunchKernel<builtin_type>                    \
+#define SEQUENCE_CONCAT_REG(ms_type, builtin_type)            \
+  {                                                           \
+    KernelAttr()                                              \
+      .AddInputAttr(kObjectTypeTuple, ms_type)                \
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)      \
+      .AddOutputAttr(ms_type),                                \
+      &SequenceConcatCpuKernelMod::LaunchKernel<builtin_type> \
   }
 
 const SequenceConcatCpuKernelMod::FuncList &SequenceConcatCpuKernelMod::GetFuncList() const {

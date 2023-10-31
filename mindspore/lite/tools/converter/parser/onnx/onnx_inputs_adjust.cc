@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@
 #include "ops/resize.h"
 #include "ops/random_normal.h"
 #include "ops/roi_align.h"
-#include "ops/concat.h"
 #include "ops/cast.h"
 #include "ops/multinomial.h"
 #include "ops/affine_grid.h"

@@ -22,103 +22,67 @@ namespace mindspore {
 namespace kernel {
 bool ShapeCalcCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                  const std::vector<KernelTensor *> &outputs) {
-  auto attr = primitive_->GetAttr(kAttrFunctor);
-  functor_ = attr->cast<ShapeCalcFunctorPtr>();
+  if (primitive_->HasAttr(kOutputRealTuple)) {
+    is_dynamic_len_out_ = true;
+  }
   return true;
 }
 
 int ShapeCalcCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
-  if (ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
+  if (ret != KRET_OK) {
     return ret;
   }
-  auto operator_ptr = std::dynamic_pointer_cast<ops::ShapeCalc>(base_operator);
-  if (!operator_ptr) {
-    MS_LOG(ERROR) << "cast ShapeCalc ops failed!";
+
+  if (primitive_->HasAttr(ops::kAttrCalcResult)) {
+    MS_LOG(ERROR) << "For ShapeCalc, the calc result should be get here.";
     return KRET_RESIZE_FAILED;
   }
-  is_need_retrieve_output_shape_ = (ret == KRET_UNKNOWN_OUT_SHAPE);
-  inputs_size_.clear();
-  inputs_type_.clear();
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto input_shape = inputs[i]->GetShapeVector();
-    auto sz = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
-    inputs_size_.push_back(sz);
-
-    auto type_id = inputs[i]->dtype_id();
-    if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
-      MS_LOG(EXCEPTION) << "For ShapeCalc input should be int32 or int64, but got " << TypeIdToString(type_id)
-                        << "input num:" << i;
-    }
-    inputs_type_.push_back(type_id);
-  }
-
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto type_id = outputs[i]->dtype_id();
-    if (type_id != kNumberTypeInt64) {
-      MS_LOG(EXCEPTION) << "For ShapeCalc output should be int64, but got " << TypeIdToString(type_id);
-    }
-  }
-  outs_shape_ = operator_ptr->get_calc_result();
-  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    // It is just a temporary modification.
-    // Formal modification, you need to synchronize the master branch.
-    output_size_list_.clear();
-    constexpr size_t kMaxDim = 8;
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      output_size_list_.push_back(kMaxDim * sizeof(int64_t));
-    }
-    return KRET_OK;
-  }
+  outs_shape_ = GetValue<ShapeArray>(primitive_->GetAttr(ops::kAttrCalcResult));
   return ret;
 }
 
 bool ShapeCalcCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  if (functor_ == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', shape func pointer is nullptr";
-    return false;
-  }
-  if (inputs.size() != inputs_size_.size() || inputs.size() != inputs_type_.size()) {
-    MS_LOG(ERROR)
-      << "For '" << kernel_name_
-      << "', inputs address list size must be equal to inputs shape list size and inputs dtype list size, but got "
-      << inputs.size() << " vs " << inputs_size_.size() << " vs " << inputs_type_.size();
-    return false;
-  }
+  if (!is_dynamic_len_out_) {
+    if (outputs.size() != outs_shape_.size()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', outputs address list size must be equal to the number of outputs of shape func, but got "
+                    << outputs.size() << " vs " << outs_shape_.size();
+      return false;
+    }
 
-  ShapeArray args;
-  args.reserve(inputs.size());
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    if (inputs_type_.at(i) == kNumberTypeInt32) {
-      auto input_addr = reinterpret_cast<int32_t *>(inputs[i]->device_ptr());
-      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
-    } else {
-      auto input_addr = reinterpret_cast<int64_t *>(inputs[i]->device_ptr());
-      (void)args.emplace_back(input_addr, input_addr + inputs_size_[i]);
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->device_ptr());
+      for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
+        output_addr[j] = outs_shape_[i][j];
+      }
+    }
+  } else {
+    // Dynamic length, each out should have same shape for dynamic-length-out solution in runtime.
+    if (outputs.size() != 1) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', dynamic length outputs address list size must be equal to 1, but got " << outputs.size();
+      return false;
+    }
+
+    auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->device_ptr());
+    size_t offset_inner = outs_shape_[0].size();
+    for (size_t i = 0; i < outs_shape_.size(); ++i) {
+      for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
+        size_t cur_offset = i * offset_inner + j;
+        *(output_addr + cur_offset) = outs_shape_[i][j];
+      }
     }
   }
-  outs_shape_ = functor_->Calc(args);
-  if (outputs.size() != outs_shape_.size()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', outputs address list size must be equal to the number of outputs of shape func, but got "
-                  << outputs.size() << " vs " << outs_shape_.size();
-    return false;
-  }
 
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    auto output_addr = reinterpret_cast<int64_t *>(outputs[i]->device_ptr());
-    for (size_t j = 0; j < outs_shape_[i].size(); ++j) {
-      output_addr[j] = outs_shape_[i][j];
-    }
-  }
   return true;
 }
 
 std::vector<KernelAttr> ShapeCalcCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddRealTuple(true)};
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true)};
   return support_list;
 }
 
@@ -126,15 +90,6 @@ std::vector<size_t> ShapeCalcCpuKernelMod::GetLaunchIgnoredInputAddressIdx() con
   std::vector<size_t> ignored_idx(inputs_.size());
   std::iota(ignored_idx.begin(), ignored_idx.end(), kIndex0);
   return ignored_idx;
-}
-
-void ShapeCalcCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
-                                                     const std::vector<KernelTensor *> &outputs) {
-  for (size_t i = 0; i < outs_shape_.size(); ++i) {
-    ShapeVector shape{static_cast<int64_t>(outs_shape_[i].size())};
-    outputs[i]->SetShapeVector(shape);
-    outputs[i]->set_size(outs_shape_[i].size() * UnitSizeInBytes(outputs[i]->dtype_id()));
-  }
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ShapeCalc, ShapeCalcCpuKernelMod);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <cuda_runtime.h>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concatv2_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concat_impl.cuh"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
@@ -86,7 +86,7 @@ template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int i
                                                   int *len_axis, int **inputs, int *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,
                                                   const int all_size_before_axis, const int all_size_axis,
-                                                  int *len_axis, short **inputs,
+                                                  int *len_axis, short **inputs,  // NOLINT
                                                   short *output,  // NOLINT
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t ConcatKernel(const size_t size, const int input_num,

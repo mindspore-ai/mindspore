@@ -217,7 +217,7 @@ std::string AbstractBase::ToString(bool verbose) const {
   }
   std::ostringstream buffer;
   auto tensor_value = BuildValue();
-  auto shape = BuildShape();
+  auto shape = GetShape();
   auto type = BuildType();
   if (shape != nullptr && type != nullptr) {
     buffer << type << ", " << shape->ToString();
@@ -1062,7 +1062,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
   if (input_len > 1) {
     auto first_element = elements()[0];
     MS_EXCEPTION_IF_NULL(first_element);
-    auto first_element_shape = first_element->BuildShape();
+    auto first_element_shape = first_element->GetShape();
     MS_EXCEPTION_IF_NULL(first_element_shape);
     auto first_element_type_id = first_element->BuildType()->generic_type_id();
     for (size_t i = 1; i < input_len; ++i) {
@@ -1078,7 +1078,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
                                  << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The "
                                  << i << "th element type is: " << TypeIdToString(cur_element_type_id);
       }
-      auto cur_element_shape = cur_element->BuildShape();
+      auto cur_element_shape = cur_element->GetShape();
       MS_EXCEPTION_IF_NULL(cur_element_shape);
       if (*first_element_shape != *cur_element_shape) {
         if (!raise_exception) {
@@ -1143,7 +1143,7 @@ BaseShapePtrList AbstractSequence::ElementsShape() const {
   BaseShapePtrList element_shape_list;
   for (const auto &element : elements_) {
     MS_EXCEPTION_IF_NULL(element);
-    BaseShapePtr element_shape = element->BuildShape();
+    BaseShapePtr element_shape = element->GetShape();
     element_shape_list.push_back(element_shape);
   }
   return element_shape_list;
@@ -1341,7 +1341,7 @@ BaseShapePtr AbstractTuple::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<TupleShape>(ElementsShape());
 }
@@ -1470,7 +1470,7 @@ BaseShapePtr AbstractList::BuildShape() const {
     if (dynamic_len_element_abs_ == nullptr) {
       return std::make_shared<DynamicSequenceShape>(nullptr);
     }
-    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->BuildShape());
+    return std::make_shared<DynamicSequenceShape>(dynamic_len_element_abs_->GetShape());
   }
   return std::make_shared<ListShape>(ElementsShape());
 }
@@ -2454,11 +2454,11 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
     MS_EXCEPTION_IF_NULL(element);
     auto abs_tuple = element->cast_ptr<AbstractTuple>();
     if (abs_tuple == nullptr) {
-      element_shape_list.push_back(element->BuildShape());
+      element_shape_list.push_back(element->GetShape());
     } else {
       for (const auto &scalar : abs_tuple->elements()) {
         MS_EXCEPTION_IF_NULL(scalar);
-        element_shape_list.push_back(scalar->BuildShape());
+        element_shape_list.push_back(scalar->GetShape());
       }
     }
   }

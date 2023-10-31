@@ -33,6 +33,8 @@ constexpr auto kInfer = "DS_Infer";
 constexpr auto kInit = "DS_Init";
 constexpr auto kUpdate = "DS_Update";
 constexpr auto kSkipCheckInputNum = "skip_check_input_num";
+constexpr auto kInputRealTuple = "input_real_tuple";
+constexpr auto kOutputRealTuple = "output_real_tuple";
 
 // Define constant about size number here.
 constexpr size_t kSizeZero = 0;

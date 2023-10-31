@@ -61,6 +61,7 @@ from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
+from mindspore.ops.auto_generate import concat_
 from mindspore.ops.operations.manually_defined import tile
 
 tuple_to_tensor_ = TupleToTensor()
@@ -297,7 +298,7 @@ def cat(tensors, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    return concat(tensors, axis)
+    return concat_(tensors, axis)
 
 
 def eye(n, m=None, dtype=None):
@@ -2025,8 +2026,7 @@ def concat(tensors, axis=0):
         - `Sentiment Classification Implemented by RNN - Dense
           <https://mindspore.cn/tutorials/application/en/master/nlp/sentiment_analysis.html#dense>`_
     """
-    _concat = _get_cache_prim(P.Concat)(axis)
-    return _concat(tensors)
+    return concat_(tensors, axis)
 
 
 def stack(tensors, axis=0):

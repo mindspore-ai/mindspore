@@ -33,7 +33,6 @@
 #include "ops/fusion/kv_cache_mgr.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/make_tuple.h"
-#include "ops/concat.h"
 namespace mindspore::opt {
 const BaseRef KVCacheMgrOneBranchFusion::DefinePattern() const {
   if (!InitVar()) {

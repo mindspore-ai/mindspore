@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,17 +56,14 @@ REG_ADPT_DESC(ParallelConcat, kNameParallelConcat, ADPT_DESC(ParallelConcat))
 // ConcatD
 INPUT_MAP(ConcatD) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(ConcatD) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(ConcatD) = {
-  {"axis", ATTR_DESC(concat_dim, AnyTraits<int64_t>())},
-  {kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
-};
+ATTR_MAP(ConcatD) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
+INPUT_ATTR_MAP(ConcatD) = {{kIndex2, ATTR_DESC(concat_dim, AnyTraits<int64_t>())}};
 OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
 
 // Concat
 INPUT_MAP(Concat) = {{2, INPUT_DESC(concat_dim)}};
 DYN_INPUT_MAP(Concat) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_INPUT_MAP(Concat) = {{"axis", "concat_dim"}};
 ATTR_MAP(Concat) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(Concat) = {{0, OUTPUT_DESC(y)}};
 // Rollback to ConcatD for the support of dynamic input scene is incomplete.

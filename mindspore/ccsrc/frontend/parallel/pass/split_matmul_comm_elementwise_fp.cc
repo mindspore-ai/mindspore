@@ -134,10 +134,8 @@ static void SplitIntoInterleaved(const FuncGraphPtr &func_graph, const FuncGraph
 
   // New concat(MakeTuple(add_a, add_b))
   auto make_tuple_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimMakeTuple->Clone()), add_a, add_b});
-  auto concat_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimConcat->Clone()), make_tuple_cnode});
-  AddCNodePrimAttr(concat_cnode, kAttrAxis, MakeValue(axis_a_0));
-  AddCNodePrimAttr(concat_cnode, "N", MakeValue(kInt64Num2));
-  AddCNodePrimAttr(concat_cnode, kAttrInputNums, MakeValue(kInt64Num2));
+  auto concat_cnode = func_graph->NewCNode(
+    {NewValueNode(prim::kPrimConcat->Clone()), make_tuple_cnode, NewValueNode(MakeValue(axis_a_0))});
 
   // Infer path_a abstract
   auto dtype = common::AnfAlgo::GetOutputInferDataType(matmul_input1, 0);

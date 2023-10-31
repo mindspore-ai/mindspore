@@ -19,12 +19,12 @@
 #include <complex>
 #include <functional>
 #include "plugin/device/gpu/kernel/sequence/sequence_concat_gpu_kernel.h"
-#include "mindspore/core/ops/sequence_concat.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/concat_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kInputsNum = 1;
+constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
 
@@ -32,17 +32,15 @@ bool SequenceConcatGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  ori_axis_ = GetValue<int64_t>(primitive_->GetAttr(ops::kAxis));
-
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
 int SequenceConcatGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  int ret = KernelMod::Resize(inputs, outputs);
-  if (ret != 0) {
+  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+
   tuple_shape_ = inputs[0]->GetShapeVector();
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
@@ -52,7 +50,7 @@ int SequenceConcatGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
 
   input_num_ = tuple_shape_[0];
-  axis_ = ori_axis_;
+  axis_ = LongToInt(inputs[kIndex1]->GetValueWithCheck<int64_t>());
   inputs_shape_.clear();
   len_axis_.clear();
   for (int i = 0; i < input_num_; ++i) {
@@ -120,10 +118,13 @@ bool SequenceConcatGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   return true;
 }
 
-#define SEQUENCE_CONCAT_KERNEL_REG(ms_type, builtin_type)                        \
-  {                                                                              \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type), \
-      &SequenceConcatGpuKernelMod::LaunchKernel<builtin_type>                    \
+#define SEQUENCE_CONCAT_KERNEL_REG(ms_type, builtin_type)     \
+  {                                                           \
+    KernelAttr()                                              \
+      .AddInputAttr(kObjectTypeTuple, ms_type)                \
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)      \
+      .AddOutputAttr(ms_type),                                \
+      &SequenceConcatGpuKernelMod::LaunchKernel<builtin_type> \
   }
 
 const SequenceConcatGpuKernelMod::FuncList &SequenceConcatGpuKernelMod::GetFuncList() const {
