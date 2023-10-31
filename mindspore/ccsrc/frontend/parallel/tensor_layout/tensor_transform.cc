@@ -267,7 +267,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
     if (it == transform_operator_.end()) {
-      MS_LOG(WARNING) << "The op:" << op_name << " would not be optimized.";
+      MS_LOG(INFO) << "The op:" << op_name << " would not be optimized.";
       return redistribution_op_list;
     }
     transform_op_list.push_back(it->second(op_pair));
