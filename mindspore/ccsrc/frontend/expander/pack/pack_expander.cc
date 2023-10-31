@@ -116,17 +116,22 @@ std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim
                                                         const bool &need_infer_value) {
   AbstractBasePtr infer_res = nullptr;
   ValuePtr val = nullptr;
+  bool has_infer_value_impl = false;
   if (need_infer_value) {
     auto value_opt = InferValueByFuncImpl(prim, abs_list);
     if (value_opt.has_value()) {
+      has_infer_value_impl = true;
       val = value_opt.value();
     } else {
       auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
       if (found.has_value() && found->IsImplInferValue()) {
+        has_infer_value_impl = true;
         val = found->InferValue(prim, abs_list);
       }
     }
-  } else {
+  }
+
+  if (!need_infer_value || !has_infer_value_impl) {
     auto out_abs_opt = InferAbstractByFuncImpl(prim, abs_list);
     if (out_abs_opt.has_value()) {
       infer_res = out_abs_opt.value();
