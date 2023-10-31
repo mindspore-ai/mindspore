@@ -23,6 +23,8 @@
 #include <utility>
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_execute.h"
+#include "kernel/pyboost/op_base.h"
+#include "kernel/pyboost/op_register.h"
 
 #ifndef MS_UNLIKELY
 #ifdef _MSC_VER
@@ -115,11 +117,12 @@ struct DataConvert {
 
 struct PyBoost {
   static FrontendOpRunInfoPtr Init(const py::args &args);
-  static void DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
-                     const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
-                     const AbstractBasePtr &output_abs);
+  static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outpus);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
+  static void SetCastForInputs(std::vector<ValuePtr> &&inputs, const FrontendOpRunInfoPtr &op_run_info);
+  static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info);
 };
 
 // Some common functions used in both jit and PackFunc grad

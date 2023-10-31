@@ -31,6 +31,7 @@
 #include "kernel/pyboost/auto_generate/silu.h"
 #include "kernel/pyboost/auto_generate/sin.h"
 #include "kernel/pyboost/auto_generate/cos.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore {
 namespace kernel {
@@ -67,6 +68,7 @@ template class OpFactory<Erf>;
 template class OpFactory<SiLU>;
 template class OpFactory<Cos>;
 template class OpFactory<Sin>;
+template class OpFactory<Cast>;
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

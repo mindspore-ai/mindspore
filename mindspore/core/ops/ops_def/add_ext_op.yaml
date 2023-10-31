@@ -11,7 +11,7 @@ add_ext:
       dtype: number
       init: 1
   args_signature:
-    same_type: (x, y)
+    dtype_group: (x, y), (alpha)
   returns:
     output:
       dtype: tensor

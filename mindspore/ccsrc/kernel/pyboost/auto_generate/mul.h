@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MUL_H_
 #define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_MUL_H_
 
+#include "kernel/pyboost/op_base.h"
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {

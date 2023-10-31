@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
-
-#include "kernel/pyboost/op_base.h"
-#include "kernel/pyboost/op_register.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT BiasAdd : public pyboost::Op {
- public:
-  BiasAdd() = default;
-  ~BiasAdd() = default;
 
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias) = 0;
-};
+tensor::TensorPtr Cast::Call(const tensor::TensorPtr &x, const ValuePtr &y) { return nullptr; };
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_

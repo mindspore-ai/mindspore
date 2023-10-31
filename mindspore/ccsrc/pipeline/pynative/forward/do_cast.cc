@@ -22,10 +22,13 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/profiler.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore {
 namespace pynative {
 namespace {
+const char kOpsFunctionModelName[] = "mindspore.ops.functional";
+
 template <typename S>
 ValuePtr Cast(S in, const TypeId &dst_type_id) {
   switch (dst_type_id) {
@@ -89,8 +92,18 @@ ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type
     return nullptr;
   }
 }
+
+void RunCastOpByPyboost(std::shared_ptr<kernel::pyboost::Cast> cast_op, const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(cast_op);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  (void)cast_op->Call(op_run_info->op_grad_info->input_value[kIndex0]->cast<tensor::TensorPtr>(),
+                      op_run_info->op_grad_info->input_value[kIndex1]);
+  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, op_run_info->op_grad_info->input_value, op_run_info);
+  if (op_run_info->requires_grad) {
+    cast_op->DoGrad();
+  }
+}
 }  // namespace
-const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeCast,
@@ -335,7 +348,6 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->requires_grad = op_run_info->requires_grad;
-  cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
   cast_run_info->base_op_run_info.next_op_name = op_name;
@@ -353,8 +365,17 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;
-  PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
-  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
+
+  // Use pyboost op call
+  if (is_py_boost_cast_) {
+    auto cast_op = CREATE_PYBOOST_OP(Cast, op_run_info->base_op_run_info.device_target);
+    cast_op->set_primitive(GetPrimByTypeId(type_id));
+    RunCastOpByPyboost(cast_op, cast_run_info);
+  } else {
+    cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
+    PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
+  }
   return cast_run_info->real_out;
 }
 

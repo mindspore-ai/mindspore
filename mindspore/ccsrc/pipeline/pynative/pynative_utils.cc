@@ -1165,22 +1165,43 @@ void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const Ab
   op_run_info->stub_output->SetValue(op_run_info->real_out);
 }
 
-void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &inputs,
-                     const std::vector<TensorPtr> &output, const std::vector<abstract::AbstractBasePtr> &input_abs,
-                     const AbstractBasePtr &output_abs) {
+void PyBoost::SetCastForInputs(std::vector<ValuePtr> &&inputs, const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  op_run_info->input_size = inputs.size();
+  op_run_info->op_grad_info->input_value = std::move(inputs);
+
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward = pynative_executor->forward_executor();
-  op_run_info->op_grad_info->input_value = inputs;
-  op_run_info->op_grad_info->input_abs = input_abs;
-  op_run_info->op_grad_info->out_abs = output_abs;
-  op_run_info->base_op_run_info.abstract = output_abs;
-  op_run_info->input_size = inputs.size();
+  forward->SetCastForInputs(op_run_info, true);
+}
+
+void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  // Set result to python
+  op_run_info->base_op_run_info.abstract = op->output_abs();
+  MakeOutputValue(op_run_info, op->outputs());
+  UpdateStubOutput(op_run_info, op->output_abs());
+
+  // Update op run info for auto grad
+  if (op_run_info->requires_grad) {
+    op_run_info->op_grad_info->input_abs = op->input_abs();
+    op_run_info->op_grad_info->out_value = op_run_info->real_out;
+    op_run_info->op_grad_info->out_abs = op->output_abs();
+    op->set_grad_func([op_run_info]() { DoGrad(op_run_info); });
+  }
+}
+
+void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
+  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
+  const auto &forward = pynative_executor->forward_executor();
+
   PyParser::PrepareOpGradInfo(op_run_info);
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
     DataConvert::ConvertValueToTensor(op_run_info, input_object, index, forward->grad()->top_cell());
   }
-  op_run_info->op_grad_info->out_value = op_run_info->real_out;
   forward->ForwardOpGradImpl(op_run_info);
 }
 

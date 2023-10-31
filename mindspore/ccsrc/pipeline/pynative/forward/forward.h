@@ -110,6 +110,8 @@ class ForwardExecutor {
   void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
+  // Mix precision and Implicit transform
+  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info, bool is_py_boost_cast) const;
 
  private:
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
@@ -126,8 +128,6 @@ class ForwardExecutor {
   void RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info);
 
   VectorRef RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
-  // Mix precision and Implicit transform
-  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
   // Infer output abstract
   void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
   // Check sync condition in heterogeneous

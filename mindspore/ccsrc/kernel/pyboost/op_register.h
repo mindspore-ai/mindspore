@@ -18,78 +18,12 @@
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_REGISTER_H_
 
 #include <map>
-#include <functional>
-#include <memory>
-#include <string>
-#include "ir/scalar.h"
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
-#include "ir/tensor.h"
-#include "include/backend/visible.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/op_base.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
 static const auto kOneScalar = std::make_shared<Int64Imm>(1);
-class BACKEND_EXPORT Op {
- public:
-  using GradFunc = std::function<void(const std::vector<ValuePtr> &inputs, const std::vector<tensor::TensorPtr> &output,
-                                      const std::vector<abstract::AbstractBasePtr> &input_abs,
-                                      const abstract::AbstractBasePtr &output_abs)>;
-  Op() = default;
-  virtual ~Op() = default;
-  void set_grad_func(const GradFunc &grad_func) { grad_func_ = grad_func; }
-  void DoGrad(const std::vector<ValuePtr> &inputs) {
-    if (grad_func_ != nullptr) {
-      grad_func_(inputs, outputs_, input_abs_, output_abs_);
-    }
-  }
-  void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
-  const PrimitivePtr &primitive() const { return primitive_; }
-
-  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
-
-  const tensor::TensorPtr &output(const size_t &idx) {
-    if (idx >= outputs_.size()) {
-      MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
-    }
-    return outputs_[idx];
-  }
-
-  const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
-  const AbstractBasePtr &output_abs() const { return output_abs_; }
-  void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
-
-  template <typename... T>
-  inline void InferOutput(T &... args) {
-    input_abs_.clear();
-    (input_abs_.emplace_back(args->ToAbstract()), ...);
-    auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
-    output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
-    MS_EXCEPTION_IF_NULL(output_abs_);
-    MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
-    outputs_.clear();
-    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
-  }
-  tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
-
-  template <typename... T>
-  void DeviceMalloc(T &... args) {
-    PrepareOpInputs(device_context_, args...);
-    PrepareOpOutputs(device_context_, outputs_);
-  }
-
- protected:
-  std::vector<tensor::TensorPtr> outputs_;
-  GradFunc grad_func_;
-  PrimitivePtr primitive_;
-  // Save abstract for grad.
-  std::vector<AbstractBasePtr> input_abs_;
-  AbstractBasePtr output_abs_{nullptr};
-  DeviceContext *device_context_{nullptr};
-};
 
 template <typename T>
 class BACKEND_EXPORT OpFactory {

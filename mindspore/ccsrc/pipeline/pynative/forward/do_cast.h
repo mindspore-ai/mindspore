@@ -35,6 +35,8 @@ class CastOperation {
   void DoCast(const FrontendOpRunInfoPtr &op_run_info);
   void ClearRes();
   ValuePtr DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v, const TypeId &type_id) const;
+  void set_is_py_boost_cast(bool is_py_boost_cast) { is_py_boost_cast_ = is_py_boost_cast; }
+  inline bool is_py_boost_cast() const { return is_py_boost_cast_; }
 
  private:
   bool IsValueTypeInvalid(const ValuePtr &v) const;
@@ -63,6 +65,7 @@ class CastOperation {
   PrimitivePtr GetPrimByTypeId(const TypeId &type_id) const;
 
  private:
+  bool is_py_boost_cast_{false};
   ImplicitCastCache implicit_cast_map_;
   mutable mindspore::HashMap<TypeId, PrimitivePtr> type_prim_cache_;
 };

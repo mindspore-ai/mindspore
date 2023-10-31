@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_BADDBMM_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_BADDBMM_H_
 
+#include "kernel/pyboost/op_base.h"
 #include "kernel/pyboost/op_register.h"
 
 namespace mindspore {
