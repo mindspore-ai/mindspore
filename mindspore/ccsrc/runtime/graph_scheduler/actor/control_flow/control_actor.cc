@@ -603,8 +603,16 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
     {addr_list[0]->device_name(), addr_list[0]->device_id()});
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
-    nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape);
+
+  abstract::BaseShapePtrList shape_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetShape());
+  auto tuple_shape = std::make_shared<abstract::TupleShape>(shape_list);
+  TypePtrList type_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetType());
+  auto tuple_type = std::make_shared<Tuple>(type_list);
+  MS_LOG(WARNING) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString();
+  const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  const auto &new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(new_device_tensor);
 
   MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();

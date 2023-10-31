@@ -472,9 +472,12 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
       address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     } else {
       // Create device tensor.
-      const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-        {node, front_node_with_index.second}, nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      const auto &sub_abstract = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), front_node_with_index.second);
+      MS_EXCEPTION_IF_NULL(sub_abstract);
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        sub_abstract->BuildShape(), sub_abstract->BuildType(), sub_abstract->BuildValue(), nullptr, size,
+        kOpFormat_DEFAULT, type_id, ShapeVector(), device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
       address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     }
   } else {
@@ -1070,6 +1073,7 @@ void GetArgumentIndexForDynamicLenParameter(const abstract::AbstractBasePtr &arg
     return;
   }
   if ((!arg_seq_abs->dynamic_len()) && para_seq_abs->dynamic_len()) {
+    MS_LOG(DEBUG) << "Add argument index:" << argument_index << " size:" << arg_seq_abs->size();
     (*indexes)[argument_index] = arg_seq_abs->size();
     return;
   }
@@ -1117,14 +1121,8 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
                         << " parameters num:" << func_graph->parameters().size();
     }
     size_t start_index = 1;
-    for (size_t i = 0; i < para_num - args_num; ++i) {
-      MS_EXCEPTION_IF_NULL((func_graph->parameters())[i]);
-      const auto &abs = (func_graph->parameters())[i]->abstract();
-      MS_EXCEPTION_IF_NULL(abs);
-      start_index += common::AnfAlgo::GetOutputNumByAbstract(abs);
-    }
     for (size_t i = 0; i < args_num; ++i) {
-      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      MS_EXCEPTION_IF_NULL(cnode->input(i + 1));
       MS_EXCEPTION_IF_NULL((func_graph->parameters())[i + para_num - args_num]);
       MS_LOG(DEBUG) << "Check formal parameter:" << cnode->input(i + 1)->DebugString()
                     << " real node:" << (func_graph->parameters())[i + para_num - args_num]->DebugString();
@@ -1134,6 +1132,11 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePt
       start_index += common::AnfAlgo::GetOutputNumByAbstract(cnode->input(i + 1)->abstract());
     }
     if (!sequence_indexes.empty()) {
+      for (const auto &pair : sequence_indexes) {
+        MS_LOG(DEBUG) << "Add dynamic len formal parameter for call node:" << node->DebugString()
+                      << " funcgraph:" << func_graph->ToString() << " argument index:" << pair.first
+                      << " size:" << pair.second;
+      }
       control_node_to_funcgraph_with_dynamic_sequence_index_[node][func_graph.get()] = sequence_indexes;
     }
   }

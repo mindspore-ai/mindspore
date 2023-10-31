@@ -105,7 +105,9 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
       return;
     }
     const auto &seq_shape = shape_->cast<abstract::SequenceShapePtr>();
-    MS_EXCEPTION_IF_NULL(seq_shape);
+    if (seq_shape == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid sequence shape:" << shape_->ToString();
+    }
     shape_vector_.clear();
     shape_vector_.push_back(seq_shape->size());
     const auto &shapes = seq_shape->shape();

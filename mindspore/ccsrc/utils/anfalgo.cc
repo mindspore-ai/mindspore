@@ -2109,7 +2109,8 @@ const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePt
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   const auto &elements = abstract_tuple->elements();
   if (elements.size() <= index) {
-    MS_LOG(EXCEPTION) << "The index: " << index << " is out of range of array, array size: " << elements.size();
+    const auto &sub_abstract = FetchAbstractByIndex(node->abstract(), index);
+    return sub_abstract;
   }
   return elements[index];
 }

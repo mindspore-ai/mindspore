@@ -632,8 +632,9 @@ void ControlNodeScheduler::CollectDynamicLenIndexForArgment(const GraphCompilerI
       auto dynamic_len_index = func_with_index.second;
       std::vector<std::pair<std::vector<size_t>, bool>> real_indexes;
       ParseRealIndex(dynamic_len_index, gather_actor->formal_parameters_.size(), &real_indexes, gather_actor);
-      MS_LOG(INFO) << "add dynamic len index for funcgraph:" << func_graph->ToString()
-                   << " actor:" << gather_actor->GetAID();
+      MS_LOG(INFO) << "Add dynamic len index for funcgraph:" << func_graph->ToString()
+                   << " actor:" << gather_actor->GetAID()
+                   << " formal parameter num:" << gather_actor->formal_parameters_.size();
       gather_actor->dynamic_len_index_[func_graph] = real_indexes;
     }
   }
