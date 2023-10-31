@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/mindir/shape_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/shape_unify_mindir.h"
+#include <memory>
+#include <vector>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "include/common/utils/anfalgo.h"
@@ -95,39 +97,17 @@ CNodePtr ShapeUnifyMindIR::CreateTensorToScalar(const FuncGraphPtr &func_graph, 
 }
 
 CNodePtr ShapeUnifyMindIR::CreateTensorShape(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node) const {
-  auto prim = NewValueNode(std::make_shared<Primitive>(kTensorShapeOpName));
+  auto prim = std::make_shared<Primitive>(kTensorShapeOpName);
   MS_EXCEPTION_IF_NULL(prim);
   auto shape_cnode = anf_node->cast<CNodePtr>();
-  AnfNodePtrList inputs = {prim, shape_cnode->input(kIndex1)};
+  AnfNodePtrList inputs = {NewValueNode(prim), shape_cnode->input(kIndex1)};
 
   CNodePtr tensor_shape_node = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tensor_shape_node);
 
-  abstract::AbstractBasePtr tmp_abstract;
-  auto shape_input_abs = shape_cnode->input(kIndex1)->abstract()->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(shape_input_abs);
-  auto shape = shape_input_abs->shape()->shape();
-  ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
-  if (IsDynamic(shape)) {
-    if (IsDynamicRank(shape)) {
-      tmp_abstract = abstract::MakeAbstract(
-        std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny}), kInt64);
-    } else {
-      auto elem = std::make_shared<abstract::AbstractScalar>(std::make_shared<ValueAny>(), std::make_shared<Int>(64));
-      auto abs_tensor = std::make_shared<abstract::AbstractTensor>(elem, std::make_shared<abstract::Shape>(tensor_shp));
-      auto shape_value = MakeValue(shape);
-      abs_tensor->set_shape_value(shape_value);
-      tmp_abstract = abs_tensor;
-    }
-  } else {
-    auto shp_buf_size = sizeof(int64_t) * shape.size();
-    auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, tensor_shp, shape.data(), shp_buf_size);
-    tmp_abstract = tensor->ToAbstract();
-  }
-
-  // set abstract
-  tensor_shape_node->set_fullname_with_scope(anf_node->fullname_with_scope() + "_tensorshape");
-  tensor_shape_node->set_abstract(tmp_abstract);
+  auto abs = InferAbstract(prim, {shape_cnode->input(kIndex1)});
+  MS_EXCEPTION_IF_NULL(abs);
+  tensor_shape_node->set_abstract(abs);
   return tensor_shape_node;
 }
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_INPUTS_UNIFY_MINDIR_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_INPUTS_UNIFY_MINDIR_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_INPUTS_UNIFY_MINDIR_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_INPUTS_UNIFY_MINDIR_H_
 
 #include <string>
 #include "include/backend/optimizer/optimizer.h"
@@ -30,7 +30,6 @@ class InputsUnifyMindIR : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  abstract::AbstractBasePtr GenerateAbsByOpInfer(const CNodePtr &tuple_to_tensor) const;
   ValueNodePtr CreateValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
@@ -38,4 +37,4 @@ class InputsUnifyMindIR : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_MAKETUPLE_UNIFY_MINDIR_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_GE_OPTIMIZER_IRPASS_MAKETUPLE_UNIFY_MINDIR_H_

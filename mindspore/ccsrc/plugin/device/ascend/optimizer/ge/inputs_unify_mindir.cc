@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/optimizer/mindir/inputs_unify_mindir.h"
+#include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
 #include <map>
 #include <vector>
 #include <memory>
@@ -38,8 +38,7 @@ std::vector<D> CastVector(std::vector<T> src) {
 }
 
 tensor::TensorPtr CastValueTensor(const tensor::TensorPtr &src, const TypePtr &dst_type) {
-  auto src_type = src->type();
-  TypeId src_type_id = src_type->type_id();
+  TypeId src_type_id = src->data_type();
   TypeId dst_type_id = dst_type->type_id();
   if (src_type_id == kNumberTypeInt64 && dst_type_id == kNumberTypeInt32) {
     auto vec = TensorValueToVector<int64_t>(src);
@@ -112,25 +111,6 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
   return node;
 }
 
-abstract::AbstractBasePtr InputsUnifyMindIR::GenerateAbsByOpInfer(const CNodePtr &tuple_to_tensor) const {
-  auto primitive = GetCNodePrimitive(tuple_to_tensor);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto found = abstract::GetPrimitiveInferImpl(primitive);
-  if (!found.has_value()) {
-    MS_LOG(INTERNAL_EXCEPTION) << primitive->name() << "infer is not registered.";
-  }
-
-  auto input_list = tuple_to_tensor->inputs();
-  std::vector<AbstractBasePtr> input_args;
-  std::for_each(input_list.begin() + kSizeOne, input_list.end(),
-                [&input_args](const auto &input) { input_args.emplace_back(input->abstract()); });
-  auto infer_impl = found.value();
-  auto abs = infer_impl.InferShapeAndType(nullptr, primitive, input_args);
-  MS_EXCEPTION_IF_NULL(abs);
-  MS_LOG(DEBUG) << "Abstract for " << primitive->name() << " is " << abs->ToString();
-  return abs;
-}
-
 ValueNodePtr InputsUnifyMindIR::CreateValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
   auto value = GetValueNode(node);
   MS_EXCEPTION_IF_NULL(value);
@@ -139,6 +119,8 @@ ValueNodePtr InputsUnifyMindIR::CreateValueTensor(const FuncGraphPtr &func_graph
     tensor = ScalarToTensor(value->cast<ScalarPtr>());
   } else if (value->isa<ValueSequence>()) {
     tensor = SequenceToTensor(value->cast<ValueSequencePtr>());
+  } else if (value->isa<tensor::Tensor>()) {
+    tensor = value->cast<tensor::TensorPtr>();
   }
   MS_EXCEPTION_IF_NULL(tensor);
   auto const_value_node = NewValueNode(tensor);
@@ -168,9 +150,9 @@ CNodePtr InputsUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_graph,
 }
 
 CNodePtr InputsUnifyMindIR::CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  auto prim = NewValueNode(std::make_shared<Primitive>(kTupleToTensorOpName));
+  auto prim = std::make_shared<Primitive>(kTupleToTensorOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, node};
+  AnfNodePtrList inputs = {NewValueNode(prim), node};
   CNodePtr tuple_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(tuple_to_tensor);
   // attr dtype
@@ -178,7 +160,7 @@ CNodePtr InputsUnifyMindIR::CreateTupleToTensor(const FuncGraphPtr &func_graph, 
   common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), tuple_to_tensor);
 
   // set abstract
-  auto abs = GenerateAbsByOpInfer(tuple_to_tensor);
+  auto abs = InferAbstract(prim, {node});
   MS_EXCEPTION_IF_NULL(abs);
   MS_LOG(DEBUG) << "Abstract for TupleToTensor op is " << abs->ToString();
   tuple_to_tensor->set_abstract(abs);

@@ -464,6 +464,8 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
   MS_EXCEPTION_IF_NULL(cnode);
   for (auto &it : input_attr_map) {
     if (!cnode->input(it.first)->isa<ValueNode>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is not a ValueNode";
       return false;
     }
   }
