@@ -1798,13 +1798,12 @@ def get_expand_dims_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Diag)
 def get_diag_vmap_rule(prim, axis_size):
     """VmapRule for `Diag` operations."""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
+    if prim.has_label("batch_rank"):
+        batch_rank = prim.get_label("batch_rank") + 1
     else:
         batch_rank = 1
 
-    batch_prim = P.Diag()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
@@ -1812,7 +1811,7 @@ def get_diag_vmap_rule(prim, axis_size):
             return result
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
-        out = batch_prim(x)
+        out = prim(x)
         return out, 0
 
     return vmap_rule

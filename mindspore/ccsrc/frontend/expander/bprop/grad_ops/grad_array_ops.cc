@@ -515,9 +515,8 @@ NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const Sha
   NodePtrList res;
   if (is_uniform) {
     auto long_nums = SizeToLong(input_nums);
-    auto dx = ib->Emit(
-      kSplitOpName, {dout},
-      {{kAttrAxis, MakeValue(axis)}, {kAttrOutputNum, MakeValue(long_nums)}, {"num_split", MakeValue(long_nums)}});
+    auto dx = ib->Emit(kSplitOpName, {dout, ib->EmitValue(MakeValue(axis)), ib->EmitValue(MakeValue(long_nums))},
+                       {{"num_split", MakeValue(long_nums)}});
     // Split output is a tuple.
     if (!is_list) {
       return {dx};

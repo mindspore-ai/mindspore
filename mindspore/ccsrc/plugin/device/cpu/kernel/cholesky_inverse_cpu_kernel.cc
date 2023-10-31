@@ -34,6 +34,7 @@ int CholeskyInverseCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+  is_upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   input_dim_0_ = x_shape[0];
   return KRET_OK;
@@ -44,7 +45,6 @@ bool CholeskyInverseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelT
                                                const std::vector<KernelTensor *> &,
                                                const std::vector<kernel::KernelTensor *> &outputs) {
   auto input_x0 = reinterpret_cast<T *>(inputs[0]->device_ptr());
-  auto is_upper_ = reinterpret_cast<bool *>(inputs[1]->device_ptr());
   auto output_y = reinterpret_cast<T *>(outputs[0]->device_ptr());
   using MatrixXd = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   Eigen::Map<MatrixXd> A(input_x0, input_dim_0_, input_dim_0_);
@@ -70,7 +70,10 @@ const std::vector<std::pair<KernelAttr, CholeskyInverseCpuKernelMod::KernelRunFu
        .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
        .AddOutputAttr(kNumberTypeFloat32),
      &CholeskyInverseCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &CholeskyInverseCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

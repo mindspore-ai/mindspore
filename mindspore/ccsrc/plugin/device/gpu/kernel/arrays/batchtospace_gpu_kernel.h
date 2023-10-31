@@ -68,7 +68,7 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     // wait for primitive unified between lite and cloud.
-    block_size_ = GetValue<size_t>(primitive_->GetAttr("block_size"));
+    block_size_ = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("block_size")));
     if (block_size_ < 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'block_size' cannot be less than 1, but got "
                         << block_size_;

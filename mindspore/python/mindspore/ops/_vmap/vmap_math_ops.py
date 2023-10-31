@@ -652,9 +652,8 @@ def get_linspace_rule(prim, axis_size):
         batch_rank = prim.get_label("batch_rank") + 1
     else:
         batch_rank = 1
-    batch_linspace = P.LinSpace()
-    batch_linspace.add_prim_attr('batch_rank', batch_rank)
-    prim_name = batch_linspace.name
+
+    prim.set_label('batch_rank', batch_rank)
 
     def vmap_rule(start_bdim, stop_bdim, num_bdim):
         is_all_none, result = vmap_general_preprocess(prim, start_bdim, stop_bdim, num_bdim)
@@ -667,7 +666,7 @@ def get_linspace_rule(prim, axis_size):
 
         if num_dim is not None:
             _raise_value_error("The source axis of `num` in `{}` must be None, "
-                               "but got {}.".format(prim_name, num_dim))
+                               "but got {}.".format(prim.name(), num_dim))
 
         out_dim = start_dim
         if start_dim != stop_dim:
@@ -677,7 +676,7 @@ def get_linspace_rule(prim, axis_size):
             else:
                 stop = _bdim_at_any(stop, stop_dim, start_dim, axis_size)
 
-        result = batch_linspace(start, stop, num)
+        result = prim(start, stop, num)
         return result, out_dim
 
     return vmap_rule

@@ -50,6 +50,7 @@ class CholeskyInverseCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
 
  private:
   int64_t input_dim_0_ = 0;
+  bool is_upper_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

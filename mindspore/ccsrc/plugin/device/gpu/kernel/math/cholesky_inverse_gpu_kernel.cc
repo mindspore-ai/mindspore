@@ -48,6 +48,7 @@ int CholeskyInverseGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
       return KRET_UNKNOWN_SHAPE;
     }
   }
+  upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   ResetResource();
   auto output_shape = outputs[0]->GetShapeVector();
   output_elements_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
@@ -81,7 +82,6 @@ bool CholeskyInverseGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
                                                const std::vector<KernelTensor *> &workspace,
                                                const std::vector<KernelTensor *> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, 0);
-  bool *upper_ = GetDeviceAddress<bool>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
   int *dev_info = GetDeviceAddress<int>(workspace, 0);
   T *d_work = GetDeviceAddress<T>(workspace, 1);
@@ -142,5 +142,6 @@ std::vector<KernelAttr> CholeskyInverseGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, CIfunc> &pair) { return pair.first; });
   return support_list;
 }
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, CholeskyInverse, CholeskyInverseGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

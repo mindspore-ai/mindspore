@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputsNum = 1;
+constexpr size_t kInputsNum = 2;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
@@ -64,10 +64,6 @@ bool CholeskyCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  if (primitive_->HasAttr("upper")) {
-    flag_ = false;
-    upper_ = GetValue<bool>(primitive_->GetAttr("upper"));
-  }
   // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
   if (primitive_->HasAttr(CLEAN)) {
     clean_ = GetValue<bool>(primitive_->GetAttr(CLEAN));
@@ -83,7 +79,7 @@ int CholeskyCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
+  upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
   auto input_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
   auto output_shape = LongVecToSizeVec(inputs[kOutputIndex]->GetShapeVector());
@@ -132,9 +128,15 @@ bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
 }
 
 std::vector<std::pair<KernelAttr, CholeskyCpuKernelMod::CholeskyFunc>> CholeskyCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat32),
    &CholeskyCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
    &CholeskyCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> CholeskyCpuKernelMod::GetOpSupport() {

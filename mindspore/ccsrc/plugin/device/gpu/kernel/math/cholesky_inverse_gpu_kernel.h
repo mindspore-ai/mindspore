@@ -75,6 +75,7 @@ class CholeskyInverseGpuKernelMod : public NativeGpuKernelMod {
   size_t unit_size_{1};
   size_t output_elements_;
   int64_t rank_;
+  bool upper_{false};
   cusolverDnHandle_t handle_{nullptr};
   cublasFillMode_t uplo_ = CUBLAS_FILL_MODE_UPPER;
   CIfunc kernel_func_{};

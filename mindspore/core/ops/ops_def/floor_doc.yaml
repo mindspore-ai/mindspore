@@ -1,30 +1,30 @@
 floor:
-  description: |
-    Rounds a tensor down to the closest integer element-wise.
+    description: |
+        Rounds a tensor down to the closest integer element-wise.
 
-        .. math::
+            .. math::
 
-            out_i = \lfloor x_i \rfloor
+                out_i = \lfloor x_i \rfloor
 
-        Args:
-            input (Tensor): The input tensor, its data type must be float16,
-                float32 or float64.
+            Args:
+                input (Tensor): The input tensor, its data type must be float16,
+                    float32 or float64.
 
-        Returns:
-            Tensor, has the same shape as `input`.
+            Returns:
+                Tensor, has the same shape as `input`.
 
-        Raises:
-            TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not in [float16, float32, float64].
+            Raises:
+                TypeError: If `input` is not a Tensor.
+                TypeError: If dtype of `input` is not in [float16, float32, float64].
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-            >>> output = ops.floor(x)
-            >>> print(output)
-            [ 1.  2. -2.]
+            Examples:
+                >>> import mindspore
+                >>> import numpy as np
+                >>> from mindspore import Tensor, ops
+                >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+                >>> output = ops.floor(x)
+                >>> print(output)
+                [ 1.  2. -2.]

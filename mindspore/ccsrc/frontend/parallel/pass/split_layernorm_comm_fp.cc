@@ -131,11 +131,10 @@ CNodePtr NewSplitCNodeAndSetAbstract(const FuncGraphPtr &func_graph, const AnfNo
   if (LongToSize(axis) >= input_node_shape.size() || input_node_shape[axis] % output_num != 0) {
     return nullptr;
   }
-  auto split_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimSplit->Clone()), input_node});
+  auto split_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimSplit->Clone()), input_node,
+                                           NewValueNode<int64_t>(axis), NewValueNode<int64_t>(output_num)});
   auto input_shape = common::AnfAlgo::GetOutputInferShape(input_node, kIndex0);
   int64_t slice_size = input_shape[kIndex0] / kLongTwo;
-  AddCNodePrimAttr(split_cnode, kAttrAxis, MakeValue(axis));
-  AddCNodePrimAttr(split_cnode, kAttrOutputNum, MakeValue(output_num));
   AddCNodePrimAttr(split_cnode, kAttrSizeSplits, MakeValue(ShapeVector{slice_size, slice_size}));
   AddCNodePrimAttr(split_cnode, kAttrNumSplit, MakeValue(output_num));
 

@@ -109,10 +109,9 @@ static void SplitIntoInterleaved(const FuncGraphPtr &func_graph, const FuncGraph
   auto value1 = NewValueNode(MakeValue(kInt64Num1));
 
   // New split(matmul_input1, axis_a_0, 2)
-  auto split_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimSplit->Clone()), matmul_input1});
+  auto split_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimSplit->Clone()), matmul_input1,
+                                           NewValueNode<int64_t>(axis_a_0), NewValueNode<int64_t>(kInt64Num2)});
   int64_t slice_size = matmul_input1_shape[axis_a_0] / kInt64Num2;
-  AddCNodePrimAttr(split_cnode, kAttrAxis, MakeValue(axis_a_0));
-  AddCNodePrimAttr(split_cnode, kAttrOutputNum, MakeValue(kInt64Num2));
   AddCNodePrimAttr(split_cnode, kAttrSizeSplits, MakeValue(ShapeVector{slice_size, slice_size}));
   AddCNodePrimAttr(split_cnode, kAttrNumSplit, MakeValue(kInt64Num2));
 

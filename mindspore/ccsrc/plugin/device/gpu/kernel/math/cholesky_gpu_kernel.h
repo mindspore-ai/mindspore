@@ -33,7 +33,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kCholeskyInputsNum = 1;
+constexpr size_t kCholeskyInputsNum = 2;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kCholeskyOutputsNum = 1;
 constexpr size_t kOutputIndex = 0;
@@ -51,10 +51,6 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCholeskyInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCholeskyOutputsNum, kernel_name_);
 
-    if (primitive_->HasAttr("upper")) {
-      flag_ = false;
-      upper_ = GetValue<bool>(primitive_->GetAttr("upper"));
-    }
     // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
     if (primitive_->HasAttr(kClean)) {
       clean_ = GetValue<bool>(primitive_->GetAttr(kClean));
@@ -88,7 +84,7 @@ class CholeskyGpuKernelMod : public NativeGpuKernelMod {
       return ret;
     }
     output_size_list_.clear();
-
+    upper_ = inputs[kIndex1]->GetValueWithCheck<bool>();
     auto in_shape = LongVecToSizeVec(inputs[kInputIndex]->GetShapeVector());
     if (!InitNoSplitDim(in_shape)) {
       return KRET_RESIZE_FAILED;
