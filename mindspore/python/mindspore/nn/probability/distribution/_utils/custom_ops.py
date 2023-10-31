@@ -62,12 +62,12 @@ def log_generic(input_x):
     if not checktype(dtype(input_x), mstype.float_):
         input_x = cast(input_x, mstype.float32)
     nan = F.fill(dtype(input_x), shape(input_x), np.nan)
-    inf = F.fill(dtype(input_x), shape(input_x), np.inf)
+    neginf = F.fill(dtype(input_x), shape(input_x), -np.inf)
     neg_x = less(input_x, 0.0)
     nonpos_x = lessequal(input_x, 0.0)
     log_x = log(input_x)
     result = select(
-        nonpos_x, (-1.0) * inf, log_x)
+        nonpos_x, neginf, log_x)
     return select(neg_x, nan, result)
 
 
