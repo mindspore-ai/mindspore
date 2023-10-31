@@ -59,7 +59,7 @@ REG_ADPT_DESC(AddV2, prim::kPrimAddV2->name(), ADPT_DESC(AddV2))
 // AccumulateNV2
 INPUT_MAP(AccumulateNV2) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AccumulateNV2) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(AccumulateNV2) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(AccumulateNV2) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(AccumulateNV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AccumulateNV2, kNameAccumulateNV2, ADPT_DESC(AccumulateNV2))
 
@@ -391,7 +391,7 @@ REG_ADPT_DESC(ReciprocalGrad, kNameReciprocalGrad, ADPT_DESC(ReciprocalGrad))
 // AddN
 INPUT_MAP(AddN) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(AddN) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(AddN) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(AddN) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(AddN) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AddN, kNameAddN, ADPT_DESC(AddN))
 
@@ -657,7 +657,7 @@ REG_ADPT_DESC(LambApplyWeightAssign, kNameLambApplyWeightAssign, ADPT_DESC(LambA
 // Eltwise
 INPUT_MAP(Eltwise) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Eltwise) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(Eltwise) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())},
+ATTR_MAP(Eltwise) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
                      {"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
                      {"coeff", ATTR_DESC(coeff, AnyTraits<std::vector<float>>(), AnyTraits<float>())}};
 OUTPUT_MAP(Eltwise) = {{0, OUTPUT_DESC(y)}};

@@ -524,6 +524,24 @@ class OpAdapter : public BaseOpAdapter {
     return list;
   }
 
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>, size_t index) {
+    MS_EXCEPTION_IF_NULL(value);
+    MS_LOG(DEBUG) << "Value: " << value->type_name();
+    if (!value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "Value should be ValueSequence, but got " << value->type_name();
+    }
+    std::vector<int64_t> list;
+    auto vec = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(vec);
+    for (auto &it : vec->value()) {
+      list.push_back(GetCastIntegralValue<int64_t>(it));
+    }
+    if (index >= list.size()) {
+      MS_LOG(EXCEPTION) << "reg dyn_input_sizes index error, must less than " << list.size() << "but got " << index;
+    }
+    return list[index];
+  }
+
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>,
                                          const AnyTraits<std::vector<int64_t>>) {
     MS_EXCEPTION_IF_NULL(value);

@@ -369,9 +369,9 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
       if (common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
         dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
       }
-      if (dyn_input_sizes.size() != 1) {
+      if (dyn_input_sizes.empty()) {
         MS_LOG(EXCEPTION) << "Attribute of " << cnode->fullname_with_scope() << " is " << dyn_input_sizes
-                          << ", of which size is not 1";
+                          << ", of which size is empty";
       }
       ms_real_idx += LongToSize(dyn_input_sizes[0]);
     } else {

@@ -464,6 +464,8 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
   MS_EXCEPTION_IF_NULL(info);
   for (const auto &[input_idx, attr_name] : info->input_attr_map()) {
+    // adapter dyn_num input
+    auto cur_input_idx = num_folded_inputs_ == 0 ? input_idx : input_idx + num_folded_inputs_ - 1;
     MS_LOG(DEBUG) << "Operator " << kernel_name << " converts input " << input_idx << " to attribute " << attr_name;
     if (input_idx >= inputs.size()) {
       MS_LOG(DEBUG) << "Operator " << kernel_name << " index " << input_idx
@@ -472,7 +474,7 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
     }
     MS_EXCEPTION_IF_NULL(inputs[input_idx]);
     ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx + 1, inputs[input_idx]->GetValue(), &ge_attr_value);
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, inputs[cur_input_idx]->GetValue(), &ge_attr_value);
 
     AttrConverter attr_coverter;
     attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
@@ -546,9 +548,9 @@ void AclConverter::ResizeAclOpInputs(const PrimitivePtr &prim) {
     if (prim->HasAttr(kAttrDynInputSizes)) {
       dyn_input_sizes = GetValue<std::vector<int64_t>>(prim->GetAttr(kAttrDynInputSizes));
     }
-    if (dyn_input_sizes.size() != 1) {
+    if (dyn_input_sizes.empty()) {
       MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of primitive " << prim_name << " is "
-                        << dyn_input_sizes << ", of which size is not 1";
+                        << dyn_input_sizes << ", of which size is empty";
     }
     num_folded_inputs_ = LongToSize(dyn_input_sizes[0]);
     num_max_inputs = info->GetNumInputsOfMsOpProto() + num_folded_inputs_ - 1;

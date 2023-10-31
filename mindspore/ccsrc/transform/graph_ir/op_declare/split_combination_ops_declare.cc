@@ -37,7 +37,8 @@ REG_ADPT_DESC(SplitD, kSplitDOpName, ADPT_DESC(Split))
 // Pack
 INPUT_MAP(Pack) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(Pack) = {{1, DYN_INPUT_DESC(x)}};
-ATTR_MAP(Pack) = {{"num", ATTR_DESC(N, AnyTraits<int64_t>())}, {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
+ATTR_MAP(Pack) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
+                  {"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Pack) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Stack, mindspore::kStackOpName, ADPT_DESC(Pack))
 REG_ADPT_DESC(Pack, prim::kPrimPack->name(), ADPT_DESC(Pack))
@@ -47,7 +48,7 @@ INPUT_MAP(ParallelConcat) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(ParallelConcat) = {{1, DYN_INPUT_DESC(values)}};
 ATTR_MAP(ParallelConcat) = {
   {"shape", ATTR_DESC(shape, AnyTraits<std::vector<int64_t>>())},
-  {"N", ATTR_DESC(N, AnyTraits<int64_t>())},
+  {kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
 };
 OUTPUT_MAP(ParallelConcat) = {{0, OUTPUT_DESC(output_data)}};
 REG_ADPT_DESC(ParallelConcat, kNameParallelConcat, ADPT_DESC(ParallelConcat))
@@ -57,7 +58,7 @@ INPUT_MAP(ConcatD) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(ConcatD) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_MAP(ConcatD) = {
   {"axis", ATTR_DESC(concat_dim, AnyTraits<int64_t>())},
-  {"inputNums", ATTR_DESC(N, AnyTraits<int64_t>())},
+  {kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)},
 };
 OUTPUT_MAP(ConcatD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
@@ -66,17 +67,15 @@ REG_ADPT_DESC(ConcatD, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
 INPUT_MAP(Concat) = {{2, INPUT_DESC(concat_dim)}};
 DYN_INPUT_MAP(Concat) = {{1, DYN_INPUT_DESC(x)}};
 ATTR_INPUT_MAP(Concat) = {{"axis", "concat_dim"}};
-ATTR_MAP(Concat) = {{"inputNums", ATTR_DESC(N, AnyTraits<int64_t>())}};
+ATTR_MAP(Concat) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(Concat) = {{0, OUTPUT_DESC(y)}};
 // Rollback to ConcatD for the support of dynamic input scene is incomplete.
-REG_ADPT_DESC(Concat, prim::kPrimConcatD->name(), ADPT_DESC(ConcatD))
+REG_ADPT_DESC(Concat, prim::kPrimConcat->name(), ADPT_DESC(ConcatD))
 
 // ConcatV2 Inference for tf
 DYN_INPUT_MAP(ConcatV2) = {{1, DYN_INPUT_DESC(x)}};
 INPUT_MAP(ConcatV2) = {{2, INPUT_DESC(concat_dim)}};
-ATTR_MAP(ConcatV2) = {
-  {"N", ATTR_DESC(N, AnyTraits<int64_t>())},
-};
+ATTR_MAP(ConcatV2) = {{kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
 OUTPUT_MAP(ConcatV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ConcatV2, kNameConcatV2, ADPT_DESC(ConcatV2))
 
