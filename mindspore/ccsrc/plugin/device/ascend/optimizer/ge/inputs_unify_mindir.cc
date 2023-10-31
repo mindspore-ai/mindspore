@@ -76,6 +76,9 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
 
   auto input_map = adpt->getInputMap();
   for (auto it : input_map) {
+    if (static_cast<size_t>(it.first) >= cnode->size()) {
+      continue;
+    }
     auto input = cnode->input(it.first);
     MS_EXCEPTION_IF_NULL(input);
     auto abstract = input->abstract();
