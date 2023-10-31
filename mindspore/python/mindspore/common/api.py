@@ -1130,11 +1130,9 @@ class _no_grad(contextlib.ContextDecorator):
         self.prev_state = False
 
     def __enter__(self):
-        if context.get_context("mode") == context.GRAPH_MODE:
-            raise RuntimeError("For no_grad feature, currently only support Pynative mode, but got Graph mode.")
-        self.prev_state = _pynative_executor.enable_grad()
-        _pynative_executor.set_enable_grad(False)
-
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            self.prev_state = _pynative_executor.enable_grad()
+            _pynative_executor.set_enable_grad(False)
     def __exit__(self, exc_type, exc_val, exc_tb):
         _pynative_executor.set_enable_grad(self.prev_state)
         return False
