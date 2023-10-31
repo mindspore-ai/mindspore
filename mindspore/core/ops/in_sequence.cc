@@ -90,11 +90,11 @@ class InSequenceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return InSequenceInferInner(primitive, input_args)->GetShape();
+    return abstract::kNoShape;
   }
 
   TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InSequenceInferInner(prim, input_args)->GetType();
+    return kBool;
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -34,6 +34,7 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,9 +43,9 @@ int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &a
   auto build_type = abs->GetType();
   auto build_value = abs->GetValue();
   if (build_type == kInt32) {
-    return GetValue<int32_t>(build_value);
+    return ops::GetScalarValue<int32_t>(build_value).value();
   } else if (build_type == kInt64) {
-    return GetValue<int64_t>(build_value);
+    return ops::GetScalarValue<int64_t>(build_value).value();
   } else {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the type of '" << attr_name
                             << "' should be int32, int64 but got: " << abs->GetType()->ToString();
@@ -167,11 +168,30 @@ class SequenceSliceInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(primitive, input_args)->GetShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 4;
+    constexpr size_t seq_index = 0;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    auto first_abs = input_args[seq_index];
+    MS_EXCEPTION_IF_NULL(first_abs);
+    if (!CheckAndConvertUtils::IsSequence(first_abs)) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name
+                              << "', the first input should be tuple or list but got: " << first_abs->ToString();
+    }
+    MS_EXCEPTION_IF_NULL(first_abs->GetShape());
+    return first_abs->GetShape()->Clone();
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SliceInferInner(prim, input_args)->GetType();
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 4;
+    constexpr size_t seq_index = 0;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    auto first_abs = input_args[seq_index];
+    MS_EXCEPTION_IF_NULL(first_abs->GetType());
+    return first_abs->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

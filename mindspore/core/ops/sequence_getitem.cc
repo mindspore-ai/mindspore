@@ -39,6 +39,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -111,11 +112,64 @@ class SequenceGetItemInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGetItemInnerInfer(primitive, input_args)->GetShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    constexpr int args_spec_size = 2;
+    abstract::CheckArgsSize(op_name, input_args, args_spec_size);
+    auto data_abs = input_args[0];
+    MS_EXCEPTION_IF_NULL(data_abs);
+    auto seq_shape = data_abs->GetShape()->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape);
+    auto nelems = seq_shape->size();
+    auto index_int64_value = ops::GetScalarValue<int64_t>(input_args[1]->GetValue()).value();
+    if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
+      MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
+                               << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
+    }
+
+    std::size_t index_unsigned_value = 0;
+    if (index_int64_value >= 0) {
+      index_unsigned_value = LongToSize(index_int64_value);
+    } else {
+      index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
+    }
+    return (*seq_shape)[index_unsigned_value];
+  }
+
+  template <class T_PTR>
+  TypePtr InferSequenceType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+    auto data_abs = input_args[0];
+    MS_EXCEPTION_IF_NULL(data_abs);
+    auto seq_type = data_abs->GetType()->cast<T_PTR>();
+    MS_EXCEPTION_IF_NULL(seq_type);
+    auto nelems = seq_type->size();
+    auto index_int64_value = ops::GetScalarValue<int64_t>(input_args[1]->GetValue()).value();
+    if (index_int64_value >= SizeToLong(nelems) || index_int64_value < -SizeToLong(nelems)) {
+      MS_EXCEPTION(IndexError) << primitive->name() << " evaluator index should be in range[-" << SizeToLong(nelems)
+                               << ", " << SizeToLong(nelems) << "), but got " << index_int64_value << ".";
+    }
+
+    std::size_t index_unsigned_value = 0;
+    if (index_int64_value >= 0) {
+      index_unsigned_value = LongToSize(index_int64_value);
+    } else {
+      index_unsigned_value = LongToSize(index_int64_value + SizeToLong(nelems));
+    }
+    return seq_type->elements()[index_unsigned_value];
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceGetItemInnerInfer(primitive, input_args)->GetType();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto op_name = primitive->name();
+    constexpr int args_spec_size = 2;
+    abstract::CheckArgsSize(op_name, input_args, args_spec_size);
+    if (CheckAndConvertUtils::IsTuple(input_args[0])) {
+      return InferSequenceType<TuplePtr>(primitive, input_args);
+    }
+    if (CheckAndConvertUtils::IsList(input_args[0])) {
+      return InferSequenceType<ListPtr>(primitive, input_args);
+    }
+    MS_LOG(EXCEPTION) << "Unexpected sequence type: " << input_args[0]->ToString();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -68,7 +68,7 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   } else if (padding_type->isa<Tuple>() || padding_type->isa<List>()) {
     auto value = input_args[1]->GetValue();
     if (IsValueKnown(value)) {
-      paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", value, prim_name);
+      paddings_arg = CheckAndConvertUtils::CheckIntOrTupleInt("paddings value", input_args[1], prim_name);
     } else {
       return std::make_shared<abstract::Shape>(std::vector<int64_t>(x_shape.size(), abstract::Shape::kShapeDimAny));
     }

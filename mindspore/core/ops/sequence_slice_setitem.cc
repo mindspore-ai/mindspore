@@ -39,9 +39,6 @@ AbstractBasePtr SequenceSliceInferInner(const PrimitivePtr &primitive, const std
   constexpr size_t stop_index = 3;
   constexpr size_t step_index = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  for (auto arg : input_args) {
-    MS_EXCEPTION_IF_NULL(arg);
-  }
   auto sequence_abs = dyn_cast<abstract::AbstractSequence>(input_args[sequence_index]);
   MS_EXCEPTION_IF_NULL(sequence_abs);
   auto target_abs = dyn_cast<abstract::AbstractSequence>(input_args[target_index]);
@@ -91,11 +88,91 @@ class SequenceSliceSetItemInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceSliceInferInner(primitive, input_args)->GetShape();
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 5;
+    constexpr size_t sequence_index = 0;
+    constexpr size_t target_index = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    auto sequence_shape = input_args[sequence_index]->GetShape()->cast<abstract::SequenceShapePtr>();
+    MS_EXCEPTION_IF_NULL(sequence_shape);
+    auto target_shape = input_args[target_index]->GetShape()->cast<abstract::SequenceShapePtr>();
+    for (size_t i = 1; i < sequence_shape->size(); ++i) {
+      if ((*sequence_shape)[i]->GetShapeVector() != (*sequence_shape)[i - 1]->GetShapeVector()) {
+        MS_EXCEPTION(ValueError) << "SequenceShape[" << i - 1 << "]: " << (*sequence_shape)[i]->ToString()
+                                 << " and SequenceShape[" << i << "]: " << (*sequence_shape)[i]->ToString()
+                                 << " should be equal.";
+      }
+    }
+    for (size_t i = 1; i < target_shape->size(); ++i) {
+      if ((*target_shape)[i]->GetShapeVector() != (*target_shape)[i - 1]->GetShapeVector()) {
+        MS_EXCEPTION(ValueError) << "TargetShape[" << i - 1 << "]: " << (*target_shape)[i]->ToString()
+                                 << " and TargetShape[" << i << "]: " << (*target_shape)[i]->ToString()
+                                 << " should be equal.";
+      }
+    }
+    if (sequence_shape->size() == 0 && target_shape->size() == 0) {
+      MS_EXCEPTION(ValueError) << "Sequence  and target cannot be all empty.";
+    }
+    if (sequence_shape->size() == 0) {
+      return (*target_shape)[0]->Clone();
+    }
+    if (target_shape->size() == 0) {
+      return (*sequence_shape)[0]->Clone();
+    }
+    return (*target_shape)[0]->Clone();
   }
 
-  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SequenceSliceInferInner(prim, input_args)->GetType();
+  template <class T_PTR>
+  TypePtr InferTypeInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 5;
+    constexpr size_t sequence_index = 0;
+    constexpr size_t target_index = 1;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    auto sequence_type = input_args[sequence_index]->GetType()->cast<T_PTR>();
+    MS_EXCEPTION_IF_NULL(sequence_type);
+    auto target_type = input_args[target_index]->GetType()->cast<T_PTR>();
+    for (size_t i = 1; i < sequence_type->size(); ++i) {
+      if (!((*sequence_type)[i] == (*sequence_type)[i - 1])) {
+        MS_EXCEPTION(ValueError) << "SequenceType[" << i - 1 << "]: " << (*sequence_type)[i]->ToString()
+                                 << " and SequenceType[" << i << "]: " << (*sequence_type)[i]->ToString()
+                                 << " should be equal.";
+      }
+    }
+    for (size_t i = 1; i < target_type->size(); ++i) {
+      if (!((*target_type)[i] == (*target_type)[i - 1])) {
+        MS_EXCEPTION(ValueError) << "TargetType[" << i - 1 << "]: " << (*target_type)[i]->ToString()
+                                 << " and TargetType[" << i << "]: " << (*target_type)[i]->ToString()
+                                 << " should be equal.";
+      }
+    }
+    if (sequence_type->size() == 0 && target_type->size() == 0) {
+      MS_EXCEPTION(ValueError) << "Sequence  and target cannot be all empty.";
+    }
+    if (sequence_type->size() == 0) {
+      return (*target_type)[0]->Clone();
+    }
+    if (target_type->size() == 0) {
+      return (*sequence_type)[0]->Clone();
+    }
+    return (*target_type)[0]->Clone();
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto prim_name = primitive->name();
+    constexpr size_t input_num = 5;
+    constexpr size_t sequence_index = 0;
+    CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
+    if (CheckAndConvertUtils::IsTuple(input_args[sequence_index])) {
+      return InferTypeInner<TuplePtr>(primitive, input_args);
+    }
+    if (CheckAndConvertUtils::IsList(input_args[sequence_index])) {
+      return InferTypeInner<ListPtr>(primitive, input_args);
+    }
+    MS_EXCEPTION(TypeError) << "Unexpected sequence type: " << input_args[sequence_index]->ToString();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
