@@ -29,7 +29,7 @@ class BACKEND_EXPORT Transpose : public pyboost::Op {
   ~Transpose() = default;
 
   virtual tensor::TensorPtr Call(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) = 0;
-  void PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &input_perm);
+  void PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm);
 };
 }  // namespace pyboost
 }  // namespace kernel

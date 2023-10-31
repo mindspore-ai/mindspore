@@ -71,9 +71,6 @@ TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vect
   auto dims = CheckAndConvertUtils::CheckTupleInt("perm", inputs[1], "Transpose");
   return StridesCalc(tensor, dims);
 }
-TensorStorageInfoPtrList TransposeCalcDirect(const tensor::TensorPtr &input, const std::vector<int64_t> &input_perm) {
-  return StridesCalc(input, input_perm);
-}
 
 REG_VIEW_STRIDES_CALC_FUN(Transpose, TransposeCalc);
 }  // namespace mindspore::ops

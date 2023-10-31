@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const std::vector<int64_t> &input_perm) {
+void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const ValueTuplePtr &input_perm) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {kAscendDevice, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
   MS_EXCEPTION_IF_NULL(device_context);
@@ -29,7 +29,7 @@ void Transpose::PyboostProcessView(const tensor::TensorPtr &input, const std::ve
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  auto storage_info_list = ops::TransposeCalcDirect(input, input_perm);
+  auto storage_info_list = ops::TransposeCalc(primitive_, {input, input_perm});
   if (!storage_info_list.empty()) {
     storage_info_list[0]->data_type = input->data_type();
     runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input, "input");
