@@ -4515,9 +4515,18 @@ class GreaterEqual(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_value(self, x, y):
+        """
+        Infer value for GreaterEqual.
+        """
         if x is not None and y is not None:
-            x = x.asnumpy()
-            y = y.asnumpy()
+            if x.dtype == mstype.bfloat16:
+                x = x.float().asnumpy()
+            else:
+                x = x.asnumpy()
+            if y.dtype == mstype.bfloat16:
+                y = y.float().asnumpy()
+            else:
+                y = y.asnumpy()
             out = np.array(np.greater_equal(x, y))
             return Tensor(out)
         return None

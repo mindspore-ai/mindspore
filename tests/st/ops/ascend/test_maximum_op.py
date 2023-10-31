@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 
+import mindspore as ms
 from mindspore import Tensor
 import mindspore.context as context
 from mindspore.common import dtype as mstype
@@ -38,3 +39,22 @@ def test_maximum_tensor_api_modes(mode):
     output = x.maximum(y)
     expected = np.array([4., 5., 6.], np.float32)
     np.testing.assert_array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_maximum_tensor_with_bfloat16():
+    """
+    Feature: test maximum on Ascend
+    Description: used two Tensor with type bfloat16.
+    Expectation: result match to numpy result.
+    """
+    x_np = np.random.randn(3, 10).astype(np.float32)
+    y_np = np.random.randn(3, 10).astype(np.float32)
+    input_x_ms = Tensor(x_np, ms.bfloat16)
+    input_y_ms = Tensor(y_np, ms.bfloat16)
+    output = input_x_ms.maximum(input_y_ms)
+    print(output.float().asnumpy())
+    output_np = np.maximum(input_x_ms.float().asnumpy(), input_y_ms.float().asnumpy())
+    assert np.allclose(output.float().asnumpy(), output_np, rtol=0.004, atol=0.004)

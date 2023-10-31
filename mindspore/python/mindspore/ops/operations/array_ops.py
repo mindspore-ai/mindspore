@@ -374,6 +374,8 @@ class Cast(PrimitiveWithCheck):
         np_dst_type = mstype.dtype_to_nptype(dst_type)
         if isinstance(x, (int, float)):
             value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
+        elif x.dtype == mstype.bfloat16:
+            value = Tensor(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
         else:
             value = Tensor(x.asnumpy().astype(np_dst_type), dtype=dst_type)
         return value
