@@ -2530,21 +2530,31 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
 
   std::vector<AnfNodePtr> new_inputs;
   constexpr size_t index_op = 0;
+  constexpr size_t index_data = 1;
   auto op_node = cnode->input(index_op);
   if (IsPrimitive(op_node, prim_)) {
     new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg);
-  } else if (cnode->size() == 1 && IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
-    // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}}.
+  } else if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
+    // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
     std::vector<AnfNodePtr> partial_inputs;
     auto op_cnode = op_node->cast<CNodePtr>();
-    (void)std::copy(op_cnode->inputs().begin() + 1, op_cnode->inputs().end(), std::back_inserter(partial_inputs));
-    auto new_op_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg);
-    (void)new_op_inputs.insert(new_op_inputs.begin(), NewValueNode(prim::kPrimPartial));
-    auto new_op_cnode = fg->NewCNodeInOrder(new_op_inputs);
-    (void)new_inputs.emplace_back(new_op_cnode);
+    (void)std::copy(op_cnode->inputs().begin() + index_data, op_cnode->inputs().end(),
+                    std::back_inserter(partial_inputs));
+    (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(partial_inputs));
+    new_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg);
+  } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr)) {
+    // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
+    auto op_cnode = op_node->cast<CNodePtr>();
+    std::vector<AnfNodePtr> getattr_inputs;
+    auto new_prim = std::make_shared<Primitive>(prim_->name());
+    (void)getattr_inputs.emplace_back(NewValueNode(new_prim));
+    (void)getattr_inputs.emplace_back(op_cnode->input(index_data));
+    (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(getattr_inputs));
+    new_inputs = ConvertArgsToInputs(prim_, getattr_inputs, fg);
   } else {
+    constexpr int recursive_level = 2;
     MS_LOG(INTERNAL_EXCEPTION) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
-                               << cnode->DebugString();
+                               << cnode->DebugString(recursive_level);
   }
 
   auto new_cnode = fg->NewCNodeInOrder(new_inputs);
