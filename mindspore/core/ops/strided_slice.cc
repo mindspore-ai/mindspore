@@ -360,7 +360,7 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       MS_EXCEPTION(ValueError) << "For 'StridedSlice', " << arg_name << " must be 1-D, but got" << slice_shape.size()
                                << "-D.";
     }
-    if (CheckAndConvertUtils::IsTensor(input_arg)) {
+    if (IsValueKnown(input_value)) {
       *slice_value =
         CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSlice", input_arg->GetType());
       *slice_len = (*slice_value).size();
