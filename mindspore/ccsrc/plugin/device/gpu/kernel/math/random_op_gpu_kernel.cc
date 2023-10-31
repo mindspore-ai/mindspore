@@ -170,9 +170,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, RandomOpGpuKernelMod::Op
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"UniformReal",
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       &RandomOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"CudnnUniformReal",
      {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+       &RandomOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
        &RandomOpGpuKernelMod::LaunchKernel<float>}}},
     {"UniformInt",
      {{KernelAttr()
