@@ -4,7 +4,7 @@ reduce_std:
     
         Args:
             x (Tensor[Number]): The input tensor.
-            axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: ``()`` , reduce all
+            axis (Union[int, tuple(int), list(int), tensor]): The dimensions to reduce. Default: ``()`` , reduce all
                 dimensions. Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
             unbiased(bool): Whether to use Bessel's correction.
                 If ``True`` , will use the Bessel correction unbiased estimation.

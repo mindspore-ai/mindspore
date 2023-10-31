@@ -6,7 +6,7 @@ reduce_std:
     axis:
       dtype: tuple[int]
       init: []
-      type_cast: int, list[int]
+      type_cast: int, list[int], tensor
     unbiased:
       dtype: bool
       init: True

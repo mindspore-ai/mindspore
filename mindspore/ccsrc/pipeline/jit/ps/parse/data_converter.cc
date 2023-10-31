@@ -1144,11 +1144,43 @@ ValuePtr ConvertTensorToSequence(const py::object &obj) {
 
   auto data = static_cast<TDE *>(tensor->data_c());
   auto size = tensor->DataSize();
-  std::vector<ValuePtr> value_list(size);
+  std::vector<ValuePtr> value_list;
   for (size_t i = 0; i < size; i++) {
     value_list.emplace_back(std::make_shared<IMMTYPE>(data[i]));
   }
+  return std::make_shared<TD>(value_list);
+}
 
+template <typename TD>
+ValuePtr ConvertTensorToSequenceInt(const py::object &obj) {
+  auto tensor_value = ConvertTensor(obj);
+  if (tensor_value == nullptr) {
+    return nullptr;
+  }
+
+  auto tensor = tensor_value->cast<tensor::TensorPtr>();
+  auto shape = tensor->shape();
+  if (shape.size() > 1) {
+    MS_LOG(INFO) << "Only support convrting Tensor, whose rank is less than 1, to sequence. The shape of Tensor is: "
+                 << shape;
+    return nullptr;
+  }
+
+  auto data_type = tensor->data_type();
+  if (data_type != kNumberTypeInt64 && data_type != kNumberTypeInt32) {
+    return nullptr;
+  }
+  auto size = tensor->DataSize();
+  std::vector<ValuePtr> value_list;
+  if (data_type == kNumberTypeInt64) {
+    auto data = static_cast<int64_t *>(tensor->data_c());
+    std::transform(data, data + size, std::back_inserter(value_list),
+                   [](int64_t num) { return std::make_shared<Int64Imm>(num); });
+  } else {
+    auto data = static_cast<int32_t *>(tensor->data_c());
+    std::transform(data, data + size, std::back_inserter(value_list),
+                   [](int32_t num) { return std::make_shared<Int64Imm>(num); });
+  }
   return std::make_shared<TD>(value_list);
 }
 
@@ -1387,7 +1419,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
    ConvertSequenceBoolToTensor<py::list>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_INT),
-   ConvertTensorToSequence<ValueTuple, int64_t, Int64Imm, kNumberTypeInt64>},
+   ConvertTensorToSequenceInt<ValueTuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_FLOAT),
    ConvertTensorToSequenceFloat<ValueTuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_TUPLE_BOOL),
@@ -1396,7 +1428,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
    ConvertTensorToSequenceAny<ValueTuple>},
 
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_INT),
-   ConvertTensorToSequence<ValueList, int64_t, Int64Imm, kNumberTypeInt64>},
+   ConvertTensorToSequenceInt<ValueList>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_FLOAT),
    ConvertTensorToSequenceFloat<ValueList>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_LIST_BOOL),
