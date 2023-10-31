@@ -5627,16 +5627,20 @@ class KLDivLoss(Primitive):
     Note:
         - On Ascend, float64 dtype is not currently supported.
         - The output aligns with the mathematical definition of Kullback-Leibler divergence
-          only when `reduction` is set to 'batchmean'.
+          only when `reduction` is set to ``'batchmean'``.
+        - On Ascend, the value of `reduction` must be one of ``'batchmean'``, ``'none'`` or ``'sum'``.
+        - On GPU, the value of `reduction` must be one of ``'mean'``, ``'none'`` or ``'sum'``.
+        - On CPU, the value of `reduction` must be one of ``'mean'``, ``'batchmean'``, ``'none'``
+          or ``'sum'``.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
             Default: ``'mean'`` .
 
-            - On Ascend, the value of `reduction` must be one of ``'batchmean'``, ``'none'`` or ``'sum'``.
-            - On GPU, the value of `reduction` must be one of ``'mean'``, ``'none'`` or ``'sum'``.
-            - On CPU, the value of `reduction` must be one of ``'mean'``, ``'batchmean'``, ``'none'``
-              or ``'sum'``.
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+            - ``'batchmean'``: average loss is taken over the batch, similar to the mean mode.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
@@ -9657,6 +9661,14 @@ class ApplyAdamWithAmsgradV2(Primitive):
             \hat v_t:=\max(\hat v_{t-1}, v_t) \\
             var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
         \end{array}
+
+    :math:`t` represents updating step while :math:`m` represents the 1st moment vector,
+    :math:`v` represents the 2nd moment vector,  :math:`\hat v_t` represents `vhat`,
+    :math:`lr` represents learning rate,
+    :math:`g` represents `grad`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`\beta_1^{t}` represents `beta1_power`, :math:`\beta_2^{t}` represents `beta2_power`,
+    :math:`var` represents the variable to be updated,
+    :math:`\epsilon` represents `epsilon`.
 
     All of the inputs are consistent with implicit type conversion rules,
     which ensure that the data types are the same. If they have different data types, the lower precision data type
