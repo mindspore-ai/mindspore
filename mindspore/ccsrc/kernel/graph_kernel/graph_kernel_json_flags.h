@@ -59,5 +59,6 @@ constexpr auto kJsonKeyCpuFeature = "feature";
 constexpr auto kJsonKeyCpuType = "cpu";
 constexpr auto kJsonKeyNodeName = "node_name";
 constexpr auto kJsonKeyDynamicInputIndex = "dynamic_input_index";
+constexpr auto kJsonKeyPrecisionMode = "precision_mode";
 }  // namespace mindspore::graphkernel
 #endif

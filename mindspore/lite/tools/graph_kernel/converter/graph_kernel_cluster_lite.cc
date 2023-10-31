@@ -107,7 +107,9 @@ bool CanCluster(const CNodePtr &cnode, const std::string &node_name) {
 
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
-    return true;
+    auto sub_graph = GetCNodeFuncGraph(node);
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    return !sub_graph->has_attr("keep_basic");
   }
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
