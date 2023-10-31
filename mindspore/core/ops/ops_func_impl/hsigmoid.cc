@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/hsigmoid.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -24,6 +25,11 @@ BaseShapePtr HSigmoidFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr HSigmoidFuncImpl::InferType(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  std::map<std::string, TypePtr> types;
+  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  (void)types.emplace("input_x", input_args[0]->GetType());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return input_args[0]->GetType()->Clone();
 }
 }  // namespace ops

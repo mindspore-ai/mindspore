@@ -99,18 +99,8 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
 }
 
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[0]->GetShape());
-  auto grad_shape = input_args[0]->GetShape()->GetShapeVector();
-  MS_EXCEPTION_IF_NULL(input_args[1]);
-  MS_EXCEPTION_IF_NULL(input_args[1]->GetShape());
-  auto x_shape = input_args[1]->GetShape()->GetShapeVector();
-  if (grad_shape != x_shape) {
-    MS_LOG_EXCEPTION << "For " << primitive
-                     << ", the grad shape must be equal to input shape, but got grad_shape: " << grad_shape
-                     << " and x_type: " << x_shape;
-  }
   return input_args[0]->GetShape()->Clone();
 }
 
