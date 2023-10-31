@@ -30,6 +30,7 @@
 #include "kernel/pyboost/op/erf.h"
 #include "kernel/pyboost/op/silu.h"
 #include "kernel/pyboost/op/sin.h"
+#include "kernel/pyboost/op/cos.h"
 
 namespace mindspore {
 namespace kernel {
@@ -70,6 +71,7 @@ template class OpFactory<Bmm>;
 template class OpFactory<Exp>;
 template class OpFactory<Erf>;
 template class OpFactory<SiLU>;
+template class OpFactory<Cos>;
 template class OpFactory<Sin>;
 }  // namespace pyboost
 }  // namespace kernel

@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, add_ext
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, add_ext, cos
 import mindspore
 
 
@@ -116,3 +116,9 @@ def test_sin_ascend():
     output = sin(x)
     assert np.allclose(output.asnumpy(), [0.5810352, 0.27635565, 0.41687083, 0.5810352])
 
+
+def test_cos_ascend():
+    context.set_context(device_target="Ascend")
+    self = Tensor(np.arange(5), mindspore.float32)
+    out = cos(self)
+    assert np.allclose(out.asnumpy(), [1, 0.5403023, -0.41614684, -0.9899925, -0.6536436])

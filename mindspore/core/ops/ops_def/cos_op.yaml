@@ -6,3 +6,4 @@ cos:
   returns:
     output:
       dtype: tensor
+  pyboost: True
