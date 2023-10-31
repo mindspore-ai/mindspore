@@ -12,7 +12,7 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "oplib/*.cc"
     "environ_manager.cc"
     "pyboost/*.cc"
-    "pyboost/op/*.cc"
+    "pyboost/auto_generate/*.cc"
 )
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")

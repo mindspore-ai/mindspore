@@ -4,8 +4,10 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
 #define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_ACLNN_UTILS_H_
-
+#include <algorithm>
+#include <functional>
 #include "transform/acl_ir/op_api_exec.h"
+#include "runtime/device/device_address_utils.h"
 
 // TODO: Get kCubeMathType by SOC version
 #define LAUNCH_ACLNN_CUBE(aclnn_api, stream_ptr, ...)                                                        \

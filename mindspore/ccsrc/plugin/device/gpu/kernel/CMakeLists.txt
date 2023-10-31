@@ -6,6 +6,7 @@ if(ENABLE_GPU)
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "*.cc"
             "pyboost/*.cc"
+            "pyboost/auto_generate/*.cc"
     )
     file(GLOB_RECURSE _AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "akg/*.cc"

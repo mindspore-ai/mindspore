@@ -41,7 +41,11 @@ class BACKEND_EXPORT Op {
   Op() = default;
   virtual ~Op() = default;
   void set_grad_func(const GradFunc &grad_func) { grad_func_ = grad_func; }
-  void DoGrad(const std::vector<ValuePtr> &inputs);
+  void DoGrad(const std::vector<ValuePtr> &inputs) {
+    if (grad_func_ != nullptr) {
+      grad_func_(inputs, outputs_, input_abs_, output_abs_);
+    }
+  }
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
 

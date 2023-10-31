@@ -22,6 +22,7 @@ if(ENABLE_CPU)
         "map_tensor/*.cc"
         "sequence/*.cc"
         "pyboost/*.cc"
+        "pyboost/auto_generate/*.cc"
     )
 
     if(NOT ENABLE_MPI)

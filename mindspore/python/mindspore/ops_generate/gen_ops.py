@@ -689,7 +689,7 @@ def generate_pyboost_functions(work_path, yaml_data):
     pyboost_func_str = ''
     pyboost_func_pybind_def = ''
     pyboost_func_include_headers_str = ''
-    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/op/${operator_name}.h\"\n")
+    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         func_name_str = op_proto.pyboost_function_name
