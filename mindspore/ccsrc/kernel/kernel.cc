@@ -97,7 +97,7 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   shape_ = shape;
   // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
-  if (type_id_ == kObjectTypeTensorType) {
+  if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
     shape_vector_ = shape_->GetShapeVector();
   } else if (type_id_ == kObjectTypeTuple || type_id_ == kObjectTypeList) {
     if (shape->isa<abstract::DynamicSequenceShape>()) {
@@ -132,8 +132,8 @@ void KernelTensor::CalculateMemSize() {
 }
 
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
-  if (type_id_ != kObjectTypeTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently, but got type: "
+  if (type_id_ != kObjectTypeTensorType && type_id_ != kObjectTypeMapTensorType) {
+    MS_LOG(EXCEPTION) << "Only support a Tensor/MapTensor type to set shape vector currently, but got type: "
                       << TypeIdLabel(type_id_);
   }
   shape_vector_ = shape_vector;
@@ -141,8 +141,8 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
 }
 
 void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
-  if (type_id_ != kObjectTypeTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor type to set shape vector currently, but got type: "
+  if (type_id_ != kObjectTypeTensorType && type_id_ != kObjectTypeMapTensorType) {
+    MS_LOG(EXCEPTION) << "Only support a Tensor/MapTensor type to set shape vector currently, but got type: "
                       << TypeIdLabel(type_id_);
   }
   shape_vector_ = std::move(shape_vector);
