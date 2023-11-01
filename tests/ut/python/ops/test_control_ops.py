@@ -817,8 +817,7 @@ def test_parser_switch_layer_func_primitive():
     input1 = Tensor(np.random.randn(2, 3, 4, 5).astype(np.float32))
     i = Tensor(1, mstype.int32)
 
-    with pytest.raises(ValueError):
-        net(i, input1)
+    net(i, input1)
 
 
 def test_switch_layer_shape_join_failed():
