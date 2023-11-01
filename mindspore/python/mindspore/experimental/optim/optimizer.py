@@ -250,3 +250,8 @@ def _tensor_apply_decay_with_sparse(weight_decay, weight, gradient):
 def _tensor_apply_decay(weight_decay, weight, gradient):
     """Get grad with weight_decay."""
     return op_add((op_mul(weight, F.cast(weight_decay, F.dtype(weight))), gradient))
+
+def check_not_less_than(arg_value, arg_name, prim, value=0.):
+    if arg_value < 0.:
+        raise ValueError("For {}, the {} must be greater than or equal to {}, "
+                         "but got {}.".format(prim, arg_name, value, arg_value))

@@ -1,7 +1,7 @@
 mindspore.experimental.optim.SGD
 =================================
 
-.. py:class:: mindspore.experimental.optim.SGD(params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *, maximize=False)
+.. py:class:: mindspore.experimental.optim.SGD(params, lr, momentum=0, dampening=0, weight_decay=0., nesterov=False, *, maximize=False)
 
     随机梯度下降算法。
 
@@ -27,7 +27,7 @@ mindspore.experimental.optim.SGD
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
         - **lr** (Union[int, float, Tensor]) - 学习率。
         - **momentum** (Union[int, float], 可选) - 动量值。默认值：``0``。
-        - **weight_decay** (float, 可选) - 权重衰减（L2 penalty），必须大于等于0。默认值：``0.0``。
+        - **weight_decay** (float, 可选) - 权重衰减（L2 penalty），必须大于等于0。默认值：``0.``。
         - **dampening** (Union[int, float], 可选) - 动量的阻尼值。默认值：``0``。
         - **nesterov** (bool, 可选) - 启用Nesterov动量。如果使用Nesterov，动量必须为正，阻尼必须等于0.0。默认值：``False``。
 

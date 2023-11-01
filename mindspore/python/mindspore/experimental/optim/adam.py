@@ -90,7 +90,7 @@ class Adam(Optimizer):
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
             numerical stability. Default: ``1e-8``.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
         amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
 
     Keyword Args:
@@ -130,7 +130,7 @@ class Adam(Optimizer):
         ...     return loss
     """
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
-                 weight_decay=0, amsgrad=False, *, maximize=False):
+                 weight_decay=0., amsgrad=False, *, maximize=False):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if eps < 0.0:
