@@ -44,6 +44,7 @@ constexpr auto kSupportInfo = "SupportInfo";
 constexpr auto kReduceSizeStatic = "ReduceSizeStatic";
 constexpr auto kDynAlgorithm = "DynAlgorithm";
 constexpr auto kEnableAtomic = "EnableAtomic";
+constexpr auto kMultiply = "*";
 
 constexpr auto kBlockIdxX = "blockIdx.x";
 constexpr auto kBlockIdxY = "blockIdx.y";
@@ -246,6 +247,44 @@ AkgKernelImplInfo::AkgKernelImplInfo(const std::string &kernel_name, nlohmann::j
   }
 }
 
+LocVector AkgKernelImplInfo::GetHostLocationVec(std::string symbol_expr, const size_t pure_num_flag) {
+  std::string delimiter = kMultiply;
+  std::vector<std::string> symbol_vec;
+  if (symbol_expr.find(delimiter) != std::string::npos) {
+    // multiplication expr after folding like 's0*1024*s1'
+    size_t pos_start = 0;
+    size_t pos_end;
+    size_t delim_len = 1;
+    std::string symbol;
+    // split each symbol or number and store in a list
+    while ((pos_end = symbol_expr.find(delimiter, pos_start)) != std::string::npos) {
+      symbol = symbol_expr.substr(pos_start, pos_end - pos_start);
+      pos_start = pos_end + delim_len;
+      (void)symbol_vec.emplace_back(symbol);
+    }
+    (void)symbol_vec.emplace_back(symbol_expr.substr(pos_start));
+  } else {
+    (void)symbol_vec.emplace_back(symbol_expr);
+  }
+
+  LocVector host_loc_vec;
+  for (auto symbol : symbol_vec) {
+    if (std::all_of(symbol.begin(), symbol.end(), [](char c) { return std::isdigit(c); })) {
+      // for number '32', save a pair of <M, number>, where M = num of inputs + outputs
+      // M must be greater than any host_loc index, so it can be a flag for pure numbers
+      auto number_pair = std::make_pair(pure_num_flag, IntToSize(std::stoi(symbol)));
+      (void)host_loc_vec.emplace_back(number_pair);
+    } else if (host_loc_map_.find(symbol) != host_loc_map_.end()) {
+      // for symbol 's0', save its location in host shape as a pair of <i, j>
+      (void)host_loc_vec.emplace_back(host_loc_map_[symbol]);
+    } else {
+      MS_EXCEPTION(RuntimeError) << "For " << kernel_name_ << ", symbol '" << symbol
+                                 << "' of device shape is not in host shape.";
+    }
+  }
+  return host_loc_vec;
+}
+
 void AkgKernelImplInfo::InitJsonShapeInformation() {
   // Initialize device shape list using -1 for unknown dims
   // Record map <device_loc, symbol>
@@ -280,7 +319,7 @@ void AkgKernelImplInfo::InitJsonShapeInformation() {
   }
   // Get map <device_loc, host_loc>
   for (auto item : device_loc_map) {
-    device_host_shape_loc_[item.first] = host_loc_map_[item.second];
+    device_host_shape_loc_[item.first] = GetHostLocationVec(item.second, parsed_js_[kHostShapes].size());
   }
   MS_LOG(INFO) << "Done InitJsonShapeInformation for " << kernel_name_;
 }
@@ -329,7 +368,7 @@ void AkgKernelImplInfo::InitJsonMappingInformation() {
       string divisor_symbol = parsed_js_[map_arg][0];
       auto dividend = parsed_js_[map_arg][1];
       (void)init_mapping_.emplace_back(static_cast<uint32_t>(dividend));
-      unknown_map_loc_[i] = host_loc_map_[divisor_symbol];
+      unknown_map_loc_[i] = GetHostLocationVec(divisor_symbol, parsed_js_[kHostShapes].size());
       unknown_map_symbol_[i] = divisor_symbol;
       product_var_[dividend] = divisor_symbol;
     } else {
@@ -451,6 +490,25 @@ void DynamicTileImpl::UpdateDynamicShapeTilingInfo() {
   MS_LOG(INFO) << "Done UpdateDynamicShapTilingInfo for " << kernel_name_;
 }
 
+int64_t AkgKernelImplInfo::GetFoldedShape(const LocVector &host_loc_vec) {
+  auto folded_shape = 1;
+  for (auto host_loc : host_loc_vec) {
+    auto curr_shape = 1;
+    if (host_loc.first == shape_list_.size()) {
+      // pure number pair <M, number>
+      curr_shape = SizeToInt(host_loc.second);
+    } else if (shape_list_[host_loc.first].size() != 0) {
+      curr_shape = shape_list_[host_loc.first][host_loc.second];
+    }
+    if (folded_shape > INT64_MAX / curr_shape) {
+      MS_EXCEPTION(RuntimeError) << "For " << kernel_name_ << ", the product of shapes, " << folded_shape << " and "
+                                 << curr_shape << ", exceeds INT64_MAX.";
+    }
+    folded_shape *= curr_shape;
+  }
+  return folded_shape;
+}
+
 void AkgKernelImplInfo::UpdateDynamicShapeMappingInfo() {
   for (auto item : unknown_map_loc_) {
     auto thread_info_id = item.first;
@@ -461,8 +519,8 @@ void AkgKernelImplInfo::UpdateDynamicShapeMappingInfo() {
       MS_EXCEPTION(RuntimeError) << "Unknown thread arg index should not exceed thread_info length, "
                                  << "which is 6 (Grid.X/Y/Z, Block.X/Y/Z).";
     }
-    auto host_loc = item.second;
-    auto dim_size = shape_list_[host_loc.first][host_loc.second];
+    auto host_loc_vec = item.second;
+    auto dim_size = GetFoldedShape(host_loc_vec);
     auto tile_size = thread_info_[thread_info_id];
     auto dim_size_float = static_cast<float>(dim_size);
     auto tile_size_float = static_cast<float>(tile_size);
@@ -479,10 +537,8 @@ void AkgKernelImplInfo::GetDeviceArgSizeVec() {
   // Update each unknown value in device_shape_list to get real device shape
   for (auto item : device_host_shape_loc_) {
     auto device_loc = item.first;
-    auto host_loc = item.second;
-    if (shape_list_[host_loc.first].size() != 0) {
-      device_shape[device_loc.first][device_loc.second] = shape_list_[host_loc.first][host_loc.second];
-    }
+    auto host_loc_vec = item.second;
+    device_shape[device_loc.first][device_loc.second] = GetFoldedShape(host_loc_vec);
   }
   problem_size_ = 1;
   for (size_t i = 0; i < device_shape.size(); i++) {
@@ -519,14 +575,14 @@ void DynamicTileImpl::UpdateRuntimeVarUpperBound() {
   // Comes from `Block/Thread: [upper_bound, prime]`
   for (const auto &item : unknown_map_loc_) {
     auto thread_info_id = item.first;
-    auto host_loc = item.second;
+    auto host_loc_vec = item.second;
     auto tile_size = thread_info_[thread_info_id];
     auto it = runtime_vars_.find(tile_size);
     if (it != runtime_vars_.end()) {
-      auto dim_size = shape_list_[host_loc.first][host_loc.second];
+      auto dim_size = GetFoldedShape(host_loc_vec);
       it->second->upper_bound = dim_size;
       it->second->outer_map_id = thread_info_id;
-      auto symbol = unknown_map_symbol_[item.first];
+      auto symbol = unknown_map_symbol_[thread_info_id];
       axis_length_left_[symbol] = dim_size;
     }
   }

@@ -168,6 +168,7 @@ enum AkgKernelImplType {
   DYNYAMIC_TILE,
 };
 
+using LocVector = std::vector<std::pair<size_t, size_t>>;
 class AkgKernelImplInfo {
  public:
   AkgKernelImplInfo(const std::string &kernel_name, nlohmann::json json);
@@ -177,8 +178,8 @@ class AkgKernelImplInfo {
   virtual void Resize() {}
 
   // update each time
-  std::vector<uint32_t> thread_info_;  // 有关，一个kernel一个mapping信息
-  std::unordered_map<size_t, std::pair<size_t, size_t>> unknown_map_loc_;
+  std::vector<uint32_t> thread_info_;
+  std::unordered_map<size_t, LocVector> unknown_map_loc_;
   std::unordered_set<size_t> solved_map_loc_;
   std::vector<int> arg_size_vec_;
   MappingInfo curr_mapping_info_;
@@ -197,7 +198,7 @@ class AkgKernelImplInfo {
   std::unordered_map<uint32_t, std::pair<size_t, size_t>> local_upper_bound_;
   size_t max_shape_rank_ = 0;
   std::string device_target_;
-  std::unordered_map<std::pair<size_t, size_t>, std::pair<size_t, size_t>, PairHash> device_host_shape_loc_;
+  std::unordered_map<std::pair<size_t, size_t>, LocVector, PairHash> device_host_shape_loc_;
   std::unordered_map<std::string, std::pair<size_t, size_t>> host_loc_map_;
   std::unordered_map<int64_t, std::string> product_var_;   // map: prime -> symbol like `s0`
   std::unordered_map<std::string, int> axis_length_left_;  // update map: symbol axis -> total length of one axis
@@ -216,6 +217,7 @@ class AkgKernelImplInfo {
   static std::unordered_map<std::string, int> algo_to_int_;
 
   void preprocessDynamicReduceTiling();
+  LocVector GetHostLocationVec(std::string symbol_expr, const size_t pure_num_flag);
   void InitJsonShapeInformation();
   void InitJsonMappingInformation();
   bool CheckJsonValueFormat(const std::string key) {
@@ -224,6 +226,7 @@ class AkgKernelImplInfo {
   }
   void GetDeviceArgSizeVec();
   void InitBeforeMapping();
+  int64_t GetFoldedShape(const LocVector &host_loc_vec);
   void UpdateDynamicShapeMappingInfo();
 };
 using AkgKernelImplInfoPtr = std::shared_ptr<AkgKernelImplInfo>;
