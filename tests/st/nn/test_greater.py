@@ -62,7 +62,7 @@ def test_greater_backward():
     """
     x = ms.Tensor(np.array([1, 2, 3]), ms.int32)
     y = ms.Tensor(np.array([1, 1, 4]), ms.int32)
-    expect_out = np.array([[[False]], [[True]], [[False]]])
+    expect_out = np.array([0, 0, 0])
     grads = greater_backward_func(x, y)
     print("grads:", grads)
     assert np.allclose(grads.asnumpy(), expect_out)
