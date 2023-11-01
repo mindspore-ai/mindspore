@@ -24,7 +24,9 @@ namespace mindspore {
 namespace opt {
 class InputsUnifyMindIR : public PatternProcessPass {
  public:
-  explicit InputsUnifyMindIR(bool multigraph = true) : PatternProcessPass("inputs_unify_mindir", multigraph) {}
+  explicit InputsUnifyMindIR(bool multigraph = true) : PatternProcessPass("inputs_unify_mindir", multigraph) {
+    is_add_ = false;
+  }
   ~InputsUnifyMindIR() override = default;
 
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
