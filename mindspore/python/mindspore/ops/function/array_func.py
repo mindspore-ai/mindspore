@@ -3701,7 +3701,7 @@ def tensor_scatter_add(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output\left [indices  \right ] = input\_x + update
@@ -3759,7 +3759,7 @@ def tensor_scatter_sub(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output[indices] = input\_x - update
@@ -3944,13 +3944,11 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
           nondeterministic.
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
+        - This is an experimental API that is subject to change or deletion.
 
     Note:
         If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
         an index error, the corresponding `updates` will not be updated to `input_x`.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
 
     Args:
         input_x (Tensor): The target tensor. The rank must be at least 1.
@@ -5194,7 +5192,7 @@ def tensor_scatter_mul(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output[indices] = input\_x \times update
@@ -5254,7 +5252,7 @@ def tensor_scatter_div(input_x, indices, updates):
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
     there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
+    equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
         output\left [indices  \right ] = input\_x \div update
@@ -6728,9 +6726,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     .. warning::
         - The output is a 3-dimensional Tensor whose shape is
           :math:`(N, C \times \prod(\text{kernel_size}), L)` .
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+        - This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): 4-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.

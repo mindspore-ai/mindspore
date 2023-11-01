@@ -22,9 +22,9 @@ mindspore.ops.SparseApplyFtrl
         - **indices** (Tensor) - `var` 和 `accum` 第一维度的索引向量，数据类型为int32或int64，且需要保证 :math:`indices.shape[0] = grad.shape[0]` 。
 
     输出：
-        - **var** (Tensor) - shape和数据类型与 `var` 相同。
-        - **accum** (Tensor) - shape和数据类型与 `accum` 相同。
-        - **linear** (Tensor) - shape和数据类型与 `linear` 相同。
+        - **var** (Tensor) - shape和数据类型与输入 `var` 相同。
+        - **accum** (Tensor) - shape和数据类型与输入 `accum` 相同。
+        - **linear** (Tensor) - shape和数据类型与输入 `linear` 相同。
 
     异常：
         - **TypeError** - 如果 `lr` 、 `l1` 、 `l2` 或 `lr_power` 不是float类型。

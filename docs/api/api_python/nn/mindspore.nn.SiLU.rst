@@ -3,8 +3,6 @@ mindspore.nn.SiLU
 
 .. py:class:: mindspore.nn.SiLU
 
-    SiLU激活函数。
-
     逐元素计算SiLU激活函数。
 
     SiLU函数定义为：

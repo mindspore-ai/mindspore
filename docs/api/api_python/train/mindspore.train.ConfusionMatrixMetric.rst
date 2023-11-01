@@ -41,7 +41,7 @@ mindspore.train.ConfusionMatrixMetric
 
               - **y_pred** (ndarray) - 待计算的输入数据。格式必须为one-hot，且第一个维度是batch。
                 `y_pred` 的shape是 :math:`(N, C, ...)` 或 :math:`(N, ...)` 。
-                至于分类任务， `y_pred` 的shape应为[BN]，其中N大于1。对于分割任务，shape应为[BNHW]或[BNHWD]。
+                至于分类任务， `y_pred` 的shape应为 :math:`(B, N)` ，其中N大于1。对于分割任务，shape应为 :math:`(B, N, H, W)` 或 :math:`(B, N, H, W, D)` 。
               - **y** (ndarray) - 计算度量值的真实值。格式必须为one-hot，且第一个维度是batch。`y` 的shape是 :math:`(N, C, ...)` 。
 
         异常：

@@ -224,8 +224,10 @@ class ConfusionMatrixMetric(Metric):
 
                 - y_pred (ndarray): The batch data shape is :math:`(N, C, ...)`
                   or :math:`(N, ...)`, representing onehot format
-                  or category index format respectively. As for classification tasks, y_pred should have the shape [BN]
-                  where N is larger than 1. As for segmentation tasks, the shape should be [BNHW] or [BNHWD].
+                  or category index format respectively. As for classification tasks,
+                  y_pred should have the shape :math:`(B, N)`
+                  where N is larger than 1. As for segmentation tasks,
+                  the shape should be :math:`(B, N, H, W)` or :math:`(B, N, H, W, D)`.
                 - y (ndarray): It must be one-hot format. The batch data shape is :math:`(N, C, ...)`.
 
         Raises:

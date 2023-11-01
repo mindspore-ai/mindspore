@@ -5019,7 +5019,7 @@ class AdamWeightDecay(Primitive):
         TypeError: If `lr`, `beta1`, `beta2`, `epsilon` or `decay` is not a float32.
         TypeError: If `var`, `m` or `v` is not a Parameter with dtype float16 or float32.
         TypeError: If `gradient` is not a Tensor.
-        ValueError: If `eps` <= 0.
+        ValueError: If `epsilon` <= 0.
         ValueError: If `beta1`, `beta2` is not in range (0.0,1.0).
         ValueError: If `decay` < 0.
 
@@ -8730,7 +8730,7 @@ class Conv3DTranspose(Primitive):
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
-        TypeError: If data type of dout and weight is not float16.
+        TypeError: If data type of dout and weight is neither float16 nor float32.
         ValueError: If bias is not none. The rank of dout and weight is not 5.
 
     Supported Platforms:

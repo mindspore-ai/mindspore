@@ -656,8 +656,6 @@ class SeLU(Cell):
 
 class SiLU(Cell):
     r"""
-    Sigmoid Linear Unit activation function.
-
     Applies the silu linear unit function element-wise.
 
     .. math::

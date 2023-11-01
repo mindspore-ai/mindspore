@@ -2491,7 +2491,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         The last axis of `indices` is the depth of each index vectors. For each index vector,
         there must be a corresponding value in `updates`. The shape of `updates` should be
-        equal to the shape of `self[indices]`. For more details, see use cases.
+        equal to the shape of `self[indices]`. For more details, see Examples.
 
         Note:
             On GPU, if some values of the `indices` are out of bound, instead of raising an index error,

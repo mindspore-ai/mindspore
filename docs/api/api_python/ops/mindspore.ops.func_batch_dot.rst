@@ -20,7 +20,7 @@ mindspore.ops.batch_dot
         - **TypeError** - `x1` 和 `x2` 的类型不相同。
         - **TypeError** - `x1` 或 `x2` 的数据类型不是float32。
         - **ValueError** - `x1` 或 `x2` 的秩小于2。
-        - **ValueError** - 在轴中使用了代表批量的维度。
+        - **ValueError** - 在 `axes` 中使用了代表批量的维度。
         - **ValueError** - `axes` 的长度小于2。
         - **ValueError** - `axes` 不是其一：None，int，或(int, int)。
         - **ValueError** - 如果 `axes` 为负值，低于输入数组的维度。
