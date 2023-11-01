@@ -678,8 +678,8 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     cur_inputs_index++;
   }
   if (cur_inputs_index != cur_inputs.size()) {
-    MS_LOG(EXCEPTION) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
-                      << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
+    MS_LOG(WARNING) << "Not use all cur inputs, cur_inputs_index: " << cur_inputs_index
+                    << ", cur_inputs.size(): " << cur_inputs.size() << ", kernel graph: " << kernel_graph->graph_id();
   }
   input_datas_[kernel_graph] = {ge_inputs, need_update_input};
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";
@@ -1182,13 +1182,11 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
   }
   const auto &input_datas = iter->second.ge_inputs;
   ge_inputs = input_datas;
-  bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
   for (auto &kv : iter->second.need_update_input) {
     auto output_addr = AnfAlgo::GetMutableOutputAddr(kv.first, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
-    auto shapes = output_addr->kernel_tensor()->GetShapeVector();
-    auto host_type = common::AnfAlgo::GetOutputInferDataType(kv.first, 0);
-    auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(shapes, host_type, kOpFormat_DEFAULT);
+    auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(output_addr->kernel_tensor()->GetShapeVector(),
+                                                                    output_addr->type_id(), output_addr->format());
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);
     ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
     (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
@@ -1213,14 +1211,9 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
                         << ge_inputs.size();
     }
     MS_LOG(DEBUG) << "[ZeroCopy] Update input " << kv.first->DebugString() << " address to "
-                  << output_addr->GetMutablePtr();
+                  << output_addr->GetMutablePtr() << ", shape:" << output_addr->kernel_tensor()->GetShapeVector()
+                  << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format();
     size_t memory_size = output_addr->GetSize();
-    if (is_dynamic_shape) {
-      std::vector<size_t> shape = Convert2SizeT(shapes);
-      size_t type_size = GetTypeByte(TypeIdToType(host_type));
-      memory_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>{});
-      MS_LOG(DEBUG) << "Update input " << kv.first->DebugString() << " shape: " << shape << " size: " << memory_size;
-    }
     (void)ge_inputs[kv.second].SetData(static_cast<uint8_t *>(output_addr->GetMutablePtr()), memory_size,
                                        [](void *) {});
   }
