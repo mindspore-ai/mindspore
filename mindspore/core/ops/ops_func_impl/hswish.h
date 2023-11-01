@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_HSWISH_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_HSWISH_H_
 
-#include "tools/converter/parser/onnx/onnx_hardswish_parser.h"
-#include <memory>
-#include "ops/ops_func_impl/hswish.h"
-#include "nnacl/op_base.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace lite {
-PrimitiveCPtr OnnxHardSwishParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::HSwish>();
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  return prim->GetPrim();
-}
+namespace ops {
+class MIND_API HSwishFuncImpl : public OpFuncImpl {
+ public:
+  HSwishFuncImpl() = default;
+  ~HSwishFuncImpl() = default;
 
-OnnxNodeRegistrar g_onnxHardSwishParser("HardSwish", new OnnxHardSwishParser());
-}  // namespace lite
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
+}  // namespace ops
 }  // namespace mindspore
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_HSWISH_H_

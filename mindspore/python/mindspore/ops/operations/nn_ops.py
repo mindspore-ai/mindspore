@@ -31,7 +31,7 @@ from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
-                             Elu, Sigmoid, Softmax, HSigmoid, AvgPool, BiasAdd,
+                             Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
                              GridSampler3D, GridSampler2D, LayerNorm, HShrink)
 from .manually_defined import BatchNorm
@@ -606,38 +606,6 @@ class ReLUV2(Primitive):
     def __init__(self):
         """Initialize ReLUV2"""
         self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
-
-
-class HSwish(Primitive):
-    r"""
-    Hard swish activation function.
-
-    Refer to :func:`mindspore.ops.hardswish` for more details.
-
-    Inputs:
-        - **input_x** (Tensor) - The input Tensor.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> hswish = ops.HSwish()
-        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> result = hswish(input_x)
-        >>> print(result)
-        [-0.3333  -0.3333  0  1.666  0.6665]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSwish."""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
 class Tanh(Primitive):

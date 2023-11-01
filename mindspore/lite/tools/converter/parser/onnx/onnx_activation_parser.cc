@@ -24,7 +24,7 @@
 #include "nnacl/op_base.h"
 #include "ops/softplus.h"
 #include "ops/selu.h"
-#include "ops/hswish.h"
+#include "ops/ops_func_impl/hswish.h"
 
 namespace mindspore {
 namespace lite {

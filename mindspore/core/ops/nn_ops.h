@@ -160,10 +160,8 @@ GVAR_DEF(PrimitivePtr, kSquareSumV1, std::make_shared<Primitive>("SquareSumV1"))
 GVAR_DEF(PrimitivePtr, kFusedMulAdd, std::make_shared<Primitive>("FusedMulAdd"));
 GVAR_DEF(PrimitivePtr, kPrimSoftShrink, std::make_shared<Primitive>("SoftShrink"));
 GVAR_DEF(PrimitivePtr, kPrimSoftShrinkGrad, std::make_shared<Primitive>("SoftShrinkGrad"));
-GVAR_DEF(PrimitivePtr, kPrimHSwish, std::make_shared<Primitive>(kHSwishOpName));
 GVAR_DEF(PrimitivePtr, kPrimHardSwish, std::make_shared<Primitive>("HardSwish"));
 GVAR_DEF(PrimitivePtr, kPrimHardSwishGrad, std::make_shared<Primitive>("HardSwishGrad"));
-GVAR_DEF(PrimitivePtr, kPrimHSwishGrad, std::make_shared<Primitive>(kHSwishGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimDeformableOffsets, std::make_shared<Primitive>("DeformableOffsets"));
 GVAR_DEF(PrimitivePtr, kPrimDeformableConv2d, std::make_shared<Primitive>("DeformableConv2d"));
 GVAR_DEF(PrimitivePtr, kPrimLARSUpdate, std::make_shared<Primitive>("LARSUpdate"));

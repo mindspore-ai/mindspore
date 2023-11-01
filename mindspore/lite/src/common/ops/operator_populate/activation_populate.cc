@@ -19,7 +19,7 @@
 #include "ops/fusion/activation.h"
 #include "ops/leaky_relu.h"
 #include "ops/tanh.h"
-#include "ops/hswish.h"
+#include "ops/ops_func_impl/hswish.h"
 #include "ops/softplus.h"
 using mindspore::ops::kActivationType;
 using mindspore::ops::kAlpha;

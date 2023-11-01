@@ -1,0 +1,12 @@
+#operator hswish
+hswish:
+    args:
+        x:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: HSwish
+    function:
+        name: hardswish_

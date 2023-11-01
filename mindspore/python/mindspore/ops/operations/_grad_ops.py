@@ -36,7 +36,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad,
                              ReLU6Grad, EluGrad, GatherDGradV2, ResizeBilinearGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
-                             SigmoidGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
+                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
                              ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad)
 
@@ -1719,14 +1719,6 @@ class _ActivationGrad(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
         validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
         return x_dtype
-
-
-class HSwishGrad(Primitive):
-    """Gets the gradient of HSwish operation."""
-    @prim_attr_register
-    def __init__(self):
-        """Initialize HSwishGrad"""
-        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
 
 class SigmoidCrossEntropyWithLogitsGrad(Primitive):
