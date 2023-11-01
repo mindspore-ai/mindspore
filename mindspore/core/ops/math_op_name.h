@@ -32,6 +32,7 @@ constexpr auto kAddV2OpName = "AddV2";
 constexpr auto kAddcdivOpName = "Addcdiv";
 constexpr auto kAddcmulOpName = "Addcmul";
 constexpr auto kSubOpName = "Sub";
+constexpr auto kSubExtOpName = "SubExt";
 constexpr auto kMedianOpName = "Median";
 constexpr auto kMedianGradOpName = "MedianGrad";
 constexpr auto kMulOpName = "Mul";

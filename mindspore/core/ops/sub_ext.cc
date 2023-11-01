@@ -14,80 +14,70 @@
  * limitations under the License.
  */
 
-#include "ops/add_ext.h"
+#include "ops/sub_ext.h"
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "abstract/ops/op_infer.h"
+
 #include "abstract/ops/primitive_infer_map.h"
-#include "abstract/utils.h"
-#include "base/base.h"
-#include "ir/anf.h"
-#include "ir/dtype/type.h"
-#include "ir/primitive.h"
-#include "mindapi/base/shape_vector.h"
 #include "mindapi/src/helper.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_utils.h"
-#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-BaseShapePtr AddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
+abstract::ShapePtr SubExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   return BroadCastInferShapeWithoutCheckAndDynamicRank(prim_name, input_args);
 }
 
-TypePtr AddInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
+TypePtr SubExtInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  auto output_type = CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, prim_name);
-  return output_type;
-}
-AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  for (auto &input : input_args) {
-    MS_EXCEPTION_IF_NULL(input);
-  }
-  constexpr int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto types = AddInferType(primitive, input_args);
-  auto shapes = AddInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shapes, types);
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, valid_types, prim->name());
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(AddExt, BaseOperator);
-class MIND_API AGAddExtInfer : public abstract::OpInferBase {
+AbstractBasePtr SubExtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int64_t kInputsNum = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto type = SubExtInferType(primitive, input_args);
+  auto shape = SubExtInferShape(primitive, input_args);
+  if (shape->IsDimZero()) {
+    type = input_args[0]->BuildType();
+  }
+  return abstract::MakeAbstract(shape, type);
+}
+
+MIND_API_OPERATOR_IMPL(SubExt, BaseOperator);
+class MIND_API AGSubExtInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddInferShape(primitive, input_args);
+    return SubExtInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddInferType(primitive, input_args);
+    return SubExtInferType(primitive, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddInfer(engine, primitive, input_args);
+    return SubExtInfer(engine, primitive, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(AddExt, prim::kPrimAddExt, AGAddExtInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(SubExt, prim::kPrimSubExt, AGSubExtInfer, false);
 }  // namespace ops
 }  // namespace mindspore
