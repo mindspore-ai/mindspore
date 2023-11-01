@@ -145,14 +145,7 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
 
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    std::vector<TypePtr> types_list;
-    bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    if (is_ascend) {
-      types_list = {x_type, x_type, x_type};
-    } else {
-      types_list = {x_type, kFloat32, kFloat32};
-    }
-
+    std::vector<TypePtr> types_list = {x_type, kFloat32, kFloat32};
     return std::make_shared<Tuple>(types_list);
   }
 };
