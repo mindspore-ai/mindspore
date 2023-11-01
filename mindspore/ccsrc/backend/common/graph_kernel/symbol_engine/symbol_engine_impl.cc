@@ -29,15 +29,12 @@
 namespace mindspore::graphkernel::symbol {
 using ops::builders::DependOn;
 
-void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &func_graph) {
-  visited_.clear();
-  cnodes_ = TopoSort(func_graph->output(), SuccIncoming,
-                     [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
-  for (auto &node : cnodes_) {
+void SymbolEngineImpl::BuildNodesSymbol(const AnfNodePtrList &nodes) {
+  for (auto &node : nodes) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (GetCNodeFuncGraph(cnode) != nullptr) {
-      BuildSubgraphSymbol(cnode);
+      BuildSubgraph(cnode);
     } else {
       auto &depend_on = depend_status_map_[node];
       if (depend_on.shape) {
@@ -54,15 +51,19 @@ void SymbolEngineImpl::Build() {
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "Build " << ToString() << " with graph " << func_graph->ToString();
+  visited_.clear();  // the visited is useless
   cache_.InitInputs(func_graph->parameters());
   emitter_ = std::make_unique<OperationEmitter>(&ops_);
-  BuildNodesSymbol(func_graph);
+  cnodes_ = TopoSort(func_graph->output(), SuccIncoming,
+                     [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
+  BuildNodesSymbol(cnodes_);
   Dump();
   emitter_->Clean();
 }
 
 void SymbolEngineImpl::BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEngineImpl &main_engine) {
   MS_LOG(DEBUG) << "Build subgraph " << ToString() << " of " << cnode->fullname_with_scope();
+  visited_.clear();  // the visited is useless
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto param_num = func_graph->parameters().size();
@@ -89,13 +90,16 @@ void SymbolEngineImpl::BuildWithOuterInfo(const CNodePtr &cnode, const SymbolEng
       cache_.SetValue(param, emitter_->RealValue(inp_symbol));
     }
   }
-  BuildNodesSymbol(func_graph);
+  cnodes_ = TopoSort(func_graph->output(), SuccIncoming,
+                     [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
+  BuildNodesSymbol(cnodes_);
   Dump();
 }
 
 void SymbolEngineImpl::PreBuild(bool depend_on_value) {
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "Prebuild " << ToString() << ". depend_on_value=" << std::boolalpha << depend_on_value;
   (void)DfsQueryDependStatus(func_graph->output(), depend_on_value);
 }
 
@@ -106,8 +110,10 @@ void SymbolEngineImpl::DfsQueryDependStatus(const AnfNodePtr &node, bool depend_
   }
   if (depend_on_value) {
     depend_status_map_[node].value = true;
+    MS_LOG(DEBUG) << "The value of " << node->fullname_with_scope() << " is required";
   } else {
     depend_status_map_[node].shape = true;
+    MS_LOG(DEBUG) << "The shape of " << node->fullname_with_scope() << " is required";
   }
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
@@ -115,47 +121,63 @@ void SymbolEngineImpl::DfsQueryDependStatus(const AnfNodePtr &node, bool depend_
   }
   auto sub_fg = GetCNodeFuncGraph(cnode);
   if (sub_fg != nullptr) {
-    std::shared_ptr<SymbolEngineImpl> sub_engine;
+    DfsSubgraphQueryDependStatus(cnode, depend_on_value, sub_fg);
+    return;
+  }
+  auto *info = OperationBuilderRegistry::GetBuildInfo(AnfUtils::GetCNodeName(cnode));
+  auto default_depend = depend_on_value ? DependOn::kValue : DependOn::kShape;
+  if (info == nullptr) {
+    for (size_t i = 1; i < cnode->size(); i++) {
+      DfsQueryDependStatus(cnode->input(i), default_depend == DependOn::kValue);
+    }
+    return;
+  }
+  auto depends = info->GetDepends(cnode, depend_on_value);
+  for (size_t i = 1; i < cnode->size(); i++) {
+    auto current_depend = (i - 1 < depends.size() ? depends[i - 1] : default_depend);
+    DfsQueryDependStatus(cnode->input(i), current_depend == DependOn::kValue);
+  }
+}
+
+void SymbolEngineImpl::DfsSubgraphQueryDependStatus(const CNodePtr &cnode, bool depend_on_value,
+                                                    const FuncGraphPtr &sub_fg) {
+  SymbolEngineImpl *sub_engine = nullptr;
+  if (multi_engine_) {
     // when the node is visited in ahead, use the exist
-    if (visited_.count({node, !depend_on_value}) > 0) {
+    if (visited_.count({cnode, !depend_on_value}) > 0) {
       auto symbol_engine_attr = sub_fg->get_attr(kAttrSymbolEngine);
       MS_EXCEPTION_IF_NULL(symbol_engine_attr);
-      sub_engine = symbol_engine_attr->cast<std::shared_ptr<SymbolEngineImpl>>();
+      sub_engine = symbol_engine_attr->cast_ptr<SymbolEngineImpl>();
+      MS_EXCEPTION_IF_NULL(sub_engine);
     } else {
-      sub_engine = std::make_shared<SymbolEngineImpl>(sub_fg);
-      sub_fg->set_attr(kAttrSymbolEngine, sub_engine);
+      auto sub_engine_sptr = std::make_shared<SymbolEngineImpl>(sub_fg, true);
+      sub_fg->set_attr(kAttrSymbolEngine, sub_engine_sptr);
+      sub_engine = sub_engine_sptr.get();
     }
     sub_engine->PreBuild(depend_on_value);
-    size_t input_index = 1;
-    for (auto &param : sub_fg->parameters()) {
-      auto &sub_depend_status_map = sub_engine->depend_status_map_;
-      auto iter = sub_depend_status_map.find(param);
-      if (iter == sub_depend_status_map.end()) {
-        MS_LOG(INTERNAL_EXCEPTION) << "The depend status of " << param->ToString() << " in funcgraph "
-                                   << sub_fg->ToString() << " is not found.";
-      }
-      if (iter->second.shape) {
-        DfsQueryDependStatus(cnode->input(input_index), false);
-      }
-      if (iter->second.value) {
-        DfsQueryDependStatus(cnode->input(input_index), true);
-      }
-      input_index++;
-    }
   } else {
-    auto *info = OperationBuilderRegistry::GetBuildInfo(AnfUtils::GetCNodeName(cnode));
-    auto default_depend = depend_on_value ? DependOn::kValue : DependOn::kShape;
-    if (info == nullptr) {
-      for (size_t i = 1; i < cnode->size(); i++) {
-        DfsQueryDependStatus(cnode->input(i), default_depend == DependOn::kValue);
-      }
-      return;
+    // use the unique symbolengine.
+    sub_engine = this;
+    sub_fg->set_attr(kAttrSymbolEngine, this->cast<SymbolEnginePtr>());
+    DfsQueryDependStatus(sub_fg->output(), depend_on_value);
+  }
+
+  // visit nodes in main graph according to subgraph's parameters
+  size_t input_index = 1;
+  for (auto &param : sub_fg->parameters()) {
+    auto &sub_depend_status_map = sub_engine->depend_status_map_;
+    auto iter = sub_depend_status_map.find(param);
+    if (iter == sub_depend_status_map.end()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The depend status of " << param->ToString() << " in funcgraph "
+                                 << sub_fg->ToString() << " is not found.";
     }
-    auto depends = info->GetDepends(cnode, depend_on_value);
-    for (size_t i = 1; i < cnode->size(); i++) {
-      auto current_depend = (i - 1 < depends.size() ? depends[i - 1] : default_depend);
-      DfsQueryDependStatus(cnode->input(i), current_depend == DependOn::kValue);
+    if (iter->second.shape) {
+      DfsQueryDependStatus(cnode->input(input_index), false);
     }
+    if (iter->second.value) {
+      DfsQueryDependStatus(cnode->input(input_index), true);
+    }
+    input_index++;
   }
 }
 
@@ -175,11 +197,11 @@ bool SymbolEngineImpl::Infer(const AbstractBasePtrList &inputs) {
   return true;
 }
 
-ListSymbolPtr SymbolEngineImpl::QuerySymbolicShape(const AnfNodePtr &node) {
+ListSymbolPtr SymbolEngineImpl::QuerySymbolicShape(const AnfNodePtr &node) const {
   auto s = cache_.GetShape(node);
   return s == nullptr ? nullptr : s->as_sptr<ListSymbol>();
 }
-SymbolPtr SymbolEngineImpl::QuerySymbolicValue(const AnfNodePtr &node) { return cache_.GetValue(node); }
+SymbolPtr SymbolEngineImpl::QuerySymbolicValue(const AnfNodePtr &node) const { return cache_.GetValue(node); }
 
 ShapeArray SymbolEngineImpl::QueryShape(const AnfNodePtr &node) {
   auto output = cache_.GetShape(node);
@@ -282,20 +304,32 @@ void SymbolEngineImpl::QuerySymbolExpr(const AnfNodePtr &node,
   }
 }
 
-void SymbolEngineImpl::BuildSubgraphSymbol(const CNodePtr &cnode) {
+void SymbolEngineImpl::BuildSubgraph(const CNodePtr &cnode) {
   auto sub_fg = GetCNodeFuncGraph(cnode);
   MS_EXCEPTION_IF_NULL(sub_fg);
   MS_LOG(DEBUG) << "Build subgraph " << sub_fg->ToString() << " of node " << cnode->fullname_with_scope();
-  auto sub_engine_attr = sub_fg->get_attr(kAttrSymbolEngine);
-  MS_EXCEPTION_IF_NULL(sub_engine_attr);
-  auto sub_engine = sub_engine_attr->cast<std::shared_ptr<SymbolEngineImpl>>();
-  MS_EXCEPTION_IF_NULL(sub_engine);
-  sub_engine->BuildWithOuterInfo(cnode, *this);
-  if (depend_status_map_[cnode].shape) {
-    cache_.SetShape(cnode, sub_engine->cache_.GetShape(sub_fg->output()));
-  }
-  if (depend_status_map_[cnode].value) {
-    cache_.SetValue(cnode, sub_engine->cache_.GetValue(sub_fg->output()));
+  if (multi_engine_) {
+    auto sub_engine_attr = sub_fg->get_attr(kAttrSymbolEngine);
+    MS_EXCEPTION_IF_NULL(sub_engine_attr);
+    auto sub_engine = sub_engine_attr->cast_ptr<SymbolEngineImpl>();
+    MS_EXCEPTION_IF_NULL(sub_engine);
+    sub_engine->BuildWithOuterInfo(cnode, *this);
+    if (depend_status_map_[cnode].shape) {
+      cache_.SetShape(cnode, sub_engine->cache_.GetShape(sub_fg->output()));
+    }
+    if (depend_status_map_[cnode].value) {
+      cache_.SetValue(cnode, sub_engine->cache_.GetValue(sub_fg->output()));
+    }
+  } else {
+    auto param_num = sub_fg->parameters().size();
+    MS_EXCEPTION_IF_CHECK_FAIL(param_num + 1 == cnode->size(), "cnode and parameter size mismatch");
+    for (size_t i = 0; i < param_num; i++) {
+      cache_.BindNode(sub_fg->parameters()[i], cnode->input(i + 1));
+    }
+    auto inner_nodes = TopoSort(sub_fg->output(), SuccIncoming,
+                                [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
+    BuildNodesSymbol(inner_nodes);
+    cache_.BindNode(cnode, sub_fg->output());
   }
 }
 
@@ -334,7 +368,7 @@ void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value)
   }
 }
 
-void SymbolEngineImpl::Dump() {
+void SymbolEngineImpl::Dump() const {
   static const bool dump_symbol_engine = (common::GetEnv("MS_DEV_DUMP_SYMBOL") == "on");
   if (!dump_symbol_engine) {
     return;
@@ -344,6 +378,13 @@ void SymbolEngineImpl::Dump() {
     MS_LOG(INFO) << op->output()->ToString() << " = " << op->ToString();
   }
   MS_LOG(INFO) << "======= Begin dump shapes of " << name_ << " ================";
+  for (size_t i = 0; i < cnodes_.size(); i++) {
+    DumpCNode(cnodes_[i], std::to_string(i));
+  }
+  MS_LOG(INFO) << "======= Finish dumping " << name_ << " ======================";
+}
+
+void SymbolEngineImpl::DumpCNode(const AnfNodePtr &node, const std::string &id) const {
   auto dump_symbol = [this](const AnfNodePtr &node) -> std::string {
     auto shape = cache_.GetShape(node);
     auto value = cache_.GetValue(node);
@@ -359,16 +400,25 @@ void SymbolEngineImpl::Dump() {
     }
     return out;
   };
-  for (size_t i = 0; i < cnodes_.size(); i++) {
-    auto cnode = cnodes_[i]->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    MS_LOG(INFO) << "Node" << i << ": " << cnode->fullname_with_scope();
-    MS_LOG(INFO) << "  inputs shape:";
-    for (size_t j = 1; j < cnode->size(); j++) {
-      MS_LOG(INFO) << "    " << j << ": " << QueryShape(cnode->input(j)) << "." << dump_symbol(cnode->input(j));
-    }
-    MS_LOG(INFO) << "  output shape: " << QueryShape(cnode) << "." << dump_symbol(cnode);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Node " << id << ": " << cnode->fullname_with_scope();
+  for (size_t j = 1; j < cnode->size(); j++) {
+    MS_LOG(INFO) << "  input[" << j << "]:" << dump_symbol(cnode->input(j));
   }
-  MS_LOG(INFO) << "======= Finish dumping " << name_ << " ======================";
+  MS_LOG(INFO) << "  output:" << dump_symbol(cnode);
+  if (multi_engine_) {
+    return;
+  }
+  // dump subgraph
+  auto sub_fg = GetCNodeFuncGraph(node);
+  if (sub_fg == nullptr) {
+    return;
+  }
+  auto inner_nodes =
+    TopoSort(sub_fg->output(), SuccIncoming, [](const AnfNodePtr &n) { return n->isa<CNode>() ? FOLLOW : EXCLUDE; });
+  for (size_t j = 0; j < inner_nodes.size(); j++) {
+    DumpCNode(inner_nodes[j], id + "_" + std::to_string(j));
+  }
 }
 }  // namespace mindspore::graphkernel::symbol
