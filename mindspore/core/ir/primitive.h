@@ -334,6 +334,8 @@ class MS_CORE_API Primitive : public Named {
   /// \return Return shared_mutex of the primitive.
   const std::shared_ptr<std::shared_mutex> &shared_mutex() const { return shared_mutex_; }
 
+  virtual bool IsPythonPrim() { return false; }
+
  protected:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, ValuePtr> evaluate_added_attrs_;

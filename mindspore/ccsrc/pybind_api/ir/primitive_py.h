@@ -78,6 +78,7 @@ class PrimitivePy : public Primitive {
   void set_bprop_cls_name(const std::string &name) { bprop_cls_name_ = name; }
   static void ProcessUnPairedCellHook(bool execute_hook_fn);
   static void ClearHookRes();
+  bool IsPythonPrim() override { return true; }
 
  private:
   py::function GetComputeFunction() const;
