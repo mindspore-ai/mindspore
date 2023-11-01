@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_${op_name_upper}_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_${op_name_upper}_H_
 
 #include "kernel/pyboost/op_base.h"
 #include "kernel/pyboost/op_register.h"
@@ -23,14 +23,14 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class BACKEND_EXPORT BiasAdd : public pyboost::Op {
+class BACKEND_EXPORT ${op_name} : public pyboost::Op {
  public:
-  BiasAdd() = default;
-  ~BiasAdd() = default;
+  ${op_name}() = default;
+  ~${op_name}() override = default;
 
-  virtual tensor::TensorPtr Call(const tensor::TensorPtr &input_x, const tensor::TensorPtr &bias) = 0;
+  virtual ${return_type} Call(${call_args}) = 0;
 };
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_OP_BIAS_ADD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_FORWARD_PYBOOST_OP_${op_name_upper}_H_

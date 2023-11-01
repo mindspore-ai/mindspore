@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_
 
-#include "kernel/pyboost/auto_generate/square.h"
+#include "kernel/pyboost/auto_generate/${op_name_lower}.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class SquareAscend : public pyboost::Square {
+class ${op_name}Ascend : public pyboost::${op_name} {
  public:
-  SquareAscend() = default;
-  ~SquareAscend() = default;
-  bool Launch(const tensor::TensorPtr &input, const tensor::TensorPtr &output);
+  ${op_name}Ascend() = default;
+  ~${op_name}Ascend() = default;
 
-  bool LaunchByKernel(const tensor::TensorPtr &input, const tensor::TensorPtr &output);
-
-  tensor::TensorPtr Call(const tensor::TensorPtr &input) override;
+  ${return_type} Call(${call_args_with_type}) override;
 };
-MS_REG_PYBOOST_OP(Ascend, Square);
+
+MS_REG_PYBOOST_OP(Ascend, ${op_name});
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_SQUARE_ASCEND_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_

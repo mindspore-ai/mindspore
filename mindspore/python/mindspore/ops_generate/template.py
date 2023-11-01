@@ -90,3 +90,18 @@ PYBOOST_HEADER_TEMPLATE = CppTemplate.load_from_file(
 
 GEN_OPS_DEF_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/python/mindspore/ops_generate/gen_ops_def_header.tpl'))
+
+PYBOOST_BASE_OP_DEFINE_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_header.tpl'))
+
+PYBOOST_OP_REGISTER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_register.tpl'))
+
+PYBOOST_ASCEND_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_aclnn_header_template.tpl'))
+
+PYBOOST_ASCEND_OP_SOURCE_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_aclnn_source_template.tpl'))
+
+PYBOOST_ASCEND_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboot_ascend_call_template.tpl'))

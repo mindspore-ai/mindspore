@@ -120,6 +120,31 @@ def get_convert_type_str(dtype: str):
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
+def get_cpp_dtype(dtype: str):
+    """
+    Convert type
+    """
+    # add more type here
+    type_convert = {
+        # TODO: Scalar to int/float/...
+        'int': 'ScalarPtr',
+        'float': 'ScalarPtr',
+        'bool': 'ScalarPtr',
+        'number': 'ScalarPtr',
+        'tuple[int]': 'ValueTuplePtr',
+        'tuple[float]': 'ValueTuplePtr',
+        'tuple[bool]': 'ValueTuplePtr',
+        'tuple[tensor]': 'ValueTuplePtr',
+        'list[int]': 'ValueTuplePtr',
+        'list[float]': 'ValueTuplePtr',
+        'list[bool]': 'ValueTuplePtr',
+        'list[tensor]': 'ValueTuplePtr',
+        'tensor': 'TensorPtr',
+    }
+    if dtype in type_convert:
+        return type_convert[dtype]
+    raise TypeError(f"""Unsupported convert type {dtype} for args.""")
+
 
 def get_type_str(type_str):
     """

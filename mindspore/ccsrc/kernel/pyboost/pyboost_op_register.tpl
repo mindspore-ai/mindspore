@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/erf_ascend.h"
-#include <algorithm>
-#include <functional>
-#include <memory>
-#include "ir/tensor.h"
-#include "transform/acl_ir/op_api_exec.h"
-#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#include "kernel/pyboost/op_register.h"
+${op_includes}
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ErfAscend::Call(const tensor::TensorPtr &x) {
-  MS_LOG(DEBUG) << "Call start";
-  InferOutput(x);
-  // Don't need to allocate memory for Scalar.
-  DeviceMalloc(x);
-  auto stream_ptr = device_context_->device_res_manager_->GetStream(kDefaultStreamIndex);
-  LAUNCH_ACLNN(aclnnErf, stream_ptr, x, output(0));
-  MS_LOG(DEBUG) << "Launch end";
-  return outputs_[0];
+template <typename T>
+OpFactory<T> &OpFactory<T>::Get() {
+  static OpFactory<T> instance;
+  return instance;
 }
+
+template <typename T>
+std::shared_ptr<T> OpFactory<T>::Create(const string &name, const string &device) {
+  auto iter = op_creater_.find(device);
+  if (iter == op_creater_.end()) {
+    MS_LOG(EXCEPTION) << "Not found op " << name << " on device " << device;
+  }
+  return iter->second();
+}
+
+${op_factory_templates}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

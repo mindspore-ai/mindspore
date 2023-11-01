@@ -22,7 +22,7 @@ import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
 from op_proto import OpProto
 from template import CppTemplate
-from gen_utils import get_convert_type_str
+from gen_utils import get_convert_type_str, get_cpp_dtype
 import template
 
 def get_op_name(operator_name, class_def):
@@ -701,6 +701,154 @@ def generate_parser_func(op_proto: OpProto) -> str:
     return parser_func_str
 
 
+def generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return):
+    pyboost_op_header_str = template.PYBOOST_BASE_OP_DEFINE_TEMPLATE.replace(op_name=op_name_str,
+                                                                             op_name_upper=op_name_str.upper(),
+                                                                             call_args=call_args_with_type,
+                                                                             return_type=cpp_func_return)
+    op_header_dir_path = os.path.join(work_path, "mindspore/ccsrc/kernel/pyboost/auto_generate/")
+    pathlib.Path(op_header_dir_path).mkdir(parents=True, exist_ok=True)
+    op_file_path = os.path.join(op_header_dir_path, op_name_str.lower() + ".h")
+    with open(op_file_path, "w") as f:
+        f.write(pyboost_op_header_str)
+
+
+def generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return):
+    pyboost_ascend_op_str = template.PYBOOST_ASCEND_OP_HEADER_TEMPLATE.replace(op_name=op_name_str,
+                                                                               op_name_upper=op_name_str.upper(),
+                                                                               op_name_lower=op_name_str.lower(),
+                                                                               call_args_with_type=call_args_with_type,
+                                                                               return_type=cpp_func_return)
+    ascend_op_header_dir_path = os.path.join(work_path,
+                                             "mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/")
+    pathlib.Path(ascend_op_header_dir_path).mkdir(parents=True, exist_ok=True)
+    ascend_op_file_path = os.path.join(ascend_op_header_dir_path, op_name_str.lower() + ".h")
+    with open(ascend_op_file_path, "w") as f:
+        f.write(pyboost_ascend_op_str)
+
+
+def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
+                                           returns_type, call_args_with_type, cpp_func_return):
+    # PyBoost ascend op source generate
+    call_args_tensor = []
+    for type, arg_name in zip(call_args_type, call_args_str):
+        if type == "TensorPtr":
+            call_args_tensor.append(arg_name)
+
+    # outputs
+    outputs_str = ""
+    for i in range(len(returns_type)):
+        outputs_str += "outputs_[{}],".format(i)
+    outputs_str = outputs_str[:-1]
+
+    cpp_func_return_values = ""
+    if len(returns_type) == 1:
+        cpp_func_return_values = "outputs_[0]"
+    elif len(returns_type) == 0:
+        raise Exception("No return")
+    else:
+        cpp_func_return_values = "std::make_tuple(" + outputs_str + ")"
+
+    # launch mode: cube or not
+    # call_impl
+    call_impl = ''
+    customize_include = ''
+    op_desc = pyboost_yaml_data[op_name_str]['Ascend']
+    if op_desc['mode'] == 'normal':
+        if op_desc['cube'] is True:
+            launch_mode = 'LAUNCH_ACLNN_CUBE'
+        else:
+            launch_mode = 'LAUNCH_ACLNN'
+        call_impl = template.PYBOOST_ASCEND_CALL_TEMPLATE.replace(op_name=op_name_str,
+                                                                  call_args=call_args_str,
+                                                                  call_tensors=call_args_tensor,
+                                                                  return_values=cpp_func_return_values,
+                                                                  launch_mode=launch_mode,
+                                                                  outputs=outputs_str)
+    elif op_desc['mode'] == 'customize':
+        call_impl = "return " + op_name_str + "AscendCall(" + ','.join(s for s in call_args_str) + ");"
+        customize_include = "#include \"plugin/device/ascend/kernel/pyboost/call/{}.h\"".format(op_name_str.lower())
+    else:
+        raise Exception("Not support mode " + op_desc['mode'])
+
+    pyboost_ascend_op_source_str = template.PYBOOST_ASCEND_OP_SOURCE_TEMPLATE.replace(op_name=op_name_str,
+                                                                                      op_name_lower=op_name_str.lower(),
+                                                                                      call_args_with_type=call_args_with_type,
+                                                                                      return_type=cpp_func_return,
+                                                                                      customize_include=customize_include,
+                                                                                      call_impl=call_impl)
+    ascend_op_header_dir_path = os.path.join(work_path,
+                                             "mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/")
+    ascend_op_source_file_path = os.path.join(ascend_op_header_dir_path, op_name_str.lower() + ".cc")
+    with open(ascend_op_source_file_path, "w") as f:
+        f.write(pyboost_ascend_op_source_str)
+
+
+def generate_pyboost_op_register_source_code(work_path, all_ops):
+    include_str = ''
+    factory_str = ''
+    for op_name in all_ops:
+        include_str += "#include \"kernel/pyboost/auto_generate/{0}.h\"\n".format(op_name.lower())
+        factory_str += "template class OpFactory<{0}>;\n".format(op_name)
+    op_register_file_str = template.PYBOOST_OP_REGISTER_TEMPLATE.replace(op_includes=include_str,
+                                                                         op_factory_templates=factory_str)
+    op_register_dir_path = os.path.join(work_path, "mindspore/ccsrc/kernel/pyboost/auto_generate/")
+    pathlib.Path(op_register_dir_path).mkdir(parents=True, exist_ok=True)
+    op_register_file_path = os.path.join(op_register_dir_path, "op_register.cc")
+    with open(op_register_file_path, "w") as f:
+        f.write(op_register_file_str)
+
+def generate_pyboost_op_return_code(op_proto):
+    returns_type = []
+    for return_obj in op_proto.returns:
+        returns_type.append(get_cpp_dtype(return_obj.arg_dtype))
+    if len(returns_type) == 1:
+        cpp_func_return = returns_type[0]
+    elif len(returns_type) == 0:
+        raise Exception("No return")
+    else:
+        cpp_func_return = "std::tuple("
+        cpp_func_return += ','.join(s for s in returns_type)
+        cpp_func_return += ")"
+    return returns_type, cpp_func_return
+
+
+def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
+    """
+    Generate pyboost op cpp code from yaml.
+    """
+    all_ops = []
+    for operator_name, operator_data in yaml_data.items():
+        op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        op_name_str = op_proto.class_name
+
+        call_args_str = []
+        call_args_type = []
+        for op_arg in op_proto.op_args:
+            call_arg = ''
+            if gen_utils.is_tensor(op_arg):
+                call_arg = op_arg.arg_name + "_tensor"
+            elif gen_utils.is_tensor_list(op_arg):
+                call_arg = op_arg.arg_name + "_tensor_list"
+            else:
+                call_arg = op_arg.arg_name
+            call_args_str.append(call_arg)
+            call_args_type.append(get_cpp_dtype(op_arg.arg_dtype))
+
+        all_ops.append(op_name_str)
+
+        call_args_with_type = []
+        for type, arg_name in zip(call_args_type, call_args_str):
+            call_args_with_type.append("const " + type + " &" + arg_name)
+
+        returns_type, cpp_func_return = generate_pyboost_op_return_code(op_proto)
+
+        generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
+        generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
+        generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
+                                               returns_type, call_args_with_type, cpp_func_return)
+    generate_pyboost_op_register_source_code(work_path, all_ops)
+
 def generate_pyboost_functions(work_path, yaml_data):
     """
     Generate pyboost functions file from yaml.
@@ -738,7 +886,8 @@ def generate_pyboost_functions(work_path, yaml_data):
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                        op_def_name=op_def_name_str,
                                                                        parser_body=parser_body_str, op_name=op_name_str,
-                                                                       convert_stub=convert_stub_str, call_args=call_args_str,
+                                                                       convert_stub=convert_stub_str,
+                                                                       call_args=call_args_str,
                                                                        op_args=op_args_str)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(
@@ -850,6 +999,8 @@ def main():
     merge_files(yaml_dir_path, ops_yaml_path, '*op.yaml')
     merge_files(yaml_dir_path, doc_yaml_path, '*doc.yaml')
 
+    pyboost_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/pyboost_op.yaml')
+
     # merge inner ops yaml
     inner_ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops.yaml')
     inner_doc_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml')
@@ -879,6 +1030,7 @@ def main():
     generate_labels_file(work_path, all_ops_str)
     # generate pyboost functions
     generate_pyboost_functions(work_path, safe_load_yaml(ops_yaml_path))
+    generate_pyboost_op_cpp_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(pyboost_yaml_path))
 
 
 

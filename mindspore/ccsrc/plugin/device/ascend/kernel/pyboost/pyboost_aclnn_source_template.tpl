@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_LINEAR_ASCEND_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_LINEAR_ASCEND_H_
-
-#include "kernel/pyboost/auto_generate/linear.h"
-#include "ir/tensor.h"
-#include "ir/scalar.h"
+#include "plugin/device/ascend/kernel/pyboost/auto_generate/${op_name_lower}.h"
+${customize_include}
+#include "runtime/hardware/device_context_manager.h"
+#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class LinearAscend : public pyboost::Linear {
- public:
-  LinearAscend() = default;
-  ~LinearAscend() = default;
-
-  tensor::TensorPtr Call(const tensor::TensorPtr &input, const tensor::TensorPtr &weight,
-                         const ValuePtr &bias_opt) override;
-};
-MS_REG_PYBOOST_OP(Ascend, Linear);
+${return_type} ${op_name}Ascend::Call(${call_args_with_type}) {
+${call_impl}
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_LINEAR_ASCEND_H_
