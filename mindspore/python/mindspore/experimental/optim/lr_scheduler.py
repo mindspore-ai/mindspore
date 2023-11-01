@@ -25,7 +25,7 @@ from mindspore.ops import operations as P
 from mindspore import _checkparam as Validator
 
 
-__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR', 'ChainedScheduler',
+__all__ = ['StepLR', 'LinearLR', 'LRScheduler', 'ExponentialLR', 'PolynomialLR',
            'MultiplicativeLR', 'ConstantLR', 'MultiStepLR', 'LambdaLR', 'SequentialLR', 'ReduceLROnPlateau',
            'CyclicLR', 'CosineAnnealingWarmRestarts', 'CosineAnnealingLR']
 
@@ -64,12 +64,11 @@ class LRScheduler:
         ...         super(ConstantLR, self).__init__(optimizer, last_epoch)
         ...
         ...     def get_lr(self):
-        ...         lrs = [lr.value() for lr in self._last_lr]
         ...         if self.last_epoch == 0:
-        ...             return [lr * self.factor for lr in lrs]
+        ...             return [lr * self.factor for lr in self._last_lr]
         ...         if self.last_epoch != self.total_iters:
-        ...             return lrs
-        ...         return sreturn [lr / self.factor for lr in lrs]
+        ...             return [lr * 1. for lr in self._last_lr]
+        ...         return sreturn [lr / self.factor for lr in self._last_lr]
         >>>
         >>> net = nn.Dense(8, 2)
         >>> optimizer = optim.SGD(net.trainable_params(), 0.01)
@@ -136,7 +135,7 @@ class LRScheduler:
 
         for i in range(self.groups_num):
             lr = values[i]
-            ops.assign(self.optimizer.param_groups[i]["lr"], lr)
+            ops.assign(self._last_lr[i], lr)
 
         return True
 
@@ -199,10 +198,9 @@ class StepLR(LRScheduler):
         super(StepLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0 or self.last_epoch % self.step_size != 0:
-            return lrs
-        return [lr * self.gamma for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr * self.gamma for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * self.gamma ** (self.last_epoch // self.step_size)
@@ -287,17 +285,16 @@ class LinearLR(LRScheduler):
         super(LinearLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
-            return [lr * self.start_factor for lr in lrs]
+            return [lr * self.start_factor for lr in self._last_lr]
 
         if self.last_epoch > self.total_iters:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
 
         factor = 1. + (self.end_factor - self.start_factor) / (
             self.total_iters * self.start_factor + (self.last_epoch - 1) * (self.end_factor - self.start_factor))
-        return [lr * factor for lr in lrs]
+        return [lr * factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * (self.start_factor +
@@ -351,10 +348,9 @@ class ExponentialLR(LRScheduler):
         super(ExponentialLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
-            return lrs
-        return [lr * self.gamma for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr * self.gamma for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * self.gamma ** self.last_epoch
@@ -424,80 +420,16 @@ class PolynomialLR(LRScheduler):
         super(PolynomialLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
-
         if self.last_epoch == 0 or self.last_epoch > self.total_iters:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
         factor = ((1.0 - self.last_epoch / self.total_iters) / (
             1.0 - (self.last_epoch - 1) / self.total_iters)) ** self.power
-        return [lr * factor for lr in lrs]
+        return [lr * factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [
             (base_lr * (1.0 - self.min(self.total_iters, self.last_epoch) / self.total_iters) ** self.power)
             for base_lr in self.base_lrs]
-
-
-@jit_class
-class ChainedScheduler:
-    r"""
-    Save the learning rate scheduler chain list of multiple learning rate schedulers,
-    and call the step() function to execute the step() function of each learning rate scheduler.
-
-    .. warning::
-        This is an experimental lr scheduler module that is subject to change.
-        This module must be used with optimizers in `Experimental Optimizer
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#experimental-optimizer>`_ .
-
-    Args:
-        schedulers (list[:class:`mindspore.experimental.optim.lr_scheduler.LRScheduler`]):
-            List of learning rate schedulers.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore import nn
-        >>> from mindspore.experimental import optim
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.fc = nn.Dense(16 * 5 * 5, 120)
-        ...     def construct(self, x):
-        ...         return self.fc(x)
-        >>> net = Net()
-        >>> optimizer = optim.Adam(net.trainable_params(), 0.01)
-        >>> scheduler1 = optim.lr_scheduler.PolynomialLR(optimizer)
-        >>> scheduler2 = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
-        >>> scheduler = optim.lr_scheduler.ChainedScheduler([scheduler1, scheduler2])
-        >>> for i in range(6):
-        ...     scheduler.step()
-        ...     current_lr = scheduler.get_last_lr()
-        ...     print(current_lr)
-        [Tensor(shape=[], dtype=Float32, value= 0.004)]
-        [Tensor(shape=[], dtype=Float32, value= 0.0015)]
-        [Tensor(shape=[], dtype=Float32, value= 0.0005)]
-        [Tensor(shape=[], dtype=Float32, value= 0.000125)]
-        [Tensor(shape=[], dtype=Float32, value= 0)]
-        [Tensor(shape=[], dtype=Float32, value= 0)]
-    """
-    def __init__(self, schedulers):
-        self._schedulers = list(schedulers)
-        self.optimizer = schedulers[0].optimizer
-        self._last_lr = [lr for lr in self._schedulers[-1]._last_lr]  # pylint: disable=W0212
-
-    def step(self):
-        """
-        Sequential execution of the saved learning rate scheduler's step() function.
-        """
-        for scheduler in self._schedulers:
-            scheduler.step()
-
-    def get_last_lr(self):
-        """
-        Return last computed learning rate by current scheduler.
-        """
-        return [lr.value() for lr in self._last_lr]
 
 
 @jit_class
@@ -599,11 +531,10 @@ class MultiplicativeLR(LRScheduler):
         super(MultiplicativeLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch > 0:
             return [lr * lmbda(self.last_epoch)
-                    for lmbda, lr in zip(self.lr_lambdas, lrs)]
-        return lrs
+                    for lmbda, lr in zip(self.lr_lambdas, self._last_lr)]
+        return [lr * 1. for lr in self._last_lr]
 
 
 @jit_class
@@ -734,12 +665,11 @@ class ConstantLR(LRScheduler):
         super(ConstantLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
         if self.last_epoch == 0:
-            return [lr * self.factor for lr in lrs]
+            return [lr * self.factor for lr in self._last_lr]
         if self.last_epoch != self.total_iters:
-            return lrs
-        return [lr / self.factor for lr in lrs]
+            return [lr * 1. for lr in self._last_lr]
+        return [lr / self.factor for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [base_lr * (self.factor + (self.last_epoch >= self.total_iters) * (1 - self.factor))
@@ -1404,22 +1334,21 @@ class CosineAnnealingLR(LRScheduler):
         super(CosineAnnealingLR, self).__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        lrs = [lr.value() for lr in self._last_lr]
 
         if self.last_epoch == 0:
-            return lrs
+            return [lr * 1. for lr in self._last_lr]
 
         if (self.last_epoch - 1 - self.T_max) % (2 * self.T_max) == 0:
             pct_pi = self.cast(self.math_pi / self.T_max, mstype.float32)
             return [lr + (base_lr - self.eta_min) *
                     (1 - self.cos(pct_pi)) / 2
                     for base_lr, lr in
-                    zip(self.base_lrs, lrs)]
+                    zip(self.base_lrs, self._last_lr)]
 
         return [(1 + self.cos(self.math_pi * self.last_epoch / self.T_max)) /
                 (1 + self.cos(self.math_pi * (self.last_epoch - 1) / self.T_max)) *
                 (lr - self.eta_min) + self.eta_min
-                for lr in lrs]
+                for lr in self._last_lr]
 
     def _get_closed_form_lr(self):
         return [self.eta_min + (base_lr - self.eta_min) *
