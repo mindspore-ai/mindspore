@@ -127,5 +127,6 @@ enum PoolMode : int64_t {
 
 // float is a float64 in python. But for some historical reason, python float is converted to float32 in
 using pyfloat = float;
+using pyint = int32_t;
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_TYPES_H_

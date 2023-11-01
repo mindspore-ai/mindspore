@@ -885,7 +885,7 @@ std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inpu
 }
 
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
-                         std::vector<ValuePtr> *input_values) {
+                         std::vector<ValuePtr> *input_values, size_t *none_init_inputs_num) {
   if (op_inputs.size() != op_def->args_.size()) {
     MS_LOG(EXCEPTION) << "For Operator[" << op_def->name_ << "], the inputs number should be " << op_def->args_.size()
                       << " but got " << op_inputs.size() << ".";
@@ -894,6 +894,10 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
   parse::OpDefConvertFunc convert_func;
   for (size_t i = 0; i < op_def->args_.size(); i++) {
     auto const &op_arg = op_def->args_[i];
+    if (!op_arg.as_init_arg_) {
+      *none_init_inputs_num += 1;
+    }
+
     ValuePtr value = nullptr;
     convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
     if (convert_func == nullptr) {
@@ -935,11 +939,14 @@ void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, 
   auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
   if (op_def == nullptr) {
     op_run_info->op_grad_info->input_value.resize(op_run_info->input_size);
+    op_run_info->none_init_inputs_num = op_run_info->input_size;
     for (size_t i = 0; i < op_run_info->input_size; ++i) {
       op_run_info->op_grad_info->input_value[i] = DataConvert::PyObjToValue(op_inputs[i], stub);
     }
   } else {
-    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value);
+    op_run_info->none_init_inputs_num = 0;
+    ParseOpInputByOpDef(op_def, op_inputs, stub, &op_run_info->op_grad_info->input_value,
+                        &op_run_info->none_init_inputs_num);
   }
   PrepareOpGradInfo(op_run_info);
 }

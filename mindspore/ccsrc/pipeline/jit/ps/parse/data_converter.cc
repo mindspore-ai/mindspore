@@ -1061,7 +1061,7 @@ ValuePtr ConvertNumberToTensor(const py::object &obj) {
   }
 
   if (py::isinstance<py::int_>(obj)) {
-    auto v = py::cast<int64_t>(obj);
+    auto v = py::cast<pyint>(obj);
     return std::make_shared<tensor::Tensor>(v);
   }
 
@@ -1397,7 +1397,7 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
 
   // TypeCast3: convert single element to Tensor
   {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_TENSOR),
-   ConvertSingleElementToTensor<py::int_, int64_t>},
+   ConvertSingleElementToTensor<py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TENSOR),
    ConvertSingleElementToTensor<py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TENSOR),
@@ -1406,13 +1406,13 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
 
   // TypeCast4: convert between sequence and tensor
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::tuple, py::int_, int64_t>},
+   ConvertSequenceToTensor<py::tuple, py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_TENSOR),
    ConvertSequenceToTensor<py::tuple, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_TENSOR),
    ConvertSequenceBoolToTensor<py::tuple>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TENSOR),
-   ConvertSequenceToTensor<py::list, py::int_, int64_t>},
+   ConvertSequenceToTensor<py::list, py::int_, pyint>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TENSOR),
    ConvertSequenceToTensor<py::list, py::float_, pyfloat>},
   {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TENSOR),

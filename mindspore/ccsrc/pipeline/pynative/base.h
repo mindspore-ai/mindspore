@@ -126,6 +126,8 @@ struct FrontendOpRunInfo {
   bool is_view_op = false;
   int mix_type{0};
   size_t input_size = 0;
+  // none_intit_inputs is the inputs those not defined in Primitive's __init__ function
+  size_t none_init_inputs_num = 0;
   // real_out return to python; out_value in OpGradInfo may be fake value;
   ValuePtr real_out{nullptr};
   std::string op_info;
