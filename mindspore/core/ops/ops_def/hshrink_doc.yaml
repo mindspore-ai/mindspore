@@ -1,0 +1,26 @@
+hshrink:
+    description: |
+        Hard Shrink activation function.
+
+            Refer to :func:`mindspore.ops.hardshrink` for more details.
+
+            Args:
+                input_x (Tensor) - The input of Hard Shrink with data type of float16 or float32.
+                lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+
+            Returns:
+                Tensor, the same shape and data type as the input.
+
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
+
+            Examples:
+                >>> import mindspore as ms
+                >>> import mindspore.ops as ops
+                >>> from mindspore import Tensor, nn
+                >>> import numpy as np
+                >>> input_x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
+                >>> output = ops.hshrink(input_x)
+                >>> print(output)
+                [[ 0.      1.      2.    ]
+                [ 0.      0.     -2.1233]]

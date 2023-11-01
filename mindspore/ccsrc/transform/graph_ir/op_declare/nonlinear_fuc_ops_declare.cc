@@ -223,14 +223,16 @@ REG_ADPT_DESC(Shrink, kShrinkOpName, ADPT_DESC(Shrink))
 
 // HardShrink
 INPUT_MAP(HardShrink) = {{1, INPUT_DESC(input_x)}};
-ATTR_MAP(HardShrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+ATTR_MAP(HardShrink) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(HardShrink) = {{2, ATTR_DESC(lambd, AnyTraits<float>())}};
 OUTPUT_MAP(HardShrink) = {{0, OUTPUT_DESC(output_y)}};
 REG_ADPT_DESC(HShrink, prim::kPrimHShrink->name(), ADPT_DESC(HardShrink))
 REG_ADPT_DESC(HardShrink, kHardShrinkOpName, ADPT_DESC(HardShrink))
 
 // HardShrinkGrad
 INPUT_MAP(HardShrinkGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
-ATTR_MAP(HardShrinkGrad) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};
+ATTR_MAP(HardShrinkGrad) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(HardShrinkGrad) = {{3, ATTR_DESC(lambd, AnyTraits<float>())}};
 OUTPUT_MAP(HardShrinkGrad) = {{0, OUTPUT_DESC(backprops)}};
 REG_ADPT_DESC(HShrinkGrad, prim::kPrimHShrinkGrad->name(), ADPT_DESC(HardShrinkGrad))
 REG_ADPT_DESC(HardShrinkGrad, kHardShrinkGradOpName, ADPT_DESC(HardShrinkGrad))

@@ -38,7 +38,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -2249,40 +2249,6 @@ class MultilabelMarginLossGrad(Primitive):
         """Initialize MultilabelMarginLossGrad"""
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'is_target'], outputs=['x_grad'])
-
-
-class HShrinkGrad(Primitive):
-    """
-    Computes gradients for HShrinkGrad operation.
-
-    Args:
-        lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
-
-    Inputs:
-        - **Gradients** (Tensor) - the gradients of loss to output of HShrink function.
-          Currently gradients data type only support float16 and float32.
-        - **Features** (Tensor) - Must be the input `input_x` of the forward operator HSHrink.
-          Currently features data type only support float16 and float32.
-
-    Outputs:
-        backprops - Tensor, with the same shape and data type as `features`.
-
-    Rasise:
-        ValueError: If `lambd` is not a float.
-        ValueError: If shape of `gradients` is not the same as `features`.
-        TypeError: If dtype of `gradients` is not the same as `features`.
-        TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, lambd=0.5):
-        validator.check_value_type("lambd", lambd, [float], self.name)
-        if lambd < 0.0:
-            lambd = 0.0
-            self.add_prim_attr('lambd', lambd)
 
 
 class Dilation2DBackpropInput(Primitive):

@@ -48,7 +48,7 @@ class HShrinkGradGpuKernelMod : public NativeGpuKernelMod {
   size_t unit_size_{1};
   size_t input_elements_{};
   void *cuda_stream_{nullptr};
-  float lambd_ = 0.f;
+  float lambd = 0.f;
   HShrinkGradFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, HShrinkGradFunc>> func_list_;
 };

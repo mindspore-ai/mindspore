@@ -17,7 +17,6 @@
 #include "plugin/device/gpu/kernel/nn/hshrink_grad_gpu_kernel.h"
 #include <algorithm>
 #include <functional>
-#include "mindspore/core/ops/grad/hshrink_grad.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/hshrink_impl.cuh"
@@ -25,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kHShrinkGradInputsNum = 2;
+constexpr size_t kHShrinkGradInputsNum = 3;
 constexpr size_t kHShrinkGradOutputsNum = 1;
 }  // namespace
 
@@ -37,8 +36,6 @@ bool HShrinkGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
-  lambd_ = GetValue<float>(primitive_->GetAttr(ops::kLambd));
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -48,6 +45,7 @@ bool HShrinkGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   kernel_func_ = func_list_[index].second;
 
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  lambd = inputs[kIndex2]->GetValueWithCheck<float>();
   return true;
 }
 
@@ -72,15 +70,23 @@ bool HShrinkGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   T *x = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx = GetDeviceAddress<T>(outputs, kIndex0);
   auto status =
-    CalHShrinkGrad(input_elements_, dy, x, lambd_, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CalHShrinkGrad(input_elements_, dy, x, lambd, dx, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
 
 std::vector<std::pair<KernelAttr, HShrinkGradGpuKernelMod::HShrinkGradFunc>> HShrinkGradGpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat16),
    &HShrinkGradGpuKernelMod::LaunchKernel<half>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
    &HShrinkGradGpuKernelMod::LaunchKernel<float>}};
 
 std::vector<KernelAttr> HShrinkGradGpuKernelMod::GetOpSupport() {

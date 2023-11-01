@@ -33,7 +33,7 @@ from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
-                             GridSampler3D, GridSampler2D, LayerNorm)
+                             GridSampler3D, GridSampler2D, LayerNorm, HShrink)
 from .manually_defined import BatchNorm
 
 
@@ -8038,46 +8038,6 @@ class SoftShrink(Primitive):
         """Initialize SoftShrink"""
         validator.check_value_type("lambd", lambd, [float], self.name)
         validator.check_number("lambd", lambd, 0, validator.GE, self.name)
-
-
-class HShrink(Primitive):
-    r"""
-    Hard Shrink activation function.
-
-    Refer to :func:`mindspore.ops.hardshrink` for more details.
-
-    Args:
-        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
-
-    Inputs:
-        - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
-
-    Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input_x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
-        >>> hshrink = ops.HShrink()
-        >>> output = hshrink(input_x)
-        >>> print(output)
-        [[ 0.      1.      2.    ]
-        [ 0.      0.     -2.1233]]
-    """
-
-    @prim_attr_register
-    def __init__(self, lambd=0.5):
-        """Initialize HShrink"""
-        validator.check_value_type('lambd', lambd, [float], self.name)
-        if lambd < 0.0:
-            lambd = 0.0
-            self.add_prim_attr('lambd', lambd)
 
 
 class ApplyAdagradDA(Primitive):

@@ -87,7 +87,7 @@ def test_hsigmoid_backward(mode):
 def test_hsigmoid_vmap(mode):
     """
     Feature: test vmap function.
-    Description: test avgpool op vmap.
+    Description: test hsigmoid op vmap.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)

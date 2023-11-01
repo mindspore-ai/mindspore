@@ -1586,11 +1586,12 @@ REG_BPROP_BUILDER("KLDivLoss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, ib->OutZeros(y)};
 });
 
-REG_BPROP_BUILDER("HShrink").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("HShrink").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto features = ib->GetInput(kIndex0);
-  auto gradients = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("HShrinkGrad", {gradients, features}, {{"lambd", ib->GetAttr("lambd")}});
-  return {dx};
+  auto lambd = ib->GetInput(kIndex1);
+  auto gradients = ib->GetInput(kIndex3);
+  auto dx = ib->Emit("HShrinkGrad", {gradients, features, lambd});
+  return {dx, ib->OutZeros(lambd)};
 });
 
 REG_BPROP_BUILDER("SoftShrink").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {

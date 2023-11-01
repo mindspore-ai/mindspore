@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/hshrink_cpu_kernel.h"
 #include <algorithm>
-#include "mindspore/core/ops/hshrink.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
@@ -24,11 +23,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kHShrinkInputsNum = 1;
+constexpr size_t kHShrinkInputsNum = 2;
 constexpr size_t kHShrinkOutputsNum = 1;
 
-const std::vector<KernelAttr> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}};
+const std::vector<KernelAttr> kernel_attr = {{KernelAttr()
+                                                .AddInputAttr(kNumberTypeFloat32)
+                                                .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                .AddOutputAttr(kNumberTypeFloat32)}};
 }  // namespace
 
 bool HShrinkCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -38,14 +39,14 @@ bool HShrinkCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return false;
   }
 
-  lambd_ = GetValue<float>(primitive_->GetAttr(ops::kLambd));
-
   auto input_type_id = inputs[0]->dtype_id();
+
   if (input_type_id != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "HShrink kernel does not support " << TypeIdToString(input_type_id);
     return false;
   }
   unit_size_ = sizeof(float);
+  lambd = inputs[kIndex1]->GetValueWithCheck<float>();
   return true;
 }
 
@@ -68,7 +69,7 @@ bool HShrinkCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, cons
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   auto task = [input, output, this](size_t start, size_t end) {
-    auto ret = HardShrink(input + start, SizeToInt(end - start), output + start, this->lambd_);
+    auto ret = HardShrink(input + start, SizeToInt(end - start), output + start, lambd);
     if (ret != NNACL_OK) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
       return false;
