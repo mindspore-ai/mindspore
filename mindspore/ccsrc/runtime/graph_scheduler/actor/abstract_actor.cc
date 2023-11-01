@@ -157,14 +157,16 @@ void AbstractActor::FetchInputByTensorStore(
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
-      // Collect the input kernel tensor.
-      if (input_kernel_tensors && input_kernel_tensors_for_infer) {
-        (*input_kernel_tensors)[device_tensor_store_key.first] = device_tensor->kernel_tensor().get();
-        (*input_kernel_tensors_for_infer)[device_tensor_store_key.first] = device_tensor->kernel_tensor();
-      }
       MS_LOG(DEBUG) << "actor:" << GetAID() << " fetch input index:" << device_tensor_store_key.first
                     << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                     << " key node:" << device_tensor_store_key.second->DebugString();
+    }
+    // Collect the input kernel tensor.
+    const auto &kernel_tensor = (*input_device_tensors)[device_tensor_store_key.first]->kernel_tensor();
+    if (input_kernel_tensors && input_kernel_tensors_for_infer &&
+        ((*input_kernel_tensors)[device_tensor_store_key.first] != kernel_tensor.get())) {
+      (*input_kernel_tensors)[device_tensor_store_key.first] = kernel_tensor.get();
+      (*input_kernel_tensors_for_infer)[device_tensor_store_key.first] = kernel_tensor;
     }
   }
 }
