@@ -80,28 +80,12 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
            .AddOutputAttr(kNumberTypeFloat64)}}},
       {kAvgPool3DGrad,
        {{KernelAttr()
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)   // x_shape
-           .AddInputAttr(kNumberTypeFloat32)                   // dout
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
+           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+           .AddInputAttr(kNumberTypeFloat32)
            .AddOutputAttr(kNumberTypeFloat32)},
         {KernelAttr()
            .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
            .AddInputAttr(kNumberTypeFloat32)
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-           .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-           .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
            .AddOutputAttr(kNumberTypeFloat32)}}},
       // the registration of maxpoolgrad and maxpool3dgrad hasn't been modified.
       {kMaxPoolGrad,

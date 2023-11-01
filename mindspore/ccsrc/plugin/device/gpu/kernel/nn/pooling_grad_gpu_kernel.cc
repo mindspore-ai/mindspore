@@ -61,31 +61,57 @@ constexpr size_t kMax3DPadsIdx = 6;
 constexpr size_t kMax3DCeilModeIdx = 7;
 constexpr size_t kMax3DDataFormatIdx = 8;
 
+int64_t get_pad_mode(const PrimitivePtr &prim) {
+  auto value_ptr = prim->GetAttr(ops::kPadMode);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return GetValue<int64_t>(value_ptr);
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = pad_map.find(attr_value_str);
+  if (iter == pad_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use CALCULATED, PAD, VALID or SAME";
+  }
+  return iter->second;
+}
+
+int64_t get_format(const PrimitivePtr &prim) {
+  auto value_ptr = prim->GetAttr(ops::kFormat);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return Format(GetValue<int64_t>(value_ptr));
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  (void)std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = dataformat_map.find(attr_value_str);
+  if (iter == dataformat_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << " use NCHW, NHWC NCDHW or NDHWC";
+  }
+  return iter->second;
+}
+
 bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
-  // avgpool3dgrad input
-  if (kernel_name_ == kAvgPool3DGradOpName) {
-    format_attr_ = static_cast<mindspore::Format>(inputs[kAvg3DDataFormatIdx]->GetValueWithCheck<int64_t>());
-    pad_mode_ = static_cast<mindspore::PadMode>(inputs[kAvg3DPadModeIdx]->GetValueWithCheck<int64_t>());
-    stride_me_ = inputs[kAvg3DStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
-    window_me_ = inputs[kAvg3DKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
-    pad_list_ = inputs[kAvg3DPadsIdx]->GetValueWithCheck<std::vector<int64_t>>();
-    divisor_override_ = inputs[kAvg3DDivisorOverrideIdx]->GetValueWithCheck<int64_t>();
-    ceil_mode_ = inputs[kAvg3DCeilModeIdx]->GetValueWithCheck<bool>();
-    include_ = inputs[kAvg3DCountIncludePadIdx]->GetValueWithCheck<bool>();
+  if (kernel_name_ != kAvgPoolGradOpName) {
+    format_attr_ = static_cast<mindspore::Format>(get_format(primitive_));
+    pad_mode_ = static_cast<mindspore::PadMode>(get_pad_mode(primitive_));
+    stride_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
+    window_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+    if (kernel_name_ == kMaxPool3DGrad) {
+      pad_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPadList));
+    } else if (kernel_name_ == kAvgPool3DGrad) {
+      pad_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPadList));
+      divisor_override_ = GetValue<int64_t>(primitive_->GetAttr(ops::kDivisorOverride));
+      ceil_mode_ = GetValue<bool>(primitive_->GetAttr(ops::kCeilMode));
+      include_ = GetValue<bool>(primitive_->GetAttr(ops::kCountIncludePad));
+    }
   } else {
-    // avgpoolgrad, maxpoolgrad and maxpool3dgrad input
     format_attr_ = static_cast<mindspore::Format>(inputs[kDataFormatIdx]->GetValueWithCheck<int64_t>());
     pad_mode_ = static_cast<mindspore::PadMode>(inputs[kPadModeIdx]->GetValueWithCheck<int64_t>());
     stride_me_ = inputs[kStridesIdx]->GetValueWithCheck<std::vector<int64_t>>();
     window_me_ = inputs[kKernelSizeIdx]->GetValueWithCheck<std::vector<int64_t>>();
-    // pad_list and format of maxpool3dgrad are different index.
-    if (kernel_name_ == kMaxPool3DGradOpName) {
-      pad_list_ = inputs[kMax3DPadsIdx]->GetValueWithCheck<std::vector<int64_t>>();
-      format_attr_ = static_cast<mindspore::Format>(inputs[kMax3DDataFormatIdx]->GetValueWithCheck<int64_t>());
-    }
   }
-
   SetFirstInputIndex(inputs.size());
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs[first_input_index_]->dtype_id()));
   SetPoolingMode();
@@ -531,79 +557,31 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
      {{KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
       {KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat32),
        &PoolingGradGpuKernelMod::LaunchKernel<float>},
       {KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
          .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat16),
        &PoolingGradGpuKernelMod::LaunchKernel<half>},
       {KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
       {KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat32),
        &PoolingGradGpuKernelMod::LaunchKernel<float>},
       {KernelAttr()
          .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
          .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // kernel_size
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // strides
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // pad_mode
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)   // pads
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // ceil_mode
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)   // count_include_pad
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // divisor_override
-         .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)  // data_format
          .AddOutputAttr(kNumberTypeFloat16),
        &PoolingGradGpuKernelMod::LaunchKernel<half>}}}};
 
