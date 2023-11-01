@@ -207,6 +207,7 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::vector<std::vector<size_t>> &param_users_ops_index, const FuncGraphPtr &root) {
   RecStrategyPropagator propagator(graph, ops, eli_list, input_tensor_names, index_list, is_training,
                                    param_users_ops_index, root);
+  propagator.ExtraShardMatmulOnBatchDim();
   if (is_training) {
     propagator.GenerateStrategyV3();
   } else {
@@ -2384,6 +2385,42 @@ size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
     }
   }
   return changes;
+}
+
+static size_t CalMatmulBatchDimFactor(size_t num_device, const StrategyRec &str) {
+  size_t max_shard_num = FloatToLong(1 / str.inputTensor[0].str_h) * FloatToLong(1 / str.inputTensor[0].str_w);
+  max_shard_num = max_shard_num < num_device ? max_shard_num : num_device;
+  return max_shard_num / (FloatToLong(1 / str.outputTensor.str_h) * FloatToLong(1 / str.outputTensor.str_w));
+}
+
+void RecStrategyPropagator::ExtraShardMatmulOnBatchDim() {
+  MS_EXCEPTION_IF_NULL(graph_);
+  MS_EXCEPTION_IF_NULL(eli_list_);
+  MS_EXCEPTION_IF_NULL(index_list_);
+
+  for (size_t i_op = 0; i_op < (size_t)index_list_->size(); i_op++) {
+    size_t iter_graph = index_list_->at(i_op);
+    if (iter_graph == SIZE_MAX || ops_[i_op]->type() != MATMUL) {
+      continue;
+    }
+    Graph::NodeType &node = graph_->nodes[iter_graph];
+    size_t matmulBatchDimFactor = CalMatmulBatchDimFactor(g_device_manager->stage_device_num(), node.apply.str);
+    if (matmulBatchDimFactor > 1) {
+      MS_LOG(INFO) << ops_[i_op]->name() << " matmulBatchDimFactor " << matmulBatchDimFactor;
+      node.apply.str.outputTensor.str_h /= matmulBatchDimFactor;
+      node.tensor_parm.tensor_str.str_h = node.apply.str.outputTensor.str_h;
+
+      Strategies strategies;
+      Dimensions strategy;
+      strategy.push_back(static_cast<int64_t>(1.0 / node.apply.str.outputTensor.str_h));
+      strategy.push_back(static_cast<int64_t>(1.0 / node.apply.str.outputTensor.str_w));
+      strategies.push_back(strategy);
+
+      int64_t stage_id = g_device_manager->stage_id();
+      StrategyPtr strategyPtr = NewStrategy(stage_id, strategies);
+      ops_[i_op]->set_out_strategy(strategyPtr);
+    }
+  }
 }
 
 void RecStrategyPropagator::GenerateStrategyV3() {
