@@ -39,13 +39,8 @@ const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberType
 namespace {
 const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
-  if (function->isa<PrimitivePy>() && function->cast<PrimitivePyPtr>()->has_signature()) {
-    return function->cast<PrimitivePyPtr>()->signatures();
-  } else if (function->isa<Primitive>()) {
-    auto prim = function->cast<PrimitivePtr>();
-    if (mindspore::ops::IsPrimitiveFunction(prim->name())) {
-      return prim->signatures();
-    }
+  if (function->isa<Primitive>() && function->cast<PrimitivePtr>()->has_signature()) {
+    return function->cast<PrimitivePtr>()->signatures();
   } else if (function->isa<MetaFuncGraph>()) {
     return function->cast<MetaFuncGraphPtr>()->signatures();
   }

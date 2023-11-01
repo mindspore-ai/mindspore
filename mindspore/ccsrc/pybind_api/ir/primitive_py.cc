@@ -184,11 +184,6 @@ PrimitivePy::~PrimitivePy() {
   backward_hook_fn_.clear();
 }
 
-void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
-  signatures_ = signatures;
-  set_has_signature(!signatures.empty());
-}
-
 py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   constexpr char get_vmap_rule_func_name[] = "get_vmap_rule";
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {

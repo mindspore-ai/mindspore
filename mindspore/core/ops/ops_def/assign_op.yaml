@@ -5,6 +5,9 @@ assign:
             dtype: tensor
         value:
             dtype: tensor
+    args_signature:
+        rw_write: variable
+        dtype_group: (variable, value)
     labels:
         side_effect_mem: True
     returns:

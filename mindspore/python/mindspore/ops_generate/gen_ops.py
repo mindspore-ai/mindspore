@@ -308,9 +308,9 @@ class {class_name}(Primitive):\n"""
         if deprecated_code != "":
             primitive_code += deprecated_code
         primitive_code += f"""    @prim_arg_register
-    def __init__(self,"""
+    def __init__(self"""
         if init_args_with_default:
-            primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
+            primitive_code += ", " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
         call_args = []
         for name in inputs_args:
             call_args.append(f"""{name}={inputs_default[name]}""" if name  in inputs_default else name)
