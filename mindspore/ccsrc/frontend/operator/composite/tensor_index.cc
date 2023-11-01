@@ -597,6 +597,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
                                                 const IndexHandleLevel index_handle_level, bool has_ellipsis,
                                                 const abstract::AbstractTuplePtr &tuple_abs_ptr,
                                                 size_t not_ellipsis_position_cnt, size_t ellipsis_position) {
+  constexpr int64_t zero = 0;
   if (index_handle_level == IndexHandleLevel::kHandleByConstFold) {
     ConstGetStrideInfoFromTuple(data_node, index_node, tuple_index_types, has_ellipsis, tuple_abs_ptr,
                                 not_ellipsis_position_cnt, ellipsis_position);
@@ -624,9 +625,8 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       (void)step_strides.emplace_back(one_tensor_node);
       index_count += 1;
     } else if (index_type_id == kObjectTypeTensorType) {
-      new_index_node = res_graph_->NewCNode({MakeExpandDimsNode(), new_index_node, NewValueNode(0)});
-      auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
-      ValueNodePtr cast_vnode = NewValueNode(cast);
+      new_index_node = res_graph_->NewCNode({MakeExpandDimsNode(), new_index_node, NewValueNode(zero)});
+      ValueNodePtr cast_vnode = NewValueNode(prim::GetPythonOps("cast", "mindspore.ops.functional"));
       new_index_node = res_graph_->NewCNode({cast_vnode, new_index_node, NewValueNode(kInt64)});
       (void)begin_strides.emplace_back(new_index_node);
       (void)end_strides.emplace_back(res_graph_->NewCNode({NewValueNode(kPrimAdd), new_index_node, one_tensor_node}));
@@ -636,7 +636,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       has_int = true;
     } else if (index_type_id == kNumberTypeInt64) {
       auto new_index_item = IntIndexToTensor(data_node, new_index_node, index_abs, tuple_index_types, i, 0);
-      new_index_item = res_graph_->NewCNode({MakeExpandDimsNode(), new_index_item, NewValueNode(0)});
+      new_index_item = res_graph_->NewCNode({MakeExpandDimsNode(), new_index_item, NewValueNode(zero)});
       (void)begin_strides.emplace_back(new_index_item);
       (void)end_strides.emplace_back(res_graph_->NewCNode({NewValueNode(kPrimAdd), new_index_item, one_tensor_node}));
       (void)step_strides.emplace_back(one_tensor_node);
@@ -649,11 +649,11 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       auto scalar_to_tensor = NewValueNode(kPrimScalarToTensor);
       if (!IsDynamic(data_shape_) && !IsAnyValue(index_abs)) {
         begin_stride = res_graph_->NewCNode({scalar_to_tensor, begin_stride, NewValueNode(MakeValue(kInt64))});
-        begin_stride = res_graph_->NewCNode({MakeExpandDimsNode(), begin_stride, NewValueNode(0)});
+        begin_stride = res_graph_->NewCNode({MakeExpandDimsNode(), begin_stride, NewValueNode(zero)});
         end_stride = res_graph_->NewCNode({scalar_to_tensor, end_stride, NewValueNode(MakeValue(kInt64))});
-        end_stride = res_graph_->NewCNode({MakeExpandDimsNode(), end_stride, NewValueNode(0)});
+        end_stride = res_graph_->NewCNode({MakeExpandDimsNode(), end_stride, NewValueNode(zero)});
         step_stride = res_graph_->NewCNode({scalar_to_tensor, step_stride, NewValueNode(MakeValue(kInt64))});
-        step_stride = res_graph_->NewCNode({MakeExpandDimsNode(), step_stride, NewValueNode(0)});
+        step_stride = res_graph_->NewCNode({MakeExpandDimsNode(), step_stride, NewValueNode(zero)});
       }
       (void)begin_strides.emplace_back(begin_stride);
       (void)end_strides.emplace_back(end_stride);
@@ -683,7 +683,6 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
     step_stride = new_slice_info[kIndex2];
   }
   auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
-
   if (IsDynamic(data_shape_) && has_int && has_ellipsis) {
     auto get_shape_prim = std::make_shared<Primitive>(kPrimGetSqueezeSliceShape->name());
     get_shape_prim->set_attr(kAttrTupleIndexTypes, MakeValue(tuple_index_types));

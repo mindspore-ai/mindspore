@@ -272,12 +272,10 @@ class MIND_API NormalizeTupleIndexInfer : public abstract::OpInferBase {
     }
     if (index_types == kBoolSequenceIndex || index_types == kSliceIndex) {
       ShapeVector max_shape;
-      if (!IsDynamic(data_shape)) {
-        auto new_dim_index =
-          NormalizeTupleIndex::NormalizeDimIndex(data_shape, dim_index, tuple_index_types, expand_dims_mask);
-        max_shape = ShapeVector({data_shape[new_dim_index]});
-      }
-      return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}), max_shape);
+      auto new_dim_index =
+        NormalizeTupleIndex::NormalizeDimIndex(data_shape, dim_index, tuple_index_types, expand_dims_mask);
+      max_shape = ShapeVector({data_shape[new_dim_index]});
+      return std::make_shared<abstract::Shape>(max_shape);
     }
     return NormalizeEllipsisIndex(data_shape, dim_index, tuple_index_types)->GetShape();
   }
