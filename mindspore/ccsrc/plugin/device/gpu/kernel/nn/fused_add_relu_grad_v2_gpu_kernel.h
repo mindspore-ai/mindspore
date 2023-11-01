@@ -61,7 +61,7 @@ class FusedAddReluGradV2GpuKernelMod : public NativeGpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     output_size_list_.clear();
     workspace_size_list_.clear();
-    auto shape = inputs[kIndex7]->GetShapeVector();
+    auto shape = inputs[kIndex0]->GetDeviceShapeVector();
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       output_size_list_.push_back(element_num_ * sizeof(T));

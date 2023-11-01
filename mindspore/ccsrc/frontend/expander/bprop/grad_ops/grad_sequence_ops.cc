@@ -28,7 +28,7 @@ NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
 
 NodePtrList TensorToSequenceGrad(BpropIRBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
-  auto dout = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex2);
   auto dx = ib->SequenceToTensor(dout, ib->GetDtype(x));
   return {dx};
 }
@@ -118,7 +118,7 @@ REG_BPROP_BUILDER("ListInsert").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("TupleToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
 REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(SequenceToTensorGrad);
 REG_BPROP_BUILDER("TensorToTuple").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
-REG_BPROP_BUILDER("ListToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
+REG_BPROP_BUILDER("TensorToList").SetUnusedInputs({i0, i1, i2}).SetBody(TensorToSequenceGrad);
 
 REG_BPROP_BUILDER("ScalarToTensor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
