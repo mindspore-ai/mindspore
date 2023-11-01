@@ -3,6 +3,7 @@ import numpy as onp
 from mindspore import Tensor, jit, ops
 from mindspore import numpy as np
 import mindspore.nn as nn
+from mindspore import context
 
 
 def match_array(actual, expected, error=0, err_msg=''):
@@ -78,7 +79,9 @@ def test_list():
     TEST_SUMMARY: test __call__ function in class
     """
     test = ListTest()
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = test.test()
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = test.test_pi_jit()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -117,7 +120,9 @@ def test_celllist(input_x):
     TEST_SUMMARY: test __call__ function in class
     """
     test = CellListTest()
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = test.test(input_x)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = test.test_pi_jit(input_x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -134,6 +139,8 @@ def test_sideeffect(input_x):
     TEST_SUMMARY: test __call__ function in class
     """
     test = ListTest()
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = test.test_sideeffect(input_x)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = test.test_sideeffect_pi_jit(input_x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

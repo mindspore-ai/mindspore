@@ -1,6 +1,6 @@
 import pytest
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
-from mindspore import Tensor, jit, ops
+from mindspore import Tensor, jit, context, ops
 import mindspore.common.dtype as mstype
 import numpy as np
 
@@ -93,8 +93,10 @@ def test_self_reference():
     d = {"k": 1}
     d["self"] = d
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     b = func(d, rec)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     a = func(d, rec)
     jit_mode_pi_enable()
     assert a == b
@@ -132,8 +134,10 @@ def test_dict_update():
     Expectation: The results should match for both modes.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     a = dict_test({})
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     b = dict_test({})
     jit_mode_pi_enable()
     assert a == b
@@ -189,6 +193,7 @@ def test_slice():
     """
     x = Tensor(np.random.randn(6, 6, 6, 6), mstype.float32) * 1.3
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     a, b, c, d, e, f = slice_test(x)
     match_array(a, b, 0)
     match_array(c, d, 0)
@@ -224,8 +229,10 @@ def test_builtin_func():
     """
     x = Tensor([True])
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     a = builtin_func_test(x, True, False)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     b = builtin_func_test(x, True, False)
     jit_mode_pi_enable()
     assert a == b

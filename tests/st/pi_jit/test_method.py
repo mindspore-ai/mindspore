@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 import mindspore.ops as ops
 
 
@@ -42,8 +42,10 @@ def test_method_annotation(input_x):
     Description: Test the methods of a class with annotation using different inputs.
     Expectation: The results of the test1 and test2 methods should match for the given input.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     axis = 0
     expand_dim = ExpandDimsTest(axis)
     res = expand_dim.test1(input_x)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = expand_dim.test2(input_x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

@@ -1,6 +1,6 @@
 import pytest
 import numpy as onp
-from mindspore import jit
+from mindspore import jit, context
 
 
 def match_array(actual, expected, error=0, err_msg=''):
@@ -51,7 +51,9 @@ def test_int_float_conversion_with_args(func, ms_func):
     Description: Test cases for argument support in PYNATIVE mode
     Expectation: Results match between GraphJit and JIT functions
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func()
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -67,6 +69,8 @@ def test_int_float_conversion_no_args(func, ms_func):
     Description: Test cases for argument support in PYNATIVE mode
     Expectation: Results match between GraphJit and JIT functions
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func()
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

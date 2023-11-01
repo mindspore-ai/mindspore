@@ -1,7 +1,7 @@
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
 from mindspore import ops, numpy, Tensor
 from mindspore.nn import Cell
-from mindspore import jit
+from mindspore import jit, context
 import numpy as onp
 import pytest
 
@@ -192,8 +192,10 @@ def test_kw_inline():
         The outputs should be identical regardless of the status of PIJit.
     """
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     a = kw_inline_test()
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     b = kw_inline_test()
     assert a == b
 
@@ -213,8 +215,10 @@ def test_cell_free():
         The outputs should be identical regardless of the status of PIJit.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     res2 = cell_free_test()
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     res1 = cell_free_test()
     jit_mode_pi_enable()
     assert res1 == res2
@@ -237,6 +241,7 @@ def test_branch():
         based on the function's defined behavior.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     r1 = branch_test()
     r2 = branch_test(a=1, use_default=False)
     r3 = branch_test(b=1, use_default=False)
@@ -264,8 +269,10 @@ def test_break_at_loop(a):
         The output with and without PIJit enabled should be the same.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     r1 = loop_test(a, 0)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     r2 = loop_test(a, 0)
     jit_mode_pi_enable()
     assert r1 == r2
@@ -288,8 +295,10 @@ def test_toy_example(a, b):
         The outputs should match when PIJit and PSJit are enabled or disabled.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     r1 = jit(toy_example, mode="PIJit", jit_config=config)(a, b)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     r2 = jit(toy_example)(a, b)
     jit_mode_pi_enable()
     match_array(r1, r2)
@@ -312,8 +321,10 @@ def test_stack_restore(param):
         The outputs should match when PIJit and PSJit are enabled or disabled.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     res2 = stack_restore_test(param)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     res1 = stack_restore_test(param)
     jit_mode_pi_enable()
     assert res1 == res2
@@ -345,8 +356,10 @@ def test_unpack(c):
         The function should unpack variables consistently and return the same value in both modes.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     r1 = unpack_test(c)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     r2 = unpack_test(c)
     jit_mode_pi_enable()
     assert r1 == r2
@@ -376,8 +389,10 @@ def test_unpack2():
         The function should unpack variables consistently and return the same value in both modes.
     """
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     r1 = unpack_test2(1, 2, 3)
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     r2 = unpack_test2(1, 2, 3)
     jit_mode_pi_enable()
     assert r1 == r2

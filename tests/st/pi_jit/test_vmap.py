@@ -19,6 +19,7 @@ import mindspore.ops.functional as F
 from mindspore import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.common.api import jit
+from mindspore import context
 
 
 @pytest.mark.level0
@@ -43,6 +44,7 @@ def test_vmap_with_tuple_input():
         return wrapped
 
     shape = (2, 3)
+    context.set_context(mode=context.PYNATIVE_MODE)
     a = F.ones(shape, mstype.int32)
     b = F.ones(shape, mstype.int32) * 2
     res = foo(real_fn)(a, b)

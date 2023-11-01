@@ -3,7 +3,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 from mindspore.common.initializer import TruncatedNormal
 
 
@@ -87,6 +87,8 @@ def test_cell_lenet(input_data):
     Description: Test the LeNet-5 model with given input data.
     Expectation: The output size should match the expected size.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = LeNet5()
+    context.set_context(mode=context.GRAPH_MODE)
     output = net(Tensor(input_data))
     check(output)

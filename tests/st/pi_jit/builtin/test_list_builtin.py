@@ -1,6 +1,6 @@
 import pytest
 import numpy as onp
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 
 
 def match_array(actual, expected, error=0, err_msg=''):
@@ -84,7 +84,9 @@ def test_list_with_input_tuple(func, ms_func, a):
     1. Test list() in PYNATIVE mode
     2. give the input data: tuple'''
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -103,7 +105,9 @@ def test_list_with_input_dict(func, ms_func, a):
     1. Test list() in PYNATIVE mode
     2. give the input data: dict'''
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -122,7 +126,9 @@ def test_list_with_input_array(func, ms_func, a):
     1. Test list() in PYNATIVE mode
     2. give the input data: numpy array'''
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -133,7 +139,7 @@ def test_list_with_input_array(func, ms_func, a):
 @pytest.mark.parametrize('func', [fallback_list_with_input_numpy_tensor])
 @pytest.mark.parametrize('ms_func', [ms_fallback_list_with_input_numpy_tensor])
 @pytest.mark.parametrize('a', [Tensor([1, 2])])
-@pytest.mark.parametrize('b', [Tensor([1, 2]), Tensor([2, 3])])
+@pytest.mark.parametrize('b', [[Tensor([1, 2]), Tensor([2, 3])]])
 def test_list_with_input_tensor(func, ms_func, a, b):
     """
     Feature: ALL TO ALL
@@ -142,7 +148,9 @@ def test_list_with_input_tensor(func, ms_func, a, b):
     1. Test list() in PYNATIVE mode
     2. give the input data: tensor and (); output tuple
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a, b)
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
     match_array(res[1], ms_res[1], error=0, err_msg=str(ms_res))

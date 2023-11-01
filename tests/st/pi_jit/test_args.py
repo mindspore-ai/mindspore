@@ -1,6 +1,6 @@
 import pytest
 import numpy as onp
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 from mindspore.nn import Cell
 import mindspore.nn as nn
 
@@ -458,6 +458,7 @@ def test_arg1(func, ms_func, a):
     Description: test cases for args support in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a)
     ms_res = ms_func(a)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -476,6 +477,7 @@ def test_arg2(func, ms_func, a, b):
     Description: test cases for args support in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
     ms_res = ms_func(a, b)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -495,6 +497,7 @@ def test_arg_vargs(func, ms_func, a, b, c):
     Description: test cases for args support in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b, c)
     ms_res = ms_func(a, b, c)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -515,6 +518,7 @@ def test_arg_vargs_kwargs(func, ms_func, a, b, c, d):
     Description: test cases for args support in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b, c, s=d)
     ms_res = ms_func(a, b, c, s=d)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -534,6 +538,7 @@ def test_default_scalar_arg(func, ms_func, a, b):
     Expectation: the result match
     TEST_SUMMARY:define a scalar default arg, but pass a tensor to it
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
     ms_res = ms_func(a, b)
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
@@ -554,6 +559,7 @@ def test_default_tuple_arg(func, ms_func, a, b):
     Expectation: the result match
     TEST_SUMMARY:define a tuple default arg, but pass a tensor to it
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
     ms_res = ms_func(a, b)
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
@@ -574,6 +580,7 @@ def test_default_scalar_arg_relu(func, ms_func, a, b):
     Expectation: the result match
     TEST_SUMMARY:define a scalar default arg, but pass a tensor to it and do relu
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
     ms_res = ms_func(a, b)
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
@@ -594,6 +601,7 @@ def test_default_none_arg(func, ms_func, a, b):
     Expectation: the result match
     TEST_SUMMARY:define a none default arg, but pass a tensor to it
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
     ms_res = ms_func(a, b)
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
@@ -613,6 +621,7 @@ def test_parser_key_value_unsed(func, ms_func, a):
     Expectation: the result match
     TEST_SUMMARY:define a key-value arg, and do not use it and do not pass a key-value to it
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a)
     ms_res = ms_func(a)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -630,6 +639,7 @@ def test_parser_arg_scalar_subnet(func, ms_func):
     Expectation: the result match
     TEST_SUMMARY:define a scalar default arg and use it in sub-network
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func()
     ms_res = ms_func()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -647,6 +657,7 @@ def test_parser_arg_scalar_outside(func, ms_func):
     Expectation: the result match
 TEST_SUMMARY:define a scalar default arg, use it in outside network
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func()
     ms_res = ms_func()
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
@@ -664,6 +675,7 @@ def test_parser_arg_tensor_subnet(func, ms_func):
     Expectation: the result match
     TEST_SUMMARY:define a default tensor tuple arg, use it in sub-network
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func()
     ms_res = ms_func()
     match_array(res[0], ms_res[0], error=0, err_msg=str(ms_res))
@@ -682,6 +694,7 @@ def test_parser_three_default_arg_tensor_subnet(func, ms_func):
     Expectation: no error
     TEST_SUMMARY:define a scalar default arg, a none arg and a tuple arg, and use them in sub-network
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
     ms_func()
 
@@ -698,6 +711,7 @@ def test_parser_key_value1(func, ms_func):
     Expectation: no error
     TEST_SUMMARY:define a key-value arg, and use it in sub-network, pass two non-tensor data to it
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
     ms_func()
 
@@ -713,6 +727,7 @@ def test_parser_key_value2(func):
     Expectation: no error
     TEST_SUMMARY:  变长关键字参数  接收dict作为输入
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
 
 
@@ -727,6 +742,7 @@ def test_parser_key_value3(func):
     Expectation: no error
     TEST_SUMMARY:  命名关键字参数  *, a, b
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
 
 
@@ -741,6 +757,7 @@ def test_parser_key_value4(func):
     Expectation: no error
     TEST_SUMMARY:  位置参数 可变参数 命名关键字  不定长关键字  非顶层Cell
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
 
 
@@ -755,4 +772,5 @@ def test_parser_key_value5(func):
     Expectation: no error
     TEST_SUMMARY:   命名关键字不命名
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     func()
