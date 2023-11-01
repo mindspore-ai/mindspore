@@ -38,9 +38,6 @@ constexpr auto kNameFloatStatus = "FloatStatus";
 
 bool CanConvert() {
   const auto &flags = GraphKernelFlags::GetInstance();
-  if (flags.kernel_generator == "AKG_V2") {
-    return false;
-  }
   if (!flags.enable_expand_ops_only.empty()) {
     std::unordered_set<std::string> all_ops(flags.enable_expand_ops_only.begin(), flags.enable_expand_ops_only.end());
     return all_ops.find(kNameAddN) != all_ops.end() && all_ops.find(kNameFloatStatus) != all_ops.end();
