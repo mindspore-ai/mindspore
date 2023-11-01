@@ -60,7 +60,7 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
                 << " origin ref count:" << input_data->data_->original_ref_count()
                 << " user data:" << input_data->data_->user_data()
                 << " type:" << input_data->data_->kernel_tensor()->GetType()
-                << input_data->data_->kernel_tensor()->type_id();
+                << " type id:" << input_data->data_->kernel_tensor()->type_id();
   if (input_data->index_ < SizeToLong(graph()->input_nodes().size())) {
     // Collect graph input data.
     input_op_datas_[sequential_num].emplace_back(input_data);
@@ -99,6 +99,7 @@ void AnyTypeKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const c
   std::vector<DeviceTensor *> memory_free_list = graph_ouput_device_tensors_;
   const auto &data_iter = input_op_datas_.find(context->sequential_num_);
   if (data_iter == input_op_datas_.end()) {
+    memory_free_lists_.push(memory_free_list);
     return;
   }
   for (auto &input_data : data_iter->second) {
@@ -207,32 +208,32 @@ std::string GenerateIDForGraph(const std::vector<DeviceTensor *> &device_tensors
     if (device_tensor == nullptr) {
       MS_LOG(EXCEPTION) << "Empty device tensor index:" << index;
     }
-    const auto &node = device_tensor->GetNodeIndex().first;
-    if (node == nullptr) {
+    if (device_tensor->user_data() == nullptr) {
+      device_tensor->kernel_tensor()->SetType(device_tensor->kernel_tensor()->GetType());
+      device_tensor->kernel_tensor()->SetShape(device_tensor->kernel_tensor()->GetShape());
       get_shape_and_type_string(device_tensor->host_shape(), device_tensor->type_id());
       continue;
     }
-    if (device_tensor->user_data() != nullptr) {
-      const auto &user_data_obj =
-        device_tensor->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
-      MS_EXCEPTION_IF_NULL(user_data_obj);
-      const auto &obj = user_data_obj->obj;
-      py::gil_scoped_acquire gil_acquire;
-      const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
-      MS_EXCEPTION_IF_NULL(abstract);
-      node->set_abstract(abstract);
-    }
-    if (node->abstract()->isa<abstract::AbstractSequence>()) {
-      auto sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+
+    const auto &user_data_obj =
+      device_tensor->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key);
+    MS_EXCEPTION_IF_NULL(user_data_obj);
+    const auto &obj = user_data_obj->obj;
+    py::gil_scoped_acquire gil_acquire;
+    const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
+    MS_EXCEPTION_IF_NULL(abstract);
+    if (abstract->isa<abstract::AbstractSequence>()) {
+      auto sequence_abs = abstract->cast<abstract::AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);
       id = id + "Tuple_" + std::to_string(sequence_abs->size()) + "_";
-    } else if (node->abstract()->isa<abstract::AbstractScalar>()) {
+    } else if (abstract->isa<abstract::AbstractScalar>()) {
       id = id + "Scalar_";
-    } else if (node->abstract()->isa<abstract::AbstractTensor>()) {
+    } else if (abstract->isa<abstract::AbstractTensor>()) {
       id = id + "Tensor_";
     }
-    get_shape_and_type_string(trans::GetRuntimePaddingShape(node, device_tensor->GetNodeIndex().second),
-                              device_tensor->type_id());
+    device_tensor->kernel_tensor()->SetType(abstract->BuildType());
+    device_tensor->kernel_tensor()->SetShape(abstract->BuildShape());
+    get_shape_and_type_string(device_tensor->host_shape(), device_tensor->type_id());
   }
   return id;
 }
@@ -247,6 +248,7 @@ void InferParameterAbstractForModelGraph(const KernelGraphPtr &graph, const std:
     }
     const auto &device_tensor = device_tensors[index];
     MS_EXCEPTION_IF_NULL(device_tensor);
+    MS_EXCEPTION_IF_NULL(device_tensor->kernel_tensor());
     auto input_node = graph->input_nodes()[index];
     MS_EXCEPTION_IF_NULL(input_node);
     abstract::AbstractBasePtr abstract;
@@ -261,17 +263,14 @@ void InferParameterAbstractForModelGraph(const KernelGraphPtr &graph, const std:
       py::gil_scoped_acquire gil_acquire;
       abstract = pyexecute::GenerateAbstractFromPyObject(obj);
     } else {
-      const auto &node_with_index = device_tensor->GetNodeIndex();
-      MS_EXCEPTION_IF_NULL(node_with_index.first);
-      MS_LOG(DEBUG) << "No user data:" << device_tensor->user_data() << " in device address:" << device_tensor
-                    << " for input:" << input_node->DebugString()
-                    << " src node:" << node_with_index.first->DebugString();
-      abstract = node_with_index.first->abstract();
+      abstract =
+        abstract::MakeAbstract(device_tensor->kernel_tensor()->GetShape(), device_tensor->kernel_tensor()->GetType());
     }
     MS_EXCEPTION_IF_NULL(abstract);
+    MS_LOG(DEBUG) << "Infer parameter by abstract:" << abstract->ToString();
     if (!abstract->isa<abstract::AbstractSequence>()) {
       MS_LOG(DEBUG) << "Set abstract:" << abstract->ToString() << " for input node:" << input_node->DebugString()
-                    << device_tensor << " type id:" << device_tensor->type_id();
+                    << " device tensor:" << device_tensor << " type id:" << device_tensor->type_id();
       input_node->set_abstract(abstract);
       continue;
     }
@@ -475,6 +474,13 @@ void AnyTypeKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const cont
     }
   }
   CopyInputData(context, real_graphs_[current_data_type_]);
+  if (!memory_free_lists_.empty()) {
+    for (size_t i = 0; i < node_device_tensors_.size(); ++i) {
+      if (node_device_tensors_[i] != nullptr) {
+        memory_free_lists_.back().emplace_back(node_device_tensors_[i].get());
+      }
+    }
+  }
   SendOutput(context);
 }
 

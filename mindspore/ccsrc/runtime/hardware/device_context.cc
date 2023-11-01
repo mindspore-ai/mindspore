@@ -47,6 +47,7 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   }
 
   if (!address->from_mem_pool()) {
+    MS_LOG(DEBUG) << "device address:" << address << " ptr:" << address->GetMutablePtr() << " not from pool";
     return;
   }
 

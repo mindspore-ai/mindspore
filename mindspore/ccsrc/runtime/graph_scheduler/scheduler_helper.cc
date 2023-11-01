@@ -268,7 +268,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   to_actor->input_datas_num_++;
   (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
-  if (from_kernel == nullptr || from_actor->type() == KernelTransformType::kAnyTypeKernelActor) {
+  if (from_kernel == nullptr) {
     return;
   }
   // Update the reference count of from_kernel.

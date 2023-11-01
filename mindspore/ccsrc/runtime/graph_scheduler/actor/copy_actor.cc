@@ -95,6 +95,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
       std::string error_info = "Copy device tensor failed: " + GetAID().Name();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
+    output_device_tensor_[0]->kernel_tensor()->SetType(input_device_tensor_[0]->kernel_tensor()->GetType());
     output_device_tensor_[0]->kernel_tensor()->SetShape(input_device_tensor_[0]->kernel_tensor()->GetShape());
     output_device_tensor_[0]->set_user_data(input_device_tensor_[0]->user_data());
     MS_LOG(DEBUG) << "Set user data:" << input_device_tensor_[0]->user_data()
