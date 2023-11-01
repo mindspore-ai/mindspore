@@ -387,7 +387,7 @@ bool GraphBuilder::PruneBranch(const Instr &instr) {
     MS_LOG(DEBUG) << "Fail to prune bytecode " << opcode << " args " << oparg << "!\n";
   }
 
-  if (cond->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+  if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     auto tr = GetTrace(cond, false, true, 0);
     GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->to_str().c_str(),
@@ -513,6 +513,9 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
 bool GraphBuilder::DoForIter(const Instr &instr) {
   ValueNode *iter = pop();
   ValueNode *element = NewValueNode(AObject::MakeAObject(AObject::kTypeAnyValue), instr, {iter});
+  if (root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase)) {
+    return false;
+  }
   CreateAndSetConditionNode(iter);
   push(iter);
   push(element);
@@ -531,6 +534,9 @@ bool GraphBuilder::DoJumpIf(const Instr &instr) {
     case JUMP_IF_FALSE_OR_POP: /* fall-through */
     case JUMP_IF_TRUE_OR_POP: {
       CreateAndSetConditionNode(seek(0));
+      if (root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase)) {
+        return false;
+      }
       frame_.SetConditionIsTrue(opcode == JUMP_IF_TRUE_OR_POP);
       MergeFrameState(current_block_->GetJumpBB());
       pop();
@@ -541,8 +547,11 @@ bool GraphBuilder::DoJumpIf(const Instr &instr) {
     case POP_JUMP_IF_FALSE: /* fall-through */
     case POP_JUMP_IF_TRUE: {
       CreateAndSetConditionNode(pop());
-      if (root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase) && !current_block_->is_loop_head()) {
-        return PruneBranch(instr);
+      if (root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase)) {
+        if (!current_block_->is_loop_head()) {
+          return PruneBranch(instr);
+        }
+        return false;
       }
       frame_.SetConditionIsTrue(opcode == POP_JUMP_IF_TRUE);
       MergeFrameState(current_block_->GetJumpBB());
@@ -1147,7 +1156,12 @@ void GraphBuilder::HandleBlockSwitch() {
   }
   if (cur_bci_ == current_block_->end_ci() && !current_block_->GetJumpBB() && current_block_->GetFallBB()) {
     // merge to fall-through frame
-    MergeFrameState(current_block_->GetFallBB());
+    bool pruned = root_->graph_->Config().GetBoolConfig(GraphJitConfig::kPruneCase);
+    bool merged = graph_->FindFrame(current_block_->GetFallBB()->begin_ci());
+    if (!pruned || !merged) {
+      // if prune branch just merge once
+      MergeFrameState(current_block_->GetFallBB());
+    }
   }
   current_block_ = next_block;
   if (current_block_->is_dead()) {
@@ -1959,9 +1973,7 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
     return nullptr;
   }
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(frame->f_code));
-  if (jcr->conf == nullptr) {
-    jcr->conf = new GraphJitConfig(conf);
-  }
+  *jcr->conf = conf;
   auto res = std::make_unique<GraphBuilder>(frame);
 
   auto code = res->GetGraph()->GetGuard();

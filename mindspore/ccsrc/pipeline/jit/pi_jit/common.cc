@@ -227,24 +227,15 @@ static void freeJitCompileResults(void *jitCompileResults) {
   Py_CLEAR(c->compiled.callable);
   c->codehub.reset();
   MS_LOG(DEBUG) << __FUNCTION__ << " " << c;
-  if (c->sub_routine) {
-    delete c;
-    return;
-  }
-  if (c->tbs != nullptr) {
-    delete c->tbs;
-    c->tbs = nullptr;
-  }
-  if (c->conf != nullptr) {
-    delete c->conf;
-    c->conf = nullptr;
-  }
   delete c;
 }
 
 static JitCompileResults *allocJitCompileResults() {
   JitCompileResults *c = new JitCompileResults();
+  c->stat = JitCompileResults::NEVER_COMPILE;
+  c->tbs = std::make_shared<Tracebackes>();
   c->codehub = std::make_shared<OptCodeHub>();
+  c->conf = std::make_shared<GraphJitConfig>();
   c->sub_routine = false;
   c->ms_mode_ = false;
   return c;
@@ -1068,36 +1059,31 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
     return false;
   }
   mindspore::jit::graph::JitCompileResults *c = mindspore::jit::graph::getJitCompileResults(code);
-  if (c == NULL) {
+  if (c == nullptr) {
     return false;
   }
-  c->stat = mindspore::jit::graph::JitCompileResults::GRAPH_CANDIDATE;
-  c->func = PyCode_Check(func) ? nullptr : func;
+  if (c->stat != mindspore::jit::graph::JitCompileResults::NEVER_COMPILE) {
+    *c->conf = mindspore::jit::graph::GraphJitConfig(tag);
+    return true;
+  }
+
+  int raw_code_size = (PyBytes_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_code)) / sizeof(_Py_CODEUNIT);
+  std::string raw_func_info_name = py::str(code).cast<std::string>();
   std::string raw_func_name = "";
-  if (func != nullptr && PyFunction_Check(func)) {
-    raw_func_name = mindspore::jit::graph::Utils::GetPyName(reinterpret_cast<PyFunctionObject *>(func)->func_qualname);
-  }
-  std::string raw_func_info_name = "";
-  int raw_code_size = 0;
-  if (code) {
-    raw_func_info_name = py::str(code).cast<std::string>();
-    raw_code_size = (PyBytes_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_code)) / sizeof(_Py_CODEUNIT);
-  }
-  if (c->conf != nullptr) {
-    delete c->conf;
-  }
-  if (c->tbs != nullptr) {
-    delete c->tbs;
-  }
-  c->conf = new mindspore::jit::graph::GraphJitConfig(tag);
-  c->tbs = new mindspore::jit::graph::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
-  c->sub_routine = false;
   if (PyFunction_Check(func)) {
     const char *module_name = PyUnicode_AsUTF8(PyFunction_GET_MODULE(func));
     const char *s = strchr(module_name, '.');
     std::string top_module = s ? std::string(module_name, s - module_name) : module_name;
     mindspore::jit::graph::kPIJitConfigDefault.AddAllowedInlineModules(top_module);
+
+    raw_func_name = mindspore::jit::graph::Utils::GetPyName(reinterpret_cast<PyFunctionObject *>(func)->func_qualname);
   }
+
+  c->sub_routine = false;
+  c->func = PyCode_Check(func) ? nullptr : func;
+  c->stat = mindspore::jit::graph::JitCompileResults::GRAPH_CANDIDATE;
+  *c->conf = mindspore::jit::graph::GraphJitConfig(tag);
+  *c->tbs = mindspore::jit::graph::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
   return true;
 }
 #else
