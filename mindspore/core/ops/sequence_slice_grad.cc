@@ -41,12 +41,8 @@ AbstractBasePtr SliceGradInferInner(const PrimitivePtr &primitive, const std::ve
   auto prim_name = primitive->name();
   constexpr size_t input_num = 5;
   constexpr size_t x_index = 1;
-  constexpr size_t start_index = 2;
-  constexpr size_t end_index = 3;
-  constexpr size_t step_index = 4;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  return std::make_shared<abstract::AbstractTuple>(
-    AbstractBasePtrList{input_args[x_index], input_args[start_index], input_args[end_index], input_args[step_index]});
+  return input_args[x_index]->Clone();
 }
 }  // namespace
 
@@ -59,13 +55,8 @@ class SequenceSliceGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     constexpr size_t input_num = 5;
     constexpr size_t x_index = 1;
-    constexpr size_t start_index = 2;
-    constexpr size_t end_index = 3;
-    constexpr size_t step_index = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{
-      input_args[x_index]->GetShape()->Clone(), input_args[start_index]->GetShape()->Clone(),
-      input_args[end_index]->GetShape()->Clone(), input_args[step_index]->GetShape()->Clone()});
+    return input_args[x_index]->GetShape()->Clone();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -73,13 +64,8 @@ class SequenceSliceGradInfer : public abstract::OpInferBase {
     auto prim_name = primitive->name();
     constexpr size_t input_num = 5;
     constexpr size_t x_index = 1;
-    constexpr size_t start_index = 2;
-    constexpr size_t end_index = 3;
-    constexpr size_t step_index = 4;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-    return std::make_shared<Tuple>(
-      TypePtrList{input_args[x_index]->GetType()->Clone(), input_args[start_index]->GetType()->Clone(),
-                  input_args[end_index]->GetType()->Clone(), input_args[step_index]->GetType()->Clone()});
+    return input_args[x_index]->GetType()->Clone();
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
