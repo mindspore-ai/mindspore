@@ -22,6 +22,7 @@
 #include "mindspore/core/ops/grad/avg_pool_3d_grad.h"
 #include "mindspore/core/ops/grad/max_pool_3d_grad.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
 #include "ops/op_name.h"
@@ -65,8 +66,7 @@ constexpr size_t kMax3DDataFormatIdx = 8;
 bool PoolingGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   if (kernel_name_ != kAvgPoolGradOpName) {
-    format_attr_ =
-      static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<string>(primitive_->GetAttr(ops::kFormat))));
+    format_attr_ = GetFormatFromStrToEnum(GetValue<string>(primitive_->GetAttr(ops::kFormat)));
     pad_mode_ =
       static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<string>(primitive_->GetAttr(ops::kPadMode))));
     stride_me_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));

@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
@@ -142,8 +143,7 @@ class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
     if (kernel_name_ == kAvgPoolOpName) {
       format_attr = static_cast<mindspore::Format>(inputs[format_index]->GetValueWithCheck<int64_t>());
     } else {
-      format_attr =
-        static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<std::string>(primitive_->GetAttr("format"))));
+      format_attr = GetFormatFromStrToEnum(GetValue<std::string>(primitive_->GetAttr("format")));
     }
     if (Anyone(format_attr, mindspore::Format::NHWC, mindspore::Format::NDHWC)) {
       data_format_ = format_attr;

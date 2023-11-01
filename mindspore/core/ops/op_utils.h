@@ -288,37 +288,6 @@ inline int64_t get_batch_rank(const PrimitivePtr &prim) {
   return 0;
 }
 
-inline int64_t FormatStringToInt(const std::string &format) {
-  std::unordered_map<std::string, int64_t> format_map = {{"DEFAULT_FORMAT", -1},
-                                                         {"NCHW", 0},
-                                                         {"NHWC", 1},
-                                                         {"NHWC4", 2},
-                                                         {"HWKC", 3},
-                                                         {"HWCK", 4},
-                                                         {"KCHW", 5},
-                                                         {"CKHW", 6},
-                                                         {"KHWC", 7},
-                                                         {"CHWK", 8},
-                                                         {"HW", 9},
-                                                         {"HW4", 10},
-                                                         {"NC", 11},
-                                                         {"NC4", 12},
-                                                         {"NC4HW4", 13},
-                                                         {"NUM_OF_FORMAT", 14},
-                                                         {"NCDHW", 15},
-                                                         {"NWC", 16},
-                                                         {"NCW", 17},
-                                                         {"NDHWC", 18},
-                                                         {"NC8HW8", 19}};
-
-  auto it = format_map.find(format);
-  if (it != format_map.end()) {
-    return it->second;
-  }
-  MS_LOG(EXCEPTION) << "Got an invalid format string: " << format << ".";
-  return -1;
-}
-
 inline int64_t PadModeStringToInt(const std::string &pad) {
   std::string pad_mode = pad;
   (void)std::transform(pad_mode.begin(), pad_mode.end(), pad_mode.begin(), toupper);

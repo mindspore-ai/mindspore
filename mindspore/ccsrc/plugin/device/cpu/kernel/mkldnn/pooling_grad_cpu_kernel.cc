@@ -21,6 +21,7 @@
 #include "utils/profile.h"
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -81,8 +82,7 @@ bool PoolingGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
       }
     }
     grad_index_ = kernel_name_ == kAvgPool3DGradOpName ? 1 : kGradIndex;
-    format_ = static_cast<mindspore::Format>(
-      ops::FormatStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT))));
+    format_ = GetFormatFromStrToEnum(GetValue<std::string>(KernelMod::primitive_->GetAttr(FORMAT)));
     pad_mode_ = static_cast<mindspore::PadMode>(
       ops::PadModeStringToInt(GetValue<std::string>(KernelMod::primitive_->GetAttr(PAD_MODE))));
     kernel_include_nc_ = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
@@ -121,8 +121,8 @@ int PoolingGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format" << format_;
   }
   if (kernel_name_ == kAvgPoolGradOpName) {
-    kernel_include_nc_.insert(kernel_include_nc_.begin(), src_shape.begin(), src_shape.begin() + NC_LEN);
-    strides_include_nc_.insert(strides_include_nc_.begin(), src_shape.begin(), src_shape.begin() + NC_LEN);
+    kernel_include_nc_.insert(kernel_include_nc_.begin(), 2, 1);
+    strides_include_nc_.insert(strides_include_nc_.begin(), 2, 1);
   }
   if (kernel_include_nc_.size() != src_dim) {
     MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
