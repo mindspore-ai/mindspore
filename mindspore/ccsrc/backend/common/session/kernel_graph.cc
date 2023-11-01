@@ -1440,7 +1440,7 @@ void KernelGraph::InferType() {
       auto abstract = mindspore::abstract::MakeAbstract(shape, type);
       cnode->set_abstract(abstract);
       MS_LOG(INFO) << "Set abstract:" << abstract->ToString() << " for node:" << cnode->DebugString();
-      return;
+      continue;
     }
 
     auto find = abstract::GetPrimitiveInferImpl(primitive);
