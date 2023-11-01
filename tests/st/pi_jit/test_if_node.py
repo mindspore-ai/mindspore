@@ -213,6 +213,7 @@ def test_full_branch(jit_func):
     Description: test full branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -230,6 +231,7 @@ def test_repeat_full_branch(jit_func):
     Description: test full branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(26, mstype.float32)
@@ -247,6 +249,7 @@ def test_nest_full_branch(jit_func):
     Description: test full branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(32, mstype.float32)
@@ -264,6 +267,7 @@ def test_multi_branch(jit_func):
     Description: test multi branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -283,6 +287,7 @@ def test_return_branch_1(jit_func):
     Description: test return branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -300,6 +305,7 @@ def test_return_branch_2(jit_func):
     Description: test return branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -317,6 +323,7 @@ def test_return_branch_3(jit_func):
     Description: test return branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -334,6 +341,7 @@ def test_return_branch_4(jit_func):
     Description: test return branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)
@@ -351,6 +359,7 @@ def test_return_branch_5(jit_func):
     Description: test return branch.
     Expectation: success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(6, mstype.float32)
     y = Tensor(10, mstype.float32)
     assert jit_func(x, y) == Tensor(16, mstype.float32)

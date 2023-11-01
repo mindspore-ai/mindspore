@@ -1,7 +1,7 @@
 import pytest
 import numpy as onp
 from mindspore import Tensor, jit, jit_class
-
+from mindspore import context
 
 def match_array(actual, expected, error=0, err_msg=''):
     if isinstance(actual, (int, Tensor)):
@@ -132,7 +132,9 @@ def test_parser_class1(func, ms_func):
     Description: Validate that the __call__ method works as expected in both static and JIT-optimized classes.
     Expectation: Both should return the same results.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     result_static = func()
+    context.set_context(mode=context.GRAPH_MODE)
     result_ms = ms_func()
     match_array(result_static, result_ms)
 
@@ -148,7 +150,9 @@ def test_parser_class2(func, ms_func):
     Description: Validate that the attributes of the class work as expected in both static and JIT-optimized classes.
     Expectation: Both should return the same results.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     result_static = func()
+    context.set_context(mode=context.GRAPH_MODE)
     result_ms = ms_func()
     match_array(result_static, result_ms)
 
@@ -165,6 +169,8 @@ def test_parser_class3(func, ms_func):
     in both static and JIT-optimized classes.
     Expectation: Both should return the same results.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     result_static = func()
+    context.set_context(mode=context.GRAPH_MODE)
     result_ms = ms_func()
     match_array(result_static, result_ms)

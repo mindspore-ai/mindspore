@@ -1,6 +1,6 @@
 import pytest
 import numpy as onp
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 
 
 def match_array(actual, expected, error=0, err_msg=''):
@@ -210,7 +210,9 @@ def test_bool(func, ms_func, args, kwargs):
     1. Test bool() in PYNATIVE mode with test_data
     2. output bool
      """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(*args, **kwargs)
+    context.set_context(mode=context.GRAPH_MODE)
     if ms_func is ms_fallback_bool_numpy:
         ms_res = ms_func()
     else:
@@ -242,7 +244,9 @@ def test_bool_tensor(func, ms_func, args, kwargs):
     1. Test bool() in PYNATIVE mode with tensor
     2. output bool
      """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(*args, **kwargs)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(*args, **kwargs)
 
     if isinstance(res, tuple):
