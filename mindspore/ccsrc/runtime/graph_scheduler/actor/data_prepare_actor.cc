@@ -730,7 +730,8 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
     return;
   }
-  MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << 0;
+  MS_LOG(INFO) << "Prepare device data for value node: " << node->DebugString() << ", output index: " << 0
+               << " device address:" << device_tensor;
   tensor->set_device_address(device_tensor);
   UpdateRefCount(device_tensor.get(), true);
 

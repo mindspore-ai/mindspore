@@ -1152,7 +1152,10 @@ void ControlNodeParser::ParseDynamicLenFormalParameterByPartial(const AnfNodePtr
     MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
   }
   const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
-  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph == nullptr) {
+    MS_LOG(WARNING) << "Failed to get funcgraph in partial node:" << node->DebugString();
+    return;
+  }
   if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
     MS_LOG(EXCEPTION) << "Invalid args num:" << input_num - kPartialInputStartPos
                       << " in partial node:" << cnode->DebugString() << " for fungraph:" << func_graph->ToString()

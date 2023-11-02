@@ -222,7 +222,7 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
     }
     auto node = n->cast<CNodePtr>();
     auto op_name = common::AnfAlgo::GetCNodeName(node);
-    auto input_num = common::AnfAlgo::GetInputNum(node);
+    auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
     if (op_def == nullptr) {
       MS_LOG(DEBUG) << op_name << " is not found in OpDef.";

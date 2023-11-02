@@ -608,7 +608,8 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   auto tuple_shape = std::make_shared<abstract::TupleShape>(shape_list);
   TypePtrList type_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetType());
   auto tuple_type = std::make_shared<Tuple>(type_list);
-  MS_LOG(WARNING) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString();
+  MS_LOG(WARNING) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString()
+                  << " in device address:" << addr_list[0];
   const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
     tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
