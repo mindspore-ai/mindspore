@@ -457,11 +457,10 @@ void AclConverter::ConvertInputToAclAttr(const AclInputToHost &inputs, const std
       continue;
     }
     auto tensor_value = CreateValueFromTensor(input_tensor);
-    ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx + 1, tensor_value, &ge_attr_value);
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, &tensor_value);
 
     AttrConverter attr_coverter;
-    attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
+    attr_coverter.ConvertValueToRealType(tensor_value, attr_name, this);
   }
   MS_LOG(DEBUG) << "Convert input to acl attr over";
 }
@@ -478,18 +477,17 @@ void AclConverter::ConvertToAclAttr(const mindspore::HashMap<std::string, ValueP
     if (attrs.count(ms_attr_name) != 0) {
       attr_value = attrs.at(ms_attr_name);
     }
-    ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsAttrValue(ms_attr_name, attr_value, &ge_attr_value);
+    info->GetGeAttrValueByMsAttrValue(ms_attr_name, &attr_value);
 
     // Dump Info
     if (ms_attr_str != nullptr) {
       std::stringstream ss;
-      ss << "attr name: " << ms_attr_name << ", value: " << ge_attr_value->ToString();
+      ss << "attr name: " << ms_attr_name << ", value: " << attr_value->ToString();
       (void)ms_attr_str->emplace_back(ss.str());
     }
 
     AttrConverter attr_coverter;
-    attr_coverter.ConvertValueToRealType(ge_attr_value, ge_attr_name, this);
+    attr_coverter.ConvertValueToRealType(attr_value, ge_attr_name, this);
   }
   MS_LOG(DEBUG) << "convert mindspore attr to acl attr over";
 }

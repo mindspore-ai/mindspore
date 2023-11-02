@@ -153,8 +153,8 @@ class GeAdapterInfo {
   mindspore::HashMap<int, std::vector<enum ::ge::DataType>> output_supported_dtypes() const {
     return info_.output_supported_dtypes;
   }
-  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, const ValuePtr &ms_value, ValuePtr *ge_value);
-  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, const ValuePtr &ms_value, ValuePtr *ge_value);
+  void GetGeAttrValueByMsAttrValue(const std::string &attr_name, ValuePtr *ms_value);
+  void GetGeAttrValueByMsInputValue(const uint32_t &input_idx, ValuePtr *ms_value);
 
  private:
   void InitOpType();
