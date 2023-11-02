@@ -920,9 +920,11 @@ std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAb
 
   // Insert cast pass will change the device type for some reason like CPU do not support fp16 actually,
   // so the output infer type and device type will be different, we change the output tensor to the real device type.
+  MS_EXCEPTION_IF_NULL(type);
   if (type->isa<TensorType>()) {
     auto real_device_type = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
-    auto abs_tensor_type = type->cast<TensorTypePtr>();
+    auto abs_tensor_type = type->Clone()->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(abs_tensor_type);
     auto abs_element = abs_tensor_type->element();
     if (abs_element != nullptr) {
       auto abs_tensor_element_type = abs_element->type_id();
@@ -934,6 +936,8 @@ std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAb
                      << " So we change the tensor type from " << TypeIdToString(abs_tensor_element_type) << " to "
                      << TypeIdToString(real_device_type);
         abs_tensor_type->set_element(TypeIdToType(real_device_type));
+        // Use new tensor type with device data type.
+        type = abs_tensor_type;
       }
     }
   }

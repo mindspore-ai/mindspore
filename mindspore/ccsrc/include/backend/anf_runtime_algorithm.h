@@ -125,6 +125,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
 
+  // Get shape, devie type and value information.
   static std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> GetAbstractInfo(const AnfNodePtr &node,
                                                                                size_t output_idx);
 

@@ -84,13 +84,28 @@ void DeviceQueueDataSourceActor::Init() {
 
   // Init kernel launch info.
   MS_EXCEPTION_IF_NULL(kernel_info_);
-  for (size_t i = 0; i < kernel_info_->output_address_list().size(); ++i) {
+  const auto &output_addresses = kernel_info_->output_address_list();
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
     (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
+    (void)output_kernel_tensors_.emplace_back(output_addresses[i]->kernel_tensor().get());
   }
+
+  is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(data_kernel_);
 }
 
 void DeviceQueueDataSourceActor::FillDataBuffer() {
   MS_EXCEPTION_IF_NULL(kernel_info_);
+  if (is_dynamic_shape_) {
+    // For GetNext dynamic case, the Resize method finish update output shape and output size in kernel tensor via data
+    // item from MindData, need not do infer shape first.
+    const auto &kernel_mod = kernel_info_->MutableKernelMod();
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    int ret = kernel_mod->Resize({}, output_kernel_tensors_);
+    if (ret != kernel::KRET_OK) {
+      MS_LOG(EXCEPTION) << "Resize failed for kernel: " << data_kernel_->fullname_with_scope();
+    }
+  }
+
   // Construct device tensors.
   std::vector<DeviceTensor *> device_tensors;
   for (auto &device_tensor : kernel_info_->output_address_list()) {
@@ -156,8 +171,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   try {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
-    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
-      data_kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+    auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(data_kernel_, {}, {}, output_kernel_tensors_,
+                                                                           kernel_info_->stream_id());
     PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
@@ -175,10 +190,6 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
-  if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
-    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name());
-    AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
-  }
   PostRun(context);
 }
 

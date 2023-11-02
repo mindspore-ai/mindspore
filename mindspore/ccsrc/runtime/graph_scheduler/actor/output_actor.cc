@@ -281,8 +281,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   }
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
-
-  auto type_id = output_kernel_tensor->dtype_id();
+  auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
   const auto &shape = output_kernel_tensor->GetShapeVector();
   auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   MS_EXCEPTION_IF_NULL(tensor);

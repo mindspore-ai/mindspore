@@ -285,7 +285,6 @@ void UpdateGetNextWithDataQueueItems(const std::vector<kernel::KernelTensor *> &
     outputs[i]->set_size(data[i].data_len);
     outputs[i]->SetShapeVector(data[i].shapes);
     output_size_list->push_back(data[i].data_len);
-    outputs[i]->SetType(inputs[i]->GetType());
   }
 }
 
