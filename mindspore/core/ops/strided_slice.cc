@@ -394,7 +394,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[x_index]->BuildShape());
   auto x_shape = shape_map[kShape];
   if (x_shape.size() == 0) {
-    MS_EXCEPTION(IndexError) << "For 'StridedSlice', input shape can not be empty.";
+    MS_EXCEPTION(TypeError) << "For 'StridedSlice', input can not be a scalar.";
   }
   ShapeVector begin_v;
   ShapeVector end_v;
