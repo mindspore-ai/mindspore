@@ -42,19 +42,13 @@ class OpApiDefaultResource {
   UnInitHugeMemThreadLocal uninit_mem_func();
   ReleaseHugeMem release_mem_func();
 
-  void *AllocWorkspace(size_t size) { return allocator.AllocFunc(&allocator, size); }
-
-  void FreeWorkspace(void *block) { allocator.FreeFunc(&allocator, block); }
-
  private:
-  OpApiDefaultResource() { allocator.Initialize(); }
-  ~OpApiDefaultResource() { allocator.Finalize(); }
+  OpApiDefaultResource() = default;
+  ~OpApiDefaultResource() = default;
 
   InitHugeMemThreadLocal init_mem_func_{nullptr};
   UnInitHugeMemThreadLocal uninit_mem_func_{nullptr};
   ReleaseHugeMem release_mem_func_{nullptr};
-
-  AclAllocator allocator;
 };
 
 template <typename Tuple>
@@ -260,9 +254,6 @@ ShapeVector UpdateOutputShape(const aclTensor *tensor);
       MS_LOG(EXCEPTION) << #aclnn_api << " not in " << transform::GetOpApiLibName() << ", please check!";   \
     }                                                                                                       \
     void *workspace_addr = nullptr;                                                                         \
-    if (workspace_size != 0) {                                                                              \
-      workspace_addr = transform::OpApiDefaultResource::GetInstance().AllocWorkspace(workspace_size);       \
-    }                                                                                                       \
     auto acl_call = [&converted_params, workspace_addr, &workspace_size, acl_stream, executor]() -> int {   \
       using RunApiFunc = int (*)(void *, uint64_t, transform::aclOpExecutor *, const aclrtStream);          \
       auto run_api_func = reinterpret_cast<RunApiFunc>(op_api_func);                                        \

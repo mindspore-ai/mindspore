@@ -26,13 +26,8 @@
 #include "ir/tensor.h"
 #include "transform/acl_ir/acl_convert.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 
 namespace mindspore::transform {
-class aclTensor {
- public:
-  void SetStorageAddr(void *addr);
-};
 
 // Api data struct.
 typedef struct aclOpExecutor aclOpExecutor;
