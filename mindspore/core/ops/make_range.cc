@@ -46,15 +46,20 @@ bool CheckMakeRangeInput(const std::vector<AbstractBasePtr> &input_args, const s
     MS_LOG(EXCEPTION) << "For '" << prim_name << "', the input size should within [" << min_args_size << ", "
                       << max_args_size << "] but got" << inputs_size;
   }
+  bool has_variable = false;
   for (size_t i = 0; i < input_args.size(); ++i) {
     auto element = input_args[i];
     MS_EXCEPTION_IF_NULL(element);
     auto element_type = element->BuildType();
-    if (element->BuildValue() == kValueAny) {
-      return true;
+    if (element_type->type_id() != kInt64->type_id() && element_type->type_id() != kInt32->type_id()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the " << i << "th input should be a int scalar but got "
+                              << element->ToString();
+    }
+    if (!has_variable && element->BuildValue() == kValueAny) {
+      has_variable = true;
     }
   }
-  return false;
+  return has_variable;
 }
 
 abstract::AbstractTuplePtr CalcSlidePara(const std::vector<int64_t> &values, const std::string &prim_name,
