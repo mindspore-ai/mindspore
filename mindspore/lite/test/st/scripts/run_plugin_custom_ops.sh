@@ -1,5 +1,21 @@
 #!/bin/bash
 
+function run_plugin_custom_ops() {
+  while read line; do
+    local plugin_custom_ops=${line}
+    if [[ $plugin_custom_ops == \#* || $plugin_custom_ops == "" ]]; then
+      continue
+    fi
+    echo "run ${plugin_custom_ops}"
+    python ${basepath}/python/plugin_custom_ops/${plugin_custom_ops} Ascend
+    local ret=$?
+    if [ ${ret} -ne 0 ]; then
+      echo "run ${plugin_custom_ops} failed."
+      exit ${ret}
+    fi
+  done < ${ascend_custom_ops_config}
+}
+
 # Example:sh run_benchmark_nets.sh -r /home/temp_test -e plugin_custom_ops
 while getopts "r:m:e:l:" opt; do
     case ${opt} in
@@ -47,13 +63,14 @@ else
   exit 1
 fi
 
+ascend_custom_ops_config=${basepath}/config/ascend_custom_ops.cfg
+
 echo "Run testcases of mindspore_lite plugin custom ops..."
 echo "-----------------------------------------------------------------------------------------"
-
-python ${basepath}/python/plugin_custom_ops/test_kv_cache_mgr.py Ascend
+run_plugin_custom_ops
 RET=$?
 if [ ${RET} -ne 0 ]; then
-  echo "run test_kv_cache_mgr failed."
+  echo "run test_plugin_custom_ops failed."
   exit ${RET}
 fi
 echo "test_plugin_custom_ops success"
