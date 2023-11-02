@@ -826,7 +826,7 @@ static py::object CallCompiledCallable(PyThreadState *tstate, const PyFrameObjec
   return py::reinterpret_steal<py::object>(res);
 }
 
-static bool PreferCallGraph(const JitCompileResults *c) {
+static bool PreferCallGraph(const JitCompileResults *c, const PyFrameObject *f) {
   bool enable_statistics = c->conf->GetBoolConfig(GraphJitConfig::kPerfStatistics);
   int scale_statistics = c->conf->getIntConfig(GraphJitConfig::kPerfStatisticsScale10000x);
   bool graph_preferred = true;
@@ -839,9 +839,12 @@ static bool PreferCallGraph(const JitCompileResults *c) {
   }
   int graph_bytecode_min = c->conf->getIntConfig(GraphJitConfig::kStaticGraphBytecodeMin);
   if (graph_bytecode_min > 0) {
-    graph_preferred =
-      graph_preferred && (OptStrategy::ExecKind::kExecGraph ==
-                          OptStrategy::MakeExecStrategyByComplex(c->compiled.callable, graph_bytecode_min));
+    PyObject *callable = c->compiled.callable;
+    if (c->compiled.cFunc) {
+      callable = reinterpret_cast<PyObject *>(f->f_code);
+    }
+    graph_preferred = graph_preferred && (OptStrategy::ExecKind::kExecGraph ==
+                                          OptStrategy::MakeExecStrategyByComplex(callable, graph_bytecode_min));
   }
   return graph_preferred;
 }
@@ -871,7 +874,7 @@ static py::object CallCompiledResults(PyThreadState *tstate, const PyFrameObject
   }
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
-  bool graph_preferred = (c->compiled.cFunc && PreferCallGraph(c));
+  bool graph_preferred = (c->compiled.cFunc && PreferCallGraph(c, f));
   SetExecStatus(c, graph_preferred);
   py::object res = graph_preferred ? CallGraph(c, args, kwvargs) : CallCompiledCallable(tstate, f, c);
   // dump traceback

@@ -18,6 +18,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "pybind_api/ir/cell_py.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "pipeline/jit/pi_jit/utils/utils.h"
 
 namespace mindspore {
 namespace jit {
@@ -224,7 +225,6 @@ class StringData : public ItemData {
  public:
   StringData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::PyStr, needSpecialize, recurseDepth) {
-    pObj_ = obj;
     if (needSpecialize) {
       strVal_ = GetObjectString(obj);
     }
@@ -239,7 +239,6 @@ class StringData : public ItemData {
 
  protected:
   std::string strVal_;
-  PyObject *pObj_ = nullptr;
 };
 
 class ListData : public ItemData {
@@ -806,8 +805,12 @@ class MetaTensorData : public ItemData {
  protected:
   virtual std::string ToStringIntern() {
     std::string param_desc = ParamInfoData::ToStringAttr(param_);
+    std::string shape = "";
+    for (size_t i = 0; i < shape_.size(); ++i) {
+      shape += DESC_INDEX_V(shape_, i);
+    }
     return DESC_STRING(tid_) + DESC(format_) + DESC(host_format_) + DESC_TOSTRING(data_type_) +
-           DESC_STRING(is_parameter_) + DESC(param_desc);
+           DESC_STRING(is_parameter_) + DESC(param_desc) + DESC(shape);
   }
 
   void StoreTensor(mindspore::tensor::MetaTensorPtr tensor_ptr) {
@@ -1412,6 +1415,10 @@ static ItemDataPtr CreateData(PyObject *obj, bool need_specialize, int recurse_d
 }
 
 static ItemDataPtr CreateItem(PyObject *obj, bool need_specialize, int recurse_depth) {
+  ReprRecursionScope scope(obj);
+  if (scope.ReEnterOrError()) {
+    return std::make_shared<ItemData>(ItemType::PyNull, need_specialize, recurse_depth);
+  }
   if (recurse_depth < -1) {
     if (obj != NULL && obj != Py_None) {
       py::object py_obj = py::reinterpret_borrow<py::object>(obj);
