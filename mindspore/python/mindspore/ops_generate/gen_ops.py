@@ -25,6 +25,7 @@ from template import CppTemplate
 from gen_utils import get_convert_type_str, get_input_dtype, get_return_type
 import template
 
+
 def get_op_name(operator_name, class_def):
     """
     Get op name for python class Primitive or c++ OpDef name.
@@ -311,7 +312,8 @@ def generate_py_primitive(yaml_data):
         pyboost_func_name = get_pyboost_name(operator_name)
         inputs_args, inputs_default, init_args, args_assign, init_args_with_default, args_handlers = process_args(args)
         init_code = '\n'.join(args_assign)
-        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args + init_args, inputs_default)
+        signature_code = generate_py_op_signature(operator_data.get('args_signature'), inputs_args + init_args,
+                                                  inputs_default)
         deprecated_code = generate_py_op_deprecated(operator_data.get('deprecated'))
 
         labels = operator_data.get('labels')
@@ -335,7 +337,7 @@ class {class_name}(Primitive):\n"""
             primitive_code += " " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
         call_args = []
         for name in inputs_args:
-            call_args.append(f"""{name}={inputs_default[name]}""" if name  in inputs_default else name)
+            call_args.append(f"""{name}={inputs_default[name]}""" if name in inputs_default else name)
         primitive_code += f"""):
 {init_code}
 
@@ -510,8 +512,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         args = operator_data.get('args')
         returns = operator_data.get('returns')
         class_name = get_op_name(operator_name, operator_data.get('class'))
-        #gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
-        #opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
+        # gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
+        # opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
         opdef_cc = f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
                    f"""\n  .args_ =
     {{"""
@@ -550,8 +552,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 
         cc_index_str += f"""\n    }},"""
         opdef_cc += cc_index_str
-        #cc_func_impl_str = f"""\n  .func_impl_ = g{class_name}FuncImpl,"""
-        #pdef_cc += cc_func_impl_str
+        # cc_func_impl_str = f"""\n  .func_impl_ = g{class_name}FuncImpl,"""
+        # pdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
 
@@ -588,7 +590,7 @@ def generate_ops_py_files(work_path, yaml_str, doc_str, file_pre):
     py_func = generate_py_op_func(yaml_str, doc_str)
 
     with open(tmp_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + ops_py_header + pyboost_import_header +py_prim + py_func)
+        py_file.write(py_licence_str + ops_py_header + pyboost_import_header + py_prim + py_func)
     check_change_and_replace_file(py_path, tmp_py_path)
 
 
@@ -727,7 +729,7 @@ def generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_wit
         f.write(pyboost_ascend_op_str)
 
 
-def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
+def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type, call_args_str,
                                            op_outputs, call_outputs, call_args_with_type, cpp_func_return):
     # PyBoost ascend op source generate
     call_args_tensor = []
@@ -739,7 +741,10 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name
     # call_impl
     call_impl = ''
     customize_include = ''
-    op_desc = pyboost_yaml_data[op_name_str]['Ascend']
+    op_desc = pyboost_yaml_data[prim_name_str]['Ascend']
+    op_name_str = prim_name_str
+    if prim_name_str.endswith('Ext'):
+        op_name_str = prim_name_str[:-3]
     if op_desc['mode'] == 'normal':
         if op_desc['cube'] is True:
             launch_mode = 'LAUNCH_ACLNN_CUBE'
@@ -794,6 +799,7 @@ def generate_pyboost_op_register_source_code(work_path, all_ops):
     with open(op_register_file_path, "w") as f:
         f.write(op_register_file_str)
 
+
 def generate_pyboost_op_return_code(op_proto):
     returns_type = []
     for return_obj in op_proto.returns:
@@ -808,6 +814,7 @@ def generate_pyboost_op_return_code(op_proto):
         cpp_func_return += ")"
     return returns_type, cpp_func_return
 
+
 def generate_pyboost_op_func_return_type(op_proto):
     returns_type = []
     for return_obj in op_proto.returns:
@@ -821,6 +828,7 @@ def generate_pyboost_op_func_return_type(op_proto):
     else:
         raise Exception("Not return found")
     return cpp_func_return
+
 
 def generate_pyboost_outputs(op_proto):
     op_outputs = ''
@@ -847,6 +855,7 @@ def generate_pyboost_outputs(op_proto):
 
     return op_outputs, call_outputs
 
+
 def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
     Generate pyboost op cpp code from yaml.
@@ -854,8 +863,10 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     all_ops = []
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
-        op_name_str = op_proto.class_name
-
+        prim_name_str = op_proto.class_name
+        op_name_str = prim_name_str
+        if prim_name_str.endswith('Ext'):
+            op_name_str = prim_name_str[:-3]
         call_args_str = []
         call_args_type = []
         for op_arg in op_proto.op_args:
@@ -880,9 +891,11 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
 
         generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
         generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
-        generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
+        generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type,
+                                               call_args_str,
                                                op_outputs, call_func_outputs, call_args_with_type, cpp_func_return)
     generate_pyboost_op_register_source_code(work_path, all_ops)
+
 
 def generate_pyboost_functions(work_path, yaml_data):
     """
@@ -891,12 +904,15 @@ def generate_pyboost_functions(work_path, yaml_data):
     pyboost_func_str = ''
     pyboost_func_pybind_def = ''
     pyboost_func_include_headers_str = ''
-    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
+    pyboost_func_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${op_name}.h\"\n")
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         func_name_str = op_proto.pyboost_function_name
         op_def_name_str = f"g{op_proto.class_name}"
-        op_name_str = op_proto.class_name
+        prim_name_str = op_proto.class_name
+        op_name_str = prim_name_str
+        if prim_name_str.endswith('Ext'):
+            op_name_str = prim_name_str[:-3]
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         parser_body_str = generate_parser_func(op_proto)
 
@@ -928,7 +944,7 @@ def generate_pyboost_functions(work_path, yaml_data):
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(
             pyboost_op_name=get_pyboost_name(op_proto.operator_name),
             pyboost_cfunc_name=op_proto.pyboost_function_name)
-        pyboost_func_include_headers_str += pyboost_func_include_header_template.replace(operator_name=operator_name)
+        pyboost_func_include_headers_str += pyboost_func_include_header_template.replace(op_name=op_name_str.lower())
     register_func_str = template.REGISTER_TEMPLATE.replace(register_func=pyboost_func_pybind_def)
 
     pyboost_func_file = template.PYBOOST_HEADER_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
@@ -939,6 +955,7 @@ def generate_pyboost_functions(work_path, yaml_data):
     file_path = os.path.join(dir_path, "pyboost_functions.cc")
     with open(file_path, "w") as f:
         f.write(pyboost_func_file)
+
 
 eum_py_header = f"""
 \"\"\"Operator argument enum definition.\"\"\"
@@ -1055,7 +1072,7 @@ def main():
     # generate_ops_py_files(work_path, safe_load_yaml(inner_ops_yaml_path), safe_load_yaml(inner_doc_yaml_path),
     #                       "gen_inner")
 
-    #all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
+    # all_ops_str = {**safe_load_yaml(ops_yaml_path), **safe_load_yaml(inner_ops_yaml_path)}
     all_ops_str = {**safe_load_yaml(ops_yaml_path)}
     # generate ops header file
     generate_ops_header_files(work_path, safe_load_yaml(ops_yaml_path))
@@ -1066,7 +1083,6 @@ def main():
     # generate pyboost functions
     generate_pyboost_functions(work_path, safe_load_yaml(ops_yaml_path))
     generate_pyboost_op_cpp_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(pyboost_yaml_path))
-
 
 
 if __name__ == "__main__":

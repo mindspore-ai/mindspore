@@ -18,7 +18,7 @@ from mindspore import Tensor, ops, context
 from mindspore import nn
 from mindspore import context
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, add_ext
 import mindspore
 
 
