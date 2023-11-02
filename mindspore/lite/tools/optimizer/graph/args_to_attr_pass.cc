@@ -58,6 +58,9 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
     std::vector<AnfNodePtr> new_node_inputs;
 
     // change PrimtiveFunction into Primitive
+    if (prim->GetAttr("primitive_function") == nullptr) {
+      continue;
+    }
     auto op_type = prim->name();
     auto op_def = mindspore::ops::GetOpDef(op_type);
     if (op_def == nullptr) {

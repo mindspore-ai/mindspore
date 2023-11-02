@@ -47,6 +47,9 @@ void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
   if (prim->IsPythonPrim()) {
     return;
   }
+  if (prim->GetAttr("primitive_function") == nullptr) {
+    return;
+  }
   auto op_def = mindspore::ops::GetOpDef(prim->name());
   if (op_def == nullptr) {
     return;
