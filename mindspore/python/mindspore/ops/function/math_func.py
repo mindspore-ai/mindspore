@@ -7276,7 +7276,7 @@ def atleast_1d(inputs):
         Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies `a.ndim >= 1`.
 
     Raises:
-        TypeError: If the `input` is not a tensor or a list of tensors.
+        TypeError: If the `inputs` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7555,7 +7555,7 @@ def atleast_2d(inputs):
         Tensor or list[Tensor]. If returned a list, every element `a` in that list satisfies `a.ndim >= 2` .
 
     Raises:
-        TypeError: If the `input` is not a tensor or a list of tensors.
+        TypeError: If the `inputs` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7638,7 +7638,7 @@ def atleast_3d(inputs):
         a 2-D Tensor of shape :math:`(M, N)` becomes a tensor of shape :math:`(M, N, 1)`.
 
     Raises:
-        TypeError: If the `input` is not a tensor or a list of tensors.
+        TypeError: If the `inputs` is not a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

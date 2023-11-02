@@ -2542,7 +2542,7 @@ def upsample(input, size=None, scale_factor=None, mode="nearest", align_corners=
 
 def softsign(x):
     r"""
-    Softsign activation function.
+    SoftSign activation function.
 
     The function is shown as follows:
 
