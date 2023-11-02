@@ -37,12 +37,11 @@ class LogSoftmaxCpuKernelMod : public MKLCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kObjectTypeNumber, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
  private:
-  int axis_ori_{0};
   int axis_{0};
 };
 }  // namespace kernel

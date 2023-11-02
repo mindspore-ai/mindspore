@@ -22,15 +22,12 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kLogSoftmaxInputsNum = 1;
+constexpr size_t kLogSoftmaxInputsNum = 2;
 constexpr size_t kLogSoftmaxOutputsNum = 1;
 }  // namespace
 
 bool LogSoftmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  // Todo, dynamic shape
-  // auto kernel_ptr = std::make_shared<ops::LogSoftmax>(primitive_);
-  // axis_ori_ = LongToInt(GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kAxis)));
   return true;
 }
 
@@ -43,7 +40,8 @@ int LogSoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxOutputsNum, kernel_name_);
 
   const auto &src_shape = inputs.at(kIndex0)->GetShapeVector();
-  axis_ = axis_ori_ < 0 ? (axis_ori_ + SizeToInt(src_shape.size())) : axis_ori_;
+  int axis_ori = inputs.at(kIndex1)->GetValueWithCheck<int>();
+  axis_ = axis_ori < 0 ? (axis_ori + SizeToInt(src_shape.size())) : axis_ori;
 
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_inference, src_desc, axis_);

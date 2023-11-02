@@ -80,7 +80,7 @@ int SparseAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (dims >= 0) {
     indices_column_ = LongToSize(dims);
   }
-  return ret;
+  return KRET_OK;
 }
 
 template <typename T>
