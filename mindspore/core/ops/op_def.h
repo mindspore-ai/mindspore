@@ -47,6 +47,7 @@ enum OP_DTYPE : int64_t {
   DT_LIST_TENSOR,
   DT_LIST_STR,
   DT_LIST_ANY,
+  DT_TYPE,
   DT_END,
 };
 

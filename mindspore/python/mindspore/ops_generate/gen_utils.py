@@ -19,7 +19,7 @@ import os
 import glob
 import hashlib
 import yaml
-from template import CppTemplate
+
 
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
@@ -115,10 +115,12 @@ def get_convert_type_str(dtype: str):
         'list[bool]': 'ToBoolList<py::list>',
         'list[tensor]': 'ToTensorList<py::list>',
         'tensor': 'ToTensor',
+        'type': 'ToDtype',
     }
     if dtype in type_convert:
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
+
 
 def get_input_dtype(dtype: str):
     """
@@ -140,6 +142,7 @@ def get_input_dtype(dtype: str):
         'list[bool]': 'ValueTuplePtr',
         'list[tensor]': 'ValueTuplePtr',
         'tensor': 'TensorPtr',
+        'type': 'TypePtr',
     }
     if dtype in type_convert:
         return type_convert[dtype]
@@ -178,6 +181,7 @@ def get_type_str(type_str):
         'list[bool]': 'OpDtype.PY_DT_LIST_ANY',
         'list[tensor]': 'OpDtype.PY_DT_LIST_ANY',
         'tensor': 'OpDtype.PY_DT_TENSOR',
+        'type': 'OpDtype.PY_DT_TYPE',
     }
     if type_str in type_kind_dict:
         return type_kind_dict[type_str]

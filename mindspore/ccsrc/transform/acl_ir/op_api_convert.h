@@ -22,6 +22,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <tuple>
 #include "acl/acl_base.h"
 #include "ir/tensor.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -310,6 +311,11 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
   }
   return acl_scalar;
+}
+
+inline aclDataType ConvertType(const TypePtr &type) {
+  MS_EXCEPTION_IF_NULL(type);
+  return AclConverter::ConvertType(type->type_id());
 }
 
 template <typename T>

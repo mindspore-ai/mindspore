@@ -20,6 +20,15 @@ Bmm:
     cube: True
     aclnn: aclnnBatchMatMul
 
+Cast:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
 Cos:
   CPU:
     mode: normal

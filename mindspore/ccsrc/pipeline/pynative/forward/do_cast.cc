@@ -22,7 +22,7 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/profiler.h"
-//#include "kernel/pyboost/auto_generate/cast.h"
+#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore {
 namespace pynative {
@@ -93,16 +93,17 @@ ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type
   }
 }
 
-// void RunCastOpByPyboost(std::shared_ptr<kernel::pyboost::Cast> cast_op, const FrontendOpRunInfoPtr &op_run_info) {
-//  MS_EXCEPTION_IF_NULL(cast_op);
-//  MS_EXCEPTION_IF_NULL(op_run_info);
-//  (void)cast_op->Call(op_run_info->op_grad_info->input_value[kIndex0]->cast<tensor::TensorPtr>(),
-//                      op_run_info->op_grad_info->input_value[kIndex1]);
-//  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, op_run_info->op_grad_info->input_value, op_run_info);
-//  if (op_run_info->requires_grad) {
-//    cast_op->DoGrad();
-//  }
-//}
+void RunCastOpByPyboost(const std::shared_ptr<kernel::pyboost::Cast> &cast_op,
+                        const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(cast_op);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  (void)cast_op->Call(op_run_info->op_grad_info->input_value[kIndex0]->cast<tensor::TensorPtr>(),
+                      op_run_info->op_grad_info->input_value[kIndex1]->cast<TypePtr>());
+  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, op_run_info->op_grad_info->input_value, op_run_info);
+  if (op_run_info->requires_grad) {
+    cast_op->DoGrad();
+  }
+}
 }  // namespace
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
@@ -368,10 +369,9 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
 
   // Use pyboost op call
   if (is_py_boost_cast_) {
-    // TODO(zjun): impl cast
-    //    auto cast_op = CREATE_PYBOOST_OP(Cast, op_run_info->base_op_run_info.device_target);
-    //    cast_op->set_primitive(GetPrimByTypeId(type_id));
-    //    RunCastOpByPyboost(cast_op, cast_run_info);
+    auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
+    cast_op->set_primitive(GetPrimByTypeId(type_id));
+    RunCastOpByPyboost(cast_op, cast_run_info);
   } else {
     cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
     PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);

@@ -20,7 +20,7 @@ py::object ${func_name}(const py::args &args) {
       auto op = CREATE_PYBOOST_OP(${op_name}, op_run_info->base_op_run_info.device_target);
       op->set_primitive(op_run_info->op_grad_info->op_prim);
 
-      // Do mixed precision and implict cast
+      // Do mixed precision and implicit cast
       PyNativeAlgo::PyBoost::SetCastForInputs({${call_args}}, op_run_info);
 
       // Run op

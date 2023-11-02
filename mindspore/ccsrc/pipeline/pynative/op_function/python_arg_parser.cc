@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 #include "pipeline/pynative/op_function/python_arg_parser.h"
+#include <unordered_map>
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
-#include <unordered_map>
+
 namespace mindspore {
 namespace pynative {
 namespace {
 using OP_DTYPE = mindspore::ops::OP_DTYPE;
+
 OP_DTYPE ListToTuple(const OP_DTYPE &type) {
   static std::unordered_map<OP_DTYPE, OP_DTYPE> convert_map = {
     {OP_DTYPE::DT_LIST_BOOL, OP_DTYPE::DT_TUPLE_BOOL},     {OP_DTYPE::DT_LIST_INT, OP_DTYPE::DT_TUPLE_INT},
@@ -32,6 +34,7 @@ OP_DTYPE ListToTuple(const OP_DTYPE &type) {
   }
   return convert_map[type];
 }
+
 ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpArg &op_arg) {
   for (auto &cast_dtype : op_arg.cast_dtype_) {
     auto convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
@@ -116,7 +119,7 @@ void Parser::Parse(py::list python_args) {
   python_args_ = &python_args;
   if (op_def_.args_.size() != python_args.size()) {
     MS_LOG(EXCEPTION) << "For operator " << op_def_.name_ << ", it requires " << op_def_.args_.size()
-                      << "paramters, bug got " << python_args.size() << "parameters!";
+                      << "parameters, bug got " << python_args.size() << "parameters!";
   }
 }
 
@@ -159,12 +162,12 @@ ValueTuplePtr Parser::ToTensorList(size_t i) {
 Int64ImmPtr Parser::ToInt(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
-  Int64ImmPtr convert = ConvertInt(obj);
+  auto convert = ConvertInt(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg)->cast<Int64ImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg)->cast<Int64ImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -194,12 +197,12 @@ ValueTuplePtr Parser::ToIntList(size_t i) {
 BoolImmPtr Parser::ToBool(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
-  BoolImmPtr convert = ConvertBool(obj);
+  auto convert = ConvertBool(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg)->cast<BoolImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg)->cast<BoolImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -229,12 +232,12 @@ ValueTuplePtr Parser::ToBoolList(size_t i) {
 FP64ImmPtr Parser::ToFloat(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
-  FP64ImmPtr convert = ConvertFloat(obj);
+  auto convert = ConvertFloat(obj);
   if (convert != nullptr) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg)->cast<FP64ImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg)->cast<FP64ImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -269,13 +272,21 @@ ScalarPtr Parser::ToScalar(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    auto convert = ConvertByCastDtype(obj, op_arg)->cast<ScalarPtr>();
+    convert = ConvertByCastDtype(obj, op_arg)->cast<ScalarPtr>();
     if (convert != nullptr) {
       return convert;
     }
   }
   PrintError(i);
   return nullptr;
+}
+
+TypePtr Parser::ToDtype(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (!py::isinstance<mindspore::Type>(obj)) {
+    MS_LOG(EXCEPTION) << "Get arg is not mindspore type " << py::str(obj);
+  }
+  return obj.cast<TypePtr>();
 }
 
 py::object Parser::Wrap(const TensorPtr &tensor) {

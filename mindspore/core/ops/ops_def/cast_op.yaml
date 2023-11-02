@@ -1,0 +1,12 @@
+#operator cast
+cast:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    type:
+      dtype: type
+  returns:
+    output:
+      dtype: tensor
+  pyboost: True
