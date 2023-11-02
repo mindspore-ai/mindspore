@@ -666,7 +666,7 @@ def get_linspace_rule(prim, axis_size):
 
         if num_dim is not None:
             _raise_value_error("The source axis of `num` in `{}` must be None, "
-                               "but got {}.".format(prim.name(), num_dim))
+                               "but got {}.".format(prim.name, num_dim))
 
         out_dim = start_dim
         if start_dim != stop_dim:

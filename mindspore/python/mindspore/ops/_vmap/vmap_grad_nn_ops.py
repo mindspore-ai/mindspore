@@ -633,7 +633,7 @@ def get_layernormgrad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.GridSampler3DGrad)
 def get_grid_sampler_grad_vmap_rule(prim, axis_size):
     """VmapRule for `GridSampler2DGrad` and `GridSampler3DGrad`."""
-    prim_name = prim.name()
+    prim_name = prim.name
     if prim_name == "GridSampler2DGrad":
         non_batch_dim_index = -3
     elif prim_name == "GridSampler3DGrad":

@@ -34,7 +34,11 @@ def scalar_to_tuple(data):
 
 
 def list_to_tuple(data):
-    return tuple(data)
+    # tuple() currently does not support Any from JIT Fallback.
+    res = ()
+    for element in data:
+        res += (element,)
+    return res
 
 
 def tensor_to_tuple(data):
@@ -56,7 +60,7 @@ def tuple_to_tensor(data):
 
 
 def list_to_tensor(data):
-    return ops.tuple_to_array(tuple(data))
+    return ops.tuple_to_array(list_to_tuple(data))
 
 
 # scalar

@@ -223,6 +223,10 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
       caller->size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
     size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + arg_start_index;
     size_t end_offset = called->fv_param_count();
+    if (start_offset > new_args.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The start_offset is " << start_offset << ", which exceeds the number of new args "
+                                 << new_args.size() << ".";
+    }
     (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - SizeToLong(end_offset));
   }
 

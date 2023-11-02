@@ -518,7 +518,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.SoftShrinkGrad)
 def get_common_activation_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
-    prim_name = prim.name()
+    prim_name = prim.name
 
     def vmap_rule(x_bdim, dy_bdim):
         x, x_dim = x_bdim
@@ -560,7 +560,7 @@ def get_hshrink_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register("HShrinkGrad")
 def get_hshrink_grad_vmap_rule(prim, axis_size):
     """VmapRule for `HShrinkGrad`."""
-    prim_name = prim.name()
+    prim_name = prim.name
 
     def vmap_rule(dy_bdim, x_bdim, lambd_bdim):
         x, x_dim = x_bdim
@@ -1897,7 +1897,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(NN.GridSampler3D)
 def get_grid_sampler_vmap_rule(prim, axis_size):
     """VmapRule for `GridSampler2D` and `GridSampler3D`."""
-    prim_name = prim.name()
+    prim_name = prim.name
     if prim_name == "GridSampler2D":
         non_batch_dim_index = -3
     elif prim_name == "GridSampler3D":

@@ -39,10 +39,8 @@ def get_vmap_rule(prim, axis_size):
     """get vmap rule function by primitive obj or prim name for c++"""
     if isinstance(prim, str):
         out = vmap_rules_getters.get(prim, None)
-    elif isinstance(prim, Primitive):
+    elif isinstance(prim, (Primitive, PrimitiveFunction_)):
         out = vmap_rules_getters.get(prim.name, None)
-    elif isinstance(prim, PrimitiveFunction_):
-        out = vmap_rules_getters.get(prim.name(), None)
     if out:
         return out(prim, axis_size)
     return None

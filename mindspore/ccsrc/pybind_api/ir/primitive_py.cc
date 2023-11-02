@@ -840,7 +840,7 @@ void RegPrimitiveFunction(const py::module *m) {
   (void)py::class_<PrimitiveFunctionAdapter, std::shared_ptr<PrimitiveFunctionAdapter>>(*m, "PrimitiveFunction_")
     .def_readonly(PYTHON_PRIMITIVE_FUNCTION_FLAG, &PrimitiveFunctionAdapter::parse_info_)
     .def(py::init<>())
-    .def("name", &PrimitiveFunctionAdapter::name, "Get function name.")
+    .def_property_readonly("name", &PrimitiveFunctionAdapter::name, "Get function name.")
     .def("has_label", &PrimitiveFunctionAdapter::has_label, "Has function attr.")
     .def("set_label", &PrimitiveFunctionAdapter::set_label, "Set function attr.")
     .def("get_label", &PrimitiveFunctionAdapter::get_label, "Get function attr.");
