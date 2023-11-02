@@ -17,9 +17,11 @@
 #include <algorithm>
 #include <utility>
 #include "ir/primitive.h"
+#include "ir/functor.h"
 #include "ops/shape_calc.h"
 #include "ops/math_ops.h"
 #include "ops/sequence_ops.h"
+#include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/common_op.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/infershape_op.h"
 #include "backend/common/graph_kernel/symbol_engine/operations/infervalue_op.h"
@@ -326,6 +328,18 @@ SymbolPtr StridedSliceValue(OperationBuilder *b) {
   return data->symbol(LongToSize(NormAxis(idx, data->size())));
 }
 
+SymbolPtr ShapeCalcValue(OperationBuilder *b) {
+  auto functor = common::AnfAlgo::GetNodeAttr<ShapeCalcFunctorPtr>(b->cnode(), kAttrFunctor);
+  if (functor->name() == "ShapeCalc_reduce_shape_shapecalc") {
+    auto input = b->GetInputShape(kIndex1);
+    auto axis = b->GetInputValue(kIndex2);
+    auto keep_dims = BoolSymbol::Make(true);
+    auto skip_mode = BoolSymbol::Make(false);
+    return b->Emit(std::make_shared<infershape::Reduce>(input, axis, keep_dims, skip_mode));
+  }
+  return nullptr;
+}
+
 REG_OP_SYMBOL_BUILDER("Abs").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Cast").SetShapeFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Exp").SetShapeFunc(TransparentShape<1>);
@@ -405,17 +419,19 @@ REG_OP_SYMBOL_BUILDER("LayerNormGrad")
   });
 REG_OP_SYMBOL_BUILDER("TensorShape").SetValueDepend({DependOn::kShape}).SetValueFunc(TransparentShape<1>);
 REG_OP_SYMBOL_BUILDER("Shape").SetValueDepend({DependOn::kShape}).SetValueFunc(TransparentShape<1>);
-REG_OP_SYMBOL_BUILDER("ShapeCalc").SetValueDepend([](const CNodePtr &cnode) -> std::vector<DependOn> {
-  auto p = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(p);
-  auto value_depend_attr = p->GetAttr(mindspore::ops::kAttrValueDepend);
-  MS_EXCEPTION_IF_NULL(value_depend_attr);
-  auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);
-  std::vector<DependOn> depends(value_depend.size());
-  (void)std::transform(value_depend.cbegin(), value_depend.cend(), depends.begin(),
-                       [](bool v) { return v ? DependOn::kValue : DependOn::kShape; });
-  return depends;
-});
+REG_OP_SYMBOL_BUILDER("ShapeCalc")
+  .SetValueDepend([](const CNodePtr &cnode) -> std::vector<DependOn> {
+    auto p = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(p);
+    auto value_depend_attr = p->GetAttr(mindspore::ops::kAttrValueDepend);
+    MS_EXCEPTION_IF_NULL(value_depend_attr);
+    auto value_depend = GetValue<std::vector<bool>>(value_depend_attr);
+    std::vector<DependOn> depends(value_depend.size());
+    (void)std::transform(value_depend.cbegin(), value_depend.cend(), depends.begin(),
+                         [](bool v) { return v ? DependOn::kValue : DependOn::kShape; });
+    return depends;
+  })
+  .SetValueFunc(ShapeCalcValue);
 REG_OP_SYMBOL_BUILDER("ScalarMul").SetValueFunc([](OperationBuilder *b) -> SymbolPtr {
   auto x = b->GetInputValue(kIndex1);
   auto y = b->GetInputValue(kIndex2);

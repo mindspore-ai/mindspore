@@ -41,10 +41,10 @@ void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &func_graph) {
     } else {
       auto &depend_on = depend_status_map_[node];
       if (depend_on.shape) {
-        BuildCNodeSmbl(cnode, false);
+        BuildCNodeSymbol(cnode, false);
       }
       if (depend_on.value) {
-        BuildCNodeSmbl(cnode, true);
+        BuildCNodeSymbol(cnode, true);
       }
     }
   }
@@ -299,7 +299,7 @@ void SymbolEngineImpl::BuildSubgraphSymbol(const CNodePtr &cnode) {
   }
 }
 
-void SymbolEngineImpl::BuildCNodeSmbl(const CNodePtr &cnode, bool infer_value) {
+void SymbolEngineImpl::BuildCNodeSymbol(const CNodePtr &cnode, bool infer_value) {
   auto name = AnfUtils::GetCNodeName(cnode);
   auto builder = OperationBuilderRegistry::GetBuilder(name, emitter_.get(), &cache_);
   MS_EXCEPTION_IF_NULL(builder);
