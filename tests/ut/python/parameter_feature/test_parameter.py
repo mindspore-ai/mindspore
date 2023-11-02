@@ -975,3 +975,30 @@ def test_jit_mixed_arguments():
     assert func(1, 2, 3, b=4, c=5, d=6) == 5
     assert func(1, 2, 3, b=4, d=6) == 5
     assert func(1, 2, 3, 4, b=5, c=6, d=7) == 6
+
+
+def test_unexpected_keyword_argument():
+    """
+    Feature: Support kwargs.
+    Description: Pass an unexpected keyword argument to a function.
+    Expectation: Throw an exception.
+    """
+
+    class SubNet(nn.Cell):
+        def construct(self, a=1, b=2):
+            return a + b
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.subnet = SubNet()
+
+        def construct(self, a, b):
+            x = self.subnet(aa=a, bb=b)
+            return x
+
+    context.set_context(mode=context.GRAPH_MODE)
+    try:
+        Net()(1, 2)
+    except RuntimeError as e:
+        assert "Got an unexpected keyword argument" in str(e)
