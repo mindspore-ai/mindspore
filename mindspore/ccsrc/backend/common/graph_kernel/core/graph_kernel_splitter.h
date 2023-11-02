@@ -24,7 +24,7 @@
 namespace mindspore::graphkernel {
 class GraphKernelSplitter : public opt::Pass {
  public:
-  GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
+  explicit GraphKernelSplitter(const std::string &name = "graph_kernel_splitter") : Pass(name) {}
   ~GraphKernelSplitter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
   bool TrySplit(const CNodePtr &sub_root_cnode);

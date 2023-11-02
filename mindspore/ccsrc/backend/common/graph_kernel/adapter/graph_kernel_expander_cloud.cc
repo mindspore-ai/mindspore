@@ -116,9 +116,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
   auto cb = Callback::Instance();
 
   std::vector<std::string> disable_expand_op_list_v2 = {
-    "OnesLike",    "FloatStatus", "OneHot",     "StridedSlice", "CumSum",      "Transpose",
-    "BatchMatMul", "MatMul",      "ExpandDims", "ElemAny",      "BroadcastTo",
-  };
+    "OnesLike", "OneHot", "StridedSlice", "CumSum", "Transpose", "BatchMatMul", "MatMul", "ExpandDims", "BroadcastTo"};
   if (flags.kernel_generator == "AKG_V2") {
     std::move(expand_ops_with_level_v2.begin(), expand_ops_with_level_v2.end(),
               std::back_inserter(expand_ops_with_level));
@@ -160,7 +158,7 @@ bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
   bool enable_dynshape_expander = (common::GetEnv("MS_DEV_ENABLE_DYNSHAPE_EXPANDER") == "on") &&
                                   GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
   std::vector<PrimitivePtr> expand_ops_dyn = {prim::kPrimReLU, prim::kPrimReluGrad, prim::kPrimBiasAdd,
-                                              prim::kPrimBiasAddGrad};
+                                              prim::kPrimBiasAddGrad, prim::kPrimDropout};
 
   bool dyn_can_expand_op = std::any_of(expand_ops_dyn.begin(), expand_ops_dyn.end(),
                                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
