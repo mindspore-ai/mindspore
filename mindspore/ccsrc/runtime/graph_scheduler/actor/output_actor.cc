@@ -251,11 +251,12 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
-  MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
-                << ", output index: " << output_index << ", output position: " << output_position;
 
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
+  MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
+                << ", output index: " << output_index << ", output position: " << output_position
+                << ", output kernel tensor: " << output_kernel_tensor->ToString();
 
   // For dynamice sequence output, the Type(Tuple) hasn't been re-inferred, only Shape has been re-inferred, need update
   // real Type of Tuple into kernel tensor to restore the tuple output.

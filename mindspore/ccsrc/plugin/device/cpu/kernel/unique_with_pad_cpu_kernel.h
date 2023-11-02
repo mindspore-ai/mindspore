@@ -76,6 +76,9 @@ class UniqueWithPadCpuKernelMod : public UniqueCpuKernelMod {
   template <typename T>
   void PadOutput(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                  const std::vector<size_t> &start);
+  // Disable update output shape because parent class 'UniqueCpuKernelMod'(for Unique op) need update output shape, but
+  // UniqueWithPad doesn't need.
+  bool IsNeedUpdateOutputShapeAndSize() override { return false; }
 };
 }  // namespace kernel
 }  // namespace mindspore

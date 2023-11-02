@@ -747,7 +747,8 @@ void KernelActor::InferShapeAndResize() {
     MS_EXCEPTION_IF_NULL(kernel_->abstract());
     base_shape = kernel_->abstract()->BuildShape();
   }
-  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope();
+  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
+                << ", shape: " << base_shape->ToString();
   MS_EXCEPTION_IF_NULL(base_shape);
 
   // 2. Update shape of output kernel tensor.
@@ -756,7 +757,8 @@ void KernelActor::InferShapeAndResize() {
   // 3. Resize kernel mod.
   MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
-  MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
+  MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope()
+                << ", the output size list: " << kernel_mod_->GetOutputSizeList();
   if (ret != kernel::KRET_OK) {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }
