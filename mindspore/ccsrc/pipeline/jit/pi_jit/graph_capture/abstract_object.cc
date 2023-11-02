@@ -47,9 +47,10 @@ namespace graph {
 #endif
 
 // mindspore graph can accept these value
-static const std::set<AObject::Type> kMsSupportedType = {AObject::kTypeInt,    AObject::kTypeBool,
-                                                         AObject::kTypeFloat,  AObject::kTypeNone,
-                                                         AObject::kTypeString, AObject::kTypeTensor};
+static const std::set<AObject::Type> kMsSupportedType = {
+  AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,   AObject::kTypeNone,
+  AObject::kTypeString, AObject::kTypeTensor, AObject::kTypeMSDType,
+};
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
 
@@ -150,9 +151,10 @@ AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyObject *o) {
 
 AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
   static const std::vector<std::pair<bool (*)(PyTypeObject *), AObject::Type>> match_func = {
-    {IsStubTensorType, kTypeStubTensor},        {IsTensorTypeOrSubType, kTypeTensor},
-    {IsCellListType, kTypeNNCellList},          {IsCellTypeOrSubType, kTypeCell},
-    {IsPrimitiveTypeOrSubType, kTypePrimitive}, {IsMetaFuncGraphTypeOrSubType, kTypeMetaFuncGraph},
+    {IsStubTensorType<true>, kTypeStubTensor}, {IsTensorType<true>, kTypeTensor},
+    {IsCellListType<false>, kTypeNNCellList},  {IsCellType<true>, kTypeCell},
+    {IsPrimitiveType<true>, kTypePrimitive},   {IsMetaFuncGraphType<true>, kTypeMetaFuncGraph},
+    {IsMSDTypeType<true>, kTypeMSDType},
   };
   if (tp == nullptr) {
     return kTypeAnyValue;
@@ -381,7 +383,7 @@ AbstractObject::AbstractObject(Type type, const py::object &o) : AbstractObjectB
 }
 
 AObject *AbstractObject::GetIter() const {
-  if (this->GetType() == kTypeAnyValue) {
+  if (this->GetType() == kTypeAnyValue || value_.ptr() == nullptr) {
     return MakeAObject(kTypeAnyValue);
   }
   PyObject *iter = PyObject_GetIter(value_.ptr());
@@ -1045,32 +1047,46 @@ AObject *AbstractDict::GetItem(AObject *k) {
   return item == nullptr ? MakeAObject(kTypeAnyValue) : ConvertValue(item);
 }
 
-bool AbstractDict::DictMerge(AObject *o) {
+bool AbstractDict::DictMerge(AObject *o, int update) {
   MarkModify();
   if (!IsElementValid()) {
     return true;
   }
-  if (o == nullptr || o->GetType() != kTypeDict ||
-      PyDict_Merge(dict_.ptr(), static_cast<AbstractDict *>(o)->dict_.ptr(), 0)) {
-    PyErr_Clear();
+  if (o == nullptr || o->GetType() != kTypeDict) {
     MarkElementInValid();
+    return true;
+  }
+  AbstractDict *d = static_cast<AbstractDict *>(o);
+  if (!d->IsElementValid() || PyDict_Merge(dict_.ptr(), d->dict_.ptr(), update)) {
+    MarkElementInValid();
+    CHECK_PYTHON_EXCEPTION(nullptr);
     // unknown user defined dict merge, assume it success
+  }
+  if (size() == 0) {
+    this->k_type_ = d->k_type_;
+    this->v_type_ = d->v_type_;
+  } else {
+    this->k_type_ = this->k_type_ == d->k_type_ ? this->k_type_ : kTypeAnyValue;
+    this->v_type_ = this->v_type_ == d->v_type_ ? this->v_type_ : kTypeAnyValue;
   }
   return true;
 }
 
-bool AbstractDict::DictUpdate(AObject *o) {
-  MarkModify();
-  if (!IsElementValid()) {
-    return true;
-  }
-  if (o == nullptr || o->GetType() != kTypeDict ||
-      PyDict_Merge(dict_.ptr(), static_cast<AbstractDict *>(o)->dict_.ptr(), 1)) {
-    PyErr_Clear();
+bool AbstractDict::DictUpdate(AObject *o) { return DictMerge(o, 1); }
+
+bool AbstractDict::MapAdd(AObject *k, AObject *v) {
+  if (v == nullptr) {
     MarkElementInValid();
-    // unknown user defined dict update, assume it success
+    return true;  // assume it success
   }
-  return true;
+  if (size() == 0) {
+    this->k_type_ = k->GetType();
+    this->v_type_ = v->GetType();
+  } else {
+    this->k_type_ = this->k_type_ == k->GetType() ? this->k_type_ : kTypeAnyValue;
+    this->v_type_ = this->v_type_ == v->GetType() ? this->v_type_ : kTypeAnyValue;
+  }
+  return SetItem(k, v);
 }
 
 bool AbstractList::ListAppend(AObject *item) {
@@ -1078,8 +1094,12 @@ bool AbstractList::ListAppend(AObject *item) {
   if (!IsElementValid()) {
     return true;
   }
+  if (size() == 0) {
+    this->element_type_ = item->GetType();
+  } else if (this->element_type_ != item->GetType()) {
+    this->element_type_ = kTypeAnyValue;
+  }
   items_.push_back(item);
-  this->element_type_ = this->element_type_ == item->GetType() ? this->element_type_ : kTypeAnyValue;
   return true;
 }
 
@@ -1097,8 +1117,12 @@ bool AbstractList::ListExtend(AObject *l) {
     MarkElementInValid();
     return true;
   }
+  if (size() == 0) {
+    this->element_type_ = i->GetElementType();
+  } else {
+    this->element_type_ = this->GetElementType() == i->GetElementType() ? this->GetElementType() : kTypeAnyValue;
+  }
   std::copy(i->items().begin(), i->items().end(), std::back_inserter(items_));
-  this->element_type_ = this->GetElementType() == i->GetElementType() ? this->GetElementType() : kTypeAnyValue;
   return true;
 }
 
@@ -1120,10 +1144,9 @@ bool AbstractTuple::Update(const std::vector<AObject *> &item) {
 
 bool AbstractTuple::Update() {
   if (!this->IsElementValid()) {
-    this->element_valid_ = kTypeAnyValue;
     return false;
   }
-  this->element_valid_ = kTypeNone;
+  this->element_type_ = kTypeAnyValue;
   // copy it
   PyObject *c = (this->type_ == kTypeTuple) ? PyTuple_New(items_.size()) : PyList_New(items_.size());
   value_ = py::reinterpret_steal<py::object>(c);
@@ -1261,15 +1284,22 @@ AObject *AbstractTensor::Unary(int op) const {
     case UNARY_NEGATIVE:
     case UNARY_INVERT: {
       AbstractTensor *res = static_cast<AbstractTensor *>(MakeAObject(kTypeTensor));
-      res->attrs_["shape"] = attrs_.find("shape")->second;
-      res->attrs_["dtype"] = attrs_.find("dtype")->second;
+      auto it = attrs_.find("shape");
+      if (it != attrs_.end()) {
+        res->attrs_["shape"] = it->second;
+      }
+      it = attrs_.find("dtype");
+      if (it != attrs_.end()) {
+        res->attrs_["dtype"] = it->second;
+      }
       return res;
     }
     case UNARY_NOT: {
-      AObject *shape_info = attrs_.find("shape")->second;
-      if (shape_info == nullptr) {
+      auto it = attrs_.find("shape");
+      if (it == attrs_.end() || it->second == nullptr) {
         return MakeAObject(kTypeTensor);
       }
+      AObject *shape_info = it->second;
       PyObject *shape = shape_info->GetPyObject().ptr();
       Py_ssize_t ndim = PyTuple_GET_SIZE(shape);
       if (ndim == 0 || (ndim == 1 && PyLong_AS_LONG(PyTuple_GET_ITEM(shape, 0))) == 1) {
@@ -1286,7 +1316,7 @@ AObject *AbstractTensor::Unary(int op) const {
 static const std::unordered_map<std::string, AObject::Type> tensor_attr_type = {
   // py Tensor property
   {"shape", AObject::kTypeTuple},
-  {"dtype", AObject::kTypeAnyValue},
+  {"dtype", AObject::kTypeMSDType},
   {"size", AObject::kTypeInt},
   {"itemsize", AObject::kTypeInt},
   {"nbytes", AObject::kTypeInt},
@@ -1299,7 +1329,7 @@ static const std::unordered_map<std::string, AObject::Type> tensor_attr_type = {
   {"mT", AObject::kTypeTensor},
   // cpp Tensor property
   {"_shape", AObject::kTypeTuple},
-  {"_dtype", AObject::kTypeAnyValue},
+  {"_dtype", AObject::kTypeMSDType},
   {"_size", AObject::kTypeInt},
   {"_itemsize", AObject::kTypeInt},
   {"_nbytes", AObject::kTypeInt},
@@ -1323,13 +1353,7 @@ static PyObject *GetUninitializedTensor() {
   return tensor;
 }
 
-AbstractTensor::AbstractTensor(const py::object &o, bool is_stub) : AbstractObject(kTypeTensor, o), is_stub_(is_stub) {
-  // cache it
-  if (o.ptr()) {
-    (void)GetAttr("shape");
-    (void)GetAttr("dtype");
-  }
-}
+AbstractTensor::AbstractTensor(const py::object &o, bool is_stub) : AbstractObject(kTypeTensor, o), is_stub_(is_stub) {}
 
 AObject *AbstractTensor::GetAttr(const std::string &name) {
   if (value_.ptr()) {

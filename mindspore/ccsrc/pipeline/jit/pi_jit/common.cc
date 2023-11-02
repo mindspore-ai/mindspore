@@ -33,7 +33,6 @@
 #include "pipeline/jit/pi_jit/graph_guard/strategy.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/jit/pi_jit/ms_adapter/infer.h"
 
 namespace mindspore {
 namespace jit {
@@ -481,7 +480,17 @@ static void ValidateCompiledResults(JitCompileResults *c) {
 
 static py::object MakeFunctionFromCodeGen(CodeGenerator *cg, PyObject *builtins, PyObject *default_globals) {
   PyObject *new_code = reinterpret_cast<PyObject *>(cg->MakeCodeObj());
-  PyDict_Merge(default_globals, cg->GetGlobals().ptr(), 0);
+  PyObject *used_globals = cg->GetGlobals().ptr();
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(used_globals, &pos, &key, &value)) {
+    PyObject *old = PyDict_GetItem(default_globals, key);
+    MS_EXCEPTION_IF_CHECK_FAIL(old == nullptr || old == value, "duplicate global value " + std::string(py::str(key)) +
+                                                                 ":" + std::string(py::str(old)) + "->" +
+                                                                 std::string(py::str(value)));
+    PyDict_SetItem(default_globals, key, value);
+  }
+
   PyObject *new_func = PyFunction_New(new_code, default_globals);
   Py_DECREF(new_code);
   Py_XSETREF(PyFunction_GET_CLOSURE(new_func), cg->GetClosure().inc_ref().ptr());
@@ -497,6 +506,8 @@ static void GraphCapture(JitCompileResults *jcr) {
   GraphBuilder g(jcr->f);
   (void)g.BuildGraph();
   oc = g.GetGraph()->GetGuard();
+
+  // check graph has primitive call
 
   GraphAnalyzer analyzer(g.GetGraph());
   analyzer.Analyze();
@@ -658,7 +669,6 @@ static void GuardForGraph(JitCompileResults *c, const std::string &graph_phase, 
 }
 
 static void GraphCompile(JitCompileResults *jcr, OptCodePtr oc, py::object func_handle, py::object frame_handle) {
-  jcr->stat = JitCompileResults::GRAPH_BUILDING;
   const auto &conf = *jcr->conf;
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(func_handle.ptr());
   PyFrameObject *frame = reinterpret_cast<PyFrameObject *>(frame_handle.ptr());
@@ -709,6 +719,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
   py::object func = py::reinterpret_borrow<py::object>(c->func);
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->f));
   if (c->stat == JitCompileResults::GRAPH_CANDIDATE) {
+    c->stat = JitCompileResults::GRAPH_BUILDING;
     size_t guard_ocs_size = c->codehub->GetOptTarget(OptOption::CreateOptionByPoint(c)).size();
     std::vector<PyObject *> locals;
     BackupLocals(c->f, &locals);
@@ -727,6 +738,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     }
   }
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
+    c->stat = JitCompileResults::GRAPH_BUILDING;
     auto f = reinterpret_cast<PyFrameObject *>(frame.ptr());
     std::vector<PyObject *> locals;
     BackupLocals(f, &locals);
@@ -921,8 +933,7 @@ static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   return compiled;
 }
 
-static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c) {
-  PyFrameObject *frame = c->f;
+static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c, PyFrameObject *frame) {
   bool just_compiled = false;
   bool compiled = false;
   switch (c->stat) {
@@ -934,6 +945,8 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c) {
       }
     /* fallthrough */
     case JitCompileResults::GRAPH_CANDIDATE:
+      MS_EXCEPTION_IF_CHECK_FAIL(c->f == nullptr || c->f == frame, "check recursive call compiling function");
+      c->f = frame;
       if (c->conf->GetBoolConfig(GraphJitConfig::kCompileWithoutCapture)) {
         c->stat = JitCompileResults::GRAPH_CAPTURED;
       }
@@ -954,20 +967,42 @@ static py::object CodeHook(PyThreadState *tstate, JitCompileResults *c) {
       bool check_guard = CheckGuard(c, frame);
       RestoreLocals(frame, &locals);
       if (check_guard) {
+        c->f = nullptr;
         return CallCompiledResults(tstate, frame, c);
       }
       if (!just_compiled) {
         c->stat = JitCompileResults::GRAPH_CANDIDATE;
-        return CodeHook(tstate, c);
+        return CodeHook(tstate, c, frame);
       }
+      MS_LOG(EXCEPTION) << "shouldn't reach here";
     }
     /* fallthrough */
     case JitCompileResults::GRAPH_BUILDING:
-      MS_LOG(EXCEPTION) << "shouldn't reach here";
+      MS_LOG(WARNING) << "recursive call, compiler call the code "
+                      << std::string(py::str(reinterpret_cast<PyObject *>(frame->f_code))) << " which is compiling";
       break;
   }
   PyObject *res = _PyEval_EvalFrameDefault(tstate, frame, 0);
   return py::reinterpret_steal<py::object>(res);
+}
+
+static void ApplyAutoJit(PyFrameObject *f) {
+  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoJit)) {
+    return;
+  }
+
+  PyObject *code = reinterpret_cast<PyObject *>(f->f_code);
+  if (getJitCompileResults(code, false) != nullptr) {
+    return;
+  }
+
+  // first reached this code
+  // allocate for all code while auto jit
+  (void)getJitCompileResults(code, true);
+  if (!kPIJitConfigDefault.ShouldAutoJit(f)) {
+    return;
+  }
+  (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict());
 }
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
@@ -978,19 +1013,21 @@ PyObject *EvalFrame(PyFrameObject *f, int exc) {
 PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
 #endif
 
-  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kCapturedMSadapterForward)) {
-    SpecializeForMSAdapterModule(f);
+  // exception handler
+  if (exc) {
+    return _PyEval_EvalFrameDefault(tstate, f, exc);
   }
+
+  ApplyAutoJit(f);
 
   PyObject *code = reinterpret_cast<PyObject *>(f->f_code);
   JitCompileResults *c = getJitCompileResults(code, false);
-  if (c == nullptr || exc) {
+  if (c == nullptr) {
     return _PyEval_EvalFrameDefault(tstate, f, exc);
   }
-  c->f = f;
   py::object res;
   try {
-    res = CodeHook(tstate, c);
+    res = CodeHook(tstate, c, f);
   } catch (py::error_already_set &e) {
     MS_LOG(ERROR) << "execute failed with" << e.what() << " at "
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
@@ -1000,7 +1037,6 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   if (PyErr_Occurred()) {
     res = py::object();
   }
-  c->f = nullptr;
   return res.inc_ref().ptr();
 }
 }  // namespace graph

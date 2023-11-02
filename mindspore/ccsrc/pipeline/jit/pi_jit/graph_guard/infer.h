@@ -51,24 +51,37 @@ PyTypeObject *GetPybindType() {
   return reinterpret_cast<PyTypeObject *>(mapped_type.ptr());
 }
 
-template <class T>
-bool IsPybindTypeOrSubType(PyTypeObject *tp) {
+template <class T, bool sub = true>
+bool IsPybindType(PyTypeObject *tp) {
   PyTypeObject *tar = GetPybindType<T>();
   if (tar == nullptr || tp == nullptr) {
     return false;
   }
-  return tp == tar || PyType_IsSubtype(tp, tar);
+  return tp == tar || (sub ? PyType_IsSubtype(tp, tar) : false);
 }
 
-bool IsGradOperationTypeOrSubType(PyTypeObject *tp);
-bool IsVmapOperationTypeOrSubType(PyTypeObject *tp);
-bool IsShardTypeOrSubType(PyTypeObject *tp);
+template <bool sub>
+bool IsGradOperationType(PyTypeObject *tp);
+template <bool sub>
+bool IsVmapOperationType(PyTypeObject *tp);
+template <bool sub>
+bool IsShardType(PyTypeObject *tp);
+template <bool sub>
 bool IsStubTensorType(PyTypeObject *tp);
-bool IsTensorTypeOrSubType(PyTypeObject *tp);
+template <bool sub>
+bool IsTensorType(PyTypeObject *tp);
+template <bool sub>
 bool IsCellListType(PyTypeObject *tp);
-bool IsCellTypeOrSubType(PyTypeObject *tp);
-bool IsPrimitiveTypeOrSubType(PyTypeObject *tp);
-bool IsMetaFuncGraphTypeOrSubType(PyTypeObject *tp);
+template <bool sub>
+bool IsCellType(PyTypeObject *tp);
+template <bool sub>
+bool IsPrimitiveType(PyTypeObject *tp);
+template <bool sub>
+bool IsMetaFuncGraphType(PyTypeObject *tp);
+template <bool sub>
+bool IsMSDTypeType(PyTypeObject *tp);
+
+bool FindTensorName(const std::string &name);
 
 bool CheckTensorDataInitialized(const py::object &tensor);
 

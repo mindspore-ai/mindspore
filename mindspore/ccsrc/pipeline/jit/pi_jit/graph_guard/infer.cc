@@ -25,6 +25,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/cell.h"
 #include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/pi_jit/pydef.h"
 
 namespace mindspore {
 namespace parse {
@@ -411,35 +412,13 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
 
 PyObject *InferEngine::InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
                                              const PrimitivePyPtr &prim) {
-  if (prim->name() == "Shape" && arglist.size() == 1 && py::isinstance<mindspore::tensor::MetaTensor>(arglist[0])) {
-    auto pyObj = py::cast<py::object>(arglist[0]);
-    auto tensor_ptr = pyObj.cast<mindspore::tensor::MetaTensorPtr>();
-    auto shape = tensor_ptr->shape();
-    PyObject *tuple = PyTuple_New(shape.size());
-    for (size_t it = 0; it < shape.size(); ++it) {
-      py::int_ ss(shape[it]);
-      Py_INCREF(ss.ptr());
-      PyTuple_SetItem(tuple, it, ss.ptr());
+  if ((prim->name() == "Shape" || prim->name() == "DType" || prim->name() == "Rank") && arglist.size() == 1) {
+    PyObject *res = PyObject_CallOneArg(primitive, arglist[0]);
+    if (res == nullptr) {
+      MS_LOG(ERROR) << py::error_already_set().what();
+      PyErr_Clear();
     }
-    return tuple;
-  } else if (prim->name() == "DType" && arglist.size() == 1 &&
-             py::isinstance<mindspore::tensor::MetaTensor>(arglist[0])) {
-    auto pyObj = py::cast<py::object>(arglist[0]);
-    auto tensor_ptr = pyObj.cast<mindspore::tensor::MetaTensorPtr>();
-    mindspore::TypePtr type = tensor_ptr->Dtype();
-    PyObject *dtype = nullptr;
-    if (g_type2attr.find(type->type_id()) != g_type2attr.end()) {
-      dtype = PyObject_GetAttrString(g_ms_type, g_type2attr[type->type_id()].c_str());
-    } else {
-      MS_LOG(EXCEPTION) << "Cannot find suitable type for " << type->ToString();
-      return nullptr;
-    }
-    return dtype;
-  } else if (prim->name() == "Rank" && arglist.size() == 1 &&
-             py::isinstance<mindspore::tensor::MetaTensor>(arglist[0])) {
-    auto pyObj = py::cast<py::object>(arglist[0]);
-    auto tensor_ptr = pyObj.cast<mindspore::tensor::MetaTensorPtr>();
-    return PyLong_FromSize_t(tensor_ptr->shape().size());
+    return res;
   } else if (prim->name() == "TileSize" && arglist.size() == 3) {
     py::tuple tuple(3);
     tuple[0] = py::cast<py::object>(arglist[0]);
@@ -486,19 +465,48 @@ bool InferEngine::SupportInfer(PyObject *primitive) {
   }                                                                                 \
   return check_res;
 
-bool IsGradOperationTypeOrSubType(PyTypeObject *tp) {
-  return IsPybindTypeOrSubType<mindspore::prim::GradOperation>(tp);
+// sub-type check
+template <>
+bool IsGradOperationType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::prim::GradOperation, true>(tp);
 }
-bool IsVmapOperationTypeOrSubType(PyTypeObject *tp) {
-  return IsPybindTypeOrSubType<mindspore::prim::VmapOperation>(tp);
+template <>
+bool IsVmapOperationType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::prim::VmapOperation, true>(tp);
 }
-bool IsShardTypeOrSubType(PyTypeObject *tp) { return IsPybindTypeOrSubType<mindspore::prim::Shard>(tp); }
-bool IsStubTensorType(PyTypeObject *tp) { TYPE_CHECK("mindspore.common._stub_tensor", "StubTensor", true); }
-bool IsTensorTypeOrSubType(PyTypeObject *tp) { return IsPybindTypeOrSubType<mindspore::tensor::MetaTensor>(tp); }
-bool IsCellListType(PyTypeObject *tp) { TYPE_CHECK("mindspore.nn", "CellList", false); }
-bool IsCellTypeOrSubType(PyTypeObject *tp) { return IsPybindTypeOrSubType<mindspore::Cell>(tp); }
-bool IsPrimitiveTypeOrSubType(PyTypeObject *tp) { return IsPybindTypeOrSubType<mindspore::PrimitivePyAdapter>(tp); }
-bool IsMetaFuncGraphTypeOrSubType(PyTypeObject *tp) { return IsPybindTypeOrSubType<mindspore::MetaFuncGraph>(tp); }
+template <>
+bool IsShardType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::prim::Shard, true>(tp);
+}
+template <>
+bool IsStubTensorType<true>(PyTypeObject *tp) {
+  TYPE_CHECK("mindspore.common._stub_tensor", "StubTensor", true);
+}
+template <>
+bool IsTensorType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::tensor::MetaTensor, true>(tp);
+}
+template <>
+bool IsCellType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::Cell, true>(tp);
+}
+template <>
+bool IsPrimitiveType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::PrimitivePyAdapter, true>(tp);
+}
+template <>
+bool IsMetaFuncGraphType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::MetaFuncGraph, true>(tp);
+}
+template <>
+bool IsMSDTypeType<true>(PyTypeObject *tp) {
+  return IsPybindType<mindspore::Type, true>(tp);
+}
+// exact type check
+template <>
+bool IsCellListType<false>(PyTypeObject *tp) {
+  TYPE_CHECK("mindspore.nn", "CellList", false);
+}
 
 #undef TYPE_CHECK
 
@@ -508,6 +516,15 @@ bool CheckTensorDataInitialized(const py::object &py_tensor) {
     return tensor->data().const_data() != nullptr;
   }
   return false;
+}
+
+bool FindTensorName(const std::string &name) {
+  const auto &meth = pipeline::GetMethodMap().find(kObjectTypeTensorType)->second;
+  if (meth.find(name) != meth.end()) {
+    return true;
+  }
+  const auto &attr = pipeline::GetAttrMap().find(kObjectTypeTensorType)->second;
+  return attr.find(name) != attr.end();
 }
 
 }  // namespace graph

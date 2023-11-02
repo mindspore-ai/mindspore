@@ -345,6 +345,52 @@ bool IsTensorPyObject(PyObject *obj) {
          py::isinstance<mindspore::tensor::TensorData>(obj);
 }
 
+std::string GetTopModule(const py::object &o) {
+  PyObject *mod = PyObject_GetAttrString(o.ptr(), "__module__");
+  const char *module_name = "";
+  if (mod == nullptr) {
+    PyErr_Clear();
+  } else if (PyModule_Check(mod)) {
+    module_name = PyModule_GetName(mod);
+  } else if (PyUnicode_Check(mod)) {
+    module_name = PyUnicode_AsUTF8(mod);
+  }
+  const char *s = strchr(module_name, '.');
+  std::string res = s ? std::string(module_name, s - module_name) : module_name;
+  Py_XDECREF(mod);
+  return res;
+}
+
+py::object GetPyCodeObject(const py::object &any, bool exact_func) {
+  PyObject *f = any.ptr();
+  if (f == nullptr) {
+    return py::object();
+  }
+  if (PyInstanceMethod_Check(f)) {
+    f = PyInstanceMethod_GET_FUNCTION(f);
+  }
+  if (PyMethod_Check(f)) {
+    f = PyMethod_GET_FUNCTION(f);
+  }
+  if (PyFunction_Check(f)) {
+    f = PyFunction_GET_CODE(f);
+  }
+  if (PyCode_Check(f)) {
+    return py::cast<py::object>(f);
+  }
+  if (exact_func) {
+    return py::object();
+  }
+  PyObject *call = PyObject_GetAttrString(any.ptr(), "__call__");
+  if (call == nullptr) {
+    PyErr_Clear();
+    return py::object();
+  }
+  // self reference self at __call__, recursive call self.
+  // just call once
+  return GetPyCodeObject(py::reinterpret_steal<py::object>(call), true);
+}
+
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

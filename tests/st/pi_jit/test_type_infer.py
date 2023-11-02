@@ -1,6 +1,6 @@
 import pytest
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, ops
 import mindspore.common.dtype as mstype
 import numpy as np
 
@@ -229,3 +229,117 @@ def test_builtin_func():
     b = builtin_func_test(x, True, False)
     jit_mode_pi_enable()
     assert a == b
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('intep', [True, False])
+def test_attr(intep):
+    """
+    Feature: Tensor and method attribute access test
+    Description: For user defined tensor attribute and method attribute is PSJit unsupported
+    Expectation: The results should match for both modes.
+    """
+    @jit(mode="PIJit", jit_config={"interpret_captured_code": intep})
+    def attr_access(x):
+        return relu(x), x.astype.__self__, x.attr
+
+    relu = ops.operations.ReLU()
+    x = Tensor(1)
+    x.attr = x
+    x1, x2, x3 = attr_access(x)
+    if intep:
+        assert x == x1 and x is x2 and x is x3
+    assert x == x1 and x == x2 and x == x3
+
+
+class MyDict:
+    def __init__(self, value=None):
+        if value is not None:
+            self.__dict__ = {**value}
+
+    def __getitem__(self, k):
+        return self.__dict__[k]
+
+    def __setitem__(self, k, v):
+        self.__dict__[k] = v
+
+    def __len__(self):
+        return len(self.__dict__)
+
+    def __iter__(self):
+        return iter(self.__dict__)
+
+    def keys(self):
+        return self.__dict__.keys()
+
+    def value(self):
+        return self.__dict__.values()
+
+    def items(self):
+        return self.__dict__.items()
+
+    def get(self, *args):
+        return self.__dict__.get(*args)
+
+
+class MyTuple(MyDict):
+    def __init__(self, *value):
+        if len(value) == 1:
+            value = value[0]
+        i = iter(value)
+        super().__init__({k: next(i) for k in range(len(value))})
+
+    def __getitem__(self, k):
+        return super().__getitem__(int(k))
+
+    def __setitem__(self, k, v):
+        raise Exception("constant dict")
+
+    def __iter__(self):
+        return iter(self.__dict__.values())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('test_user_defined_dict', [True, False])
+def test_unpack_call(test_user_defined_dict):
+    """
+    Feature: Test unpack call
+    Description: For user defined dict and tuple, support break graph to avoid unpack the sequence
+    Expectation: The results should match for both modes.
+    """
+    kwargs = MyDict()
+    kwargs.k1 = "keyword1"
+    kwargs.k2 = "keyword2"
+    kwargs.k3 = "keyword3"
+    kwargs.k4 = "keyword4"
+
+    args = MyTuple(kwargs.keys())
+    if not test_user_defined_dict:
+        args = tuple(args)
+        kwargs = dict(kwargs)
+
+    def results_offer(a, b, c, d, k1, k2, k3, k4):
+        return {a: k1, b: k2, c: k3, d: k4}
+
+    def forward2(*args, **kwargs):
+        return results_offer(*args, **kwargs)
+
+    def forward1(*args, **kwargs):
+        return forward2(*args, **kwargs)
+
+    @jit(mode="PIJit")
+    def unpack_call():
+        return forward1(*args, **kwargs)
+
+    @jit(mode="PIJit")
+    def unpack_call2():
+        return forward1(1, 2, 3, 4, k1=1, k2=2, k3=3, k4=4)
+
+    res1 = unpack_call()
+    res2 = unpack_call2()
+    assert {**res1} == {**kwargs}
+    assert res2 == {1: 1, 2: 2, 3: 3, 4: 4}

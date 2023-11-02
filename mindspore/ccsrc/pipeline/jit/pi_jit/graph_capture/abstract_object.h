@@ -231,11 +231,14 @@ class AbstractDict : public AbstractSequence {
   AObject *GetItem(AObject *key) override;
   bool IsMindSporeSupportedType() override;
 
+  Type KeyType() const { return k_type_; }
+  Type ValueType() const { return v_type_; }
+
   bool IsModify() const { return modify_ || this->write_cache_.size() > 0; }
   void MarkModify() { modify_ = true; }
-  bool DictMerge(AObject *o);
+  bool DictMerge(AObject *o, int update = 0);
   bool DictUpdate(AObject *o);
-  bool MapAdd(AObject *k, AObject *v) { return SetItem(k, v); }
+  bool MapAdd(AObject *k, AObject *v);
   bool IsElementValid() const { return element_valid_; }
   void MarkElementInValid() {
     k_type_ = kTypeAnyValue;
