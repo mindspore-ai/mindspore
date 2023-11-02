@@ -2542,7 +2542,8 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
                     std::back_inserter(partial_inputs));
     (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(partial_inputs));
     new_inputs = ConvertArgsToInputs(prim_, partial_inputs, fg);
-  } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr)) {
+  } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
+             IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
     auto op_cnode = op_node->cast<CNodePtr>();
     std::vector<AnfNodePtr> getattr_inputs;
