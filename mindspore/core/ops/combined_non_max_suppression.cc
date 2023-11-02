@@ -16,7 +16,6 @@
 
 #include "ops/combined_non_max_suppression.h"
 
-#define IsValue(value_ptr) (!value_ptr->isa<ValueAny>() && !value_ptr->isa<None>())
 #include <algorithm>
 #include <set>
 
@@ -41,6 +40,7 @@
 #include "mindspore/core/ops/image_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -54,13 +54,6 @@ const int64_t kInputDimension1 = 3;
 const int64_t kDimsize = 4;
 const int64_t kInputs = 6;
 const size_t ksecond = 2;
-
-tensor::TensorPtr Get_Value(const std::vector<AbstractBasePtr> &input_args, size_t index) {
-  auto input_shape_value_ptr = input_args[index]->GetValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  return input_shape_value_ptr->cast<tensor::TensorPtr>();
-}
-
 void CombinedNonMaxSuppressionCheckShapeSize(const ShapeVector &input0_shape, const ShapeVector &input1_shape,
                                              const ShapeVector &input2_shape, const ShapeVector &input3_shape,
                                              const ShapeVector &input4_shape, const ShapeVector &input5_shape,
@@ -112,16 +105,15 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
   MS_EXCEPTION_IF_NULL(pad_per_class_ptr);
   bool pad_per_class = GetValue<bool>(pad_per_class_ptr);
 
-  if (!is_dynamic && IsValue(input_args[kInputIndex2]->GetValue()) && IsValue(input_args[kInputIndex3]->GetValue())) {
-    auto input2_tensor = Get_Value(input_args, kInputIndex2);
-    auto input3_tensor = Get_Value(input_args, kInputIndex3);
-    auto max_output_size_per_class = *(static_cast<int32_t *>(input2_tensor->data_c()));
-    auto max_total_size = *(static_cast<int32_t *>(input3_tensor->data_c()));
+  auto max_output_size_per_class_opt = GetScalarValue<int>(input_args[kInputIndex2]->GetValue());
+  auto max_total_size_opt = GetScalarValue<int>(input_args[kInputIndex3]->GetValue());
+  if (!is_dynamic && max_output_size_per_class_opt.has_value() && max_total_size_opt.has_value()) {
+    auto max_output_size_per_class = max_output_size_per_class_opt.value();
+    auto max_total_size = max_total_size_opt.value();
 
     const int32_t kNumZero = 0;
     (void)CheckAndConvertUtils::CheckInteger("max_total_size", max_total_size, kGreaterThan, kNumZero,
                                              primitive->name());
-
     (void)CheckAndConvertUtils::CheckInteger("max_output_size_per_clas", max_output_size_per_class, kGreaterThan,
                                              kNumZero, primitive->name());
 
@@ -145,6 +137,27 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
     auto shape3 = std::make_shared<abstract::Shape>(ShapeVector{-1, -1});
     auto shape4 = std::make_shared<abstract::Shape>(ShapeVector{-1});
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{shape1, shape2, shape3, shape4});
+  }
+}
+
+void CheckCombinedNonMaxSuppressionThreshold(const AbstractBasePtr &iou_arg, const AbstractBasePtr &score_arg,
+                                             const std::string &prim_name, const ShapeVector &input0_shape,
+                                             const ShapeVector &input1_shape, bool is_dynamic) {
+  auto iou_opt = GetScalarValue<float>(iou_arg->GetValue());
+  if (iou_opt.has_value()) {
+    auto iou_threshold = iou_opt.value();
+    if (iou_threshold < 0 || iou_threshold > 1) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", iou_threshold must be in [0,1], but got " << iou_threshold
+                               << ".";
+    }
+  }
+  auto score_opt = GetScalarValue<float>(score_arg->GetValue());
+  if (score_opt.has_value()) {
+    auto score_threshold = score_opt.value();
+    if (score_threshold < 0 && !is_dynamic && input0_shape[kInputIndex2] == input1_shape[kInputIndex2]) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", it is temporarily unsupported when boxes's 2'nd dim "
+                               << "is not 1 and score_threshold is less than 1.";
+    }
   }
 }
 
@@ -172,21 +185,8 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionInferShape(const PrimitivePtr &
       MS_EXCEPTION(TypeError) << "For " << prim_name << " input" << i << " only support tensor!";
     }
   }
-
-  if (IsValue(input_args[kInputIndex4]->GetValue()) && IsValue(input_args[kInputIndex5]->GetValue())) {
-    auto input4_tensor = Get_Value(input_args, kInputIndex4);
-    auto input5_tensor = Get_Value(input_args, kInputIndex5);
-    auto iou_threshold = *(static_cast<float *>(input4_tensor->data_c()));
-    auto score_threshold = *(static_cast<float *>(input5_tensor->data_c()));
-    if (iou_threshold < 0 || iou_threshold > 1) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", iou_threshold must be in [0,1], but got " << iou_threshold
-                               << ".";
-    }
-    if (score_threshold < 0 && !is_dynamic && input0_shape[kInputIndex2] == input1_shape[kInputIndex2]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", it is temporarily unsupported when boxes's 2'nd dim "
-                               << "is not 1 and score_threshold is less than 1.";
-    }
-  }
+  CheckCombinedNonMaxSuppressionThreshold(input_args[kInputIndex4], input_args[kInputIndex5], prim_name, input0_shape,
+                                          input1_shape, is_dynamic);
 
   return CombinedNonMaxSuppressionGetOutputShape(primitive, input_args, is_dynamic);
 }
