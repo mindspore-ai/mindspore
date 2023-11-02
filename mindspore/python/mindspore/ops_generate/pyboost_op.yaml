@@ -70,7 +70,7 @@ Transpose:
   GPU:
     mode: normal
   Ascend:
-    mode: customize
+    mode: view
 
 View:
   CPU:
@@ -78,4 +78,4 @@ View:
   GPU:
     mode: normal
   Ascend:
-    mode: customize
+    mode: view

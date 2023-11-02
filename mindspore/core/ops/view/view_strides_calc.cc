@@ -74,6 +74,12 @@ TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<Va
     return {};
   }
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto ori_storage_info = input_tensor->storage_info();
+  if (ori_storage_info != nullptr && !ori_storage_info->is_contiguous) {
+    MS_LOG(EXCEPTION) << "input tensor:" << input_tensor->ToString()
+                      << " is not contiguous, storage info:" << ori_storage_info->ToString();
+  }
 
   auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
 
