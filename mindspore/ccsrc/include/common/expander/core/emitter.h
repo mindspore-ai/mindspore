@@ -301,6 +301,8 @@ class COMMON_EXPORT Emitter {
   /// of the body function should match init_list.
   NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list);
 
+  NodePtr ConvertTensorToTuple(const NodePtr &node);
+
  protected:
   virtual NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs);
   NodePtr NewNode(const AnfNodePtr &anfnode) { return std::make_shared<Node>(anfnode, this); }

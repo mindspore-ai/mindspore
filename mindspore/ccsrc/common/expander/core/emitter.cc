@@ -361,7 +361,8 @@ NodePtr Emitter::ReduceSum(const NodePtr &x, const NodePtr &axis, bool keep_dims
   if (!need_reduce.first) {
     return Reshape(x, need_reduce.second);
   }
-  return Emit(prim::kPrimReduceSum->name(), {x, axis, Value(keep_dims), Value(skip_mode)});
+  auto tuple_axis = ConvertTensorToTuple(axis);
+  return Emit(prim::kPrimReduceSum->name(), {x, tuple_axis, Value(keep_dims), Value(skip_mode)});
 }
 
 NodePtr Emitter::ReduceSum(const NodePtr &x, const ShapeVector &axis, bool keep_dims) {
@@ -464,6 +465,25 @@ std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const Node
     return {this->Cast(lhs, rhs->dtype()), rhs};
   }
   return {lhs, this->Cast(rhs, lhs->dtype())};
+}
+
+NodePtr Emitter::ConvertTensorToTuple(const NodePtr &node) {
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    if (node->isa<ValueNode>()) {
+      auto [success, value] = GetIntList(node);
+      if (success) {
+        return EmitValue(MakeValue(value));
+      }
+    }
+    return Emit(kTensorToTupleOpName, {node});
+  }
+  if (!abs->isa<abstract::AbstractTuple>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "ConvertTensorToTuple only support a Tensor or tuple as input, but got "
+                               << abs->BuildType()->ToString() << ".";
+  }
+  return node;
 }
 
 class Emitter::CtrlFlowBlock {

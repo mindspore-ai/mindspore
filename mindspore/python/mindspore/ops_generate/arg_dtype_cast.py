@@ -157,9 +157,8 @@ def type_it(data, src_type, dst_type):
     """
     if is_instance_of(data, dst_type):
         return data
-    # Temporarily remove this judgment.
-    # if not is_instance_in(data, src_type):
-    #     raise TypeError(f"For type_it, the {data} should be {src_type}, but got {type(data)}")
+    if not is_instance_in(data, src_type):
+        raise TypeError(f"For type_it, the {data} should be OpDtype::{src_type}, but got {type(data)}.")
     if dst_type == PY_DT_FLOAT:
         if isinstance(data, int):
             return int_to_float(data)
@@ -182,4 +181,4 @@ def type_it(data, src_type, dst_type):
             ret = TensorToScalar()(data)
             return ret
 
-    raise TypeError("Unsupported type cast.")
+    raise TypeError(f"Failed to convert dtype of {data} from OpDtype::{src_type} to OpDtype::{dst_type}.")

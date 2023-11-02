@@ -80,13 +80,6 @@ bool ContainsAbstractAnyInner(const AbstractBasePtr &abs) {
   return abs->isa<AbstractAny>();
 }
 
-bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
-  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
-    MS_EXCEPTION_IF_NULL(item);
-    return ContainsAbstractAnyInner(item);
-  });
-}
-
 TypePtr GetArgsUniqueDtype(const AbstractBasePtrList &args_abs_list) {
   TypePtr res = nullptr;
   for (const auto &arg : args_abs_list) {
@@ -236,6 +229,13 @@ const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> ignore_a
   prim::kPrimUpdateState,    prim::kPrimLoad,         prim::kPrimIsConstant,  prim::kPrimMakeKeywordArg,
   prim::kPrimIsShapeUnknown, prim::kPrimIsDimUnknown, prim::kPrimListGetItem, prim::kPrimTupleGetItem,
   prim::kPrimSequenceLen,    prim::kPrimMakeDict,     prim::kPrimMutable};
+
+bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
+  return std::any_of(args_abs_list.cbegin(), args_abs_list.cend(), [](const AbstractBasePtr &item) {
+    MS_EXCEPTION_IF_NULL(item);
+    return ContainsAbstractAnyInner(item);
+  });
+}
 
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList args_abs_list;

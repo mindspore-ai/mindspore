@@ -26,6 +26,7 @@
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "include/common/utils/primfunc_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
@@ -831,59 +832,6 @@ static std::string BuilidPyInputTypeString(const py::object &obj) {
   return ss.str();
 }
 
-std::string BuildOpErrorMsg(const ops::OpDefPtr &op_def, const py::list &op_inputs) {
-  std::stringstream init_arg_ss;
-  std::stringstream input_arg_ss;
-  for (auto const &op_arg : op_def->args_) {
-    if (op_arg.as_init_arg_) {
-      init_arg_ss << op_arg.arg_name_ << "=<";
-      for (auto const &dtype : op_arg.cast_dtype_) {
-        init_arg_ss << ops::EnumToString(dtype) << ", ";
-      }
-      init_arg_ss << ops::EnumToString(op_arg.arg_dtype_) << ">, ";
-    } else {
-      input_arg_ss << op_arg.arg_name_ << "=<";
-      for (auto const &dtype : op_arg.cast_dtype_) {
-        input_arg_ss << ops::EnumToString(dtype) << ", ";
-      }
-      input_arg_ss << ops::EnumToString(op_arg.arg_dtype_) << ">, ";
-    }
-  }
-
-  auto init_arg_str = init_arg_ss.str();
-  auto input_arg_str = input_arg_ss.str();
-  init_arg_str = init_arg_str.empty() ? "" : init_arg_str.replace(init_arg_str.end() - 2, init_arg_str.end(), "");
-  input_arg_str = input_arg_str.empty() ? "" : input_arg_str.replace(input_arg_str.end() - 2, input_arg_str.end(), "");
-
-  std::stringstream real_init_arg_ss;
-  std::stringstream real_input_arg_ss;
-  for (size_t i = 0; i < op_inputs.size(); i++) {
-    auto const &op_arg = op_def->args_[i];
-    if (op_arg.as_init_arg_) {
-      real_init_arg_ss << op_arg.arg_name_ << "=";
-      real_init_arg_ss << BuilidPyInputTypeString(op_inputs[i]) << ", ";
-    } else {
-      real_input_arg_ss << op_arg.arg_name_ << "=";
-      real_input_arg_ss << BuilidPyInputTypeString(op_inputs[i]) << ", ";
-    }
-  }
-  auto real_init_arg_str = real_init_arg_ss.str();
-  auto real_input_arg_str = real_input_arg_ss.str();
-  real_init_arg_str = real_init_arg_str.empty()
-                        ? ""
-                        : real_init_arg_str.replace(real_init_arg_str.end() - 2, real_init_arg_str.end(), "");
-  real_input_arg_str = real_input_arg_str.empty()
-                         ? ""
-                         : real_input_arg_str.replace(real_input_arg_str.end() - 2, real_input_arg_str.end(), "");
-
-  std::stringstream ss;
-  ss << "Failed calling " << op_def->name_ << " with \"" << op_def->name_ << "(" << real_init_arg_str << ")("
-     << real_input_arg_str << ")\"." << std::endl;
-  ss << "The valid calling should be: " << std::endl;
-  ss << "\"" << op_def->name_ << "(" << init_arg_str << ")(" << input_arg_str << ")\".";
-  return ss.str();
-}
-
 void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs, bool stub,
                          std::vector<ValuePtr> *input_values, size_t *none_init_inputs_num) {
   if (op_inputs.size() != op_def->args_.size()) {
@@ -925,7 +873,11 @@ void ParseOpInputByOpDef(const ops::OpDefPtr &op_def, const py::list &op_inputs,
     }
 
     if (value == nullptr) {
-      MS_LOG(EXCEPTION) << BuildOpErrorMsg(op_def, op_inputs);
+      std::vector<std::string> op_type_list;
+      for (size_t index = 0; index < op_inputs.size(); ++index) {
+        (void)op_type_list.emplace_back(BuilidPyInputTypeString(op_inputs[index]));
+      }
+      MS_EXCEPTION(TypeError) << ops::BuildOpErrorMsg(op_def, op_type_list);
     }
     input_values->emplace_back(value);
   }
