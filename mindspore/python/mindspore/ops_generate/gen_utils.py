@@ -121,6 +121,28 @@ def get_convert_type_str(dtype: str):
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
+def tuple_input_to_cpp_type(dtype: str):
+    types_map = {
+        'tuple[int]': 'int64_t',
+        'tuple[float]': 'double',
+        'tuple[bool]': 'bool',
+        'list[int]': 'int64_t',
+        'list[float]': 'double',
+        'list[bool]': 'bool',
+    }
+    if dtype in types_map:
+        return types_map[dtype]
+    return None
+
+def number_input_to_cpp_type(dtype: str):
+    types_map = {
+        'int': 'int64_t',
+        'float': 'double',
+        'bool': 'bool',
+    }
+    if dtype in types_map:
+        return types_map[dtype]
+    return None
 
 def get_input_dtype(dtype: str):
     """
@@ -128,10 +150,9 @@ def get_input_dtype(dtype: str):
     """
     # add more type here
     type_convert = {
-        # TODO: Scalar to int/float/...
-        'int': 'ScalarPtr',
-        'float': 'ScalarPtr',
-        'bool': 'ScalarPtr',
+        'int': 'Int64ImmPtr',
+        'float': 'FP64ImmPtr',
+        'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
         'tuple[int]': 'ValueTuplePtr',
         'tuple[float]': 'ValueTuplePtr',

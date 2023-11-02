@@ -22,7 +22,8 @@ import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
 from op_proto import OpProto
 from template import CppTemplate
-from gen_utils import get_convert_type_str, get_input_dtype, get_return_type
+from gen_utils import get_convert_type_str, get_input_dtype, get_return_type, tuple_input_to_cpp_type, \
+    number_input_to_cpp_type
 import template
 
 
@@ -730,7 +731,8 @@ def generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_wit
 
 
 def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type, call_args_str,
-                                           op_outputs, call_outputs, call_args_with_type, cpp_func_return):
+                                           op_outputs, call_outputs, call_args_with_type, cpp_func_return,
+                                           call_args_after_convert, const_number_convert, value_tuple_convert):
     # PyBoost ascend op source generate
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
@@ -757,6 +759,9 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
         call_impl = template.PYBOOST_ASCEND_CALL_TEMPLATE.replace(aclnn_name=aclnn_name,
                                                                   call_args=call_args_str,
                                                                   call_tensors=call_args_tensor,
+                                                                  value_tuple_convert=value_tuple_convert,
+                                                                  const_number_convert=const_number_convert,
+                                                                  aclnn_call_args=call_args_after_convert,
                                                                   return_values=call_outputs,
                                                                   launch_mode=launch_mode,
                                                                   outputs=op_outputs)
@@ -855,6 +860,12 @@ def generate_pyboost_outputs(op_proto):
 
     return op_outputs, call_outputs
 
+def get_const_number_convert(arg_name, arg_type):
+    return "auto {}_imm = GetValue<{}>({});\n".format(arg_name, number_input_to_cpp_type(arg_type), arg_name)
+
+def get_tuple_input_convert(arg_name, arg_type):
+    cpp_type = tuple_input_to_cpp_type(arg_type)
+    return "std::vector<{}> {}_vector = ConvertValueTupleToVector<{}>({});\n".format(cpp_type, arg_name, cpp_type, arg_name)
 
 def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
@@ -868,7 +879,10 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
         if prim_name_str.endswith('Ext'):
             op_name_str = prim_name_str[:-3]
         call_args_str = []
+        call_args_after_convert = []
         call_args_type = []
+        value_tuple_convert = []
+        const_number_convert = []
         for op_arg in op_proto.op_args:
             call_arg = ''
             if gen_utils.is_tensor(op_arg):
@@ -879,6 +893,15 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
                 call_arg = op_arg.arg_name
             call_args_str.append(call_arg)
             call_args_type.append(get_input_dtype(op_arg.arg_dtype))
+
+            if number_input_to_cpp_type(op_arg.arg_dtype):
+                call_args_after_convert.append(call_arg + "_imm")
+                const_number_convert.append(get_const_number_convert(call_arg, op_arg.arg_dtype))
+            elif tuple_input_to_cpp_type(op_arg.arg_dtype):
+                call_args_after_convert.append(call_arg + "_vector")
+                value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
+            else:
+                call_args_after_convert.append(call_arg)
 
         all_ops.append(op_name_str)
 
@@ -891,9 +914,9 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
 
         generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
         generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
-        generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type,
-                                               call_args_str,
-                                               op_outputs, call_func_outputs, call_args_with_type, cpp_func_return)
+        generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type, call_args_str,
+                                               op_outputs, call_func_outputs, call_args_with_type, cpp_func_return,
+                                               call_args_after_convert, const_number_convert, value_tuple_convert)
     generate_pyboost_op_register_source_code(work_path, all_ops)
 
 
