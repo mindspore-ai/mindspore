@@ -132,3 +132,7 @@ mindspore/python/mindspore/ops/auto_generate/gen_enum_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py
 mindspore/ccsrc/pipeline/pynative/op_function/auto_generate/
+mindspore/ccsrc/kernel/pyboost/auto_generate/
+mindspore/ccsrc/plugin/device/cpu/kernel/pyboost/auto_generate/
+mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/auto_generate/
+mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/
