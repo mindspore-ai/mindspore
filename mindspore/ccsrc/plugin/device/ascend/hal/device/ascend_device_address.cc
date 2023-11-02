@@ -50,6 +50,7 @@ namespace ascend {
 const auto kFloat16Bytes = 2;
 const auto kFloatBytes = sizeof(float);
 const auto kFloat64Bytes = 8;
+static std::recursive_mutex transdata_mutx;
 
 #if defined(RT_MEMORY_P2PDMA)
 static std::mutex dma_lock;
@@ -411,7 +412,11 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   // launch transdata
   GilReleaseWithCheck release_gil;
   launch_transdata_->SetInputAddr(ptr_);
-  launch_transdata_->LaunchOpKernel();
+  {
+    std::lock_guard<std::recursive_mutex> lock_launch(transdata_mutx);
+    launch_transdata_->LaunchOpKernel();
+  }
+
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
