@@ -111,6 +111,7 @@ op_dtype:
 py_format:
   NCHW: 0
   NHWC: 1
+  NCDHW: 2
 
 # enum PadMode
 pad_mode:

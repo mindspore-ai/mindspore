@@ -36,8 +36,8 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/shape_utils.h"
 #include "utils/ms_context.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -92,17 +92,19 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
                                << "but now inputs batch_size: " << inputs_x_shape[1]
                                << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
     }
-    int64_t max_shape_value = IsDynamicRank(inputs_x_shape) ? -1 : inputs_x_shape[0] * inputs_x_shape[1];
-    ShapeVector decoded_indices_max_shape = {max_shape_value, 2};
-    ShapeVector decoded_values_max_shape = {max_shape_value};
-    ShapeVector decoded_indices_shape = {-1, 2};
-    ShapeVector decoded_values_shape = {-1};
+    int64_t max_shape_value =
+      IsDynamicRank(inputs_x_shape) ? abstract::TensorShape::kShapeDimAny : inputs_x_shape[0] * inputs_x_shape[1];
+    if (max_shape_value < 0) {
+      max_shape_value = abstract::TensorShape::kShapeDimAny;
+    }
+    ShapeVector decoded_indices_shape = {max_shape_value, 2};
+    ShapeVector decoded_values_shape = {max_shape_value};
     ShapeVector decoded_shape_shape = {2};
-    ShapeVector log_probability_shape =
-      IsDynamicRank(inputs_x_shape) ? ShapeVector{-1, 1} : ShapeVector{inputs_x_shape[1], 1};
-    auto decoded_indices_shape_ptr =
-      std::make_shared<abstract::Shape>(decoded_indices_shape, decoded_indices_max_shape);
-    auto decoded_values_shape_ptr = std::make_shared<abstract::Shape>(decoded_values_shape, decoded_values_max_shape);
+    ShapeVector log_probability_shape = IsDynamicRank(inputs_x_shape)
+                                          ? ShapeVector{abstract::TensorShape::kShapeDimAny, 1}
+                                          : ShapeVector{inputs_x_shape[1], 1};
+    auto decoded_indices_shape_ptr = std::make_shared<abstract::Shape>(decoded_indices_shape);
+    auto decoded_values_shape_ptr = std::make_shared<abstract::Shape>(decoded_values_shape);
     auto decoded_shape_shape_ptr = std::make_shared<abstract::Shape>(decoded_shape_shape);
     auto log_probability_shape_ptr = std::make_shared<abstract::Shape>(log_probability_shape);
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
