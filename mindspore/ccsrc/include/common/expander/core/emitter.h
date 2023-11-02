@@ -275,6 +275,9 @@ class COMMON_EXPORT Emitter {
   NodePtrList ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtrList &inputs,
                         const std::vector<int64_t> &value_depend = {}, const ShapeValidFunc &valid_func = nullptr);
 
+  /// \brief Emit a TensorToTuple node.
+  NodePtr TensorToTuple(const NodePtr &node);
+
   using BlockFunc = std::function<NodePtrList(Emitter *)>;
   /// \brief Generate a conditional block.
   ///

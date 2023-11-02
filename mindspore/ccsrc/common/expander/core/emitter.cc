@@ -449,6 +449,11 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcFunctorPtr &functor, const NodePtr
   return res;
 }
 
+NodePtr Emitter::TensorToTuple(const NodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return Emit(kTensorToTupleOpName, {node});
+}
+
 std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) {
   auto it1 = type_vector_[lhs->dtype()->type_id()];
   auto it2 = type_vector_[rhs->dtype()->type_id()];

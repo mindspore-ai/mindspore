@@ -46,6 +46,8 @@ int TensorToSeqCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != 0) {
     return ret;
   }
+  auto shape0 = inputs[kIndex0]->GetShapeVector();
+  is_empty_tensor_ = std::any_of(shape0.begin(), shape0.end(), [](const int64_t shape) { return shape == 0; });
   return KRET_OK;
 }
 
@@ -54,6 +56,9 @@ bool TensorToSeqCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  if (is_empty_tensor_) {
+    return true;
+  }
   const auto input_addr = inputs[0]->device_ptr();
   auto output_addr = outputs[0]->device_ptr();
   auto input_size = inputs[0]->size();

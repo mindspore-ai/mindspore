@@ -24,11 +24,22 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
   auto input_shape = input_args[0]->GetShape();
   auto input_shape_vec = input_shape->GetShapeVector();
+  auto shape_shape = input_args[1]->GetShape();
+  if (shape_shape->isa<abstract::DynamicSequenceShape>()) {
+    return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
   auto shape_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   auto shape_array_opt = GetArrayValue<int64_t>(shape_value);
   if (!shape_array_opt.has_value()) {
-    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+    if (shape_shape->isa<abstract::SequenceShape>()) {
+      auto seq_shape = shape_shape->cast<abstract::SequenceShapePtr>();
+      MS_EXCEPTION_IF_NULL(seq_shape);
+      size_t shape_size = seq_shape->size();
+      return std::make_shared<abstract::TensorShape>(ShapeVector(shape_size, abstract::Shape::kShapeDimAny));
+    }
+    return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
   auto shape_array = shape_array_opt.value();
