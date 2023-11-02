@@ -106,7 +106,7 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         window_length (Tensor): The size of returned window, with data type int32, int64.
             The input data should be an integer with a value of [0, 1000000].
         periodic (bool, optional): Indicates whether to returns a window to be used as periodic function or
-            a symmetric window. Default: ``True`` .
+            a symmetric window. Default: ``True`` , indicating that the returned window is a periodic function.
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The datatype of returned tensor.

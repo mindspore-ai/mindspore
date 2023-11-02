@@ -68,7 +68,7 @@ class TopKCategoricalAccuracy(Metric):
 
     @rearrange_inputs
     def update(self, *inputs):
-        """
+        r"""
         Updates the internal evaluation result `y_pred` and `y`.
 
         Args:
@@ -79,7 +79,7 @@ class TopKCategoricalAccuracy(Metric):
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
 
         Note:
-            The method `update` must receive input of the form :math:`(y_{pred}, y)`. If some samples have
+            The method `update` must receive input of the form :math:`(y\_pred, y)`. If some samples have
             the same accuracy, the first sample will be chosen.
         """
         if len(inputs) != 2:

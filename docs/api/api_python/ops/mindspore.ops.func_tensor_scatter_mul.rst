@@ -5,7 +5,7 @@ mindspore.ops.tensor_scatter_mul
 
     根据索引，通过乘法运算得到输出Tensor的值。更新后的结果是通过算子output返回，而不是直接原地更新input。
 
-    `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见使用用例。
+    `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见样例。
 
     .. note::
         - 如果 `indices` 的某些值超出 `input_x` 的维度范围，则相应的 `updates` 不会更新为 `input_x` ，而不是抛出索引错误。
