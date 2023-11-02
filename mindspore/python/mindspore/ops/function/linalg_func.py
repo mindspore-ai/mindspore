@@ -58,7 +58,8 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)`
+            where :math:`*` is zero or more batch dimensions.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
             behavior. Default: ``None``.
 

@@ -239,6 +239,9 @@ class Unpack(Primitive):
 class ScatterNonAliasingAdd(Primitive):
     """
     Please use TensorScatterAdd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -257,6 +260,9 @@ class ScatterNonAliasingAdd(Primitive):
 class BatchToSpaceND(Primitive):
     """
     Please use batch_to_space_nd instead.
+
+    Supported Platforms:
+        Deprecated
     """
     @deprecated("2.0", "ops.batch_to_space_nd", False)
     @prim_attr_register

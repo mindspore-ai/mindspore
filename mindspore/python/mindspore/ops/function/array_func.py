@@ -1379,7 +1379,7 @@ def searchsorted(sorted_sequence, values, *, out_int32=False, right=False):
 
     Returns:
         Tensor containing the indices from the innermost dimension of `sorted_sequence` such that,
-        if insert the corresponding value in the `values` tensor, the order of `sorted_sequence` would be preserved,
+        if insert the corresponding value in the `values` Tensor, the order of `sorted_sequence` would be preserved,
         whose datatype is int32 if out_int32 is ``True`` , otherwise int64, and shape is the same as the shape of
         `values`.
 
@@ -3415,8 +3415,8 @@ def sort(input_x, axis=-1, descending=False):
             are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
 
     .. warning::
-        Currently, the data types of Float16, UInt8, Int8, Int16, Int32, Int64 are well supported.
-        If use Float32, it may cause loss of accuracy.
+        Currently, the data types of float16, uint8, int8, int16, int32, int64 are well supported.
+        If use float32, it may cause loss of accuracy.
 
     Returns:
 
@@ -7451,7 +7451,7 @@ def repeat_interleave(input, repeats, axis=None):
 
 def repeat_elements(x, rep, axis=0):
     """
-    Repeat elements of a tensor along an axis, like `np.repeat` .
+    Repeat elements of a tensor along an axis, like `numpy.repeat` .
 
     Args:
         x (Tensor): The tensor to repeat values for. Must be of type: float16,

@@ -12,6 +12,7 @@ mindspore.ops.UniformReal
         - 全局的随机种子未设置，算子层的随机种子设置了：使用0和算子层的随机种子拼接。
         - 全局的随机种子和算子层的随机种子都设置了：全局的随机种子和算子层的随机种子拼接。
         - 目前在Ascend平台上不支持 `shape` 为Tensor，CPU/GPU平台支持。当输入为Tensor的时候，支持的数据类型：
+
           - GPU：int32、int64。
           - CPU：int16、int32、int64。
 

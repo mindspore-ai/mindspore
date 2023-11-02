@@ -3,9 +3,9 @@ mindspore.ops.softsign
 
 .. py:function:: mindspore.ops.softsign(x)
 
-    Softsign激活函数。
+    SoftSign激活函数。
 
-    Softsign函数定义为：
+    SoftSign函数定义为：
 
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}

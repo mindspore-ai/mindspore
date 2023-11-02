@@ -47,9 +47,9 @@ mindspore.ops.binary_cross_entropy_with_logits
         - **pos_weight** (Tensor，可选) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。默认值：``None`` ， `pos_weight` 是值为 ``1`` 的Tensor。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的加权平均值。
-          - ``"sum"``：计算输出元素的总和。
+          - ``'none'``：不应用规约方法。
+          - ``'mean'``：计算输出元素的加权平均值。
+          - ``'sum'``：计算输出元素的总和。
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
@@ -57,6 +57,6 @@ mindspore.ops.binary_cross_entropy_with_logits
     异常：
         - **TypeError** - 输入 `logits` ， `label` ， `weight` ， `pos_weight` 不为Tensor。
         - **TypeError** - 输入 `logits` ， `label` ， `weight` ， `pos_weight` 的数据类型既不是float16也不是float32。
-        - **TypeError** - 输入 `reduction` 输入数据类型不为string。
+        - **TypeError** - `reduction` 输入数据类型不为string。
         - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。

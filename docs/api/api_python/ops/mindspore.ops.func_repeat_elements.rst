@@ -3,7 +3,7 @@ mindspore.ops.repeat_elements
 
 .. py:function:: mindspore.ops.repeat_elements(x, rep, axis=0)
 
-    在指定轴上复制输入Tensor的元素，类似 `np.repeat` 的功能。
+    在指定轴上复制输入Tensor的元素，类似 `numpy.repeat` 的功能。
 
     参数：
         - **x** (Tensor) - 输入Tensor。类型为float16、float32、int8、uint8、int16、int32或int64。

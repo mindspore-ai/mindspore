@@ -374,11 +374,11 @@ def uniform_candidate_sampler(true_classes,
 
     Returns:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          Shape: :math:`(num\_sampled, )` .
+          shape: :math:`(num\_sampled, )` .
         - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. Shape: :math:`(batch\_size, num\_true)` .
+          of true_classes. shape: :math:`(batch\_size, num\_true)` .
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. Shape: :math:`(num\_sampled, )` .
+          each of sampled_candidates. shape: :math:`(num\_sampled, )` .
 
     Raises:
         TypeError: If neither `num_true` nor `num_sampled` is an int.
