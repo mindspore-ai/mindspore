@@ -37,6 +37,11 @@ inline void _PyInterpreterState_SetEvalFrameFunc(PyInterpreterState *interp, _Py
 inline PyObject *PyObject_Vectorcall(PyObject *func, PyObject *const *stack, Py_ssize_t nargs, PyObject *kwnames) {
   return _PyObject_FastCallKeywords(func, stack, nargs, kwnames);
 }
+
+inline PyObject *PyObject_CallOneArg(PyObject *func, PyObject *arg) {
+  return _PyObject_FastCallKeywords(func, &arg, 1, nullptr);
+}
+
 #define PY_VECTORCALL_ARGUMENTS_OFFSET 0
 #define Py_IS_TYPE(ob, type) Py_TYPE(ob) == type
 

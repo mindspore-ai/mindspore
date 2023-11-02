@@ -18,6 +18,7 @@
 #include <unordered_set>
 #include <vector>
 #include "pipeline/jit/pi_jit/pi_jit_config.h"
+#include "pipeline/jit/pi_jit/graph_guard/infer.h"
 
 namespace mindspore {
 namespace jit {
@@ -50,17 +51,17 @@ static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access
   if (IsNonLocalValue(v)) {
     return true;
   }
-  int op = v->GetOpcode();
-  if ((op == LOAD_ATTR || op == BINARY_SUBSCR) && repeat_attr_item_access) {
-    return true;
-  }
 
-  switch (op) {
+  AObject::Type type = v->GetVobj() ? v->GetVobj()->GetType() : AObject::kTypeAnyValue;
+  switch (v->GetOpcode()) {
     case BUILD_TUPLE:
       return CheckBuildTupleRepeatable(v, repeat_attr_item_access);
     case BUILD_SLICE:
       // NOTE: mindspore can't resolve call 'slice' class
       return CheckBuildSliceRepeatable(v->getInputs(), repeat_attr_item_access);
+    case BINARY_SUBSCR:
+    case LOAD_ATTR:
+      return type == AObject::kTypeAnyValue ? false : repeat_attr_item_access;
     default:
       break;
   }
@@ -95,13 +96,33 @@ bool GraphAnalyzer::ProduceInterpretValue(ValueNode *v) {
   return true;
 }
 
+// if operation can't be repeated, or block has attr access side effect
+// can't reorder attr access op, must be interpret all attr, item access operation
+static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
+  int op = v->GetOpcode();
+  bool can_access = repeat_op && v->GetBlock() && !v->GetBlock()->HasAttrSideEffect();
+  AObject::Type type = v->input(0)->GetVobj() ? v->input(0)->GetVobj()->GetType() : AObject::kTypeAnyValue;
+  // item access
+  if (op == BINARY_SUBSCR) {
+    return type != AObject::kTypeAnyValue && can_access;
+  }
+  // attr access
+  if (!can_access) {
+    return false;
+  }
+  if (type == AObject::kTypeAnyValue || type == AObject::kTypeBoundMethod) {
+    return false;
+  }
+  if (type == AObject::kTypeTensor && !FindTensorName(v->GetName())) {
+    return false;
+  }
+  return true;
+}
+
 bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
   int op = v->GetOpcode();
   bool repeat_op = Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
-  bool attr_access = op == LOAD_ATTR || op == BINARY_SUBSCR;
-  if (attr_access && (!repeat_op || !v->GetBlock() || v->GetBlock()->HasAttrSideEffect())) {
-    // if operation can't be repeated, or block has attr access side effect
-    // can't reorder attr access op, must be interpret all attr, item access operation
+  if ((op == LOAD_ATTR || op == BINARY_SUBSCR) && !CheckAttrItemSupport(v, repeat_op)) {
     return false;
   }
 
@@ -194,39 +215,42 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
 }
 
 bool GraphAnalyzer::AnalyzeCall(CallNode *call_node) {
+  if (call_node->GetSubGraph() == nullptr) {
+    return false;
+  }
+  if (call_node->GetInlineReason() != InlineReason::kInline &&
+      call_node->GetInlineReason() != InlineReason::kInlinePartial) {
+    return false;
+  }
+
   Graph *g = call_node->GetGraph();
-  if (call_node->GetInlineReason() == InlineReason::kInline ||
-      call_node->GetInlineReason() == InlineReason::kInlinePartial) {
-    for (ValueNode *i : call_node->GetParams()) {
-      TryToCapture(i);  // first captured
-      i->set_bci(-1);
-    }
-    if (!AnalyzeRecursive(call_node->GetSubGraph())) {
-      g->StopTraceAt(call_node->bci(), call_node->GetSubGraph()->GetStopTraceReason());
+  for (ValueNode *i : call_node->GetParams()) {
+    if (!TryToCapture(i)) {
+      call_node->SetSubGraph(nullptr);
+      call_node->SetInlineReason(InlineReason::kInlineFunc_ArgHandle_Unsupported);
+      g->StopTraceAt(call_node->bci(), StopTraceReason::kStopTraceFunc_ArgHandle_Unsupported);
       return false;
     }
-    return true;
   }
-  // class build in graph if it's life cycle only in graph
-  g->StopTraceAt(call_node->bci(), call_node->GetSubGraph()->GetStopTraceReason());
-  return false;
+  if (!AnalyzeRecursive(call_node->GetSubGraph())) {
+    g->StopTraceAt(call_node->bci(), call_node->GetSubGraph()->GetStopTraceReason());
+    return false;
+  }
+  return true;
 }
 
 bool GraphAnalyzer::AnalyzeBlock(Block *b) {
-  auto stop_trace = b->GetGraph()->GetStopTraceAt();
+  Graph *g = b->GetGraph();
   for (auto n : b->GetNodes()) {
-    if (n->GetType() == AbstractNode::Call && (reinterpret_cast<CallNode *>(n))->GetSubGraph()) {
-      if (!AnalyzeCall(reinterpret_cast<CallNode *>(n))) {
-        return false;
-      }
+    int bci = static_cast<ValueNode *>(n)->bci();
+    if (n->GetType() == AbstractNode::Call && AnalyzeCall(static_cast<CallNode *>(n))) {
       continue;
     }
-    if (stop_trace && stop_trace->bci() == (reinterpret_cast<ValueNode *>(n))->bci()) {
+    if (g->GetStopTraceAt() && g->GetStopTraceAt()->bci() == bci) {
       return false;
     }
     if (!TryToCapture(n)) {
-      b->GetGraph()->StopTraceAt((reinterpret_cast<InstrNode *>(n))->bci(),
-                                 StopTraceReason::kStopTraceDataDependsOnGraphOut);
+      g->StopTraceAt(bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
       return false;
     }
   }

@@ -29,8 +29,9 @@ class GraphJitConfig {
  public:
   enum Options {
     kBoolConf = 0,
+    kCopyFuncOnlyOnceIfTraceBreak,
+    kAutoJit,
     kReplaceNNCellByConstruct,
-    kCapturedMSadapterForward,
     kPrintAfterAll,
     kPrintTraceback,
     kPrintBB,
@@ -65,6 +66,8 @@ class GraphJitConfig {
     /* ------------------------------ */
     kStrListConf,
     kAllowedInlineModules,
+    kPSJitStrictCells,
+    kJitForbidden,
     kOptionsCount
   };
   GraphJitConfig();
@@ -75,13 +78,36 @@ class GraphJitConfig {
     return o > kStrListConf && o < kOptionsCount ? &set_conf[o - kStrListConf] : nullptr;
   }
 
-  void AddAllowedInlineModules(PyObject *list);
+  bool ShouldAutoJit(PyFrameObject *f);
+  bool CheckJitForbidden(const py::object &callable);
+
   void AddAllowedInlineModules(const std::string &module_name);
+  void AddPSJitStrictCells(const std::string &type_str);
+
+  bool AddJitForbidden(PyObject *callable_list);
+  bool AddAllowedInlineModules(PyObject *list);
+  bool AddPSJitStrictCells(PyObject *list);
+  bool SetAutoJitFilter(PyObject *callable);
+  template <Options o>
+  bool SetBool(PyObject *value) {
+    static_assert(o > kBoolConf && o < kIntConf);
+    bool_conf[o - kBoolConf] = value == Py_True;
+    return true;
+  }
+
+  template <Options o>
+  bool SetInt(PyObject *value) {
+    static_assert(o > kIntConf && o < kStrListConf);
+    int res = PyLong_AsLong(value);
+    if (PyErr_Occurred()) {
+      PyErr_Clear();
+      return false;
+    }
+    int_conf[o - kIntConf] = res;
+    return true;
+  }
 
  private:
-  bool SetBool(const char *, PyObject *v);
-  bool SetInt(const char *, PyObject *v);
-
   bool bool_conf[kIntConf - kBoolConf];
   int int_conf[kStrListConf - kIntConf];
   std::set<std::string> set_conf[kOptionsCount - kStrListConf];

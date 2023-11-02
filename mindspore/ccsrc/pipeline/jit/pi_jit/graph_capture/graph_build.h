@@ -116,6 +116,8 @@ class GraphBuilder {
   bool UnpackCallExParams(std::vector<ValueNode *> *params, int extra_local, AbstractNodeList *extra_oper,
                           bool *has_kw);
 
+  bool UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNodeList *extra_oper);
+
   // generate the general unpack operations of dict, return operations
   std::vector<AbstractNode *> GenerateDictUnpack(ValueNode *kwargs_node);
 
@@ -140,8 +142,8 @@ class GraphBuilder {
    * \param[out] dict_op the opcode of dict generation
    * \return false if parameters is illegal
    */
-  std::vector<ValueNode *> PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
-                                        AbstractNodeList *dict_gen, int *dict_op);
+  bool PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
+                    AbstractNodeList *dict_gen, std::vector<ValueNode *> *kwvargs);
 
   bool CheckAndSetDefaultParams(const py::object &func, AbstractNodeList *extra_oper, FrameStates *frame, int pargc);
 
@@ -152,7 +154,9 @@ class GraphBuilder {
                             FrameStates *frame);
 
   // build subgraph, return stop trace reason
-  StopTraceReason BuildSubGraph(CallNode *call_node, int depth, GraphBuilder *subgraph);
+  StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func, GraphBuilder *subgraph);
+
+  bool ReplaceCall(CallNode *call_node, const py::object &func);
 
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);

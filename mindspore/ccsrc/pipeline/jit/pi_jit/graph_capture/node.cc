@@ -167,7 +167,7 @@ std::string CellVarNode::to_str() const {
 
 std::string CallNode::to_str() const {
   std::stringstream s;
-  s << this->ValueNode::to_str() << "sub-graph " << sub_graph_ << ", current stack size " << stack_size_ << ",";
+  s << this->ValueNode::to_str() << "sub-graph " << sub_graph_;
   return s.str();
 }
 

@@ -361,19 +361,24 @@ static void insert_EXTENDED_ARG(InstrNode *list_beg) {
 }
 
 static void SetGlobal(InstrNode *n, const py::dict &used_globals) {
-  MS_EXCEPTION_IF_CHECK_FAIL(strlen(n->GetName()) && n->GetGraph(), "check LOAD_GLOBAL node" + n->to_str());
+  MS_EXCEPTION_IF_CHECK_FAIL(!n->GetName().empty() && n->GetGraph(), "check LOAD_GLOBAL node" + n->to_str());
   PyObject *dict = n->GetGraph()->GetGlobals().ptr();
-  PyObject *val = PyDict_GetItemString(dict, n->GetName());
+  PyObject *val = PyDict_GetItemString(dict, n->GetName().c_str());
   if (val == nullptr) {
     return;
   }
-  char buf[20];
-  snprintf(buf, sizeof(buf), "%p", val);  // hex string
-  n->SetName(buf);
-  py::str key(buf);
-  if (!used_globals.contains(key)) {
-    used_globals[key] = val;
-  }
+  std::stringstream name;
+  int len = n->GetName().size();
+  name << n->GetName().substr(0, (len < 20 ? len : 20)) << "<" << val << ">";
+
+  n->SetName(name.str().c_str());
+  py::str key(n->GetName());
+
+  PyObject *old = PyDict_GetItem(used_globals.ptr(), key.ptr());
+  MS_EXCEPTION_IF_CHECK_FAIL(old == nullptr || old == val, "duplicate global value " + std::string(py::str(key)) + ":" +
+                                                             std::string(py::str(old)) + "->" +
+                                                             std::string(py::str(val)));
+  PyDict_SetItem(used_globals.ptr(), key.ptr(), val);
 }
 
 py::object CodeGenerator::GenerateCode(const AbstractNodeList &list, Code *ccode) {
@@ -390,7 +395,7 @@ py::object CodeGenerator::GenerateCode(const AbstractNodeList &list, Code *ccode
       SetGlobal(n, used_globals);
     }
     if (Utils::IsNameRelated(op)) {
-      MS_EXCEPTION_IF_CHECK_FAIL(strlen(n->GetName()), "check");
+      MS_EXCEPTION_IF_CHECK_FAIL(!n->GetName().empty(), "check");
       ccode->co_names.insert({n->GetName(), ccode->co_names.size()});
       n->SetOparg(ccode->co_names[n->GetName()]);
     }
@@ -825,13 +830,6 @@ void CodeGenerator::CutoffBytecodesIfGraphBreak() {
 void CodeGenerator::BreakAtUnsupportedOperation(InstrNode *stop_trace_at, const FrameStates &f) {
   int opcode = stop_trace_at->GetOpcode();
   int oparg = stop_trace_at->GetOparg();
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION == 9)
-  if (stop_trace_at->GetType() != ValueNode::Value && stop_trace_at->GetType() != ValueNode::Call &&
-      opcode != UNPACK_SEQUENCE && opcode != UNPACK_EX) {
-    MS_LOG(EXCEPTION) << "unimplemented break graph at " << Utils::GetOpName(stop_trace_at->GetOpcode());
-    return;
-  }
-#endif
   AbstractNodeList untracked;
   instrs_.cutList(stop_trace_at->GetNext(), &untracked);
 
@@ -1149,9 +1147,14 @@ static bool no_side_effect_op(ValueNode *v) {
   if (Utils::IsNoSideEffectOp(op)) {
     return true;
   }
-  if ((op == BUILD_MAP || op == BUILD_CONST_KEY_MAP || op == BUILD_SET) && v->GetOparg() == 0) {
+  if (op == BUILD_MAP || op == BUILD_CONST_KEY_MAP) {
     // BUILD_MAP will call __hash__
-    return true;
+    if (v->GetOparg() == 0) {
+      return true;
+    }
+    if (v->GetVobj()) {
+      return static_cast<AbstractDict *>(v->GetVobj())->KeyType() != AObject::kTypeAnyValue;
+    }
   }
   return false;
 }
@@ -1202,8 +1205,7 @@ AbstractNodeList CodeGenerator::BuildValues(std::unordered_map<ValueNode *, int>
   }
   AbstractNodeList res;
   for (size_t i = 0; i < values.size(); ++i) {
-    bool is_unused = values[i]->marker_ == 0;
-    if (is_unused && no_side_effect_op(values[i])) {
+    if (no_side_effect_op(values[i])) {
       continue;
     }
     AbstractNodeList op;
@@ -1220,7 +1222,7 @@ AbstractNodeList CodeGenerator::BuildValues(std::unordered_map<ValueNode *, int>
  */
 static bool IsPassedByParameter(ValueNode *param) {
   AObject *value_info = param->GetVobj();
-  return value_info->IsMindSporeSupportedType();
+  return value_info ? value_info->IsMindSporeSupportedType() : false;
 }
 
 void CodeGenerator::BuildGraphParameters(std::unordered_map<ValueNode *, int> *graph_local_map,
