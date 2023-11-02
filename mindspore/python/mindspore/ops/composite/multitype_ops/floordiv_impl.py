@@ -78,3 +78,13 @@ def _tensor_floordiv_list(x, y):
     """Returns x // y where x is a tensor and y is a list. """
     y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_floordiv(x, y)
+
+
+@floordiv.register_default()
+def default_floordiv(x, y):
+    """
+    Default function for floordiv.
+   """
+    if y == 0:
+        raise ValueError("division by zero")
+    return x // y

@@ -808,7 +808,6 @@ def test_parser_switch_layer_func_primitive():
         def construct(self, i, input1):
             x = self.funcs[i](input1)
             return x
-
     func1 = P.ReLU()
     func2 = P.Softmax()
     funcs = (func1, func2)
@@ -818,7 +817,6 @@ def test_parser_switch_layer_func_primitive():
     i = Tensor(1, mstype.int32)
 
     net(i, input1)
-
 
 def test_switch_layer_shape_join_failed():
     class AddFuncNet(nn.Cell):

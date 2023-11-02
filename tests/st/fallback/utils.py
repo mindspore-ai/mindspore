@@ -13,7 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
+from mindspore import ops
 
 
 def add_func(x, y):
     return x + y
+
+
+add = ops.MultitypeFuncGraph('add1')
+tensor_add = ops.Add()
+
+
+@add.register("Number", "Number")
+def add_scala(x, y):
+    return x + y
+
+
+@add.register("Tensor", "Tensor")
+def add_tensor(x, y):
+    return tensor_add(x, y)

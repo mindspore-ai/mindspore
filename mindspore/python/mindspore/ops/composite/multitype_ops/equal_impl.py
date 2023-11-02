@@ -327,3 +327,11 @@ def _string_equal_number(x, y):
        bool, return false.
    """
     return False
+
+
+@equal.register_default()
+def default_equal(x, y):
+    """
+    Default function for equal.
+   """
+    return x == y

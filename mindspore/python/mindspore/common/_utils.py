@@ -21,7 +21,6 @@ import math
 import ctypes
 import functools
 
-import mindspore
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched
@@ -95,16 +94,6 @@ def _jit_fallback_set_attr(class_obj, attr_name, target_obj):
     """Set attr for object and return the object for jit fallback."""
     setattr(class_obj, attr_name, target_obj)
     return target_obj
-
-
-def ones_like(x):
-    """Implement `oneslike`."""
-    return mindspore.ops.composite.ones_like(x)
-
-
-def zeros_like(x):
-    """Implement `zeroslike`."""
-    return mindspore.ops.composite.zeros_like(x)
 
 
 def load_lib(lib_path):

@@ -39,11 +39,13 @@ AnfNodePtr GeneratePyInterpretNodeWithScriptSrc(const FuncGraphPtr &func_graph, 
                                                 const AnfNodePtrList &node_inputs, std::string script_str);
 void SetNodeExprSrc(const AnfNodePtr &node, const std::string &expr_src);
 std::string GetNodeExprSrc(const AnfNodePtr &node);
+std::string ConvertToRealStr(const std::string &target);
 std::string GeneratePyInterpretScriptForBinOrComp(const std::string &left, const std::string &right,
                                                   const std::string &op);
 std::string GeneratePyInterpretScriptForUnary(const std::string &operand, const std::string &op);
 std::string GeneratePyInterpretScriptForSubscript(const std::string &value, const std::string &slice, bool is_slice);
 std::string GeneratePyInterpretScriptForCallNode(const AnfNodePtr &call_node, const std::string &name_id);
+std::string GeneratePyExecuteScriptForFuncNode(const std::string &func_str);
 
 // Create a PyExecute CNode by old node or debug_info.
 CNodePtr CreatePyExecuteCNode(const FuncGraphPtr &fg, const AnfNodePtr &script, const AnfNodePtr &keys,
@@ -123,8 +125,9 @@ std::shared_ptr<U> GetRealShape(const std::shared_ptr<T> &owner) {
   return owner->template user_data<U>("__py_execute_real_shape__");
 }
 
-AnfNodePtr GenerateOnesOrZerosLikeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                                       const std::string &type);
+AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
+                                                    const py::object &meta_obj, const TypePtrList &types,
+                                                    const std::string &name);
 }  // namespace fallback
 
 namespace raiseutils {

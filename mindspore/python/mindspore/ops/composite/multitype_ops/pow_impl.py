@@ -79,3 +79,11 @@ def _tensor_pow_list(x, y):
     """Returns x ** y where x is a tensor and y is a list. """
     y = utils.sequence_to_tensor(y, x.dtype)
     return F.tensor_pow(x, y)
+
+
+@pow_.register_default()
+def default_pow(x, y):
+    """
+    Default function for pow.
+   """
+    return x ** y

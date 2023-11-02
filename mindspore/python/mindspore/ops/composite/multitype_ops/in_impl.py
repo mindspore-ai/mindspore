@@ -188,3 +188,11 @@ def _mstype_in_tuple(x, y):
        bool, if x in y return true, x not in y return false.
    """
     return const_utils.check_in_sequence(x, y)
+
+
+@in_.register_default()
+def default_in(x, y):
+    """
+    Default function for in.
+   """
+    return x in y

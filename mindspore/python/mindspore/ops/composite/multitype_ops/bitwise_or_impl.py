@@ -48,3 +48,11 @@ def _tensor_bitwise_or_scalar(x, y):
 def _scalar_bitwise_or_tensor(x, y):
     """Returns x | y where x and y are all tensors."""
     return F.bitwise_or(x, y)
+
+
+@bitwise_or.register_default()
+def default_bitwsie_or(x, y):
+    """
+    Default function for bitwise_or.
+   """
+    return x | y
