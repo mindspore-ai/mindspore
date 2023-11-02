@@ -575,7 +575,8 @@ REG_BPROP_BUILDER("LSTM").SetBody(BODYFUNC(ib) {
                         {"num_layers", num_layers},
                         {"has_bias", has_bias},
                         {"bidirectional", bidirectional},
-                        {"dropout", dropout}});
+                        {"dropout", dropout},
+                        {"proj_size", proj_size}});
   auto dx = ib->TupleGetItem(res1, kIndex0);
   auto dhx = ib->TupleGetItem(res1, kIndex1);
   auto dcx = ib->TupleGetItem(res1, kIndex2);
@@ -585,7 +586,8 @@ REG_BPROP_BUILDER("LSTM").SetBody(BODYFUNC(ib) {
                       {"num_layers", num_layers},
                       {"has_bias", has_bias},
                       {"bidirectional", bidirectional},
-                      {"dropout", dropout}});
+                      {"dropout", dropout},
+                      {"proj_size", proj_size}});
   return {dx, dhx, dcx, dw};
 });
 

@@ -38,7 +38,7 @@ bool LstmGradWeightGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   input_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("input_size")));
   hidden_size_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("hidden_size")));
   num_layers_ = static_cast<int>(GetValue<int64_t>(primitive_->GetAttr("num_layers")));
-  has_bias_ = GetValue<int64_t>(primitive_->GetAttr("has_bias"));
+  has_bias_ = GetValue<bool>(primitive_->GetAttr("has_bias"));
   dropout_ = GetValue<float>(primitive_->GetAttr("dropout"));
   auto proj_size = GetValue<int64_t>(primitive_->GetAttr("proj_size"));
   if (proj_size != 0) {

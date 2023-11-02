@@ -37,7 +37,7 @@ bool PrintCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   }
   if (primitive_->HasAttr("value_type")) {
     auto value_type = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type"));
-    auto value_type_pos = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type_type"));
+    auto value_type_pos = GetValue<std::vector<int64_t>>(primitive_->GetAttr("value_type_pos"));
     for (size_t i = 0; i < value_type.size(); i++) {
       value_type_[value_type_pos[i]] = value_type[i];
     }
