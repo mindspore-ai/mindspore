@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
+#include "ir/anf.h"
 #include "kernel/common_utils.h"
 #include "kernel/framework_utils.h"
 #include "ops/arithmetic_ops.h"
@@ -390,7 +391,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::SCALAR);
   } else {
-    // For other ops, defaulty set TENSOR as output object type.
+    // For other ops, set TENSOR as output object type by default.
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::TENSOR);
   }
@@ -515,6 +516,7 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   if (matched) {
     // Create replacing node, update front-end node map, set kernel build info, inherit attributes, etc. These
     // operations could rely on the origin CNode.
+    new_input_list[kIndex0] = AnfAlgo::ChangePrimitiveNodeAsSkipCheckInputNum(new_input_list[kIndex0]);
     auto new_node = CreateNewNode(func_graph, new_input_list, cnode);
     MS_LOG(INFO) << "Create new node " << new_node->fullname_with_scope() << " " << new_node->DebugString()
                  << " to replace " << cnode->fullname_with_scope() << " " << cnode->DebugString();

@@ -27,6 +27,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
 #include "ir/anf.h"
+#include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
@@ -2494,5 +2495,24 @@ bool AnfRuntimeAlgorithm::NeedEraseCache(const PrimitivePtr &prim) {
   auto random_cache_value = prim->GetAttr(kRandomCache);
   MS_EXCEPTION_IF_NULL(random_cache_value);
   return !GetValue<bool>(random_cache_value);
+}
+
+PrimitivePtr AnfRuntimeAlgorithm::GetSkipCheckInputNumPrimitive(const PrimitivePtr &prim, bool need_clone) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto new_prim = need_clone ? prim->Clone() : prim;
+  new_prim->AddAttr(kSkipCheckInputNum, MakeValue(true));
+  return new_prim;
+}
+
+AnfNodePtr AnfRuntimeAlgorithm::ChangePrimitiveNodeAsSkipCheckInputNum(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto prim = value->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto new_prim = GetSkipCheckInputNumPrimitive(prim);
+  return NewValueNode(new_prim);
 }
 }  // namespace mindspore::session

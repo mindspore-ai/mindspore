@@ -35,25 +35,37 @@
 
 namespace mindspore {
 namespace {
+std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_node) {
+  if (!IsValueNode<Primitive>(prim_node)) {
+    return {false, nullptr};
+  }
+  auto prim = GetValueNode<PrimitivePtr>(prim_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->IsPythonPrim() || prim->HasAttr(kSkipCheckInputNum)) {
+    return {false, nullptr};
+  }
+  if (prim->GetAttr("primitive_function") == nullptr) {
+    return {false, nullptr};
+  }
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def == nullptr) {
+    return {false, nullptr};
+  }
+
+  return {true, prim};
+}
+
 void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
   if (inputs.empty()) {
     return;
   }
-  if (!IsValueNode<Primitive>(inputs[0])) {
+
+  auto [need_check, prim] = IsNeedCheckPrimitiveNode(inputs[0]);
+  if (!need_check) {
     return;
   }
-  auto prim = GetValueNode<PrimitivePtr>(inputs[0]);
-  MS_EXCEPTION_IF_NULL(prim);
-  if (prim->IsPythonPrim()) {
-    return;
-  }
-  if (prim->GetAttr("primitive_function") == nullptr) {
-    return;
-  }
+
   auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr) {
-    return;
-  }
   bool input_num_err = false;
   constexpr size_t prim_num = 1;
   size_t input_tensor_num = inputs.size() - prim_num;

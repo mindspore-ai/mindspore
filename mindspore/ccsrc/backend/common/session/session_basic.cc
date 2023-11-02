@@ -1184,6 +1184,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   MS_EXCEPTION_IF_NULL(op_prim);
   // Decoupling of frontend PrimitivePy and backend Primitive
   auto new_prim = std::make_shared<Primitive>(*op_prim);
+  new_prim = AnfAlgo::GetSkipCheckInputNumPrimitive(new_prim, false);
   if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
     AnfAlgo::SetDynamicAttrToPrim(new_prim);
   }

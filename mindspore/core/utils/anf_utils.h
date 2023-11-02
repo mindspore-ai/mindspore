@@ -32,6 +32,7 @@ namespace mindspore {
 constexpr auto kInfer = "DS_Infer";
 constexpr auto kInit = "DS_Init";
 constexpr auto kUpdate = "DS_Update";
+constexpr auto kSkipCheckInputNum = "skip_check_input_num";
 
 // Define constant about size number here.
 constexpr size_t kSizeZero = 0;
