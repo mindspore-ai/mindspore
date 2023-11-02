@@ -120,7 +120,7 @@ def get_convert_type_str(dtype: str):
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
-def get_cpp_dtype(dtype: str):
+def get_input_dtype(dtype: str):
     """
     Convert type
     """
@@ -145,6 +145,19 @@ def get_cpp_dtype(dtype: str):
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
+def get_return_type(dtype: str):
+    """
+    Convert type
+    """
+    # add more type here
+    type_convert = {
+        'tuple[tensor]': 'std::vector<TensorPtr>',
+        'list[tensor]': 'std::vector<TensorPtr>',
+        'tensor': 'TensorPtr',
+    }
+    if dtype in type_convert:
+        return type_convert[dtype]
+    raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 def get_type_str(type_str):
     """

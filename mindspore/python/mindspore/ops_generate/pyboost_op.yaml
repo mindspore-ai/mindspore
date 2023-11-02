@@ -18,6 +18,7 @@ Bmm:
   Ascend:
     mode: normal
     cube: True
+    aclnn: aclnnBatchMatMul
 
 Cos:
   CPU:

@@ -22,7 +22,7 @@ import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
 from op_proto import OpProto
 from template import CppTemplate
-from gen_utils import get_convert_type_str, get_cpp_dtype
+from gen_utils import get_convert_type_str, get_input_dtype, get_return_type
 import template
 
 def get_op_name(operator_name, class_def):
@@ -728,26 +728,12 @@ def generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_wit
 
 
 def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
-                                           returns_type, call_args_with_type, cpp_func_return):
+                                           op_outputs, call_outputs, call_args_with_type, cpp_func_return):
     # PyBoost ascend op source generate
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
         if type == "TensorPtr":
             call_args_tensor.append(arg_name)
-
-    # outputs
-    outputs_str = ""
-    for i in range(len(returns_type)):
-        outputs_str += "outputs_[{}],".format(i)
-    outputs_str = outputs_str[:-1]
-
-    cpp_func_return_values = ""
-    if len(returns_type) == 1:
-        cpp_func_return_values = "outputs_[0]"
-    elif len(returns_type) == 0:
-        raise Exception("No return")
-    else:
-        cpp_func_return_values = "std::make_tuple(" + outputs_str + ")"
 
     # launch mode: cube or not
     # call_impl
@@ -759,12 +745,16 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name
             launch_mode = 'LAUNCH_ACLNN_CUBE'
         else:
             launch_mode = 'LAUNCH_ACLNN'
-        call_impl = template.PYBOOST_ASCEND_CALL_TEMPLATE.replace(op_name=op_name_str,
+        if 'aclnn' in op_desc:
+            aclnn_name = op_desc['aclnn']
+        else:
+            aclnn_name = 'aclnn' + op_name_str
+        call_impl = template.PYBOOST_ASCEND_CALL_TEMPLATE.replace(aclnn_name=aclnn_name,
                                                                   call_args=call_args_str,
                                                                   call_tensors=call_args_tensor,
-                                                                  return_values=cpp_func_return_values,
+                                                                  return_values=call_outputs,
                                                                   launch_mode=launch_mode,
-                                                                  outputs=outputs_str)
+                                                                  outputs=op_outputs)
     elif op_desc['mode'] == 'customize':
         call_impl = "return " + op_name_str + "AscendCall(" + ','.join(s for s in call_args_str) + ");"
         customize_include = "#include \"plugin/device/ascend/kernel/pyboost/call/{}.h\"".format(op_name_str.lower())
@@ -807,7 +797,7 @@ def generate_pyboost_op_register_source_code(work_path, all_ops):
 def generate_pyboost_op_return_code(op_proto):
     returns_type = []
     for return_obj in op_proto.returns:
-        returns_type.append(get_cpp_dtype(return_obj.arg_dtype))
+        returns_type.append(get_return_type(return_obj.arg_dtype))
     if len(returns_type) == 1:
         cpp_func_return = returns_type[0]
     elif len(returns_type) == 0:
@@ -818,6 +808,44 @@ def generate_pyboost_op_return_code(op_proto):
         cpp_func_return += ")"
     return returns_type, cpp_func_return
 
+def generate_pyboost_op_func_return_type(op_proto):
+    returns_type = []
+    for return_obj in op_proto.returns:
+        returns_type.append(get_return_type(return_obj.arg_dtype))
+    if len(returns_type) == 1:
+        cpp_func_return = returns_type[0]
+    elif len(returns_type) > 1:
+        cpp_func_return = "std::tuple("
+        cpp_func_return += ','.join(s for s in returns_type)
+        cpp_func_return += ")"
+    else:
+        raise Exception("Not return found")
+    return cpp_func_return
+
+def generate_pyboost_outputs(op_proto):
+    op_outputs = ''
+    call_outputs = ''
+    returns_type = []
+    for return_obj in op_proto.returns:
+        returns_type.append(get_return_type(return_obj.arg_dtype))
+
+    if len(returns_type) == 1:
+        if returns_type[0] == 'TensorPtr':
+            op_outputs = 'outputs_[0]'
+            call_outputs = op_outputs
+        elif returns_type[0] == "std::vector<TensorPtr>":
+            op_outputs = 'outputs_'
+            call_outputs = op_outputs
+        else:
+            raise Exception("Not support return type {}".format(returns_type[0]))
+    elif len(returns_type) > 1:
+        outputs_str = ''
+        for i in range(len(returns_type)):
+            outputs_str += 'outputs_[{}],'.format(i)
+        op_outputs = outputs_str[:-1]
+        call_outputs = "std::make_tuple(" + op_outputs + ")"
+
+    return op_outputs, call_outputs
 
 def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
@@ -839,7 +867,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
             else:
                 call_arg = op_arg.arg_name
             call_args_str.append(call_arg)
-            call_args_type.append(get_cpp_dtype(op_arg.arg_dtype))
+            call_args_type.append(get_input_dtype(op_arg.arg_dtype))
 
         all_ops.append(op_name_str)
 
@@ -847,12 +875,13 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
         for type, arg_name in zip(call_args_type, call_args_str):
             call_args_with_type.append("const " + type + " &" + arg_name)
 
-        returns_type, cpp_func_return = generate_pyboost_op_return_code(op_proto)
+        cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
+        op_outputs, call_func_outputs = generate_pyboost_outputs(op_proto)
 
         generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
         generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return)
         generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, op_name_str, call_args_type, call_args_str,
-                                               returns_type, call_args_with_type, cpp_func_return)
+                                               op_outputs, call_func_outputs, call_args_with_type, cpp_func_return)
     generate_pyboost_op_register_source_code(work_path, all_ops)
 
 def generate_pyboost_functions(work_path, yaml_data):
