@@ -36,13 +36,15 @@ class LogSoftmaxCpuKernelMod : public MKLCpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kObjectTypeNumber, kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32)};
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 
  private:
-  int axis_{0};
+  int64_t axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

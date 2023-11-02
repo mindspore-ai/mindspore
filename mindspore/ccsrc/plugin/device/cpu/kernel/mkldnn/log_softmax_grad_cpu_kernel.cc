@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kLogSoftmaxGradInputsNum = 2;
+constexpr size_t kLogSoftmaxGradInputsNum = 3;
 constexpr size_t kLogSoftmaxGradOutputsNum = 1;
 }  // namespace
 
@@ -44,10 +44,7 @@ int LogSoftmaxGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (ret != KRET_OK) {
     return ret;
   }
-  // Todo, dynamic shape
-  // auto kernel_ptr = std::dynamic_pointer_cast<ops::LogSoftmaxGrad>(base_operator);
-  // MS_EXCEPTION_IF_NULL(kernel_ptr);
-  // axis_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kAxis));
+  axis_ = inputs.at(kIndex2)->GetValueWithCheck<int>();
   auto src_shape = inputs[0]->GetDeviceShapeVector();
   if (axis_ >= SizeToLong(src_shape.size())) {
     axis_ = SizeToLong(src_shape.size()) - 1;

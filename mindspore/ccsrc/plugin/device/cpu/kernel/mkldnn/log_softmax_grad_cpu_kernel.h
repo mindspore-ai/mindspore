@@ -34,8 +34,11 @@ class LogSoftmaxGradCpuKernelMod : public MKLCpuKernelMod {
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::vector<KernelAttr> support_list = {
-      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
 

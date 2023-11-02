@@ -40,8 +40,8 @@ int LogSoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxOutputsNum, kernel_name_);
 
   const auto &src_shape = inputs.at(kIndex0)->GetShapeVector();
-  int axis_ori = inputs.at(kIndex1)->GetValueWithCheck<int>();
-  axis_ = axis_ori < 0 ? (axis_ori + SizeToInt(src_shape.size())) : axis_ori;
+  auto axis_ori = static_cast<int64_t>(inputs.at(kIndex1)->GetValueWithCheck<int>());
+  axis_ = axis_ori < 0 ? (axis_ori + src_shape.size()) : axis_ori;
 
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   auto desc = CreateDesc<dnnl::logsoftmax_forward::desc>(dnnl::prop_kind::forward_inference, src_desc, axis_);
