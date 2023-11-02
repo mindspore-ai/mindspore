@@ -51,6 +51,54 @@ int64_t SequenceSliceGetValue(const std::string &prim_name, const std::string &a
                             << "' should be int32, int64 but got: " << abs->GetType()->ToString();
   }
 }
+
+int64_t SliceGetScalarValue(const std::string &attr_name, const AbstractBasePtr &abs) {
+  auto build_type = abs->GetType()->type_id();
+  auto build_value = abs->GetValue();
+  if (build_type == kNumberTypeInt32) {
+    return ops::GetScalarValue<int32_t>(build_value).value();
+  } else if (build_type == kNumberTypeInt64) {
+    return ops::GetScalarValue<int64_t>(build_value).value();
+  } else {
+    MS_EXCEPTION(TypeError) << "For 'SequenceSlice', the type of '" << attr_name
+                            << "' should be int32, int64 but got: " << abs->GetType()->ToString();
+  }
+}
+
+int64_t SliceGetStartPoint(int64_t start, int64_t len, int64_t step) {
+  if (step > 0) {
+    if (start <= -len) {
+      start = 0;
+    } else if (start < 0) {
+      start += len;
+    }
+  } else {
+    if (start >= len) {
+      start = -1;
+    } else if (start >= 0 && start < len) {
+      start -= len;
+    }
+  }
+  return start;
+}
+
+int64_t SliceGetEndPoint(int64_t end, int64_t len, int64_t step) {
+  if (step > 0) {
+    if (end > len) {
+      end = len;
+    } else if (end > -len && end < 0) {
+      end += len;
+    }
+  } else {
+    if (end < -len) {
+      end = -1 - len;
+    } else if (end >= 0 && end < len) {
+      end -= len;
+    }
+  }
+  return end;
+}
+
 AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, int64_t start_v, int64_t end,
                                 int64_t step) {
   auto elems = seq_abs->elements();
@@ -59,17 +107,10 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
   abstract::AbstractBasePtrList abs{};
   if (step == 0) {
     MS_EXCEPTION(ValueError) << "For 'SequenceSlice', step cannot be 0.";
-  } else if (step > 0) {
-    if (start <= -len) {
-      start = 0;
-    } else if (start < 0) {
-      start += len;
-    }
-    if (end > len) {
-      end = len;
-    } else if (end > -len && end < 0) {
-      end += len;
-    }
+  }
+  start = SliceGetStartPoint(start, len, step);
+  end = SliceGetEndPoint(end, len, step);
+  if (step > 0) {
     if (start >= end) {
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
@@ -80,16 +121,6 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     return std::make_shared<abstract::AbstractTuple>(abs);
   } else {
     // when step < 0
-    if (start >= len) {
-      start = -1;
-    } else if (start >= 0 && start < len) {
-      start -= len;
-    }
-    if (end < -len) {
-      end = -1 - len;
-    } else if (end >= 0 && end < len) {
-      end -= len;
-    }
     if (start <= end) {
       return std::make_shared<abstract::AbstractTuple>(abs);
     }
@@ -100,6 +131,46 @@ AbstractBasePtr SliceInferValue(const abstract::AbstractSequencePtr &seq_abs, in
     return std::make_shared<abstract::AbstractTuple>(abs);
   }
 }
+
+std::vector<int64_t> SliceGetOutputIndexs(const std::vector<AbstractBasePtr> &input_args, int64_t len) {
+  auto start_abs = input_args[kInputIndex1];
+  MS_EXCEPTION_IF_NULL(start_abs);
+  auto end_abs = input_args[kInputIndex2];
+  MS_EXCEPTION_IF_NULL(end_abs);
+  auto step_abs = input_args[kInputIndex3];
+  MS_EXCEPTION_IF_NULL(step_abs);
+  int64_t start, end, step;
+  const std::string start_str = "start";
+  const std::string end_str = "end";
+  const std::string step_str = "step";
+  start = SliceGetScalarValue(start_str, start_abs);
+  end = SliceGetScalarValue(end_str, end_abs);
+  step = SliceGetScalarValue(step_str, step_abs);
+  if (step == 0) {
+    MS_EXCEPTION(ValueError) << "For 'SequenceSlice', step cannot be 0.";
+  }
+  std::vector<int64_t> indexes;
+  start = SliceGetStartPoint(start, len, step);
+  end = SliceGetEndPoint(end, len, step);
+  if (step > 0) {
+    if (start >= end) {
+      return indexes;
+    }
+    for (int64_t i = start; i < end; i += step) {
+      indexes.push_back(i);
+    }
+  } else {
+    // when step < 0
+    if (start <= end) {
+      return indexes;
+    }
+    for (int64_t i = start; i > end; i += step) {
+      indexes.push_back(i + len);
+    }
+  }
+  return indexes;
+}
+
 AbstractBasePtr SliceInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -180,7 +251,20 @@ class SequenceSliceInfer : public abstract::OpInferBase {
                               << "', the first input should be tuple or list but got: " << first_abs->ToString();
     }
     MS_EXCEPTION_IF_NULL(first_abs->GetShape());
-    return first_abs->GetShape()->Clone();
+    MS_EXCEPTION_IF_NULL(first_abs->GetType());
+    abstract::BaseShapePtrList elements;
+    if (first_abs->GetType()->object_type() == kObjectTypeTuple) {
+      elements = first_abs->GetShape()->cast<abstract::TupleShapePtr>()->shape();
+    } else {
+      elements = first_abs->GetShape()->cast<abstract::ListShapePtr>()->shape();
+    }
+
+    auto indexes = SliceGetOutputIndexs(input_args, elements.size());
+    std::vector<BaseShapePtr> elements_shapes;
+    for (size_t i = 0; i < indexes.size(); i++) {
+      elements_shapes.push_back(elements[indexes[i]]);
+    }
+    return std::make_shared<abstract::TupleShape>(elements_shapes);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
@@ -190,8 +274,25 @@ class SequenceSliceInfer : public abstract::OpInferBase {
     constexpr size_t seq_index = 0;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
     auto first_abs = input_args[seq_index];
+    MS_EXCEPTION_IF_NULL(first_abs);
+    if (!CheckAndConvertUtils::IsSequence(first_abs)) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name
+                              << "', the first input should be tuple or list but got: " << first_abs->ToString();
+    }
     MS_EXCEPTION_IF_NULL(first_abs->GetType());
-    return first_abs->GetType()->Clone();
+    TypePtrList elements;
+    if (first_abs->GetType()->object_type() == kObjectTypeTuple) {
+      elements = first_abs->GetType()->cast<TuplePtr>()->elements();
+    } else {
+      elements = first_abs->GetType()->cast<ListPtr>()->elements();
+    }
+
+    auto indexes = SliceGetOutputIndexs(input_args, elements.size());
+    std::vector<TypePtr> elements_types;
+    for (size_t i = 0; i < indexes.size(); i++) {
+      elements_types.push_back(elements[indexes[i]]);
+    }
+    return std::make_shared<Tuple>(elements_types);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
