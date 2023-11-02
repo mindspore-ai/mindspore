@@ -732,7 +732,7 @@ def prim_attr_register(fn):
         elif isinstance(self, PrimitiveWithCheck):
             PrimitiveWithCheck.__init__(self, class_name)
         else:
-            Primitive.__init__(self, self.__class__.__name__)
+            Primitive.__init__(self, class_name)
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
         bound_args.apply_defaults()
         arguments = bound_args.arguments
