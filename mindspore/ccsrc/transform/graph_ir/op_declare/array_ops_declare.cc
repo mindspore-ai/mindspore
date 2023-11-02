@@ -39,7 +39,6 @@ ATTR_MAP(Summary) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
 
 // OutfeedEnqueueOpV2
-#ifndef ENABLE_SECURITY
 DYN_INPUT_MAP(OutfeedEnqueueOpV2) = {{2, DYN_INPUT_DESC(x)}};
 INPUT_MAP(OutfeedEnqueueOpV2) = {{1, INPUT_DESC(tensor_name)}};
 ATTR_MAP(OutfeedEnqueueOpV2) = {{"channel_name", ATTR_DESC(channel_name, AnyTraits<std::string>())}};
@@ -49,7 +48,7 @@ REG_ADPT_DESC(ScalarSummary, "ScalarSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(ImageSummary, "ImageSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(HistogramSummary, "HistogramSummary", ADPT_DESC(OutfeedEnqueueOpV2))
 REG_ADPT_DESC(TensorDump, kNameTensorDump, ADPT_DESC(OutfeedEnqueueOpV2))
-#endif
+REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(OutfeedEnqueueOpV2))
 
 // Data
 INPUT_MAP(Data) = EMPTY_INPUT_MAP;

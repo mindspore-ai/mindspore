@@ -40,7 +40,6 @@
 #include "plugin/device/ascend/optimizer/ge/trans_depend_value_to_int32.h"
 #include "plugin/device/ascend/optimizer/ge/insert_identity.h"
 #include "plugin/device/ascend/optimizer/ge/dropout_gen_mask_depend.h"
-#include "plugin/device/ascend/optimizer/ge/print_to_stringformat_print.h"
 #include "plugin/device/ascend/optimizer/ge/unfold_maketuple.h"
 #include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
@@ -84,7 +83,6 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::AdjustPrintForGe>());
-  opt_ge_pm->AddPass(std::make_shared<opt::PrintToStringFormatPrint>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
