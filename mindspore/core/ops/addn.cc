@@ -112,14 +112,14 @@ TypePtr AddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   (void)types.emplace("element_0", elements[0]->GetType());
   for (size_t i = 0; i < elements.size(); ++i) {
     if (elements[i]->GetType()->type_id() == kObjectTypeUndeterminedType) {
-      return elements[0]->GetType();
+      return elements[0]->GetType()->Clone();
     }
     std::string element_i = "element_" + std::to_string(i);
     (void)types.emplace(element_i, elements[i]->GetType());
   }
   std::set<TypePtr> valid_types = common_valid_types_with_complex_and_bool;
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
-  return elements[0]->GetType();
+  return elements[0]->GetType()->Clone();
 }
 }  // namespace
 

@@ -29,10 +29,6 @@ class MIND_API ScalarDivFuncImpl : public ScalarArithmeticFuncImpl {
     return kFloat32;
   }
 };
-
-class ScalarDivFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarDiv", ScalarDivFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 

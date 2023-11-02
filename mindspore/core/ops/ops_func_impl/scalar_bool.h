@@ -29,10 +29,6 @@ class MIND_API ScalarBoolFuncImpl : public ScalarArithmeticUnaryFuncImpl {
     return kBool;
   }
 };
-
-class ScalarBoolFrontendFuncImpl : public ScalarArithmeticUnaryFrontendFuncImpl {};
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarBool", ScalarBoolFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 

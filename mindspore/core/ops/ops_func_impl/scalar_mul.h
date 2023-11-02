@@ -22,10 +22,6 @@
 namespace mindspore {
 namespace ops {
 class MIND_API ScalarMulFuncImpl : public ScalarArithmeticFuncImpl {};
-
-class ScalarMulFrontendFuncImpl : public ScalarArithmeticFrontendFuncImpl {};
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarMul", ScalarMulFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 

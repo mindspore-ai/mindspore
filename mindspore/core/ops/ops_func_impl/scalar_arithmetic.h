@@ -19,7 +19,6 @@
 
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
-#include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,11 +26,6 @@ class ScalarArithmeticFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
-
-class ScalarArithmeticFrontendFuncImpl : public OpFrontendFuncImpl {
- public:
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

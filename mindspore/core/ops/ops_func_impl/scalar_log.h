@@ -29,10 +29,6 @@ class MIND_API ScalarLogFuncImpl : public ScalarArithmeticUnaryFuncImpl {
     return kFloat32;
   }
 };
-
-class ScalarLogFrontendFuncImpl : public ScalarArithmeticUnaryFrontendFuncImpl {};
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("ScalarLog", ScalarLogFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
 
