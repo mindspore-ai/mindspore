@@ -51,6 +51,11 @@ REG_CUST_OP(Eig)
   .REQUIRED_ATTR(compute_v, Bool)
   .CUST_OP_END_FACTORY_REG(Eig)
 
+REG_CUST_OP(Eps)
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .OUTPUT(y, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
+  .CUST_OP_END_FACTORY_REG(Eps)
+
 REG_CUST_OP(Hypot)
   .INPUT(x1, TensorType({DT_DOUBLE, DT_FLOAT}))
   .INPUT(x2, TensorType({DT_DOUBLE, DT_FLOAT}))

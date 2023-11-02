@@ -66,6 +66,7 @@ cust_op_lists = [
     "div",
     "divnonan",
     "eig",
+    "eps",
     "exp",
     "expand",
     "expm1",

@@ -274,6 +274,12 @@ CUST_ATTR_MAP(Eig) = {{"compute_v", ATTR_DESC(compute_v, AnyTraits<bool>())}};
 CUST_OUTPUT_MAP(Eig) = {{0, OUTPUT_DESC(eigen_values)}, {1, OUTPUT_DESC(eigen_vectors)}};
 REG_ADPT_DESC(Eig, prim::kPrimEig->name(), CUST_ADPT_DESC(Eig));
 
+// Eps
+CUST_INPUT_MAP(Eps) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Eps) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Eps) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Eps, prim::kPrimEps->name(), CUST_ADPT_DESC(Eps));
+
 // Hypot
 CUST_INPUT_MAP(Hypot) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 CUST_ATTR_MAP(Hypot) = EMPTY_ATTR_MAP;
