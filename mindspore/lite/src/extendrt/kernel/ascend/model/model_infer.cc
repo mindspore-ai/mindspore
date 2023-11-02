@@ -88,6 +88,7 @@ bool ModelInfer::Init() {
 }
 
 bool ModelInfer::Finalize() {
+  std::lock_guard<std::mutex> lock(g_context_mutex);
   if (!init_flag_) {
     MS_LOG(INFO) << "Init is not ok, no need to finalize.";
     return true;
@@ -105,7 +106,7 @@ bool ModelInfer::Finalize() {
       MS_LOG(ERROR) << "Stop profiling failed";
     }
   }
-  std::lock_guard<std::mutex> lock(g_context_mutex);
+
   if (stream_ != nullptr) {
     rt_ret = aclrtDestroyStream(stream_);
     if (rt_ret != ACL_ERROR_NONE) {
