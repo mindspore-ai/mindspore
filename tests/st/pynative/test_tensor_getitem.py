@@ -139,7 +139,7 @@ class NetWorkSliceStep(Cell):
         return ret1, ret2
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 # ascend op stridedslice has bug, and has not been fixed.
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -861,7 +861,7 @@ class TensorAssignWithSlice(Cell):
         return z
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

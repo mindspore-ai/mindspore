@@ -1505,11 +1505,10 @@ void CheckDataDim(const ShapeVector &data_shape) {
   }
 }
 
-bool CheckSliceInfoStep(const int step, std::vector<int64_t> *data_transfer_types,
-                        std::vector<py::object> *data_transfer_args) {
-  data_transfer_types->clear();
-  data_transfer_args->clear();
-  return false;
+void CheckNumberOfEllipsis(const size_t counter) {
+  if (counter > 0) {
+    MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
+  }
 }
 }  // namespace
 
@@ -1553,7 +1552,11 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       std::vector<int64_t> end_info(new_data_shape);
       std::vector<int64_t> step_info(new_data_shape.size(), 1);
 
-      CheckSliceInfoStep(slice_info.step(), data_transfer_types, data_transfer_args);
+      if (slice_info.step() < 0) {
+        data_transfer_types->clear();
+        data_transfer_args->clear();
+        return false;
+      }
 
       if (slice_info.start() == 0 && slice_info.step() == 1 && slice_info.stop() == end_info[dim]) {
         dim++;
@@ -1573,9 +1576,7 @@ bool TensorIndex::GetItemByTupleWithView(const ValuePtr &data_value, const Shape
       new_data_shape[dim] = (slice_info.stop() + slice_info.step() - 1 - slice_info.start()) / slice_info.step();
       dim++;
     } else if (py::isinstance<py::ellipsis>(obj)) {
-      if (ellipsis_count > 0) {
-        MS_EXCEPTION(IndexError) << "An index can only have a single ellipsis('...')";
-      }
+      CheckNumberOfEllipsis(ellipsis_count);
       dim += data_shape.size() - specified_dimensions;
       ellipsis_count += 1;
     } else if (py::isinstance<py::none>(obj)) {
