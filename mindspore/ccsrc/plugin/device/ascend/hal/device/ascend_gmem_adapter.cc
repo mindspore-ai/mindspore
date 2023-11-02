@@ -188,7 +188,7 @@ void AscendGmemAdapter::LoadGMemLib() noexcept {
       }
     }
   } else {
-    MS_LOG(INFO) << "Open GMem lib failed.";
+    MS_LOG(DEBUG) << "Open GMem lib failed.";
   }
 }
 

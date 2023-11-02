@@ -449,7 +449,6 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send data in base class.
   AbstractActor::SendOutput(context);
 
-  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // Send Partial.
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);

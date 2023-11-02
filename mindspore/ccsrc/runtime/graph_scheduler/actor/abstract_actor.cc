@@ -271,9 +271,6 @@ void AbstractActor::SendOutputData(
 }
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
-
   MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
   // 1.Send output data.
@@ -301,11 +298,6 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
-
-  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
-  if (ActorDispatcher::is_multi_thread_execution()) {
-    PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name(), false);
   }
 }
 

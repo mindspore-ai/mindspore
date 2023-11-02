@@ -89,7 +89,6 @@ void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   // 1.Send output in base class.
   ControlActor::SendOutput(context);
 
-  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // 2.Send output data in output branch.
   const auto &branch_data_iter = output_branch_data_.find(output_branch_id_);
   if (branch_data_iter != output_branch_data_.end()) {
