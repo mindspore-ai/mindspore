@@ -19,6 +19,7 @@
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/max_pool_with_argmax.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,8 +33,7 @@ constexpr int kPadHalf = 2;
 
 bool MaxPoolWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  data_format_ =
-    static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<std::string>(primitive_->GetAttr(ops::kFormat))));
+  data_format_ = GetFormatFromStrToEnum(GetValue<std::string>(primitive_->GetAttr(ops::kFormat)));
   auto kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
   auto strides = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   if (kernel_size.size() < kIndex3 || strides.size() < kIndex3) {

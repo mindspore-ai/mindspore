@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <functional>
 #include "plugin/device/cpu/kernel/utils/cpu_utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "ops/conv_pool_op_name.h"
@@ -114,8 +115,7 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
     stride_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
     pad_mode_ =
       static_cast<mindspore::PadMode>(ops::PadModeStringToInt(GetValue<std::string>(primitive()->GetAttr(PAD_MODE))));
-    format_ =
-      static_cast<mindspore::Format>(ops::FormatStringToInt(GetValue<std::string>(primitive()->GetAttr(FORMAT))));
+    format_ = GetFormatFromStrToEnum(GetValue<std::string>(primitive()->GetAttr(FORMAT)));
   }
 
   if (primitive()->HasAttr(COUNT_INCLUDE_PAD)) {
