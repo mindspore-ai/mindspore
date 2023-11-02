@@ -479,6 +479,7 @@ from .nn_func import (
     fractional_max_pool3d,
     pixel_shuffle,
     pixel_unshuffle,
+    prompt_flash_attention,
     hardshrink,
     soft_shrink,
     is_floating_point,
