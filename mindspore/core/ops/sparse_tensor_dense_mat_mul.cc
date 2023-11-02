@@ -245,7 +245,7 @@ TypePtr SparseTensorDenseMatmulInferType(const PrimitivePtr &primitive,
     MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input indices "
                             << "data type should be int32 or int64.";
   }
-  if (CheckAndConvertUtils::IsTuple(x1_shape) && !checkType("shape_type", shape_type, {kInt64, kInt32}, primitive)) {
+  if (!CheckAndConvertUtils::IsTuple(x1_shape) && !checkType("shape_type", shape_type, {kInt64, kInt32}, primitive)) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the input shape "
                             << "data type should be int32 or int64.";
   }

@@ -25,9 +25,6 @@ TensorArraySizeCpuKernelMod::TensorArraySizeCpuKernelMod() {}
 
 int TensorArraySizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
   output_size_list_.clear();
   output_size_list_.push_back(sizeof(int64_t));
   return KRET_OK;

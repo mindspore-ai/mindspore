@@ -87,7 +87,8 @@ abstract::ShapePtr StandardLaplaceInferShape(const PrimitivePtr &primitive,
         MS_EXCEPTION(ValueError) << "For '" << prim_name
                                  << "', rank of the input Tensor shall be 1, but got: " << x_shape.size() << ".";
       }
-      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
+      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name,
+                                                                          input_args[kInputIndex0]->GetType());
       return std::make_shared<abstract::Shape>(input_shape);
     } else {
       constexpr int dynamic_rank_value = -2;

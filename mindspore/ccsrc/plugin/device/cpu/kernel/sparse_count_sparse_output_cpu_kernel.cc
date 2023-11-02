@@ -133,6 +133,7 @@ int SparseCountSparseOutputCpuKernelMod::Resize(const std::vector<KernelTensor *
     (void)output_size_list_.emplace_back(max_out_size * kMaxIndicesRank * GetTypeByte(TypeIdToType(types_[kIndex0])));
     (void)output_size_list_.emplace_back(max_out_size * GetTypeByte(TypeIdToType(types_[kIndex1])));
     (void)output_size_list_.emplace_back(kMaxIndicesRank * GetTypeByte(TypeIdToType(types_[kIndex2])));
+    return KRET_OK;
   }
   return ret;
 }
