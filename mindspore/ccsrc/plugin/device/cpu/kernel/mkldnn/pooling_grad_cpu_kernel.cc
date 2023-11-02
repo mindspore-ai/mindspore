@@ -28,10 +28,6 @@ namespace kernel {
 namespace {
 constexpr size_t kMaxPoolingGradWorkSpaceNum = 2;
 constexpr size_t kAvgPoolingGradWorkSpaceNum = 1;
-constexpr size_t kPoolingGradInputsNum = 3;
-constexpr size_t kAvgPooling3DGradInputsNum = 1;
-constexpr size_t kAvgPooling3DGradDynamicInputsNum = 2;
-constexpr size_t kPoolingGradOutputsNum = 1;
 // avgpoolgrad and maxpoolgrad input indexes
 constexpr size_t kGradIndex = 2;
 constexpr size_t kKernelSizeIdx = 3;

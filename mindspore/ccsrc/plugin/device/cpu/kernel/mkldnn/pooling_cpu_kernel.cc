@@ -39,10 +39,10 @@ void PoolingCpuKernelMod::InitPoolingFields(const std::vector<KernelTensor *> &i
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
   if (kernel_name_ == kAvgPoolOpName) {
-    kernel_include_nc = inputs[1]->GetValue<std::vector<int64_t>>().value();
-    strides_include_nc = inputs[2]->GetValue<std::vector<int64_t>>().value();
-    pad_mode_ = inputs[3]->GetValue<PadMode>().value();
-    format_ = inputs[4]->GetValue<Format>().value();
+    kernel_include_nc = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+    strides_include_nc = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[3]->GetValueWithCheck<int64_t>());
+    format_ = static_cast<mindspore::Format>(inputs[4]->GetValueWithCheck<int64_t>());
   } else {
     kernel_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(KERNEL_SIZE));
     strides_include_nc = GetValue<std::vector<int64_t>>(KernelMod::primitive_->GetAttr(STRIDES));

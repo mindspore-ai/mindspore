@@ -106,10 +106,11 @@ bool PoolingCpuKernelNnaclMod::Init(const std::vector<KernelTensor *> &inputs,
   }
   dtype_ = inputs[0]->dtype_id();
   if (kernel_name_ == kAvgPoolOpName) {
-    kernel_size_ = inputs[1]->GetValue<std::vector<int64_t>>().value();
-    stride_size_ = inputs[2]->GetValue<std::vector<int64_t>>().value();
-    pad_mode_ = inputs[3]->GetValue<PadMode>().value();
-    format_ = inputs[4]->GetValue<Format>().value();
+    kernel_size_ = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+    stride_size_ = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
+    pad_mode_ = static_cast<mindspore::PadMode>(inputs[3]->GetValueWithCheck<int64_t>());
+    format_ = static_cast<mindspore::Format>(inputs[4]->GetValueWithCheck<int64_t>());
+
   } else {
     kernel_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
     stride_size_ = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
@@ -149,8 +150,8 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
     std::vector<int64_t> kernel_size;
     std::vector<int64_t> stride_size;
     if (kernel_name_ == kAvgPoolOpName) {
-      kernel_size = inputs[1]->GetValue<std::vector<int64_t>>().value();
-      stride_size = inputs[2]->GetValue<std::vector<int64_t>>().value();
+      kernel_size = inputs[1]->GetValueWithCheck<std::vector<int64_t>>();
+      stride_size = inputs[2]->GetValueWithCheck<std::vector<int64_t>>();
     } else {
       kernel_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(KERNEL_SIZE));
       stride_size = GetValue<std::vector<int64_t>>(primitive()->GetAttr(STRIDES));
@@ -169,12 +170,8 @@ int PoolingCpuKernelNnaclMod::Resize(const std::vector<KernelTensor *> &inputs,
     }
     // change kernel size and strides from (H, W) to (1, 1, H, W)
     if (kernel_name_ == kAvgPoolOpName) {
-      kernel_size_ = {1, 1};
-      kernel_size_.emplace_back(kernel_size[0]);
-      kernel_size_.emplace_back(kernel_size[1]);
-      stride_size_ = {1, 1};
-      stride_size_.emplace_back(stride_size[0]);
-      stride_size_.emplace_back(stride_size[1]);
+      kernel_size_ = {1, 1, kernel_size[0], kernel_size[1]};
+      stride_size_ = {1, 1, stride_size[0], stride_size[1]};
     } else {
       kernel_size_ = kernel_size;
       stride_size_ = stride_size;
