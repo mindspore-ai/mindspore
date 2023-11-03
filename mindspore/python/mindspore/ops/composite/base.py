@@ -201,7 +201,7 @@ class GradOperation(GradOperation_):
             If sens_param is ``False`` , a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: ``False`` .
             If the sensor_param is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
-            through the location parameter or key-value pair parameter. If the value is transferred through
+            through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
 
     Returns:
@@ -836,10 +836,10 @@ class HyperMap(HyperMap_):
 
     Outputs:
         Sequence or nested sequence, the sequence of output after applying the function.
-        e.g. `operation(args[0][i], args[1][i])`.
+        e.g. `operation(args[0][i], args[1][i])`, `operation` is the function assigned by `ops`.
 
     Raises:
-        TypeError: If `ops` is neither MultitypeFuncGraph nor None.
+        TypeError: If `ops` is neither :class:`mindspore.ops.MultitypeFuncGraph` nor None.
         TypeError: If `args` is not a Tuple.
 
     Supported Platforms:

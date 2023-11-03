@@ -21,8 +21,8 @@ mindspore.ops.HyperMap
         输入数量等于 `ops` 的输入数量。
 
     输出：
-        序列或嵌套序列，执行函数如 `operation(args[0][i], args[1][i])` 之后输出的序列。
+        序列或嵌套序列，执行 `operation(args[0][i], args[1][i])` 之后输出的序列，其中 `operation` 为 `ops` 指定的一个函数。
 
     异常：
-        - **TypeError** - 如果 `ops` 既不是 `MultitypeFuncGraph` 也不是 ``None`` 。
+        - **TypeError** - 如果 `ops` 既不是 :class:`mindspore.ops.MultitypeFuncGraph` 也不是 ``None`` 。
         - **TypeError** - 如果 `args` 不是一个tuple。

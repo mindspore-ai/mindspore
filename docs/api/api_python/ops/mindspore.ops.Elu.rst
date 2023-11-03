@@ -24,9 +24,9 @@ mindspore.ops.Elu
         - **input_x** (Tensor) - 用于计算Elu的任意维度的Tensor，数据类型为float16,float32或float64。
 
     输出：
-        Tensor，shape和数据类型与 `x` 相同。
+        Tensor，shape和数据类型与 `input_x` 相同。
 
     异常：
         - **TypeError** - `alpha` 不是float。
-        - **TypeError** - `x` 的数据类型既不是float16，float32也不是float64。
+        - **TypeError** - `input_x` 的数据类型既不是float16，float32也不是float64。
         - **ValueError** - `alpha` 不等于1.0。
