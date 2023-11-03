@@ -5,8 +5,9 @@
   DeviceMalloc(${call_tensors});
   ${value_tuple_convert}
   ${const_number_convert}
+  ${get_cube_math_type}
   auto stream_ptr = device_context_->device_res_manager_->GetStream(kDefaultStreamIndex);
-  ${launch_mode}(${aclnn_name}, stream_ptr, ${aclnn_call_args}, ${outputs});
+  EXEC_NPU_CMD(${aclnn_name}, stream_ptr, ${aclnn_call_args}, ${outputs}${cube_math_type});
   MS_LOG(DEBUG) << "Launch end";
   // return TensorPtr or std::tuple(TensorPtr) or self define function.
   return ${return_values};

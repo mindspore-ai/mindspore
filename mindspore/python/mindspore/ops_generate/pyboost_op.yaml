@@ -64,6 +64,7 @@ SiLU:
   Ascend:
     mode: normal
     cube: False
+    aclnn: aclnnSilu
 
 Sin:
   CPU:

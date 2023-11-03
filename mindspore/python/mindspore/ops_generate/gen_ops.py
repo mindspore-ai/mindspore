@@ -745,13 +745,14 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
     customize_include = ''
     op_desc = pyboost_yaml_data[prim_name_str]['Ascend']
     op_name_str = prim_name_str
+    cube_math_type = ''
+    get_cube_math_type = ''
     if prim_name_str.endswith('Ext'):
         op_name_str = prim_name_str[:-3]
     if op_desc['mode'] == 'normal':
         if op_desc['cube'] is True:
-            launch_mode = 'LAUNCH_ACLNN_CUBE'
-        else:
-            launch_mode = 'LAUNCH_ACLNN'
+            get_cube_math_type = "auto cube_math_type = GetCubeMathType();"
+            cube_math_type = ', cube_math_type'
         if 'aclnn' in op_desc:
             aclnn_name = op_desc['aclnn']
         else:
@@ -761,9 +762,10 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                   call_tensors=call_args_tensor,
                                                                   value_tuple_convert=value_tuple_convert,
                                                                   const_number_convert=const_number_convert,
+                                                                  get_cube_math_type=get_cube_math_type,
+                                                                  cube_math_type=cube_math_type,
                                                                   aclnn_call_args=call_args_after_convert,
                                                                   return_values=call_outputs,
-                                                                  launch_mode=launch_mode,
                                                                   outputs=op_outputs)
     elif op_desc['mode'] == 'customize':
         call_impl = "return " + op_name_str + "AscendCall(" + ','.join(s for s in call_args_str) + ");"
