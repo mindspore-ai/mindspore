@@ -111,7 +111,24 @@ op_dtype:
 py_format:
   NCHW: 0
   NHWC: 1
-  NCDHW: 2
+  NHWC4: 2
+  HWKC: 3
+  HWCK: 4
+  KCHW: 5
+  CKHW: 6
+  KHWC: 7
+  CHWK: 8
+  HW: 9
+  HW4: 10
+  NC: 11
+  NC4: 12
+  NC4HW4: 13
+  NUM_OF_FORMAT: 14
+  NCDHW: 15
+  NWC: 16
+  NCW: 17
+  NDHWC: 18
+  NC8HW8: 19
 
 # enum PadMode
 pad_mode:

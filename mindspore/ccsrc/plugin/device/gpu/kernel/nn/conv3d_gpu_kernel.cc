@@ -131,8 +131,8 @@ int Conv3dGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   pad_mode_ = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   SetPad(pad_list);
   if (!IsDynamicRank(in_shape) && !IsDynamicRank(filter_shape)) {
-    std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
-    std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
+    std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrStrides));
+    std::vector<int64_t> dilation_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr(kAttrDilations));
     SetStrideAndDilation(stride_me, dilation_me);
   }
   auto input_descriptor_real = GetInputDescReal(pad_list);
