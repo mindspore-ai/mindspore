@@ -116,7 +116,7 @@ bool DeformableOffsetsCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
                   << ". But got 'pads': " << pads_;
     return false;
   }
-  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  kernel_size_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kSize));
   if (kernel_size_.size() != kKernelSizeSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'kernel_size' should be a vector with size " << kKernelSizeSize
                   << ". But got 'kernel_size': " << kernel_size_;

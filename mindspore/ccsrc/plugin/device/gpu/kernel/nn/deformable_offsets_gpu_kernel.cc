@@ -65,7 +65,7 @@ bool DeformableOffsetsGpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
 bool DeformableOffsetsGpuKernelMod::CheckParam(const PrimitivePtr &primitive_) {
   MS_EXCEPTION_IF_NULL(primitive_);
   auto kernel_name_ = primitive_->name();
-  data_format_ = GetValue<std::string>(primitive_->GetAttr("data_format"));
+  data_format_ = GetValue<std::string>(primitive_->GetAttr("format"));
   if (data_format_ == kOpFormat_NCHW) {
     n_axis_ = 0;
     c_axis_ = 1;
@@ -91,7 +91,7 @@ bool DeformableOffsetsGpuKernelMod::CheckParam(const PrimitivePtr &primitive_) {
                   << ", padding should be a vector constructed by 4 integer, but got" << pads_;
     return false;
   }
-  const auto &kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
+  const auto &kernel_size = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
   std::transform(kernel_size.begin(), kernel_size.end(), std::back_inserter(kernel_size_), to_unsigned);
   if (kernel_size_.size() != kKernelSizeAttrNum) {
     MS_LOG(ERROR) << "Get invalid ksize attr form " << kernel_name_
