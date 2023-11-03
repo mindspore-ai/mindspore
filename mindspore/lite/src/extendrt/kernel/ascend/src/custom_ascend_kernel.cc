@@ -42,6 +42,8 @@ CustomAscendKernelMod::~CustomAscendKernelMod() {
   }
 }
 
+bool CustomAscendKernelMod::Finalize() { return AclEnvGuard::Finalize(); }
+
 void CustomAscendKernelMod::RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs) {
   for (size_t idx = 0; idx < inputs.size(); ++idx) {
     if (inputs[idx] == nullptr) {
@@ -153,6 +155,7 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   UpdateOutputKernelTensorInfo();
   MS_LOG(INFO) << "Load om data success.";
   load_model_ = true;
+  AclEnvGuard::AddModel(model_infer_);
   return true;
 }
 
