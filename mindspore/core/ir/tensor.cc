@@ -925,6 +925,24 @@ DeviceSyncPtr Tensor::device_address() const {
   return device_sync_;
 }
 
+std::vector<int64_t> Tensor::stride() {
+  auto storage_info = storage_info_;
+  if (storage_info != nullptr) {
+    return storage_info->strides;
+  }
+
+  if (shape_.empty()) {
+    return {};
+  }
+  std::vector<int64_t> ret(shape_.size(), 1);
+  int64_t stride = 1;
+  for (size_t i = shape_.size() - 1; i > 0; --i) {
+    stride *= shape_[i];
+    ret[i - 1] = stride;
+  }
+  return ret;
+}
+
 void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count) {
   address_future_ = nullptr;
   device_sync_ = device_sync;

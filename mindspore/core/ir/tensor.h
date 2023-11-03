@@ -891,6 +891,13 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return True if tensor memory is contiguous, false otherwise.
   bool is_contiguous() const;
 
+  std::vector<int64_t> stride();
+
+  int64_t storage_offset() {
+    auto storage_info = storage_info_;
+    return storage_info == nullptr ? 0 : SizeToLong(storage_info->storage_offset);
+  }
+
  private:
   void ExecuteLazyTask() const;
 

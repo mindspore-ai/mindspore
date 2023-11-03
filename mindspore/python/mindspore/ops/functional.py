@@ -24,6 +24,7 @@ from mindspore.ops.function.array_func import narrow, flatten
 from mindspore.ops.function.math_func import all
 from mindspore.ops import operations as P
 from mindspore.ops.operations import array_ops
+from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops, _csr_ops, _inner_ops, linalg_ops, _sequence_ops, other_ops
 from mindspore.ops.operations.math_ops import Median
@@ -395,7 +396,8 @@ tensor_operator_registry.register('long', P.Cast)
 tensor_operator_registry.register('cholesky', P.Cholesky)
 tensor_operator_registry.register('cholesky_inverse', P.CholeskyInverse)
 tensor_operator_registry.register('cholesky_solve', cholesky_solve)
-tensor_operator_registry.register('expand', expand)
+tensor_operator_registry.register('expand', P.BroadcastTo)
+tensor_operator_registry.register('tensortotuple', TensorToTuple)
 tensor_operator_registry.register('cumprod', cumprod)
 tensor_operator_registry.register('diff', diff)
 tensor_operator_registry.register('div', div)
