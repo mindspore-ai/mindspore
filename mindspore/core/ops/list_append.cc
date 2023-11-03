@@ -96,8 +96,10 @@ class MIND_API AGListAppendInfer : public abstract::OpInferBase {
 
     auto seq_shape = seq_input->GetShape();
     MS_EXCEPTION_IF_NULL(seq_shape);
-    auto list_shape = seq_shape->cast<abstract::ListShapePtr>();
-    MS_EXCEPTION_IF_NULL(list_shape);
+    auto list_shape = seq_shape->cast<abstract::SequenceShapePtr>();
+    if (list_shape == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid shape, need list:" << seq_shape->ToString();
+    }
     auto item_shape = item_input->GetShape();
     auto list_shape_elements = list_shape->shape();
     list_shape_elements.emplace_back(item_shape->Clone());

@@ -308,20 +308,13 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     auto new_kernel_tensor = kernel_tensor->Clone();
     MS_EXCEPTION_IF_NULL(new_kernel_tensor);
     new_kernel_tensor->set_device_ptr(nullptr);
-    DeviceTensorPtr new_device_tensor = nullptr;
-    if (!is_dynamic_shapes_[i]) {
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
-      MS_EXCEPTION_IF_NULL(new_device_tensor);
-      MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
-    } else {
-      // If there is a dynamic shape, the shape in the kernel should be used.
-      MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
-                    << " for actor:" << GetAID();
-      new_kernel_tensor->set_host_shape(new_kernel_tensor->GetShapeVector());
-      new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
-      MS_EXCEPTION_IF_NULL(new_device_tensor);
-      MS_LOG(DEBUG) << "Create device tensor:" << new_device_tensor << " type:" << new_device_tensor->type_id();
-    }
+    DeviceTensorPtr new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+    MS_LOG(DEBUG) << "Actor:" << GetAID() << " create new device tensor:" << new_device_tensor
+                  << " type:" << new_device_tensor->type_id() << " by input device tensor:" << input_device_tensor
+                  << " shape:"
+                  << (kernel_tensor->GetShape() == nullptr ? "null" : kernel_tensor->GetShape()->ToString())
+                  << (kernel_tensor->GetType() == nullptr ? "null" : kernel_tensor->GetType()->ToString());
     const auto &swap_manager = device_context->device_res_manager_->swap_manager();
     if (swap_manager != nullptr) {
       swap_manager->AddSwappableTensor(new_device_tensor);

@@ -557,8 +557,6 @@ int KernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vect
                                    << " is too big, mindspore cannot apply for such a large amount of memory.";
         }
       }
-      bool is_sequence_type = (output->type_id() == kObjectTypeTuple) || (output->type_id() == kObjectTypeList);
-      tensor_size = !is_sequence_type ? std::max(tensor_size, type_size) : tensor_size;
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }

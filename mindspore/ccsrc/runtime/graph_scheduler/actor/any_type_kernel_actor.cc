@@ -467,6 +467,19 @@ void AnyTypeKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const cont
   }
   for (size_t i = 0; i < node_device_tensors_.size(); ++i) {
     if (node_device_tensors_[i] != nullptr && input_device_tensors_[i] != nullptr) {
+      MS_EXCEPTION_IF_NULL(input_device_tensors_[i]->kernel_tensor());
+      MS_EXCEPTION_IF_NULL(node_device_tensors_[i]->kernel_tensor());
+      MS_LOG(DEBUG) << "set shape:"
+                    << (input_device_tensors_[i]->kernel_tensor()->GetShape() == nullptr
+                          ? "null"
+                          : input_device_tensors_[i]->kernel_tensor()->GetShape()->ToString())
+                    << " type:"
+                    << (input_device_tensors_[i]->kernel_tensor()->GetType() == nullptr
+                          ? "null"
+                          : input_device_tensors_[i]->kernel_tensor()->GetType()->ToString())
+                    << " from device address:" << input_device_tensors_[i]
+                    << " to device address:" << node_device_tensors_[i];
+      node_device_tensors_[i]->kernel_tensor()->SetType(input_device_tensors_[i]->kernel_tensor()->GetType());
       node_device_tensors_[i]->kernel_tensor()->SetShape(input_device_tensors_[i]->kernel_tensor()->GetShape());
       MS_LOG(DEBUG) << "set shape:" << input_device_tensors_[i]->kernel_tensor()->GetShape()->ToString()
                     << " from device address:" << input_device_tensors_[i]

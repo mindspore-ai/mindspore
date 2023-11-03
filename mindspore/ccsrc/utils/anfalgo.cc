@@ -2105,7 +2105,7 @@ const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePt
   }
 
   // Return element abstract by index for tuple type.
-  const auto &abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+  const auto &abstract_tuple = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   const auto &elements = abstract_tuple->elements();
   if (elements.size() <= index) {

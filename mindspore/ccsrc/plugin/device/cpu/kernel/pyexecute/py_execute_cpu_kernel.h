@@ -62,6 +62,7 @@ class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   void AttachPyOutputData(const py::object &py_res);
   CNodePtr kernel_node_{nullptr};
+  bool is_output_any_{true};
   std::vector<PyExecuteInputInfo> inputs_info_;
   std::map<size_t, UserData *> input_user_data_;
   std::map<size_t, UserData *> output_user_data_;

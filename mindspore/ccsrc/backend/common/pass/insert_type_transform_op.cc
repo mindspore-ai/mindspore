@@ -696,6 +696,11 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
   // Data type of the tensor should be set as an attr of TupleToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
+  if (data_type == TypeId::kTypeUnknown && input->abstract() != nullptr &&
+      input->abstract()->isa<abstract::AbstractSequence>() &&
+      input->abstract()->cast<abstract::AbstractSequencePtr>()->elements().size() == 0) {
+    data_type = TypeId::kNumberTypeInt64;
+  }
   // There might be nested tuples, we need to find one step further to get element's data type.
   if (data_type == kObjectTypeTuple) {
     auto seq_abs = input->abstract();

@@ -381,7 +381,8 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address << " type:" << device_address->type_id()
                     << ", kernel tensor addr:" << kernel_tensor.get()
-                    << ", kernel tensor: " << kernel_tensor->ToString();
+                    << ", kernel tensor: " << kernel_tensor->ToString() << " addr size:" << address_size
+                    << " real size:" << device_address->GetSize();
       device_address->set_stream_id(AnfAlgo::GetStreamId(kernel));
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }

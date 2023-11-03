@@ -942,7 +942,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
   MS_EXCEPTION_IF_NULL(context);
   auto &node_value = node->value();
   MS_EXCEPTION_IF_NULL(node_value);
-
+  MS_LOG(DEBUG) << "Prepare data for value node:" << node->DebugString() << " front node:" << front_node->DebugString();
   if (node_value->isa<tensor::Tensor>()) {
     PrepareDataForValueNodeTensor(node, node_value, front_node, device_context, context);
   } else if (node_value->isa<ValueSequence>() || node_value->isa<Scalar>()) {

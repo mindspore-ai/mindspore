@@ -83,41 +83,51 @@ const AnfNodePtr FlattenValueSequenceInValueNode::Process(const FuncGraphPtr &fu
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &inputs = cnode->inputs();
+  if (inputs.empty()) {
+    return nullptr;
+  }
   const auto &input_formats = AnfAlgo::GetAllInputFormats(node);
   const auto &input_data_types = AnfAlgo::GetAllInputDeviceTypes(node);
   const auto &input_kernel_object_types = AnfAlgo::GetInputKernelObjectTypes(node);
   MS_LOG(DEBUG) << "check cnode:" << cnode->DebugString();
-  if (inputs.size() != input_formats.size() + 1 || inputs.size() != input_data_types.size() + 1 ||
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+  if (input_num != input_formats.size() || input_num != input_data_types.size() ||
       inputs.size() != input_kernel_object_types.size() + 1) {
-    MS_LOG(DEBUG) << "for node:" << node->DebugString() << " inputs size:" << inputs.size()
+    MS_LOG(DEBUG) << "for node:" << node->DebugString() << " input nodes size:" << inputs.size()
                   << " input format size:" << input_formats.size()
                   << " input device type size:" << input_data_types.size()
-                  << " input kernel object type size:" << input_kernel_object_types.size();
+                  << " input kernel object type size:" << input_kernel_object_types.size()
+                  << " input num:" << input_num;
     return nullptr;
   }
   auto input_reshape_types = AnfAlgo::GetAllInputReshapeType(node);
-  if (inputs.size() != input_reshape_types.size() + 1) {
-    MS_LOG(WARNING) << "Invalid input reshape type size:" << input_reshape_types.size()
-                    << " and fix to:" << inputs.size() - 1;
-    input_reshape_types = std::vector<std::string>(inputs.size() - 1, "");
+  if (input_num != input_reshape_types.size()) {
+    MS_LOG(WARNING) << "Invalid input reshape type size:" << input_reshape_types.size() << " and fix to:" << input_num;
+    input_reshape_types = std::vector<std::string>(input_num, "");
     auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
     MS_EXCEPTION_IF_NULL(build_info);
     build_info->SetInputsReshapeType(input_reshape_types);
   }
-  std::vector<AnfNodePtr> new_inputs;
+  std::vector<AnfNodePtr> new_inputs{inputs[0]};
   InputBuildInfo input_build_info;
   bool is_update = false;
-  for (size_t i = 0; i < inputs.size(); ++i) {
+  for (size_t i = 1; i < inputs.size(); ++i) {
     const auto &input = inputs[i];
     MS_EXCEPTION_IF_NULL(input);
+    if (HasAbstractMonad(input)) {
+      continue;
+    }
+    if (i - 1 >= input_formats.size()) {
+      MS_LOG(WARNING) << "Invalid index:" << i << " format size:" << input_formats.size()
+                      << " for node:" << node->DebugString();
+      return nullptr;
+    }
     if (!input->isa<ValueNode>()) {
       new_inputs.emplace_back(input);
-      if (i != 0) {
-        input_build_info.formats.emplace_back(input_formats[i - 1]);
-        input_build_info.device_types.emplace_back(input_data_types[i - 1]);
-        input_build_info.reshape_types.emplace_back(input_reshape_types[i - 1]);
-        input_build_info.kernel_object_types.emplace_back(input_kernel_object_types[i - 1]);
-      }
+      input_build_info.formats.emplace_back(input_formats[i - 1]);
+      input_build_info.device_types.emplace_back(input_data_types[i - 1]);
+      input_build_info.reshape_types.emplace_back(input_reshape_types[i - 1]);
+      input_build_info.kernel_object_types.emplace_back(input_kernel_object_types[i - 1]);
       continue;
     }
     const auto &value = input->cast<ValueNodePtr>()->value();
