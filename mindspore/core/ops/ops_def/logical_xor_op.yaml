@@ -12,3 +12,5 @@ logical_xor:
     returns:
         output:
             dtype: tensor
+    function:
+        name: logical_xor_

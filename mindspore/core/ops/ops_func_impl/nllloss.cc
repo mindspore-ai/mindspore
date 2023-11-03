@@ -88,7 +88,7 @@ BaseShapePtr NLLLossFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   auto reduce_value_enum = static_cast<Reduction>(reduction_opt.value());
   if ((reduce_value_enum == Reduction::SUM) || (reduce_value_enum == Reduction::MEAN)) {
-    loss_shape.push_back(1);  // loss is scalar
+    // shape () means 0D tensor.
     auto loss_shape_ptr = std::make_shared<abstract::TensorShape>(loss_shape);
     return std::make_shared<abstract::TupleShape>(
       std::vector<abstract::BaseShapePtr>{loss_shape_ptr, total_weight_shape_ptr});

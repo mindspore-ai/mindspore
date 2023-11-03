@@ -88,10 +88,9 @@ def test_tile_multiple_tensor_grad_cpu():
     """
     if sys.platform != 'linux':
         return
-    multiples = Tensor(np.array([2, 1]), mstype.int64)
     x0 = Tensor(np.array([[1, 2, 3, 4]]), mstype.float32)
     tile_net = GradTile(TileNet())
-    output = tile_net(x0, multiples)
+    output = tile_net(x0, (2, 1))
     expect = np.array([[2., 2., 2., 2.]])
     assert (output.asnumpy() == expect).all()
 

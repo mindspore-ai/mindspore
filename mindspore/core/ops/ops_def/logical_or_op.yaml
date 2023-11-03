@@ -12,3 +12,5 @@ logical_or:
     returns:
         output:
             dtype: tensor
+    function:
+        name: logical_or_

@@ -12,3 +12,5 @@ logical_and:
     returns:
         output:
             dtype: tensor
+    function:
+        name: logical_and_

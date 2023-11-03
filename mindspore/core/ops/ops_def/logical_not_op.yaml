@@ -6,3 +6,5 @@ logical_not:
     returns:
         output:
             dtype: tensor
+    function:
+        name: logical_not_
