@@ -1267,7 +1267,7 @@ ValuePtr ConvertTensorToInt(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to int";
     return nullptr;
   }
-  return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+  return std::make_shared<Int64Imm>(static_cast<int64_t *>(tensor->data_c())[0]);
 }
 
 ValuePtr ConvertTensorToFloat(const py::object &obj) {
@@ -1283,7 +1283,7 @@ ValuePtr ConvertTensorToFloat(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to float";
     return nullptr;
   }
-  return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+  return ConvertPythonFloatToScalarValue(static_cast<double *>(tensor->data_c())[0]);
 }
 
 ValuePtr ConvertTensorToBool(const py::object &obj) {
@@ -1299,11 +1299,12 @@ ValuePtr ConvertTensorToBool(const py::object &obj) {
     MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to bool";
     return nullptr;
   }
-  return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+  return std::make_shared<BoolImm>(static_cast<bool *>(tensor->data_c())[0]);
 }
 
 ValuePtr ConvertTensorToNumber(const py::object &obj) {
   if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
+    MS_LOG(INFO) << "Can't convert " << data_converter::PyDataToValue(obj)->ToString();
     return nullptr;
   }
 
@@ -1315,13 +1316,15 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
 
   switch (tensor->data_type()) {
     case kNumberTypeBool:
-      return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
+      return std::make_shared<BoolImm>(static_cast<bool *>(tensor->data_c())[0]);
     case kNumberTypeInt64:
-      return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+      return std::make_shared<Int64Imm>(static_cast<int64_t *>(tensor->data_c())[0]);
     case kNumberTypeInt32:
-      return MakeValue(reinterpret_cast<int *>(tensor->data_c())[0]);
+      return std::make_shared<Int32Imm>(static_cast<int32_t *>(tensor->data_c())[0]);
     case kNumberTypeFloat64:
-      return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
+      return ConvertPythonFloatToScalarValue(static_cast<double *>(tensor->data_c())[0]);
+    case kNumberTypeFloat32:
+      return ConvertPythonFloatToScalarValue(static_cast<float *>(tensor->data_c())[0]);
     default:
       MS_LOG(INFO) << "Can't convert " << tensor->ToString() << " to number";
       return nullptr;
