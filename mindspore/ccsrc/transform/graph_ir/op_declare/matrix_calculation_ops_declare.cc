@@ -240,8 +240,8 @@ REG_ADPT_DESC(Tril, kNameTril, ADPT_DESC(Tril))
 // Eye
 INPUT_MAP(Eye) = EMPTY_INPUT_MAP;
 ATTR_MAP(Eye) = EMPTY_ATTR_MAP;
-INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int>())},
-                       {2, ATTR_DESC(num_columns, AnyTraits<int>())},
+INPUT_ATTR_MAP(Eye) = {{1, ATTR_DESC(num_rows, AnyTraits<int64_t>())},
+                       {2, ATTR_DESC(num_columns, AnyTraits<int64_t>())},
                        {3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(Eye) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Eye, kNameEye, ADPT_DESC(Eye));

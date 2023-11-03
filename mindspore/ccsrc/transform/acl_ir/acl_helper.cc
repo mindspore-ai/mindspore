@@ -216,6 +216,9 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
       (void)special_inputs.emplace_back(i);
     }
 
+    if (i >= input_info.size()) {
+      continue;
+    }
     // Get reshape type.
     auto ge_idx = ge_info->GetGeInputByMsInputIndex(i).index;
     if (ge_idx >= input_info.size()) {
@@ -557,7 +560,7 @@ std::string AclHelper::ConvertOriginShapeAndFormat(const std::string &name, size
   }
   // case2: no special config
   auto info_list = acl_info.inputs();
-  if (info_list.empty()) {
+  if (info_list.empty() || idx >= info_list.size()) {
     return ret_format;
   }
   auto ge_idx = info->GetGeInputByMsInputIndex(idx).index;
