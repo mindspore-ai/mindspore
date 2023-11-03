@@ -373,8 +373,6 @@ def test_dynamic_batchnorm1d_single_op():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_batchnorm1d_single_op_2_unknown_shape():
     """
@@ -433,8 +431,6 @@ def test_dynamic_sort2():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_nms_with_mask():
     """
@@ -450,8 +446,6 @@ def test_dynamic_nms_with_mask():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_concat():
     """
@@ -467,8 +461,6 @@ def test_dynamic_concat():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_stack():
     """
@@ -484,8 +476,6 @@ def test_dynamic_stack():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool1():
     """
@@ -501,8 +491,6 @@ def test_dynamic_maxpool1():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool2():
     """
@@ -518,8 +506,6 @@ def test_dynamic_maxpool2():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool3():
     """
@@ -535,8 +521,6 @@ def test_dynamic_maxpool3():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_maxpool4():
     """

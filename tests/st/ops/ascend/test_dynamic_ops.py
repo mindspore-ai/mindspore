@@ -242,8 +242,6 @@ def test_dynamic_layernorm():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_conv2d():
     """
@@ -284,8 +282,6 @@ def test_dynamic_dropout():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_reducesum1():
     """
@@ -307,8 +303,6 @@ def test_dynamic_reducesum1():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_reducesum2():
     """
@@ -332,8 +326,6 @@ def test_dynamic_reducesum2():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_add1():
     """
@@ -359,8 +351,6 @@ def test_dynamic_add1():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_add2():
     """
@@ -474,8 +464,6 @@ def test_dynamic_square_sum_all():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('dtype', [np.float32])
 @pytest.mark.env_onecard
 def test_dynamic_hswish(dtype):

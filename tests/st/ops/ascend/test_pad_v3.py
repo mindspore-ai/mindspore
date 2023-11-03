@@ -37,8 +37,6 @@ class PadV3Net(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_padv3_circular_dynamic_shape_3d(mode):
@@ -65,8 +63,6 @@ def test_padv3_circular_dynamic_shape_3d(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_padv3_circular_dynamic_shape_4d(mode):
@@ -92,8 +88,6 @@ def test_padv3_circular_dynamic_shape_4d(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_padv3_circular_dynamic_shape_5d(mode):

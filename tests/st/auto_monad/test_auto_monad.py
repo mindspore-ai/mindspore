@@ -46,8 +46,6 @@ def _pynative_save_graphs():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print():
     """
@@ -82,8 +80,6 @@ def test_print():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_add():
     """
@@ -121,8 +117,6 @@ def test_print_add():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign():
     """
@@ -160,8 +154,6 @@ def test_print_assign():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign_add():
     """
@@ -202,8 +194,6 @@ def test_print_assign_add():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_while():
     """
@@ -248,8 +238,6 @@ def test_print_while():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_if():
     """
@@ -290,8 +278,6 @@ def test_print_if():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign_while():
     """
@@ -345,8 +331,6 @@ def test_print_assign_while():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign_if():
     """
@@ -666,8 +650,6 @@ def test_for():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_for():
     """
@@ -714,8 +696,6 @@ def test_print_for():
 @security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign_for():
     """
@@ -941,8 +921,6 @@ def test_multi_assign_addn():
 
 @security_off_wrap
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_multi_assign_print():
     """
@@ -1654,8 +1632,6 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 # Besides Ascend, it can work on CPU.
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_cast():
     """
@@ -1818,8 +1794,6 @@ def test_multi_abs_add_assign():
 
 @security_off_wrap
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_print_assign_print():
     """

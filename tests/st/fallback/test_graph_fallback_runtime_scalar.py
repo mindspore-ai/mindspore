@@ -306,8 +306,6 @@ def test_bool_condition():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_int_condition():
     """
@@ -329,8 +327,6 @@ def test_int_condition():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_float_condition():
     """
@@ -439,8 +435,6 @@ def test_scalar_int_calculation():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_combine_calculation():
     """

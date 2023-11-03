@@ -55,9 +55,7 @@ def num_to_asterisk(data):
     # Convert number and +/- to asterisk
     return re.sub(r'\d|\+|\-', '*', data.group())
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0te
 @pytest.mark.env_onecard
 def test_tensor_print():
     path = os.path.split(os.path.realpath(__file__))[0]

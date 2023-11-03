@@ -102,8 +102,6 @@ def run_async_dump(test_name):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_async_dump_dataset_sink():
@@ -138,8 +136,6 @@ def run_e2e_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_e2e_dump():
@@ -153,8 +149,6 @@ def test_e2e_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_e2e_dump_with_hccl_env():
@@ -172,8 +166,6 @@ def test_e2e_dump_with_hccl_env():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_dump_with_diagnostic_path():
@@ -252,8 +244,6 @@ def run_saved_data_dump_test(scenario, saved_data):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_statistic_dump():
@@ -267,8 +257,6 @@ def test_ascend_statistic_dump():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_tensor_dump():
@@ -282,8 +270,6 @@ def test_ascend_tensor_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_full_dump():

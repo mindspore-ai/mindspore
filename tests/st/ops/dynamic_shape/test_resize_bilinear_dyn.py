@@ -56,8 +56,6 @@ def case_input_dyn(mode, device_target, dtype="float32"):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_ascend():
     """

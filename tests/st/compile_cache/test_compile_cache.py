@@ -349,8 +349,6 @@ def test_compile_cache_lenet_change_dir():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_compile_cache_lenet_ps():
     """
@@ -362,8 +360,6 @@ def test_compile_cache_lenet_ps():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_compile_cache_ms_function():
     """
@@ -389,8 +385,6 @@ def test_compile_cache_run_two_cells_once():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_compile_cache_pipeline_parallel_and_recompute():
     """

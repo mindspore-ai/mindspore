@@ -552,8 +552,6 @@ class FusedSparseAdamNet(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_adam():
     """
@@ -596,8 +594,6 @@ class FusedSparseFtrlNet(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_ftrl():
     """
@@ -632,8 +628,6 @@ class FusedSparseLazyAdamNet(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_lazyadam():
     """
@@ -674,8 +668,6 @@ class FusedSparseProximalAdagradNet(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fused_sparse_proximal_adagrad():
     """

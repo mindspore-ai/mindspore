@@ -140,8 +140,6 @@ def test_GPU_e2e_multi_root_graph_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_Ascend_e2e_multi_root_graph_dump():
@@ -159,8 +157,6 @@ def test_Ascend_e2e_multi_root_graph_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_Ascend_async_multi_root_graph_dump():
@@ -178,8 +174,6 @@ def test_Ascend_async_multi_root_graph_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_multi_root_graph_dump_kernel_by_kernel():

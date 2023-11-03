@@ -36,9 +36,6 @@ class NetWithEmbeddingLookUp(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sit_embedding_lookup_net():
     indices = Tensor(np.array([0, 1, 2]).astype(np.int32))

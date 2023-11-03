@@ -32,8 +32,6 @@ class Net(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_cast():
     """
@@ -53,8 +51,6 @@ def test_scalar_cast():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scalar_cast1():
     """
@@ -74,8 +70,6 @@ def test_scalar_cast1():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_cast_grad():
     """
@@ -96,8 +90,6 @@ def test_cast_grad():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_cast_grad1():
     """

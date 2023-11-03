@@ -57,8 +57,6 @@ def generate_test_cases(dtype, mode, reduction):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -83,8 +83,6 @@ def run_async_dump(test_name):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_async_dump():
@@ -130,8 +128,6 @@ def run_e2e_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_e2e_dump():
@@ -145,8 +141,6 @@ def test_e2e_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_e2e_dump_with_hccl_env():
@@ -179,8 +173,6 @@ class ReluReduceMeanDenseRelu(Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_async_dump_net_multi_layer_mode1():
@@ -216,8 +208,6 @@ def test_async_dump_net_multi_layer_mode1():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_dump_with_diagnostic_path():
@@ -280,8 +270,6 @@ def run_e2e_dump_execution_graph():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_dump_with_execution_graph():
