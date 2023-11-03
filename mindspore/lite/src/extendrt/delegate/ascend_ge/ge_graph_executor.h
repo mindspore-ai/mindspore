@@ -60,6 +60,18 @@ struct GraphRuntimeInfo {
   std::vector<ShapeVector> output_shapes;
 };
 
+struct DynKVCacheInfo {
+  bool dynamic_kv_cache = false;
+  bool batch_size_dyn = false;
+  bool seq_length_dyn = false;
+  bool is_ge_graph_static_ = false;
+  int64_t real_batch_size = -1;
+  int64_t real_seq_len_size = -1;
+  int64_t max_batch_size = 32;
+  int64_t max_seq_len_size = 4096;
+  std::vector<std::vector<int64_t>> dynamic_kv_cache_dims;
+};
+
 class GeGraphExecutor : public LiteGraphExecutor {
  public:
   GeGraphExecutor(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos)
@@ -148,10 +160,12 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool BuildGraphRefMode(const FuncGraphPtr &anf_graph, uint32_t graph_id);
   bool RunGraphRefMode(uint32_t graph_id, const std::vector<tensor::Tensor> &inputs,
                        std::vector<tensor::Tensor> *outputs);
-  bool SyncDeviceOutputsToHost(std::vector<tensor::Tensor> *outputs);
+  bool SyncDeviceOutputsToHost(std::vector<tensor::Tensor> *outputs, std::vector<::ge::Tensor> *ge_outputs);
 
   bool UpdateInputShapeOption(const std::vector<std::pair<std::string, tensor::TensorPtr>> &ref_data_tensors,
                               std::map<std::string, std::string> *ge_options_ptr);
+  bool UpdateDynamicDimsOption(const std::vector<std::pair<std::string, tensor::TensorPtr>> &ref_data_tensors,
+                               std::map<std::string, std::string> *ge_options_ptr);
 
   static std::atomic_uint32_t global_graph_idx_;
   static uint32_t GetNextGraphIdx();
@@ -174,6 +188,15 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool Warmup(const FuncGraphPtr &func_graph, uint32_t graph_id);
   bool SetModelCacheDir(std::map<std::string, std::string> *session_options_ptr);
   bool GetConfigOption(const std::string &section_name, const std::string &option_name, std::string *option_val);
+
+  bool SetGeTensorShape(GeTensor *ge_tensor, ShapeVector shape);
+  void UpdateOutputShapeInfo(std::vector<::ge::Tensor> *ge_outputs);
+  void SetDynamicKVCache();
+  void InitRealShapeParam(const std::vector<tensor::Tensor> &inputs);
+  bool InitMaxShapeParam();
+  DynKVCacheInfo dyn_kv_cache_info_;
+  void SetRefShape(std::vector<int64_t> *ref_shape, bool dyn, std::string tensor_name);
+  bool InitInputDeviceTensor(const FuncGraphPtr &anf_graph);
 };
 
 struct GeSessionContext {
