@@ -44,7 +44,7 @@ namespace mindspore {
 namespace dpico {
 namespace {
 const std::set<std::string> kAssignedFormatOpSet = {
-  mindspore::ops::kNameAvgPoolFusion, mindspore::KBatchNormOpName,
+  mindspore::ops::kNameAvgPoolFusion, mindspore::ops::kNameBatchNorm,
   mindspore::ops::kNameBatchToSpace,  mindspore::ops::kNameBiasAdd,
   mindspore::ops::kNameConv2DFusion,  mindspore::ops::kNameConv2dTransposeFusion,
   mindspore::ops::kNameDepthToSpace,  mindspore::ops::kNameFusedBatchNorm,

@@ -42,6 +42,25 @@ class MIND_API LayerNormFusion : public BaseOperator {
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1, const float epsilon = 1e-7,
             const bool elementwise_affine = false);
 
+  /// \brief Set begin_norm_axis.
+  void set_begin_norm_axis(const int64_t begin_norm_axis);
+  /// \brief Set begin_params_axis.
+  void set_begin_params_axis(const int64_t begin_params_axis);
+  /// \brief Set epsilon.
+  void set_epsilon(const float epsilon);
+  /// \brief Get begin_norm_axis.
+  ///
+  /// \return begin_norm_axis.
+  int64_t get_begin_norm_axis() const;
+  /// \brief Get begin_params_axis.
+  ///
+  /// \return begin_params_axis.
+  int64_t get_begin_params_axis() const;
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
+  float get_epsilon() const;
+
   /// \brief Method to set elementwise_affine attribute.
   ///
   /// \param[in] elementwise_affine Define a boolean value to indicate that the operation is element-wise or not.
@@ -51,17 +70,6 @@ class MIND_API LayerNormFusion : public BaseOperator {
   ///
   /// \return a boolean value.
   bool get_elementwise_affine() const;
-
-  void set_begin_norm_axis(const int &begin_norm_axis) {
-    (void)this->AddAttr("begin_norm_axis", api::MakeValue(begin_norm_axis));
-  }
-  int get_begin_norm_axis() const { return GetValue<int>(GetAttr("begin_norm_axis")); }
-  void set_begin_params_axis(const int &begin_params_axis) {
-    (void)this->AddAttr("begin_params_axis", api::MakeValue(begin_params_axis));
-  }
-  int get_begin_params_axis() const { return GetValue<int>(GetAttr("begin_params_axis")); }
-  void set_epsilon(const float &epsilon) { (void)this->AddAttr("epsilon", api::MakeValue(epsilon)); }
-  float get_epsilon() const { return GetValue<float>(GetAttr("epsilon")); }
 };
 
 abstract::AbstractBasePtr LayerNormFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -35,6 +35,27 @@ void LayerNormFusion::Init(const int64_t begin_norm_axis, const int64_t begin_pa
   this->set_elementwise_affine(elementwise_affine);
 }
 
+void LayerNormFusion::set_begin_norm_axis(const int64_t begin_norm_axis) {
+  (void)this->AddAttr(kBeginNormAxis, api::MakeValue(begin_norm_axis));
+}
+void LayerNormFusion::set_begin_params_axis(const int64_t begin_params_axis) {
+  (void)this->AddAttr(kBeginParamsAxis, api::MakeValue(begin_params_axis));
+}
+void LayerNormFusion::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
+
+int64_t LayerNormFusion::get_begin_norm_axis() const {
+  auto value_ptr = this->GetAttr(kBeginNormAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+int64_t LayerNormFusion::get_begin_params_axis() const {
+  auto value_ptr = this->GetAttr(kBeginParamsAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+float LayerNormFusion::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
+
 void LayerNormFusion::set_elementwise_affine(const bool elementwise_affine) {
   (void)AddAttr(kElementwiseAffine, api::MakeValue(elementwise_affine));
 }

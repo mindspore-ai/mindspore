@@ -19,6 +19,7 @@
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "common/op_attr.h"
+#include "mindapi/base/format.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,7 +30,7 @@ BaseOperatorPtr CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, 
     return nullptr;
   }
   prim->set_is_training(false);
-  prim->set_format(mindspore::NCHW);
+  prim->set_data_format(mindspore::Format::NCHW);
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {

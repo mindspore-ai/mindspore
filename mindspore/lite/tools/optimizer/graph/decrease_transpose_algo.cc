@@ -414,11 +414,6 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
           return lite::RET_ERROR;
         }
       }
-      auto status = node_infer_shape_.InferShape(input_make_tuple);
-      if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
-        MS_LOG(ERROR) << "infer shape failed.";
-        return lite::RET_ERROR;
-      }
       continue;
     }
     if (HandleFunc(func_graph, cnode, i, trans_type) != lite::RET_OK) {
