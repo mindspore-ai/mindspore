@@ -17,9 +17,10 @@ import numpy as np
 from mindspore import Tensor, context
 from mindspore import nn
 from mindspore.ops.composite import GradOperation
-from mindspore.ops import split, conv2d
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext, sub_ext, \
-    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d_ext
+from mindspore.ops import split
+from mindspore import ops
+from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add, sub, \
+    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d
 import mindspore
 
 
@@ -184,7 +185,7 @@ def test_silu_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_add_ext_ascend():
+def test_add_ascend():
     """
     Feature: test add_ext operator
     Description: test add_ext run by pyboost
@@ -193,7 +194,7 @@ def test_add_ext_ascend():
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
     y = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-    output = add_ext(x, y, 1)
+    output = add(x, y, 1)
     assert np.allclose(output.asnumpy(), [[[2, 6, 6], [8, 10, 12]], [[14, 16, 18], [20, 22, 24]]])
 
 
@@ -201,7 +202,7 @@ def test_add_ext_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_sub_ext_ascend():
+def test_sub_ascend():
     """
     Feature: test add_ext operator
     Description: test sub_ext run by pyboost
@@ -210,7 +211,7 @@ def test_sub_ext_ascend():
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
     y = Tensor(np.array([[[1, 1, 1], [1, 1, 2]], [[3, 8, 9], [10, 11, 12]]]), mindspore.float32)
-    output = sub_ext(x, y, 1)
+    output = sub(x, y, 1)
     assert np.allclose(output.asnumpy(), [[[0, 2, 2], [3, 4, 4]], [[4, 0, 0], [0, 0, 0]]])
 
 
@@ -408,7 +409,7 @@ def test_matmul_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_conv2d_ext_ascend():
+def test_conv2d_ascend():
     """
     Feature: test conv2d_ext operator
     Description: test conv2d_ext run by pyboost
@@ -421,6 +422,6 @@ def test_conv2d_ext_ascend():
     inputs = Tensor(np.random.randn(1, 4, 5, 5).astype(dtype=np.float32))
     bias = Tensor(np.random.randn(8).astype(dtype=np.float32))
 
-    pyboost_out = conv2d_ext(inputs, filters, padding=1, bias=bias)
-    old_out = conv2d(inputs, filters, pad_mode="pad", padding=1, bias=bias)
+    pyboost_out = conv2d(inputs, filters, padding=1, bias=bias)
+    old_out = ops.conv2d(inputs, filters, pad_mode="pad", padding=1, bias=bias)
     assert np.allclose(pyboost_out.asnumpy(), old_out.asnumpy(), 0.003, 0.003)

@@ -199,6 +199,14 @@ Int64ImmPtr Parser::ToInt(size_t i) {
   return nullptr;
 }
 
+std::optional<Int64ImmPtr> Parser::ToIntOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(std::move(ToInt(i)));
+}
+
 template <typename T>
 ValueTuplePtr Parser::ToIntList(size_t i) {
   const auto &op_arg = op_def_.args_[i];

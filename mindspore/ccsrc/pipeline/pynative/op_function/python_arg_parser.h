@@ -31,6 +31,7 @@ class Parser {
   template <typename T>
   ValueTuplePtr ToTensorList(size_t i);
   Int64ImmPtr ToInt(size_t i);
+  std::optional<Int64ImmPtr> ToIntOptional(size_t i);
   template <typename T>
   ValueTuplePtr ToIntList(size_t i);
   BoolImmPtr ToBool(size_t i);

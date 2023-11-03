@@ -76,7 +76,7 @@ class CppTemplate:
 
 
 NEW_LINE = "\n"
-WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../")
+WORK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../../../")
 
 REGISTER_DEFINE_TEMPLATE = CppTemplate(
     "  m->def(\"${pyboost_op_name}\", &mindspore::pynative::${pyboost_cfunc_name}, \"Encrypt the data.\");\n")
@@ -111,3 +111,17 @@ PYBOOST_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_ascend_customize_call_template.tpl'))
+
+PYBOOST_PY_FUNC_HEADEAR = ("""
+from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.auto_generate.gen_ops_def import *
+""")
+
+PYBOOST_PY_FUNC_TEMPLATE = CppTemplate("""
+def ${func_name}(${func_args}):
+    r\"\"\"
+    ${description}
+    \"\"\"
+    ${operator_name}_op = _get_cache_prim(${class_name})(${init_args})
+    return ${operator_name}_op(${input_args})\n\n""")
+
