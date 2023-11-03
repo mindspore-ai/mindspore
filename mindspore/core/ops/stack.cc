@@ -101,7 +101,12 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
     return std::make_shared<abstract::Shape>(ShapeVector{kUnknownRank});
   }
   std::vector<int64_t> infer_shape = input_shape;
-  auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  int64_t axis_temp;
+  if (primitive->HasAttr(kAxis)) {
+    axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  } else {
+    axis_temp = GetValue<int64_t>(input_args[1]->BuildValue());
+  }
   CheckAndConvertUtils::CheckInRange<int64_t>("Stack axis", axis_temp, kIncludeBoth,
                                               {-SizeToLong(element_rank) - 1, SizeToLong(element_rank)},
                                               primitive->name());
@@ -111,12 +116,8 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
 }
 
 TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
-  if (input_args.size() == 1) {
-    if (!input_args[0]->isa<abstract::AbstractSequence>()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
-    }
+  if (input_args[0]->isa<abstract::AbstractSequence>()) {
     elements = input_args[0]->cast<abstract::AbstractSequencePtr>()->elements();
   }
   (void)CheckAndConvertUtils::CheckInteger("stack element num", SizeToLong(elements.size()), kGreaterEqual, 1,

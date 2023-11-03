@@ -78,10 +78,14 @@ class MatMulInfer : public abstract::OpInferBase {
     const auto &x_shp = x->GetShape()->GetShapeVector();
     const auto &y_shp = y->GetShape()->GetShapeVector();
 
-    ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
-    ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
-    bool transpose_a = GetValue<bool>(transpose_a_ptr);
-    bool transpose_b = GetValue<bool>(transpose_b_ptr);
+    bool transpose_a = False;
+    if (primitive->HasAttr(kAxis)) {
+      transpose_a = GetValue<bool>(primitive->GetAttr("transpose_a"));
+    }
+    bool transpose_b = False;
+    if (primitive->HasAttr(kAxis)) {
+      transpose_b = GetValue<bool>(primitive->GetAttr("transpose_b"));
+    }
 
     if (IsDynamicRank(x_shp) || IsDynamicRank(y_shp)) {
       ShapeVector ret_shape{abstract::Shape::kShapeRankAny};

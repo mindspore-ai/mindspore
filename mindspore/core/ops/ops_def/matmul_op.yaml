@@ -1,0 +1,15 @@
+#operator matmul
+matmul:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: MatMul
+  pyboost: True
+
+

@@ -8,3 +8,6 @@ sqrt:
             dtype: tensor
     function:
         name: sqrt_
+    pyboost: True
+
+

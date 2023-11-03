@@ -947,7 +947,7 @@ def generate_pyboost_functions(work_path, yaml_data):
         convert_to_tensor_template = CppTemplate(
             "auto ${arg_name}_tensor = PyNativeAlgo::Common::StubNodeToTensor(${arg_name});\n")
         convert_to_tensor_list_template = CppTemplate(
-            "auto ${arg_name}_tensor = PyNativeAlgo::Common::StubNodeToTensorList(${arg_name});\n")
+            "auto ${arg_name}_tensor_list = PyNativeAlgo::Common::StubNodeToValueTuple(${arg_name});\n")
         convert_value_tuple_template = CppTemplate("parser.ToValueTuple(${arg})")
         call_args_str = []
         convert_stub_str = ''

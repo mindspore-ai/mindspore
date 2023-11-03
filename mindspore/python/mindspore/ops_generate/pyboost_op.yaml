@@ -109,6 +109,15 @@ SplitTensor:
     mode: normal
     cube: False
 
+SubExt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
 SplitWithSize:
   CPU:
     mode: normal
@@ -117,4 +126,51 @@ SplitWithSize:
   Ascend:
     mode: normal
     cube: False
+
+Softmax:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+Sqrt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+Stack:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+Pow:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+    aclnn: aclnnPowTensorTensor
+
+MatMul:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: True
+    aclnn: aclnnMatmul
 

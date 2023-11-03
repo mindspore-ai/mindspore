@@ -1,5 +1,5 @@
-#operator add_ext
-add_ext:
+#operator sub_ext
+sub_ext:
   args:
     input:
       dtype: tensor
@@ -16,5 +16,5 @@ add_ext:
     output:
       dtype: tensor
   class:
-    name: AddExt
+    name: SubExt
   pyboost: True

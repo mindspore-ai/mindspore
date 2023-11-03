@@ -1,5 +1,6 @@
 #operator pow
 pow:
+<<<<<<< HEAD
     args:
         x1:
             dtype: tensor
@@ -12,3 +13,6 @@ pow:
     returns:
         y:
             dtype: tensor
+    pyboost: True
+
+

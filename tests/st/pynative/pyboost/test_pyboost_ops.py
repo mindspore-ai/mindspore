@@ -17,8 +17,9 @@ import numpy as np
 from mindspore import Tensor, context
 from mindspore import nn
 from mindspore.ops.composite import GradOperation
-from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext, split_tensor, split_with_size
 from mindspore.ops import split
+from mindspore.ops.auto_generate import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add_ext, sub_ext, \
+    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul
 import mindspore
 
 
@@ -192,8 +193,25 @@ def test_add_ext_ascend():
     context.set_context(device_target="Ascend")
     x = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
     y = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
-    output = add_ext(x, y)
+    output = add_ext(x, y, 1)
     assert np.allclose(output.asnumpy(), [[[2, 6, 6], [8, 10, 12]], [[14, 16, 18], [20, 22, 24]]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sub_ext_ascend():
+    """
+    Feature: test add_ext operator
+    Description: test sub_ext run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([[[1, 3, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    y = Tensor(np.array([[[1, 1, 1], [1, 1, 2]], [[3, 8, 9], [10, 11, 12]]]), mindspore.float32)
+    output = sub_ext(x, y, 1)
+    assert np.allclose(output.asnumpy(), [[[0, 2, 2], [3, 4, 4]], [[4, 0, 0], [0, 0, 0]]])
 
 
 @pytest.mark.level1
@@ -252,7 +270,7 @@ def test_cast_ascend():
 def test_split_tensor_ascend():
     """
     Feature: test split_tensor operator
-    Description: test cast run by pyboost
+    Description: test split_tensor run by pyboost
     Expectation: success
     """
     context.set_context(device_target="Ascend")
@@ -267,10 +285,26 @@ def test_split_tensor_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_softmax_ascend():
+    """
+    Feature: test cast operator
+    Description: test softmax run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+    output = softmax(x, 0)
+    assert np.allclose(output.asnumpy(), [0.03168492, 0.01165623, 0.08612854, 0.6364086, 0.23412167])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_split_with_size_ascend():
     """
     Feature: test split_with_size operator
-    Description: test cast run by pyboost
+    Description: test split_with_size run by pyboost
     Expectation: success
     """
     context.set_context(device_target="Ascend")
@@ -285,10 +319,26 @@ def test_split_with_size_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_sqrt_ascend():
+    """
+    Feature: test cast operator
+    Description: test sqrt run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
+    output = sqrt(x)
+    assert np.allclose(output.asnumpy(), [1, 2, 3])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_split_ascend():
     """
     Feature: test split operator
-    Description: test cast run by pyboost
+    Description: test split run by pyboost
     Expectation: success
     """
     context.set_context(device_target="Ascend")
@@ -302,3 +352,53 @@ def test_split_ascend():
     assert np.allclose(outputs[1].asnumpy(), [3, 4, 5])
     assert np.allclose(outputs[2].asnumpy(), [6, 7, 8])
 
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_stack_ascend():
+    """
+    Feature: test cast operator
+    Description: test stack run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([0, 1]).astype(np.float32))
+    input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
+    output = stack((input_x1, input_x2), 0)
+    assert np.allclose(output.asnumpy(), [[0, 1], [2, 3]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pow_ascend():
+    """
+    Feature: test cast operator
+    Description: test pow run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2]).astype(np.float32))
+    input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
+    output = pow(input_x1, input_x2)
+    assert np.allclose(output.asnumpy(), [1, 8])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_matmul_ascend():
+    """
+    Feature: test cast operator
+    Description: test matmul run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+    input_x2 = Tensor(np.array([[2, 3], [4, 5]]).astype(np.float32))
+    output = matmul(input_x1, input_x2)
+    assert np.allclose(output.asnumpy(), [[10, 13], [22, 29]])

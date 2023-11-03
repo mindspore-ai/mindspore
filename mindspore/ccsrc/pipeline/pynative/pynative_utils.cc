@@ -519,13 +519,14 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
-std::vector<TensorPtr> Common::StubNodeToTensorList(const ValuePtr &v) {
+ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
-    std::vector<TensorPtr> tensor_list;
+    std::vector<ValuePtr> tensor_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(tensor_list),
                          [](const ValuePtr &value) { return StubNodeToTensor(value); });
+    return std::make_shared<ValueTuple>(tensor_list);
   }
   MS_LOG(EXCEPTION) << "It should be stub tensor sequence, but got " << v->ToString();
 }

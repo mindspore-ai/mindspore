@@ -1,5 +1,6 @@
 #operator softmax
 softmax:
+<<<<<<< HEAD
     args:
         logits:
             dtype: tensor
@@ -13,3 +14,6 @@ softmax:
     function:
         name: softmax_
         disable: False
+    pyboost: True
+
+

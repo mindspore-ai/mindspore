@@ -1,0 +1,15 @@
+#operator stack
+stack:
+  args:
+    tensors:
+      dtype: tuple[tensor]
+    dim:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Stack
+  pyboost: True
+
+
