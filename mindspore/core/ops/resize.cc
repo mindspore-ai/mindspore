@@ -160,7 +160,8 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
   if (size_shape[0] == 1) {
     // zoom factor
     (void)CheckAndConvertUtils::CheckTypeValid("size", tensor_type, {kInt32}, primitive->name());
-    auto scale_value = CheckAndConvertUtils::CheckTensorIntValue("size", shape_value, primitive->name());
+    auto scale_value =
+      CheckAndConvertUtils::CheckTensorIntValue("size", shape_value, primitive->name(), shape_abstract->GetType());
     auto scale = scale_value[0];
     *new_height = (in_height == -1) ? -1 : (in_height + (in_height - 1) * (scale - 1));
     *new_width = (in_width == -1) ? -1 : (in_width + (in_width - 1) * (scale - 1));

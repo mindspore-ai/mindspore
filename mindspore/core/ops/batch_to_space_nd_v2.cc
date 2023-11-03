@@ -59,8 +59,10 @@ abstract::ShapePtr BatchToSpaceNDV2InferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> res(out_shape.size(), -1);
     return std::make_shared<abstract::Shape>(res);
   }
-  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->GetValue(), prim_name);
-  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->GetValue(), prim_name);
+  auto block_shape = CheckAndConvertUtils::CheckTensorIntValue(kBlockShape, input_args[1]->GetValue(), prim_name,
+                                                               input_args[1]->GetType());
+  auto crops = CheckAndConvertUtils::CheckTensorIntValue(kCrops, input_args[index2]->GetValue(), prim_name,
+                                                         input_args[index2]->GetType());
   size_t size = block_shape.size();
   size_t offset = x_shape.size() - size;
   for (size_t i = 0; i < size; i++) {

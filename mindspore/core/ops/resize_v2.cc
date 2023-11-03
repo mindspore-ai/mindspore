@@ -56,7 +56,8 @@ abstract::ShapePtr ResizeV2InferShape(const PrimitivePtr &primitive, const std::
   std::string mode_str = GetValue<std::string>(mode_ptr);
 
   if (!sizes_input->isa<ValueAny>() && !sizes_input->isa<None>()) {
-    auto sizes = CheckAndConvertUtils::CheckTensorIntValue("sizes", sizes_input, op_name);
+    auto sizes =
+      CheckAndConvertUtils::CheckTensorIntValue("sizes", sizes_input, op_name, input_args[kInputIndex3]->GetType());
     const size_t kSizesSize = 4;
     if (sizes.size() != kSizesSize) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the length of 'sizes' must be 4.";

@@ -96,7 +96,7 @@ class CropAndResizeInfer : public abstract::OpInferBase {
 
     std::vector<int64_t> crop_size;
     if (crop_size_type->isa<TensorType>()) {
-      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
+      crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name, crop_size_type);
     } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
       auto value_tuple = value_ptr->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value_tuple);

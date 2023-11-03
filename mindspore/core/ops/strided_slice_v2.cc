@@ -371,7 +371,8 @@ bool CheckAndGetDynamicSliceV2(const AbstractBasePtr &input_arg, const std::stri
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->GetType(), {kInt64, kInt32},
                                                      "StridedSliceV2");
     if (input_value->isa<tensor::Tensor>()) {
-      *slice_value = CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSliceV2");
+      *slice_value =
+        CheckAndConvertUtils::CheckTensorIntValue(arg_name, input_value, "StridedSliceV2", input_arg->GetType());
       *slice_len = (*slice_value).size();
     } else {
       // slice is ValueAny

@@ -104,7 +104,8 @@ abstract::TupleShapePtr SparseFillEmptyRowsInferShape(const PrimitivePtr &primit
     auto indice_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
     const int64_t input_nnz = indice_shape[0];
 
-    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name)[0];
+    auto dense_row = CheckAndConvertUtils::CheckTensorIntValue("x_dense_shape", input_shape_value, op_name,
+                                                               input_args[kInputIndex2]->GetType())[0];
     output_indices_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny, rank}),
                                                              ShapeVector({input_nnz + dense_row, rank}));
     output_values_shape = std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeDimAny}),

@@ -79,7 +79,8 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
   auto output_size_value = input_args[1]->GetValue();
   MS_EXCEPTION_IF_NULL(output_size_value);
   if (input_args[1]->GetType()->object_type() == kObjectTypeTensorType && IsValueKnown(output_size_value)) {
-    auto output_size = CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name);
+    auto output_size =
+      CheckAndConvertUtils::CheckTensorIntValue("output_size", output_size_value, prim_name, input_args[1]->GetType());
 
     ShapeVector out_shape = x_shape;
     for (int64_t i = 1; i <= kOutputSizeNumElem; ++i) {
