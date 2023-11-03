@@ -29,7 +29,7 @@ bool CTCLossV2GradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   // Getting values
 
   blank_ = GetValue<int64_t>(primitive_->GetAttr("blank"));
-  zero_infinity_ = GetValue<int64_t>(primitive_->GetAttr("zero_infinity"));
+  zero_infinity_ = GetValue<bool>(primitive_->GetAttr("zero_infinity"));
 
   if (!MatchKernelFunc(kernel_name_, inputs, outputs)) {
     return false;

@@ -33,10 +33,21 @@ using LogitPtrCreatorFunc =
   std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, LogitPtrCreatorFunc>> kernel_attr = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat64),
    CreateLogitKernelPtr<double, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateLogitKernelPtr<float, float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateLogitKernelPtr<half, float>}};
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateLogitKernelPtr<float, float>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateLogitKernelPtr<half, float>}};
 }  // namespace
 
 bool LogitGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -56,7 +67,6 @@ bool LogitGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
   if (!is_match) {
     return false;
   }
-  attr_ptr_->eps = GetValue<float>(primitive_->GetAttr("eps"));
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
   return true;
@@ -70,6 +80,7 @@ int LogitGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
       return KRET_UNKNOWN_SHAPE;
     }
   }
+  attr_ptr_->eps = inputs[1]->GetValueWithCheck<float>();
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();

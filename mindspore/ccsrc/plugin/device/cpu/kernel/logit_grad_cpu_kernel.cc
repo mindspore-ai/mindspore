@@ -37,7 +37,6 @@ bool LogitGradCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
     return false;
   }
-  eps = GetValue<float>(primitive_->GetAttr("eps"));
   return true;
 }
 
@@ -47,6 +46,7 @@ int LogitGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
+  eps = inputs[kIndex2]->GetValueWithCheck<float>();
   input_dtype_ = inputs[kIndex0]->dtype_id();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
@@ -126,10 +126,21 @@ bool LogitGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inpu
 }
 
 std::vector<KernelAttr> LogitGradCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat64)
+                                                   .AddInputAttr(kNumberTypeFloat64)
+                                                   .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, LogitGrad, LogitGradCpuKernelMod);

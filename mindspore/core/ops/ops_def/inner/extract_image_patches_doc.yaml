@@ -6,11 +6,11 @@ extract_image_patches:
         Args:
             input_x (Tensor): A 4-D tensor whose shape is :math:`(in\_batch, in\_depth, in\_row, in\_col)`.
             ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-                the size must be 2, and the format is [1, 1, ksize_row, ksize_col].
+                the size must be 4, and the format is [1, 1, ksize_row, ksize_col].
             strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-                must be a tuple or list of int, the size must be 2, and the format is [stride_row, stride_col].
+                must be a tuple or list of int, the size must be 4, and the format is [1, 1, stride_row, stride_col].
             rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-                pixel positions, must be a tuple or a list of integers, the size must be 2, and the format is [rate_row, rate_col].
+                pixel positions, must be a tuple or a list of integers, the size must be 4, and the format is [1, 1, rate_row, rate_col].
             padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
                 not case sensitive. Default: "valid".
 
