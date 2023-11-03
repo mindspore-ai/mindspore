@@ -36,11 +36,11 @@ class StridedSliceGpuCommon {
   ~StridedSliceGpuCommon() = default;
 
   inline bool IsEmptyInput(int input_size) { return input_size == 0; }
-  void CollectInfo(const std::string &kernel_name) {
+  void CollectInfo(const std::string &kernel_name, const PrimitivePtr &op_prim) {
     auto shape_tmp = Convert2Long(input_shape_);
     FillEmptyDims(kernel_name, &begin_, &end_, &strides_, &shape_tmp, true);
     input_shape_ = Convert2SizeT(shape_tmp);
-    ParseStrideSliceMasks(&begin_, &end_, &strides_, shape_tmp);
+    ParseStrideSliceMasks(op_prim, &begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
     null_output_ = IsNullOutput();
   }

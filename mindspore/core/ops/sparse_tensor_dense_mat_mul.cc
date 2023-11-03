@@ -133,26 +133,16 @@ void SparseTensorDenseMatmulCheckShapeSetShape(const std::string &prim_name, int
   if (CheckAndConvertUtils::IsTensor(x1_shape) && IsValueKnown(x1_shape->GetValue())) {
     auto a_shape_value = x1_shape->GetValue();
     MS_EXCEPTION_IF_NULL(a_shape_value);
-    auto a_shape_opt = GetArrayValue<int64_t>(a_shape_value);
-    if (!a_shape_opt.has_value()) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the 'sparse_shape' must be valid.";
-    }
-    auto a_shape_type = x1_shape->GetType()->cast<TensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(a_shape_type);
-    auto a_shape_type_id = a_shape_type->element()->type_id();
+    auto a_shape_vec =
+      CheckAndConvertUtils::CheckTensorIntValue("sparse_shape", a_shape_value, prim_name, x1_shape->GetType());
     if (!IsDynamic(shape_shape)) {
-      auto a_shape_size = a_shape_opt.value().size();
+      auto a_shape_size = a_shape_vec.size();
       auto expect_size = std::accumulate(shape_shape.begin(), shape_shape.end(), 1, std::multiplies{});
       MS_EXCEPTION_IF_CHECK_FAIL(a_shape_size == LongToSize(expect_size),
                                  "For '" + prim_name + "', something unexpected happened.");
     }
-    auto a_shape_ptr = a_shape_opt.value();
     for (size_t i = 0; i < kDimensionTwo; ++i) {
-      if (a_shape_type_id == kNumberTypeInt32) {
-        shape_ptr[i] = IntToLong(a_shape_ptr[i]);
-      } else {
-        shape_ptr[i] = a_shape_ptr[i];
-      }
+      shape_ptr[i] = a_shape_vec[i];
     }
   } else if (IsIdentidityOrSubclass(x1_shape->GetType(), kTuple)) {
     auto value_tuple = GetValue<std::vector<int64_t>>(x1_shape->GetValue());

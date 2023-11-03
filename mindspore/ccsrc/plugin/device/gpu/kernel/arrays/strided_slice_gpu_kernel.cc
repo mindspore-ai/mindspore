@@ -69,7 +69,7 @@ int StridedSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
   end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
   strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
-  CollectInfo(kernel_name_);
+  CollectInfo(kernel_name_, primitive_);
 
   return ret;
 }

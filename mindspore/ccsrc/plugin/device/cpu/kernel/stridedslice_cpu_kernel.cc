@@ -159,7 +159,7 @@ void StridedSliceCpuKernelMod::InitSliceParam(std::vector<int64_t> *begin, std::
   slice_struct_.data_type_ = type_pair->second.first;
   auto input_shape_pad = input_shape_;
   FillEmptyDims(kernel_name_, begin, end, stride, &input_shape_pad);
-  ParseStrideSliceMasks(begin, end, stride, input_shape_pad);
+  ParseStrideSliceMasks(primitive_, begin, end, stride, input_shape_pad);
 
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
