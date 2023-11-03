@@ -89,7 +89,7 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
         if (!transform::ConvertCheck(node)) {
           all_support = false;
           common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue<std::string>(kCPUDevice), node);
-          MS_LOG(DEBUG) << node->fullname_with_scope() << "can not found adpt, run on CPU";
+          MS_LOG(DEBUG) << node->fullname_with_scope() << " can not find adpt, run on CPU";
           continue;
         }
         if (!transform::DynamicShapeSupportCheck(node)) {

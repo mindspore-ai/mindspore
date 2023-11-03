@@ -305,7 +305,7 @@ tensor::TensorPtr SequenceToTensor(const ValueSequencePtr &sequence) {
   if (element_values.empty()) {
     std::vector<int32_t> array_data;
     MS_LOG(WARNING) << "The value sequence is empty.";
-    return std::make_shared<tensor::Tensor>(std::move(array_data), sequence->type());
+    return std::make_shared<tensor::Tensor>(std::move(array_data), TypeIdToType(kNumberTypeInt32));
   }
 
   const auto &first_element = element_values[0];

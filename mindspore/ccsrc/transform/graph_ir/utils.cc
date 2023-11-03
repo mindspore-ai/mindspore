@@ -469,6 +469,16 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
       return false;
     }
   }
+  auto input_map = adpt->getInputMap();
+  for (auto &it : input_map) {
+    auto abs = cnode->input(it.first)->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractAny>()) {
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
+                    << " is a AbstractAny";
+      return false;
+    }
+  }
   return true;
 }
 }  // namespace transform

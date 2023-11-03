@@ -73,7 +73,9 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
   if (adpt == nullptr) {
     return nullptr;
   }
-
+  if (!transform::SinkGraphCheck(node)) {
+    return nullptr;
+  }
   auto input_map = adpt->getInputMap();
   for (auto it : input_map) {
     if (static_cast<size_t>(it.first) >= cnode->size()) {
