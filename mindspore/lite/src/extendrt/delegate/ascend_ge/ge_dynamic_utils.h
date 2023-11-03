@@ -42,6 +42,8 @@ class GeDynamicUtils {
                                   std::vector<GeDynamicShapeInfo> *input_shape, std::string *input_shape_str);
   static void UpdateGraphInputShapes(const std::shared_ptr<mindspore::Context> &context, ConfigInfos *config_infos,
                                      const std::string &input_shape);
+  static void UpdateGraphDynamicDims(const std::shared_ptr<mindspore::Context> &context, ConfigInfos *config_infos,
+                                     const std::string &dynamic_dims);
   static bool GetGraphOneRealShapes(const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos,
                                     std::vector<std::pair<std::string, ShapeVector>> *input_shape,
                                     std::string *input_shape_str);
