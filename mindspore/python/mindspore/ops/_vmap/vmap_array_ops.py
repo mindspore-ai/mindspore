@@ -152,8 +152,7 @@ def _get_prefix(indices_shape, axis_size, indices_dtype):
     _check(indices_shape)
     indices_len = len(indices_shape)
     if indices_len == 1:
-        prefix = P.Range()(Tensor(0, indices_dtype), F.fill(
-            indices_dtype, (), axis_size), Tensor(1, indices_dtype))
+        prefix = P.Range()(Tensor(0, indices_dtype), Tensor(axis_size, indices_dtype), Tensor(1, indices_dtype))
         return prefix
 
     indices_end = indices_len - 1

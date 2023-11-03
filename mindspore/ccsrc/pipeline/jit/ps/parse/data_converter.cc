@@ -1318,6 +1318,8 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
       return MakeValue(reinterpret_cast<bool *>(tensor->data_c())[0]);
     case kNumberTypeInt64:
       return MakeValue(reinterpret_cast<int64_t *>(tensor->data_c())[0]);
+    case kNumberTypeInt32:
+      return MakeValue(reinterpret_cast<int *>(tensor->data_c())[0]);
     case kNumberTypeFloat64:
       return ConvertPythonFloatToScalarValue(reinterpret_cast<double *>(tensor->data_c())[0]);
     default:

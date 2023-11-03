@@ -44,7 +44,7 @@ int LogSoftmaxGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (ret != KRET_OK) {
     return ret;
   }
-  axis_ = inputs.at(kIndex2)->GetValueWithCheck<int>();
+  axis_ = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
   auto src_shape = inputs[0]->GetDeviceShapeVector();
   if (axis_ >= SizeToLong(src_shape.size())) {
     axis_ = SizeToLong(src_shape.size()) - 1;

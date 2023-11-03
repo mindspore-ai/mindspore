@@ -40,7 +40,7 @@ int LogSoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxOutputsNum, kernel_name_);
 
   const auto &src_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto axis_ori = static_cast<int64_t>(inputs.at(kIndex1)->GetValueWithCheck<int>());
+  auto axis_ori = inputs.at(kIndex1)->GetValueWithCheck<int64_t>();
   axis_ = axis_ori < 0 ? (axis_ori + src_shape.size()) : axis_ori;
 
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);

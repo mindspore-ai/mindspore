@@ -29,19 +29,26 @@ def int_to_float(data):
     return float(data)
 
 
-def scalar_to_tuple(data):
+def scalar_to_tuple(data, dst_type):
+    if dst_type == PY_DT_TUPLE_INT:
+        return (int(data),)
     return (data,)
 
 
-def list_to_tuple(data):
+def list_to_tuple(data, dst_type):
     # tuple() currently does not support Any from JIT Fallback.
     res = ()
     for element in data:
-        res += (element,)
+        if dst_type == PY_DT_TUPLE_INT:
+            res += (int(element),)
+        else:
+            res += (element,)
     return res
 
 
-def tensor_to_tuple(data):
+def tensor_to_tuple(data, dst_type):
+    if dst_type == PY_DT_TUPLE_INT:
+        data = ops.cast(data, ms.int64)
     return tensor_to_tuple_(data)
 
 
@@ -59,8 +66,8 @@ def tuple_to_tensor(data):
     return ops.tuple_to_array(data)
 
 
-def list_to_tensor(data):
-    return ops.tuple_to_array(list_to_tuple(data))
+def list_to_tensor(data, dst_type):
+    return ops.tuple_to_array(list_to_tuple(data, dst_type))
 
 
 # scalar
@@ -158,18 +165,18 @@ def type_it(data, src_type, dst_type):
             return int_to_float(data)
     elif is_tuple(dst_type):
         if isinstance(data, (int, float, bool)):
-            return scalar_to_tuple(data)
+            return scalar_to_tuple(data, dst_type)
         if isinstance(data, list):
-            return list_to_tuple(data)
+            return list_to_tuple(data, dst_type)
         if isinstance(data, Tensor):
-            return tensor_to_tuple(data)
+            return tensor_to_tuple(data, dst_type)
     elif dst_type == PY_DT_TENSOR:
         if isinstance(data, (int, float, bool)):
             return scalar_to_tensor(data)
         if isinstance(data, tuple):
             return tuple_to_tensor(data)
         if isinstance(data, list):
-            return list_to_tensor(data)
+            return list_to_tensor(data, dst_type)
     elif is_number(dst_type):
         if isinstance(data, Tensor):
             ret = TensorToScalar()(data)
