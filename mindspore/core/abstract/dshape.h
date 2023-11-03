@@ -265,7 +265,12 @@ class MS_CORE_API DynamicSequenceShape : public BaseShape {
   /// \return True if any element shape of DynamicSequenceShape is dynamic shape.
   bool IsDimUnknown() const override;
 
-  BaseShapePtr Clone() const override { return std::make_shared<DynamicSequenceShape>(element_shape_->Clone()); }
+  BaseShapePtr Clone() const override {
+    if (element_shape_ == nullptr) {
+      return std::make_shared<DynamicSequenceShape>(nullptr);
+    }
+    return std::make_shared<DynamicSequenceShape>(element_shape_->Clone());
+  }
 
   bool operator==(const BaseShape &other) const override;
 
