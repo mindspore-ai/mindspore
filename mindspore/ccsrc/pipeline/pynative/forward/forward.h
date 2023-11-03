@@ -24,6 +24,7 @@
 #include <stack>
 #include <vector>
 #include "pipeline/pynative/forward/do_cast.h"
+#include "pipeline/pynative/forward/do_pyboost_cast.h"
 #include "pipeline/pynative/forward/do_infer.h"
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
@@ -42,6 +43,7 @@ class ForwardExecutor {
  public:
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
+        pyboost_cast_operation_(std::make_shared<PyBoostCastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
         frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)),
         backend_queue_(std::make_shared<AsyncQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)) {}
@@ -111,7 +113,11 @@ class ForwardExecutor {
   GradExecutorPtr grad() const;
   void InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info);
   // Mix precision and Implicit transform
-  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info, bool is_py_boost_cast) const;
+  void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
+  inline const PyBoostCastOperationPtr &pyboost_cast_operation() const {
+    MS_EXCEPTION_IF_NULL(pyboost_cast_operation_);
+    return pyboost_cast_operation_;
+  }
 
  private:
   compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
@@ -174,6 +180,7 @@ class ForwardExecutor {
   std::stack<CellPtr> forward_cell_stack_;
   GradExecutorWeakPtr grad_executor_;
   CastOperationPtr cast_operation_;
+  PyBoostCastOperationPtr pyboost_cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
   AsyncQueuePtr frontend_queue_;

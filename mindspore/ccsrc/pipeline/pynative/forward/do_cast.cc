@@ -22,7 +22,6 @@
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/profiler.h"
-#include "kernel/pyboost/auto_generate/cast.h"
 
 namespace mindspore {
 namespace pynative {
@@ -92,18 +91,6 @@ ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type
     return nullptr;
   }
 }
-
-void RunCastOpByPyboost(const std::shared_ptr<kernel::pyboost::Cast> &cast_op,
-                        const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(cast_op);
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  (void)cast_op->Call(op_run_info->op_grad_info->input_value[kIndex0]->cast<tensor::TensorPtr>(),
-                      op_run_info->op_grad_info->input_value[kIndex1]->cast<TypePtr>());
-  PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, op_run_info->op_grad_info->input_value, op_run_info);
-  if (op_run_info->requires_grad) {
-    cast_op->DoGrad();
-  }
-}
 }  // namespace
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
@@ -124,59 +111,6 @@ bool CastOperation::IsValueTypeInvalid(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
   return !v->isa<tensor::Tensor>() && !v->isa<tensor::CSRTensor>() && !v->isa<IntegerImm>() && !v->isa<FloatImm>() &&
          !v->isa<BoolImm>();
-}
-
-ValuePtr CastOperation::GetDstType(const TypeId &type_id) const {
-  constexpr int k8Bits = 8;
-  constexpr int k16Bits = 16;
-  constexpr int k32Bits = 32;
-  constexpr int k64Bits = 64;
-  ValuePtr value = nullptr;
-  if (type_id == kNumberTypeFloat16) {
-    value = std::make_shared<Float>(k16Bits);
-  } else if (type_id == kNumberTypeFloat32) {
-    value = std::make_shared<Float>(k32Bits);
-  } else if (type_id == kNumberTypeFloat64) {
-    value = std::make_shared<Float>(k64Bits);
-  } else if (type_id == kNumberTypeBFloat16) {
-    value = std::make_shared<BFloat>(k16Bits);
-  } else if (type_id == kNumberTypeBool) {
-    value = std::make_shared<Bool>();
-  } else if (type_id == kNumberTypeInt8) {
-    value = std::make_shared<Int>(k8Bits);
-  } else if (type_id == kNumberTypeUInt8) {
-    value = std::make_shared<UInt>(k8Bits);
-  } else if (type_id == kNumberTypeInt16) {
-    value = std::make_shared<Int>(k16Bits);
-  } else if (type_id == kNumberTypeInt32) {
-    value = std::make_shared<Int>(k32Bits);
-  } else if (type_id == kNumberTypeInt64) {
-    value = std::make_shared<Int>(k64Bits);
-  } else {
-    MS_LOG(EXCEPTION) << "Not support dst type " << type_id;
-  }
-  MS_EXCEPTION_IF_NULL(value);
-  return value;
-}
-
-TypeId CastOperation::JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_int64,
-                                   bool has_tensor_int8) const {
-  if (max_type == TypeId::kNumberTypeBool) {
-    if (has_scalar_int64) {
-      max_type = TypeId::kNumberTypeInt64;
-    }
-    if (has_scalar_float32) {
-      max_type = TypeId::kNumberTypeFloat32;
-    }
-  }
-  if (max_type != TypeId::kNumberTypeFloat16 && max_type != TypeId::kNumberTypeFloat32 &&
-      max_type != TypeId::kNumberTypeFloat64 && max_type != TypeId::kTypeUnknown && has_scalar_float32) {
-    max_type = TypeId::kNumberTypeFloat32;
-  }
-  if (max_type == TypeId::kNumberTypeUInt8 && has_tensor_int8) {
-    max_type = TypeId::kNumberTypeInt16;
-  }
-  return max_type;
 }
 
 void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
@@ -230,76 +164,6 @@ void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
   }
 }
 
-const std::string &CastOperation::TypeIdToMsTypeStr(const TypeId &type_id) const {
-  const auto &type_name = type_name_map().find(type_id);
-  if (type_name == type_name_map().cend()) {
-    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
-  }
-  return type_name->second;
-}
-
-bool CastOperation::GetSignatureType(const std::vector<Signature> &signatures,
-                                     std::vector<SignatureEnumDType> *dtypes) const {
-  MS_EXCEPTION_IF_NULL(dtypes);
-  bool has_sig_dtype = false;
-  (void)std::transform(signatures.begin(), signatures.end(), std::back_inserter(*dtypes),
-                       [&has_sig_dtype](const Signature &sig) {
-                         auto dtype = sig.dtype;
-                         if (dtype != SignatureEnumDType::kDTypeEmptyDefaultValue) {
-                           has_sig_dtype = true;
-                         }
-                         return dtype;
-                       });
-  return has_sig_dtype;
-}
-
-void CastOperation::GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
-                                 mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) const {
-  MS_EXCEPTION_IF_NULL(type_indexes);
-  for (size_t i = 0; i < dtypes.size(); ++i) {
-    auto it = type_indexes->find(dtypes[i]);
-    if (it == type_indexes->end()) {
-      (void)type_indexes->emplace(std::make_pair(dtypes[i], std::vector<size_t>{i}));
-    } else {
-      (void)it->second.emplace_back(i);
-    }
-  }
-}
-
-PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
-  const auto &iter = type_prim_cache_.find(type_id);
-  if (iter != type_prim_cache_.end()) {
-    return iter->second;
-  }
-
-#ifndef ENABLE_TEST
-  auto cast_prim = std::make_shared<Primitive>(kCastOpName);
-  std::vector<std::string> input_names = {"x", "dst_type"};
-  std::vector<std::string> output_names = {"output"};
-  cast_prim->AddAttr("input_names", MakeValue(input_names));
-  cast_prim->AddAttr("output_names", MakeValue(output_names));
-  type_prim_cache_[type_id] = cast_prim;
-  cast_prim->EnableSharedMutex();
-  return cast_prim;
-#else
-  py::gil_scoped_acquire gil;
-  const auto &cast_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "cast");
-  auto prim_adapter = cast_prim.cast<PrimitivePyAdapterPtr>();
-  MS_EXCEPTION_IF_NULL(prim_adapter);
-  auto primitive = prim_adapter->attached_primitive();
-  if (primitive == nullptr) {
-    primitive = std::make_shared<PrimitivePy>(cast_prim);
-    prim_adapter->set_attached_primitive(primitive);
-  }
-  if (!primitive->HasPyObj()) {
-    MS_LOG(EXCEPTION) << "Pyobj is empty";
-  }
-  type_prim_cache_[type_id] = primitive;
-  primitive->EnableSharedMutex();
-  return primitive;
-#endif
-}
-
 ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v,
                                      const TypeId &type_id) const {
   MS_EXCEPTION_IF_NULL(v);
@@ -327,7 +191,7 @@ ValuePtr CastOperation::DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, 
     cast_run_info->op_grad_info->op_prim, cast_run_info->base_op_run_info.op_name,
     cast_run_info->base_op_run_info.device_target, false, &cast_run_info->input_to_attr);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
-  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstType(type_id));
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstTypeValue(type_id));
   cast_run_info->input_size = input_size;
   PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
@@ -348,6 +212,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   MS_EXCEPTION_IF_NULL(op_run_info);
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
+  auto cast_prim = GetPrimByTypeId(type_id);
   cast_run_info->requires_grad = op_run_info->requires_grad;
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
@@ -356,27 +221,18 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
   cast_run_info->base_op_run_info.device_target =
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(
-      cast_run_info->op_grad_info->op_prim);
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   bool is_dynamic_shape =
     cast_run_info->base_op_run_info.has_dynamic_output || cast_run_info->base_op_run_info.use_dynamic_shape_process;
-  PyNativeAlgo::Common::GetConstInputToAttr(
-    cast_run_info->op_grad_info->op_prim, cast_run_info->base_op_run_info.op_name,
-    cast_run_info->base_op_run_info.device_target, is_dynamic_shape, &cast_run_info->input_to_attr);
+  PyNativeAlgo::Common::GetConstInputToAttr(cast_prim, cast_run_info->base_op_run_info.op_name,
+                                            cast_run_info->base_op_run_info.device_target, is_dynamic_shape,
+                                            &cast_run_info->input_to_attr);
   (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
-  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstType(type_id));
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstTypeValue(type_id));
   cast_run_info->input_size = input_size;
-
-  // Use pyboost op call
-  if (is_py_boost_cast_) {
-    auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
-    cast_op->set_primitive(GetPrimByTypeId(type_id));
-    RunCastOpByPyboost(cast_op, cast_run_info);
-  } else {
-    cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
-    PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
-  }
+  cast_run_info->op_grad_info->op_prim = cast_prim;
+  PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
   return cast_run_info->real_out;
 }
 

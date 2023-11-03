@@ -117,11 +117,24 @@ struct DataConvert {
 struct PyBoost {
   static FrontendOpRunInfoPtr Init(const py::args &args);
   static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
-  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outpus);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
-  static void SetCastForInputs(std::vector<ValuePtr> &&inputs, const FrontendOpRunInfoPtr &op_run_info);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
+
+  template <typename... T>
+  static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
+    MS_EXCEPTION_IF_NULL(op_run_info);
+    // For auto grad use
+    op_run_info->op_grad_info->input_value = {t...};
+    op_run_info->input_size = sizeof...(t);
+    if (op_run_info->base_op_run_info.op_name == kCast) {
+      return std::make_tuple(t...);
+    }
+    const auto &pyboost_cast_operation = Common::GetPyNativeExecutor()->forward_executor()->pyboost_cast_operation();
+    const auto &ret = pyboost_cast_operation->DoMixPrecisionCast(op_run_info, t...);
+    return pyboost_cast_operation->DoImplicitCast(op_run_info, ret);
+  }
 };
 
 // Some common functions used in both jit and PackFunc grad

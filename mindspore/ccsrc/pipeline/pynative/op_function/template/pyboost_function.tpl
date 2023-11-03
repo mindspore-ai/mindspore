@@ -21,13 +21,13 @@ py::object ${func_name}(const py::args &args) {
       op->set_primitive(op_run_info->op_grad_info->op_prim);
 
       // Do mixed precision and implicit cast
-      PyNativeAlgo::PyBoost::SetCastForInputs({${call_args}}, op_run_info);
+      auto [${real_inputs}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs(op_run_info, ${call_args});
 
       // Run op
-      (void)op->Call(${call_args});
+      (void)op->Call(${real_inputs});
 
       // Update op and op_run_info by op outputs
-      PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${call_args}}, op_run_info);
+      PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${real_inputs}}, op_run_info);
 
       // Do auto grad
       if (op_run_info->requires_grad) {

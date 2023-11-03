@@ -20,8 +20,9 @@ from mindspore.ops.composite import GradOperation
 from mindspore.ops import split
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
-    cast, add, sub, softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
+    cast, add, sub, softmax, sqrt, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
     maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm
+from mindspore.ops.auto_generate.gen_pyboost_func import pow as pyboost_pow
 import mindspore
 
 
@@ -385,7 +386,7 @@ def test_pow_ascend():
     context.set_context(device_target="Ascend")
     input_x1 = Tensor(np.array([1, 2]).astype(np.float32))
     input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
-    output = pow(input_x1, input_x2)
+    output = pyboost_pow(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [1, 8])
 
 
@@ -582,3 +583,16 @@ def test_layer_norm_ascend():
     assert np.allclose(output[0].asnumpy(), [[[-0.999979973, 0.999979973], [-0.999979973, 0.999979973]]])
     assert np.allclose(output[1].asnumpy(), [[[1.5], [3.5]]])
     assert np.allclose(output[2].asnumpy(), [[[1.99995995], [1.99995995]]])
+
+
+def test_implicit_cast_ascend():
+    """
+    Feature: test implicit cast operator
+    Description: test implicit cast run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    x = Tensor(np.array([2]))
+    y = Tensor(np.array([3]), mindspore.float32)
+    out = add(x, y)
+    assert np.allclose(out.asnumpy(), np.array([5], np.float32))

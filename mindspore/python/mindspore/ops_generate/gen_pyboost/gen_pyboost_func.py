@@ -80,8 +80,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
 
     malloc_inputs = ''
     for item in need_malloc_tensors:
-        malloc_inputs += 'runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context_, {}, "{}");\n'.format(
-            item, item)
+        malloc_inputs += f'runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context_, {item}, "{item}");\n'
 
     # launch mode: cube or not
     # call_impl
@@ -167,7 +166,7 @@ def generate_pyboost_op_return_code(op_proto):
         returns_type.append(get_return_type(return_obj.arg_dtype))
     if len(returns_type) == 1:
         cpp_func_return = returns_type[0]
-    elif len(returns_type) == 0:
+    elif not returns_type:
         raise Exception("No return")
     else:
         cpp_func_return = "std::tuple("
@@ -279,6 +278,7 @@ def generate_pyboost_functions(work_path, yaml_data):
         convert_to_tensor_list_template = CppTemplate(
             "auto ${arg_name}_tensor_list = PyNativeAlgo::Common::StubNodeToValueTuple(${arg_name});\n")
         call_args_str = []
+        real_inputs_str = []
         convert_stub_str = ''
         for op_arg in op_proto.op_args:
             call_arg = ''
@@ -291,11 +291,13 @@ def generate_pyboost_functions(work_path, yaml_data):
             else:
                 call_arg = op_arg.arg_name
             call_args_str.append(call_arg)
+            real_inputs_str.append("real_" + call_arg)
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                        op_def_name=op_def_name_str,
                                                                        parser_body=parser_body_str, op_name=op_name_str,
                                                                        convert_stub=convert_stub_str,
                                                                        call_args=call_args_str,
+                                                                       real_inputs=real_inputs_str,
                                                                        op_args=op_args_str)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(

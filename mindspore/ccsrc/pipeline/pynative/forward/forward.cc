@@ -758,7 +758,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   // Convert StubNode to Tensor and no need to concern about input StubNode anymore in this thread.
   PyNativeAlgo::Common::StubNodeToValue(op_run_info);
   // 1.Set cast for inputs
-  SetCastForInputs(op_run_info, false);
+  SetCastForInputs(op_run_info);
 
 #ifndef ENABLE_TEST
   auto strides_calc_info =
@@ -904,13 +904,12 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   return op_run_info;
 }
 
-void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info, bool is_py_boost_cast) const {
+void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   // No need cast self
   if (op_run_info->base_op_run_info.op_name == prim::kPrimCast->name()) {
     return;
   }
-  cast_operation()->set_is_py_boost_cast(is_py_boost_cast);
   cast_operation()->DoCast(op_run_info);
 }
 

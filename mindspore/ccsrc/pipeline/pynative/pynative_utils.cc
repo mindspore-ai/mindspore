@@ -1129,9 +1129,9 @@ FrontendOpRunInfoPtr PyBoost::Init(const py::args &args) {
   return op_run_info;
 }
 
-void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outpus) {
+void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
   std::vector<ValuePtr> output_values;
-  for (auto &output_tensor : outpus) {
+  for (auto &output_tensor : outputs) {
     MS_EXCEPTION_IF_NULL(output_tensor);
     if (op_run_info->requires_grad) {
       output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
@@ -1164,16 +1164,6 @@ void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const Ab
   MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
 
   op_run_info->stub_output->SetValue(op_run_info->real_out);
-}
-
-void PyBoost::SetCastForInputs(std::vector<ValuePtr> &&inputs, const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->input_size = inputs.size();
-  op_run_info->op_grad_info->input_value = std::move(inputs);
-
-  const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
-  const auto &forward = pynative_executor->forward_executor();
-  forward->SetCastForInputs(op_run_info, true);
 }
 
 void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
