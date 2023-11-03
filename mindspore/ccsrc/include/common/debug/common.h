@@ -19,6 +19,7 @@
 
 #include <string>
 #include <optional>
+#include <set>
 #include "include/common/visible.h"
 #include "include/common/utils/contract.h"
 #include "utils/ms_context.h"
@@ -57,6 +58,8 @@ class COMMON_EXPORT Common {
   static bool GetDebugTerminate();
   static bool GetDebugExitSuccess();
   static void DebugTerminate(bool val, bool exit_success);
+  static bool CheckInterval();
+  static bool CheckIfPrintIrPass(const std::string &pass_name);
 
   // Get time stamp since epoch in microseconds
   static uint64_t GetTimeStamp();
@@ -66,6 +69,7 @@ class COMMON_EXPORT Common {
 
   inline static bool debugger_terminate_ = false;
   inline static bool exit_success_ = false;
+  inline static size_t g_id_ = 0;
 };
 
 inline std::string GetSaveGraphsPathName(const std::string &file_name, const std::string &save_path = "") {

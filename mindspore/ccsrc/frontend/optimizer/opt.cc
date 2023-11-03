@@ -302,7 +302,9 @@ bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, con
       changes = changes || change;
       loop = loop || change;
 #ifdef ENABLE_DUMP_IR
-      static const auto enable_dump_pass_ir = GetDumpConfig().enable_dump_pass_ir;
+      static const auto enable_dump_pass = GetDumpConfig().enable_dump_pass_ir;
+      static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+      auto enable_dump_pass_ir = (input_name.size() != 0) || enable_dump_pass;
       auto context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context);
       if ((enable_dump_pass_ir && context->CanDump(kIntroductory)) || context->CanDump(kFully)) {
