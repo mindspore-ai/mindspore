@@ -915,7 +915,6 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
                                            size_t index, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(value_seq);
-  ValuePtrList fake_tensor_list;
   if (op_run_info->requires_grad) {
     op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kOpOutput;
   }
@@ -934,17 +933,11 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
       if (Common::IsParam(grad_type)) {
         op_run_info->op_grad_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
-      MS_EXCEPTION_IF_NULL(top_cell);
-      if (!top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-        (void)fake_tensor_list.emplace_back(Common::CreateFakeTensorWithoutDeviceAddress(tensor));
-      }
     }
     (void)op_run_info->base_op_run_info.input_tensor.emplace_back(tensor);
     (void)op_run_info->base_op_run_info.input_mask.emplace_back(tensor_mask);
   }
-  if (op_run_info->requires_grad && !top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-    op_run_info->op_grad_info->input_value[index] = std::make_shared<ValueTuple>(fake_tensor_list);
-  }
+
   if (!op_run_info->base_op_run_info.dyn_input_sizes.empty()) {
     int64_t elem_size = SizeToLong(value_seq->size());
     if (op_run_info->base_op_run_info.dyn_input_sizes.size() != op_run_info->input_size) {
@@ -1075,9 +1068,6 @@ void DataConvert::ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, 
     }
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(tensor_ptr, top_cell);
-      if (!top_cell->is_high_order_top_cell() && op_run_info->input_unused_in_bprop[index]) {
-        op_run_info->op_grad_info->input_value[index] = Common::CreateFakeTensorWithoutDeviceAddress(tensor_ptr);
-      }
     }
   } else if (v->isa<FloatImm>()) {
     double input_value = v->cast<FP32ImmPtr>()->value();
