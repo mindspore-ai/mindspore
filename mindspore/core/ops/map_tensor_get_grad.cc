@@ -50,13 +50,11 @@ AbstractBasePtr MapTensorGetGradInferInner(const PrimitivePtr &primitive,
 }
 
 BaseShapePtr MapTensorGetGradInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto abs = MapTensorGetGradInferInner(prim, input_args);
-  return abs->GetShape();
+  return input_args[kIndex0]->GetShape()->Clone();
 }
 
 TypePtr MapTensorGetGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto abs = MapTensorGetGradInferInner(prim, input_args);
-  return abs->GetType();
+  return input_args[kIndex0]->GetType()->Clone();
 }
 
 AbstractBasePtr MapTensorGetGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

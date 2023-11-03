@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "ops/ops_func_impl/rank.h"
 #include <vector>
 #include "ops/op_name.h"
 #include "ops/ops_frontend_func_impl.h"
-#include "ops/ops_func_impl/rank.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 BaseShapePtr RankFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -33,8 +34,13 @@ TypePtr RankFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
 class RankFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto input_shape_vec = input_args[kInputIndex0]->GetShape()->GetShapeVector();
-    if (IsDynamic(input_shape_vec)) {
+    auto x_abs = input_args[kIndex0];
+    if (!CheckAndConvertUtils::IsTensor(x_abs)) {
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                              << "', input must be a Tensor, but got: " << x_abs->ToString() << ".";
+    }
+    auto input_shape_vec = x_abs->GetShape()->GetShapeVector();
+    if (IsDynamicRank(input_shape_vec)) {
       return kValueAny;
     }
     auto x_shape_rank = SizeToLong(input_shape_vec.size());
