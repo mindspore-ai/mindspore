@@ -1118,6 +1118,41 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return Tensor_.storage_offset(self)
 
+    def stride(self, dim=None):
+        """
+        The stride to jump from one element to the next in the input dim.
+        When no parameters are passed in, a list of stride for all dimensions is returned.
+        Args:
+            dim (Int): The dim of stride from one element to the next.
+        Returns:
+            Int, the stride of tensor.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> x = ms.Tensor([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], dtype=ms.float32)
+            >>> ret = x.stride()
+            [5, 1]
+        """
+        stride = Tensor_.stride(self)
+        if dim is None:
+            return stride
+        return stride[dim]
+
+    def storage_offset(self):
+        """
+        Tensor's offset in the underlying storage in terms of the number of storage elements.
+
+        Returns:
+            Int, tensor's offset in the underlying storage in terms of number of storage elements.
+
+        Examples:
+            >>> import mindspore as ms
+            >>> x = ms.Tensor([1, 2, 3, 4, 5], dtype=ms.float32)
+            >>> ret = x.storage_offset()
+            0
+        """
+        return Tensor_.storage_offset(self)
+
     def flush_from_cache(self):
         """
         Flush cache data to host if tensor is cache enable.
