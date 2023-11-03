@@ -46,17 +46,6 @@ std::string CTypeToPythonType(const OP_DTYPE &type) {
   }
   return convert_map[type];
 }
-OP_DTYPE ListToTuple(const OP_DTYPE &type) {
-  static std::unordered_map<OP_DTYPE, OP_DTYPE> convert_map = {
-    {OP_DTYPE::DT_LIST_BOOL, OP_DTYPE::DT_TUPLE_BOOL},     {OP_DTYPE::DT_LIST_INT, OP_DTYPE::DT_TUPLE_INT},
-    {OP_DTYPE::DT_LIST_FLOAT, OP_DTYPE::DT_TUPLE_FLOAT},   {OP_DTYPE::DT_LIST_NUMBER, OP_DTYPE::DT_TUPLE_NUMBER},
-    {OP_DTYPE::DT_LIST_TENSOR, OP_DTYPE::DT_TUPLE_TENSOR}, {OP_DTYPE::DT_LIST_STR, OP_DTYPE::DT_TUPLE_STR},
-    {OP_DTYPE::DT_LIST_ANY, OP_DTYPE::DT_TUPLE_ANY}};
-  if (convert_map.find(type) == convert_map.end()) {
-    return type;
-  }
-  return convert_map[type];
-}
 
 ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpArg &op_arg) {
   for (auto &cast_dtype : op_arg.cast_dtype_) {
@@ -131,12 +120,7 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Parser::Parser(const ops::OpDef &op_def) {
-  op_def_ = op_def;
-  for (auto &op_arg : op_def_.args_) {
-    op_arg.arg_dtype_ = ListToTuple(op_arg.arg_dtype_);
-  }
-}
+Parser::Parser(const ops::OpDef &op_def) { op_def_ = op_def; }
 
 void Parser::Parse(py::list python_args) {
   python_args_ = &python_args;

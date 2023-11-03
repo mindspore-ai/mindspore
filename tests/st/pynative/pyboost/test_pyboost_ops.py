@@ -17,7 +17,7 @@ import numpy as np
 from mindspore import Tensor, context
 from mindspore import nn
 from mindspore.ops.composite import GradOperation
-from mindspore.ops import split
+from mindspore.ops import split, interpolate
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax, sqrt, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
@@ -650,3 +650,18 @@ def test_cat_ascend():
     input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
     output = cat((input_x1, input_x2), 0)
     assert np.allclose(output.asnumpy(), [0, 1, 2, 3])
+
+
+def test_interpolate_ascend():
+    """
+    Feature: test interpolate operator
+    Description: test interpolate run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+
+    np.random.seed(1)
+    x = Tensor(np.ones(shape=[1, 3, 3]), mindspore.float32)
+    expect_out = Tensor(np.ones(shape=[1, 3, 5]), mindspore.float32)
+    pyboost_out = interpolate(x, size=(5, ), mode='nearest')
+    assert np.allclose(pyboost_out.asnumpy(), expect_out.asnumpy(), 0.0001, 0.0001)

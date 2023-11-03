@@ -1,0 +1,17 @@
+#operator upsample_nearest1d
+upsample_nearest1d:
+  args:
+    input:
+      dtype: tensor
+    output_size:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    scale_factors:
+      dtype: tuple[float]
+      type_cast: float, list[float]
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: UpsampleNearest1d
+  pyboost: True

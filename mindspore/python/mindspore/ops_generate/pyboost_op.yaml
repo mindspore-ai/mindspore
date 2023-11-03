@@ -83,6 +83,14 @@ Transpose:
   Ascend:
     mode: view
 
+UpsampleNearest1d:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: customize
+
 View:
   CPU:
     mode: view

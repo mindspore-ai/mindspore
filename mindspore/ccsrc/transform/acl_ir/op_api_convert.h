@@ -282,13 +282,25 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   if (aclCreateTensor == nullptr) {
     return nullptr;
   }
-
+  auto shape = tensor->shape();
+  const auto shape_size = shape.size();
+  aclFormat format = ACL_FORMAT_ND;
+  switch (shape_size) {
+    case 3:
+      format = ACL_FORMAT_NCL;
+      break;
+    case 4:
+      format = ACL_FORMAT_NCHW;
+      break;
+    case 5:
+      format = ACL_FORMAT_NCDHW;
+      break;
+    default:
+      format = ACL_FORMAT_ND;
+  }
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   auto [view_shape, strides, offset, ori_dev_shape] = GetViewShapeAndStride(tensor, device_address);
-  const auto &tensor_format = device_address->format();
-  aclFormat format = AclConverter::ConvertFormat(tensor_format);
-
   auto acl_tensor = aclCreateTensor(view_shape.data(), view_shape.size(), acl_data_type, strides.data(), offset, format,
                                     ori_dev_shape.data(), ori_dev_shape.size(), device_address->GetMutablePtr());
   return acl_tensor;
