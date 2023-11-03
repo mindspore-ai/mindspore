@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ops/op_utils.h"
+
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -35,7 +37,6 @@
 #include "mindapi/base/type_id.h"
 #include "mindapi/src/helper.h"
 #include "ops/op_name.h"
-#include "ops/op_utils.h"
 #include "ops/op_def.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -931,6 +932,15 @@ size_t GetInputIndexByName(const std::string &op_name, const std::string &input_
   }
   MS_LOG(INFO) << "Not Find " << input_name << "in OP " << op_name;
   return SIZE_MAX;
+}
+
+size_t GetOpInputsNum(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return SIZE_MAX;
+  }
+  return op_def->indexes_.size();
 }
 
 template <typename T>

@@ -35,6 +35,11 @@ const char *GetOpPythonPath(const char *op_name);
 
 // Init python operator Instance
 ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
+std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const std::string &instance_name,
+                                            const AnfNodePtrList &inputs, const OperatorAttrs &attrs);
+CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const OperatorName &op_name,
+                                    const std::string &instance_name, const AnfNodePtrList &inputs,
+                                    const OperatorAttrs &attrs);
 
 AnfNodePtr CreateTypeInt(int64_t nbits);
 AnfNodePtr CreateTypeFloat(int64_t nbits);

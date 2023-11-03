@@ -20,9 +20,11 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
+#include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "base/base.h"
@@ -35,6 +37,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "utils/log_adapter.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -396,6 +399,48 @@ AnfNodePtr CreateTensorTupleAnfNodePtr(const tensor::TensorPtrList &tensor_tuple
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype);
 Operator CreateDivOpWithType(float divisor, const TypePtr &dtype);
 std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value);
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  return ops::GetScalarValue<T>(input_value[idx]);
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                          const std::string &attr_name) {
+  auto idx = ops::GetInputIndexByName(op_name, attr_name);
+  return GetScalarValueFromInputs<T>(input_value, idx);
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
+  if (idx == SIZE_MAX) {
+    MS_EXCEPTION(ValueError) << "Index is the size max, target value maybe wrong!";
+  }
+
+  if (input_value.size() <= idx || input_value[idx] == nullptr) {
+    return std::nullopt;
+  }
+  auto array_opt = ops::GetArrayValue<T>(input_value[idx]);
+  if (!array_opt.has_value() || array_opt.value().HasUnknownValue()) {
+    return std::nullopt;
+  }
+  return array_opt.value().ToVector();
+}
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value,
+                                                      const std::string &op_name, const std::string &attr_name) {
+  auto idx = ops::GetInputIndexByName(op_name, attr_name);
+  return GetArrayValueFromInputs<T>(input_value, idx);
+}
 }  // namespace parallel
 }  // namespace mindspore
 

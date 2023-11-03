@@ -272,6 +272,7 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
 bool IsValueKnown(const ValuePtr &value);
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
+MS_CORE_API size_t GetOpInputsNum(const std::string &op_name);
 MS_CORE_API std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";

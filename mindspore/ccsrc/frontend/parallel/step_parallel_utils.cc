@@ -26,6 +26,7 @@
 #include <string>
 #include <utility>
 
+#include "base/base.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/device_manager.h"
@@ -597,22 +598,18 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
-  ValuePtr pyop_instance = CreateOpInstance(arg_replace_op.first, replace_op.first, instance_name);
-  if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreateOpInstance failed";
-  }
   OperatorParams params = arg_replace_op.second;
   if (node->inputs().size() < 2) {
     // GetNext operator dose not has input
     if (node->inputs().size() == 1) {
-      return {NewValueNode(pyop_instance)};
+      return ConvertToRealInputs(replace_op.first, instance_name, AnfNodePtrList{}, arg_replace_op.first);
     }
     MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
   }
-  std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
+  std::vector<AnfNodePtr> replace_input = {node->input(1)};
 
   if (replace_op.first == EMBEDDING_LOOKUP) {
-    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
+    replace_input = {node->input(1), node->input(2)};
   }
 
   if (!params.empty()) {
@@ -627,13 +624,15 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
         MS_LOG(EXCEPTION) << "Failure:val is nullptr";
       }
       int64_t position = param.second;
-      (void)replace_input.insert(replace_input.cbegin() + position, val);
+      (void)replace_input.insert(replace_input.cbegin() + position - 1, val);
     }
   } else if (replace_op.first == SYNC_BATCH_NORM) {
     for (size_t i = 2; i < node->inputs().size(); ++i) {
       replace_input.push_back(node->input(i));
     }
   }
+
+  replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
   SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
 }

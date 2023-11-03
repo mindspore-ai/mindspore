@@ -94,20 +94,20 @@ static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_in
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name) {
   MS_EXCEPTION_IF_NULL(node);
   OperatorArgs arg_forward = op.second;
-  ValuePtr pyop_instance = CreateOpInstance(arg_forward.first, op.first, instance_name);
-  MS_EXCEPTION_IF_NULL(pyop_instance);
   OperatorParams params = arg_forward.second;
 
-  std::vector<AnfNodePtr> new_node_input = {NewValueNode(pyop_instance), node};
+  std::vector<AnfNodePtr> new_node_input = {node};
   if (!params.empty()) {
     for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
       val->set_abstract(param.first.second->ToAbstract());
       int64_t position = param.second;
-      (void)new_node_input.insert(new_node_input.cbegin() + position, val);
+      (void)new_node_input.insert(new_node_input.cbegin() + position - 1, val);
     }
   }
+
+  new_node_input = ConvertToRealInputs(op.first, instance_name, new_node_input, arg_forward.first);
 
   // if the op have 'group' attr, set the rank list name for the op
   SetCommunicationOpGroupLabel(new_node_input);
@@ -152,18 +152,16 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
     }
   }
 
-  ValuePtr pyop_instance = CreateOpInstance(arg_forward.first, op_name, instance_name);
-  MS_EXCEPTION_IF_NULL(pyop_instance);
   OperatorParams params = arg_forward.second;
 
   std::vector<AnfNodePtr> new_node_input;
   if (op_name == MIRROR_MINI_STEP_OPERATOR || op_name == MINI_STEP_ALL_GATHER ||
       op_name == MIRROR_MICRO_STEP_OPERATOR || op_name == MICRO_STEP_ALL_GATHER) {
     MS_EXCEPTION_IF_NULL(grad_accu);
-    new_node_input = {NewValueNode(pyop_instance), node, grad_accu};
+    new_node_input = {node, grad_accu};
     MS_LOG(INFO) << "Insert the grad accumulation node as the mirror op's input";
   } else {
-    new_node_input = {NewValueNode(pyop_instance), node};
+    new_node_input = {node};
   }
 
   if (!params.empty()) {
@@ -171,10 +169,11 @@ static std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
       int64_t position = param.second;
-      (void)new_node_input.insert(new_node_input.cbegin() + position, val);
+      (void)new_node_input.insert(new_node_input.cbegin() + position - 1, val);
     }
   }
 
+  new_node_input = ConvertToRealInputs(op_name, instance_name, new_node_input, arg_forward.first);
   // if the op have 'group' attr, set the rank list name for the op
   SetCommunicationOpGroupLabel(new_node_input);
   return new_node_input;

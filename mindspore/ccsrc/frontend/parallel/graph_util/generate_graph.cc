@@ -24,7 +24,14 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "ir/anf.h"
+#include "ir/value.h"
 #include "mindspore/ccsrc/pipeline/jit/ps/parse/parse_base.h"
+#include "utils/log_adapter.h"
+#include "utils/anf_utils.h"
+#include "ir/primitive.h"
+#include "ops/op_utils.h"
+#include "ops/op_def.h"
 
 using mindspore::tensor::Tensor;
 
@@ -68,6 +75,42 @@ ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_nam
     return nullptr;
   }
   return op_instance;
+}
+
+std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const std::string &instance_name,
+                                            const AnfNodePtrList &inputs, const OperatorAttrs &attrs) {
+  auto prim = std::make_shared<Primitive>(op_name);
+  MS_EXCEPTION_IF_NULL(prim);
+  prim->set_instance_name(instance_name);
+
+  auto new_defined = (mindspore::ops::GetOpDef(op_name) == nullptr);
+
+  // The AllGather attrs contains group_name and group_ranks, pop group_ranks.
+  size_t attrs_num = (op_name == "AllGather" && attrs.size() == kSizeTwo) ? kSizeOne : attrs.size();
+  AnfNodePtrList real_inputs;
+  real_inputs.reserve(1 + inputs.size() + (new_defined ? attrs_num : 0));  // 1 for primitive value node.
+  real_inputs.push_back(NewValueNode(prim));
+  real_inputs.insert(real_inputs.end(), inputs.begin(), inputs.end());
+
+  for (size_t i = 0; i < attrs_num; ++i) {
+    auto [attr_name, attr_value] = attrs[i];
+    if (new_defined) {
+      real_inputs.push_back(NewValueNode(attr_value));
+    } else {
+      prim->AddAttr(attr_name, attr_value);
+    }
+  }
+
+  return real_inputs;
+}
+
+CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const OperatorName &op_name,
+                                    const std::string &instance_name, const AnfNodePtrList &inputs,
+                                    const OperatorAttrs &attrs) {
+  auto real_inputs = ConvertToRealInputs(op_name, instance_name, inputs, attrs);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto cnode = func_graph->NewCNode(real_inputs);
+  return cnode;
 }
 
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
