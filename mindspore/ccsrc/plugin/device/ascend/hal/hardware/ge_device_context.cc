@@ -141,6 +141,13 @@ void GeDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
+
+  // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
+  int32_t is_heterogenous = 0;
+  (void)rtGetIsHeterogenous(&is_heterogenous);
+  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
+  InitGe(ms_context);
+
   if (IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
     GetKernelExecutor(false)->Initialize();
@@ -151,11 +158,6 @@ void GeDeviceContext::Initialize() {
     GetKernelExecutor(true)->Initialize();
   }
 
-  // set MS_CTX_ENABLE_GE_HETEROGENOUS true according to  heterogeneous mode
-  int32_t is_heterogenous = 0;
-  (void)rtGetIsHeterogenous(&is_heterogenous);
-  ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
-  InitGe(ms_context);
   InitDump();
   if (ms_context->EnableAoeOnline()) {
     transform::InitializeAoeUtil();
@@ -308,11 +310,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
-
-  (*ge_options)["ge.exec.formatMode"] = "0";
-  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
-    (*ge_options)["ge.exec.formatMode"] = "1";
-  }
 
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
