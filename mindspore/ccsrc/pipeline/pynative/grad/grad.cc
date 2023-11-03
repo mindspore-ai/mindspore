@@ -310,20 +310,37 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
   }
 }
 
+void FreeUselessValue(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  MS_EXCEPTION_IF_NULL(top_cell);
+  if (top_cell->is_high_order_top_cell()) {
+    return;
+  }
+
+  // Free bprop not used input
+  for (size_t i = 0; i < op_run_info->input_size; i++) {
+    if (!op_run_info->input_unused_in_bprop[i]) {
+      continue;
+    }
+    op_run_info->op_grad_info->input_value[i] =
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->input_value[i]);
+  }
+
+  // Free bprop not used output
+  if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
+    // Process output
+    op_run_info->op_grad_info->out_value =
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
+  }
+  // Free special op memory
+  FreeSpecialOpValue(op_run_info->op_grad_info->op_prim->name(), op_run_info, &op_run_info->op_grad_info->out_value);
+}
+
 GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   bool out_used_in_bporp_graph = true;
   op_run_info->op_grad_info->out_value = op_run_info->real_out;
-  // Free bprop not used output
-  if (!top_cell->is_high_order_top_cell()) {
-    if (op_run_info->input_unused_in_bprop[op_run_info->input_size]) {
-      // Process output
-      op_run_info->op_grad_info->out_value =
-        PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
-    }
-    // Free special op memory
-    FreeSpecialOpValue(op_run_info->op_grad_info->op_prim->name(), op_run_info, &op_run_info->op_grad_info->out_value);
-  }
+  FreeUselessValue(op_run_info, top_cell);
 
   op_run_info->op_grad_info->out_abs = op_run_info->base_op_run_info.abstract;
   auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
