@@ -48,7 +48,7 @@ AbstractBasePtr MakeSequenceZeros(const abstract::AbstractSequencePtr &seq_abs) 
                                seq_element->GetType(), seq_element->GetShape()->cast<abstract::ShapePtr>()->shape())
                                ->ToAbstract());
     } else if (seq_element->isa<abstract::AbstractScalar>()) {
-      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue(0), seq_element->GetType()));
+      (void)abs.emplace_back(std::make_shared<abstract::AbstractScalar>(MakeValue<int64_t>(0), seq_element->GetType()));
     } else if (seq_element->isa<abstract::AbstractTuple>() || seq_element->isa<abstract::AbstractList>()) {
       (void)abs.emplace_back(MakeSequenceZeros(seq_element->cast<abstract::AbstractSequencePtr>()));
     } else {

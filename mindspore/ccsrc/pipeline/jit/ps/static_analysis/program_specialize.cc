@@ -142,9 +142,9 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
       constexpr int recursive_level = 2;
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << cnode->DebugString(recursive_level);
       // Change the node.
-      auto zero_value = NewValueNode(MakeValue(0));
+      auto zero_value = NewValueNode(MakeValue<int64_t>(0));
       zero_value->set_abstract(
-        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0), std::make_shared<Problem>()));
+        std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0), std::make_shared<Problem>()));
       cnode->set_input(pos + 1, zero_value);
 
       // Change the abstract.
@@ -171,7 +171,7 @@ void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
 
       MS_LOG(DEBUG) << "Erase elements[" << pos << "] DeadNode as zero for " << node->DebugString();
       // Change the node.
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       auto value_list = const_cast<ValuePtrList &>(sequence_value->value());
       value_list[pos] = zero;
 
@@ -783,7 +783,7 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -864,7 +864,7 @@ void PurifyNamedTupleValueNode(const CNodePtr &cnode, size_t index, ProgramSpeci
       (void)dead_node_positions.emplace_back(i);
     }
     if (!(*flags)[i]) {
-      auto zero = MakeValue(0);
+      auto zero = MakeValue<int64_t>(0);
       (void)elements.emplace_back(zero);
       (void)elements_abs.emplace_back(zero->ToAbstract());
       MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << old_input->DebugString() << ", which is inputs["
@@ -944,8 +944,8 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
       for (size_t i = 0; i < (*flags).size(); ++i) {
         auto old_input = cnode->input(i + 1);
         if (!(*flags)[i]) {
-          auto zero_value = NewValueNode(MakeValue(0));
-          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+          auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+          zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
           (void)inputs.emplace_back(zero_value);
           constexpr int recursive_level = 2;
           MS_LOG(DEBUG) << "Erase elements[" << i << "] as zero for " << cnode->DebugString(recursive_level);

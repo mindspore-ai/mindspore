@@ -102,7 +102,7 @@ void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
 
   if (input_num_err) {
     std::stringstream ss;
-    size_t i = 1;
+    size_t i = 0;
     ss << "Inputs are as follows: \n";
     for (const auto &input : inputs) {
       ss << "Input[" << i++ << "]: " << input->DebugString() << "\n";

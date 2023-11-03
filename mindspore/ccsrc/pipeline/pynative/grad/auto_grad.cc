@@ -1097,7 +1097,7 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
       (void)input_value.emplace_back(v);
     } else {
       // Make Fake value
-      auto v = MakeValue(0);
+      auto v = MakeValue<int64_t>(0);
       (void)cnode_inputs->emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(v, input_node->abstract()));
       (void)input_value.emplace_back(v);
       MS_LOG(DEBUG) << "Get input node " << input_node->DebugString();
