@@ -42,14 +42,12 @@ constexpr size_t kGradIndex = 9;
 constexpr size_t kIndicesIndex = 10;
 constexpr size_t kFusedSparseLazyAdamInputNum = 11;
 
-abstract::TupleShapePtr FusedSparseLazyAdamInferShape(const PrimitivePtr &primitive,
-                                                      const std::vector<AbstractBasePtr> &input_args) {
-  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+abstract::TupleShapePtr FusedSparseLazyAdamInferShapeCommon(const PrimitivePtr &primitive,
+                                                            const std::vector<AbstractBasePtr> &input_args,
+                                                            const abstract::BaseShapePtr &var_shape_r,
+                                                            const abstract::BaseShapePtr &m_shape_r,
+                                                            const abstract::BaseShapePtr &v_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
-  auto m_shape_r = input_args[kMIndex]->Broaden()->GetShape();
-  auto v_shape_r = input_args[kVIndex]->Broaden()->GetShape();
   auto outputs =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({var_shape_r, m_shape_r, v_shape_r}));
   for (auto &input : input_args) {
@@ -79,6 +77,26 @@ abstract::TupleShapePtr FusedSparseLazyAdamInferShape(const PrimitivePtr &primit
     }
   }
   return outputs;
+}
+
+abstract::TupleShapePtr FusedSparseLazyAdamInferShapeIner(const PrimitivePtr &primitive,
+                                                          const std::vector<AbstractBasePtr> &input_args) {
+  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto m_shape_r = input_args[kMIndex]->Broaden()->GetShape();
+  auto v_shape_r = input_args[kVIndex]->Broaden()->GetShape();
+  return FusedSparseLazyAdamInferShapeCommon(primitive, input_args, var_shape_r, m_shape_r, v_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseLazyAdamInferShape(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  // "var","m","v","beta1_power","beta2_power","lr","beta1","beta2","epsilon","grad","indices"
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto m_shape_r = input_args[kMIndex]->GetShape();
+  auto v_shape_r = input_args[kVIndex]->GetShape();
+  return FusedSparseLazyAdamInferShapeCommon(primitive, input_args, var_shape_r, m_shape_r, v_shape_r);
 }
 
 TypePtr FusedSparseLazyAdamInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -141,7 +159,7 @@ AbstractBasePtr FusedSparseLazyAdamInfer(const abstract::AnalysisEnginePtr &, co
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                            SizeToLong(fused_sparse_lazy_adam::kFusedSparseLazyAdamInputNum), op_name);
   auto types = fused_sparse_lazy_adam::FusedSparseLazyAdamInferType(primitive, input_args);
-  auto shapes = fused_sparse_lazy_adam::FusedSparseLazyAdamInferShape(primitive, input_args);
+  auto shapes = fused_sparse_lazy_adam::FusedSparseLazyAdamInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

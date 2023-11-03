@@ -55,12 +55,11 @@ constexpr size_t kGradIndex = 5;
 constexpr size_t kIndicesIndex = 6;
 constexpr size_t kFusedSparseProximalAdagradInputNum = 7;
 
-abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr &primitive,
-                                                             const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShapeCommon(const PrimitivePtr &primitive,
+                                                                   const std::vector<AbstractBasePtr> &input_args,
+                                                                   const abstract::BaseShapePtr &var_shape_r,
+                                                                   const abstract::BaseShapePtr &accum_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
   auto outputs =
     std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r}));
   for (auto &input : input_args) {
@@ -89,6 +88,22 @@ abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr 
                                            prim_name);
   }
   return outputs;
+}
+
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShapeIner(const PrimitivePtr &primitive,
+                                                                 const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
+  return FusedSparseProximalAdagradInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseProximalAdagradInferShape(const PrimitivePtr &primitive,
+                                                             const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->GetShape();
+  return FusedSparseProximalAdagradInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r);
 }
 
 TypePtr FusedSparseProximalAdagradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -137,7 +152,7 @@ AbstractBasePtr FusedSparseProximalAdagradInfer(const abstract::AnalysisEnginePt
     "input numbers", SizeToLong(input_args.size()), kGreaterEqual,
     SizeToLong(fused_sparse_proximal_adagrad::kFusedSparseProximalAdagradInputNum), op_name);
   auto types = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferType(primitive, input_args);
-  auto shapes = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferShape(primitive, input_args);
+  auto shapes = fused_sparse_proximal_adagrad::FusedSparseProximalAdagradInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 

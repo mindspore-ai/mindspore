@@ -52,13 +52,12 @@ constexpr size_t kGradIndex = 3;
 constexpr size_t kIndicesIndex = 4;
 constexpr size_t kFusedSparseFtrlInputNum = 5;
 
-abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr FusedSparseFtrlInferShapeCommon(const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args,
+                                                        const abstract::BaseShapePtr &var_shape_r,
+                                                        const abstract::BaseShapePtr &accum_shape_r,
+                                                        const abstract::BaseShapePtr &linear_shape_r) {
   auto prim_name = primitive->name();
-  // the output is useless, so we don't have to focus on the output shape, cannot return 1
-  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
-  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
-  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->GetShape();
   auto outputs = std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>({var_shape_r, accum_shape_r, linear_shape_r}));
   for (auto &input : input_args) {
@@ -90,6 +89,24 @@ abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
                                            prim_name);
   }
   return outputs;
+}
+
+abstract::TupleShapePtr FusedSparseFtrlInferShapeIner(const PrimitivePtr &primitive,
+                                                      const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->Broaden()->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->Broaden()->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->Broaden()->GetShape();
+  return FusedSparseFtrlInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r, linear_shape_r);
+}
+
+abstract::TupleShapePtr FusedSparseFtrlInferShape(const PrimitivePtr &primitive,
+                                                  const std::vector<AbstractBasePtr> &input_args) {
+  // the output is useless, so we don't have to focus on the output shape, cannot return 1
+  auto var_shape_r = input_args[kVarIndex]->GetShape();
+  auto accum_shape_r = input_args[kAccumIndex]->GetShape();
+  auto linear_shape_r = input_args[kLinearIndex]->GetShape();
+  return FusedSparseFtrlInferShapeCommon(primitive, input_args, var_shape_r, accum_shape_r, linear_shape_r);
 }
 
 TypePtr FusedSparseFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -175,7 +192,7 @@ AbstractBasePtr FusedSparseFtrlInfer(const abstract::AnalysisEnginePtr &, const 
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual,
                                            SizeToLong(fused_sparse_ftrl::kFusedSparseFtrlInputNum), op_name);
   auto types = fused_sparse_ftrl::FusedSparseFtrlInferType(primitive, input_args);
-  auto shapes = fused_sparse_ftrl::FusedSparseFtrlInferShape(primitive, input_args);
+  auto shapes = fused_sparse_ftrl::FusedSparseFtrlInferShapeIner(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
