@@ -228,7 +228,6 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
     if (flag != 0) {
       return flag;
     }
-
     auto cuda_ret = cudaMemcpy(row_pooling_sequence, height_cum_seq.data(),
                                sizeof(int64_t) * (output_shape_[kOutputShapeIndexH] + 1), cudaMemcpyHostToDevice);
     if (cuda_ret != 0) {
@@ -241,7 +240,6 @@ class FractionalPoolHelperGpuKernel : public GpuKernelHelperBase {
       MS_LOG(ERROR) << "copy mem failed,ret " << cudaGetErrorName(cuda_ret);
       return -1;
     }
-
     int64_t dims = static_cast<int64_t>(output_shape_.size());
     int64_t outer_size = 1;
     for (int64_t i = dims - 1; i >= 0; i--) {
@@ -324,7 +322,9 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
       is_max_pooling_grad_ ? kInputRowPoolingSequenceIndex : kAvgGradInputRowPoolingSequenceIndex;
     size_t col_pooling_index =
       is_max_pooling_grad_ ? kInputColPoolingSequenceIndex : kAvgGradInputColPoolingSequenceIndex;
+    size_t input3_index = is_max_pooling_grad_ ? kOutBackpropIndex : kAvgGradOutBackpropIndex;
 
+    out_backprop_shape_ = input_shapes[input3_index];
     row_pooling_shape_ = input_shapes[row_pooling_index];
     col_pooling_shape_ = input_shapes[col_pooling_index];
     output_shape_ = output_shapes[kOutputIndex];
@@ -419,31 +419,25 @@ class FractionalPoolGradHelperGpuKernel : public GpuKernelHelperBase {
       if (flag != 0) {
         return flag;
       }
-
       flag = GetDeviceAddress<int64_t>(input_ptrs, kAvgGradInputRowPoolingSequenceIndex, kernel_name_,
                                        &row_pooling_sequence);
       if (flag != 0) {
         return flag;
       }
-
       flag = GetDeviceAddress<int64_t>(input_ptrs, kAvgGradInputColPoolingSequenceIndex, kernel_name_,
                                        &col_pooling_sequence);
       if (flag != 0) {
         return flag;
       }
-
       flag = GetDeviceAddress<T>(output_ptrs, kOutputIndex, kernel_name_, &output_ptr);
       if (flag != 0) {
         return flag;
       }
-
       int64_t dims = static_cast<int64_t>(output_shape_.size());
-
       int64_t backprop_size = 1;
       for (int64_t i = dims - 1; i >= 0; i--) {
         backprop_size *= out_backprop_shape_[i];
       }
-
       int64_t outer_size = 1;
       for (int64_t i = dims - 1; i >= 0; i--) {
         outer_size *= output_shape_[i];

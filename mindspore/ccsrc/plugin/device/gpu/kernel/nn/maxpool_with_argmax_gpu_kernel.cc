@@ -92,7 +92,6 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   output_height_ = LongToInt(output_shape[kOutputIndexForH]);
   output_width_ = LongToInt(output_shape[kOutputIndexForW]);
   std::vector<int> window;
-
   std::vector<int64_t> window_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("kernel_size"));
   (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                        [](const int64_t &value) { return static_cast<int>(value); });
@@ -113,7 +112,6 @@ int MaxPoolWithArgmaxGpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   }
   stride_height_ = stride[1];
   stride_width_ = stride[Index2];
-
   auto mode_str = GetValue<std::string>(primitive_->GetAttr("pad_mode"));
   (void)std::transform(mode_str.begin(), mode_str.end(), mode_str.begin(), ::toupper);
   MS_EXCEPTION_IF_CHECK_FAIL((mode_str == "SAME" || mode_str == "VALID"),

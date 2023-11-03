@@ -32,7 +32,6 @@ constexpr auto kExtractImagePatchesArgDims = 2;
 std::vector<int64_t> CheckAndGetExtractImagePatchesList(string prim_name, string param_name,
                                                         AbstractBasePtr input_arg) {
   std::vector<int64_t> out(2, abstract::Shape::kShapeDimAny);
-
   auto arg_value = GetArrayValue<int64_t>(input_arg->GetValue());
   if (!arg_value.has_value()) {
     return out;
@@ -113,7 +112,6 @@ BaseShapePtr ExtractImagePatchesFuncImpl::InferShape(const PrimitivePtr &primiti
       ksize_col != abstract::Shape::kShapeDimAny) {
     out_shape[kIndex1] = x_shape[kIndex1] * ksize_row * ksize_col;
   }
-
   auto padding_v = GetScalarValue<int64_t>(input_args[kInputIndex4]->GetValue());
   if (!padding_v.has_value()) {
     return std::make_shared<abstract::TensorShape>(out_shape);

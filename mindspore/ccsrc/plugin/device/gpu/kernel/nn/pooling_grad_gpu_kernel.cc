@@ -527,35 +527,17 @@ std::map<std::string, std::vector<std::pair<KernelAttr, PoolingGradGpuKernelMod:
          .AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>}}},
     {kAvgPool3DGrad,
-     {{KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
+     {{KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
-      {KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &PoolingGradGpuKernelMod::LaunchKernel<float>},
-      {KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &PoolingGradGpuKernelMod::LaunchKernel<half>},
-      {KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &PoolingGradGpuKernelMod::LaunchKernel<double>},
-      {KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &PoolingGradGpuKernelMod::LaunchKernel<float>},
-      {KernelAttr()
-         .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &PoolingGradGpuKernelMod::LaunchKernel<half>}}}};
 
 std::vector<KernelAttr> PoolingGradGpuKernelMod::GetOpSupport() {
