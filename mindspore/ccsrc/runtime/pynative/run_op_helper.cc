@@ -399,6 +399,26 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::shared_ptr<
   return inputs;
 }
 
+std::vector<abstract::AbstractBasePtr> GetInputKernelTensorsForInfer(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
+                                                                     const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(runtime_info);
+  auto input_size = runtime_info->GetInputSize();
+  std::vector<abstract::AbstractBasePtr> inputs;
+  for (size_t i = 0; i < input_size; ++i) {
+    if (common::AnfAlgo::IsNoneInput(node, i)) {
+      (void)inputs.emplace_back(nullptr);
+      MS_LOG(DEBUG) << "Input[" << i << "]:"
+                    << " is None Input";
+      continue;
+    }
+    auto device_address = runtime_info->GetInputDeviceAddress(i);
+    MS_EXCEPTION_IF_NULL(device_address);
+    (void)inputs.emplace_back(device_address->kernel_tensor());
+    MS_EXCEPTION_IF_NULL(inputs.back());
+  }
+  return inputs;
+}
+
 std::vector<kernel::KernelTensor *> GetWorkspaceKernelTensors(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
                                                               const device::DeviceContext *device_context,
                                                               const CNodePtr &kernel, bool is_dynamic_shape,
@@ -974,6 +994,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     MS_LOG(DEBUG) << "Start launch kernel " << node->fullname_with_scope() << " kernel type "
                   << AnfAlgo::GetKernelType(node);
     auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
+    bool is_dynamic_value = common::AnfAlgo::IsDynamicValue(node);
     auto runtime_info = node->user_data<runtime::OpRuntimeInfo>();
     MS_EXCEPTION_IF_NULL(runtime_info);
 
@@ -982,8 +1003,12 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     }
     auto inputs = GetInputKernelTensors(runtime_info, node);
     auto outputs = GetOutputKernelTensors(runtime_info);
-    bool is_dynamic_value = common::AnfAlgo::IsDynamicValue(node);
-    if (is_dynamic_value) {
+    if (is_dynamic_shape) {
+      auto input_kernel_tensors_for_infer = GetInputKernelTensorsForInfer(runtime_info, node);
+      auto out_shape = InferNodeRealShape(node, input_kernel_tensors_for_infer);
+      opt::dynamic_shape::UpdateKernelTensorShape(out_shape, outputs);
+      ResizeKernelMod(node, inputs, outputs);
+    } else if (is_dynamic_value) {
       auto kernel_mod = runtime_info->GetKernelMod();
       MS_EXCEPTION_IF_NULL(kernel_mod);
       if (kernel_mod->Resize(inputs, outputs) != static_cast<int>(kernel::KRET_OK)) {
