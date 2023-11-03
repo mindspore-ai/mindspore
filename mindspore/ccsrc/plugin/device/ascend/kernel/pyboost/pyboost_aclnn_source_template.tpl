@@ -23,7 +23,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 ${return_type} ${op_name}Ascend::Call(${call_args_with_type}) {
-${call_impl}
+  ${call_impl}
 }
 }  // namespace pyboost
 }  // namespace kernel

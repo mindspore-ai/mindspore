@@ -768,7 +768,10 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                   return_values=call_outputs,
                                                                   outputs=op_outputs)
     elif op_desc['mode'] == 'customize':
-        call_impl = "return " + op_name_str + "AscendCall(" + ','.join(s for s in call_args_str) + ");"
+        call_impl = template.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(op_name=op_name_str,
+                                                                     call_args=call_args_str,
+                                                                     call_tensors=call_args_tensor,
+                                                                     )
         customize_include = "#include \"plugin/device/ascend/kernel/pyboost/call/{}.h\"".format(op_name_str.lower())
     elif op_desc['mode'] == 'view':
         call_impl = template.PYBOOST_VIEW_CALL_TEMPLATE.replace(op_name=op_name_str,

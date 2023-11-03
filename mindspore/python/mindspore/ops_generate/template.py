@@ -108,3 +108,6 @@ PYBOOST_ASCEND_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_view_call_template.tpl'))
+
+PYBOOST_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_ascend_customize_call_template.tpl'))
