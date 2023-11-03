@@ -173,6 +173,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_CONV_FPROP_ALGO,
   MS_CTX_CONV_DGRAD_ALGO,
   MS_CTX_CONV_WGRAD_ALGO,
+  MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
