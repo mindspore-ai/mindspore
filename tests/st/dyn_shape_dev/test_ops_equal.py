@@ -30,6 +30,20 @@ def equal_backward_func(x, y):
     return ops.grad(equal_forward_func, (0,))(x, y)
 
 
+@test_utils.run_with_cell
+def equal_infervalue_func1():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
+    return ops.auto_generate.equal(x, y)
+
+
+@test_utils.run_with_cell
+def equal_infervalue_func2():
+    x = ms.Tensor(np.array([3, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([3]).astype(np.float32))
+    return ops.auto_generate.equal(x, y)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -89,3 +103,24 @@ def test_equal_vmap(mode):
     output = nest_vmap(x, y)
     expect = [[[False, True], [True, True]]]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_equal_op_infervalue(context_mode):
+    """
+    Feature: Ops.
+    Description: test op equal infervalue.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    out = equal_infervalue_func1()
+    expect_out = np.array([True, True, False]).astype(np.bool)
+    np.testing.assert_array_equal(out.asnumpy(), expect_out)
+    out = equal_infervalue_func2()
+    expect_out = np.array([True, False, False]).astype(np.bool)
+    np.testing.assert_array_equal(out.asnumpy(), expect_out)

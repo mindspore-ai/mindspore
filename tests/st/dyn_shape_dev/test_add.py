@@ -19,10 +19,24 @@ from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
-from test_utils import get_inputs_np, get_inputs_tensor, compare, to_cell_obj
+from test_utils import get_inputs_np, get_inputs_tensor, compare, to_cell_obj, run_with_cell
 
 def get_np_data():
     return get_inputs_np([(2, 4, 8, 16), (2, 4, 8, 16)], [np.float16, np.float16])
+
+
+@run_with_cell
+def add_infervalue_func1():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([2, 4, 3]).astype(np.float32))
+    return ops.auto_generate.add(x, y)
+
+
+@run_with_cell
+def add_infervalue_func2():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([3, 5, 1]).astype(np.float32))
+    return ops.auto_generate.add(x, y)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -105,3 +119,24 @@ def test_add_dyn(mode):
         compare(output, expect)
         output_grads = ops.grad(net, grad_position=(0, 1))(*input_case_t)
         compare(output_grads, expect_grads)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_add_op_infervalue(context_mode):
+    """
+    Feature: Ops.
+    Description: test op add infervalue.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    out_1 = add_infervalue_func1()
+    expect_out_1 = np.array([3., 6., 7.]).astype(np.float32)
+    np.testing.assert_array_equal(out_1.asnumpy(), expect_out_1)
+    out_2 = add_infervalue_func2()
+    expect_out_2 = np.array([4., 7., 5.]).astype(np.float32)
+    np.testing.assert_array_equal(out_2.asnumpy(), expect_out_2)
