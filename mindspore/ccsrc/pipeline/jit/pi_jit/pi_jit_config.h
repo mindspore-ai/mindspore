@@ -55,6 +55,7 @@ class GraphJitConfig {
     /* ------------------------------ */
     kIntConf,
     kMaxInlineDepth,
+    kMaxTraceDepth,
     kMaxPruneCase,
     kMaxLoopUnrolling,
     kStaticGraphBytecodeMin,
