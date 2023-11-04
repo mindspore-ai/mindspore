@@ -51,7 +51,7 @@ int SizeCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   for (size_t i = 0; i < shape_vector.size(); i++) {
     elements *= shape_vector[i];
   }
-  input_elements = SizeToLong(elements);
+  input_elements = elements;
   return KRET_OK;
 }
 
