@@ -134,6 +134,12 @@ void KernelTensor::CalculateMemSize() {
 }
 
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
+  if (type_id_ == kObjectTypeNumber) {
+    if (!shape_vector.empty()) {
+      MS_LOG(EXCEPTION) << "For Number Type, shape should be empty, but got " << shape_vector;
+    }
+    return;
+  }
   if (type_id_ != kObjectTypeTensorType && type_id_ != kObjectTypeMapTensorType) {
     MS_LOG(EXCEPTION) << "Only support a Tensor/MapTensor type to set shape vector currently, but got type: "
                       << TypeIdLabel(type_id_);
