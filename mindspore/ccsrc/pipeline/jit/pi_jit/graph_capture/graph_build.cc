@@ -226,20 +226,10 @@ InstrNode *GraphBuilder::NewInstrNode(int op, int arg) {
 Graph *GraphBuilder::NewGraph(PyCodeObject *co, PyObject *globals) {
   std::vector<Graph *> &graphs = (root_ != nullptr) ? root_->graph_pool_ : this->graph_pool_;
   if ((root_ == nullptr || root_ == this) && graph_ == nullptr) {
-    MS_ASSERT(co != nullptr);
     JitCompileResults *jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
-    GraphJitConfig &conf = *jcr->conf;
-    graphs.push_back(new Graph(co, globals, conf));
-
-    if (conf.GetBoolConfig(GraphJitConfig::kEnableGuard)) {
-      // Create guard and opt target
-      OptOptionPtr opt = OptOption::CreateOptionByPoint(jcr);
-      OptCodePtr oc = jcr->codehub->AddOptTarget(opt);
-      if (oc == nullptr) {
-        MS_LOG(ERROR) << "Fail to add optimized code!" << std::endl;
-      }
-      graphs.back()->SetGuard(oc);
-    }
+    MS_EXCEPTION_IF_CHECK_FAIL(jcr && jcr->code != nullptr, "must be create guard code before trace start");
+    graphs.push_back(new Graph(co, globals, *jcr->conf));
+    graphs.back()->SetGuard(jcr->code);
   } else {
     graphs.push_back(new Graph(co, globals, root_->GetGraph()->Config()));
     graphs.back()->SetGuard(root_->GetGraph()->GetGuard());
@@ -890,7 +880,7 @@ bool GraphBuilder::DoMakeFunction(const Instr &instr) {
   AObject *f = AObject::MakeFunction(CollectObjects(p), graph_->GetGlobals(), oparg);
   ValueNode *func = NewValueNode(f, instr, p);
   push(func);
-  // maybe has a side effect, current_block_->SetTrackResult(Block::kHasGlobalSideEffect);
+  current_block_->SetTrackResult(Block::kHasGlobalSideEffect);
   return true;
 }
 
@@ -1123,6 +1113,8 @@ GraphBuilder::GraphBuilder(const PyFrameObject *f)
     AbstractNode::Type t = i < ncells ? AbstractNode::CellVar : AbstractNode::FreeVar;
     CellVarNode *n = graph_->allocator().NewNode<CellVarNode>(t);
     n->SetVobj(AObject::Convert(cell));
+    n->SetIndex(i);
+    n->SetGraph(graph_);
     frame_.SetClosure(i, n);
     if (i < ncells && co->co_cell2arg != nullptr && co->co_cell2arg[i] != CO_CELL_NOT_AN_ARG) {
       MS_EXCEPTION_IF_CHECK_FAIL(PyCell_GET(cell), "check frame");
@@ -1452,6 +1444,14 @@ bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
 }
 
 static bool ApplyInlinePolicy(Graph *g) {
+  PyCodeObject *co = g->GetCodeObj();
+  int ncells = PyTuple_GET_SIZE(co->co_cellvars);
+  int nfrees = PyTuple_GET_SIZE(co->co_freevars);
+  if (ncells + nfrees > 0) {
+    // not implement free variable merge
+    return false;
+  }
+
   for (auto &i : g->GetCFG()->bb_pool()) {
     if (i->HasUnresolvedSideEffect()) {
       return false;
@@ -2171,6 +2171,8 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
   }
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(frame->f_code));
   *jcr->conf = conf;
+  jcr->code = jcr->codehub->AddOptTarget(OptOption::CreateOptionByPoint(jcr));
+
   auto res = std::make_unique<GraphBuilder>(frame);
 
   auto code = res->GetGraph()->GetGuard();
@@ -2200,8 +2202,7 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   if (clear_guard) {
     Graph *graph = g->GetGraph();
     auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));
-    OptOptionPtr opt = OptOption::CreateOptionByPoint(jcr);
-    jcr->codehub->DelOptTarget(opt, graph->GetGuard());
+    jcr->codehub->DelOptTarget(OptOption::CreateOptionByPoint(jcr), graph->GetGuard());
   }
 
   ValueNode *res = g->GetGraph()->GetRetVal();

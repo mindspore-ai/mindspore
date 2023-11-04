@@ -25,6 +25,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi_jit/pydef.h"
 #include "pipeline/jit/pi_jit/graph_guard/cache.h"
@@ -102,9 +103,15 @@ class Tracebackes {
 };
 
 // shouldn't save this object, must get it by 'getJitCompileResults'
+// python call free function of this struct while the onwer (pyobject) is freed
 typedef struct CodeExtra {
-  PyObject *func;    // original function
-  PyFrameObject *f;  // frame object
+  // sub-graph trees
+  CodeExtra *parent_;
+
+  std::vector<CodeExtra *> children_;
+
+  PyFrameObject *origin_frame_;  // frame object
+
   enum State {
     NEVER_COMPILE = 0,
     GRAPH_CANDIDATE,
@@ -114,21 +121,14 @@ typedef struct CodeExtra {
   } stat;
 
   // compiler output
-  struct {
-    PyObject *callable;
-    NativeFunc cFunc;
-    OptCodePtr code;
-  } compiled;
+  OptCodePtr code;
+
+  // code cache
+  mindspore::jit::graph::OptCodeHubPtr codehub;
 
   std::shared_ptr<Tracebackes> tbs;
 
-  mindspore::jit::graph::OptCodeHubPtr codehub;
-
   std::shared_ptr<GraphJitConfig> conf;
-
-  bool sub_routine;
-
-  bool ms_mode_;
 } JitCompileResults;
 
 JitCompileResults *getJitCompileResults(PyObject *code, bool alloc = true);

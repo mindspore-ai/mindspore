@@ -54,22 +54,22 @@ class OptCode : public std::enable_shared_from_this<OptCode> {
  public:
   OptCode();
   virtual ~OptCode();
-  virtual void SetPhase(std::string phase);
-  virtual void SetNativeFunc(NativeFunc cFunc, ReleaseFunc rFunc = nullptr);
-  virtual NativeFunc GetNativeFunc();
-  virtual void SetPythonCallable(PyObject *pFunc);
-  virtual PyObject *GetPythonCallable();
   virtual void SetGuard(OptGuardPtr guard);
   virtual OptGuardPtr GetGuard();
   virtual void SetOption(OptOptionPtr option);
   virtual OptOptionPtr GetOption();
   virtual OptPerfPtr GetPerf(OptPerf::PerfKind kind);
 
+  void SetPythonCode(const py::object &code);
+  PyCodeObject *GetPythonCode() const;
+  void SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc);
+  NativeFunc GetNativeFunc() const;
+
  protected:
   std::string phase_;
   NativeFunc cFunc_;
   ReleaseFunc rFunc_;
-  PyObject *pFunc_;
+  py::object compiled_code_;
   OptGuardPtr guard_;
   OptOptionPtr option_;
   OptPerfPtr graph_perf_;

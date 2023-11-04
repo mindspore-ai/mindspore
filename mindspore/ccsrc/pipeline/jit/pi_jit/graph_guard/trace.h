@@ -48,7 +48,7 @@ typedef struct _TraceContext {
   PyObject *f_globals;
   PyObject *f_builtins;
   PyObject *f_locals;
-  PyObject **f_localsplus;
+  PyObject *const *f_localsplus;
   PyCodeObject *f_code;
 } TraceContext, *PTraceContext;
 
@@ -202,7 +202,7 @@ class UnsupportedTrace : public Trace {
 using UnsupportedTracePtr = std::shared_ptr<UnsupportedTrace>;
 
 /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
-PyObject *GetObjectFromTrace(PyFrameObject *frame, TracePtr trace);
+PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace);
 }  // namespace graph
 }  // namespace jit
 }  // namespace mindspore

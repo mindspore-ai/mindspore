@@ -39,8 +39,6 @@ class GraphJitConfig {
     kInterpretCapturedCode,
     kCompileWithoutCapture,
     kCompileWithTry,
-    kEnableGuard,
-    kGuardSubRoutine,
     kGuardSpecializeScalar,
     kGuardSpecializeContainer,
     kGuardSpecializeTensor,
