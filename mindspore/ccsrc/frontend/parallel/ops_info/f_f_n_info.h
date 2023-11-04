@@ -29,12 +29,12 @@
 
 namespace mindspore {
 namespace parallel {
-class MoeFFNInfo : public OperatorInfo {
+class FFNInfo : public OperatorInfo {
  public:
-  MoeFFNInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
+  FFNInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+          const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationInfoCost>()) {}
-  ~MoeFFNInfo() override = default;
+  ~FFNInfo() override = default;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
