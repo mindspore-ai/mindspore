@@ -766,15 +766,15 @@ static ValueNode *TupleDictItemAccess(ValueNode *container, ValueNode *index) {
   }
   if (container->GetOpcode() == BUILD_MAP && PyUnicode_Check(o)) {
     std::string k = PyUnicode_AsUTF8(o);
-    MS_EXCEPTION_IF_CHECK_FAIL(container->GetOparg() * 2 == static_cast<int>(container->getInputs().size()),
-                               "check BUILD_MAP oparg");
+    size_t element_count = container->GetOparg() << 1;
+    MS_EXCEPTION_IF_CHECK_FAIL(element_count == container->getInputs().size(), "check BUILD_MAP oparg");
     for (int i = 0; i < container->GetOparg(); ++i) {
       AObject *tmp = container->input(i * 2)->GetVobj();
       PyObject *str = tmp ? tmp->GetPyObject().ptr() : nullptr;
       if (str == nullptr || !PyUnicode_Check(str) || k != PyUnicode_AsUTF8(str)) {
         continue;
       }
-      return container->input(i * 2 + 1);
+      return container->input((i << 1) + 1);
     }
   }
   return nullptr;
@@ -982,6 +982,7 @@ static bool ReplaceMergeOp(ValueNode *container) {
     return false;
   }
   std::vector<ValueNode *> inputs = origin->getInputs();
+  constexpr const int second_arg = 2;
   switch (container->GetOpcode()) {
     case LIST_APPEND:
       inputs.push_back(arg);
@@ -1000,9 +1001,6 @@ static bool ReplaceMergeOp(ValueNode *container) {
       break;
     case DICT_MERGE:
       // NOTE: here not check duplicate key, will not exception if function call is inlined
-      // if (!static_cast<AbstractDict *>(container->getVobj())->IsElementValid()) {
-      //   return false;
-      // }
     case DICT_UPDATE:
       if (arg->GetOpcode() != BUILD_MAP) {
         return false;
@@ -1010,14 +1008,16 @@ static bool ReplaceMergeOp(ValueNode *container) {
       inputs.insert(inputs.end(), arg->getInputs().begin(), arg->getInputs().end());
       container->getInputs() = inputs;
       container->SetOpcode(BUILD_MAP);
-      container->SetOparg(inputs.size() / 2);
+      MS_EXCEPTION_IF_CHECK_FAIL((inputs.size() & 1) == 0, "error inputs");
+      container->SetOparg(inputs.size() >> 1);
       break;
     case MAP_ADD:
       inputs.push_back(container->input(1));
-      inputs.push_back(container->input(2));
+      inputs.push_back(container->input(second_arg));
       container->getInputs() = inputs;
       container->SetOpcode(BUILD_MAP);
-      container->SetOparg(inputs.size() / 2);
+      MS_EXCEPTION_IF_CHECK_FAIL((inputs.size() & 1) == 0, "error inputs");
+      container->SetOparg(inputs.size() >> 1);
       break;
     default:
       break;
@@ -1678,9 +1678,8 @@ bool GraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, AbstractNo
       return false;
     }
     keys[i] = k->GetPyObject();
-    params->push_back(dict_node->input(i * 2 + 1));
+    params->push_back(dict_node->input((i << 1) + 1));
     MS_EXCEPTION_IF_CHECK_FAIL(keys[i].ptr(), "the keys of unpack-call must be a const string");
-    // MS_EXCEPTION_IF_CHECK_FAIL(key-word not duplicate);
   }
   ValueNode *const_keys = this->NewValueNode(AObject::Convert(keys), LOAD_CONST, -1, {});
   params->push_back(const_keys);
