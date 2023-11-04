@@ -17,17 +17,6 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-template <typename T>
-std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
-  std::vector<T> result;
-  const auto &values = tuple->value();
-  for (const auto &value : values) {
-    (void)result.emplace_back(GetValue<T>(value));
-  }
-  MS_LOG(DEBUG) << "Convert ValueTuple to vector " << result;
-  return result;
-}
-
 int8_t GetCubeMathType() {
   return 0;
 }
