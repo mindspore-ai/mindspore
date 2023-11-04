@@ -169,7 +169,7 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // col
       {SizeToLong(y_batch_pointer_host_[y_batch_pointer_host_.size() - 1])},  // values
     };
-    for (size_t i = 0; i < outputs_.size(); ++i) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
       outputs[i]->SetShapeVector(shapes[i]);
       outputs[i]->set_size(LongToSize(std::accumulate(
         shapes[i].begin(), shapes[i].end(), UnitSizeInBytes(outputs[i]->dtype_id()), std::multiplies<int64_t>())));

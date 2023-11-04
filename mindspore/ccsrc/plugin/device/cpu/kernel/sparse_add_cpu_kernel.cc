@@ -198,8 +198,12 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   (void)out_indices_shape.emplace_back(SizeToLong(indices_column_));
   (void)out_values_shape.emplace_back(SizeToLong(whole_values.size()));
   outputs[kSumIndicesIdx]->SetShapeVector(out_indices_shape);
+  outputs[kSumIndicesIdx]->set_size(whole_indices.size() * UnitSizeInBytes(outputs[kSumIndicesIdx]->dtype_id()));
   outputs[kSumValuesIdx]->SetShapeVector(out_values_shape);
+  outputs[kSumValuesIdx]->set_size(indices_column_ * UnitSizeInBytes(outputs[kSumValuesIdx]->dtype_id()));
   outputs[kSumShapeIdx]->SetShapeVector(dense_shape_);
+  outputs[kSumShapeIdx]->set_size(whole_values.size() * UnitSizeInBytes(outputs[kSumShapeIdx]->dtype_id()));
+
   return true;
 }
 

@@ -230,9 +230,12 @@ bool SparseCountSparseOutputCpuKernelMod::LaunchKernel(const std::vector<kernel:
   std::vector<int64_t> out_indices_shape = {value_pos, num_dim};
   std::vector<int64_t> out_values_shape = {value_pos};
   std::vector<int64_t> out_dense_shape_shape = {num_dim};
-  outputs_[kIndex0]->SetShapeVector(out_indices_shape);
-  outputs_[kIndex1]->SetShapeVector(out_values_shape);
-  outputs_[kIndex2]->SetShapeVector(out_dense_shape_shape);
+  outputs[kIndex0]->SetShapeVector(out_indices_shape);
+  outputs[kIndex0]->set_size(value_pos * num_dim * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->SetShapeVector(out_values_shape);
+  outputs[kIndex1]->set_size(value_pos * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->SetShapeVector(out_dense_shape_shape);
+  outputs[kIndex2]->set_size(num_dim * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
   return true;
 }
 

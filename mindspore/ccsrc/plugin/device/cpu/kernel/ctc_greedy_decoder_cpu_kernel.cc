@@ -182,10 +182,14 @@ bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::Kernel
   std::vector<int64_t> decoded_values_shape = {p_num};
   std::vector<int64_t> decoded_shape_shape = {2};
   std::vector<int64_t> log_probability_shape = {batch_size, 1};
-  outputs_[kIndex0]->SetShapeVector(decoded_indices_shape);
-  outputs_[kIndex1]->SetShapeVector(decoded_values_shape);
-  outputs_[kIndex2]->SetShapeVector(decoded_shape_shape);
-  outputs_[kIndex3]->SetShapeVector(log_probability_shape);
+  outputs[kIndex0]->SetShapeVector(decoded_indices_shape);
+  outputs[kIndex0]->set_size(p_num * 2 * UnitSizeInBytes(outputs[kIndex0]->dtype_id()));
+  outputs[kIndex1]->SetShapeVector(decoded_values_shape);
+  outputs[kIndex1]->set_size(p_num * UnitSizeInBytes(outputs[kIndex1]->dtype_id()));
+  outputs[kIndex2]->SetShapeVector(decoded_shape_shape);
+  outputs[kIndex2]->set_size(2 * UnitSizeInBytes(outputs[kIndex2]->dtype_id()));
+  outputs[kIndex3]->SetShapeVector(log_probability_shape);
+  outputs[kIndex3]->set_size(batch_size * UnitSizeInBytes(outputs[kIndex3]->dtype_id()));
 
   return true;
 }

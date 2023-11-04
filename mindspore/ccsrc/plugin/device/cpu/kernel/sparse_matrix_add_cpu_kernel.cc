@@ -16,6 +16,7 @@
 #include "plugin/device/cpu/kernel/sparse_matrix_add_cpu_kernel.h"
 #include <algorithm>
 #include <complex>
+#include <functional>
 #include <utility>
 #include <set>
 #include <map>
@@ -90,8 +91,16 @@ int SparseMatrixAddCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     (void)output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
                                          GetTypeByte(TypeIdToType(types_[kAValuesIdx])));  // value
     // set dense and batch shape for output.
-    outputs_[kOutDenseShape]->SetShapeVector(inputs[kADenseShapeIdx]->GetShapeVector());
-    outputs_[kOutBatch]->SetShapeVector(inputs[kABatchPtrIdx]->GetShapeVector());
+    auto out_dense_shape = inputs[kADenseShapeIdx]->GetShapeVector();
+    auto ele_size =
+      LongToSize(std::accumulate(out_dense_shape.begin(), out_dense_shape.end(), 1, std::multiplies<int64_t>()));
+    outputs[kOutDenseShape]->SetShapeVector(out_dense_shape);
+    outputs[kOutDenseShape]->set_size(ele_size * UnitSizeInBytes(outputs[kOutDenseShape]->dtype_id()));
+    auto out_batch_shape = inputs[kABatchPtrIdx]->GetShapeVector();
+    ele_size =
+      LongToSize(std::accumulate(out_batch_shape.begin(), out_batch_shape.end(), 1, std::multiplies<int64_t>()));
+    outputs[kOutBatch]->SetShapeVector(out_batch_shape);
+    outputs[kOutBatch]->set_size(ele_size * UnitSizeInBytes(outputs[kOutBatch]->dtype_id()));
   }
   return ret;
 }
@@ -199,9 +208,12 @@ bool SparseMatrixAddCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
   (void)out_indptr_shape.emplace_back(SizeToLong(batch_size * (row_ + 1)));
   (void)out_indices_shape.emplace_back(SizeToLong(c_idx));
   (void)out_values_shape.emplace_back(SizeToLong(c_idx));
-  outputs_[kOutIndptr]->SetShapeVector(out_indptr_shape);
-  outputs_[kOutIndices]->SetShapeVector(out_indices_shape);
-  outputs_[kOutValue]->SetShapeVector(out_values_shape);
+  outputs[kOutIndptr]->SetShapeVector(out_indptr_shape);
+  outputs[kOutIndptr]->set_size(batch_size * (row_ + 1) * UnitSizeInBytes(outputs[kOutIndptr]->dtype_id()));
+  outputs[kOutIndices]->SetShapeVector(out_indices_shape);
+  outputs[kOutIndices]->set_size(c_idx * UnitSizeInBytes(outputs[kOutIndices]->dtype_id()));
+  outputs[kOutValue]->SetShapeVector(out_values_shape);
+  outputs[kOutValue]->set_size(c_idx * UnitSizeInBytes(outputs[kOutValue]->dtype_id()));
   return true;
 }
 
