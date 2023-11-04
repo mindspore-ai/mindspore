@@ -35,7 +35,7 @@ class InputsUnifyMindIR : public PatternProcessPass {
   ValueNodePtr CreateValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateTupleToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
-  AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId data_type) const;
+  AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const TypePtr &data_type) const;
 };
 }  // namespace opt
 }  // namespace mindspore

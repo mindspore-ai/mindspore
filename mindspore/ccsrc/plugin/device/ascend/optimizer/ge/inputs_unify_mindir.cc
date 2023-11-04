@@ -109,7 +109,7 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
                                    << ") data type is not support.";
       }
       MS_LOG(INFO) << "Convert data type from " << TypeIdToString(src_type) << " to " << TypeIdToString(iter->second);
-      tensor_node = CreateCastNode(func_graph, tensor_node, iter->second);
+      tensor_node = CreateCastNode(func_graph, tensor_node, TypeIdToType(iter->second));
     }
     manager->SetEdge(cnode, it.first, tensor_node);
   }
@@ -177,29 +177,32 @@ CNodePtr InputsUnifyMindIR::CreateTupleToTensor(const FuncGraphPtr &func_graph, 
 }
 
 AnfNodePtr InputsUnifyMindIR::CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                             TypeId data_type) const {
+                                             const TypePtr &data_type) const {
   if (node->isa<ValueNode>()) {
     auto value = GetValueNode(node);
     MS_EXCEPTION_IF_NULL(value);
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-    auto new_tensor = CastValueTensor(tensor, TypeIdToType(data_type));
+    auto new_tensor = CastValueTensor(tensor, data_type);
     MS_EXCEPTION_IF_NULL(new_tensor);
     auto const_value_node = NewValueNode(new_tensor);
     const_value_node->set_abstract(new_tensor->ToAbstract());
     return const_value_node;
   }
 
-  auto prim = NewValueNode(std::make_shared<Primitive>(kCastOpName));
+  auto prim = std::make_shared<Primitive>(kCastOpName);
   MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, node, NewValueNode(TypeIdToType(data_type))};
+  auto dst_type_value = NewValueNode(data_type);
+  MS_EXCEPTION_IF_NULL(dst_type_value);
+  dst_type_value->set_abstract(data_type->ToAbstract());
+  AnfNodePtrList inputs = {NewValueNode(prim), node, dst_type_value};
   CNodePtr cast = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cast);
-  common::AnfAlgo::SetNodeAttr(kAttrDType, TypeIdToType(data_type), cast);
-  auto abstract = node->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  abstract->set_type(TypeIdToType(data_type));
-  cast->set_abstract(abstract);
+  auto abs = InferAbstract(prim, {node, dst_type_value});
+  cast->set_abstract(abs);
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, data_type, cast);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(std::vector<std::string>({"input_x", "dtype"})), cast);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputNames, MakeValue(std::vector<std::string>({"output"})), cast);
   return cast;
 }
 }  // namespace opt

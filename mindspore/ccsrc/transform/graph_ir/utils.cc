@@ -462,7 +462,11 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
   auto input_attr_map = adpt->getInputAttrMap();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto input_size = cnode->size();
   for (auto &it : input_attr_map) {
+    if (it.first >= input_size) {
+      continue;
+    }
     if (!cnode->input(it.first)->isa<ValueNode>()) {
       MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
                     << " is not a ValueNode";
@@ -471,6 +475,9 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
   }
   auto input_map = adpt->getInputMap();
   for (auto &it : input_map) {
+    if (static_cast<size_t>(it.first) >= input_size) {
+      continue;
+    }
     auto abs = cnode->input(it.first)->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     if (abs->isa<abstract::AbstractAny>()) {
