@@ -128,7 +128,6 @@ void ControlActor::Run(OpContext<DeviceTensor> *const context) {
     SendMemoryFreeReq(context);
 
     EraseInput(context);
-    UpdateDynamicShapeInParameter();
     SendOutput(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
@@ -467,36 +466,6 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (const auto &actor : end_actors_) {
     MS_EXCEPTION_IF_NULL(actor);
     actor->set_start_time(GetTime());
-  }
-}
-
-void ControlActor::UpdateDynamicShapeInParameter() {
-  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
-  for (size_t i = 0; i < backend_parameters_.size(); ++i) {
-    if (backend_parameters_[i].empty() || input_device_tensors_[i] == nullptr) {
-      continue;
-    }
-
-    auto node = input_device_tensors_[i]->GetNodeIndex().first;
-    ShapeVector shape = input_device_tensors_[i]->host_shape();
-    if (node != nullptr) {
-      shape = trans::GetRuntimePaddingShape(node, input_device_tensors_[i]->GetNodeIndex().second);
-    }
-    for (const auto &parameter : backend_parameters_[i]) {
-      if (common::AnfAlgo::IsDynamicSequence(parameter)) {
-        std::vector<ShapeVector> shapes = {shape};
-        if (!shape.empty()) {
-          shapes = std::vector<ShapeVector>(*shape.begin(), ShapeVector(shape.begin() + 1, shape.end()));
-        }
-        if (node != nullptr) {
-          shapes = BaseShapeToShapeVector(node->Shape());
-        }
-        std::vector<TypeId> types = std::vector(shapes.size(), input_device_tensors_[i]->type_id());
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, parameter);
-        continue;
-      }
-      common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape}, parameter.get());
-    }
   }
 }
 namespace {

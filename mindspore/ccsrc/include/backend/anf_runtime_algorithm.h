@@ -237,9 +237,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
   // 'Unique' will change after Launch, the output address size should update.
   static void UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel);
-  // Update the shape of internal parameter in the sub graph.
-  static void UpdateInternalParameterShape(
-    const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters);
   static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
 
   static void AddOutInRefToGraph(const KernelGraphPtr &graph);

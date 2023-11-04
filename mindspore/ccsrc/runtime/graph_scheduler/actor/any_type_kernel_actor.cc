@@ -518,67 +518,12 @@ void AnyTypeKernelActor::EraseGraphOutput(OpContext<DeviceTensor> *const context
   }
 }
 
-void AnyTypeKernelActor::UpdataDynamicShapeParameterForGraphOutput(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  for (auto &internal_parameter_iter : internal_parameters_) {
-    auto &node = internal_parameter_iter.first.first;
-    size_t index = internal_parameter_iter.first.second;
-    MS_EXCEPTION_IF_NULL(node);
-    const auto &real_output = common::AnfAlgo::GetAllOutputWithOutMonadAndParameter(graph()->output());
-    const auto &output_iter = find(real_output.begin(), real_output.end(), internal_parameter_iter.first);
-    if (output_iter == real_output.end()) {
-      MS_LOG(ERROR) << "Invalid output node:" << node->DebugString() << " index:" << index
-                    << " for graph:" << graph()->ToString();
-      continue;
-    }
-    size_t real_output_index = output_iter - real_output.begin();
-    if (real_output_index >= graph_ouput_device_tensors_.size() ||
-        graph_ouput_device_tensors_[real_output_index] == nullptr ||
-        graph_ouput_device_tensors_[real_output_index]->user_data() == nullptr) {
-      MS_LOG(INFO) << "Invalid output index:" << real_output_index << " by output node:" << node->DebugString()
-                   << " index:" << index << " for graph:" << graph()->ToString();
-      continue;
-    }
-    const auto &user_data_obj =
-      graph_ouput_device_tensors_[real_output_index]->user_data()->get<PyExecuteOutputUserData>(
-        PyExecuteOutputUserData::key);
-    MS_EXCEPTION_IF_NULL(user_data_obj);
-    const auto &obj = user_data_obj->obj;
-    const auto &abstract = pyexecute::GenerateAbstractFromPyObject(obj);
-    MS_EXCEPTION_IF_NULL(abstract);
-    MS_LOG(DEBUG) << "Infer abstract:" << abstract->ToString()
-                  << " by device tensor:" << graph_ouput_device_tensors_[real_output_index]
-                  << " user data:" << graph_ouput_device_tensors_[real_output_index]->user_data()
-                  << " for node:" << node->DebugString();
-    const auto &backend_node = graph_ouput_device_tensors_[real_output_index]->GetNodeIndex().first;
-    MS_EXCEPTION_IF_NULL(backend_node);
-    backend_node->set_abstract(abstract);
-    for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
-      auto internal_parameter = internal_parameter_weakptr.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      MS_LOG(DEBUG) << "Actor:" << GetAID() << " node:" << backend_node->DebugString()
-                    << " abstract:" << abstract->ToString();
-      if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
-        const auto &shapes = BaseShapeToShapeVector(backend_node->Shape());
-        std::vector<TypeId> types =
-          std::vector(shapes.size(), common::AnfAlgo::GetOutputInferDataType(backend_node, index));
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
-        continue;
-      }
-      common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(backend_node, index)},
-                                                  {common::AnfAlgo::GetOutputInferShape(backend_node, index)},
-                                                  internal_parameter.get());
-    }
-  }
-}
-
 void AnyTypeKernelActor::RunForGraphOutput(OpContext<DeviceTensor> *const context) {
   MS_LOG(DEBUG) << "actor:" << GetAID() << " run for graph output start";
   actor_state_ = AnyTypeKernelActorState::kAnyTypeKernelActorSendOutput;
   FetchGraphOutput(context);
   EraseGraphOutput(context);
   SendMemoryFreeReq(context);
-  UpdataDynamicShapeParameterForGraphOutput(context);
   AbstractActor::SendOutput(context);
 }
 

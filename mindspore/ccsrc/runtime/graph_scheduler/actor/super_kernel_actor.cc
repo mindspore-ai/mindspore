@@ -284,11 +284,6 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     SendDebugReq(context);
     return;
   }
-
-  if (graph_->is_dynamic_shape()) {
-    AnfAlgo::UpdateInternalParameterShape(internal_parameters_);
-  }
-
   PostRun(context);
 }
 

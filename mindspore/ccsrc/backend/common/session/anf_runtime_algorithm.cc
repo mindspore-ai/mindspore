@@ -1868,28 +1868,6 @@ void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_
   }
 }
 
-void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
-  const std::map<KernelWithIndex, std::vector<AnfNodeWeakPtr>> &internal_parameters) {
-  for (auto &internal_parameter_iter : internal_parameters) {
-    auto &node = internal_parameter_iter.first.first;
-    MS_EXCEPTION_IF_NULL(node);
-    for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
-      auto internal_parameter = internal_parameter_weakptr.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      if (common::AnfAlgo::IsDynamicSequence(internal_parameter)) {
-        const auto &shapes = BaseShapeToShapeVector(node->Shape());
-        std::vector<TypeId> types = std::vector(
-          shapes.size(), common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second));
-        common::AnfAlgo::SetScalarTupleOutputInferType(types, shapes, internal_parameter);
-        continue;
-      }
-      common::AnfAlgo::SetOutputInferTypeAndShape(
-        {common::AnfAlgo::GetOutputInferDataType(node, internal_parameter_iter.first.second)},
-        {common::AnfAlgo::GetOutputInferShape(node, internal_parameter_iter.first.second)}, internal_parameter.get());
-    }
-  }
-}
-
 void AnfRuntimeAlgorithm::AddOutInRefToGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &cnode : graph->execution_order()) {
