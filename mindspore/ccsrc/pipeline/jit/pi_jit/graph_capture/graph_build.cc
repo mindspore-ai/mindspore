@@ -334,7 +334,7 @@ bool isSatisfyPruneLimit(GraphJitConfig conf, int ret, Graph *graph_, ValueNode 
   return (limit_prune < 0 || limit_prune > graph_->GetPruneBranchCount()) && ret != -1 && graph_->GuardValueNode(cond);
 }
 
-extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0);
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 bool GraphBuilder::PruneBranch(const Instr &instr) {
   int opcode = instr.op();
   int oparg = instr.arg();
@@ -380,7 +380,7 @@ bool GraphBuilder::PruneBranch(const Instr &instr) {
   }
 
   if (conf.GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-    auto tr = GetTrace(cond, false, true, 0);
+    auto tr = GetTrace(cond, false, true, 0, conf.getIntConfig(GraphJitConfig::kMaxTraceDepth));
     GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("if branch prune failed, condition [%s] at [%U : %d]", cond->to_str().c_str(),
                     cond->GetGraph()->GetCodeObj()->co_filename, cond->GetLineNo());

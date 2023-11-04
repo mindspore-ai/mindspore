@@ -169,7 +169,7 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
   GetCaptureInfo().ordered_escaped_locals.push_back(v);
 }
 
-extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0);
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   ValueNode *v = static_cast<ValueNode *>(n);
@@ -200,7 +200,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   }
 
   if (v->GetGraph() != nullptr && this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
-    auto tr = GetTrace(v, false, true, 0);
+    auto tr = GetTrace(v, false, true, 0, -1);
     GRAPH_JIT_LOG_F("trace %s", tr ? tr->ToString().c_str() : "trace failed");
     GRAPH_JIT_LOG_F("capture failed, operations is unsupported [%s] at [%U: %d]", v->to_str().c_str(),
                     v->GetGraph()->GetCodeObj()->co_filename, v->GetLineNo());

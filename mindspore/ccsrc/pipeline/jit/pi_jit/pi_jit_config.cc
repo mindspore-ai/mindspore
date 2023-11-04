@@ -27,6 +27,8 @@ namespace graph {
 
 GraphJitConfig kPIJitConfigDefault;
 
+constexpr int kDefaultMaxTraceDepth = 16;
+
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   // debug option, until fix the error of copied function reuse, if compiled results recursive call self
   {"copy_once_if_trace_break", &GraphJitConfig::SetBool<GraphJitConfig::kCopyFuncOnlyOnceIfTraceBreak>},
@@ -54,6 +56,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   // kEnableOptimizeForAttrItem
   // kEnableEliminateUnusedOperation
   {"MAX_INLINE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxInlineDepth>},
+  {"MAX_TRACE_DEPTH", &GraphJitConfig::SetInt<GraphJitConfig::kMaxTraceDepth>},
   {"MAX_PRUNE_CASE", &GraphJitConfig::SetInt<GraphJitConfig::kMaxPruneCase>},
   {"MAX_LOOP_UNROLLING", &GraphJitConfig::SetInt<GraphJitConfig::kMaxLoopUnrolling>},
   {"INFER_PRIMITIVE_MASK", &GraphJitConfig::SetInt<GraphJitConfig::kInferPrimitiveMask>},
@@ -96,6 +99,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kEnableEliminateUnusedOperation - kBoolConf] = false;
 
   int_conf[kMaxInlineDepth - kIntConf] = 8;
+  int_conf[kMaxTraceDepth - kIntConf] = kDefaultMaxTraceDepth;
   int_conf[kMaxPruneCase - kIntConf] = -1;
   int_conf[kMaxLoopUnrolling - kIntConf] = 100;
   int_conf[kInferPrimitiveMask - kIntConf] = 7;

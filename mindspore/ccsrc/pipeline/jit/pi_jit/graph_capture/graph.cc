@@ -120,11 +120,11 @@ int Graph::GetStackSize() const {
   return c ? (c->co_stacksize + 2 + ((c->co_flags & CO_VARKEYWORDS) ? 1 : 0)) : 0;
 }
 
-TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth);
-static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv, int depth, bool *has_unsupported,
-                              bool strict, bool print) {
+TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
+static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv, int depth, int max_depth,
+                              bool *has_unsupported, bool strict, bool print) {
   for (auto it : *inputs) {
-    auto t = GetTrace(it, strict, print, depth + 1);
+    auto t = GetTrace(it, strict, print, depth + 1, max_depth);
     if (t == nullptr) {
       return false;
     } else if (t->GetTraceType() == TraceType::Unsupported) {
@@ -135,16 +135,18 @@ static bool PrepareTraceParam(std::vector<ValueNode *> *inputs, TraceVector *tv,
   return true;
 }
 
-TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth = 0) {
-  if (depth > 8) {
+static bool CheckDepth(int depth, int max_depth) { return depth < max_depth || max_depth == -1; }
+
+TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
+  if (!CheckDepth(depth, max_depth)) {
     MS_LOG(DEBUG) << "too deep trace for guard";
     return nullptr;
   }
   TraceVector tv;
   ValueNode *p = node;
   bool has_unsupported = false;
-  if (node->GetVobj() == nullptr ||
-      !PrepareTraceParam(&(node->getInputs()), &tv, depth, &has_unsupported, strict, print)) {
+  if (!PrepareTraceParam(&(node->getInputs()), &tv, depth, max_depth, &has_unsupported, strict, print) ||
+      node->GetVobj() == nullptr) {
     return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, p->GetOpcode(), p->GetOparg());
   }
   TracePtr ret = nullptr;
@@ -198,7 +200,8 @@ bool Graph::GuardValueNode(ValueNode *node) {
     return false;
   }
   TracePtr t = GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
-                        Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0);
+                        Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
+                        Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
   if (t != nullptr) {
     return guard_->GetGuard()->GuardOn(t, mindspore::jit::graph::GuardLevel::GEqual);
   }
@@ -211,7 +214,8 @@ TracePtr Graph::TraceValueNode(ValueNode *node) {
     return nullptr;
   }
   return GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
-                  Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0);
+                  Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
+                  Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
 }
 
 void Graph::print(int depth) const {
