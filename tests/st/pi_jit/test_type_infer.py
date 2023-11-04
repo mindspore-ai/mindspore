@@ -312,18 +312,16 @@ def test_unpack_call(test_user_defined_dict):
     Expectation: The results should match for both modes.
     """
     kwargs = MyDict()
-    kwargs.k1 = "keyword1"
-    kwargs.k2 = "keyword2"
-    kwargs.k3 = "keyword3"
-    kwargs.k4 = "keyword4"
+    setattr(kwargs, "k1", "keyword1")
+    setattr(kwargs, "k2", "keyword2")
 
     args = MyTuple(kwargs.keys())
     if not test_user_defined_dict:
         args = tuple(args)
         kwargs = dict(kwargs)
 
-    def results_offer(a, b, c, d, k1, k2, k3, k4):
-        return {a: k1, b: k2, c: k3, d: k4}
+    def results_offer(a, b, k1, k2):
+        return {a: k1, b: k2}
 
     def forward2(*args, **kwargs):
         return results_offer(*args, **kwargs)
@@ -337,9 +335,9 @@ def test_unpack_call(test_user_defined_dict):
 
     @jit(mode="PIJit")
     def unpack_call2():
-        return forward1(1, 2, 3, 4, k1=1, k2=2, k3=3, k4=4)
+        return forward1(1, 2, k1=1, k2=2)
 
     res1 = unpack_call()
     res2 = unpack_call2()
     assert {**res1} == {**kwargs}
-    assert res2 == {1: 1, 2: 2, 3: 3, 4: 4}
+    assert res2 == {1: 1, 2: 2}

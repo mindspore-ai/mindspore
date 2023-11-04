@@ -369,7 +369,8 @@ static void SetGlobal(InstrNode *n, const py::dict &used_globals) {
   }
   std::stringstream name;
   int len = n->GetName().size();
-  name << n->GetName().substr(0, (len < 20 ? len : 20)) << "<" << val << ">";
+  constexpr const int max_len = 40;
+  name << n->GetName().substr(0, std::min(len, max_len)) << "<" << val << ">";
 
   n->SetName(name.str().c_str());
   py::str key(n->GetName());
