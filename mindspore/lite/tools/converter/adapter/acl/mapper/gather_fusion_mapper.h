@@ -19,7 +19,7 @@
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
 #include "ops/auto_generate/gen_ops_name.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 
 using mindspore::ops::kNameGather;
 

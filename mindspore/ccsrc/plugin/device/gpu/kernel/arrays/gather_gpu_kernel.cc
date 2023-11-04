@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h"
 #include <memory>
-#include "mindspore/core/ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
@@ -119,6 +119,5 @@ const std::vector<std::pair<KernelAttr, GatherGpuKernelMod::KernelRunFunc>> &Gat
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Gather, GatherGpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SparseGatherV2, GatherGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

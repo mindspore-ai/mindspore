@@ -51,11 +51,11 @@ class GatherGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<G
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
- private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs);
 
+ private:
   void Reshape() {
     if (axis_ < 0) {
       axis_ = axis_ + SizeToInt(input_shapes_.size());

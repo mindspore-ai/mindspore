@@ -23,7 +23,7 @@
 #include "nnacl/gather_parameter.h"
 #include "nnacl/base/gather_base.h"
 #include "include/common/thread_pool.h"
-#include "mindspore/core/ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 
 namespace mindspore {
 namespace kernel {

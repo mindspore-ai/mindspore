@@ -20,12 +20,22 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "abstract/ops/op_infer.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseGatherV2 = "SparseGatherV2";
+
+abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+MIND_API abstract::AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+
 /// \brief Returns a slice of the input tensor based on the specified indices and axis.
 /// Refer to Python API @ref mindspore.ops.SparseGatherV2 for more details.
 class MIND_API SparseGatherV2 : public BaseOperator {

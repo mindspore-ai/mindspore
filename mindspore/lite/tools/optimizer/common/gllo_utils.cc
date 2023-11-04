@@ -31,7 +31,7 @@
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/cast.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/concat.h"
 #include "ops/tuple_get_item.h"
 #include "tools/common/tensor_util.h"

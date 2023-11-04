@@ -45,7 +45,7 @@
 #include "ops/cast.h"
 #include "ops/is_finite.h"
 #include "ops/invert_permutation.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/fill.h"
 #include "ops/switch.h"
 #include "ops/tensor_array_read.h"

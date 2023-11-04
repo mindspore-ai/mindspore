@@ -56,7 +56,7 @@
 #include "ops/fill.h"
 #include "ops/fill_v2.h"
 #include "ops/fused_batch_norm.h"
-#include "ops/gather.h"
+#include "ops/ops_func_impl/gather.h"
 #include "ops/hashtable_lookup.h"
 #include "ops/instance_norm.h"
 #include "ops/l2_normalize.h"
