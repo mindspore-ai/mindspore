@@ -1,0 +1,16 @@
+#operator broadcast_to_ext
+broadcast_to_ext:
+  args:
+    input:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+      type_cast: list[int]
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: BroadCastToExt
+  pyboost: True
+
+

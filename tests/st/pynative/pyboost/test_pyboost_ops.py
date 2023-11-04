@@ -20,7 +20,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.ops import split
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add, sub, \
-    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d
+    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to
 import mindspore
 
 
@@ -425,3 +425,37 @@ def test_conv2d_ascend():
     pyboost_out = conv2d(inputs, filters, padding=1, bias=bias)
     old_out = ops.conv2d(inputs, filters, pad_mode="pad", padding=1, bias=bias)
     assert np.allclose(pyboost_out.asnumpy(), old_out.asnumpy(), 0.003, 0.003)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_gather_ext_ascend():
+    """
+    Feature: test cast operator
+    Description: test gather run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]).astype(np.float32))
+    input_x2 = Tensor(np.array([0, 1, 2, 3, 3, 2, 1, 0]).astype(np.int64))
+    output = gather(input_x1, 0, input_x2)
+    assert np.allclose(output.asnumpy(), [0, 1, 2, 3, 3, 2, 1, 0])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_broadcast_to_ext_ascend():
+    """
+    Feature: test cast operator
+    Description: test broadcast_to run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2, 3]).astype(np.float32))
+    input_x2 = [2, 3]
+    output = broadcast_to(input_x1, input_x2)
+    assert np.allclose(output.asnumpy(), [[1, 2, 3], [1, 2, 3]])

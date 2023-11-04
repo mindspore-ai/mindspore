@@ -50,16 +50,7 @@ bool BroadcastToCheck(const std::vector<int64_t> &input_x, const std::vector<int
   return true;
 }
 
-TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
-    return {};
-  }
-
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto value_ptr = prim->GetAttr(kShape);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
+TensorStorageInfoPtrList BroadCastToProcess(const tensor::TensorPtr input_tensor, const std::vector<int64_t> &input_x) {
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
@@ -97,6 +88,19 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
     std::make_shared<TensorStorageInfo>(new_shape, new_strides, old_storage_offset, old_tensor_info->ori_shape,
                                         old_tensor_info->ori_strides, IsContiguous(new_shape, new_strides));
   return {new_storage_info};
+}
+
+TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
+    return {};
+  }
+
+  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto value_ptr = prim->GetAttr(kShape);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  auto input_x = GetValue<std::vector<int64_t>>(value_ptr);
+  return BroadCastToProcess(input_tensor, input_x);
 }
 
 REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);

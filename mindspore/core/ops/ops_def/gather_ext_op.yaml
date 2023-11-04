@@ -1,0 +1,15 @@
+#operator gather_ext
+gather_ext:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+    index:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: GatherExt
+  pyboost: True

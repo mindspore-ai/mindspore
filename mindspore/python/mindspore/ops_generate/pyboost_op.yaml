@@ -181,3 +181,20 @@ Conv2DExt:
     mode: normal
   Ascend:
     mode: customize
+
+GatherExt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+BroadCastToExt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: view

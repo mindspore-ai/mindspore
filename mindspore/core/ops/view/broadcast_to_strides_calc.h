@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 
 TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
-
+TensorStorageInfoPtrList BroadCastToProcess(const tensor::TensorPtr input_tensor, const std::vector<int64_t> &input_x);
 }  // namespace ops
 }  // namespace mindspore
 

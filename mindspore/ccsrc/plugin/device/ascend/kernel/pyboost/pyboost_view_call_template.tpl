@@ -6,6 +6,6 @@
     PyBoostUtils::CreateOutputTensor(${input}, storage_info_list[0], &outputs_);
     output_abs_ = output(0)->ToAbstract();
   } else {
-    MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name();
+    MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
   return output(0);
