@@ -92,6 +92,7 @@ class AclConverter {
 
   static aclDataType ConvertType(TypeId type);
   static aclFormat ConvertFormat(const std::string &format);
+  std::string GetFormatFromInputAttrMap(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
 
  private:
   friend class AttrConverter;

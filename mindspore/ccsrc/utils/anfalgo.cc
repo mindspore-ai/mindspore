@@ -2137,7 +2137,10 @@ bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
     if (abstract == nullptr || (!abstract->isa<abstract::AbstractScalar>())) {
       return false;
     }
-    return true;
+    if (abstract->BuildValue() == kValueAny && abstract->BuildType()->isa<Number>()) {
+      return true;
+    }
+    return false;
   };
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);

@@ -20,6 +20,7 @@
 #include "transform/acl_ir/acl_adapter_info.h"
 #include "include/common/utils/convert_utils.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::transform {
 namespace {
@@ -459,6 +460,30 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
   MS_LOG(DEBUG) << "Convert attr to acl input over";
 }
 
+std::string AclConverter::GetFormatFromInputAttrMap(const std::vector<KernelTensor *> &inputs,
+                                                    const std::string &kernel_name) {
+  MS_LOG(DEBUG) << "Start GetFormatFromInputAttrMap";
+  std::string format;
+  auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
+  MS_EXCEPTION_IF_NULL(info);
+  for (const auto &[input_idx, attr_name] : info->input_attr_map()) {
+    if (attr_name == kAttrDataFormat) {
+      // adapter dyn_num input
+      auto cur_input_idx = num_folded_inputs_ == 0 ? input_idx : input_idx + num_folded_inputs_ - 1;
+      MS_LOG(DEBUG) << "Operator " << kernel_name << " converts input " << input_idx << " to attribute " << attr_name;
+      if (cur_input_idx >= inputs.size()) {
+        MS_LOG(DEBUG) << "Operator " << kernel_name << " index " << cur_input_idx
+                      << " is out of range of inputs, size of which is " << inputs.size() << ", ignore it.";
+        continue;
+      }
+      MS_EXCEPTION_IF_NULL(inputs[cur_input_idx]);
+      auto format_enum = ops::GetScalarValue<int64_t>(inputs[cur_input_idx]->GetValue());
+      format = FormatEnumToString(static_cast<mindspore::Format>(format_enum.value()));
+    }
+  }
+  return format;
+}
+
 void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name) {
   MS_LOG(DEBUG) << "Start convert input to acl attr";
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
@@ -472,7 +497,7 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
                     << " is out of range of inputs, size of which is " << inputs.size() << ", ignore it.";
       continue;
     }
-    MS_EXCEPTION_IF_NULL(inputs[input_idx]);
+    MS_EXCEPTION_IF_NULL(inputs[cur_input_idx]);
     ValuePtr ge_attr_value;
     info->GetGeAttrValueByMsInputValue(input_idx + 1, inputs[cur_input_idx]->GetValue(), &ge_attr_value);
 

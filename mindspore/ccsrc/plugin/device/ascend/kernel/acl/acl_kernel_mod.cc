@@ -86,6 +86,10 @@ void AclKernelMod::PackageOutput(const size_t idx, const ShapeVector &shape) {
   output_size_list_[idx] = tensor_size;
 }
 
+std::string AclKernelMod::GetFormatFromInput(const std::vector<KernelTensor *> &inputs) {
+  return converter_->GetFormatFromInputAttrMap(inputs, kernel_name_);
+}
+
 void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
   if (input_params_.size() != inputs.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's input size is not equal with acl param's size:" << input_params_.size()
@@ -93,6 +97,9 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
   }
 
   std::string format = transform::AclHelper::GetFormatFromAttr(primitive_);
+  if (format.empty()) {
+    format = converter_->GetFormatFromInputAttrMap(inputs, kernel_name_);
+  }
 
   for (size_t i = 0; i < input_params_.size(); i++) {
     auto &input = inputs[i];
