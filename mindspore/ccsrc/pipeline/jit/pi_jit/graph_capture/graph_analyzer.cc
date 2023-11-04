@@ -137,7 +137,7 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
     if (!is_known_func && !is_ms_support_func) {
       return false;
     }
-    GetCaptureInfo().must_be_graph_mode_ |= f->TestMsFlag(AObject::kMsFlagGradFunc);
+    GetCaptureInfo().has_grad_ |= f->TestMsFlag(AObject::kMsFlagGradFunc);
   }
 
   auto &locals = GetCaptureInfo().escaped_locals;          // interpret values
@@ -186,7 +186,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   const int ms_flag =
     AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc | AObject::kMsFlagJitFunc;
   if (o && o->TestMsFlag(ms_flag) && AddToCaptured(v)) {
-    GetCaptureInfo().must_be_graph_mode_ = o->TestMsFlag(AObject::kMsFlagGradFunc);
+    GetCaptureInfo().has_grad_ = o->TestMsFlag(AObject::kMsFlagGradFunc);
     return true;
   }
 

@@ -30,13 +30,7 @@ OptStrategy::ExecKind OptStrategy::MakeExecStrategyByPerf(OptPerfPtr graph_perf,
   }
 }
 
-OptStrategy::ExecKind OptStrategy::MakeExecStrategyByComplex(PyObject *code, int threshold) {
-  PyCodeObject *co = nullptr;
-  if (PyCode_Check(code)) {
-    co = reinterpret_cast<PyCodeObject *>(code);
-  } else if (PyFunction_Check(code)) {
-    co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(code));
-  }
+OptStrategy::ExecKind OptStrategy::MakeExecStrategyByComplex(PyCodeObject *co, int threshold) {
   // currently just use instruction count to judge whether to use graph build
   // later it need cost model to make judgement here
   if (co != nullptr && static_cast<int>(PyBytes_GET_SIZE(co->co_code) / sizeof(_Py_CODEUNIT)) < threshold) {

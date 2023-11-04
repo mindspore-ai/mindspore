@@ -41,7 +41,7 @@ std::shared_ptr<OptOption> OptOption::CreateOptionByPoint(void *ptr) {
   return ret;
 }
 
-OptCode::OptCode() : phase_(""), cFunc_(nullptr), rFunc_(nullptr), pFunc_(NULL) {
+OptCode::OptCode() : phase_(""), cFunc_(nullptr), rFunc_(nullptr), compiled_code_() {
   guard_ = std::make_shared<OptGuard>();
   graph_perf_ = std::make_shared<OptPerf>();
   pynative_perf_ = std::make_shared<OptPerf>();
@@ -51,28 +51,23 @@ OptCode::~OptCode() {
   if (rFunc_ != nullptr) {
     rFunc_();
   }
-  Py_XDECREF(pFunc_);
 }
 
-void OptCode::SetPhase(std::string phase) { phase_ = phase; }
-
-void OptCode::SetNativeFunc(NativeFunc cFunc, ReleaseFunc rFunc) {
+void OptCode::SetNativeFunc(const std::string &phase, NativeFunc cFunc, ReleaseFunc rFunc) {
+  phase_ = phase;
   cFunc_ = cFunc;
   rFunc_ = rFunc;
 }
 
-NativeFunc OptCode::GetNativeFunc() { return cFunc_; }
+NativeFunc OptCode::GetNativeFunc() const { return cFunc_; }
 
-void OptCode::SetPythonCallable(PyObject *pFunc) {
-  if (pFunc != NULL && (PyCallable_Check(pFunc) || PyCode_Check(pFunc))) {
-    Py_INCREF(pFunc);
-    Py_XSETREF(this->pFunc_, pFunc);
-  } else {
-    pFunc_ = NULL;
-  }
+void OptCode::SetPythonCode(const py::object &code) {
+  MS_EXCEPTION_IF_CHECK_FAIL(code.ptr() != nullptr && PyCode_Check(code.ptr()) && Py_REFCNT(code.ptr()) == 1,
+                             "code handler must be only one");
+  compiled_code_ = code;
 }
 
-PyObject *OptCode::GetPythonCallable() { return pFunc_; }
+PyCodeObject *OptCode::GetPythonCode() const { return reinterpret_cast<PyCodeObject *>(compiled_code_.ptr()); }
 
 void OptCode::SetGuard(OptGuardPtr guard) { guard_ = guard; }
 

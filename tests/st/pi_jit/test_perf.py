@@ -16,9 +16,11 @@
 import pytest
 from mindspore import Tensor, jit, context
 
+
 @jit(mode="PIJit", jit_config={"perf_statistics": True})
 def perf_statistic_simple(a, b):
     return a + b
+
 
 @jit(mode="PIJit", jit_config={"perf_statistics": True, "PERF_STATISTICS_SCALE_10000X": -9900})
 def perf_statistic_complex(a, b):
@@ -44,9 +46,11 @@ def perf_statistic_complex(a, b):
     a = a // 2
     return a
 
+
 @jit(mode="PIJit", jit_config={"STATIC_GRAPH_BYTECODE_MIN": 8})
 def perf_bytecode_simple(a, b):
     return a + b
+
 
 @jit(mode="PIJit", jit_config={"STATIC_GRAPH_BYTECODE_MIN": 8})
 def perf_bytecode_complex(a, b):
@@ -72,6 +76,7 @@ def perf_bytecode_complex(a, b):
     a = a // 2
     return a
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
@@ -96,6 +101,6 @@ def test_perf_statistic_case(func_param):
     func(a, b)
     func(a, b)
     if param is True:
-        assert getattr(func, "__graph_exec__")
+        assert func.__globals__[func.__code__]
     else:
-        assert not getattr(func, "__graph_exec__")
+        assert not func.__globals__[func.__code__]

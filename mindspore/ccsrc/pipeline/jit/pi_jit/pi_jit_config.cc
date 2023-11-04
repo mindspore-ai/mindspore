@@ -40,8 +40,6 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"interpret_captured_code", &GraphJitConfig::SetBool<GraphJitConfig::kInterpretCapturedCode>},
   {"compile_without_capture", &GraphJitConfig::SetBool<GraphJitConfig::kCompileWithoutCapture>},
   {"compile_with_try", &GraphJitConfig::SetBool<GraphJitConfig::kCompileWithTry>},
-  {"enable_guard", &GraphJitConfig::SetBool<GraphJitConfig::kEnableGuard>},
-  {"guard_subroutine", &GraphJitConfig::SetBool<GraphJitConfig::kGuardSubRoutine>},
   {"specialize_scalar", &GraphJitConfig::SetBool<GraphJitConfig::kGuardSpecializeScalar>},
   {"specialize_container", &GraphJitConfig::SetBool<GraphJitConfig::kGuardSpecializeContainer>},
   {"specialize_tensor", &GraphJitConfig::SetBool<GraphJitConfig::kGuardSpecializeTensor>},
@@ -79,8 +77,6 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kInterpretCapturedCode - kBoolConf] = false;
   bool_conf[kCompileWithoutCapture - kBoolConf] = false;
   bool_conf[kCompileWithTry - kBoolConf] = false;
-  bool_conf[kEnableGuard - kBoolConf] = true;
-  bool_conf[kGuardSubRoutine - kBoolConf] = false;
   bool_conf[kGuardSpecializeScalar - kBoolConf] = true;
   bool_conf[kGuardSpecializeContainer - kBoolConf] = false;
   bool_conf[kGuardSpecializeTensor - kBoolConf] = false;

@@ -1077,7 +1077,7 @@ std::string UnsupportedTrace::ToString() {
 
 TraceVector UnsupportedTrace::GetParams() { return params_; }
 
-PyObject *GetObjectFromTrace(PyFrameObject *frame, TracePtr trace) {
+PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace) {
   TraceContext context = {frame->f_globals, frame->f_builtins, frame->f_locals, frame->f_localsplus, frame->f_code};
   if (trace != NULL) {
     PyObject *obj = trace->Retrieve(&context);

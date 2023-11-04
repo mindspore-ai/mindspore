@@ -105,7 +105,7 @@ OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
 
 OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
 
-bool OptGuard::Check(PyFrameObject *frame, bool print) {
+bool OptGuard::Check(const PyFrameObject *frame, bool print) {
   for (size_t i = 0; i < guardList_.size(); ++i) {
     GuardItemPtr item = guardList_[i];
     if (!item->Check(frame)) {

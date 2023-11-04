@@ -1467,7 +1467,7 @@ class EqGuard : public GuardItem {
         specialized_(needSpecialize),
         recurse_(recurseDepth) {}
 
-  virtual bool Check(PyFrameObject *frame) {
+  virtual bool Check(const PyFrameObject *frame) {
     PyObject *obj = GetObjectFromTrace(frame, var_);
     bool ret = Check(obj);
     if (obj != NULL) {
@@ -1499,7 +1499,7 @@ class TypeGuard : public GuardItem {
     }
   }
 
-  virtual bool Check(PyFrameObject *frame) {
+  virtual bool Check(const PyFrameObject *frame) {
     PyObject *obj = GetObjectFromTrace(frame, var_);
     bool ret = Check(obj);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
@@ -1541,7 +1541,7 @@ class IdGuard : public GuardItem {
  public:
   explicit IdGuard(TracePtr obj) : GuardItem(obj) { refId_ = obj->GetObject(); }
 
-  virtual bool Check(PyFrameObject *frame) {
+  virtual bool Check(const PyFrameObject *frame) {
     PyObject *obj = GetObjectFromTrace(frame, var_);
     bool ret = Check(obj);
     if (obj != NULL) {
@@ -1602,7 +1602,7 @@ class AttrGuard : public GuardItem {
 
   virtual ~AttrGuard() {}
 
-  virtual bool Check(PyFrameObject *frame) {
+  virtual bool Check(const PyFrameObject *frame) {
     PyObject *obj = GetObjectFromTrace(frame, var_);
     bool ret = CheckIntern(obj);
     if (obj != NULL) {

@@ -31,33 +31,6 @@ static bool IsOperationWithoutOperatorStackEffects(int op) {
          op == RERAISE;
 }
 
-// restore MAKE_FUNCTION globals after inlined function
-static PyObject *MakeFuncHandler(PyObject *, PyObject *args) {
-  MS_ASSERT(PyTuple_Check(args) && PyTuple_GET_SIZE(args) == 2);
-  PyObject *inner_func = PyTuple_GET_ITEM(args, 0);
-  PyObject *outer_func = PyTuple_GET_ITEM(args, 1);
-  PyObject *globals = nullptr;
-  PyObject *object_call = nullptr;
-  if (PyMethod_Check(outer_func)) {
-    outer_func = PyInstanceMethod_GET_FUNCTION(outer_func);
-  }
-  if (PyFunction_Check(outer_func)) {
-    globals = PyFunction_GET_GLOBALS(outer_func);
-  } else {
-    object_call = PyObject_GetAttrString(reinterpret_cast<PyObject *>(Py_TYPE(outer_func)), "__call__");
-    MS_EXCEPTION_IF_CHECK_FAIL(object_call != nullptr, "unknown callable object " + std::string(py::str(outer_func)));
-    globals = PyFunction_GET_GLOBALS(object_call);
-  }
-  PyObject *module_name = PyDict_GetItemString(globals, "__name__");
-  REPLACE_PY_MEMBER(PyFunction_GET_GLOBALS(inner_func), globals);
-  REPLACE_PY_MEMBER(PyFunction_GET_MODULE(inner_func), module_name);
-  Py_XDECREF(object_call);
-  Py_RETURN_NONE;
-}
-
-static PyMethodDef makeFuncHandlerDef = {"MAKE_FUNCTION", MakeFuncHandler, METH_VARARGS,
-                                         "restore MAKE_FUNCTION globals"};
-
 static void reSetJumpToUnusedInstr(InstrNode *n) {
   if (!n->GetJump()) {
     return;
@@ -93,95 +66,68 @@ static void eraseUnusedInstr(AbstractNodeList *list) {
 }
 
 static PyCodeObject *TransformCode(const CodeGenerator::Code &ccode) {
-  PyObject *t = PyBytes_FromStringAndSize(reinterpret_cast<const char *>(ccode.co_code.data()),
-                                          ccode.co_code.size() * sizeof(ccode.co_code[0]));
-  auto code = py::reinterpret_steal<py::object>(t);
-  auto pyconsts = py::reinterpret_steal<py::object>(PyTuple_New(ccode.co_consts.size()));
-  auto pynames = py::reinterpret_steal<py::object>(PyTuple_New(ccode.co_names.size()));
+  const char *bytecode = reinterpret_cast<const char *>(ccode.co_code.data());
+  auto code = py::bytes(bytecode, ccode.co_code.size() * sizeof(ccode.co_code[0]));
+  auto pyconsts = py::tuple(ccode.co_consts.size());
+  auto pynames = py::tuple(ccode.co_names.size());
   for (auto i : ccode.co_consts) {
-    PyTuple_SET_ITEM(pyconsts.ptr(), i.second, i.first);
     Py_XINCREF(i.first);
+    PyTuple_SET_ITEM(pyconsts.ptr(), i.second, i.first);
   }
   for (const auto &i : ccode.co_names) {
     PyTuple_SET_ITEM(pynames.ptr(), i.second, PyUnicode_FromString(i.first.c_str()));
   }
 
-  auto pyvarnames = py::reinterpret_steal<py::object>(PyTuple_New(ccode.co_nlocals));
-  auto pycellvars = py::reinterpret_steal<py::object>(PyTuple_New(ccode.co_cell2arg.size()));
-  auto pyfreevars = py::reinterpret_steal<py::object>(PyTuple_New(ccode.nfrees));
-  char buf[32];
-  for (int i = 0; i < ccode.nfrees; ++i) {
-    snprintf(buf, sizeof(buf), "%d_free", i);
-    PyTuple_SET_ITEM(pyfreevars.ptr(), i, PyUnicode_FromString(buf));
-  }
-  for (int i = ccode.co_cell2arg.size() - 1; i >= 0; --i) {
-    if (ccode.co_cell2arg[i] == CO_CELL_NOT_AN_ARG) {
-      snprintf(buf, sizeof(buf), "%d_cell", i);
-    } else {
-      snprintf(buf, sizeof(buf), "%d_cell_to_%d_arg", i, ccode.co_cell2arg[i]);
-    }
-    PyObject *str = PyUnicode_FromString(buf);
-    PyTuple_SET_ITEM(pycellvars.ptr(), i, str);
-    if (ccode.co_cell2arg[i] == CO_CELL_NOT_AN_ARG) {
-      continue;
-    }
-    Py_INCREF(str);
-    PyTuple_SET_ITEM(pyvarnames.ptr(), ccode.co_cell2arg[i], str);
-  }
+  std::set<std::string> vars;
+  auto pyvarnames = py::tuple(ccode.co_nlocals);
   for (int i = 0; i < ccode.co_nlocals; ++i) {
-    if (!PyTuple_GET_ITEM(pyvarnames.ptr(), i)) {
-      snprintf(buf, sizeof(buf), "%d_local", i);
-      PyTuple_SET_ITEM(pyvarnames.ptr(), i, PyUnicode_FromString(buf));
+    std::string n;
+    if (i < static_cast<int>(ccode.co_varnames.size())) {
+      n = ccode.co_varnames[i];
+    } else {
+      n = std::to_string(i) + "_local";
     }
+    while (vars.find(n) != vars.end()) {
+      n = n + "_" + std::to_string(i);
+    }
+    vars.insert(n);
+    pyvarnames[i] = py::str(n);
+  }
+  auto pyfreevars = py::tuple(ccode.co_freevars.size());
+  for (int i = ccode.co_freevars.size() - 1; i >= 0; --i) {
+    PyTuple_SET_ITEM(pyfreevars.ptr(), i, PyUnicode_FromString(ccode.co_freevars[i].c_str()));
+  }
+  auto pycellvars = py::tuple(ccode.co_cellvars.size());
+  for (int i = ccode.co_cellvars.size() - 1; i >= 0; --i) {
+    PyTuple_SET_ITEM(pycellvars.ptr(), i, PyUnicode_FromString(ccode.co_cellvars[i].c_str()));
   }
 
-  t = PyBytes_FromStringAndSize(ccode.co_lnotab.data(), ccode.co_lnotab.size() * sizeof(ccode.co_lnotab[0]));
-  auto lnotab = py::reinterpret_steal<py::object>(t);
+  auto lnotab = py::bytes(ccode.co_lnotab.data(), ccode.co_lnotab.size() * sizeof(ccode.co_lnotab[0]));
   PyCodeObject *newCodeObj =
     PyCode_New(ccode.co_argcount, ccode.co_kwonlyargcount, ccode.co_nlocals, ccode.co_stacksize, ccode.co_flags,
                code.ptr(), pyconsts.ptr(), pynames.ptr(), pyvarnames.ptr(), pyfreevars.ptr(), pycellvars.ptr(),
                ccode.co_filename.ptr(), py::str(ccode.co_name).ptr(), ccode.co_firstlineno, lnotab.ptr());
-  MS_EXCEPTION_IF_CHECK_FAIL(newCodeObj, "check code");
+  MS_EXCEPTION_IF_CHECK_FAIL(newCodeObj, std::string() + "check code because of " + py::error_already_set().what());
   return newCodeObj;
 }
 
 CodeGenerator::CodeGenerator(Graph *g, GraphAnalyzer::CapturedInfo &info)
     : graph_(g), captured_info_(info), nlocals_(g->GetNlocals()), code_changed_(false) {
-  make_func_handler_ = py::reinterpret_steal<py::object>(PyCFunction_New(&makeFuncHandlerDef, nullptr));
-
   ProcessGraph(this->graph_);
 
   eraseUnusedInstr(&instrs_);
 
-  // rewrite cell index
-  int ncells = 0;
-  for (auto i : this->cells_nodes_) {
-    for (auto j : i->GetCellOper()) {
-      j->SetOparg(ncells);
-    }
-    cell2arg_.push_back(i->GetFromParam());
-    i->SetIndex(ncells);
-    ++ncells;
-  }
-
-  for (auto i : this->frees_nodes_) {
-    MS_EXCEPTION_IF_CHECK_FAIL(i->GetVobj()->GetPyObject().ptr(), "check InstrNode");
-    int pos = AddClosure(i->GetVobj()->GetPyObject());
-    for (auto j : i->GetCellOper()) {
-      j->SetOparg(ncells + pos);
-    }
-    i->SetIndex(ncells + pos);
+  int cell_index = 0;
+  for (auto i : this->graph_->GetFrame(0).GetClosures()) {
+    MS_EXCEPTION_IF_CHECK_FAIL(i->GetIndex() == cell_index++,
+                               "not implement inline function with free variable merge, check cell index");
   }
 }
 
 void CodeGenerator::ProcessGraph(Graph *graph, int local_off) {
-  // collect inlined graph cell_free;
-  for (auto i : graph->GetFrame(0).GetClosures()) {
-    if (i->GetType() == ValueNode::CellVar) {
-      cells_nodes_.insert(i);
-    } else {
-      frees_nodes_.insert(i);
-    }
+  if (graph != this->graph_) {
+    MS_EXCEPTION_IF_CHECK_FAIL(!graph->GetFrame(0).GetClosures().size(),
+                               "not implement inline function with free variable merge, check inline policy");
   }
 
   const std::vector<InstrNode *> &instrs = graph->GetInstrs();
@@ -228,7 +174,6 @@ void CodeGenerator::InlineCall(CallNode *call_node, int local_off) {
   int t = local_off + call_node->GetSubGraph()->GetNlocals();
   nlocals_ = t > nlocals_ ? t : nlocals_;
   if (call_node->GetGraph()->GetInstrs().size()) {
-    inlined_call_.push_back(call_node->GetSubGraph());
     code_changed_ = true;
   }
 }
@@ -240,16 +185,6 @@ bool CodeGenerator::FixInstr(Graph *graph, InstrNode *i, int local_off) {
   }
   if (graph->GetGlobals().ptr() == this->graph_->GetGlobals().ptr()) {
     return true;
-  }
-  if (i->GetOpcode() == MAKE_FUNCTION) {
-    PushInstr(i);
-    PushInstr(NewInstr(DUP_TOP));
-    PushInstr(alloc_.NewValueNode(AObject::Convert(make_func_handler_), LOAD_CONST, -1, {}));
-    PushInstr(NewInstr(ROT_TWO));
-    PushInstr(NewInstr(LOAD_FAST, local_off + graph->GetExtraLocalIndex()));
-    PushInstr(NewInstr(CALL_FUNCTION, 2));
-    PushInstr(NewInstr(POP_TOP));
-    return false;
   }
   return true;
 }
@@ -382,7 +317,7 @@ static void SetGlobal(InstrNode *n, const py::dict &used_globals) {
   PyDict_SetItem(used_globals.ptr(), key.ptr(), val);
 }
 
-py::object CodeGenerator::GenerateCode(const AbstractNodeList &list, Code *ccode) {
+py::object GenerateCode(const AbstractNodeList &list, CodeGenerator::Code *ccode) {
   ccode->co_names.clear();
   ccode->co_consts.clear();
   ccode->co_code.clear();
@@ -441,19 +376,22 @@ py::object CodeGenerator::GenerateCode(const AbstractNodeList &list, Code *ccode
 PyCodeObject *CodeGenerator::MakeCodeObj() {
   PyCodeObject *origin_co = this->graph_->GetCodeObj();
   std::string co_name = PyUnicode_AsUTF8(origin_co->co_name);
-  Code ccode = {origin_co->co_argcount,
-                origin_co->co_kwonlyargcount,
-                nlocals_,
-                0,
-                origin_co->co_flags,
-                origin_co->co_firstlineno,
-                GetNfrees(),
-                cell2arg_,
-                std::vector<_Py_CODEUNIT>(),
-                std::unordered_map<std::string, int>(),
-                std::unordered_map<PyObject *, int>(),
-                py::reinterpret_borrow<py::object>(origin_co->co_filename),
-                co_name};
+  Code ccode = {
+    origin_co->co_argcount,
+    origin_co->co_kwonlyargcount,
+    nlocals_,
+    0,
+    origin_co->co_flags,
+    origin_co->co_firstlineno,
+    py::cast<std::vector<std::string>>(origin_co->co_varnames),
+    py::cast<std::vector<std::string>>(origin_co->co_freevars),
+    py::cast<std::vector<std::string>>(origin_co->co_cellvars),
+    std::vector<_Py_CODEUNIT>(),
+    std::unordered_map<std::string, int>(),
+    std::unordered_map<PyObject *, int>(),
+    py::reinterpret_borrow<py::object>(origin_co->co_filename),
+    co_name,
+  };
   py::object g = GenerateCode(instrs_, &ccode);
   UpdateGlobals(g);
   SetId(&ccode);
@@ -502,6 +440,7 @@ AbstractNodeList CodeGenerator::GenerateMakeFunc(Code *ccode, const std::set<int
   ccode->co_name.append("_" + r->tbs->raw_func_name());
   SetId(ccode);
 
+  MS_EXCEPTION_IF_CHECK_FAIL(freevars.size() == ccode->co_freevars.size(), "code must be generate free variable names");
   std::for_each(freevars.begin(), freevars.end(), [&res, this](int i) { res.push_back(NewInstr(LOAD_CLOSURE, i)); });
   int make_oparg = 0;
   if (freevars.size()) {
@@ -513,12 +452,13 @@ AbstractNodeList CodeGenerator::GenerateMakeFunc(Code *ccode, const std::set<int
   auto code = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(co));
   if (compile_state != JitCompileResults::NEVER_COMPILE) {
     JitCompileResults *c = getJitCompileResults(code.ptr());
+    JitCompileResults *parent = getJitCompileResults(reinterpret_cast<PyObject *>(this->graph_->GetCodeObj()), false);
     MS_EXCEPTION_IF_NULL(c);
     c->stat = compile_state;
-    c->sub_routine = true;
     c->conf = r->conf;
     c->tbs = r->tbs;
-    c->ms_mode_ = ccode->ms_mode_ && compile_state == JitCompileResults::GRAPH_CAPTURED;
+    c->parent_ = parent;
+    parent->children_.push_back(c);
   }
 
   ValueNode *load_compiled = alloc_.NewValueNode(AObject::Convert(code), LOAD_CONST, -1, {});
@@ -532,6 +472,9 @@ AbstractNodeList CodeGenerator::GenerateMakeFunc(Code *ccode, const std::set<int
 AbstractNodeList CodeGenerator::GenerateNewInstrs(const AbstractNodeList &list, int in_stack, int out_stack,
                                                   const std::set<int> &inputs, const std::set<int> &outputs,
                                                   const std::set<int> &visit_cells, Code *ccode) {
+  PyCodeObject *co = this->graph_->GetCodeObj();
+  int ncells = PyTuple_GET_SIZE(co->co_cellvars);
+
   // local = [ stack_val1, stack_v2...local1, local3... ]
   AbstractNodeList restore_frame, graph_out, new_list;
   new_list = CopyInstrList(list);
@@ -550,6 +493,11 @@ AbstractNodeList CodeGenerator::GenerateNewInstrs(const AbstractNodeList &list, 
   c = 0;
   for (auto i : visit_cells) {
     cells_map[i] = c++;
+    if (i < ncells) {
+      ccode->co_freevars.push_back(PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_cellvars, i)));
+    } else {
+      ccode->co_freevars.push_back(PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, i - ncells)));
+    }
   }
   c = 0;
   // rewrite index
@@ -638,18 +586,22 @@ AbstractNodeList CodeGenerator::CallSubList(const AbstractNodeList &list, int in
     0,                                                          // co_stacksize
     (origin_co->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS)),     // co_flags
     (reinterpret_cast<InstrNode *>(list.head()))->GetLineNo(),  // co_firstlineno
-    static_cast<int>(visit_cells.size()),                       // nfrees
-    std::vector<int>(),                                         // co_cell2arg
+    std::vector<std::string>(),                                 // co_varnames
+    std::vector<std::string>(),                                 // co_freevars
+    std::vector<std::string>(),                                 // co_cellvars
     std::vector<_Py_CODEUNIT>(),                                // co_code
     std::unordered_map<std::string, int>(),                     // co_names
     std::unordered_map<PyObject *, int>(),                      // co_consts
     py::reinterpret_borrow<py::object>(file_name),              // co_filename
     "",                                                         // co_name
     std::vector<char>(),                                        // co_lnotab
-    0,                                                          // ms_mode_
     stat,                                                       // compile stat
   };
+  for (auto i = 0; i < ccode.co_argcount; ++i) {
+    ccode.co_varnames.push_back(std::to_string(i) + "_local");
+  }
 
+  // rewrite cell index
   AbstractNodeList instrs = GenerateNewInstrs(list, in_stack, out_stack, inputs, outputs, visit_cells, &ccode);
 
   // make const code
@@ -1087,19 +1039,6 @@ bool CodeGenerator::LoadValue(std::unordered_map<ValueNode *, int> *local_map, V
   return true;
 }
 
-static ValueNode *TraceMakeFuncGlobals(ValueNode *func) {
-  while (func->GetOpcode() == MAKE_FUNCTION) {
-    int outer_func = func->GetGraph()->GetExtraLocalIndex();
-    const auto &frame = func->GetGraph()->GetFrame(0);
-    if (static_cast<int>(frame.GetLocals().size()) <= outer_func) {
-      func = nullptr;
-      break;
-    }
-    func = frame.Local(outer_func);
-  }
-  return func;
-}
-
 void CodeGenerator::BuildValue(std::unordered_map<ValueNode *, int> *local_map, ValueNode *n, int order,
                                AbstractNodeList *res) {
   int op = n->GetOpcode();
@@ -1128,14 +1067,6 @@ void CodeGenerator::BuildValue(std::unordered_map<ValueNode *, int> *local_map, 
     return;
   }
   res->push_back(NewInstr(STORE_FAST, allocLocal(local_map, n, order)));
-  if (op == MAKE_FUNCTION && n->GetGraph()->GetGlobals().ptr() != this->graph_->GetGlobals().ptr()) {
-    res->push_back(alloc_.NewValueNode(AObject::Convert(make_func_handler_), LOAD_CONST, -1, {}));
-    res->push_back(NewInstr(LOAD_FAST, (*local_map)[n]));
-    bool succ = LoadValue(local_map, TraceMakeFuncGlobals(n), res, false);
-    MS_EXCEPTION_IF_CHECK_FAIL(succ, "check MarkLocalAliveTime");
-    res->push_back(NewInstr(CALL_FUNCTION, 2));
-    res->push_back(NewInstr(POP_TOP));
-  }
 }
 
 // if these values not used, allowed delete these operations
@@ -1169,14 +1100,6 @@ static void MarkLocalAliveTime(const std::vector<ValueNode *> &order_values) {
   for (int i = order_values.size() - 1; i >= 0; --i) {
     for (auto node : order_values[i]->getInputs()) {
       node->marker_ = node->marker_ < i ? i : node->marker_;
-    }
-    // extra used for MAKE_FUNCTION, use it to restore globals dictionary
-    if (order_values[i]->GetOpcode() != MAKE_FUNCTION) {
-      continue;
-    }
-    ValueNode *root = TraceMakeFuncGlobals(order_values[i]);
-    if (root) {
-      root->marker_ = root->marker_ < i ? i : root->marker_;
     }
   }
 }
@@ -1353,17 +1276,21 @@ AbstractNodeList CodeGenerator::ReshapeGraphBytecodes(std::unordered_map<ValueNo
     0,                                                           // co_stacksize
     code_flag,                                                   // co_flags
     origin_co->co_firstlineno,                                   // co_firstlineno
-    0,                                                           // nfrees
-    std::vector<int>(),                                          // co_cell2arg, closure is mindspore unsupported
+    std::vector<std::string>(),                                  // co_varnames
+    std::vector<std::string>(),                                  // co_freevars
+    std::vector<std::string>(),                                  // co_cellvars
     std::vector<_Py_CODEUNIT>(),                                 // co_code
     std::unordered_map<std::string, int>(),                      // co_names
     std::unordered_map<PyObject *, int>(),                       // co_consts
     py::reinterpret_borrow<py::object>(origin_co->co_filename),  // co_filename
     "_compile",                                                  // co_name
     std::vector<char>(),                                         // co_lnotab
-    this->captured_info_.must_be_graph_mode_,                    // ms_mode_
     JitCompileResults::GRAPH_CAPTURED,                           // compile stat
   };
+  for (auto i = 0; i < ccode.co_argcount; ++i) {
+    ccode.co_varnames.push_back(std::to_string(i) + "_local");
+  }
+
   py::object globals = GenerateCode(compile, &ccode);
   UpdateGlobals(globals);
   std::set<int> unused;

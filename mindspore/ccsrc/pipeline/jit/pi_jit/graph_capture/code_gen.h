@@ -45,15 +45,15 @@ class CodeGenerator {
     int co_stacksize;
     int co_flags;
     int co_firstlineno;
-    int nfrees;
-    std::vector<int> co_cell2arg;
+    std::vector<std::string> co_varnames;
+    std::vector<std::string> co_freevars;
+    std::vector<std::string> co_cellvars;
     std::vector<_Py_CODEUNIT> co_code;
     std::unordered_map<std::string, int> co_names;
     std::unordered_map<PyObject *, int> co_consts;
     py::object co_filename;
     std::string co_name;
     std::vector<char> co_lnotab;
-    bool ms_mode_;
     JitCompileResults::State stat;
   };
 
@@ -70,15 +70,6 @@ class CodeGenerator {
   // use instrs list to generate PyCodeObject
   PyCodeObject *MakeCodeObj();
 
-  py::object GetClosure() {
-    PyObject *c = PyTuple_New(closure_.size());
-    for (auto i : closure_) {
-      Py_INCREF(i.first);
-      PyTuple_SET_ITEM(c, i.second, i.first);
-    }
-    return py::reinterpret_steal<py::object>(c);
-  }
-
   void UpdateGlobals(const py::object &g) {
     if (used_globals_.ptr()) {
       PyDict_Update(used_globals_.ptr(), g.ptr());
@@ -89,8 +80,6 @@ class CodeGenerator {
 
   bool IsCodeChanged() const { return code_changed_; }
   auto &GetGlobals() { return used_globals_; }
-  int GetNcells() const { return cell2arg_.size(); }
-  int GetNfrees() const { return closure_.size(); }
 
   // NOTE: if break graph, do this in CutoffBytecodesIfGraphBreak
   // return true if must be interpret these code
@@ -99,13 +88,6 @@ class CodeGenerator {
   // NOTE: graph inputs will passed by globals for mindspore
   // should produce guard for mindspore
   static std::string GetGraphInputsKey(const ValueNode *v);
-
-  /**
-   * use list to generate code info, update co_co_names, co_consts, so LOAD_CONST node and LOAD_GLOBAL node
-   * must has value. will optimize list, e.g delete NOP, delete jump to next instruction
-   * return used globals
-   **/
-  static py::object GenerateCode(const AbstractNodeList &list, Code *);
 
   // debug function
   static void Print(const AbstractNode *list_beg, const char *marker_info);
@@ -142,16 +124,6 @@ class CodeGenerator {
 
   // NOTE: will modify node->marker_ for link jump node
   AbstractNodeList CopyInstrList(const AbstractNodeList &instrs);
-
-  int AddClosure(const py::object &o) {
-    auto pos = closure_.find(o.ptr());
-    if (pos != closure_.end()) {
-      return pos->second;
-    }
-    int i = closure_.size();
-    closure_.insert({o.ptr(), i});
-    return i;
-  }
 
   // break graph actions
 
@@ -210,23 +182,11 @@ class CodeGenerator {
   // code status
   bool code_changed_;
 
-  std::vector<Graph *> inlined_call_;
-
-  // information for rewrite cell index
-
-  std::set<CellVarNode *> cells_nodes_;
-  std::set<CellVarNode *> frees_nodes_;
-  std::unordered_map<PyObject *, int> closure_;
-  std::vector<int> cell2arg_;
-
   // used globals
   py::object used_globals_;
 
   // node allocator
   Allocator alloc_;
-
-  // handle make function gloabls
-  py::object make_func_handler_;
 };
 }  // namespace graph
 }  // namespace jit

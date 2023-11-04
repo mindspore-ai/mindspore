@@ -34,7 +34,7 @@ class GraphAnalyzer {
     } captured_locals;
     std::set<ValueNode *> escaped_locals;
     std::vector<ValueNode *> ordered_escaped_locals;
-    bool must_be_graph_mode_ = false;
+    bool has_grad_ = false;
   };
 
   explicit GraphAnalyzer(Graph *g) : graph_(g) {}
