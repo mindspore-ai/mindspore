@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "base/base.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/parallel_context.h"
@@ -37,6 +39,60 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
+namespace {
+size_t CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name, const std::string &attr_name,
+                                  size_t limit_size) {
+  auto ks_iter = op_def->indexes_.find(attr_name);
+  if (ks_iter == op_def->indexes_.end()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", cannot find a valid index for input " << attr_name
+                               << " in operator-definition.";
+  }
+  auto idx = ks_iter->second;
+  auto real_idx = idx + 1;
+  if (real_idx >= limit_size) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", " << idx << " is not a valid index for input " << attr_name;
+  }
+  return real_idx;
+}
+
+std::vector<AnfNodePtr> RectifyInputsForNewCNode(const std::vector<AnfNodePtr> &inputs) {
+  if (inputs.size() <= 1) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For NewCNode, the inputs should not less than two!";
+  }
+
+  auto value_node = inputs[0]->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto prim = value->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(prim);
+
+  auto op_name = prim->name();
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return inputs;
+  }
+
+  std::vector<AnfNodePtr> new_inputs(inputs.begin(), inputs.end());
+  auto op_inputs_num = op_def->indexes_.size();
+  new_inputs.resize(op_inputs_num + 1);  // 1 for primitive.
+
+  // For new defined op, almost all old attrs is changed to inputs.
+  std::vector<std::string> latter_erase;
+  auto attrs = prim->attrs();
+  for (const auto &[name, value] : attrs) {
+    auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, name, new_inputs.size());
+    new_inputs[node_input_idx] = NewValueNode(value);
+    latter_erase.push_back(name);
+  }
+
+  for (const auto &name : latter_erase) {
+    prim->EraseAttr(name);
+  }
+
+  return new_inputs;
+}
+}  // namespace
 const char *GetOpPythonPath(const char *op_name) {
   static const py::module inner_mod = py::module::import(INNER_OP_PATH);
   if (py::hasattr(inner_mod, op_name)) {
@@ -79,29 +135,43 @@ ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_nam
 
 std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const std::string &instance_name,
                                             const AnfNodePtrList &inputs, const OperatorAttrs &attrs) {
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+  auto new_defined = (op_def != nullptr);
+
+  // The AllGather attrs contains group_name and group_ranks, pop group_ranks.
+  size_t attrs_num = (op_name == "AllGather" && attrs.size() == kSizeTwo) ? kSizeOne : attrs.size();
+  size_t op_inputs_num = inputs.size();
+  if (new_defined) {
+    op_inputs_num += attrs_num;
+    if (op_inputs_num != op_def->indexes_.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", inputs should be " << op_def->indexes_.size()
+                                 << ", but got given inputs num " << inputs.size() << " and attrs num " << attrs_num;
+    }
+  }
+
   auto prim = std::make_shared<Primitive>(op_name);
   MS_EXCEPTION_IF_NULL(prim);
   prim->set_instance_name(instance_name);
 
-  auto new_defined = (mindspore::ops::GetOpDef(op_name) == nullptr);
+  AnfNodePtrList node_inputs;
+  node_inputs.resize(1 + op_inputs_num);  // 1 for primitive value node.
+  node_inputs[0] = NewValueNode(prim);
 
-  // The AllGather attrs contains group_name and group_ranks, pop group_ranks.
-  size_t attrs_num = (op_name == "AllGather" && attrs.size() == kSizeTwo) ? kSizeOne : attrs.size();
-  AnfNodePtrList real_inputs;
-  real_inputs.reserve(1 + inputs.size() + (new_defined ? attrs_num : 0));  // 1 for primitive value node.
-  real_inputs.push_back(NewValueNode(prim));
-  real_inputs.insert(real_inputs.end(), inputs.begin(), inputs.end());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    node_inputs[i + 1] = inputs[i];
+  }
 
   for (size_t i = 0; i < attrs_num; ++i) {
     auto [attr_name, attr_value] = attrs[i];
     if (new_defined) {
-      real_inputs.push_back(NewValueNode(attr_value));
+      auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, attr_name, node_inputs.size());
+      node_inputs[node_input_idx] = NewValueNode(attr_value);
     } else {
       prim->AddAttr(attr_name, attr_value);
     }
   }
 
-  return real_inputs;
+  return node_inputs;
 }
 
 CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const OperatorName &op_name,
@@ -111,6 +181,41 @@ CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const Operat
   MS_EXCEPTION_IF_NULL(func_graph);
   auto cnode = func_graph->NewCNode(real_inputs);
   return cnode;
+}
+
+CNodePtr CreateNewCNodeForReplace(const CNodePtr &origin_node, const PrimitivePtr &new_prim) {
+  MS_EXCEPTION_IF_NULL(origin_node);
+  auto func_graph = origin_node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto inputs = origin_node->inputs();
+  AnfNodePtrList new_inputs(inputs.begin(), inputs.end());
+
+  MS_EXCEPTION_IF_NULL(new_prim);
+  auto op_name = new_prim->name();
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+
+  if (op_def != nullptr) {
+    // For new defined op, almost all old attrs is changed to inputs.
+    std::vector<std::string> latter_erase;
+    auto attrs = new_prim->attrs();
+    for (const auto &[name, value] : attrs) {
+      auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, name, inputs.size());
+      if (!inputs[node_input_idx]->isa<ValueNode>()) {
+        MS_LOG(INTERNAL_EXCEPTION) << "For auto parallel, the " << (node_input_idx - 1) << " input of " << op_name
+                                   << " must be a value node!";
+      }
+
+      inputs[node_input_idx] = NewValueNode(value);
+      latter_erase.push_back(name);
+    }
+
+    for (const auto &name : latter_erase) {
+      new_prim->EraseAttr(name);
+    }
+  }
+
+  new_inputs[0] = NewValueNode(new_prim);
+  return func_graph->NewCNode(new_inputs);
 }
 
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
@@ -242,14 +347,12 @@ Status GenerateGraph::Init(const CNodePtr &cnode) {
 }
 
 AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = func_graph_->NewCNode(inputs);  // using NewCNode to create anfnode
+  auto new_inputs = RectifyInputsForNewCNode(inputs);
+  CNodePtr cnode = func_graph_->NewCNode(new_inputs);  // using NewCNode to create anfnode
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   SetUserAttrs(origin_attrs_, prim);
   cnode->set_scope(scope_);
-  if (inputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "inputs.size() must be more than 1";
-  }
   auto new_anf_node_ptr = cnode->cast<AnfNodePtr>();
   MS_EXCEPTION_IF_NULL(new_anf_node_ptr);
   return new_anf_node_ptr;

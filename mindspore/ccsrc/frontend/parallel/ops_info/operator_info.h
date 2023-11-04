@@ -400,6 +400,14 @@ ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, con
 Operator CreateDivOpWithType(float divisor, const TypePtr &dtype);
 std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value);
 
+inline std::string GetPrimNameFromInfoName(const std::string &info_name) {
+  auto prim_name = info_name;
+  if (auto pos = info_name.find("Info"); pos != std::string::npos) {
+    prim_name = info_name.substr(0, pos);
+  }
+  return prim_name;
+}
+
 template <typename T>
 std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, size_t idx) {
   if (idx == SIZE_MAX) {
@@ -415,7 +423,8 @@ std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_val
 template <typename T>
 std::optional<T> GetScalarValueFromInputs(const std::vector<ValuePtr> &input_value, const std::string &op_name,
                                           const std::string &attr_name) {
-  auto idx = ops::GetInputIndexByName(op_name, attr_name);
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
   return GetScalarValueFromInputs<T>(input_value, idx);
 }
 
@@ -438,7 +447,8 @@ std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr
 template <typename T>
 std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr> &input_value,
                                                       const std::string &op_name, const std::string &attr_name) {
-  auto idx = ops::GetInputIndexByName(op_name, attr_name);
+  auto prim_name = GetPrimNameFromInfoName(op_name);
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
   return GetArrayValueFromInputs<T>(input_value, idx);
 }
 }  // namespace parallel

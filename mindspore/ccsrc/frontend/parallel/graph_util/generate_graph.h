@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "ir/anf.h"
+#include "ir/primitive.h"
 #include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
@@ -40,6 +42,7 @@ std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const s
 CNodePtr CreateCNodeByInputsAndAttr(const FuncGraphPtr &func_graph, const OperatorName &op_name,
                                     const std::string &instance_name, const AnfNodePtrList &inputs,
                                     const OperatorAttrs &attrs);
+CNodePtr CreateNewCNodeForReplace(const CNodePtr &origin_node, const PrimitivePtr &new_prim);
 
 AnfNodePtr CreateTypeInt(int64_t nbits);
 AnfNodePtr CreateTypeFloat(int64_t nbits);
