@@ -1,0 +1,15 @@
+#operator unsqueeze
+unsqueeze:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Unsqueeze
+  pyboost: True
+
+

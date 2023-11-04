@@ -1,6 +1,5 @@
 #operator pow
 pow:
-<<<<<<< HEAD
     args:
         x1:
             dtype: tensor

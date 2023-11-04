@@ -77,17 +77,17 @@ Sin:
 
 Transpose:
   CPU:
-    mode: normal
+    mode: view
   GPU:
-    mode: normal
+    mode: view
   Ascend:
     mode: view
 
 View:
   CPU:
-    mode: normal
+    mode: view
   GPU:
-    mode: normal
+    mode: view
   Ascend:
     mode: view
 
@@ -193,9 +193,9 @@ GatherExt:
 
 BroadCastToExt:
   CPU:
-    mode: normal
+    mode: view
   GPU:
-    mode: normal
+    mode: view
   Ascend:
     mode: view
 
@@ -207,6 +207,14 @@ Maximum:
   Ascend:
     mode: normal
     cube: False
+
+Unsqueeze:
+  CPU:
+    mode: view
+  GPU:
+    mode: view
+  Ascend:
+    mode: view
 
 Minimum:
   CPU:

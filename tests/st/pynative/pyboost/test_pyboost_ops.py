@@ -19,9 +19,9 @@ from mindspore import nn
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import split
 from mindspore import ops
-from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, cast, add, sub, \
-    softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to,\
-    maximum, minimum, greater_equal, less
+from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
+    cast, add, sub, softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
+    maximum, minimum, greater_equal, less, unsqueeze
 import mindspore
 
 
@@ -432,7 +432,7 @@ def test_conv2d_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_gather_ext_ascend():
+def test_gather_ascend():
     """
     Feature: test cast operator
     Description: test gather run by pyboost
@@ -449,7 +449,7 @@ def test_gather_ext_ascend():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_broadcast_to_ext_ascend():
+def test_broadcast_to_ascend():
     """
     Feature: test cast operator
     Description: test broadcast_to run by pyboost
@@ -460,6 +460,7 @@ def test_broadcast_to_ext_ascend():
     input_x2 = [2, 3]
     output = broadcast_to(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [[1, 2, 3], [1, 2, 3]])
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -477,6 +478,7 @@ def test_maximum_ascend():
     output = maximum(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [3, 2, 4])
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -493,6 +495,7 @@ def test_minimum_ascend():
     output = minimum(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [1, 0, -1])
 
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -504,10 +507,11 @@ def test_greater_equal_ascend():
     Expectation: success
     """
     context.set_context(device_target="Ascend")
-    input_x1 = Tensor(np.array([[1, 2], [3,4]]).astype(np.float32))
+    input_x1 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     input_x2 = Tensor(np.array([[1, 1], [4, 4]]).astype(np.float32))
     output = greater_equal(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [[True, True], [False, True]])
+
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -520,7 +524,24 @@ def test_less_ascend():
     Expectation: success
     """
     context.set_context(device_target="Ascend")
-    input_x1 = Tensor(np.array([[1, 2], [3,4]]).astype(np.float32))
+    input_x1 = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     input_x2 = Tensor(np.array([[1, 1], [4, 4]]).astype(np.float32))
     output = less(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [[False, False], [True, False]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unsqueeze_ascend():
+    """
+    Feature: test cast operator
+    Description: test unsqueeze run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    input_x2 = 1
+    output = unsqueeze(input_x1, input_x2)
+    assert np.allclose(output.asnumpy(), [[1], [2], [3], [4]])
