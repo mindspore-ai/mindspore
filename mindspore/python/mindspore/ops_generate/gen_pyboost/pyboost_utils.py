@@ -70,9 +70,11 @@ def tuple_input_to_cpp_type(dtype: str):
         'tuple[int]': 'int64_t',
         'tuple[float]': 'double',
         'tuple[bool]': 'bool',
+        'tuple[tensor]': 'TensorPtr',
         'list[int]': 'int64_t',
         'list[float]': 'double',
         'list[bool]': 'bool',
+        'list[tensor]': 'TensorPtr',
     }
     if dtype in types_map:
         return types_map[dtype]

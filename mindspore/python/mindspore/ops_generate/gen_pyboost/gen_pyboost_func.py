@@ -64,12 +64,17 @@ def generate_pyboost_ascend_op_header_code(work_path, op_name_str, call_args_wit
 
 def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type, call_args_str,
                                            op_outputs, call_outputs, call_args_with_type, cpp_func_return,
-                                           call_args_after_convert, const_number_convert, value_tuple_convert):
+                                           call_args_after_convert, const_number_convert, value_tuple_convert,
+                                           need_malloc_tensors):
     # PyBoost ascend op source generate
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
         if type == "TensorPtr":
             call_args_tensor.append(arg_name)
+
+    malloc_inputs = ''
+    for item in need_malloc_tensors:
+        malloc_inputs += 'runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context_, {}, "{}");\n'.format(item, item)
 
     # launch mode: cube or not
     # call_impl
@@ -94,6 +99,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                   call_tensors=call_args_tensor,
                                                                   value_tuple_convert=value_tuple_convert,
                                                                   const_number_convert=const_number_convert,
+                                                                  malloc_inputs=malloc_inputs,
                                                                   get_cube_math_type=get_cube_math_type,
                                                                   cube_math_type=cube_math_type,
                                                                   aclnn_call_args=call_args_after_convert,
@@ -311,10 +317,12 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
         call_args_type = []
         value_tuple_convert = []
         const_number_convert = []
+        need_malloc_tensors = []
         for op_arg in op_proto.op_args:
             call_arg = ''
             if pyboost_utils.is_tensor(op_arg):
                 call_arg = op_arg.arg_name + "_tensor"
+                need_malloc_tensors.append(call_arg)
             elif pyboost_utils.is_tensor_list(op_arg):
                 call_arg = op_arg.arg_name + "_tensor_list"
             else:
@@ -328,6 +336,8 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
             elif tuple_input_to_cpp_type(op_arg.arg_dtype):
                 call_args_after_convert.append(call_arg + "_vector")
                 value_tuple_convert.append(get_tuple_input_convert(call_arg, op_arg.arg_dtype))
+                if pyboost_utils.is_tensor_list(op_arg):
+                    need_malloc_tensors.append(call_arg + "_vector")
             else:
                 call_args_after_convert.append(call_arg)
 
@@ -345,7 +355,8 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
         generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_name_str, call_args_type,
                                                call_args_str,
                                                op_outputs, call_func_outputs, call_args_with_type, cpp_func_return,
-                                               call_args_after_convert, const_number_convert, value_tuple_convert)
+                                               call_args_after_convert, const_number_convert, value_tuple_convert,
+                                               need_malloc_tensors)
     generate_pyboost_op_register_source_code(work_path, all_ops)
 
 

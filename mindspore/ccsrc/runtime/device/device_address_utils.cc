@@ -801,6 +801,16 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
   return device_address;
 }
 
+std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateInputTensorAddress(
+  const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors, const std::string &input_name) {
+  std::vector<device::DeviceAddressPtr> result;
+  result.reserve(tensors.size());
+  for (const auto &tensor : tensors) {
+    result.emplace_back(CreateInputTensorAddress(device_context, tensor, input_name));
+  }
+  return result;
+}
+
 device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
                                                                        const tensor::TensorPtr &tensor,
                                                                        const std::string &output_name,
