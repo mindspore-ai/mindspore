@@ -25,7 +25,16 @@ from .template import CppTemplate
 from . import template
 from .op_proto import OpProto
 from .pyboost_utils import get_disable_flag, get_op_name, py_licence_str
+from mindspore import log as logger
 
+
+def clean_auto_generate_dir(work_path, relative_path):
+    dir_path = os.path.join(work_path, relative_path)
+    for file_name in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, file_name)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+            logger.warning("Clean PyBoost auto generate file:{}".format(file_path))
 
 def generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return):
     pyboost_op_header_str = template.PYBOOST_BASE_OP_DEFINE_TEMPLATE.replace(op_name=op_name_str,
@@ -287,6 +296,9 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
     Generate pyboost op cpp code from yaml.
     """
+    clean_auto_generate_dir(work_path, "mindspore/ccsrc/kernel/pyboost/auto_generate/")
+    clean_auto_generate_dir(work_path, "mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/")
+
     all_ops = []
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
