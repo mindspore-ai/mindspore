@@ -54,7 +54,8 @@ std::map<size_t, std::string> OutputNames = {{kVarIndex, "var"}};
 
 bool SparseApplyAdagradDAGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = static_cast<size_t>(GetValue<int64_t>(primitive_->GetAttr("batch_rank")));
+  auto batch_rank = primitive_->HasAttr("batch_rank") ? GetValue<int64_t>(primitive_->GetAttr("batch_rank")) : 0;
+  batch_rank_ = static_cast<size_t>(batch_rank);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For'" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;

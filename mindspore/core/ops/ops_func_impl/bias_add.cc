@@ -47,7 +47,7 @@ void CheckShapeValid(const PrimitivePtr &primitive, const std::vector<AbstractBa
     return;
   }
 
-  auto data_format_ptr = input_args[kInputIndex1]->GetValue();
+  auto data_format_ptr = input_args[kInputIndex2]->GetValue();
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   auto data_format_opt = GetScalarValue<int64_t>(data_format_ptr);
   if (!data_format_opt.has_value()) {

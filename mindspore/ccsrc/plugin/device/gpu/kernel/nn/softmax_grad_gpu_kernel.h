@@ -72,7 +72,6 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
     std::function<bool(SoftmaxGradGpuKernelMod *, const std::vector<KernelTensor *> &,
                        const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &, void *)>;
 
- private:
   void InitSizeByAxis(const std::vector<size_t> input_shape, const int axis) {
     axis_ = axis;
     if (axis_ < 0) {
@@ -106,9 +105,6 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
     output_size_ = input_size_;
   }
 
-  SoftmaxGradGpuLaunchFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, SoftmaxGradGpuLaunchFunc>> func_list_;
-
   cudnnHandle_t cudnn_handle_{nullptr};
   cudnnTensorDescriptor_t y_desc_{nullptr};
   cudnnSoftmaxAlgorithm_t algo_{CUDNN_SOFTMAX_ACCURATE};
@@ -128,6 +124,10 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   size_t height_{0};
   size_t width_{0};
   size_t type_id_size_{0};
+  SoftmaxGradGpuLaunchFunc kernel_func_;
+
+ private:
+  static std::vector<std::pair<KernelAttr, SoftmaxGradGpuLaunchFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

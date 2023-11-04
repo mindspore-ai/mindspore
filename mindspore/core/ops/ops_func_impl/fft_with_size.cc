@@ -156,18 +156,21 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(y_shape);
 }
 
-std::set<TypePtr> get_input_types(std::unordered_map<TypePtr, TypePtr> types) {
+std::set<TypePtr> get_input_types(std::unordered_map<TypeId, TypePtr> types) {
   std::set<TypePtr> keys;
   for (const auto &t : types) {
-    keys.insert(t.first);
+    keys.insert(TypeIdToType(t.first));
   }
   return keys;
 }
-const std::unordered_map<TypePtr, TypePtr> kRfftTypes{
-  {kFloat32, kComplex64}, {kFloat64, kComplex128}, {kUInt8, kComplex64}, {kInt8, kComplex64},
-  {kInt16, kComplex64},   {kInt32, kComplex64},    {kInt64, kComplex64}, {kBool, kComplex64}};
-const std::unordered_map<TypePtr, TypePtr> kFftTypes{{kComplex64, kComplex64}, {kComplex128, kComplex128}};
-const std::unordered_map<TypePtr, TypePtr> kIrfftTypes{{kComplex64, kFloat32}, {kComplex128, kFloat64}};
+const std::unordered_map<TypeId, TypePtr> kRfftTypes{
+  {kNumberTypeFloat32, kComplex64}, {kNumberTypeFloat64, kComplex128}, {kNumberTypeUInt8, kComplex64},
+  {kNumberTypeInt8, kComplex64},    {kNumberTypeInt16, kComplex64},    {kNumberTypeInt32, kComplex64},
+  {kNumberTypeInt64, kComplex64},   {kNumberTypeBool, kComplex64}};
+const std::unordered_map<TypeId, TypePtr> kFftTypes{{kNumberTypeComplex64, kComplex64},
+                                                    {kNumberTypeComplex128, kComplex128}};
+const std::unordered_map<TypeId, TypePtr> kIrfftTypes{{kNumberTypeComplex64, kFloat32},
+                                                      {kNumberTypeComplex128, kFloat64}};
 
 /*
  * fft/ifft mode: !real
@@ -195,16 +198,16 @@ TypePtr FFTWithSizeFuncImpl::InferType(const PrimitivePtr &primitive,
     if (!inverse) {
       auto valid_types = get_input_types(kRfftTypes);
       (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in rfft mode", valid_types, prim_name);
-      out_type = kRfftTypes.at(input_type);
+      out_type = kRfftTypes.at(input_type->type_id());
     } else {
       auto valid_types = get_input_types(kIrfftTypes);
       (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in irfft mode", valid_types, prim_name);
-      out_type = kIrfftTypes.at(input_type);
+      out_type = kIrfftTypes.at(input_type->type_id());
     }
   } else {
     auto valid_types = get_input_types(kFftTypes);
     (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in fft/ifft mode", valid_types, prim_name);
-    out_type = kFftTypes.at(input_type);
+    out_type = kFftTypes.at(input_type->type_id());
   }
 
   return std::make_shared<TensorType>(out_type);

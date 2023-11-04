@@ -20,16 +20,12 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 2;
-constexpr size_t OUTPUT_NUM = 1;
 
 bool SoftmaxGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_),
                                       kernel_name_ + "create input_descriptor failed");
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), INPUT_NUM, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), OUTPUT_NUM, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -51,26 +47,20 @@ int SoftmaxGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   ResetResource();
   auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   shape_size_ = input_shape.size();
-  if (kernel_name_ == "LogSoftmaxGrad") {
-    algo_ = CUDNN_SOFTMAX_LOG;
-    auto axis = LongToInt(GetValue<int64_t>(primitive_->GetAttr("axis")));
-    InitSizeByAxis(input_shape, axis);
-  } else {
-    algo_ = CUDNN_SOFTMAX_ACCURATE;
-    std::vector<int> axis;
-    auto axis_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
-    (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
-                         [](const int64_t &value) { return LongToInt(value); });
-    if (axis.size() < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
-                        << axis.size();
-    }
-    if (axis.size() > 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
-                        << axis.size();
-    }
-    InitSizeByAxis(input_shape, axis[0]);
+  algo_ = CUDNN_SOFTMAX_ACCURATE;
+  std::vector<int> axis;
+  auto axis_me = GetValue<std::vector<int64_t>>(primitive_->GetAttr("axis"));
+  (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
+                       [](const int64_t &value) { return LongToInt(value); });
+  if (axis.size() < 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
+                      << axis.size();
   }
+  if (axis.size() > 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be greater than 1, but got "
+                      << axis.size();
+  }
+  InitSizeByAxis(input_shape, axis[0]);
   use_workspace_ = (axis_ != static_cast<int>(input_shape_.size()) - 1);
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(y_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
@@ -142,6 +132,5 @@ std::vector<KernelAttr> SoftmaxGradGpuKernelMod::GetOpSupport() {
 }
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SoftmaxGrad, SoftmaxGradGpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogSoftmaxGrad, SoftmaxGradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
