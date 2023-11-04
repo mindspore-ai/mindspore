@@ -119,7 +119,10 @@ class Graph {
   PyCodeObject *GetCodeObj() const { return reinterpret_cast<PyCodeObject *>(co_.ptr()); }
   const py::object &GetGlobals() const { return f_globals_; }
 
-  void StopTraceAt(int bci, StopTraceReason reason) { stop_trace_info_ = {bci, reason}; }
+  void StopTraceAt(int bci, StopTraceReason reason) {
+    MS_EXCEPTION_IF_CHECK_FAIL(bci >= 0 && bci < static_cast<int>(instr_nodes_.size()), "bci out of range !");
+    stop_trace_info_ = {bci, reason};
+  }
   auto GetStopTraceAt() const { return stop_trace_info_.bci == -1 ? nullptr : instr_nodes_[stop_trace_info_.bci]; }
   bool GetLoopInfo() const { return stop_trace_info_.reason == StopTraceReason::kStopTraceLoop_Unsupported; }
   StopTraceReason GetStopTraceReason() const { return stop_trace_info_.reason; }

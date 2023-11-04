@@ -89,8 +89,8 @@ class InstrNode : public AbstractNode {
   void SetOparg(int arg) { this->arg_ = arg; }
   void SetOpcode(int op) { this->op_ = op; }
   void SetLineNo(int l) { this->line_ = l; }
-  void SetName(const char *n) { name_ = n ? n : ""; }
-  const char *GetName() const { return name_.c_str(); }
+  void SetName(const std::string &n) { name_ = n; }
+  const std::string &GetName() const { return name_; }
   std::string to_str() const override;
 
   int bci() const { return bci_; }
@@ -124,9 +124,9 @@ class ValueNode : public InstrNode {
   void SetVobj(AObject *vobj) { vobj_ = vobj; }
   const auto &GetVobj() const { return vobj_; }
 
-  void store_attr(const char *nam, ValueNode *v) { attr_ = true; }
-  void del_attr(const char *nam) {}
-  AObject *get_attr(const char *nam) { return (!attr_ && vobj_) ? vobj_->GetAttr(nam) : nullptr; }
+  void store_attr(const std::string &nam, ValueNode *v) { attr_ = true; }
+  void del_attr(const std::string &nam) {}
+  AObject *get_attr(const std::string &nam) { return (!attr_ && vobj_) ? vobj_->GetAttr(nam) : nullptr; }
 
   void store_subscr(ValueNode *sub, ValueNode *v) { subscr_ = true; }
   void del_subscr(ValueNode *sub) {}
@@ -183,15 +183,13 @@ class ParamNode : public ValueNode {
 class CallNode : public ValueNode {
  public:
   CallNode(int opcode, int oparg, const std::vector<ValueNode *> &inputs)
-      : ValueNode(Call, nullptr, opcode, oparg, inputs), sub_graph_(nullptr), extra_oper_(nullptr), stack_size_(0) {}
+      : ValueNode(Call, nullptr, opcode, oparg, inputs), sub_graph_(nullptr), extra_oper_(nullptr) {}
   virtual ~CallNode() {}
 
   Graph *GetSubGraph() const { return sub_graph_; }
   void SetSubGraph(Graph *n) { sub_graph_ = n; }
   InstrNode *GetExtraOper() const { return extra_oper_; }
   void SetExtraOper(InstrNode *root) { extra_oper_ = root; }
-  void SetStackSize(int i) { stack_size_ = i; }
-  int GetStackSize() const { return stack_size_; }
   std::string to_str() const override;
   void SetInlineReason(InlineReason r) { reason_ = r; }
   InlineReason GetInlineReason() { return reason_; }
@@ -209,8 +207,6 @@ class CallNode : public ValueNode {
    */
   InstrNode *extra_oper_;  // handle parameters by bytecode
 
-  // current stack size, must greater than inputs.size()
-  int stack_size_;
   InlineReason reason_ = InlineReason::kInlineUnknown;
 
   std::vector<ValueNode *> params_;  // handle parameters by bytecode

@@ -898,6 +898,9 @@ PyObject *OpTrace::Retrieve(PTraceContext context) {
   std::vector<PyObject *> params;
   auto iter = std::find_if(params_.begin(), params_.end(), [&params, &context](const TracePtr &p) {
     auto param = p->Retrieve(context);
+    if (param == nullptr) {
+      return true;
+    }
     if (py::isinstance<mindspore::tensor::Tensor>(param)) {
       mindspore::tensor::TensorPtr tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(param);
       tensor_ptr->data_sync(true);
