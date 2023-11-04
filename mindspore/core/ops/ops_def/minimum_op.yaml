@@ -12,3 +12,4 @@ minimum:
     returns:
         output: 
             dtype: tensor
+    pyboost: True

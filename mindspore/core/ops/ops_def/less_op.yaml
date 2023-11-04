@@ -12,3 +12,4 @@ less:
   returns:
     output:
       dtype: tensor
+  pyboost: True

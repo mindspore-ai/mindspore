@@ -13,3 +13,4 @@ greater_equal:
         output: 
             dtype: tensor
             type_cast: bool
+    pyboost: True

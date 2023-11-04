@@ -198,3 +198,41 @@ BroadCastToExt:
     mode: normal
   Ascend:
     mode: view
+
+Maximum:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+Minimum:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+GreaterEqual:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+    aclnn: aclnnGeTensor
+
+Less:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+    aclnn: aclnnLtTensor
