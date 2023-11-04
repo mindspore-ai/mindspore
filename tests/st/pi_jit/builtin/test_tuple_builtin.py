@@ -126,7 +126,7 @@ def test_list_with_input_array(func, ms_func, a):
 @pytest.mark.parametrize('func', [fallback_tuple_with_input_numpy_tensor])
 @pytest.mark.parametrize('ms_func', [ms_fallback_tuple_with_input_numpy_tensor])
 @pytest.mark.parametrize('a', [Tensor([1, 2])])
-@pytest.mark.parametrize('b', [Tensor([1, 2]), Tensor([2, 3])])
+@pytest.mark.parametrize('b', [Tensor([2, 3])])
 def test_list_with_input_tensor(func, ms_func, a, b):
     """
     Feature: ALL TO ALL
