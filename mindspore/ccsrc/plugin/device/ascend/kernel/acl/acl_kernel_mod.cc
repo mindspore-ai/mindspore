@@ -107,7 +107,7 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
     auto shape = input->GetShapeVector();
     if (!IsValidShape(shape)) {
       // early stop if any input shape contains -1/-2, which means input shape is dynamic
-      MS_LOG(INTERNAL_EXCEPTION) << "In Resize function, input shape must be valid!";
+      MS_LOG(INTERNAL_EXCEPTION) << "For " << kernel_name_ << ", Resize failed because of invalid shape: " << shape;
     }
     PackageInput(i, format, &shape);
   }

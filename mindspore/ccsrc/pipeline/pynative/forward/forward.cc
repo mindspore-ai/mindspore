@@ -185,7 +185,7 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
   if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
     op_run_info->base_op_run_info.need_earse_cache = true;
   }
-  if (op_run_info->base_op_run_info.has_dynamic_output && op_run_info->base_op_run_info.op_name != kGetNextOpName) {
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
     backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
   }
   return backend_op_run_info;

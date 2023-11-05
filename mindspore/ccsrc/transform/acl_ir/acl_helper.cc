@@ -32,6 +32,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "transform/acl_ir/acl_adapter_info.h"
 #include "transform/acl_ir/ge_adapter_info.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -330,6 +331,8 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
   auto input_supported_dtypes = info->input_supported_dtypes();
   size_t num_real_inputs = common::AnfAlgo::GetInputTensorNum(cnode);
   size_t ms_real_idx = 0;  // index of actual input argument
+  auto value_depend_indices = ops::GetInputDependValueList(common::AnfAlgo::GetCNodePrimitive(cnode));
+
   for (size_t ms_proto_idx = 0; ms_proto_idx < info->GetNumInputsOfMsOpProto(); ++ms_proto_idx) {
     // skip attribute converted input
     if (NeedCheckAttrToInput(cnode, info->attr_input_map(), ms_proto_idx)) {
@@ -352,6 +355,23 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
 
     auto &ge_input_info = opt_ge_input_info.value();
     auto base_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, ms_real_idx);
+    if (base_type == kTypeUnknown) {
+      // if the input is a empty sequence, the base_type will be kTypeUnKnown
+      if (value_depend_indices.find(static_cast<int64_t>(ms_real_idx)) != value_depend_indices.end()) {
+        auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, ms_real_idx);
+        auto abs = kernel_with_index.first->abstract();
+        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+        if (abs_seq == nullptr || abs_seq->size() != 0) {
+          MS_LOG(EXCEPTION) << "when base_type is kTypeUnknown, a empty sequence is expected, but got: "
+                            << abs->ToString() << ".";
+        }
+      }
+
+      // we do consider the empty sequence could only be int64_t when it's an value depended arg
+      base_type = kNumberTypeInt64;
+      MS_LOG(DEBUG) << "Empty sequence is detected and change the base_type from kTypeUnknown to kNumberTypeInt64.";
+    }
+
     if (!std::any_of(
           input_supported_dtypes[ms_proto_idx].begin(), input_supported_dtypes[ms_proto_idx].end(),
           [base_type, ge_input_info](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
