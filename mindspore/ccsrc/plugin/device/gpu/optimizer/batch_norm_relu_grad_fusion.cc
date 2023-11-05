@@ -47,7 +47,7 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_name = common::AnfAlgo::GetCNodeName(node);
   size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
-  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "data_format");
   if (is_train_idx == SIZE_MAX || format_idx == SIZE_MAX) {
     return nullptr;
   }

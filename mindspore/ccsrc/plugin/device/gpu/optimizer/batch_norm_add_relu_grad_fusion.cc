@@ -123,7 +123,7 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
 bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  size_t format_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(node), "format");
+  size_t format_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(node), "data_format");
   if (format_idx == SIZE_MAX) {
     return false;
   }

@@ -16,21 +16,21 @@
 #include "plugin/device/gpu/optimizer/batch_norm_relu_fusion.h"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "mindspore/core/ops/sequence_ops.h"
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
-#include "plugin/device/gpu/hal/device/kernel_info_setter.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ir/primitive.h"
 #include "kernel/graph_kernel_info.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 
 namespace mindspore {
 namespace opt {
@@ -69,7 +69,7 @@ const AnfNodePtr BatchNormReluFusion::Process(const FuncGraphPtr &graph, const A
 
   auto kernel_name = common::AnfAlgo::GetCNodeName(batch_norm);
   size_t is_train_idx = ops::GetInputIndexByName(kernel_name, "is_training");
-  size_t format_idx = ops::GetInputIndexByName(kernel_name, "format");
+  size_t format_idx = ops::GetInputIndexByName(kernel_name, "data_format");
   if (is_train_idx == SIZE_MAX || format_idx == SIZE_MAX) {
     return nullptr;
   }

@@ -44,6 +44,23 @@ namespace ops {
 namespace {
 const int64_t kInputsRank = 3;
 const int64_t kSeqLenRank = 1;
+std::vector<abstract::BaseShapePtr> GetOutputsShape(const ShapeVector &x_shape, const int64_t max_shape_value) {
+  ShapeVector decoded_indices_shape = {max_shape_value, 2};
+  ShapeVector decoded_values_shape = {max_shape_value};
+  ShapeVector decoded_shape_shape = {2};
+  ShapeVector log_probability_shape =
+    IsDynamicRank(x_shape) ? ShapeVector{abstract::TensorShape::kShapeDimAny, 1} : ShapeVector{x_shape[1], 1};
+
+  auto decoded_indices_shape_ptr = std::make_shared<abstract::TensorShape>(std::move(decoded_indices_shape));
+  auto decoded_values_shape_ptr = std::make_shared<abstract::TensorShape>(std::move(decoded_values_shape));
+  auto decoded_shape_shape_ptr = std::make_shared<abstract::TensorShape>(std::move(decoded_shape_shape));
+  auto log_probability_shape_ptr = std::make_shared<abstract::TensorShape>(std::move(log_probability_shape));
+
+  std::vector<abstract::BaseShapePtr> out_shapes{decoded_indices_shape_ptr, decoded_values_shape_ptr,
+                                                 decoded_shape_shape_ptr, log_probability_shape_ptr};
+
+  return out_shapes;
+}
 }  // namespace
 
 void CTCGreedyDecoder::Init(const bool merge_repeated) { this->set_merge_repeated(merge_repeated); }
@@ -62,6 +79,18 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
+    auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+    if (x_shape.size() != kInputsRank) {
+      MS_LOG(EXCEPTION) << "Rank of " << primitive->name() << "'s input must be " << kInputsRank;
+    }
+    auto max_shape_value = x_shape[kInputIndex0] * x_shape[kInputIndex1];
+    auto out_shapes = GetOutputsShape(x_shape, max_shape_value);
+    return std::make_shared<abstract::TupleShape>(std::move(out_shapes));
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    // Infer Shape for frontend
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
     auto inputs_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
@@ -92,23 +121,20 @@ class CTCGreedyDecoderInfer : public abstract::OpInferBase {
                                << "but now inputs batch_size: " << inputs_x_shape[1]
                                << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
     }
-    int64_t max_shape_value =
-      IsDynamicRank(inputs_x_shape) ? abstract::TensorShape::kShapeDimAny : inputs_x_shape[0] * inputs_x_shape[1];
-    if (max_shape_value < 0) {
-      max_shape_value = abstract::TensorShape::kShapeDimAny;
-    }
-    ShapeVector decoded_indices_shape = {max_shape_value, 2};
-    ShapeVector decoded_values_shape = {max_shape_value};
-    ShapeVector decoded_shape_shape = {2};
-    ShapeVector log_probability_shape = IsDynamicRank(inputs_x_shape)
-                                          ? ShapeVector{abstract::TensorShape::kShapeDimAny, 1}
-                                          : ShapeVector{inputs_x_shape[1], 1};
-    auto decoded_indices_shape_ptr = std::make_shared<abstract::Shape>(decoded_indices_shape);
-    auto decoded_values_shape_ptr = std::make_shared<abstract::Shape>(decoded_values_shape);
-    auto decoded_shape_shape_ptr = std::make_shared<abstract::Shape>(decoded_shape_shape);
-    auto log_probability_shape_ptr = std::make_shared<abstract::Shape>(log_probability_shape);
-    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{
-      decoded_indices_shape_ptr, decoded_values_shape_ptr, decoded_shape_shape_ptr, log_probability_shape_ptr});
+    // Get out shapes
+    int64_t max_shape_value = abstract::TensorShape::kShapeDimAny;
+    auto out_shapes = GetOutputsShape(inputs_x_shape, max_shape_value);
+    // Get log_probability_type
+    auto x_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 0);
+    auto log_probability_type = x_ptr->element()->GetType();
+    // Get outputs
+    auto decoded_indices = std::make_shared<abstract::AbstractTensor>(kInt64, out_shapes[kInputIndex0]);
+    auto decoded_values = std::make_shared<abstract::AbstractTensor>(kInt64, out_shapes[kInputIndex1]);
+    auto decoded_shape = std::make_shared<abstract::AbstractTensor>(kInt64, out_shapes[kInputIndex2]);
+    auto log_probability = std::make_shared<abstract::AbstractTensor>(log_probability_type, out_shapes[kInputIndex3]);
+    AbstractBasePtrList elements{decoded_indices, decoded_values, decoded_shape, log_probability};
+
+    return std::make_shared<abstract::AbstractTuple>(std::move(elements));
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
