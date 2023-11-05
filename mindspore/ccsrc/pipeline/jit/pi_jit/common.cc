@@ -40,8 +40,8 @@ namespace graph {
 static Py_tss_t *tss = NULL;
 
 void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard);
-void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard);
-static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard);
+void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach);
+static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach);
 static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_graph_mode);
 
 // jit compiler initialize
@@ -363,8 +363,9 @@ static PyFrameObject *PrepareCallCompiledCallable(PyThreadState *tstate, const P
 static void GuardForFrame(PyFrameObject *frame, const OptCodePtr &oc, const GraphJitConfig &conf) {
   const char *code_name = PyUnicode_AsUTF8(frame->f_code->co_name);
   AddConfigToGuard(conf, oc->GetGuard());
-  AddGuardForParam(frame, oc->GetGuard());
-  AddGradFlagForParam(pynative::PyNativeExecutor::GetInstance()->grad_flag(), oc->GetGuard());
+  AddGuardForParam(frame, oc->GetGuard(), conf.GetBoolConfig(GraphJitConfig::kGuardDetachObject));
+  AddGradFlagForParam(pynative::PyNativeExecutor::GetInstance()->grad_flag(), oc->GetGuard(),
+                      conf.GetBoolConfig(GraphJitConfig::kGuardDetachObject));
   if (conf.GetBoolConfig(GraphJitConfig::kPrintGuard)) {
     GRAPH_JIT_LOG_F("Guard on %s by %s!\n", code_name, oc->GetGuard()->GetDescript().c_str());
     return;
@@ -480,7 +481,7 @@ void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard) {
   guard->UpdateConfig(cfg);
 }
 
-void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard) {
+void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   int argc = f->f_code->co_argcount + f->f_code->co_kwonlyargcount;
   PyTupleObject *vargs = NULL;
   PyDictObject *kwargs = NULL;
@@ -493,16 +494,25 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard) {
   for (int i = 0; i < argc; ++i) {
     RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[i], mindspore::jit::graph::TraceType::Param, i);
     guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    if (detach) {
+      ptr->Detach();
+    }
   }
   if (vargs != NULL) {
     RootTracePtr ptr =
       std::make_shared<RootTrace>(f->f_localsplus[argc], mindspore::jit::graph::TraceType::Param, argc);
     guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    if (detach) {
+      ptr->Detach();
+    }
   }
   if (kwargs != NULL) {
     RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[argc + (vargs ? 1 : 0)],
                                                    mindspore::jit::graph::TraceType::Param, argc + (vargs ? 1 : 0));
     guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+    if (detach) {
+      ptr->Detach();
+    }
   }
   for (int i = 0; f->f_code->co_cell2arg && i < PyTuple_GET_SIZE(f->f_code->co_cellvars); ++i) {
     Py_ssize_t arg = f->f_code->co_cell2arg[i];
@@ -510,11 +520,14 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard) {
       RootTracePtr ptr = std::make_shared<RootTrace>(
         f->f_localsplus[f->f_code->co_nlocals + i], mindspore::jit::graph::TraceType::Param, f->f_code->co_nlocals + i);
       guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GDeduce, false);
+      if (detach) {
+        ptr->Detach();
+      }
     }
   }
 }
 
-static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard) {
+static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) {
   CustomizedTracePtr ptr = std::make_shared<CustomizedTrace>(
     grad_flag ? Py_True : Py_False,
     [](PTraceContext context) -> PyObject * {
@@ -528,6 +541,9 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard) {
              std::string("}(type:") + std::to_string(TraceType::Customized) + std::string(")");
     });
   guard->GuardOn(ptr, mindspore::jit::graph::GuardLevel::GEqual, true);
+  if (detach) {
+    ptr->Detach();
+  }
 }
 
 static void CallGraphCompiler(JitCompileResults *jcr, PyFunctionObject *func, const PyFrameObject *frame) {
