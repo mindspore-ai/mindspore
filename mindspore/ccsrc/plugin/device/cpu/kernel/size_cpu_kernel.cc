@@ -34,11 +34,6 @@ bool SizeCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std
     MS_LOG_ERROR << "Can not match kernel based on given attr!";
     return false;
   }
-
-  if (Resize(inputs, outputs) == KRET_RESIZE_FAILED) {
-    MS_LOG_ERROR << "Resize failed!";
-    return false;
-  }
   return true;
 }
 
