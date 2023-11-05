@@ -501,7 +501,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
           (!depend_list.empty() && depend_list.find(index) != depend_list.end())) {
         graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
       }
-    } else if (!op_info.use_dynamic_shape_process) {
+    } else {
       graph_info += value->ToString();
     }
 
