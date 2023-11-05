@@ -19,6 +19,7 @@
 #include <set>
 #include <utility>
 #include <complex>
+#include <functional>
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/sparse_add.h"
 
@@ -198,11 +199,14 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
   (void)out_indices_shape.emplace_back(SizeToLong(indices_column_));
   (void)out_values_shape.emplace_back(SizeToLong(whole_values.size()));
   outputs[kSumIndicesIdx]->SetShapeVector(out_indices_shape);
-  outputs[kSumIndicesIdx]->set_size(whole_indices.size() * UnitSizeInBytes(outputs[kSumIndicesIdx]->dtype_id()));
+  auto ele_size =
+    LongToSize(std::accumulate(out_indices_shape.begin(), out_indices_shape.end(), 1, std::multiplies<int64_t>()));
+  outputs[kSumIndicesIdx]->set_size(ele_size * UnitSizeInBytes(outputs[kSumIndicesIdx]->dtype_id()));
   outputs[kSumValuesIdx]->SetShapeVector(out_values_shape);
-  outputs[kSumValuesIdx]->set_size(indices_column_ * UnitSizeInBytes(outputs[kSumValuesIdx]->dtype_id()));
+  outputs[kSumValuesIdx]->set_size(whole_values.size() * UnitSizeInBytes(outputs[kSumValuesIdx]->dtype_id()));
   outputs[kSumShapeIdx]->SetShapeVector(dense_shape_);
-  outputs[kSumShapeIdx]->set_size(whole_values.size() * UnitSizeInBytes(outputs[kSumShapeIdx]->dtype_id()));
+  ele_size = LongToSize(std::accumulate(dense_shape_.begin(), dense_shape_.end(), 1, std::multiplies<int64_t>()));
+  outputs[kSumShapeIdx]->set_size(ele_size * UnitSizeInBytes(outputs[kSumShapeIdx]->dtype_id()));
 
   return true;
 }
