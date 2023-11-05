@@ -180,7 +180,8 @@ std::pair<bool, size_t> NativeGpuKernelModFactory::GpuKernelAttrCheck(const std:
     MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
     return std::make_pair(false, 0);
   }
-  if ((iter->second).size() == 1 && (iter->second)[0].first.GetInputSize() == 0) {
+  if (((iter->second).size() == 1 && (iter->second)[0].first.GetInputSize() == 0) ||
+      (iter->second)[0].first.GetSkipCheck()) {
     return std::make_pair(true, 0);
   }
 
