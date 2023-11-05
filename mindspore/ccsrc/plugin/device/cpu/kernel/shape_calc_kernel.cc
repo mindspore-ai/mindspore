@@ -48,7 +48,8 @@ int ShapeCalcCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 
     auto type_id = inputs[i]->dtype_id();
     if (type_id != kNumberTypeInt32 && type_id != kNumberTypeInt64) {
-      MS_LOG(EXCEPTION) << "For ShapeCalc input should be int32 or int64, but got " << TypeIdToString(type_id);
+      MS_LOG(EXCEPTION) << "For ShapeCalc input should be int32 or int64, but got " << TypeIdToString(type_id)
+                        << "input num:" << i;
     }
     inputs_type_.push_back(type_id);
   }

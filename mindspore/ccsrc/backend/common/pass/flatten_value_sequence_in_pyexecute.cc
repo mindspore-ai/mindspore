@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass/flatten_value_sequence_in_value_node.h"
+#include "backend/common/pass/flatten_value_sequence_in_pyexecute.h"
 
 #include <algorithm>
 #include <memory>
@@ -73,7 +73,7 @@ void FlattenSequence(const ValueSequencePtr &value_sequence, const FuncGraphPtr 
   }
 }
 }  // namespace
-const AnfNodePtr FlattenValueSequenceInValueNode::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+const AnfNodePtr FlattenValueSequenceInPyExecute::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                           const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);

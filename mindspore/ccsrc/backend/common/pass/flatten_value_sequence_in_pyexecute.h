@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_VALUE_NODE_H_
-#define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_VALUE_NODE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_PY_EXECUTE_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_PY_EXECUTE_H_
 
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT FlattenValueSequenceInValueNode : public PatternProcessPass {
+class BACKEND_EXPORT FlattenValueSequenceInPyExecute : public PatternProcessPass {
  public:
-  explicit FlattenValueSequenceInValueNode(bool multigraph = true)
-      : PatternProcessPass("max_pool_with_argmax_v2_fusion", multigraph) {}
-  ~FlattenValueSequenceInValueNode() override = default;
+  explicit FlattenValueSequenceInPyExecute(bool multigraph = true)
+      : PatternProcessPass("flatten_value_sequence_in_pyexecute", multigraph) {}
+  ~FlattenValueSequenceInPyExecute() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_VALUE_NODE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_PASS_FLATTEN_VALUE_SEQUENCE_IN_PY_EXECUTE_H_

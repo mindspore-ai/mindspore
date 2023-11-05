@@ -739,20 +739,30 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 void KernelActor::InferShapeAndResize() {
   MS_LOG(DEBUG) << "Begin InferShape for kernel: " << kernel_->fullname_with_scope();
   // 1. Infer operator's output's Shape.
-  auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
   if (common::AnfAlgo::CheckPrimitiveType(kernel_, prim::kPrimPyExecute)) {
     MS_LOG(DEBUG) << "Infer shape for pyexecute kernel:" << kernel_->DebugString();
-
+    MS_LOG(WARNING) << "actor:" << GetAID() << " output device address:" << output_device_tensors_[0]
+                    << " type:" << output_device_tensors_[0]->kernel_tensor()->GetType()->ToString()
+                    << " type id:" << output_device_tensors_[0]->kernel_tensor()->type_id();
     opt::dynamic_shape::InferOp(kernel_, &input_device_tensors_);
     MS_EXCEPTION_IF_NULL(kernel_->abstract());
-    base_shape = kernel_->abstract()->BuildShape();
-  }
-  MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
-                << ", shape: " << base_shape->ToString();
-  MS_EXCEPTION_IF_NULL(base_shape);
+    if (output_device_tensors_.empty() || output_device_tensors_[0] == nullptr ||
+        output_device_tensors_[0]->kernel_tensor() == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid output device tensor for actor:" << GetAID()
+                        << " output size:" << output_device_tensors_.size();
+    }
+    output_device_tensors_[0]->kernel_tensor()->SetType(kernel_->abstract()->BuildType());
+    output_device_tensors_[0]->kernel_tensor()->SetShape(kernel_->abstract()->BuildShape());
 
-  // 2. Update shape of output kernel tensor.
-  opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
+  } else {
+    auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+    MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
+                  << ", shape: " << base_shape->ToString();
+    MS_EXCEPTION_IF_NULL(base_shape);
+
+    // 2. Update shape of output kernel tensor.
+    opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
+  }
 
   // 3. Resize kernel mod.
   MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();

@@ -149,7 +149,10 @@ void AbstractActor::FetchInputByTensorStore(
         ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
-
+    MS_LOG(DEBUG) << "Actor:" << GetAID()
+                  << " fetch device tensor store by node:" << device_tensor_store_key.second->DebugString()
+                  << " node addr:" << device_tensor_store_key.second.get() << " device address:" << device_tensor
+                  << " device type:" << device_contexts_[0]->GetDeviceType() << " dtype:" << device_tensor->type_id();
     if ((device_tensor_store_key.first >= input_device_tensors->size()) ||
         (device_tensor_store_key.first >= memory_free_tensors->size())) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");

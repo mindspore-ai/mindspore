@@ -380,6 +380,7 @@ void AnyTypeKernelActor::RunForGraphInput(OpContext<DeviceTensor> *const context
         if (!node_pair.first->isa<CNode>()) {
           continue;
         }
+        MS_LOG(DEBUG) << "Check for node:" << node_pair.first->DebugString();
         const auto &cnode = node_pair.first->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
         if (cnode->HasAttr(kAttrReplaceRealKernelInBackend)) {
