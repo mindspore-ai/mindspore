@@ -44,9 +44,6 @@ int GatherGpuKernelMod::Resize(const std::vector<kernel::KernelTensor *> &inputs
   output_shapes_ = outputs[kIndexZero]->GetShapeVector();
 
   axis_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
-  if (axis_ < 0) {
-    axis_ += SizeToLong(indices_shapes_.size());
-  }
   if (inputs.size() == kSizeFour) {
     batch_dims_ = inputs[kIndex3]->GetValueWithCheck<int64_t>();
     if (batch_dims_ < 0) {
