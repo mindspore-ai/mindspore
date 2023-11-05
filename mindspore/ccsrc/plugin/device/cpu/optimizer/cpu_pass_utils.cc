@@ -41,6 +41,11 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(origin_shape);
   std::string input_format = format;
   std::string output_format = format;
+
+  if (origin_shape->isa<abstract::SequenceShape>()) {
+    MS_LOG(EXCEPTION) << "The Cast op doesn't support Tuple/List input, the input node: " << input->DebugString();
+  }
+
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
   MS_EXCEPTION_IF_NULL(cast);
   // set kernel build info

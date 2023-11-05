@@ -98,6 +98,12 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
   shape_ = shape;
   // Note: for performance, the function `SetShape` uses type_id_, so need to SetType first.
   if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
+    // The shape type check will affect the performance. The following check will be deleted after the framework is
+    // stable.
+    if (!shape_->isa<abstract::TensorShape>()) {
+      MS_LOG(EXCEPTION) << "Expected TensorShape for SetShape, but got: " << shape_->type_name() << ", "
+                        << shape_->ToString();
+    }
     shape_vector_ = shape_->GetShapeVector();
   } else if (type_id_ == kObjectTypeTuple || type_id_ == kObjectTypeList) {
     if (shape->isa<abstract::DynamicSequenceShape>()) {
@@ -106,7 +112,8 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
     }
     const auto &seq_shape = shape_->cast<abstract::SequenceShapePtr>();
     if (seq_shape == nullptr) {
-      MS_LOG(EXCEPTION) << "Invalid sequence shape:" << shape_->ToString();
+      MS_LOG(EXCEPTION) << "Expected SequenceShape for SetShape, but got: " << shape_->type_name() << ", "
+                        << shape_->ToString();
     }
     shape_vector_.clear();
     shape_vector_.push_back(seq_shape->size());
@@ -134,27 +141,41 @@ void KernelTensor::CalculateMemSize() {
 }
 
 void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
+  if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
+    shape_vector_ = shape_vector;
+    shape_->SetShapeVector(shape_vector_);
+    return;
+  }
+
   if (type_id_ == kObjectTypeNumber) {
     if (!shape_vector.empty()) {
       MS_LOG(EXCEPTION) << "For Number Type, shape should be empty, but got " << shape_vector;
     }
     return;
   }
-  if (type_id_ != kObjectTypeTensorType && type_id_ != kObjectTypeMapTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor/MapTensor type to set shape vector currently, but got type: "
-                      << TypeIdLabel(type_id_);
-  }
-  shape_vector_ = shape_vector;
-  shape_->SetShapeVector(shape_vector_);
+
+  MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
+                    << TypeIdLabel(type_id_)
+                    << ", please use KernelTensor::SetShape(const abstract::BaseShapePtr &shape) instead.";
 }
 
 void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
-  if (type_id_ != kObjectTypeTensorType && type_id_ != kObjectTypeMapTensorType) {
-    MS_LOG(EXCEPTION) << "Only support a Tensor/MapTensor type to set shape vector currently, but got type: "
-                      << TypeIdLabel(type_id_);
+  if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
+    shape_vector_ = std::move(shape_vector);
+    shape_->SetShapeVector(shape_vector_);
+    return;
   }
-  shape_vector_ = std::move(shape_vector);
-  shape_->SetShapeVector(shape_vector_);
+
+  if (type_id_ == kObjectTypeNumber) {
+    if (!shape_vector.empty()) {
+      MS_LOG(EXCEPTION) << "For Number Type, shape should be empty, but got " << shape_vector;
+    }
+    return;
+  }
+
+  MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
+                    << TypeIdLabel(type_id_)
+                    << ", please use KernelTensor::SetShape(const abstract::BaseShapePtr &shape) instead.";
 }
 
 void KernelTensor::SetType(const TypePtr &type) {
