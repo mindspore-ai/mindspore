@@ -33,7 +33,7 @@ bool LrnCpuKernelMod::GetLrnAttr() {
   depth_radius_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
   bias_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBias));
   alpha_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kAlpha));
-  beta_ = GetValue<int64_t>(KernelMod::primitive_->GetAttr(ops::kDepthRadius));
+  beta_ = GetValue<float>(KernelMod::primitive_->GetAttr(ops::kBeta));
   norm_region_ = GetValue<std::string>(KernelMod::primitive_->GetAttr(ops::kNormRegion));
   if (norm_region_ != "ACROSS_CHANNELS") {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "''s attribute 'norm_region' must be ACROSS_CHANNELS but got "
