@@ -531,9 +531,10 @@ vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddr
       auto output_type = cache_output_address->type_id();
       auto output_format = cache_output_address->format();
       auto address_size = GetTensorDeviceSize(device_context, output_node, shape, output_format, output_type, index);
-      const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-        {output_node, index}, nullptr, address_size, output_format, output_type, shape,
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+      const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
+        real_abstract->GetShape()->Clone(), real_abstract->GetType()->Clone(), real_abstract->GetValue(), nullptr,
+        address_size, output_format, output_type, shape, device_context->device_context_key().device_name_,
+        device_context->device_context_key().device_id_);
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
                     << " addr:" << device_address;

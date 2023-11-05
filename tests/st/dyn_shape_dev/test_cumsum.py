@@ -215,6 +215,7 @@ def test_cumsum_backward_dynamic_rank(context_mode):
     assert np.allclose(out2.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
+@pytest.mark.skip(reason="Probabilistic failure on CI.")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu

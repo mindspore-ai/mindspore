@@ -613,7 +613,7 @@ NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &
     if (!IsDynamic(out_shape) && onehot_axis >= SizeToLong(out_shape.size())) {
       onehot_axis = -1;
     }
-    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value}, {{"axis", MakeValue(onehot_axis)}});
+    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value, ib->Value<int64_t>(onehot_axis)});
     if (x_shape.empty()) {
       dx = ib->Emit("Squeeze", {dx});
     }
