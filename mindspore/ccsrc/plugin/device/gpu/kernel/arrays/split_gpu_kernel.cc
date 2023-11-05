@@ -50,8 +50,6 @@ bool SplitFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &input
 
 bool SplitFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSplitInputsNum, kernel_name_);
-  output_num_ = static_cast<int>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
-  outputs_host_ = std::make_unique<void *[]>(output_num_);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -70,6 +68,8 @@ int SplitFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
+  output_num_ = static_cast<int>(inputs[kIndex2]->GetValueWithCheck<int64_t>());
+  outputs_host_ = std::make_unique<void *[]>(output_num_);
   axis_ = static_cast<int>(inputs[kIndex1]->GetValueWithCheck<int64_t>());
   auto input_shape = inputs[0]->GetShapeVector();
   int dims = SizeToInt(input_shape.size());

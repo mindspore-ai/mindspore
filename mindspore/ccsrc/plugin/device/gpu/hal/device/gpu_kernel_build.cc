@@ -138,16 +138,20 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(kernel);
         std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(kernel);
 
+        MS_LOG(DEBUG) << "Begin Init kernel: " << kernel->fullname_with_scope();
         if (!gpu_kernel_mod->Init(common::AnfAlgo::GetCNodePrimitive(kernel), input_kernel_tensors,
                                   output_kernel_tensors)) {
           MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
                             << kernel->fullname_with_scope() << "] failed.";
         }
+        MS_LOG(DEBUG) << "End Init kernel: " << kernel->fullname_with_scope();
         if (kernel::CheckResizeCondition(kernel)) {
+          MS_LOG(DEBUG) << "Begin Resize in compile phase for kernel: " << kernel->fullname_with_scope();
           if (gpu_kernel_mod->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
             MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Gpu kernel op[" << kernel->fullname_with_scope()
                               << "] Resize failed.";
           }
+          MS_LOG(DEBUG) << "End Resize in compile phase for kernel: " << kernel->fullname_with_scope();
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
       }

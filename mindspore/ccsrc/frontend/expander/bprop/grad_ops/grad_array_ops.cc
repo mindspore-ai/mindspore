@@ -906,8 +906,8 @@ REG_BPROP_BUILDER("ResizeNearestNeighbor").SetUnusedInputs({i0, i4}).SetBody(BOD
   } else {
     shape = ib->ShapeCalc(g_resize_nearest_neighbor, {x})[0];
   }
-  auto out = ib->Emit("ResizeNearestNeighborGrad", {dout, shape, align_corners, half_pixel_centers}, {});
-  return {out};
+  auto dx = ib->Emit("ResizeNearestNeighborGrad", {dout, shape, align_corners, half_pixel_centers}, {});
+  return {dx, ib->OutZeros(ib->GetInput(kIndex1)), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 
 REG_BPROP_BUILDER("GatherNd").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {

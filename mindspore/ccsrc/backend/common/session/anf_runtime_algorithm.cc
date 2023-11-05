@@ -1047,8 +1047,9 @@ KernelTensorPtr AnfRuntimeAlgorithm::CreateOutputKernelTensorWithDeviceInfo(
   MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(type);
   MS_LOG(DEBUG) << "Create output kernel tensor for node: " << node_with_index.first->fullname_with_scope()
-                << ", Shape: " << shape->ToString() << ", Type: " << type->ToString()
-                << ", Value: " << (value ? value->ToString() : "nullptr.") << ", host shape: " << host_shape;
+                << ", output index: " << node_with_index.second << ", Shape: " << shape->ToString()
+                << ", Type: " << type->ToString() << ", Value: " << (value ? value->ToString() : "nullptr")
+                << ", host shape: " << host_shape;
 
   return std::make_shared<kernel::KernelTensor>(shape, type, value, device_ptr, size, format, dtype_id, host_shape,
                                                 device_name, device_id, user_data);
