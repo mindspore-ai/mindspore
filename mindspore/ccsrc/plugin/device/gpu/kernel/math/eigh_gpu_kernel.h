@@ -46,7 +46,7 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
     dtype_ = inputs[0]->dtype_id();
     compute_eigen_vectors_ = GetValue<bool>(primitive_->GetAttr("compute_eigenvectors"));
-    lower_ = GetValue<bool>(primitive_->GetAttr("lower"));
+    lower_ = primitive_->HasAttr("lower") ? GetValue<bool>(primitive_->GetAttr("lower")) : true;
     if (compute_eigen_vectors_) {
       jobz_ = CUSOLVER_EIG_MODE_VECTOR;
     } else {

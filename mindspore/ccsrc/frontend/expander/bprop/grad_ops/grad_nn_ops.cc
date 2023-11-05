@@ -1098,24 +1098,34 @@ REG_BPROP_BUILDER("BiasAddGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) 
   return {tiled_grad, ib->OutZeros(format)};
 });
 
-REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto ksizes_row = GetValue<std::vector<int64_t>>(ib->GetAttr("ksizes"))[2];
-  auto ksizes_col = GetValue<std::vector<int64_t>>(ib->GetAttr("ksizes"))[3];
+REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex2);
+  auto ksizes = ib->GetInput(kIndex1);
+  auto strides = ib->GetInput(kIndex2);
+  auto rates = ib->GetInput(kIndex3);
+  auto padding = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+
   auto x_shape = ib->GetShape(x);
   auto out_shape = ib->GetShape(out);
+
+  auto ksizes_opt = ops::GetArrayValue<int64_t>(ksizes->BuildValue());
+  int64_t ksizes_row = 1;
+  int64_t ksizes_col = 1;
+  if (ksizes_opt.has_value()) {
+    ksizes_row = ksizes_opt.value()[0];
+    ksizes_col = ksizes_opt.value()[1];
+  } else {
+    MS_LOG(EXCEPTION) << "For ExtractImagePatches bprop, get 'ksize' data failed.";
+  }
+
   if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
     auto res = ib->ShapeCalc(std::make_shared<ExtractImagePatchesShapeCalc>(ksizes_row, ksizes_col), {x, out});
     auto x_idx = ib->Cast(ib->Range(ib->Tensor(1, kInt64), res[0], ib->Tensor(1, kInt64)), kFloat32);
     x_idx = ib->Reshape(x_idx, res[1]);
-    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
-                                         {{"ksizes", ib->GetAttr("ksizes")},
-                                          {"strides", ib->GetAttr("strides")},
-                                          {"rates", ib->GetAttr("rates")},
-                                          {"padding", ib->GetAttr("padding")}}),
-                                kInt32);
+
+    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx, ksizes, strides, rates, padding}), kInt32);
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
     auto out_idx = ib->Cast(ib->Range(res[2]), kInt32);
     out_idx = ib->Reshape(out_idx, res[3]);
@@ -1132,8 +1142,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     auto jac = ib->MatMul(sp_tensor, grad, false, false);
     auto dx = ib->Reshape(jac, res[8]);
     dx = ib->Transpose(dx, {2, 3, 0, 1});
-    return {dx};
-
+    return {dx, ib->OutZeros(ksizes), ib->OutZeros(strides), ib->OutZeros(rates), ib->OutZeros(padding)};
   } else {
     auto x_batch = x_shape[0];
     auto x_depth = x_shape[1];
@@ -1142,12 +1151,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     auto x_indices_num = (x_row * x_col) + 1;
     auto x_idx = ib->Tensor(Range(1, x_indices_num), kFloat32);
     x_idx = ib->Reshape(x_idx, {1, 1, x_row, x_col});
-    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx},
-                                         {{"ksizes", ib->GetAttr("ksizes")},
-                                          {"strides", ib->GetAttr("strides")},
-                                          {"rates", ib->GetAttr("rates")},
-                                          {"padding", ib->GetAttr("padding")}}),
-                                kInt32);
+    auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx, ksizes, strides, rates, padding}), kInt32);
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
     auto out_row = out_shape[2];
     auto out_col = out_shape[3];
@@ -1169,7 +1173,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i1}).SetBody(BODYF
     auto jac = ib->MatMul(sp_tensor, grad, false, false);
     auto dx = ib->Reshape(jac, {x_row, x_col, x_batch, x_depth});
     dx = ib->Transpose(dx, {2, 3, 0, 1});
-    return {dx};
+    return {dx, ib->OutZeros(ksizes), ib->OutZeros(strides), ib->OutZeros(rates), ib->OutZeros(padding)};
   }
 });
 

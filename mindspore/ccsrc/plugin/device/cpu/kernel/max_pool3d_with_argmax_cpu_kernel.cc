@@ -38,7 +38,7 @@ bool MaxPool3DWithArgmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &in
   x_dtype_ = inputs[kZero]->dtype_id();
   argmax_dtype_ = outputs[kOne]->dtype_id();
 
-  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kKernelSize));
+  ksize_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr("ksize"));
   strides_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kStrides));
   pads_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kPads));
   dilation_list_ = GetValue<std::vector<int64_t>>(primitive_->GetAttr(ops::kDilation));

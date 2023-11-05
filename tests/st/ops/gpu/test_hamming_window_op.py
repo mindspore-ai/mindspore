@@ -57,7 +57,7 @@ def hamming_window_pynative(periodic, loss):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_blackman_window_graph_int32_true_float32():
+def test_hamming_window_graph_int32_true_float32():
     """
     Feature: ALL To ALL
     Description: test cases for HammingWindow
@@ -69,7 +69,7 @@ def test_blackman_window_graph_int32_true_float32():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_blackman_window_pynative_int64_false_float64():
+def test_hamming_window_pynative_int64_false_float64():
     """
     Feature: ALL To ALL
     Description: test cases for HammingWindow

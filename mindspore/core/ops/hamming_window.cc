@@ -47,12 +47,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
-#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                        \
-  case (DTYPE): {                                                                           \
-    const auto &tensor_value = GetArrayValue<TYPE>(LENGTH_TENSOR).value().ToVector();       \
-    MS_EXCEPTION_IF_CHECK_FAIL(!tensor_value.empty(), "Tensor of window length is empty."); \
-    LENGTH_VALUE = static_cast<int64_t>(tensor_value.front());                              \
-    break;                                                                                  \
+#define WINDOW_LENGTH_CASE(DTYPE, TYPE, LENGTH_VALUE, LENGTH_TENSOR)                          \
+  case (DTYPE): {                                                                             \
+    const auto &tensor_array_value_op = GetArrayValue<TYPE>(LENGTH_TENSOR);                   \
+    if (tensor_array_value_op.has_value()) {                                                  \
+      const auto &tensor_array_value = tensor_array_value_op.value();                         \
+      const auto &tensor_value = tensor_array_value.ToVector();                               \
+      MS_EXCEPTION_IF_CHECK_FAIL(!tensor_value.empty(), "Tensor of window length is empty."); \
+      LENGTH_VALUE = static_cast<int64_t>(tensor_value.front());                              \
+    } else {                                                                                  \
+      MS_LOG(EXCEPTION) << "For 'HammingWindow' , get input data failed.";                    \
+    }                                                                                         \
+    break;                                                                                    \
   }
 
 abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
