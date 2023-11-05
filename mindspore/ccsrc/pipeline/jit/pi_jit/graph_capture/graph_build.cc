@@ -2157,7 +2157,7 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
 }
 
 extern void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard);
-extern void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard);
+extern void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach);
 
 /**
  * Generate a graph from callable, this function will actually create python frame
@@ -2177,7 +2177,7 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
 
   auto code = res->GetGraph()->GetGuard();
   AddConfigToGuard(conf, code->GetGuard());
-  AddGuardForParam(frame, code->GetGuard());
+  AddGuardForParam(frame, code->GetGuard(), conf.GetBoolConfig(GraphJitConfig::kGuardDetachObject));
 
   Py_DECREF(frame);
   return res;

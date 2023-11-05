@@ -84,6 +84,16 @@ bool Trace::operator==(const Trace &trace) {
   }
 }
 
+void Trace::Detach() {
+  if (obj_ != Py_None && obj_ != nullptr) {
+    Py_DECREF(obj_);
+    obj_ = nullptr;
+  }
+  if (origin_ != nullptr) {
+    origin_->Detach();
+  }
+}
+
 RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, std::string module_name)
     : Trace(pObj, nullptr), idx_(index), name_(name), module_name_(module_name) {
   originType_ = tt;
@@ -251,6 +261,13 @@ bool ItemTrace::operator==(const Trace &trace) {
   return false;
 }
 
+void ItemTrace::Detach() {
+  Trace::Detach();
+  if (item_ != nullptr) {
+    item_->Detach();
+  }
+}
+
 AttrTrace::AttrTrace(PyObject *pObj, TracePtr pOrigin, std::string strAttr) : Trace(pObj, pOrigin), attr_(strAttr) {
   curType_ = TraceType::Attr;
 }
@@ -327,6 +344,13 @@ void OpTrace::Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src) {
   }
 }
 
+void OpTrace::Detach() {
+  Trace::Detach();
+  for (auto t : params_) {
+    t->Detach();
+  }
+}
+
 std::string ConstTrace::ToString() {
   std::string ret = "co_consts";
   return ret + "[" + std::to_string(index_) + "]";
@@ -339,6 +363,8 @@ bool ConstTrace::operator==(const Trace &trace) {
   }
   return false;
 }
+
+void ConstTrace::Detach() {}
 
 TypeTrace::TypeTrace(PyObject *pObj, TracePtr pOrigin) : Trace(pObj, pOrigin) {
   pType_ = Py_TYPE(pObj);
@@ -1076,6 +1102,13 @@ std::string UnsupportedTrace::ToString() {
 }
 
 TraceVector UnsupportedTrace::GetParams() { return params_; }
+
+void UnsupportedTrace::Detach() {
+  Trace::Detach();
+  for (auto t : params_) {
+    t->Detach();
+  }
+}
 
 PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace) {
   TraceContext context = {frame->f_globals, frame->f_builtins, frame->f_locals, frame->f_localsplus, frame->f_code};

@@ -64,6 +64,7 @@ class Trace {
   virtual TraceType GetOriginType();
   virtual void Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src);
   virtual bool operator==(const Trace &trace);
+  virtual void Detach();
   /// \brief Get the reference for the object by Py_INCREF and call Py_DECREF by yourself.
   /// \param[out] borrow reference for PyObject
   virtual PyObject *Retrieve(PTraceContext context) = 0;
@@ -103,6 +104,7 @@ class ItemTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
+  virtual void Detach();
 
  protected:
   TracePtr item_;
@@ -131,6 +133,7 @@ class ConstTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
+  virtual void Detach();
 
  protected:
   int index_;
@@ -159,6 +162,7 @@ class OpTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual bool operator==(const Trace &trace);
+  virtual void Detach();
 
  protected:
   int opcode_;
@@ -193,6 +197,7 @@ class UnsupportedTrace : public Trace {
   virtual PyObject *Retrieve(PTraceContext context);
   virtual std::string ToString();
   virtual TraceVector GetParams();
+  virtual void Detach();
 
  protected:
   TraceVector params_;

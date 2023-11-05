@@ -624,6 +624,9 @@ static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, Tr
 
   auto guard = call_node->GetGraph()->GetGuard()->GetGuard();
   guard->GuardOn(*trace, mindspore::jit::graph::GuardLevel::GEqual);
+  if (config.GetBoolConfig(GraphJitConfig::kGuardDetachObject)) {
+    (*trace)->Detach();
+  }
   call_node->SetSubGraph(nullptr);
   HandleGradFuncCall(call_node, AObject::Convert(decorated_func), sens_param);
 }

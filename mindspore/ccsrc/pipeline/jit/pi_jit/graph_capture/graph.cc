@@ -203,7 +203,11 @@ bool Graph::GuardValueNode(ValueNode *node) {
                         Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
                         Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
   if (t != nullptr) {
-    return guard_->GetGuard()->GuardOn(t, mindspore::jit::graph::GuardLevel::GEqual);
+    bool ret = guard_->GetGuard()->GuardOn(t, mindspore::jit::graph::GuardLevel::GEqual);
+    if (Config().GetBoolConfig(GraphJitConfig::kGuardDetachObject)) {
+      t->Detach();
+    }
+    return ret;
   }
   return false;
 }
