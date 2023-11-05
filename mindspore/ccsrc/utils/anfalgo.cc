@@ -2137,7 +2137,7 @@ bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
     if (abstract == nullptr || (!abstract->isa<abstract::AbstractScalar>())) {
       return false;
     }
-    if (abstract->BuildValue() == kValueAny && abstract->BuildType()->isa<Number>()) {
+    if (abstract->BuildValue()->ContainsValueAny() && abstract->BuildType()->isa<Number>()) {
       return true;
     }
     return false;
