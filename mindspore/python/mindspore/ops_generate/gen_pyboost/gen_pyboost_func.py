@@ -25,7 +25,6 @@ from .template import CppTemplate
 from . import template
 from .op_proto import OpProto
 from .pyboost_utils import get_disable_flag, get_op_name, py_licence_str
-from mindspore import log as logger
 
 
 def clean_auto_generate_dir(work_path, relative_path):
@@ -34,7 +33,6 @@ def clean_auto_generate_dir(work_path, relative_path):
         file_path = os.path.join(dir_path, file_name)
         if os.path.isfile(file_path):
             os.remove(file_path)
-            logger.warning("Clean PyBoost auto generate file:{}".format(file_path))
 
 def generate_pyboost_base_op_header_code(work_path, op_name_str, call_args_with_type, cpp_func_return):
     pyboost_op_header_str = template.PYBOOST_BASE_OP_DEFINE_TEMPLATE.replace(op_name=op_name_str,

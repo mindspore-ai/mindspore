@@ -36,6 +36,10 @@ py::object ${func_name}(const py::args &args) {
 
       MS_LOG(DEBUG) << "Dispatch ${func_name} end";
     }, op_run_info);
-  PyNativeExecutor::GetInstance()->forward_executor()->frontend_queue()->Push(forward_task);
+  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+  forward_executor->frontend_queue()->Push(forward_task);
+  if (!forward_executor->enable_async()) {
+    forward_executor->frontend_queue()->Wait();
+  }
   return node.first;
 }
