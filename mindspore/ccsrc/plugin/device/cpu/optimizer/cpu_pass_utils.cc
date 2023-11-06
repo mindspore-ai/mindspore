@@ -76,14 +76,17 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   kernel::SetCpuRefMapToKernelInfo(cast, kernel_attrs);
   auto thread_pool = kernel::GetActorMgrInnerThreadPool();
   cpu_kernel->SetThreadPool(thread_pool);
-  auto args = kernel::AbstractArgsFromCNode(cast);
-  auto op = kernel::CreateOperatorByCNode(cast);
-  auto ret = cpu_kernel->Init_(op, args.inputs, args.outputs);
+
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(cast);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(cast);
+  auto ret = cpu_kernel->Init(common::AnfAlgo::GetCNodePrimitive(cast), input_kernel_tensors, output_kernel_tensors);
   if (!ret) {
     MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
   }
-  if (cpu_kernel->Resize(args.inputs, args.outputs, kernel::GetKernelDepends(cast)) == kernel::KRET_RESIZE_FAILED) {
-    MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
+  if (kernel::CheckResizeCondition(cast)) {
+    if (cpu_kernel->Resize(input_kernel_tensors, output_kernel_tensors) == kernel::KRET_RESIZE_FAILED) {
+      MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
+    }
   }
   AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;
