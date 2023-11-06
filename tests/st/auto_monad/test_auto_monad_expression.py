@@ -195,7 +195,7 @@ class ForwardNet2(Cell):
         out = 0
         i = 0
         while i < 3:
-            F.assign(self.weight, Tensor(i))
+            F.assign(self.weight, i)
             out = self.weight + out
             i = i + 1
         return out

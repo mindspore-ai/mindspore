@@ -53,6 +53,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "pipeline/jit/ps/resource.h"
+#include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "pipeline/jit/ps/static_analysis/builtin_prim.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "utils/check_convert_utils.h"
@@ -82,18 +83,6 @@ mindspore::HashMap<std::string, std::vector<int>> prims_transparent_pass_sequenc
   {kReturnOpName, std::vector({0})},       {kDependOpName, std::vector({0})},     {kidentityOpName, std::vector({0})},
   {kMakeTupleOpName, std::vector({-1})},   {kMakeListOpName, std::vector({-1})},  {kListAppendOpName, std::vector({0})},
   {kTupleGetItemOpName, std::vector({0})}, {kListGetItemOpName, std::vector({0})}};
-
-mindspore::HashMap<ops::OP_DTYPE, std::string> op_def_dtype_map{
-  {ops::OP_DTYPE::DT_BOOL, "bool"},          {ops::OP_DTYPE::DT_INT, "int"},
-  {ops::OP_DTYPE::DT_FLOAT, "float"},        {ops::OP_DTYPE::DT_STR, "str"},
-  {ops::OP_DTYPE::DT_NUMBER, "Number"},      {ops::OP_DTYPE::DT_TENSOR, "Tensor"},
-  {ops::OP_DTYPE::DT_TUPLE_BOOL, "tuple"},   {ops::OP_DTYPE::DT_TUPLE_INT, "tuple"},
-  {ops::OP_DTYPE::DT_TUPLE_FLOAT, "tuple"},  {ops::OP_DTYPE::DT_TUPLE_NUMBER, "tuple"},
-  {ops::OP_DTYPE::DT_TUPLE_TENSOR, "tuple"}, {ops::OP_DTYPE::DT_TUPLE_STR, "tuple"},
-  {ops::OP_DTYPE::DT_LIST_BOOL, "list"},     {ops::OP_DTYPE::DT_LIST_INT, "list"},
-  {ops::OP_DTYPE::DT_LIST_FLOAT, "list"},    {ops::OP_DTYPE::DT_LIST_NUMBER, "list"},
-  {ops::OP_DTYPE::DT_LIST_TENSOR, "list"},   {ops::OP_DTYPE::DT_LIST_STR, "list"},
-};
 
 inline int64_t OpDtypeToInt(ops::OP_DTYPE dtype) { return static_cast<int64_t>(dtype); }
 
@@ -130,13 +119,13 @@ AnfNodePtr GetNodeAfterArgHandler(const AnfNodePtr &node, const ops::OpArg &op_a
   auto arg_handler_fg = dyn_cast<FuncGraph>(arg_handler_func);
   MS_EXCEPTION_IF_NULL(arg_handler_fg);
   arg_handler_fg->set_manager(fg->manager());
-  return fg->NewCNode({NewValueNode(arg_handler_fg), node});
+  return fg->NewCNodeInOrder({NewValueNode(arg_handler_fg), node});
 }
 
 void DoTypeConversionWithOpDef(AnalysisEnginePtr engine, const PrimitivePtr &prim, std::vector<AnfNodePtr> *params_list,
                                AbstractBasePtrList *args_abs_list, const AnfNodeConfigPtr &out_conf) {
   auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr) {
+  if (op_def == nullptr || ContainsAbstractAny(*args_abs_list)) {
     return;
   }
   auto params_size = params_list->size();
