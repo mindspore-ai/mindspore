@@ -98,20 +98,24 @@ PYBOOST_OP_REGISTER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/kernel/pyboost/pyboost_op_register.tpl'))
 
 PYBOOST_ASCEND_OP_HEADER_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_aclnn_header_template.tpl'))
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_aclnn_header_template.tpl'))
 
 PYBOOST_ASCEND_OP_SOURCE_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_aclnn_source_template.tpl'))
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_aclnn_source_template.tpl'))
 
 PYBOOST_ASCEND_CALL_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_ascend_call_template.tpl'))
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_ascend_call_template.tpl'))
 
 PYBOOST_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/pyboost_view_call_template.tpl'))
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_view_call_template.tpl'))
 
 PYBOOST_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
-    os.path.join(WORK_PATH, './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost'
-                            '/pyboost_ascend_customize_call_template.tpl'))
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_ascend_customize_call_template.tpl'))
 
 PYBOOST_PY_FUNC_HEADEAR = ("""
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -125,4 +129,3 @@ def ${func_name}(${func_args}):
     \"\"\"
     ${operator_name}_op = _get_cache_prim(${class_name})(${init_args})
     return ${operator_name}_op(${input_args})\n\n""")
-

@@ -119,7 +119,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                      call_args=call_args_str,
                                                                      call_tensors=call_args_tensor,
                                                                      )
-        customize_include = "#include \"plugin/device/ascend/kernel/pyboost/call/{}.h\"".format(operator_name.lower())
+        customize_include = "#include \"plugin/device/ascend/kernel/pyboost/customize/{}.h\"".format(operator_name.lower())
     elif op_desc['mode'] == 'view':
         call_impl = template.PYBOOST_VIEW_CALL_TEMPLATE.replace(op_name=prim_name_str,
                                                                 call_args=call_args_str,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/call/conv2d.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/conv2d.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/py_boost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"

@@ -2,7 +2,7 @@
 // Created by jojo on 2023/10/31.
 //
 
-#include "plugin/device/ascend/kernel/pyboost/call/bias_add.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/bias_add.h"
 #include "runtime/device/device_address_utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"

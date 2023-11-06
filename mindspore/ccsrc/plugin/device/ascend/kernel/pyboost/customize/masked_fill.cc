@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/call/masked_fill.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/masked_fill.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
 #include "kernel/pyboost/py_boost_utils.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_CONV2D_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_CONV2D_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MASKED_FILL_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MASKED_FILL_H_
 
 #include <vector>
 #include "ir/tensor.h"
@@ -25,12 +25,10 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
-                                   const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
-                                   const tensor::TensorPtr &bias_tensor, const ValueTuplePtr &stride,
-                                   const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
-                                   const Int64ImmPtr &groups, const std::vector<tensor::TensorPtr> &outputs);
+tensor::TensorPtr MaskedFillAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
+                                       const tensor::TensorPtr &selfRef, const tensor::TensorPtr &mask,
+                                       const tensor::TensorPtr &value, const std::vector<tensor::TensorPtr> &);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_CONV2D_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_MASKED_FILL_H_
