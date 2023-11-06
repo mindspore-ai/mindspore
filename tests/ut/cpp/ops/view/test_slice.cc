@@ -42,7 +42,7 @@ TEST_F(TestViewSlice, SliceFunction) {
   size_t expect_offset = 5;
   size_t expect_size = 1;
   ASSERT_EQ(storage_list.size(), expect_size);
-  ASSERT_TRUE(storage_list[0]->is_contiguous);
+  ASSERT_FALSE(storage_list[0]->is_contiguous);
   ASSERT_TRUE(storage_list[0]->shape == expect_shape_1);
   ASSERT_TRUE(storage_list[0]->strides == expect_strides_1);
   ASSERT_TRUE(storage_list[0]->storage_offset == expect_offset);
