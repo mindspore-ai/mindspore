@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -57,6 +57,7 @@ def test_hypermap_specialize_param():
         ret2 = hypermap(F.partial(net, factor1), [x, y])
         return ret1, ret2
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     expected_ret = (Tensor(np.full(1, 5).astype(np.int32)),
                     Tensor(np.full(2, 5).astype(np.int32)))
     ret = hypermap_specialize_param()

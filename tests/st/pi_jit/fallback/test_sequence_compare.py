@@ -14,7 +14,7 @@
 # ============================================================================
 """Test graph sequence operation with nested or irregular input/output"""
 import pytest
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 
 
 @pytest.mark.level0
@@ -32,6 +32,7 @@ def test_sequence_compare_with_operation():
         n = ((y, y-1), y+2)
         return m < n, m <= n, m > n, m >= n
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     a1, a2, a3, a4 = foo(Tensor([1]), Tensor([3]))
     assert a1
     assert a2

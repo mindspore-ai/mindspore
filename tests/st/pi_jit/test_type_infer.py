@@ -3,28 +3,7 @@ from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
 from mindspore import Tensor, jit, context, ops
 import mindspore.common.dtype as mstype
 import numpy as np
-
-
-def match_array(actual, expected, error=6, err_msg='result match failed !!!'):
-
-    if isinstance(actual, int):
-        actual = np.asarray(actual)
-
-    if isinstance(actual, Tensor):
-        actual = actual.asnumpy()
-
-    if isinstance(expected, (int, tuple)):
-        expected = np.asarray(expected)
-
-    if isinstance(expected, Tensor):
-        expected = expected.asnumpy()
-
-    if error > 0:
-        np.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        np.testing.assert_equal(actual, expected, err_msg=err_msg)
-    print("successful")
+from .share.utils import match_array
 
 
 def kwf(*vargs, p=-1, **kwvargs):

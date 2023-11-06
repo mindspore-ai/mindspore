@@ -15,7 +15,7 @@
 ''' test fallback tuple with mindspore function '''
 import numpy as np
 import mindspore.nn as nn
-from mindspore import jit, Tensor
+from mindspore import jit, Tensor, context
 from mindspore.ops import Primitive
 import pytest
 
@@ -40,6 +40,7 @@ def test_fallback_tuple_with_mindspore_function():
     def foo():
         return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     assert foo()
 
 
@@ -60,5 +61,6 @@ def test_prune_if_in_while():
                 tuple_of_tensor += (tensor,)
             return tuple_of_tensor
         return list_of_tensor
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = convert_list([Tensor(0), Tensor(0)])
     assert len(res) == 2
