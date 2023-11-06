@@ -128,15 +128,21 @@ int PadV3GradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
 
-  std::vector<int64_t> paddings_arg;
   std::vector<int64_t> paddings_val;
-  paddings_arg = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-
-  int64_t paddings_size = SizeToLong(paddings_arg.size());
-  for (int64_t i = 0; i < paddings_size; ++i) {
-    paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
+  auto paddings_type = inputs[kIndex1]->dtype_id();
+  if (paddings_type == kNumberTypeInt32) {
+    std::vector<int32_t> paddings_arg = inputs[kIndex1]->GetValueWithCheck<std::vector<int32_t>>();
+    for (size_t i = 0; i < paddings_arg.size(); ++i) {
+      paddings_val.push_back(static_cast<int64_t>(paddings_arg[i]));
+    }
+  } else if (paddings_type == kNumberTypeInt64) {
+    paddings_val = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  } else {
+    MS_LOG(ERROR) << "For Padv3, the paddings value type should be int64 or int32, but got " << paddings_type;
+    return KRET_RESIZE_FAILED;
   }
 
+  int64_t paddings_size = SizeToLong(paddings_val.size());
   auto prim = primitive_;
   MS_EXCEPTION_IF_NULL(prim);
   if (!GetValue<bool>(prim->GetAttr("paddings_contiguous"))) {
