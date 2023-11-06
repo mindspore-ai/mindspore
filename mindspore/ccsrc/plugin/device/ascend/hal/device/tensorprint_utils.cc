@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <mutex>
 #include "ir/tensor.h"
 #include "pybind11/pybind11.h"
 #include "include/common/utils/utils.h"
@@ -35,6 +36,7 @@ namespace {
 std::thread g_acl_tdt_print = {};
 const size_t kMbufCapacitySize = 128;
 const int32_t kMbufDestroyDelayTime = 500;
+std::mutex g_tdt_destroy_mutex_;
 
 const std::map<aclDataType, TypeId> kPrintAclDataTypeMap = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
@@ -294,13 +296,16 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      if (acl_handle == nullptr) {
-        ret = -1;
-        MS_LOG(ERROR) << "acl_handle is nullptr or has destroyed.";
-        break;
+      {
+        std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+        if (acl_handle == nullptr) {
+          ret = -1;
+          MS_LOG(WARNING) << "acl_handle is nullptr or has destroyed.";
+          break;
+        }
+        // 200 ms timeout
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 200);
       }
-      // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         MS_LOG(DEBUG) << "queue is empty.";
         break;
@@ -456,15 +461,18 @@ void DestroyTensorPrintThread() {
   if (channel_type != ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  aclError destroyed_status = acltdtDestroyChannel(acl_handle);
-  if (destroyed_status != ACL_SUCCESS) {
-    MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
-    return;
+  {
+    std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+    aclError destroyed_status = acltdtDestroyChannel(acl_handle);
+    acl_handle = nullptr;
+    if (destroyed_status != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
+      return;
+    }
   }
   if (channel_type == ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  tdt_handle::DelHandle(&acl_handle);
   MS_LOG(INFO) << "Succeed destroy acl channel";
 }
 }  // namespace mindspore::device::ascend

@@ -18,6 +18,7 @@
 #include <thread>
 #include <vector>
 #include <utility>
+#include <mutex>
 #include "pybind11/pybind11.h"
 #include "ir/tensor.h"
 #include "ir/dtype/type.h"
@@ -32,6 +33,7 @@ const size_t kMbufCapacitySize = 128;
 const int32_t kMbufDestroyDelayTime = 500;
 const char PYTHON_MOD_CALLBACK_MODULE[] = "mindspore.train.callback._callback";
 const char PYTHON_FUN_PROCESS_SUMMARY[] = "summary_cb_for_save_op";
+std::mutex g_tdt_destroy_mutex_;
 
 const std::map<aclDataType, TypeId> kPrintAclDataTypeMap = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
@@ -113,14 +115,16 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
-      if (acl_handle == nullptr) {
-        ret = -1;
-        MS_LOG(ERROR) << "acl_handle is nullptr or has destroyed.";
-        break;
+      {
+        std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+        if (acl_handle == nullptr) {
+          ret = -1;
+          MS_LOG(ERROR) << "acl_handle is nullptr or has destroyed.";
+          break;
+        }
+        // 100 ms timeout
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 100);
       }
-      // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
-
       ChannelType channel_type{ChannelType::kMbuf};
       std::map<std::string, TDTInfo>::iterator iter = tdt_infos.find(channel_name);
       if (iter != tdt_infos.end()) {
@@ -294,10 +298,14 @@ void TensorSummaryUtils::DestroyTDTSummaryThread() {
     if (channel_type != ChannelType::kMbuf) {
       JoinAclPrintThread(tdt_info.second.dtd_thread);
     }
-    aclError destroyed_status = acltdtDestroyChannel(acl_handle);
-    if (destroyed_status != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
-      return;
+    {
+      std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+      aclError destroyed_status = acltdtDestroyChannel(acl_handle);
+      acl_handle = nullptr;
+      if (destroyed_status != ACL_SUCCESS) {
+        MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
+        return;
+      }
     }
     MS_LOG(INFO) << "Succeed destroy acl data channel for host queue ";
   }
