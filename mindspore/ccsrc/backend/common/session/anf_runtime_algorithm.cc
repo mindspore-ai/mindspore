@@ -990,6 +990,8 @@ const KernelTensorPtr &AnfRuntimeAlgorithm::GetOrCreateOutputKernelTensor(const 
 
   auto [shape, type, value] = GetAbstractInfo(node, output_idx);
   auto kernel_tensor = std::make_shared<KernelTensor>(shape, type, value);
+  // Handle the format diff between host and device, need set format before Resize KernelMod.
+  kernel_tensor->SetStringFormat(GetOutputFormat(node, output_idx));
   kernel_info->SetOutputKernelTensor(kernel_tensor, output_idx);
 
   return kernel_info->GetOutputKernelTensor(output_idx);

@@ -33,6 +33,18 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &Conv2dInputGradGpuKerne
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat16),
+     &Conv2dInputGradGpuKernelMod::LaunchKernel<half>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &Conv2dInputGradGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
      &Conv2dInputGradGpuKernelMod::LaunchKernel<half>}};
   return func_list;
 }

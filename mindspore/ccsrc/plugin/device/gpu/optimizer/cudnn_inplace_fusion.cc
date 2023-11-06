@@ -29,7 +29,6 @@
 #include "ops/math_op_name.h"
 #include "ops/sequence_ops.h"
 #include "ops/framework_ops.h"
-#include "ops/op_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
@@ -134,19 +133,20 @@ std::pair<size_t, bool> GetCoverIndex(const std::vector<AnfNodeIndex> &inplace_n
     return {0, true};
   }
 
-  auto out_channel_first = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(first_node), kIndex3);
-  auto out_channel_sec = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(second_node), kIndex3);
-  if (!utils::isa<ValueNodePtr>(out_channel_first) || !utils::isa<ValueNodePtr>(out_channel_sec)) {
-    return {0, true};
-  }
-  auto out_channel_sec_v = ops::GetScalarValue<int64_t>(out_channel_sec->cast<ValueNodePtr>()->value());
-  auto out_channel_first_v = ops::GetScalarValue<int64_t>(out_channel_first->cast<ValueNodePtr>()->value());
-
-  if (!out_channel_first_v.has_value() || !out_channel_sec_v.has_value()) {
-    return {0, true};
-  }
-  size_t first_channel = out_channel_first_v.value();
-  size_t second_channel = out_channel_sec_v.value();
+  auto first_node_prim = common::AnfAlgo::GetCNodePrimitive(first_node);
+  MS_EXCEPTION_IF_NULL(first_node_prim);
+  auto first_node_channel = first_node_prim.get()->GetAttr("out_channel");
+  MS_EXCEPTION_IF_NULL(first_node_channel);
+  auto first_imm_ptr = first_node_channel->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(first_imm_ptr);
+  size_t first_channel = first_imm_ptr->value();
+  auto second_node_prim = common::AnfAlgo::GetCNodePrimitive(second_node);
+  MS_EXCEPTION_IF_NULL(second_node_prim);
+  auto second_node_channel = second_node_prim.get()->GetAttr("out_channel");
+  MS_EXCEPTION_IF_NULL(second_node_channel);
+  auto second_imm_ptr = second_node_channel->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(second_imm_ptr);
+  size_t second_channel = second_imm_ptr->value();
   size_t cover_index = (first_channel >= second_channel) ? 0 : 1;
   bool ret = ExistDependencyFromAcc2Cover(inplace_node, cover_index);
   if (ret) {

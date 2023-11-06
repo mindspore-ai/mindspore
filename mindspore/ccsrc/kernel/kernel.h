@@ -217,7 +217,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void SetShapeVector(ShapeVector &&shape_vector);
 
   // Get the device shape vector for Tensor/Sequence/Scalar.
-  const ShapeVector &GetDeviceShapeVector() const { return shape_vector_; }
+  const ShapeVector &GetDeviceShapeVector() const;
 
   // Get host shape for KernelTensor.
   const ShapeVector &host_shape() const { return host_shape_; }
@@ -248,6 +248,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Get the address of the value converted to continuous memory storage.
   const void *GetValuePtr() const {
+    std::lock_guard<std::mutex> lock(value_mutex_);
+
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
@@ -266,6 +268,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // Get the value of the KernelTensor.
   ValuePtr GetValue() const override {
+    std::lock_guard<std::mutex> lock(value_mutex_);
+
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
@@ -286,6 +290,8 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Return the optional contain value if the KernelTensor has value, otherwise nullopt.
   template <typename T, typename std::enable_if<std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
+    std::lock_guard<std::mutex> lock(value_mutex_);
+
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
       if (kernel_tensor_value_ == nullptr) {
@@ -317,6 +323,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     if (!std::is_scalar_v<typename T::value_type>) {
       MS_LOG(EXCEPTION) << "The element of std::vector to get kernel tensor's value should be scalar type.";
     }
+    std::lock_guard<std::mutex> lock(value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
     if (value_ && !value_->isa<ValueAny>()) {
@@ -511,6 +518,12 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Calculate memory size need by the KernelTensor.
   void CalculateMemSize();
 
+  // Check whether need to transpose host infer shape to device shape.
+  bool NeedTransposeToDeviceShape() const { return format_ != Format::DEFAULT_FORMAT && format_ != Format::NCHW; }
+
+  // Transpose host infer shape to device shape according format.
+  void TransposeToDeviceShape() const;
+
   // The flatten shape vector for Tensor/Scalar/Tuple/List.
   // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
   // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
@@ -520,6 +533,13 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // number in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of
   // this Tuple is {2}.
   ShapeVector shape_vector_{};
+
+  // The shape of the device corresponding to 'shape_vector_'. For example, if format is NHWC, the shape of the device
+  // and host may be different.
+  mutable ShapeVector device_shape_vector_{};
+
+  // Make GetDeviceShapeVector thread-safe.
+  mutable std::mutex device_shape_mutex_;
 
   // The flatten shape(maybe after padding) vector.
   // Note: the 'host_shape_' will be repalced by 'shape_vector_' in the future.
@@ -565,6 +585,9 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
 
   // For synchronizing data between device and host.
   DeviceSynchronizerPtr device_synchronizer_{nullptr};
+
+  // Make GetValue related interfaces thread-safe.
+  mutable std::mutex value_mutex_;
 
   // The following member variables are required by the old KernelTensor.
   TypeId meta_type_{kObjectTypeTensorType};

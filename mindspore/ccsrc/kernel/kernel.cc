@@ -25,6 +25,39 @@
 namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
+namespace {
+using ShapeTransposeFunc = std::function<void(const ShapeVector *, ShapeVector *)>;
+
+void TransposeDefaultShape(const ShapeVector *host_shape_vector, ShapeVector *device_shape_vector) {
+  MS_EXCEPTION_IF_NULL(host_shape_vector);
+  MS_EXCEPTION_IF_NULL(device_shape_vector);
+  *device_shape_vector = *host_shape_vector;
+}
+
+void TransposeNCHWShape(const ShapeVector *host_shape_vector, ShapeVector *device_shape_vector) {
+  MS_EXCEPTION_IF_NULL(host_shape_vector);
+  MS_EXCEPTION_IF_NULL(device_shape_vector);
+  if (host_shape_vector->size() != kDim4) {
+    MS_LOG(EXCEPTION) << "The host shape dims should be 4, but got: " << host_shape_vector->size();
+  }
+  *device_shape_vector = *host_shape_vector;
+}
+
+void TransposeNHWCShape(const ShapeVector *host_shape_vector, ShapeVector *device_shape_vector) {
+  MS_EXCEPTION_IF_NULL(host_shape_vector);
+  MS_EXCEPTION_IF_NULL(device_shape_vector);
+
+  if (host_shape_vector->size() != kDim4) {
+    MS_LOG(EXCEPTION) << "The host shape dims should be 4, but got: " << host_shape_vector->size();
+  }
+  device_shape_vector->resize(kDim4);
+
+  device_shape_vector->at(kIndex0) = host_shape_vector->at(kIndex0);
+  device_shape_vector->at(kIndex1) = host_shape_vector->at(kIndex2);
+  device_shape_vector->at(kIndex2) = host_shape_vector->at(kIndex3);
+  device_shape_vector->at(kIndex3) = host_shape_vector->at(kIndex1);
+}
+}  // namespace
 
 KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
   if (type) {
@@ -75,6 +108,7 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
   type_ = other.shape_ != nullptr ? other.type_->Clone() : kTypeAny;
   value_ = other.value_;
   shape_vector_ = other.shape_vector_;
+  device_shape_vector_ = other.device_shape_vector_;
   host_shape_ = other.host_shape_;
   type_id_ = other.type_id_;
   dtype_ = other.dtype_ != nullptr ? other.dtype_->Clone() : kTypeAny;
@@ -144,6 +178,10 @@ void KernelTensor::SetShapeVector(const ShapeVector &shape_vector) {
   if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
     shape_vector_ = shape_vector;
     shape_->SetShapeVector(shape_vector_);
+
+    if (NeedTransposeToDeviceShape()) {
+      MS_LOG(EXCEPTION) << "Can not update host shape for format: " << GetFormatFromEnumToStr(format_);
+    }
     return;
   }
 
@@ -163,6 +201,10 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
   if (type_id_ == kObjectTypeTensorType || type_id_ == kObjectTypeMapTensorType) {
     shape_vector_ = std::move(shape_vector);
     shape_->SetShapeVector(shape_vector_);
+
+    if (NeedTransposeToDeviceShape()) {
+      MS_LOG(EXCEPTION) << "Can not update host shape for format: " << GetFormatFromEnumToStr(format_);
+    }
     return;
   }
 
@@ -176,6 +218,33 @@ void KernelTensor::SetShapeVector(ShapeVector &&shape_vector) {
   MS_LOG(EXCEPTION) << "Only support Scalar/Tensor/MapTensor type to set shape vector currently, but got type: "
                     << TypeIdLabel(type_id_)
                     << ", please use KernelTensor::SetShape(const abstract::BaseShapePtr &shape) instead.";
+}
+
+void KernelTensor::TransposeToDeviceShape() const {
+  if (type_id_ != kObjectTypeTensorType) {
+    MS_LOG(EXCEPTION) << "Only TensorType could transpose device shape, but got: " << TypeIdLabel(type_id_);
+  }
+
+  static const mindspore::HashMap<mindspore::Format, ShapeTransposeFunc> shape_trans_funcs = {
+    {Format::DEFAULT_FORMAT, TransposeDefaultShape},
+    {Format::NCHW, TransposeNCHWShape},
+    {Format::NHWC, TransposeNHWCShape}};
+
+  auto iter = shape_trans_funcs.find(format_);
+  if (iter == shape_trans_funcs.end()) {
+    MS_LOG(EXCEPTION) << "Can not find shape transpose function for format: " << GetFormatFromEnumToStr(format_);
+  }
+
+  iter->second(&shape_vector_, &device_shape_vector_);
+}
+
+const ShapeVector &KernelTensor::GetDeviceShapeVector() const {
+  if (NeedTransposeToDeviceShape()) {
+    std::lock_guard<std::mutex> lock(device_shape_mutex_);
+    TransposeToDeviceShape();
+    return device_shape_vector_;
+  }
+  return shape_vector_;
 }
 
 void KernelTensor::SetType(const TypePtr &type) {

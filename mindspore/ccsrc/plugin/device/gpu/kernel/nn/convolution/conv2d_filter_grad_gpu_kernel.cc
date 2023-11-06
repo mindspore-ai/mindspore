@@ -46,6 +46,30 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &Conv2dFilterGradGpuKern
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
        .AddOutputAttr(kNumberTypeFloat16),
+     &Conv2dFilterGradGpuKernelMod::LaunchKernel<half>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &Conv2dFilterGradGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &Conv2dFilterGradGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &Conv2dFilterGradGpuKernelMod::LaunchKernel<half>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat16),
      &Conv2dFilterGradGpuKernelMod::LaunchKernel<half>}};
   return func_list;
 }
