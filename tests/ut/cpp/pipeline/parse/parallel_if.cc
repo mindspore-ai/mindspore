@@ -67,12 +67,13 @@ class TestParallelIf : public UT::Common {
     AbstractBasePtr abstract_y = abstract::FromValue(y_tensor, true);
     abstract::AbstractBasePtrList args_spec_list{abstract_x, abstract_y};
 
-    abstract::AnalysisResult result = pipeline::AbstractAnalyze(res1, basic_graph, args_spec_list);
-    auto new_basic_graph = pipeline::ProgramSpecialize(res1, basic_graph, result.context);
+    abstract::AnalysisResult result =
+      pipeline::AbstractAnalyze(res1->engine(), basic_graph, args_spec_list, res1->is_load());
+    auto new_basic_graph = pipeline::ProgramSpecialize(res1->engine(), basic_graph, result.context);
 
     pipeline::ResourcePtr res2 = std::make_shared<pipeline::Resource>();
-    result = pipeline::AbstractAnalyze(res2, manual_graph, args_spec_list);
-    auto new_manual_graph = pipeline::ProgramSpecialize(res2, manual_graph, result.context);
+    result = pipeline::AbstractAnalyze(res2->engine(), manual_graph, args_spec_list, res2->is_load());
+    auto new_manual_graph = pipeline::ProgramSpecialize(res2->engine(), manual_graph, result.context);
 
     auto patterns = std::vector<opt::SubstitutionPtr>({irpass_lib_.inline_, irpass_lib_.switch_simplify_});
     ASSERT_TRUE(CheckIsomorphic(new_basic_graph, new_manual_graph, patterns));
