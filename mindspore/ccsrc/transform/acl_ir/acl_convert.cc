@@ -673,7 +673,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
     DumpAclString(ACL_DT_UNDEFINED, params.ori_shape, params.dev_shape, ACL_FORMAT_UNDEFINED, ACL_FORMAT_UNDEFINED,
                   dump_str);
   } else {
-    auto acl_data_type = ConvertType(params.data_type);
+    auto acl_data_type = ConvertType(host_tensor->data_type());
     auto acl_ori_format = ConvertFormat(params.ori_format);
     acl_desc = tensor.Create(acl_data_type, params.ori_shape, acl_ori_format)
                  .SetTensorPlaceMent(ACL_MEMTYPE_HOST)
@@ -683,10 +683,6 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
   }
   MS_EXCEPTION_IF_NULL(acl_desc);
 
-  // convert host_tensor's data_type to params.data_type
-  if (host_tensor->data_type() != params.data_type && params.data_type != kMetaTypeNone) {
-    (void)host_tensor->set_data_type(params.data_type);
-  }
   // Create buf.
   auto buffer_maker = std::make_shared<AclTensorBufferMaker>(host_tensor);
   auto acl_data = buffer_maker->Get();

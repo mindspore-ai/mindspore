@@ -63,6 +63,7 @@ class AclHelper {
 
   // Check whether is nop op.
   static bool IsNopNode(const CNodePtr &node);
+  static bool IsInputDtypeSupport(const std::string &kernel_name, TypeId base_type, size_t idx);
 };
 }  // namespace transform
 }  // namespace mindspore

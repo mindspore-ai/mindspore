@@ -26,6 +26,7 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "mindspore/core/ops/op_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -203,8 +204,21 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
     const auto &param = input_params_[input_idx];
     KernelTensorValuePtr value_ptr = input->GetValue()->cast<KernelTensorValuePtr>();
     MS_EXCEPTION_IF_NULL(value_ptr);
-    auto tensor = std::make_shared<tensor::Tensor>(param.data_type, param.ori_shape);
-    auto ret = memcpy_s(tensor->data_c(), tensor->Size(), value_ptr->GetDataPtr(), value_ptr->GetDataSize());
+    errno_t ret;
+    tensor::TensorPtr tensor = nullptr;
+    if (param.data_type == kNumberTypeInt64 &&
+        !transform::AclHelper::IsInputDtypeSupport(kernel_name_, param.data_type, input_idx)) {
+      auto value = ops::GetArrayValue<int64_t>(value_ptr);
+      auto ori_vec = value.value().ToVector();
+      std::vector<int32_t> vec;
+      (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
+                           [](const auto &v) { return static_cast<int32_t>(v); });
+      tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, param.ori_shape);
+      ret = memcpy_s(tensor->data_c(), tensor->Size(), vec.data(), vec.size() * sizeof(int32_t));
+    } else {
+      tensor = std::make_shared<tensor::Tensor>(param.data_type, param.ori_shape);
+      ret = memcpy_s(tensor->data_c(), tensor->Size(), value_ptr->GetDataPtr(), value_ptr->GetDataSize());
+    }
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
     }
