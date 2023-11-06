@@ -489,8 +489,6 @@ class VmapEvaluator : public Evaluator {
 AbstractBasePtrList EvaluateArguments(const ConfigPtrList &args_conf_list);
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
-
-bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_EVALUATOR_H_
