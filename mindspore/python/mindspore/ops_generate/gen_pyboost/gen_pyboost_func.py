@@ -29,6 +29,8 @@ from .pyboost_utils import get_disable_flag, get_op_name, py_licence_str
 
 def clean_auto_generate_dir(work_path, relative_path):
     dir_path = os.path.join(work_path, relative_path)
+    if not os.path.exists(dir_path):
+        return
     for file_name in os.listdir(dir_path):
         file_path = os.path.join(dir_path, file_name)
         if os.path.isfile(file_path):
