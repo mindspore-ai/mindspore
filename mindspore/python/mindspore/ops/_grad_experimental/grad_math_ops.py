@@ -21,8 +21,6 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import Imag, Complex, Angle
-from mindspore.ops.operations.math_ops import Polar
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixSolveLs
@@ -31,7 +29,6 @@ from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.math_ops import FFTWithSize
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
-from mindspore.ops.operations.math_ops import TridiagonalSolve
 from mindspore.ops.operations.math_ops import EuclideanNorm
 from mindspore.ops.operations.array_ops import Transpose
 from mindspore.ops.operations._inner_ops import DynamicBroadcastGradientArgs
@@ -368,74 +365,6 @@ def get_bprop_nan_to_num(self):
     def bprop(x, out, dout):
         dx = dout * isfinite(x)
         return (dx,)
-
-    return bprop
-
-
-@bprop_getters.register(Angle)
-def get_bprop_angle(self):
-    """Grad definition for `Angle` operation."""
-    real_op = P.Real()
-    imag_op = Imag()
-    reciprocal_op = P.Reciprocal()
-    complex_op = Complex()
-    neg_op = P.Neg()
-
-    def bprop(x, out, dout):
-        re = real_op(x)
-        im = imag_op(x)
-        re = complex_op(im, re)
-        z = reciprocal_op(re)
-        zero = zeros_like(dout)
-        complex_dout = complex_op(dout, zero)
-        return (neg_op(complex_dout * z),)
-
-    return bprop
-
-
-@bprop_getters.register(Polar)
-def get_bprop_polar(self):
-    """Grad definition for `Polar` operation."""
-    complex_op = P.Complex()
-    conj = P.Conj()
-    real = P.Real()
-    sig = P.Sign()
-    ones = P.Ones()
-    zeros = P.Zeros()
-
-    def bprop(input1, angle, out, dout):
-        grad_conj = conj(dout)
-        zero = zeros(dout.shape, input1.dtype)
-        one = ones(dout.shape, input1.dtype)
-        i = complex_op(zero, one)
-        grad_abs = real(grad_conj * sig(out))
-        result_mul_1_j = out * i
-        grad_angle = real(grad_conj * result_mul_1_j)
-        return (grad_abs, grad_angle)
-
-    return bprop
-
-
-@bprop_getters.register(TridiagonalSolve)
-def get_bprop_tridiagonalsolve(self):
-    """Grad definition for 'TridiagonalSolve' operation"""
-    tridiagonalsolve = TridiagonalSolve()
-
-    def bprop(diagonals, rhs, out, dout):
-        diags = diagonals
-        diag1 = diags[..., 1, :]
-        zeros1 = P.Zeros()(diags.shape[:-2] + (1,), diags.dtype)
-        superdiag1 = P.Concat(-1)((diags[..., 2, 1:], zeros1))
-        subdiag1 = P.Concat(-1)((zeros1, diags[..., 0, :-1]))
-        diags_transposed = P.Stack(-2)([superdiag1, diag1, subdiag1])
-        grad_rhs = tridiagonalsolve(diags_transposed, dout)
-        diag2 = P.ReduceSum()(grad_rhs * out, -1)
-        zeros2 = P.Zeros()(grad_rhs.shape[:-2] + (1, grad_rhs.shape[-1]), grad_rhs.dtype)
-        superdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((out[..., 1:, :], zeros2)), -1)
-        subdiag2 = P.ReduceSum()(grad_rhs * P.Concat(-2)((zeros2, out[..., :-1, :])), -1)
-        a = (P.Stack(-2)([superdiag2, diag2, subdiag2]))
-        grad_diags = 0 - a
-        return grad_diags, grad_rhs
 
     return bprop
 
