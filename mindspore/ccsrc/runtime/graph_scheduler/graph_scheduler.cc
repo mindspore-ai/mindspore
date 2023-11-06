@@ -2702,7 +2702,8 @@ void GraphScheduler::PersistDeviceTensorForValueNode(const AnfNodePtr &value_nod
   // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
   if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
     MS_LOG(INFO) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                 << ", type:" << device_context->GetDeviceType();
+                 << ", type:" << device_context->GetDeviceType() << " dtype:" << device_tensor->type_id()
+                 << " current device address:" << device_tensor << " in value node:" << value_node->DebugString();
 
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
       {value_node, 0}, nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
