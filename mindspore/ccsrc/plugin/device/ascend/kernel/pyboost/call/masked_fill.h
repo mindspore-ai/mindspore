@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_MASKED_FILL_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_MASKED_FILL_H_
 
-#include "kernel/pyboost/auto_generate/${operator_name}.h"
+#include <vector>
 #include "ir/tensor.h"
-#include "ir/scalar.h"
+#include "ir/value.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-class ${op_name}Ascend : public pyboost::${op_name} {
- public:
-  ${op_name}Ascend() = default;
-  ~${op_name}Ascend() = default;
-
-  ${return_type} Call(${call_args_with_type}) override;
-};
-
-MS_REG_PYBOOST_OP(Ascend, ${op_name});
+tensor::TensorPtr MaskedFillAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
+                                       const tensor::TensorPtr &selfRef, const tensor::TensorPtr &mask,
+                                       const tensor::TensorPtr &value, const std::vector<tensor::TensorPtr> &);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_${op_name_upper}_ASCEND_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CALL_MASKED_FILL_H_

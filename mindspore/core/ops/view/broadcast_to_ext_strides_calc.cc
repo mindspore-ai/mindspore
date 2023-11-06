@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/${operator_name}.h"
-${customize_include}
-#include "runtime/hardware/device_context_manager.h"
-#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
-
-namespace mindspore {
-namespace kernel {
-namespace pyboost {
-${return_type} ${op_name}Ascend::Call(${call_args_with_type}) {
-  ${call_impl}
+#include "ops/view/broadcast_to_ext_strides_calc.h"
+#include <memory>
+#include "ops/view/broadcast_to_strides_calc.h"
+namespace mindspore::ops {
+TensorStorageInfoPtrList BroadCastToExtCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto input_x = GetValue<std::vector<int64_t>>(inputs[1]);
+  return BroadCastToProcess(input_tensor, input_x);
 }
-}  // namespace pyboost
-}  // namespace kernel
-}  // namespace mindspore
+
+REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);
+}  // namespace mindspore::ops

@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_EXT_STRIDES_CALC_H
+#define MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_EXT_STRIDES_CALC_H
 
-#include "plugin/device/ascend/kernel/pyboost/auto_generate/${operator_name}.h"
-${customize_include}
-#include "runtime/hardware/device_context_manager.h"
-#include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#include <vector>
+#include "ops/view/view_strides_calculator.h"
 
 namespace mindspore {
-namespace kernel {
-namespace pyboost {
-${return_type} ${op_name}Ascend::Call(${call_args_with_type}) {
-  ${call_impl}
-}
-}  // namespace pyboost
-}  // namespace kernel
+namespace ops {
+
+MS_CORE_API TensorStorageInfoPtrList BroadCastToExtCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs);
+}  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_VIEW_BROADCAST_TO_EXT_STRIDES_CALC_H

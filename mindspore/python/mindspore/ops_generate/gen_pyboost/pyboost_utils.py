@@ -65,6 +65,7 @@ def get_convert_type_str(dtype: str):
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
+
 def tuple_input_to_cpp_type(dtype: str):
     types_map = {
         'tuple[int]': 'int64_t',
@@ -80,6 +81,7 @@ def tuple_input_to_cpp_type(dtype: str):
         return types_map[dtype]
     return None
 
+
 def number_input_to_cpp_type(dtype: str):
     types_map = {
         'int': 'int64_t',
@@ -89,6 +91,7 @@ def number_input_to_cpp_type(dtype: str):
     if dtype in types_map:
         return types_map[dtype]
     return None
+
 
 def get_input_dtype(dtype: str):
     """
@@ -114,6 +117,7 @@ def get_input_dtype(dtype: str):
     if dtype in type_convert:
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
+
 
 def get_return_type(dtype: str):
     """
@@ -155,18 +159,24 @@ def get_op_name(operator_name, class_def):
             class_name = item
     return class_name
 
+
 def get_pyboost_name(operator_name):
     return 'pyboost_' + operator_name
+
 
 def convert_python_func_name_to_c(func_name: str) -> str:
     return ''.join(word.capitalize() for word in func_name.split('_'))
 
+
 def get_const_number_convert(arg_name, arg_type):
     return "auto {}_imm = GetValue<{}>({});\n".format(arg_name, number_input_to_cpp_type(arg_type), arg_name)
 
+
 def get_tuple_input_convert(arg_name, arg_type):
     cpp_type = tuple_input_to_cpp_type(arg_type)
-    return "std::vector<{}> {}_vector = ConvertValueTupleToVector<{}>({});\n".format(cpp_type, arg_name, cpp_type, arg_name)
+    return "std::vector<{}> {}_vector = ConvertValueTupleToVector<{}>({});\n".format(cpp_type, arg_name, cpp_type,
+                                                                                     arg_name)
+
 
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #

@@ -235,6 +235,14 @@ Unsqueeze:
   Ascend:
     mode: view
 
+MaskedFill:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: customize
+
 Minimum:
   CPU:
     mode: normal

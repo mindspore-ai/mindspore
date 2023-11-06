@@ -13,3 +13,4 @@ masked_fill:
     returns:
         output:
             dtype: tensor
+    pyboost: True

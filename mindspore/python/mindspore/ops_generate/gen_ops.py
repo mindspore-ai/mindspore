@@ -24,6 +24,7 @@ from gen_pyboost.pyboost_utils import get_pyboost_name
 from gen_pyboost.template import CppTemplate
 from gen_pyboost.gen_pyboost_func import gen_pyboost_code
 
+
 def get_op_name(operator_name, class_def):
     """
     Get op name for python class Primitive or c++ OpDef name.
@@ -786,7 +787,8 @@ def main():
     generate_ops_cc_files(work_path, all_ops_str)
     # generate ops label python files
     generate_labels_file(work_path, all_ops_str)
-    gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path),  safe_load_yaml(doc_yaml_path), safe_load_yaml(pyboost_yaml_path))
+    gen_pyboost_code(work_path, safe_load_yaml(ops_yaml_path), safe_load_yaml(doc_yaml_path),
+                     safe_load_yaml(pyboost_yaml_path))
 
 
 if __name__ == "__main__":

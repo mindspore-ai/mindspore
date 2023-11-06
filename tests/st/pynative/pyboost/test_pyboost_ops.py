@@ -21,7 +21,7 @@ from mindspore.ops import split
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill
 import mindspore
 
 
@@ -545,3 +545,20 @@ def test_unsqueeze_ascend():
     input_x2 = 1
     output = unsqueeze(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), [[1], [2], [3], [4]])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_masked_fill_ascend():
+    """
+    Feature: test cast operator
+    Description: test masked_fill run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    input_x2 = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+    output = masked_fill(input_x1, input_x2, 0.5)
+    assert np.allclose(output.asnumpy(), [0.5, 0.5, 3, 0.5])
