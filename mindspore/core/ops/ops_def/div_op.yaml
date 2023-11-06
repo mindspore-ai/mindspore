@@ -12,3 +12,6 @@ div:
             dtype: tensor
     function:
         name: div_
+    pyboost: True
+
+

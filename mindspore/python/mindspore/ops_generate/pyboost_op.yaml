@@ -100,6 +100,25 @@ AddExt:
     mode: normal
     cube: False
 
+Div:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+
+Mul:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
 SplitTensor:
   CPU:
     mode: normal

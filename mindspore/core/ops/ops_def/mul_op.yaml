@@ -13,3 +13,6 @@ mul:
     returns:
         output: 
             dtype: tensor
+    pyboost: True
+
+
