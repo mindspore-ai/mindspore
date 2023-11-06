@@ -52,6 +52,7 @@ constexpr size_t kAvg3DCeilModeIdx = 6;
 constexpr size_t kAvg3DCountIncludePadIdx = 7;
 constexpr size_t kAvg3DDivisorOverrideIdx = 8;
 constexpr size_t kAvg3DDataFormatIdx = 9;
+constexpr size_t kAvgPool3DGradInputNum = 2;
 
 // maxpool3dgrad input indexes are different from those of avgpool3dgrad.
 // the input indexes of maxpool3dgrad are roughly listed, which need to be determined later.
@@ -105,7 +106,6 @@ int PoolingGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
-  kernel_name_ = primitive_->name();
   input_shape_ = inputs[first_input_index_]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   int nbDims = SizeToInt(input_shape_.size());
@@ -353,15 +353,37 @@ void PoolingGradGpuKernelMod::SetPad3D() {
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(window_me_.begin(), window_me_.end(), std::back_inserter(window),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  const size_t kIdxD = 0;
-  const size_t kIdxH = 1;
-  const size_t kIdxW = 2;
+  const size_t k3dSizeLowerLimit = 5;
+  const size_t kIdxD = 2;
+  const size_t kIdxH = 3;
+  const size_t kIdxW = 4;
+  if (window.size() < k3dSizeLowerLimit) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'kernel_size' cannot be less than 5, but got "
+                      << window.size();
+  }
   int window_depth = window[kIdxD];
   int window_height = window[kIdxH];
   int window_width = window[kIdxW];
+
+  if (stride.size() < k3dSizeLowerLimit) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'strides' cannot be less than 5, but got "
+                      << stride.size();
+  }
   int stride_d = stride[kIdxD];
   int stride_h = stride[kIdxH];
   int stride_w = stride[kIdxW];
+
+  if (format_attr_ == Format::NDHWC) {
+    const size_t kNDHWCIdxD = 1;
+    const size_t kNDHWCIdxH = 2;
+    const size_t kNDHWCIdxW = 3;
+    window_depth = window[kNDHWCIdxD];
+    window_height = window[kNDHWCIdxH];
+    window_width = window[kNDHWCIdxW];
+    stride_d = stride[kNDHWCIdxD];
+    stride_h = stride[kNDHWCIdxH];
+    stride_w = stride[kNDHWCIdxW];
+  }
   const size_t k3dDimSize = 3;
   int windowDimA[k3dDimSize] = {window_depth, window_height, window_width};
   int paddingA[k3dDimSize] = {0, 0, 0};
@@ -455,7 +477,7 @@ std::vector<int64_t> PoolingGradGpuKernelMod::GetEdgeKernelSize() {
 }
 
 void PoolingGradGpuKernelMod::SetFirstInputIndex(size_t input_num) {
-  if (kernel_name_ == kAvgPool3DGrad) {
+  if (kernel_name_ == kAvgPool3DGrad && input_num == kAvgPool3DGradInputNum) {
     first_input_index_ = 1;
   }
 }
