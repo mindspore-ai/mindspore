@@ -311,8 +311,8 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
         break;
       }
 
-      if (ret != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "AclHandle failed to receive tensor.ret = " << ret;
+      if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
+        MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
         break;
       }
       if (ConvertDataset2Tensor(acl_dataset)) {

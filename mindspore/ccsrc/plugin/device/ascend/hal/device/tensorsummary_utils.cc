@@ -156,7 +156,8 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
       break;
     }
 
-    if (ret != ACL_SUCCESS) {
+    if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
+      MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
       break;
     }
   }
