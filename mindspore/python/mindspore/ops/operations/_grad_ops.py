@@ -1597,19 +1597,6 @@ class ReluGradV2(Primitive):
         self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
 
 
-class GatherDGrad(Primitive):
-    """Performs grad of GatherD operation."""
-
-    @prim_attr_register
-    def __init__(self, dim=0, shape=None):
-        """Initialize GatherDGrad"""
-        validator.check_is_int(dim, int)
-        self.add_prim_attr("dim", dim)
-        self.dim = dim
-        self.out_shape = shape
-        self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
-
-
 class UpsampleNearest3DGrad(Primitive):
     """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.

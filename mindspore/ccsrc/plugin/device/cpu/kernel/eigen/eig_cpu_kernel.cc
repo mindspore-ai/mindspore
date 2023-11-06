@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <type_traits>
 #include <utility>
-#include <map>
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "utils/ms_utils.h"
 #include "Eigen/Eigenvalues"
@@ -108,8 +107,8 @@ bool EigCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs, co
 std::vector<std::pair<KernelAttr, EigCpuKernelMod::EigFunc>> EigCpuKernelMod::func_list_ = {
   {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeComplex64, float, float_complex)},
   {EIG_KERNEL_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeComplex128, double, double_complex)},
-  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, float, float_complex)},
-  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, double, double_complex)}};
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex64, kNumberTypeComplex64, float_complex, float_complex)},
+  {EIG_KERNEL_CPU_REGISTER(kNumberTypeComplex128, kNumberTypeComplex128, double_complex, double_complex)}};
 
 std::vector<KernelAttr> EigCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

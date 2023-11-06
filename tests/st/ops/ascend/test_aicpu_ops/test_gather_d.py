@@ -49,12 +49,12 @@ class TensorNet(nn.Cell):
 
 
 class NetGrad(nn.Cell):
-    def __init__(self, dim=0, shape=None):
+    def __init__(self):
         super(NetGrad, self).__init__()
-        self.op = G.GatherDGrad(dim, shape)
+        self.op = G.GatherDGradV2()
 
-    def construct(self, index, x):
-        return self.op(index, x)
+    def construct(self, index, x, dim=0, shape=None):
+        return self.op(shape, dim, index, x)
 
 
 def get_data(ms_type):
@@ -227,8 +227,10 @@ def test_net_grad():
                              [2, 0, 0, 1, -1]]), mindspore.int32)
     x = Tensor(np.array([[772, 231, 508, 615, 249],
                          [122, 676, 714, 261, 936]]), mindspore.int32)
-    net = NetGrad(dim=0, shape=(3, 5))
-    out = net(index, x)
+    net = NetGrad()
+    shape = Tensor(np.array([3, 5]), mindspore.int64)
+    dim = 0
+    out = net(shape, dim, index, x)
     print(out.asnumpy())
 
     expect_out = np.array([[772, 676, 714, 615, 249],
