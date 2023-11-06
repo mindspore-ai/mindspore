@@ -2115,7 +2115,7 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
     MS_LOG(ERROR) << "StepAssignedParallel failed. Please check.";
     return nullptr;
   }
-  resource->set_is_load(False);
+  resource->set_is_load(false);
   resource->set_manager(func_graph_manager);
   resource->set_func_graph(func_graph);
   auto params = func_graph->parameters();
