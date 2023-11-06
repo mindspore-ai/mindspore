@@ -1768,8 +1768,38 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_list,
-                                            const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValuePtr &item_value,
+                                                   const AnfNodeConfigPtr &out_conf) {
+  const auto &item_str = item_value->cast_ptr<StringImm>();
+  if (item_str == nullptr) {
+    return nullptr;
+  }
+  const std::string &item_name = item_str->value();
+  auto value_obj = *node->user_data<py::object>(item_name);
+  py::object overridden_method = value_obj.attr("__class__").attr(item_name.c_str());
+  auto inner_fg = parse::ParsePythonCode(overridden_method);
+  if (inner_fg == nullptr) {
+    return nullptr;
+  }
+  std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial)};
+  input.push_back(NewValueNode(inner_fg));
+  MS_EXCEPTION_IF_NULL(out_conf);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
+  auto cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  input.push_back(cnode->input(1));
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  CNodePtr new_cnode = func_graph->NewCNode(input);
+  auto eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AddToManager(eng, inner_fg);
+  auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
+}
+
+EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf,
+                                            const bool check_override = false) {
   // args_abs_list: same as StaticGetter
   constexpr size_t args_min_size = 2;
   if (args_abs_list.size() < args_min_size) {
@@ -1783,15 +1813,21 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
   auto item = args_abs_list[item_index];
   MS_EXCEPTION_IF_NULL(data);
   MS_EXCEPTION_IF_NULL(item);
+  MS_EXCEPTION_IF_NULL(out_conf->node());
   auto data_value = data->BuildValue();
   MS_EXCEPTION_IF_NULL(data_value);
   auto data_type = data->BuildType();
   MS_EXCEPTION_IF_NULL(data_type);
+  auto item_value = item->BuildValue();
   std::string data_id_str = TypeIdToString(data_type->type_id());
+  if (check_override) {
+    auto inner_fg_res = GenerateFuncGraphForOverriddenMethod(out_conf->node(), item_value, out_conf);
+    if (inner_fg_res != nullptr) return inner_fg_res;
+  }
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   if (data_value->isa<parse::ClassType>()) {
     auto class_val = dyn_cast_ptr<parse::ClassType>(data_value);
     auto class_obj = class_val->obj();
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, class_obj);
     data_value = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
     data_id_str = class_val->name();
@@ -1799,15 +1835,12 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
   if (data_value->isa<parse::MsClassObject>()) {
     auto class_val = dyn_cast_ptr<parse::MsClassObject>(data_value);
     auto class_obj = class_val->obj();
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, class_obj);
     data_value = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
     data_id_str = class_val->name();
   }
   if (!data_value->isa<parse::NameSpace>()) {
-    auto item_value = item->BuildValue();
     MS_EXCEPTION_IF_NULL(item_value);
-    MS_EXCEPTION_IF_NULL(out_conf->node());
     MS_LOG(DEBUG) << "Evaluate " << data_value->ToString() << " attribute: " << item_value->ToString()
                   << ".\nnode: " << out_conf->node()->DebugString() << "\n"
                   << trace::GetDebugInfoStr(out_conf->node()->debug_info());
@@ -2049,6 +2082,20 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
   return GetEvaluatedValueForPrimitiveAttr(args_abs_list, data_args);
 }
 
+bool CheckHasOverriddenMethod(AnfNodePtr node, ValuePtr item_value) {
+  const auto &item_str = item_value->cast_ptr<StringImm>();
+  if (item_str != nullptr) {
+    const std::string &item_name = item_str->value();
+    if (node->has_user_data(item_name)) {
+      auto value_obj = *node->user_data<py::object>(item_name);
+      py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+      py::bool_ check = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CHECK_ATTRS, value_obj, item_name);
+      return py::cast<bool>(check);
+    }
+  }
+  return false;
+}
+
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                            const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
@@ -2102,11 +2149,13 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   // Try to search method map, if not found, the data_type should be External type.
   TypePtr data_type = data_args->BuildType();
   MS_EXCEPTION_IF_NULL(data_type);
+  // Check if attr is a overridden method.
+  bool check_override = CheckHasOverriddenMethod(out_conf->node(), item_value);
   // Not check if the data is from PyExecute CNode, since its Tensor output is pseud.
-  if (!IsPyExecuteData(data_args) && pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
+  if (!IsPyExecuteData(data_args) && pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id()) && !check_override) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_abs_list, data_conf, out_conf);
   }
-  return GetEvaluatedValueForNameSpace(args_abs_list, out_conf);
+  return GetEvaluatedValueForNameSpace(args_abs_list, out_conf, check_override);
 }
 
 TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) {

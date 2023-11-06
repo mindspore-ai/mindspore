@@ -2316,6 +2316,18 @@ AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &no
   return ParseTupleOrList(block, node, false);
 }
 
+py::object Parser::GetValuePythonObject(const py::object &value_node) {
+  auto value_name = py::cast<std::string>(value_node);
+  py::tuple attr_namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value_name);
+  // Handle nested function def.
+  constexpr size_t value_index = 2;
+  auto py_obj_attr_value = attr_namespace_info[value_index];
+  if (!py::isinstance<py::none>(py_obj_attr_value)) {
+    return py_obj_attr_value;
+  }
+  return py::none();
+}
+
 // Process a subscript, such as x[y] , node expressed as value[slice]
 AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Subscript";
@@ -2326,7 +2338,24 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   AnfNodePtr value = ParseExprNode(block, value_node);
   AnfNodePtr slice = ParseExprNode(block, slice_node);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  return block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
+  auto value_id = python_adapter::GetPyObjAttr(value_node, "id");
+  AnfNodePtr getitem_node;
+  py::object value_obj = py::none();
+  auto str_getitem = std::make_shared<StringImm>("__getitem__");
+  AnfNodePtr new_node;
+  if (!py::isinstance<py::none>(value_id)) {
+    value_obj = GetValuePythonObject(value_id);
+  }
+  if (!py::isinstance<py::none>(value_obj)) {
+    getitem_node =
+      block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), value, NewValueNode(str_getitem)});
+    new_node = block->func_graph()->NewCNodeInOrder({getitem_node, slice});
+    getitem_node->set_user_data<py::object>("__getitem__", std::make_shared<py::object>(value_obj));
+  } else {
+    new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
+  }
+
+  return new_node;
 }
 
 // Process a slice, get the slice value
@@ -3805,16 +3834,33 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   MakeSetAttrNode(block, target_node, value_node, target_id_str, attr_str);
 }
 
+CNodePtr Parser::MakeSetitemNode(const FunctionBlockPtr &block, const py::object &value_obj,
+                                 const py::object &slice_obj, const AnfNodePtr &assigned_node,
+                                 const AnfNodePtr &value_node) {
+  AnfNodePtr op_setitem = block->MakeResolveOperation(NAMED_PRIMITIVE_SETITEM);
+  auto value_id = python_adapter::GetPyObjAttr(value_obj, "id");
+  AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
+  auto str_setitem = std::make_shared<StringImm>("__setitem__");
+  if (!py::isinstance<py::none>(value_id)) {
+    py::object value_obj = GetValuePythonObject(value_id);
+    if (!py::isinstance<py::none>(value_obj)) {
+      AnfNodePtr setitem_node =
+        block->func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), value_node, NewValueNode(str_setitem)});
+      setitem_node->set_user_data<py::object>("__setitem__", std::make_shared<py::object>(value_obj));
+      return block->func_graph()->NewCNodeInOrder({setitem_node, slice_node, assigned_node});
+    }
+  }
+  return block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
+}
+
 void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::object &target,
                                    const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
-  AnfNodePtr op_setitem = block->MakeResolveOperation(NAMED_PRIMITIVE_SETITEM);
   py::object value_obj = python_adapter::GetPyObjAttr(target, "value");
   py::object slice_obj = python_adapter::GetPyObjAttr(target, "slice");
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
-  AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  CNodePtr setitem_app = block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
+  auto setitem_app = MakeSetitemNode(block, value_obj, slice_obj, assigned_node, value_node);
   // Getitem apply should return the sequence data structure itself
   std::string var_name;
   if (ast_->IsClassMemberOfSelf(value_obj)) {

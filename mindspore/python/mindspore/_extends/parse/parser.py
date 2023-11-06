@@ -853,6 +853,13 @@ def get_dtype(name: str):
     return get_attr_from_object(mstype, name)
 
 
+def check_attrs(target_object, func_name: str):
+    if hasattr(target_object, func_name) and hasattr(target_object.__class__.__base__, func_name):
+        if getattr(target_object.__class__, func_name) is not getattr(target_object.__class__.__base__, func_name):
+            return True
+    return False
+
+
 class ThirdPartyLibraryChecker:
     """
     Check if a module or function is from third-party libraries.
