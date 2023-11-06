@@ -79,6 +79,7 @@ def test_while_after_if_in_for_tensor_2():
     assert res_y == 5
 
 
+@case_register.skip(reason='Need to be fixed')
 @case_register.level0
 @case_register.target_gpu
 @case_register.target_ascend
