@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "ops/view/view_strides_calc.h"
+#include "ops/view/reshape_strides_calc.h"
 #include <vector>
 #include <memory>
 
 namespace mindspore::ops {
-constexpr size_t kViewInputsNum = 2;
-ShapeVector update_shape(const ShapeVector &input_shape, ShapeVector shape) {
+constexpr size_t kReshapeInputsNum = 2;
+ShapeVector ReshapeUpdateShape(const ShapeVector &input_shape, ShapeVector shape) {
   int64_t x_num = 1;
   for (int64_t value : input_shape) {
     x_num = LongMulWithOverflowCheck(value, x_num);
@@ -54,14 +54,17 @@ ShapeVector update_shape(const ShapeVector &input_shape, ShapeVector shape) {
   return shape;
 }
 
-TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
-                                      const std::vector<int64_t> &shape) {
+TensorStorageInfoPtrList ReshapeCalcImpl(const PrimitivePtr &prim, const tensor::TensorPtr &input_tensor,
+                                         const std::vector<int64_t> &shape) {
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   const auto &old_shape = old_tensor_info->old_shape;
   auto storage_offset = old_tensor_info->old_offset;
+  if (!IsContiguous(old_shape, old_tensor_info->old_strides)) {
+    return {};
+  }
 
-  const auto &new_shape = update_shape(old_shape, shape);
+  const auto &new_shape = ReshapeUpdateShape(old_shape, shape);
   const auto &new_strides = GetOriStrides(new_shape);
   auto new_storage_info =
     std::make_shared<TensorStorageInfo>(new_shape, new_strides, storage_offset, old_tensor_info->ori_shape,
@@ -69,8 +72,8 @@ TensorStorageInfoPtrList ViewCalcImpl(const PrimitivePtr &prim, const tensor::Te
   return {new_storage_info};
 }
 
-TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (inputs.size() != kViewInputsNum) {
+TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+  if (inputs.size() != kReshapeInputsNum) {
     return {};
   }
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
@@ -83,8 +86,8 @@ TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<Va
 
   auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
 
-  return ViewCalcImpl(prim, input_tensor, shape);
+  return ReshapeCalcImpl(prim, input_tensor, shape);
 }
 
-REG_VIEW_STRIDES_CALC_FUN(View, ViewCalc);
+REG_VIEW_STRIDES_CALC_FUN(Reshape, ReshapeCalc);
 }  // namespace mindspore::ops

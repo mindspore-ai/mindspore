@@ -203,8 +203,10 @@ class DynamicMemAllocatorDebugInfo {
 };
 
 struct DynamicMemBuf {
-  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size,
-                const std::string &allocator_name = "Unknown", AllocatorType allocator_type = AllocatorType::kOther)
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size)
+      : device_addr_(addr), status_(status), size_(size) {}
+  DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, const std::string &allocator_name,
+                AllocatorType allocator_type)
       : device_addr_(addr),
         status_(status),
         size_(size),
@@ -216,7 +218,7 @@ struct DynamicMemBuf {
 
   // Debug info.
   std::string allocator_name_;
-  AllocatorType allocator_type_;
+  AllocatorType allocator_type_{AllocatorType::kOther};
 };
 
 class DynamicMemBlock {

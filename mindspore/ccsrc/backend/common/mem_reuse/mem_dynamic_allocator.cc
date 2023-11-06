@@ -698,7 +698,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
           total_eager_free_mem += mem_buf->size_;
         }
         MS_LOG(INFO) << "  MemBuf info: address[" << mem_buf->device_addr_ << "] size[" << mem_buf->size_ << "] status["
-                     << kBufStatusString.at(mem_buf->status_) << "] name[" << mem_buf->allocator_name_ << "] type["
+                     << kBufStatusString.at(mem_buf->status_) << "] name["
+                     << (mem_buf->allocator_name_.empty() ? "Unknown" : mem_buf->allocator_name_) << "] type["
                      << kAllocatorTypeString.at(mem_buf->allocator_type_) << "].";
       }
     }

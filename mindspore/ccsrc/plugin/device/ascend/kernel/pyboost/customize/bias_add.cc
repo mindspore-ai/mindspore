@@ -20,9 +20,11 @@ bool BiasAddAscendLaunch(const PrimitivePtr &primitive, const tensor::TensorPtr 
 
   auto device_context = PyBoostUtils::GetDeviceContext(kAscendDevice);
 
-  auto input_x_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_x, "input_x");
-  auto bias_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, bias, "bias");
-  auto output_address = runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
+  auto input_x_address =
+    runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_x, "input_x", true);
+  auto bias_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, bias, "bias", true);
+  auto output_address =
+    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output", "", true);
 
   MS_EXCEPTION_IF_NULL(input_x_address);
   MS_EXCEPTION_IF_NULL(bias_address);

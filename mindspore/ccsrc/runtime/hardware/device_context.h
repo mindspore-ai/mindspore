@@ -86,7 +86,10 @@ class DeviceContext {
   const DeviceContextKey &device_context_key() const { return device_context_key_; }
 
   // Get device address type according different device type, such GPU, Ascend.
-  DeviceType GetDeviceType() const { return GetDeviceTypeByName(device_context_key_.device_name_); }
+  DeviceType GetDeviceType() const {
+    static const auto device_type = GetDeviceTypeByName(device_context_key_.device_name_);
+    return device_type;
+  }
 
   // Get kernel executor by is dynamic shape
   std::shared_ptr<KernelExecutor> GetKernelExecutor(bool is_dynamic_shape) const {
