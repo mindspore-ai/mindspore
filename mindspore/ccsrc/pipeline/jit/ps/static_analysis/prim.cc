@@ -1797,7 +1797,10 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << data_value->ToString()
-                              << "\nThe first argument should be a NameSpace, but got " << data->ToString();
+                              << " in JIT strict mode. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' \"\n"
+                              << " to enable the JIT lax mode to support the current syntax."
+                              << "\nThe first argument should be a NameSpace, but got " << data->ToString()
+                              << trace::GetDebugInfoStr(out_conf->node()->debug_info());
     }
 
     auto item_value = item->BuildValue();
@@ -1933,7 +1936,11 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       if (!has_default) {
         const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
         if (!allow_fallback_runtime) {
-          MS_EXCEPTION(AttributeError) << data_type->ToString() << " object has no attribute: " << item_name;
+          MS_EXCEPTION(AttributeError) << "In JIT strict mode, cannot get attributes " << item_name << " or the "
+                                       << data_type->ToString() << " object has no attribute: " << item_name
+                                       << "'. You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
+                                       << "to enable the JIT lax mode to support the current syntax.\n\n"
+                                       << trace::GetDebugInfoStr(out_conf->node()->debug_info());
         }
 
         constexpr auto recursive_level = 3;
@@ -2073,7 +2080,10 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
       MS_EXCEPTION(TypeError) << "Do not support to get attribute from " << py::str(type_str) << " object "
                               << py::str(obj) << ".\nFor more details, please refer to "
                               << "https://mindspore.cn/docs/zh-CN/master/faq/network_compilation.html?highlight=do"
-                              << "%20support%20get%20attribute%20from";
+                              << "%20support%20get%20attribute%20from\n"
+                              << "You can use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' \n"
+                              << "to enable the JIT lax mode to support the current syntax.\n"
+                              << trace::GetDebugInfoStr(out_conf->node()->debug_info());
     }
   }
 

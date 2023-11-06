@@ -103,7 +103,10 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
       // 'node' is setattr node.
       const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
       if (!allow_fallback_runtime) {
-        MS_LOG(EXCEPTION) << "Not support setattr during JIT Fallback disabled.";
+        MS_LOG(EXCEPTION) << "Not support setattr during JIT Fallback disabled. You can use"
+                             " os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' \n"
+                          << "to enable the JIT lax mode to support the current syntax.\n"
+                          << trace::GetDebugInfoStr(target_node->debug_info());
       }
       return parse::ResolveInterpretedObjectOfSetAttr(target_node, attr_node, assigned_node);
     }

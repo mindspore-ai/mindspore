@@ -593,6 +593,7 @@ FuncGraphPtr PyExecuteGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 
   // Make fprop first result, PyExecute's forward result.
   AnfNodePtr out = fg->NewCNodeInOrder(params);
+  InterpretNodeRecorder::GetInstance().PushPyExecuteNode(out);
 
   // Make fprop second result, PyExecute's backward function.
   FuncGraphPtr bprop = std::make_shared<FuncGraph>();

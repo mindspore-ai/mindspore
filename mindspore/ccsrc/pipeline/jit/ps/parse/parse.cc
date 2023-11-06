@@ -128,6 +128,7 @@ void Parser::BuildMethodMap() {
   expr_method_map_["GeneratorExp"] = &Parser::ParseListComp;  // We treat 'GeneratorExp' the same as 'ListComp'.
   expr_method_map_["JoinedStr"] = &Parser::ParseJoinedStr;
   expr_method_map_["FormattedValue"] = &Parser::ParseFormattedValue;
+  expr_method_map_["Starred"] = &Parser::ParseStarred;
   condition_method_map_["Attribute"] = &Parser::CheckAttributeConstantCond;
   condition_method_map_["Name"] = &Parser::CheckNameConstantCond;
   condition_method_map_["UnaryOp"] = &Parser::CheckUnaryOpConstantCond;
@@ -2315,50 +2316,97 @@ AnfNodePtr Parser::ParseLambda(const FunctionBlockPtr &block, const py::object &
   return const_graph;
 }
 
-// Process a tuple
-AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &node) {
-  MS_LOG(DEBUG) << "Process ast Tuple";
-  MS_EXCEPTION_IF_NULL(block);
+// a = *[1, 2], (3, 4)
+// StarredUnpackMerge(assign_node1, assign_node2, starred_flags_node, is_tuple)
+// StarredUnpackMerge(StarredUnpack(*[1, 2]), (3, 4), (1, 0), 1)
+// --> StarredUnpackMerge((1, 2), (3, 4), (1, 0), 1)
+// --> (1, 2, (3, 4))
+AnfNodePtr Parser::ParseTupleOrListWithStarred(const FunctionBlockPtr &block, const py::object &node, bool is_tuple,
+                                               const std::vector<AnfNodePtr> &starred_flags) {
+  auto prim = std::make_shared<prim::StarredUnpackMerge>(NAMED_METAGRAPH_STARRED_UNPACK_MERGE);
+  std::vector<AnfNodePtr> unpack_merge_inputs{NewValueNode(prim)};
+  auto starred_flags_node = block->func_graph()->NewCNodeInOrder(starred_flags);
   py::tuple elts = python_adapter::GetPyObjAttr(node, "elts");
-  if (elts.empty()) {
-    auto empty_tuple = std::vector<ValuePtr>();
-    return NewValueNode(std::make_shared<ValueTuple>(empty_tuple));
-  }
-
-  std::vector<AnfNodePtr> tuple_vec;
-  AnfNodePtr make_tuple_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKETUPLE);
-  (void)tuple_vec.emplace_back(make_tuple_op);
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
     node_ptr = HandleInterpret(block, node_ptr, elts[i]);
-    (void)tuple_vec.emplace_back(node_ptr);
+    auto elt_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, elts[i])));
+    if (elt_type == AST_SUB_TYPE_STARRED) {
+      auto starred_unpack_prim = std::make_shared<prim::StarredUnpack>(NAMED_METAGRAPH_STARRED_UNPACK);
+      CNodePtr unpack_node = block->func_graph()->NewCNodeInOrder({NewValueNode(starred_unpack_prim), node_ptr});
+      (void)unpack_merge_inputs.emplace_back(unpack_node);
+    } else {
+      (void)unpack_merge_inputs.emplace_back(node_ptr);
+    }
   }
-  MS_EXCEPTION_IF_NULL(block->func_graph());
-  CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(std::move(tuple_vec));
-  return tuple_app;
+  (void)unpack_merge_inputs.emplace_back(starred_flags_node);
+  if (is_tuple) {
+    auto is_tuple_node = NewValueNode(static_cast<int64_t>(1));
+    (void)unpack_merge_inputs.emplace_back(is_tuple_node);
+  } else {
+    auto is_tuple_node = NewValueNode(static_cast<int64_t>(0));
+    (void)unpack_merge_inputs.emplace_back(is_tuple_node);
+  }
+
+  CNodePtr unpack_merge_node = block->func_graph()->NewCNodeInOrder(unpack_merge_inputs);
+  return unpack_merge_node;
+}
+
+AnfNodePtr Parser::ParseTupleOrList(const FunctionBlockPtr &block, const py::object &node, bool is_tuple) {
+  MS_EXCEPTION_IF_NULL(block);
+  py::tuple elts = python_adapter::GetPyObjAttr(node, "elts");
+  if (elts.empty()) {
+    if (is_tuple) {
+      auto empty_tuple = std::vector<ValuePtr>();
+      return NewValueNode(std::make_shared<ValueTuple>(empty_tuple));
+    }
+    auto empty_list = std::vector<ValuePtr>();
+    return NewValueNode(std::make_shared<ValueList>(empty_list));
+  }
+
+  bool exist_starred_expression = false;
+  std::vector<AnfNodePtr> starred_flags{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < elts.size(); i++) {
+    auto elt_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, elts[i])));
+    if (elt_type == AST_SUB_TYPE_STARRED) {
+      exist_starred_expression = true;
+      starred_flags.push_back(NewValueNode(static_cast<int64_t>(1)));
+    } else {
+      starred_flags.push_back(NewValueNode(static_cast<int64_t>(0)));
+    }
+  }
+
+  if (!exist_starred_expression) {
+    std::vector<AnfNodePtr> sequence_vec;
+    AnfNodePtr sequence_op = nullptr;
+    if (is_tuple) {
+      sequence_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKETUPLE);
+    } else {
+      sequence_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
+    }
+    (void)sequence_vec.emplace_back(sequence_op);
+    for (size_t i = 0; i < elts.size(); i++) {
+      AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
+      node_ptr = HandleInterpret(block, node_ptr, elts[i]);
+      (void)sequence_vec.emplace_back(node_ptr);
+    }
+    MS_EXCEPTION_IF_NULL(block->func_graph());
+    CNodePtr sequence_app = block->func_graph()->NewCNodeInOrder(std::move(sequence_vec));
+    return sequence_app;
+  }
+  return ParseTupleOrListWithStarred(block, node, is_tuple, starred_flags);
+}
+
+// Process a tuple
+AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Tuple";
+  return ParseTupleOrList(block, node, true);
 }
 
 // Process a list
 AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast List";
-  MS_EXCEPTION_IF_NULL(block);
-  py::list elts = python_adapter::GetPyObjAttr(node, "elts");
-  if (elts.empty()) {
-    auto empty_list = std::vector<ValuePtr>();
-    return NewValueNode(std::make_shared<ValueList>(empty_list));
-  }
-
-  std::vector<AnfNodePtr> list_vec;
-  AnfNodePtr make_list_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
-  (void)list_vec.emplace_back(make_list_op);
-  for (size_t i = 0; i < elts.size(); i++) {
-    AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
-    node_ptr = HandleInterpret(block, node_ptr, elts[i]);
-    (void)list_vec.emplace_back(node_ptr);
-  }
-  MS_EXCEPTION_IF_NULL(block->func_graph());
-  CNodePtr list_app = block->func_graph()->NewCNodeInOrder(std::move(list_vec));
-  return list_app;
+  return ParseTupleOrList(block, node, false);
 }
 
 // Process a subscript, such as x[y] , node expressed as value[slice]
@@ -2471,23 +2519,47 @@ AnfNodePtr Parser::ParseDictByKeysAndValues(const FunctionBlockPtr &block, const
   return block->func_graph()->NewCNodeInOrder({make_dict_op, keys_tuple, values_tuple});
 }
 
-AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &node) {
-  MS_LOG(DEBUG) << "Process ast Dict";
+std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> Parser::GetRealKeysValues(const FunctionBlockPtr &block,
+                                                                                      const py::object &node) {
   py::list keys = node.attr("keys");
   py::list values = node.attr("values");
   if (keys.size() != values.size()) {
     MS_LOG(INTERNAL_EXCEPTION) << "The keys' size is not equal to the values' size.";
   }
-  std::vector<AnfNodePtr> key_nodes;
-  std::vector<AnfNodePtr> value_nodes;
-  for (size_t i = 0; i < keys.size(); i++) {
-    AnfNodePtr key_node = ParseExprNode(block, keys[i]);
-    key_node = HandleInterpret(block, key_node, keys[i]);
-    key_nodes.push_back(key_node);
-    AnfNodePtr value_node = ParseExprNode(block, values[i]);
-    value_node = HandleInterpret(block, value_node, values[i]);
-    value_nodes.push_back(value_node);
+  std::vector<AnfNodePtr> inner_key_nodes;
+  std::vector<AnfNodePtr> inner_value_nodes;
+  for (size_t index = 0; index < keys.size(); ++index) {
+    auto inner_key_node_type = ast_->GetNodeType(keys[index]);
+    const std::string &inner_key_node_type_name = inner_key_node_type->node_name();
+    // The key does not exist, mean the value is a dict which need unpack.
+    if (inner_key_node_type_name == "NoneType") {
+      auto unpack_dict = values[index];
+      auto inner_value_node_type =
+        AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, unpack_dict)));
+      if (inner_value_node_type != AST_SUB_TYPE_DICT) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The input of dict which need unpack must be dict, but got "
+                                   << inner_value_node_type;
+      }
+      auto [unpack_keys, unpack_values] = GetRealKeysValues(block, unpack_dict);
+      for (size_t i = 0; i < unpack_keys.size(); ++i) {
+        inner_key_nodes.push_back(unpack_keys[i]);
+        inner_value_nodes.push_back(unpack_values[i]);
+      }
+    } else {
+      AnfNodePtr key_node = ParseExprNode(block, keys[index]);
+      key_node = HandleInterpret(block, key_node, keys[index]);
+      inner_key_nodes.push_back(key_node);
+      AnfNodePtr value_node = ParseExprNode(block, values[index]);
+      value_node = HandleInterpret(block, value_node, values[index]);
+      inner_value_nodes.push_back(value_node);
+    }
   }
+  return {inner_key_nodes, inner_value_nodes};
+}
+
+AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Dict";
+  auto [key_nodes, value_nodes] = GetRealKeysValues(block, node);
   return ParseDictByKeysAndValues(block, key_nodes, value_nodes);
 }
 
@@ -3045,6 +3117,7 @@ CNodePtr GenerateInterpretGetItem(const FuncGraphPtr &fg, const AnfNodePtr &iter
   auto prim = NewValueNode(prim::kPrimPyInterpret);
   auto interpret_get_item = fg->NewCNodeInOrder({prim, script_node, empty_global_dict_node, local_dict_node});
   interpret_get_item->set_debug_info(iter_node->debug_info());
+  InterpretNodeRecorder::GetInstance().PushPyInterpretNode(interpret_get_item);
   return interpret_get_item;
 }
 
@@ -3733,6 +3806,34 @@ AnfNodePtr Parser::ParseFormattedValue(const FunctionBlockPtr &block, const py::
   return value_node;
 }
 
+AnfNodePtr Parser::ParseStarred(const FunctionBlockPtr &block, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Starred.";
+  TraceGuard trace_guard(GetLocation(node));
+  MS_EXCEPTION_IF_NULL(block);
+  py::object value_object = python_adapter::GetPyObjAttr(node, "value");
+  AnfNodePtr value_node = ParseExprNode(block, value_object);
+  AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
+  auto func = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func);
+  CNodePtr iterated_node = func->NewCNodeInOrder({op_iter, value_node});
+  auto prim = std::make_shared<prim::StarredUnpack>(NAMED_METAGRAPH_STARRED_UNPACK);
+  CNodePtr unpack_node = func->NewCNodeInOrder({NewValueNode(prim), iterated_node});
+  return unpack_node;
+}
+
+void Parser::HandleAssignStarred(const FunctionBlockPtr &block, const py::object &target,
+                                 const AnfNodePtr &assigned_node) {
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(assigned_node);
+  py::object value_object = python_adapter::GetPyObjAttr(target, "value");
+  py::str name = python_adapter::GetPyObjAttr(value_object, "id");
+  std::string name_id = name;
+  MS_EXCEPTION_IF_NULL(assigned_node->debug_info());
+  assigned_node->debug_info()->set_name(name_id);
+  MS_LOG(DEBUG) << "Assign name: `" << name_id << "` to node: " << assigned_node->DebugString();
+  block->WriteVariable(name_id, assigned_node);
+}
+
 void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &target,
                               const AnfNodePtr &assigned_node) const {
   MS_EXCEPTION_IF_NULL(block);
@@ -3755,21 +3856,85 @@ void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &t
   block->WriteVariable(name_id, assigned_node);
 }
 
+void Parser::HandleAssignTupleWithStarredExpression(const FunctionBlockPtr &block, const py::object &target,
+                                                    const AnfNodePtr &assigned_node,
+                                                    const std::vector<int64_t> &positions) {
+  // Process assigned_node
+  auto func = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func);
+  AnfNodePtr op_iter = block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
+  CNodePtr iterated_node = func->NewCNodeInOrder({op_iter, assigned_node});
+  auto starred_unpack_prim = std::make_shared<prim::StarredUnpack>(NAMED_METAGRAPH_STARRED_UNPACK);
+  CNodePtr unpack_node = func->NewCNodeInOrder({NewValueNode(starred_unpack_prim), iterated_node});
+
+  py::list items = python_adapter::GetPyObjAttr(target, "elts");
+  for (size_t i = 0; i < items.size(); i++) {
+    py::object elt = items[i];
+    auto elt_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, elt)));
+    if (elt_type != AST_SUB_TYPE_STARRED) {
+      std::string module_name = "mindspore.ops.composite.multitype_ops.getitem_impl";
+      ValuePtr op = prim::GetPythonOps("getitem", module_name);
+      std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(op), unpack_node, NewValueNode(positions[i])};
+      AnfNodePtr tuple_get_item = func->NewCNodeInOrder(tuple_get_item_inputs);
+      MS_LOG(DEBUG) << "Assign name: `" << py::str(elt) << "` to node: " << tuple_get_item->DebugString();
+      WriteAssignVars(block, elt, tuple_get_item);
+    } else {
+      auto starred_get_item_prim = std::make_shared<prim::StarredGetItem>(NAMED_METAGRAPH_STARRED_GET_ITEM);
+      std::vector<AnfNodePtr> starred_get_item_inputs{NewValueNode(starred_get_item_prim), unpack_node,
+                                                      NewValueNode(positions[i]),
+                                                      NewValueNode(SizeToLong(items.size()))};
+      AnfNodePtr starred_get_item = func->NewCNodeInOrder(starred_get_item_inputs);
+      MS_LOG(DEBUG) << "Assign name: `" << py::str(elt) << "` to node: " << starred_get_item->DebugString();
+      WriteAssignVars(block, elt, starred_get_item);
+    }
+  }
+}
+
 void Parser::HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::object &target,
                                      const AnfNodePtr &assigned_node) {
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_getitem = block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   py::list items = python_adapter::GetPyObjAttr(target, "elts");
-  for (size_t i = 0; i < items.size(); i++) {
-    // Use the Primitive replace the operation resolve node (getitem),
-    // because the getitem will eventually be converted to Primitive node
-    MS_EXCEPTION_IF_NULL(block->func_graph());
-    CNodePtr item_apply =
-      block->func_graph()->NewCNodeInOrder({op_getitem, assigned_node, NewValueNode(static_cast<int64_t>(i))});
 
+  // Record the position with targets.
+  size_t target_starred_num = 0;
+  size_t starred_pos = items.size();
+  std::vector<int64_t> positions(items.size(), 0);
+  for (size_t i = 0; i < items.size(); i++) {
     py::object elt = items[i];
-    WriteAssignVars(block, elt, item_apply);
+    auto elt_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, elt)));
+    if (elt_type == AST_SUB_TYPE_STARRED) {
+      target_starred_num++;
+      if (target_starred_num > 1) {
+        MS_LOG(EXCEPTION) << "SyntaxError: " << target_starred_num << " starred expressions in assignment.";
+      }
+      starred_pos = i;
+      positions[i] = i;
+    } else {
+      if (i > starred_pos) {
+        positions[i] = i - items.size();
+      } else {
+        positions[i] = i;
+      }
+    }
   }
+  auto func = block->func_graph();
+  MS_EXCEPTION_IF_NULL(func);
+
+  if (target_starred_num == 0) {
+    for (size_t i = 0; i < items.size(); i++) {
+      // Use the Primitive replace the operation resolve node (getitem),
+      // because the getitem will eventually be converted to Primitive node
+      CNodePtr item_apply = func->NewCNodeInOrder({op_getitem, assigned_node, NewValueNode(static_cast<int64_t>(i))});
+      py::object elt = items[i];
+      WriteAssignVars(block, elt, item_apply);
+    }
+    return;
+  }
+
+  // Process AssignTuple with starred expression.
+  // a, *b, c = x    // targets(a, *b, c) = assign(x)
+  HandleAssignTupleWithStarredExpression(block, target, assigned_node, positions);
 }
 
 bool Parser::IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const {
@@ -3981,6 +4146,8 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
     HandleAssignClassMember(block, target_object, value_node);
   } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
     HandleAssignClassMember(block, target_object, value_node);
+  } else if (ast_type == AST_SUB_TYPE_STARRED) {
+    HandleAssignStarred(block, target_object, value_node);
   } else {
     TraceGuard trace_guard(GetLocation(target_object));
     MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
@@ -4196,10 +4363,11 @@ bool Parser::IsPopOperation(const AnfNodePtr &node) const {
 FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast assign";
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
+  py::object targets_object = python_adapter::GetPyObjAttr(node, "targets");
+
   AnfNodePtr value_node = ParseExprNode(block, value_object);
   value_node = HandleInterpret(block, value_node, value_object);
 
-  py::object targets_object = python_adapter::GetPyObjAttr(node, "targets");
   py::int_ pcount = python_adapter::CallPyObjMethod(targets_object, "__len__");
   size_t count = LongToSize(pcount);
   MS_LOG(DEBUG) << "The nodes count is " << count;

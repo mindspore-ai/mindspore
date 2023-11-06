@@ -44,6 +44,7 @@ enum AstSubType : int64_t {
   AST_SUB_TYPE_SUBSCRIPT = 8,   // ast.Subscript
   AST_SUB_TYPE_STARRED = 9,     // ast.Starred
   AST_SUB_TYPE_ATTRIBUTE = 10,  // ast.Attribute
+  AST_SUB_TYPE_DICT = 11,       // ast.Dict
   AST_SUB_TYPE_UNKNOWN = 0xFF   // Unknown type
 };
 
@@ -164,6 +165,9 @@ const char NAMED_PRIMITIVE_MAKELIST[] = "make_list";
 const char NAMED_PRIMITIVE_MAKESLICE[] = "make_slice";
 const char NAMED_PRIMITIVE_MAKEDICT[] = "make_dict";
 const char NAMED_METAGRAPH_UNPACKCALL[] = "unpack_call";
+const char NAMED_METAGRAPH_STARRED_UNPACK[] = "starred_unpack";
+const char NAMED_METAGRAPH_STARRED_GET_ITEM[] = "starred_get_item";
+const char NAMED_METAGRAPH_STARRED_UNPACK_MERGE[] = "starred_unpack_merge";
 
 // Define NAMED_PRIMITIVE_GETATTR "getattr".
 // Define python inline attr.
