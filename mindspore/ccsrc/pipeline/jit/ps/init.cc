@@ -55,7 +55,7 @@
 #include "frontend/expander/pack/pack_expander.h"
 #include "include/common/profiler.h"
 
-#include "pipeline/jit/pi_jit/external.h"
+#include "pipeline/jit/pi/external.h"
 
 namespace py = pybind11;
 using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
