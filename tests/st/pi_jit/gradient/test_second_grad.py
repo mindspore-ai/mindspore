@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
-from mindspore import jit, Tensor, nn, ops
+from mindspore import jit, Tensor, nn, ops, context
 
 
 class Net(nn.Cell):
@@ -36,6 +36,7 @@ def test_run(x_train, y_train, Net1):
     Expectation:
     The second order gradients for both sin and cos should match the expected values.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net1()
     firstgrad = ops.grad(net, grad_position=(0, 1))
     secondgrad = ops.grad(firstgrad, grad_position=(0, 1))

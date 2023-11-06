@@ -1,28 +1,7 @@
 import pytest
-import numpy as onp
 from mindspore import numpy as np
-from mindspore import ops, Tensor, jit
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-
-    if isinstance(actual, int):
-        actual = onp.asarray(actual)
-
-    if isinstance(actual, Tensor):
-        actual = actual.asnumpy()
-
-    if isinstance(expected, (int, tuple)):
-        expected = onp.asarray(expected)
-
-    if isinstance(expected, Tensor):
-        expected = expected.asnumpy()
-
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from mindspore import ops, Tensor, jit, context
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")
@@ -62,6 +41,8 @@ def test_subtraction_operations(func, ms_func, a, b):
     Description: test cases for sub in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a, b)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

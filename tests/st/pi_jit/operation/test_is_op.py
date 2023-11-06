@@ -1,28 +1,7 @@
 import pytest
-import numpy as onp
 from mindspore import numpy as np
-from mindspore import Tensor, jit
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-
-    if isinstance(actual, int):
-        actual = onp.asarray(actual)
-
-    if isinstance(actual, Tensor):
-        actual = actual.asnumpy()
-
-    if isinstance(expected, (int, tuple)):
-        expected = onp.asarray(expected)
-
-    if isinstance(expected, Tensor):
-        expected = expected.asnumpy()
-
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from mindspore import Tensor, jit, context
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")
@@ -49,7 +28,9 @@ def test_int_add(func, ms_func, a, b):
     Description: Test cases for integer addition in PYNATIVE mode.
     Expectation: The results match.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a, b)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -67,6 +48,8 @@ def test_tensor_add(func, ms_func, a, b):
     Description: Test cases for tensor addition in PYNATIVE mode.
     Expectation: The results match.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, b)
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a, b)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

@@ -1,21 +1,8 @@
 import pytest
-import numpy as onp
 from mindspore import numpy as np
 from mindspore import ops
-from mindspore import Tensor, jit
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-    actual = onp.asarray(actual) if isinstance(actual, (int, tuple)) else (
-        actual.asnumpy() if isinstance(actual, Tensor) else actual)
-    expected = onp.asarray(expected) if isinstance(actual, (int, tuple)) else (
-        expected.asnumpy() if isinstance(expected, Tensor) else expected)
-
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from mindspore import Tensor, jit, context
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")
@@ -64,7 +51,9 @@ def test_standard_mul_operations(func, ms_func, a, b):
     Description: test cases for mul in PYNATIVE mode
     Expectation: the result match
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a[0], b[0])
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a[0], b[0])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
@@ -81,6 +70,8 @@ def test_special_mul_operations(func, ms_func, a, b):
     Description: test cases for mul in PYNATIVE mode
     Expectation: an exception is raised
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a[0], b[0])
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = a[0] * b[0]
     match_array(res, ms_res, error=0, err_msg=str(ms_res))

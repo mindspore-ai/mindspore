@@ -1,29 +1,8 @@
 import pytest
-import numpy as onp
 from mindspore import numpy as np
 from mindspore import ops
 from mindspore import Tensor, jit, context
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-    """Assert two arrays are equal with a certain error."""
-    if isinstance(actual, int):
-        actual = onp.asarray(actual)
-
-    if isinstance(actual, Tensor):
-        actual = actual.asnumpy()
-
-    if isinstance(expected, (int, tuple)):
-        expected = onp.asarray(expected)
-
-    if isinstance(expected, Tensor):
-        expected = expected.asnumpy()
-
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")

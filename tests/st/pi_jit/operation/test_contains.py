@@ -1,19 +1,7 @@
 import pytest
-import numpy as onp
 from mindspore import numpy as np
-from mindspore import Tensor, jit
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-    if isinstance(actual, (int, bool)):
-        actual = onp.asarray(actual)
-    if isinstance(expected, (int, bool)):
-        expected = onp.asarray(expected)
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from mindspore import Tensor, jit, context
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")
@@ -66,10 +54,14 @@ def jit_not_in_contains_string():
 
 def common_test_case(func, ms_func, a, b, error=0, type_check='array'):
     if type_check == 'string':
+        context.set_context(mode=context.PYNATIVE_MODE)
         res = func()
+        context.set_context(mode=context.GRAPH_MODE)
         ms_res = ms_func()
     else:
+        context.set_context(mode=context.PYNATIVE_MODE)
         res = func(a, b)
+        context.set_context(mode=context.GRAPH_MODE)
         ms_res = ms_func(a, b)
     match_array(res, ms_res, error=error, err_msg=str(ms_res))
 
@@ -101,7 +93,9 @@ def test_tensor_in_list(func, ms_func, a, b):
     Description: Validate the behavior of 'in' and 'not in' operators when a Tensor is in a list.
     Expectation: Both PIJit and PSJit functions should return the same results.
     """
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func(a, [a, b])
+    context.set_context(mode=context.GRAPH_MODE)
     ms_res = ms_func(a, [a, b])
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
