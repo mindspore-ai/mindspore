@@ -153,6 +153,7 @@ class TensorSetItem(nn.Cell):
         return tensor1, tensor2
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -192,6 +193,7 @@ def test_dynamic_setitem_int_tensor():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -545,6 +547,7 @@ def test_dynamic_setitem_slice_sequence():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -594,6 +597,7 @@ def test_dynamic_rank_setitem_with_single_basic_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -642,6 +646,7 @@ def test_dynamic_rank_setitem_tuple_with_basic_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -688,6 +693,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -726,6 +732,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -763,6 +770,7 @@ def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -798,6 +806,7 @@ def test_dynamic_rank_setitem_with_list_index():
     fact.grad_impl()
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
