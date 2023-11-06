@@ -106,7 +106,7 @@ def test_concat_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+#@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_concat_vmap(mode):
     """

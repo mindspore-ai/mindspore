@@ -52,13 +52,15 @@ FuncGraphPtr GetTaylorRule(const PrimitivePtr &prim, const pipeline::ResourceBas
   // Firstly we get taylor rule from mindir. If failed, parse the python function registered.
   FuncGraphPtr func_graph = nullptr;
   py::function taylor_fn;
-  if (prim->is_base()) {
+  if (prim->is_base() || mindspore::ops::IsPrimitiveFunction(prim->name())) {
     taylor_fn = GetTaylorRuleFunction(prim->name());
-  } else {
+  } else if (prim->isa<PrimitivePy>()) {
     taylor_fn = prim->cast<PrimitivePyPtr>()->GetTaylorRuleFunction();
     if (py::isinstance<py::none>(taylor_fn)) {
       taylor_fn = GetTaylorRuleFunction(prim->name());
     }
+  } else {
+    MS_LOG(EXCEPTION) << "Unknown Primitive SubClass: " << prim->ToString();
   }
   if (!taylor_fn || py::isinstance<py::none>(taylor_fn)) {
     MS_LOG(INFO) << "Fail to find taylor rule function for " << prim->name() << ". taylor_fn: " << py::str(taylor_fn);
