@@ -16,6 +16,7 @@
 
 #include "runtime/device/device_address_utils.h"
 
+#include <algorithm>
 #include <string>
 #include <map>
 #include <vector>
@@ -241,7 +242,8 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
     if (input_num != args.size()) {
       MS_LOG(DEBUG) << "Node " << op_name << ", has " << input_num << " inputs, but has " << args.size()
                     << " inputs in op_def, it means allsame input";
-      size_t total = (args[args.size() - 1].as_init_arg_ == 1) ? input_num - 2 : input_num - 1;
+      int input_with_init_args = std::count_if(args.begin(), args.end(), [](auto arg) { return arg.as_init_arg_; });
+      size_t total = input_num - IntToSize(input_with_init_args);
       for (size_t i = 0; i < total; i++) {
         (void)nodes.insert(node->input(i));
       }
