@@ -264,11 +264,6 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  return !OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name) &&
-         !op_run_info->base_op_run_info.has_dynamic_output;
-}
-
 KernelTaskType GetViewOpTaskType(const std::string &op_name) {
   if (op_name == kCopyWithScileOpName) {
     return KernelTaskType::kCOPY_TASK;
@@ -671,7 +666,8 @@ bool ForwardExecutor::ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info,
       PyNativeAlgo::DataConvert::MarkInputs(op_run_info, input_object, index, top_cell);
     }
   }
-  if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
+
+  if (false) {
     if (task_type == KernelTaskType::kNORMAL_VIEW_TASK && !op_run_info->requires_grad) {
       MS_LOG(DEBUG) << "End";
       return true;
@@ -787,7 +783,8 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   PrepareOpInputs(op_run_info);
-  if (EnableBackendAsync(op_run_info) && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
+
+  if (false) {
     PrepareOpOutputs(op_run_info);
     const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
     DispatchBackendTask(op_run_info, backend_op_run_info);
@@ -1204,7 +1201,8 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   }
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
-  if (EnablePipeline(op_run_info->base_op_run_info.op_name)) {
+
+  if (false) {
     if (input_tensor->address_future() != nullptr) {
       DispatchAllocateMemTask(op_run_info, input_tensor, input_idx, true);
     } else {
@@ -1243,7 +1241,8 @@ void ForwardExecutor::RefreshTensorContiguous(const tensor::TensorPtr &tensor) {
 
   // Gil might be release  by ACL, so release here to reduce conflict
   GilReleaseWithCheck release_gil;
-  if (!ScopedFallbackRunning::on() && enable_async()) {
+
+  if (false) {
     static auto contiguous_func = [this](const tensor::TensorPtr &tensor) { RunContiguousTask(tensor, true); };
 
     auto contiguous_task = std::make_shared<ContiguousBackendTask>(contiguous_func, tensor);

@@ -326,7 +326,7 @@ py::object Converter::Wrap(const TensorPtr &tensor) {
 void Converter::ThrowException(size_t i) {
   MS_LOG(EXCEPTION) << "For op " << op_def_->name_ << ", the " << i << "th arg dtype is not right!"
                     << "expect dtype: " << CTypeToPythonType(op_def_->args_[i].arg_dtype_)
-                    << "but got dtype: " << py::type((*python_args_)[i]);
+                    << "but got dtype: " << type((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.

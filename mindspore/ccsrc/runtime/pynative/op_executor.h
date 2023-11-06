@@ -53,6 +53,8 @@ class BACKEND_EXPORT OpExecutor {
 
   void PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task);
 
+  void PushOpRunTask(const std::shared_ptr<pynative::PyBoostDeviceTask> &op_run_task);
+
   void PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task);
 
   const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }

@@ -24,13 +24,12 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr UpsampleNearest1dAscendCall(const PrimitivePtr &primitive,
                                               const device::DeviceContext *device_context,
-                                              const TensorPtr &input_tensor, const ValueTuplePtr &output_size,
-                                              const ValueTuplePtr &scale_factors,
+                                              const TensorPtr &input_tensor, const std::vector<int64_t> &output_size,
+                                              const std::vector<float> &scale_factors,
                                               const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  EXEC_NPU_CMD(aclnnUpsampleNearest1d, stream_ptr, input_tensor, output_size_vector, outputs[0]);
+  EXEC_NPU_CMD(aclnnUpsampleNearest1d, stream_ptr, input_tensor, output_size, outputs[0]);
   return outputs[0];
 }
 }  // namespace pyboost

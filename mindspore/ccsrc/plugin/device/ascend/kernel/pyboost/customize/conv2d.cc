@@ -35,24 +35,25 @@ std::vector<int64_t> ExpandVector(const std::vector<int64_t> &value, const size_
 
 tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                                    const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
-                                   const std::optional<tensor::TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
-                                   const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
-                                   const Int64ImmPtr &groups, const std::vector<tensor::TensorPtr> &outputs) {
+                                   const std::optional<tensor::TensorPtr> &bias_tensor,
+                                   const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
+                                   const std::vector<int64_t> &dilation, const int64_t &groups,
+                                   const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   const size_t dim = 2;
-  const auto &expand_stride = ExpandVector(GetValue<std::vector<int64_t>>(stride), dim);
-  const auto &expand_padding = ExpandVector(GetValue<std::vector<int64_t>>(padding), dim);
-  const auto &expand_dilation = ExpandVector(GetValue<std::vector<int64_t>>(dilation), dim);
-  auto groups_value = groups->value();
+  const auto &expand_stride = ExpandVector(stride, dim);
+  const auto &expand_padding = ExpandVector(padding, dim);
+  const auto &expand_dilation = ExpandVector(dilation, dim);
   auto transposed = false;
   std::vector<int64_t> output_padding = {0, 0};
   auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "outputs is empty";
+    return nullptr;
   }
   auto cube_math_type = GetCubeMathType();
   EXEC_NPU_CMD(aclnnConvolution, stream_ptr, input_tensor, weight_tensor, bias_tensor, expand_stride, expand_padding,
-               expand_dilation, transposed, output_padding, groups_value, outputs[0], cube_math_type);
+               expand_dilation, transposed, output_padding, groups, outputs[0], cube_math_type);
   MS_LOG(DEBUG) << "Launch end";
   return outputs[0];
 }

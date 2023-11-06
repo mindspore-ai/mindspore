@@ -27,9 +27,10 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                                    const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
-                                   const std::optional<tensor::TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
-                                   const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
-                                   const Int64ImmPtr &groups, const std::vector<tensor::TensorPtr> &outputs);
+                                   const std::optional<tensor::TensorPtr> &bias_tensor,
+                                   const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
+                                   const std::vector<int64_t> &dilation, const int64_t &groups,
+                                   const std::vector<tensor::TensorPtr> &outputs);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

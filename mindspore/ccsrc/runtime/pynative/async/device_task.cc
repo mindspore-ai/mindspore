@@ -20,6 +20,9 @@
 
 namespace mindspore {
 namespace pynative {
+namespace {
+constexpr auto kProfilerNamePyboost = "pyboost";
+}
 DeviceOpBuildTask::~DeviceOpBuildTask() {
   if (!has_set_value_) {
     promise_.set_value(false);
@@ -42,6 +45,16 @@ void DeviceOpRunTask::Run() {
   }
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
+}
+
+void PyBoostDeviceTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                     kProfilerNamePyboost, false);
+  if (run_func_) {
+    run_func_();
+  } else {
+    MS_LOG(EXCEPTION) << "No run function!";
+  }
 }
 
 void AllocViewMemDeviceTask::Run() {

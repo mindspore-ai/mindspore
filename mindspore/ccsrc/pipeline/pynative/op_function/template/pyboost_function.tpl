@@ -11,35 +11,34 @@ py::object ${func_name}(const py::args &args) {
   GilReleaseWithCheck release_gil;
   op_run_info->stub_output = node.second;
 
-  auto forward_task = std::make_shared<FrontendTask>(
-    [${op_args}](const FrontendOpRunInfoPtr &op_run_info) {
-      // stub tensor to tensor.
-      ${convert_stub}
+    DispatchOp(
+      std::make_shared<FrontendTask>(
+        [${op_args}](const FrontendOpRunInfoPtr &op_run_info) {
+          // stub tensor to tensor.
+          ${convert_stub}
 
-      // Create op
-      auto op = CREATE_PYBOOST_OP(${op_name}, op_run_info->base_op_run_info.device_target);
-      op->set_primitive(op_run_info->op_grad_info->op_prim);
+          // Create op
+          auto op = CREATE_PYBOOST_OP(${op_name}, op_run_info->base_op_run_info.device_target);
+          op->set_primitive(op_run_info->op_grad_info->op_prim);
 
-      // Do mixed precision and implicit cast
-      auto [${cast_args}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs(op_run_info, ${call_args});
+          // Do mixed precision and implicit cast
+          auto [${cast_args}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs(op_run_info, ${call_args});
 
-      // Run op
-      (void)op->Call(${cast_args});
-      ${optional_to_value}
-      // Update op and op_run_info by op outputs
-      PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${grad_args}}, op_run_info);
+          // Run op
+          (void)op->Call(${cast_args});
+          ${optional_to_value}
+          // Update op and op_run_info by op outputs
+          PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${grad_args}}, op_run_info);
 
-      // Do auto grad
-      if (op_run_info->requires_grad) {
-        op->DoGrad();
-      }
+          // Do auto grad
+          if (op_run_info->requires_grad) {
+            op->DoGrad();
+          }
 
-      MS_LOG(DEBUG) << "Dispatch ${func_name} end";
-    }, op_run_info);
-  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
-  forward_executor->frontend_queue()->Push(forward_task);
-  if (!forward_executor->enable_async()) {
-    forward_executor->frontend_queue()->Wait();
-  }
+          MS_LOG(DEBUG) << "Dispatch ${func_name} end";
+        },
+        op_run_info
+      )
+    );
   return node.first;
 }

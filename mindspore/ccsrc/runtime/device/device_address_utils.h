@@ -56,13 +56,22 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                            bool need_ret_address = false);
   static device::DeviceAddressPtr CreateInputTensorAddress(const DeviceContext *device_context,
                                                            const std::optional<tensor::TensorPtr> &val,
-                                                           const std::string &input_name, bool need_ret_address = false);
+                                                           const std::string &input_name,
+                                                           bool need_ret_address = false);
   static std::vector<device::DeviceAddressPtr> CreateInputTensorAddress(const DeviceContext *device_context,
                                                                         const std::vector<tensor::TensorPtr> &tensors,
                                                                         const std::string &input_name,
                                                                         bool need_ret_address = false);
+
   static void CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                        const std::string &output_name, std::string format = "");
+                                        const std::string &output_name, const std::string &format = "");
+
+  static device::DeviceAddressPtr CreateOutputTensorAddress(const DeviceContext *device_context,
+                                                            const tensor::TensorPtr &tensor,
+                                                            const pynative::DeviceAddressPromisePtr &promise,
+                                                            const std::string &output_name,
+                                                            const std::string &format = "");
+
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
                                                          const size_t &workspace_size);
   static device::DeviceAddressPtr CreateScalarAddress(const DeviceContext *device_context,

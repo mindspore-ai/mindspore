@@ -25,6 +25,7 @@
 #include "pipeline/pynative/pynative_execute.h"
 #include "kernel/pyboost/op_base.h"
 #include "kernel/pyboost/op_register.h"
+#include "pipeline/pynative/forward/forward_task.h"
 
 #ifndef MS_UNLIKELY
 #ifdef _MSC_VER
@@ -158,6 +159,8 @@ struct GradCommon {
   static void SetForward(const AnfNodePtrList &node_list);
 };
 };  // namespace PyNativeAlgo
+
+void DispatchOp(const std::shared_ptr<FrontendTask> &task);
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_PYNATIVE_UTILS_H_

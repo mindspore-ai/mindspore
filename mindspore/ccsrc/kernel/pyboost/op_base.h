@@ -20,6 +20,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "ir/scalar.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
@@ -33,7 +35,7 @@ namespace kernel {
 namespace pyboost {
 using GradFunc = std::function<void()>;
 
-class BACKEND_EXPORT Op {
+class BACKEND_EXPORT Op : public std::enable_shared_from_this<Op> {
  public:
   Op() = default;
   virtual ~Op() = default;
@@ -44,6 +46,8 @@ class BACKEND_EXPORT Op {
     MS_EXCEPTION_IF_NULL(grad_func_);
     grad_func_();
   }
+
+  std::shared_ptr<Op> get_op() { return shared_from_this(); }
 
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
@@ -69,22 +73,25 @@ class BACKEND_EXPORT Op {
   }
   AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
   template <typename... T>
-  inline void InferOutput(T &...args) {
+  inline void InferOutput(T &... args) {
     input_abs_.clear();
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     outputs_.clear();
-    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
+    PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_, &device_sync_promises_);
   }
   tensor::TensorPtr Contiguous(const tensor::TensorPtr &input_tensor) { return ContiguousTensor(input_tensor); }
 
   template <typename... T>
-  void DeviceMalloc(T &...args) {
+  void DeviceMalloc(T &... args) {
     PrepareOpInputs(device_context_, args...);
     PrepareOpOutputs(device_context_, outputs_);
   }
+
+  DeviceContext *device_context() const { return device_context_; }
+  const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
 
  protected:
   std::vector<tensor::TensorPtr> outputs_{};
@@ -94,6 +101,7 @@ class BACKEND_EXPORT Op {
   std::vector<AbstractBasePtr> input_abs_{};
   AbstractBasePtr output_abs_{nullptr};
   DeviceContext *device_context_{nullptr};
+  std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;
 };
 using OpPtr = std::shared_ptr<Op>;
 

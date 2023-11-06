@@ -80,7 +80,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
 
     malloc_inputs = ''
     for item in need_malloc_tensors:
-        malloc_inputs += f'runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context_, {item}, "{item}");\n'
+        malloc_inputs += f'runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, {item}, "{item}");\n'
 
     # launch mode: cube or not
     # call_impl
@@ -120,8 +120,13 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                   inplace_process=inplace_process)
     elif op_desc['mode'] == 'customize':
         call_impl = template.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(op_name=op_name_str,
+                                                                     value_tuple_convert=value_tuple_convert,
+                                                                     const_number_convert=const_number_convert,
+                                                                     malloc_inputs=malloc_inputs,
                                                                      call_args=call_args_str,
+                                                                     aclnn_call_args=call_args_after_convert,
                                                                      call_tensors=call_args_tensor,
+                                                                     return_values=call_outputs,
                                                                      )
         customize_include = "#include \"plugin/device/ascend/kernel/pyboost/customize/{}.h\"".format(
             operator_name.lower())
@@ -207,19 +212,24 @@ def generate_pyboost_outputs(op_proto):
 
     if len(returns_type) == 1:
         if returns_type[0] == 'tensor::TensorPtr':
-            op_outputs = 'outputs_[0]'
-            call_outputs = op_outputs
+            op_outputs = 'outputs[0]'
+            call_outputs = 'outputs_[0]'
         elif returns_type[0] == "std::vector<tensor::TensorPtr>":
-            op_outputs = 'outputs_'
-            call_outputs = op_outputs
+            op_outputs = 'outputs'
+            call_outputs = 'outputs_'
         else:
             raise Exception("Not support return type {}".format(returns_type[0]))
     elif len(returns_type) > 1:
         outputs_str = ''
         for i in range(len(returns_type)):
-            outputs_str += 'outputs_[{}],'.format(i)
+            outputs_str += 'outputs[{}],'.format(i)
         op_outputs = outputs_str[:-1]
-        call_outputs = "std::make_tuple(" + op_outputs + ")"
+
+        outputs_str = ''
+        for i in range(len(returns_type)):
+            outputs_str += 'outputs_[{}],'.format(i)
+        outputs_str = outputs_str[:-1]
+        call_outputs = "std::make_tuple(" + outputs_str + ")"
 
     return op_outputs, call_outputs
 
@@ -307,8 +317,9 @@ def generate_pyboost_functions(work_path, yaml_data):
                     convert_optional_to_value_template = CppTemplate(
                         "auto ${output} = PyNativeAlgo::PyBoost::OptionalToValue(${input});\n")
                     convert_optional_to_value_name = op_arg.arg_name + "_value"
-                    optional_to_value_str += convert_optional_to_value_template.replace(input=cast_output,
-                                                                                        output=convert_optional_to_value_name)
+                    optional_to_value_str += \
+                        convert_optional_to_value_template.replace(input=cast_output,
+                                                                   output=convert_optional_to_value_name)
                     call_arg = convert_stub_output_name
                     grad_arg = convert_optional_to_value_name
                     cast_arg = cast_output
@@ -367,7 +378,9 @@ def generate_inplace_process_cpp_code(op_proto):
         if return_obj.inplace == '':
             continue
         has_ref = True
-        inplace_process += f'outputs_[{index}]->set_device_address({return_obj.inplace}_tensor->device_address());\n'
+        inplace_process += f"op->device_sync_promises()[{index}]->SetValue(" \
+                           f"std::make_shared<pynative::DeviceAddressFutureData>(" \
+                           f"{return_obj.inplace}_tensor->device_address(), nullptr));"
     if has_ref:
         return inplace_process
     else:

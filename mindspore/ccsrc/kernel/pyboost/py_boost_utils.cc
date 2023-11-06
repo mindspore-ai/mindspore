@@ -1,8 +1,20 @@
-//
-// Created by jojo on 2023/10/18.
-//
+/**
+ * Copyright 2023 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include "py_boost_utils.h"
+#include "kernel/pyboost/py_boost_utils.h"
 #include "kernel/common_utils.h"
 #include "runtime/device/device_address_utils.h"
 #include "ops/ops_frontend_func_impl.h"
@@ -11,6 +23,54 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+using DeviceAddressPromisePtr = pynative::DeviceAddressPromisePtr;
+using DeviceAddressPromise = pynative::DeviceAddressPromise;
+using DeviceAddressFutureDataPtr = pynative::DeviceAddressFutureDataPtr;
+using DeviceAddressFuture = pynative::DeviceAddressFuture;
+
+void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
+                                      std::vector<pynative::DeviceAddressPromisePtr> *device_sync_promises) {
+  auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
+    auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    (void)outputs->emplace_back(output_tensor);
+    MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+
+    DeviceAddressPromisePtr promise =
+      std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+    auto future = promise->GetFuture();
+    auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
+    output_tensor->set_address_future(device_address_future);
+    (void)device_sync_promises->emplace_back(std::move(promise));
+  };
+
+  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract->isa<abstract::AbstractSequence>()) {
+    auto seq = abstract->cast<abstract::AbstractSequencePtr>();
+    auto elements = seq->elements();
+    for (const auto &element : elements) {
+      CreateOutputTensor(element, outputs, device_sync_promises);
+    }
+  } else if (abstract->isa<abstract::AbstractTensor>()) {
+    auto abstract_tensor = abstract->cast<abstract::AbstractTensorPtr>();
+    auto shape = abstract_tensor->BuildShape();
+    auto type = abstract_tensor->element()->BuildType();
+    MS_LOG(DEBUG) << "get abstract tensor shape " << shape->ToString() << " type " << type->ToString();
+    if (!shape->isa<abstract::Shape>()) {
+      MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
+    }
+    auto shape_vector = shape->cast<abstract::ShapePtr>()->shape();
+    create_tensor(type, shape_vector);
+  } else if (abstract->isa<abstract::AbstractScalar>()) {
+    auto scalar = abstract->cast<abstract::AbstractScalarPtr>();
+    const auto &type = scalar->BuildType();
+    MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
+    create_tensor(type, {});
+  } else {
+    MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
+  }
+}
+
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
   auto create_tensor = [&outputs](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
@@ -139,25 +199,18 @@ void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr
   }
 }
 
-// KernelTensorPtr TensorToKernelTensor(const TensorPtr &tensor, const DeviceContext *device_context) {
-//   // TODO (CARRY) Waiting dyn_shape_dev
-//   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
-//   //  tensor->device_info().host_format_, dtype, shape,
-//   // device_context->device_context_key().device_name_,
-//   // device_context->device_context_key().device_id_);
-//   //  return new_kernel_tensor;
-//   auto kernel_tensor = std::make_shared<KernelTensor>(tensor);
-//   return kernel_tensor;
-// }
-// KernelTensorPtr ScalarToKernelTensor(const ScalarPtr &scalar, const DeviceContext *device_context) {
-//   // TODO (CARRY) Waiting dyn_shape_dev
-//   //  auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(nullptr, tensor_size,
-//   //  tensor->device_info().host_format_, dtype, {},
-//   // device_context->device_context_key().device_name_,
-//   // device_context->device_context_key().device_id_);
-//   //  return new_kernel_tensor;
-//   return std::make_shared<KernelTensor>(scalar);
-// }
+void PrepareOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs,
+                      const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises) {
+  auto output_size = outputs.size();
+  if (output_size != device_sync_promises.size()) {
+    MS_LOG(EXCEPTION) << "outputs size " << output_size << " but device_sync_promises size "
+                      << device_sync_promises.size();
+  }
+  for (size_t i = 0; i < output_size; ++i) {
+    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, outputs[i], device_sync_promises[i],
+                                                           "output");
+  }
+}
 
 // std::vector<KernelTensorPtr> ValueToKernelTensor(const ValuePtrList &values, const DeviceContext *device_context) {
 //   std::vector<KernelTensorPtr> kernel_tensors;
@@ -293,6 +346,13 @@ DeviceContext *CreateOrGetDeviceContextAndInit(const std::string &target_device)
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
   return device_context;
+}
+
+void DispatchRun(const std::shared_ptr<pynative::PyBoostDeviceTask> &task) {
+  runtime::OpExecutor::GetInstance().PushOpRunTask(task);
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+    runtime::OpExecutor::GetInstance().Wait();
+  }
 }
 }  // namespace pyboost
 }  // namespace kernel

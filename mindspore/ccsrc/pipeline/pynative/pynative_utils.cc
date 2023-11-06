@@ -1484,5 +1484,13 @@ void GradCommon::GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore
   }
 }
 }  // namespace PyNativeAlgo
+
+void DispatchOp(const std::shared_ptr<FrontendTask> &task) {
+  auto forward_executor = PyNativeExecutor::GetInstance()->forward_executor();
+  forward_executor->frontend_queue()->Push(task);
+  if (!forward_executor->enable_async()) {
+    forward_executor->frontend_queue()->Wait();
+  }
+}
 }  // namespace pynative
 }  // namespace mindspore

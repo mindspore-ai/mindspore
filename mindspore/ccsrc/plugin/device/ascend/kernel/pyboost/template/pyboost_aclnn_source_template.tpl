@@ -18,6 +18,7 @@
 ${customize_include}
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 namespace mindspore {
 namespace kernel {
