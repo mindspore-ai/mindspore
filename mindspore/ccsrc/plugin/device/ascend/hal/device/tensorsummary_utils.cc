@@ -113,6 +113,11 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
+      if (acl_handle == nullptr) {
+        ret = -1;
+        MS_LOG(ERROR) << "acl_handle is nullptr or has destroyed.";
+        break;
+      }
       // no timeout
       ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
 

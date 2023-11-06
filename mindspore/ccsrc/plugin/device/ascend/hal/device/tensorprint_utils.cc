@@ -294,6 +294,11 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
+      if (acl_handle == nullptr) {
+        ret = -1;
+        MS_LOG(ERROR) << "acl_handle is nullptr or has destroyed.";
+        break;
+      }
       // no timeout
       ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
