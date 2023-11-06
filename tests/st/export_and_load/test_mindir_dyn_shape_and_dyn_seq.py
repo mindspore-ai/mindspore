@@ -162,6 +162,5 @@ def test_mindir_raise_export_and_load():
 
     graph = load(mindir_file_name)
 
-    with pytest.raises(RuntimeError):
-        load_cell = nn.GraphCell(graph)
-        load_cell(data)
+    load_cell = nn.GraphCell(graph)
+    load_cell(data)
