@@ -56,6 +56,10 @@ std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_no
 }
 
 void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
+  if (!IS_OUTPUT_ON(mindspore::kDebug)) {
+    return;
+  }
+
   if (inputs.empty()) {
     return;
   }
@@ -107,9 +111,9 @@ void CheckCNodeInputsNum(const AnfNodePtrList &inputs) {
     for (const auto &input : inputs) {
       ss << "Input[" << i++ << "]: " << input->DebugString() << "\n";
     }
-    MS_LOG(INTERNAL_EXCEPTION) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
-                               << " is not equal to expect input num: " << op_def->args_.size() << "\n"
-                               << ss.str();
+    MS_LOG(DEBUG) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
+                  << " is not equal to expect input num: " << op_def->args_.size() << "\n"
+                  << ss.str();
   }
 }
 }  // namespace

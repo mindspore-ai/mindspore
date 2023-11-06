@@ -516,7 +516,6 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   if (matched) {
     // Create replacing node, update front-end node map, set kernel build info, inherit attributes, etc. These
     // operations could rely on the origin CNode.
-    new_input_list[kIndex0] = AnfAlgo::ChangePrimitiveNodeAsSkipCheckInputNum(new_input_list[kIndex0]);
     auto new_node = CreateNewNode(func_graph, new_input_list, cnode);
     MS_LOG(INFO) << "Create new node " << new_node->fullname_with_scope() << " " << new_node->DebugString()
                  << " to replace " << cnode->fullname_with_scope() << " " << cnode->DebugString();

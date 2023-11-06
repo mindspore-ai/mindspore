@@ -293,8 +293,6 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void UpdateValueNodeShape(const AnfNodePtr &node);
   static bool HasSelectKernelBuildInfo(const AnfNodePtr &node);
   static bool NeedEraseCache(const PrimitivePtr &prim);
-  static PrimitivePtr GetSkipCheckInputNumPrimitive(const PrimitivePtr &prim, bool need_clone = true);
-  static AnfNodePtr ChangePrimitiveNodeAsSkipCheckInputNum(const AnfNodePtr &node);
 };
 }  // namespace session
 
