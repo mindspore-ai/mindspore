@@ -21,7 +21,7 @@ from mindspore.ops import split
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax, sqrt, stack, pow, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze, masked_fill
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm
 import mindspore
 
 
@@ -562,3 +562,23 @@ def test_masked_fill_ascend():
     input_x2 = Tensor(np.array([True, True, False, True]), mindspore.bool_)
     output = masked_fill(input_x1, input_x2, 0.5)
     assert np.allclose(output.asnumpy(), [0.5, 0.5, 3, 0.5])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_layer_norm_ascend():
+    """
+    Feature: test cast operator
+    Description: test layer_norm run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([[[1, 2], [3, 4]]]).astype(np.float32))
+    weight = Tensor(np.ones(2), mindspore.float32)
+    bias = Tensor(np.zeros(2), mindspore.float32)
+    output = layer_norm(input_x1, [2], weight, bias, 0.00001)
+    assert np.allclose(output[0].asnumpy(), [[[-0.999979973, 0.999979973], [-0.999979973, 0.999979973]]])
+    assert np.allclose(output[1].asnumpy(), [[[1.5], [3.5]]])
+    assert np.allclose(output[2].asnumpy(), [[[1.99995995], [1.99995995]]])

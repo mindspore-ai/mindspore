@@ -125,9 +125,9 @@ def get_return_type(dtype: str):
     """
     # add more type here
     type_convert = {
-        'tuple[tensor]': 'std::vector<TensorPtr>',
-        'list[tensor]': 'std::vector<TensorPtr>',
-        'tensor': 'TensorPtr',
+        'tuple[tensor]': 'std::vector<tensor::TensorPtr>',
+        'list[tensor]': 'std::vector<tensor::TensorPtr>',
+        'tensor': 'tensor::TensorPtr',
     }
     if dtype in type_convert:
         return type_convert[dtype]

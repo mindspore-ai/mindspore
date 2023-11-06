@@ -252,6 +252,15 @@ Minimum:
     mode: normal
     cube: False
 
+LayerNormExt:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
 GreaterEqual:
   CPU:
     mode: normal

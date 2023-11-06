@@ -27,7 +27,7 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr MaskedFillAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                                        const tensor::TensorPtr &selfRef, const tensor::TensorPtr &mask,
-                                       const tensor::TensorPtr &value, const std::vector<tensor::TensorPtr> &);
+                                       const tensor::TensorPtr &value, const std::vector<tensor::TensorPtr> &outputs);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -184,9 +184,9 @@ def generate_pyboost_op_func_return_type(op_proto):
     if len(returns_type) == 1:
         cpp_func_return = returns_type[0]
     elif len(returns_type) > 1:
-        cpp_func_return = "std::tuple("
+        cpp_func_return = "std::tuple<"
         cpp_func_return += ','.join(s for s in returns_type)
-        cpp_func_return += ")"
+        cpp_func_return += ">"
     else:
         raise Exception("Not return found")
     return cpp_func_return
@@ -201,10 +201,10 @@ def generate_pyboost_outputs(op_proto):
         returns_type.append(get_return_type(return_obj.arg_dtype))
 
     if len(returns_type) == 1:
-        if returns_type[0] == 'TensorPtr':
+        if returns_type[0] == 'tensor::TensorPtr':
             op_outputs = 'outputs_[0]'
             call_outputs = op_outputs
-        elif returns_type[0] == "std::vector<TensorPtr>":
+        elif returns_type[0] == "std::vector<tensor::TensorPtr>":
             op_outputs = 'outputs_'
             call_outputs = op_outputs
         else:

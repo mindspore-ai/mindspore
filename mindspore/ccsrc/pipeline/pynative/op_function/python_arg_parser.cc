@@ -93,7 +93,7 @@ Int64ImmPtr ConvertInt(const py::object &obj) {
 }
 
 FP64ImmPtr ConvertFloat(const py::object &obj) {
-  if (!py::isinstance<py::int_>(obj)) {
+  if (!py::isinstance<py::float_>(obj)) {
     return nullptr;
   }
   return PyCast<double, FP64Imm>(obj);
