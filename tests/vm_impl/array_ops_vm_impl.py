@@ -206,9 +206,9 @@ def vm_impl_tile(self):
 def vm_impl_all(self):
     """Generate vm_impl function for All"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
-        out = vm.all(x, axis, self.keep_dims)
+        out = vm.all(x, axis, keep_dims)
         return Tensor(out)
 
     return vm_impl
@@ -218,9 +218,9 @@ def vm_impl_all(self):
 def vm_impl_any(self):
     """Generate vm_impl function for Any"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims):
         x = x.asnumpy()
-        out = vm.any(x, axis, self.keep_dims)
+        out = vm.any(x, axis, keep_dims)
         return Tensor(out)
 
     return vm_impl
@@ -267,7 +267,7 @@ def vm_impl_concatOffset(self):
 def vm_impl_sum(self):
     """Generate vm_impl function for Sum"""
 
-    def vm_impl(x, axis):
+    def vm_impl(x, axis, keep_dims, skip_mode):
         x = x.asnumpy()
         if axis == ():
             out = np.sum(x)

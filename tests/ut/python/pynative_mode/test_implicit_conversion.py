@@ -47,7 +47,7 @@ def test_bool_tensor_and_int_add():
     x = Tensor(np.array([[True, False], [False, True]], dtype=np.bool_))
     y = 3
     ret_actual = x + y
-    ret_expect = Tensor(np.array([[4, 3], [3, 4]], dtype=np.int64))
+    ret_expect = Tensor(np.array([[4, 3], [3, 4]], dtype=np.int32))
     assert ret_actual.dtype == ret_expect.dtype
     assert (ret_actual.asnumpy() == ret_expect.asnumpy()).all()
 
@@ -109,9 +109,11 @@ def test_int8_tensor_and_uint8_tensors_add():
 def test_float_tensor_and_str_add():
     x = Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
     y = "ok"
-    with pytest.raises(TypeError) as er:
+    with pytest.raises(RuntimeError) as er:
         ret = x + y
-    assert "For 'Add', the 2th input var can not be implicitly converted. Its type is" in str(er.value)
+    assert "RuntimeError: Failed calling Add with" in str(er.value)
+    assert "Add()(x=Tensor, y=string)" in str(er.value)
+    assert "Add()(x=<Number, Tensor>, y=<Number, Tensor>)" in str(er.value)
 
 
 def test_float_tensor_and_tuple_add():

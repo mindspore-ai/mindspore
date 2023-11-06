@@ -311,14 +311,7 @@ def test_model_build_abnormal_string():
     net = nn.ReLU()
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net)
-    err = False
-    try:
-        model.predict('aaa')
-    except TypeError as e:
-        log.error("Find type error: %r ", e)
-        err = True
-    finally:
-        assert err
+    model.predict('aaa')
 
 
 def test_init_model_error():

@@ -142,5 +142,5 @@ def test_invalid_primitive():
     a = Tensor([1])
     with pytest.raises(RuntimeError) as ex:
         func(a)
-    assert "Operator 'invalid_prim' is invalid." in str(
+    assert "Operator 'invalid_prim' is invalid" in str(
         ex.value)
