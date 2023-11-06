@@ -9,7 +9,7 @@ mindspore.ops.is_complex
         - **input** (Tensor) - 输入Tensor。
 
     返回：
-        Bool，返回Tensor的数据类型是否为complex。
+        Bool，返回Tensor的数据类型是否为复数。
 
     异常：
         - **TypeError** - `input` 不是Tensor。

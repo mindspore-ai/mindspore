@@ -33,10 +33,10 @@ class ConfusionMatrix(Metric):
         num_classes (int): Number of classes in the dataset.
         normalize (str): Normalization mode for confusion matrix. Default: ``"no_norm"`` . Choose from:
 
-            - **"no_norm"** (None) - No Normalization is used. Default: ``None``.
-            - **"target"** (str) - Normalization based on target value.
-            - **"prediction"** (str) - Normalization based on predicted value.
-            - **"all"** (str) - Normalization over the whole matrix.
+            - ``"no_norm"`` : No Normalization is used. Default: ``None``.
+            - ``"target"`` : Normalization based on target value.
+            - ``"prediction"`` : Normalization based on predicted value.
+            - ``"all"`` : Normalization over the whole matrix.
 
         threshold (float): The threshold used to compare with the input tensor. Default: ``0.5`` .
 

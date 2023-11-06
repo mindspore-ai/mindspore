@@ -5,16 +5,16 @@ mindspore.ops.NLLLoss
 
     获取预测值和目标值之间的负对数似然损失。
 
-    reduction为 ``"none"`` 时，负对数似然损失如下：
+    `reduction` 为 ``"none"`` 时，负对数似然损失如下：
 
     .. math::
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
         \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
         \quad w_{c}=\text { weight }[c] \cdot 1
 
-    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
+    其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重， :math:`N` 表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
 
-    reduction不为'none'（默认为'mean'），则
+    reduction不为 ``"none"`` （默认为 ``"mean"`` ），则
 
     .. math::
         \ell(x, t)=\left\{\begin{array}{ll}

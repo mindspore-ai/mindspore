@@ -311,9 +311,9 @@ def eye(n, m=None, dtype=None):
 
     Args:
         n (int): The number of rows of returned tensor. Constant value only.
-        m (int): The number of columns of returned tensor. Constant value only.
+        m (int, optional): The number of columns of returned tensor. Constant value only.
             Default: ``None`` , if ``None`` , the number of columns is as the same as n.
-        dtype (mindspore.dtype): MindSpore's dtype, the data type of the returned tensor.
+        dtype (mindspore.dtype, optional): MindSpore's dtype, the data type of the returned tensor.
             The data type can be bool or Number.
             Default: ``None`` , the data type of the returned tensor is mindspore.float32.
 
@@ -660,7 +660,8 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
     other locations take value `off_value`.
 
     Note:
-        If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+        If the input `indices` has rank `N`, the output will have rank `N+1`.
+        The new axis is created at dimension `axis`.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
@@ -1549,7 +1550,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `order` is not string type.
-        ValueError: If `order` is string type, but not 'C' or 'F'.
+        ValueError: If `order` is string type, but not ``'C'`` or ``'F'``.
         TypeError: If `start_dim` or `end_dim` is not int.
         ValueError: If `start_dim` is greater than `end_dim` after canonicalized.
         ValueError: If `start_dim` or `end_dim` is not in range of [-input.dim, input.dim-1].
@@ -4463,18 +4464,19 @@ def meshgrid(*inputs, indexing='xy'):
 
     Keyword Args:
         indexing (str, optional): Cartesian ('xy', default) or
-            matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
+            matrix ('ij') indexing of output. Valid options: xy' or ``'ij'``. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape :math:`(N, M)`
-            for 'xy' indexing and :math:`(M, N)` for 'ij' indexing. In the 3-D
+            for ``'xy'`` indexing and :math:`(M, N)` for ``'ij'`` indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing. Default: ``'xy'`` .
+            :math:`(N, M, P)` for ``'xy'`` indexing and :math:`(M, N, P)` for ``'ij'`` indexing.
+            Default: ``'xy'`` .
 
     Returns:
         Tensors, a Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Raises:
         TypeError: If `indexing` is not a str or `inputs` is not a tuple.
-        ValueError: If `indexing` is neither 'xy' nor 'ij'.
+        ValueError: If `indexing` is neither ``'xy'`` nor ``'ij'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

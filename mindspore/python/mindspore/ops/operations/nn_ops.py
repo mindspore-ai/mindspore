@@ -1335,13 +1335,13 @@ class MaxPool(_Pool):
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: ``1`` .
         pad_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
-            ``"same"`` or ``"valid"`` . Default: ``"valid"`` .
+            ``'same'`` or ``'valid'`` . Default: ``'valid'`` .
 
-            - ``"same"``: Pad the input around its edges so that the shape of input and output
+            - ``'same'``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
               The amount of padding to is calculated by the operator internally, If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
-            - ``"valid"``: No padding is applied to the input, and the output returns the maximum
+            - ``'valid'``: No padding is applied to the input, and the output returns the maximum
               possible height and width. Extra pixels that could not complete a full stride will
               be discarded.
 
@@ -1360,8 +1360,8 @@ class MaxPool(_Pool):
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
-        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `pad_mode` is neither ``'valid'`` nor ``'same'`` with not case sensitive.
+        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of shape of `input` is not equal to 4.
 
@@ -1523,10 +1523,10 @@ class MaxPool3D(Primitive):
             pad[3], pad[4] and pad[5] correspondingly.
         ceil_mode (Union[bool, None]): Whether to use ceil instead of floor to calculate output shape.
             Only effective in "pad" mode.
-            When "pad_mode" is ``"pad"`` and "ceil_mode" is ``"None"`` , "ceil_mode" will be set as ``"False"``.
+            When `pad_mode` is ``"pad"`` and "ceil_mode" is ``None`` , `ceil_mode` will be set as ``False``.
             Default: ``None`` .
-        data_format (str) : The optional value for data format. Currently only support ``'NCDHW'`` .
-            Default: ``'NCDHW'`` .
+        data_format (str) : The optional value for data format. Currently only support ``"NCDHW"`` .
+            Default: ``"NCDHW"`` .
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
@@ -1539,10 +1539,10 @@ class MaxPool3D(Primitive):
         TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
         TypeError: If `pad_mode` or `data_format` is not a string.
         ValueError: If numbers in `kernel_size` or `strides` are not positive.
-        ValueError: If `pad_mode` is not one of 'SAME', 'VALID' or 'PAD'.
-        ValueError: If `pad_mode` is 'SAME' or 'VALID', 'ceil_mode' is not None.
+        ValueError: If `pad_mode` is not one of ``"SAME"``, ``"VALID"`` or ``"PAD"``.
+        ValueError: If `pad_mode` is ``"SAME"`` or ``"VALID"``, `ceil_mode` is not ``None``.
         ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3.
-        ValueError: If `data_format` is not 'NCDHW'.
+        ValueError: If `data_format` is not ``"NCDHW"``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1768,7 +1768,7 @@ class MaxUnpool3D(Primitive):
         ValueError: If numbers in `strides` or `ksize` is negative.
         ValueError: If numbers in `pads` is negative.
         ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 3.
-        ValueError: If `data_format` is not a str or is neither `NCDHW` nor `NDHWC`.
+        ValueError: If `data_format` is not a str or is neither ``'NCDHW'`` nor ``'NDHWC'``.
         ValueError: If `output_shape` whose length is neither 0 or 5.
         ValueError: If `output_shape` is not close to output size range
                     computed by attr `ksize, strides, pads`.
@@ -2039,7 +2039,7 @@ class MaxPool3DWithArgmax(Primitive):
         TypeError: If `ksize` , `strides` , `pads` or `dilation` is not int or tuple.
         ValueError: If `ksize` or `strides` is less than 1.
         ValueError: If `pads` is less than 0.
-        ValueError: If `data_format` is not 'NCDHW'.
+        ValueError: If `data_format` is not ``'NCDHW'``.
         ValueError: If `argmax_type` is not mindspore.int64 or mindspore.int32.
 
     Supported Platforms:
@@ -2141,10 +2141,10 @@ class Conv2DTranspose(Conv2DBackpropInput):
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
-        ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
+        ValueError: If `pad_mode` is not one of ``'same'``, ``'valid'`` or ``'pad'``.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
-        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `pad_mode` it not equal to ``'pad'`` and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither ``'NCHW'`` nor ``'NHWC'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3018,8 +3018,9 @@ class L2Normalize(Primitive):
         On Ascend, input data type of float64 is currently not supported.
 
     Args:
-        axis (Union[list(int), tuple(int), int]): Specify the axis for calculating the L2 norm. Default: ``0`` .
-        epsilon (float): A small value added for numerical stability. Default: ``1e-4`` .
+        axis (Union[list(int), tuple(int), int], optional): Specify the axis for calculating the L2 norm.
+            Default: ``0`` .
+        epsilon (float, optional): A small value added for numerical stability. Default: ``1e-4`` .
 
     Inputs:
         - **x** (Tensor) - Input to compute the normalization. Tensor of shape :math:`(N, *)`,
@@ -5829,9 +5830,12 @@ class LARSUpdate(PrimitiveWithInfer):
     For more details, please refer to :class:`mindspore.nn.LARS`.
 
     Args:
-        epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .
-        hyperpara (float): Trust coefficient for calculating the local learning rate. Default: ``0.001`` .
-        use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: ``False`` .
+        epsilon (float, optional): Term added to the denominator to improve numerical stability.
+            Default: ``1e-05`` .
+        hyperpara (float, optional): Trust coefficient for calculating the local learning rate.
+            Default: ``0.001`` .
+        use_clip (bool, optional): Whether to use clip operation for calculating the local learning rate.
+            Default: ``False`` .
 
     Inputs:
         - **weight** (Tensor) - A tensor, representing the weight.
@@ -6649,21 +6653,21 @@ class DynamicGRUV2(Primitive):
     :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
 
     Args:
-        direction (str): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
+        direction (str, optional): A string identifying the direction in the operator. Default: ``'UNIDIRECTIONAL'`` .
             Only ``'UNIDIRECTIONAL'`` is currently supported.
-        cell_depth (int): An integer identifying the cell depth in the operator. Default: ``1`` .
-        keep_prob (float): A float identifying the keep prob in the operator. Default: ``1.0`` .
-        cell_clip (float): A float identifying the cell clip in the operator. Default: ``-1.0`` .
-        num_proj (int): An integer identifying the number projection in the operator. Default: ``0`` .
-        time_major (bool): A bool identifying the time major in the operator. Default: ``True`` .
-        activation (str) : A string identifying the type of activation function in the operator.
+        cell_depth (int, optional): An integer identifying the cell depth in the operator. Default: ``1`` .
+        keep_prob (float, optional): A float identifying the keep prob in the operator. Default: ``1.0`` .
+        cell_clip (float, optional): A float identifying the cell clip in the operator. Default: ``-1.0`` .
+        num_proj (int, optional): An integer identifying the number projection in the operator. Default: ``0`` .
+        time_major (bool, optional): A bool identifying the time major in the operator. Default: ``True`` .
+        activation (str, optional) : A string identifying the type of activation function in the operator.
             Default: ``'tanh'`` . Only ``'tanh'`` is currently supported.
-        gate_order (str): A string identifying the gate order in weight and bias. Default: ``'rzh'`` .
+        gate_order (str, optional): A string identifying the gate order in weight and bias. Default: ``'rzh'`` .
             ``'zrh'`` is another option. Here, ``'rzh'`` means the gate order is: reset gate, update gate, hidden gate.
             ``'zrh'`` means the gate order is: update gate, reset gate, hidden gate.
-        reset_after (bool): A bool identifying whether to apply reset gate after matrix multiplication.
+        reset_after (bool, optional): A bool identifying whether to apply reset gate after matrix multiplication.
             Default: ``True`` .
-        is_training (bool): A bool identifying is training in the operator. Default: ``True`` .
+        is_training (bool, optional): A bool identifying is training in the operator. Default: ``True`` .
 
     Inputs:
         - **x** (Tensor) - Current words.

@@ -21,7 +21,7 @@ mindspore.ops.MaxPool
           - ``"same"``：在输入的四周填充，使得当 `stride` 为 ``1`` 时，输入和输出的shape一致。待填充的量由算子内部计算，若为偶数，则均匀地填充在四周，若为奇数，多余的填充量将补充在底部/右侧。
           - ``"valid"``：不对输入进行填充，返回输出可能的最大高度和宽度，不能构成一个完整stride的额外的像素将被丢弃。
 
-        - **data_format** (str) - 输入和输出的数据格式。可选值为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
+        - **data_format** (str) - 输入和输出的数据格式。可选值为 ``"NHWC"`` 或 ``"NCHW"`` 。默认值： ``"NCHW"`` 。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
@@ -35,7 +35,7 @@ mindspore.ops.MaxPool
 
     异常：
         - **TypeError** - `kernel_size` 或 `strides` 既不是int也不是tuple。
-        - **ValueError** - `pad_mode` 既不是'valid'也不是'same'（不区分大小写）。
-        - **ValueError** - `data_format` 既不是'NCHW'也不是'NHWC'。
+        - **ValueError** - `pad_mode` 既不是 ``"valid"`` 也不是 ``"same"`` （不区分大小写）。
+        - **ValueError** - `data_format` 既不是 ``"NCHW"`` 也不是 ``"NHWC"`` 。
         - **ValueError** - `kernel_size` 或 `strides` 小于1。
         - **ValueError** - `iput` 的shape长度不等于4。

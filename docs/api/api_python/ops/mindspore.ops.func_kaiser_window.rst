@@ -23,7 +23,7 @@ mindspore.ops.kaiser_window
         - **beta** (float, 可选) - 形状参数，当 `beta` 变大时，窗口就会变窄。默认值： ``12.0`` 。
 
     关键字参数：
-        - **dtype** (mindspore.dtype, 可选) - 输出window的数据类型，必须为float。默认值：``None`` 。
+        - **dtype** (mindspore.dtype, 可选) - 输出window的数据类型，必须为float。默认值： ``None`` 。
 
     返回：
         Tensor，一个Kaiser window。

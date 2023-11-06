@@ -3760,12 +3760,12 @@ class IndexAdd(Primitive):
 
     Args:
         axis (int): The dimension along which to index.
-        use_lock (bool): Whether to enable a lock to protect the updating process of variable tensors.
+        use_lock (bool, optional): Whether to enable a lock to protect the updating process of variable tensors.
             If ``True`` , when updating the value of `x`, this process will be protected by a lock by using atomic
             operation.
             If ``False`` , the result may be unpredictable. Default: ``True`` .
-        check_index_bound (bool): If ``True`` , check index boundary. If ``False`` , don't check index boundary.
-            Default: ``True`` .
+        check_index_bound (bool, optional): If ``True`` , check index boundary. If ``False`` ,
+            don't check index boundary. Default: ``True`` .
 
     Inputs:
         - **x** (Parameter) - The input Parameter to add to.
@@ -5487,7 +5487,7 @@ class Ormqr(Primitive):
     r"""
     Computes the matrix-matrix multiplication of a product of Householder matrices with a general matrix.
     Multiplies a(m, n) matrix C (given by other) with a matrix Q, where Q is represented using Householder
-    reflectors (x, tau), which is the output of geqrf().
+    reflectors (x, tau), which is the output of :func:`mindspore.ops.geqrf`.
 
     Refer to :func:`mindspore.ops.ormqr` for more details.
 

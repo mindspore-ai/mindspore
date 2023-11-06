@@ -743,8 +743,8 @@ def gamma(shape, alpha, beta, seed=None):
         shape (tuple): The shape of random tensor to be generated.
         alpha (Tensor): The :math:`\alpha` distribution parameter. It should be greater than 0 with float32 data type.
         beta (Tensor): The :math:`\beta` distribution parameter. It should be greater than 0 with float32 data type.
-        seed (int): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: ``None`` , which will be treated as ``0`` .
+        seed (int, optional): Seed is used as entropy source for the random number engines to generate
+            pseudo-random numbers, must be non-negative. Default: ``None`` , which will be treated as ``0`` .
 
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes

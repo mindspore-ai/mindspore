@@ -1264,7 +1264,7 @@ def exp(input):
         out_i = e^{x_i}
 
     Args:
-        input (Tensor): The input tensor.
+        input (Tensor): The input tensor, which is :math:`x` in the formula above.
 
     Returns:
         Tensor, has the same shape and dtype as the `input`.
@@ -1296,7 +1296,7 @@ def expm1(input):
         out_i = e^{x_i} - 1
 
     Args:
-        input (Tensor): The input Tensor.
+        input (Tensor): The input Tensor, which is :math:`x` in the formula above.
 
     Returns:
         Tensor, has the same shape as the `input`.
@@ -1327,7 +1327,7 @@ def log(input):
         y_i = \log_e(x_i)
 
     .. warning::
-        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        If the input value is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
         be affacted.
 
     Args:
@@ -1392,8 +1392,8 @@ def floor(input):
         out_i = \lfloor x_i \rfloor
 
     Args:
-        input (Tensor): The input tensor, its data type must be float16,
-            float32 or float64.
+        input (Tensor): The input tensor, which is :math:`x` in the formula above.
+            Its data type must be float16, float32 or float64.
 
     Returns:
         Tensor, has the same shape as `input`.
@@ -1650,8 +1650,10 @@ def logical_or(input, other):
 
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
+
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them must be bool.
+
     When the inputs are one tensor and one bool, the bool object could only be a constant,
     and the data type of the tensor must be bool.
 
@@ -1715,8 +1717,10 @@ def logical_and(input, other):
 
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
+
     When the inputs are two tensors, the shapes of them could be broadcast,
     and the data types of them must be bool.
+
     When the inputs are one tensor and one bool, the bool object could only be a constant,
     and the data type of the tensor must be bool.
 
@@ -3083,7 +3087,8 @@ def erf(input):
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor of Gaussian error function. Supported dtypes:
+        input (Tensor): The input tensor of Gaussian error function, which is :math:`x`
+            in the formula above. Supported dtypes:
 
             - Ascend: float16, float32.
             - GPU/CPU: float16, float32, float64.
@@ -3119,7 +3124,8 @@ def erfc(input):
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        input (Tensor): The input tensor. Supported dtypes:
+        input (Tensor): The input tensor, which is :math:`x`
+            in the formula above. Supported dtypes:
 
             - Ascend: float16, float32.
             - GPU/CPU: float16, float32, float64.
@@ -5224,9 +5230,6 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         &step = (end - start)/(steps - 1)\\
         &output = [base^{start}, base^{start + 1 * step}, ... , base^{start + (steps-2) * step}, base^{end}]
         \end{aligned}
-
-    Note:
-        - Input `base` must be integer.
 
     Args:
         start (Union[float, Tensor]): Start value of interval.
@@ -8917,7 +8920,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
-        tau (float): The scalar temperature, which is a positive number. Default: ``1.0`` .
+        tau (float): The scalar temperature, which is a positive number. Default: ``1`` .
         hard (bool): if `True`, the returned samples will be discretized as one-hot vectors, but will be differentiated
           as if it is the soft sample in autograd. Default: ``False`` .
         dim (int): Dim for softmax to compute. Default: ``-1`` .
@@ -10257,21 +10260,21 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         and width are scaled by 0.2 internally.
 
     Args:
-        anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . "N" indicates the number of anchor boxes,
-            and the value "4" refers to "x0", "y0", "x1", and "y1".
-            Data type must be either float16,  float32 or float64.
-        gt_boxes (Tensor): Ground truth boxes, tensor of shape :math:`(M, 4)` . "M" indicates the number of ground
-            truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1".
-            Data type must be either float16, float32 or float64.
+        anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . :math:`N` indicates the number of
+            anchor boxes, and the value :math:`4` refers to four boundary coordinates of the predicted area
+            "x0", "y0", "x1", and "y1". Data type must be either float16, float32 or float64.
+        gt_boxes (Tensor): Ground truth boxes, tensor of shape :math:`(M, 4)` . :math:`M` indicates the number
+            of ground truth boxes, and the value :math:`4` refers to four boundary coordinates of the truth
+            area "x0", "y0", "x1", and "y1". Data type must be either float16, float32 or float64.
         mode (string): The mode is used to specify the calculation method,
             now supporting 'iou' (intersection over union) or 'iof' (intersection over foreground) mode.
             Default: ``'iou'`` .
 
     Returns:
-        Tensor, the 'iou' values, tensor of shape :math:`(M, N)` , with the same data type as `anchor_boxes`.
+        Tensor, the IOU/IOF values, tensor of shape :math:`(M, N)` , with the same data type as `anchor_boxes`.
 
     Raises:
-        KeyError: When `mode` is not 'iou' or 'iof'.
+        KeyError: When `mode` is not ``'iou'`` or ``'iof'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

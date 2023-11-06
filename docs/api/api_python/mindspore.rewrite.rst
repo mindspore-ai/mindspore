@@ -178,7 +178,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
     参数：
         - **arg_type** (ValueType) - 当前值的类型。
-        - **scope** (str) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
+        - **scope** (str，可选) - 字符串表示当前值的范围。以"self.var1"为例，这个var1的作用域是"self"。默认值： ``""`` 。
         - **value** - 当前ScopedValue中保存的值。值的类型对应于 `arg_type`。默认值： ``None`` 。
 
     .. py:method:: mindspore.rewrite.ScopedValue.create_name_values(names: Union[List[str], Tuple[str]], scopes: Union[List[str], Tuple[str]] = None)
@@ -188,7 +188,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **names** (List[str] or Tuple[str]) - 引用变量的名称，类型为str的列表或元组。
-            - **scopes** (List[str] or Tuple[str]) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
+            - **scopes** (List[str] or Tuple[str]，可选) - 引用变量的范围，类型为str的列表或元组。默认值： ``None`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例列表。
@@ -204,7 +204,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 
         参数：
             - **name** (str) – 表示变量的字符串。
-            - **scope** (str) – 表示变量范围的字符串，默认值： ``""`` ，表示没有指定作用范围。
+            - **scope** (str，可选) – 表示变量范围的字符串，默认值： ``""`` ，表示没有指定作用范围。
 
         返回：
             ScopedValue的实例。
@@ -245,7 +245,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             Position，指定插入节点的位置。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.before(node: Union[Node, str])
 
@@ -258,7 +258,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             Position，指定插入节点的位置。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.create(network)
 
@@ -323,7 +323,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
             如果 `node` 属于当前的SymbolTree则返回被删除节点。否则返回None。
 
         异常：
-            - **TypeError** - 参数不是Node类型。
+            - **TypeError** - 参数不是Node或str类型。
 
     .. py:method:: mindspore.rewrite.SymbolTree.get_code()
 

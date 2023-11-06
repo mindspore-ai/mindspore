@@ -55,8 +55,9 @@ SUMMARY_RETURN_VALUE = {'dtype': mstype.int32, 'shape': [1], 'value': None}
 
 class ScalarSummary(Primitive):
     """
-    This operator will put a scalar to a summary file with protocol buffer format. It must be used with SummaryRecord
-    or SummaryCollector, which specify the directory of the summary file. The summary file can
+    This operator will put a scalar to a summary file with protocol buffer format.
+    It must be used with :class:`mindspore.SummaryRecord` or :class:`mindspore.SummaryCollector`,
+    which specify the directory of the summary file. The summary file can
     be loaded and shown by MindInsight, see `MindInsight documents <https://www.mindspore.cn/
     mindinsight/docs/en/master/index.html>`_ for details.
 

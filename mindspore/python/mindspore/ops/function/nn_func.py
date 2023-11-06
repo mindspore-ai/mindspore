@@ -837,7 +837,7 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
         \end{array}
 
     Args:
@@ -1899,7 +1899,8 @@ def hardshrink(x, lambd=0.5):
 
     Args:
         x (Tensor): The input of Hard Shrink with data type of float16 or float32.
-        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula.
+            Default: ``0.5`` .
 
     Returns:
         Tensor, has the same data type and shape as the input `x`.
@@ -2001,7 +2002,7 @@ def flip(input, dims):
     Raises:
         TypeError: If the input is not a tensor.
         ValueError: If `dims` is None.
-        ValueError: If `dims` is not a tuple of ints.
+        ValueError: If `dims` is not a list/tuple of ints.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3314,30 +3315,30 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`\text{padding_top}, \text{padding_bottom}`,
             :math:`\text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, ``"constant"`` , ``"reflect"`` , ``"replicate"``  or ``"circular"`` .
+        mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
             Default: ``'constant'`` .
 
-            For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
+            For ``'constant'`` mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
             this filling pattern and extend the padding pattern to n dimensions.
 
-            For "reflect" mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
+            For ``'reflect'`` mode, please refer to :class:`mindspore.nn.ReflectionPad1d` as an example to understand
             this filling pattern.
             The reflect mode is used to pad the last two dimensions of 3D or 4D input, or the last dimension of 2D or
             3D input.
 
-            For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
+            For ``'replicate'`` mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
             this filling pattern.
             The replicate mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
             or 4D input, or the last dimension of 2D or 3D input.
 
-            For "circular" mode, the pixels from one edge of the image are wrapped around to the opposite edge,
+            For ``'circular'`` mode, the pixels from one edge of the image are wrapped around to the opposite edge,
             such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
             and the pixel on the bottom edge is replaced with the pixel on the top edge.
             The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
             or 4D input, or the last dimension of 2D or 3D input.
 
-        value (Union[int, float, None], optional): Valid only in "constant" mode.
-            Set the padding value in "constant" mode. If the value is None, 0 is used as the default padding value.
+        value (Union[int, float, None], optional): Valid only in ``'constant'`` mode.
+            Set the padding value in ``'constant'`` mode. If the value is None, 0 is used as the default padding value.
             Default: ``None`` .
 
     Returns:
@@ -3348,7 +3349,7 @@ def pad(input_x, padding, mode='constant', value=None):
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
-        ValueError: If mode is not "constant" and value not None.
+        ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3902,8 +3903,9 @@ def l1_loss(input, target, reduction='mean'):
     r"""
     Calculate the mean absolute error between the `input` value and the `target` value.
 
-    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, `reduction` is set to ``"none"``,
-    then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+    Assuming that the :math:`x` and :math:`y` (predicted and target value) are 1-D Tensor,
+    length :math:`N`, `reduction` is set to ``'none'``, then calculate the loss of
+    :math:`x` and :math:`y` without dimensionality reduction.
 
     The formula is as follows:
 
@@ -3912,7 +3914,7 @@ def l1_loss(input, target, reduction='mean'):
 
     where :math:`N` is the batch size.
 
-    If `reduction` is ``"mean"`` or ``"sum"`` , then:
+    If `reduction` is ``'mean'`` or ``'sum'`` , then:
 
     .. math::
         \ell(x, y) =
@@ -3933,13 +3935,13 @@ def l1_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``'none'``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If `target` is not a Tensor.
-        ValueError: If `reduction` is not one of ``"none"``, ``"mean"`` or ``"sum"``.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4896,7 +4898,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         inputs (Tensor): Predicted values, represented as :math:`x` in the formula.
         targets (Tensor): Label values, represented as :math:`y` in the formula.
             Has the same shape as `inputs`, contains -1 or 1.
-        margin (float, int): Threshold defined by Hinge Embedding Loss :math:`margin`.
+        margin (float, int): Threshold defined by Hinge Embedding Loss `margin`.
             Represented as :math:`\Delta` in the formula. Default: ``1.0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -4906,7 +4908,7 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Tensor scalar, the computed loss depending on :math:`reduction`.
+        Tensor or Tensor scalar, the computed loss depending on `reduction`.
 
     Raises:
         TypeError: If `inputs` is not a Tensor.
@@ -5478,8 +5480,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 
     Args:
         input (Tensor): Input Tensor.
-        min_val (Union[int, float]): Minimum value of the linear region range. Default: ``-1.0`` .
-        max_val (Union[int, float]): Maximum value of the linear region range. Default: ``1.0`` .
+        min_val (Union[int, float], optional): Minimum value of the linear region range. Default: ``-1.0`` .
+        max_val (Union[int, float], optional): Maximum value of the linear region range. Default: ``1.0`` .
 
     Returns:
         Tensor, with the same dtype and shape as `input`.
@@ -5515,7 +5517,7 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     which has the best of both the loss of l1 and the loss of mse.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
-    is set to ``"none"`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
+    is set to ``'none'`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
     The formula is as follows:
 
     .. math::
@@ -5556,14 +5558,14 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
             The value must be greater than zero. Default: ``1.0`` .
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``"none"``, return a Tensor with same shape and dtype as `input`.
+        Tensor or Scalar, if `reduction` is ``'none'``, return a Tensor with same shape and dtype as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If `input` or `target` is not a Tensor.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
-        ValueError: If `reduction` is not one of ``"none"``, ``"mean"``, ``"sum"``.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If `input` and `target` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
@@ -6310,10 +6312,11 @@ def multilabel_margin_loss(input, target, reduction='mean'):
     This allows for different samples to have variable amounts of target classes.
 
     Args:
-        input (Tensor): Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
-            is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same shape as `input`, data type must be int32 and
-            label targets padded by -1.
+        input (Tensor): Predict data, :math:`x` in the formula above. Tensor of shape :math:`(C)`
+            or :math:`(N, C)`, where :math:`N` is the batch size and :math:`C` is the number of classes.
+            Data type must be float16 or float32.
+        target (Tensor): Ground truth data, :math:`y` in the formula above, with the same shape as `input`,
+            data type must be int32 and label targets padded by -1.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 

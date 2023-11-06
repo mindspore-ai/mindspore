@@ -875,12 +875,12 @@ class Relational(IntEnum):
 
     Available values are as follows:
 
-    - Relational.EQ: Equal to.
-    - Relational.NE: Not equal to.
-    - Relational.GT: Greater than.
-    - Relational.GE: Greater than or equal to.
-    - Relational.LT: Less than.
-    - Relational.LE: Less than or equal to.
+    - ``Relational.EQ``: Equal to.
+    - ``Relational.NE``: Not equal to.
+    - ``Relational.GT``: Greater than.
+    - ``Relational.GE``: Greater than or equal to.
+    - ``Relational.LT``: Less than.
+    - ``Relational.LE``: Less than or equal to.
     """
     EQ = 0
     NE = 1
@@ -932,15 +932,16 @@ class Slice(TensorOperation):
 
     Args:
         slices (Union[int, list[int], slice, Ellipsis]): The desired slice.
-            If the input type is int, it will slice the element with the specified index value.
-            Negative index is also supported.
-            If the input type is list[int], it will slice all the elements with the specified index values.
-            Negative index is also supported.
-            If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
-            it will slice according to its specified start position, stop position and step size.
-            If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
-            all elements will be sliced.
-            If the input is None, all elements will be sliced.
+
+            - If the input type is int, it will slice the element with the specified index value.
+              Negative index is also supported.
+            - If the input type is list[int], it will slice all the elements with the specified index values.
+              Negative index is also supported.
+            - If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
+              it will slice according to its specified start position, stop position and step size.
+            - If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
+              all elements will be sliced.
+            - If the input is None, all elements will be sliced.
 
     Raises:
         TypeError: If `slices` is not of type Union[int, list[int], slice, Ellipsis].
