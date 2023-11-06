@@ -21,8 +21,9 @@ from mindspore.ops import split
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax, sqrt, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat
 from mindspore.ops.auto_generate.gen_pyboost_func import pow as pyboost_pow
+from mindspore.ops.auto_generate.gen_pyboost_func import sum as pyboost_sum
 import mindspore
 
 
@@ -585,6 +586,10 @@ def test_layer_norm_ascend():
     assert np.allclose(output[2].asnumpy(), [[[2.0], [2.0]]])
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_implicit_cast_ascend():
     """
     Feature: test implicit cast operator
@@ -597,3 +602,51 @@ def test_implicit_cast_ascend():
     out = add(x, y)
     assert np.allclose(out.asnumpy(), np.array([5], np.float32))
 
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sum_ascend():
+    """
+    Feature: test cast operator
+    Description: test sum run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    output = pyboost_sum(input_x1, 0, False, mindspore.float32)
+    assert np.allclose(output.asnumpy(), [10])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_mean_ascend():
+    """
+    Feature: test cast operator
+    Description: test mean run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    output = mean(input_x1, 0, False, mindspore.float32)
+    assert np.allclose(output.asnumpy(), [2.5])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_cat_ascend():
+    """
+    Feature: test cast operator
+    Description: test cat run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    input_x1 = Tensor(np.array([0, 1]).astype(np.float32))
+    input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
+    output = cat((input_x1, input_x2), 0)
+    assert np.allclose(output.asnumpy(), [0, 1, 2, 3])

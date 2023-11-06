@@ -1,0 +1,20 @@
+#operator sum
+sum:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: tuple[int]
+      type_cast: int
+    keepdim:
+      dtype: bool
+      init: False
+    dtype:
+      dtype: type
+      init: mstype.type_none
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Sum
+  pyboost: True

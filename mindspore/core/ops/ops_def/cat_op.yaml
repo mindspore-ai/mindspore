@@ -1,0 +1,14 @@
+#operator cat
+cat:
+  args:
+    input:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    dim:
+      dtype: int
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: Cat
+  pyboost: True

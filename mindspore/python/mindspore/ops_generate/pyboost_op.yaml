@@ -281,3 +281,30 @@ Less:
     cube: False
     aclnn: aclnnLtTensor
 
+Mean:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+
+Sum:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
+    aclnn: aclnnReduceSum
+
+Cat:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False
