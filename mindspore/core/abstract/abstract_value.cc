@@ -1032,7 +1032,7 @@ bool AbstractSequence::PurifyElements() {
   for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
-      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
+      const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(0));
       if (elements_[i]->isa<AbstractProblem>()) {
         unuse_node_none->set_type(std::make_shared<Problem>());
       }

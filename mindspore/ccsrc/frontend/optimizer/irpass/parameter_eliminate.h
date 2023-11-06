@@ -153,8 +153,8 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
         // Erase the unused element in returned MakeTuple CNode.
         auto user_cnode = dyn_cast<CNode>(user);
         MS_EXCEPTION_IF_NULL(user_cnode);
-        auto zero_value = NewValueNode(MakeValue(0));
-        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
+        auto zero_value = NewValueNode(MakeValue<int64_t>(0));
+        zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(0)));
         user_cnode->set_input(IntToSize(pos), zero_value);
       }
     }
