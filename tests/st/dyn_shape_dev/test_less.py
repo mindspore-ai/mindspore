@@ -35,6 +35,20 @@ def less_dyn_shape_func(x, y):
     return ops.auto_generate.less(x, y)
 
 
+@test_utils.run_with_cell
+def less_infervalue_func1():
+    x = ms.Tensor(np.array([1, 2, 3]).astype(np.float32))
+    y = ms.Tensor(np.array([1, 1, 4]).astype(np.float32))
+    return ops.auto_generate.less(x, y)
+
+
+@test_utils.run_with_cell
+def less_infervalue_func2():
+    x = ms.Tensor(np.array([1, 2, 4]).astype(np.float32))
+    y = ms.Tensor(np.array([3, 2, 1]).astype(np.float32))
+    return ops.auto_generate.less(x, y)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
@@ -168,3 +182,24 @@ def test_less_dynamic_rank(mode):
         [[False, False, True], [False, False, True], [False, False, True]],
         dtype=np.bool)
     assert np.allclose(out_2.asnumpy(), expect_2, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_less_op_infervalue(context_mode):
+    """
+    Feature: Ops.
+    Description: test op less infervalue.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    out_1 = less_infervalue_func1()
+    expect_out_1 = np.array([False, False, True], dtype=np.bool)
+    assert np.allclose(out_1.asnumpy(), expect_out_1)
+    out_2 = less_infervalue_func2()
+    expect_out_2 = np.array([True, False, False], dtype=np.bool)
+    assert np.allclose(out_2.asnumpy(), expect_out_2)
