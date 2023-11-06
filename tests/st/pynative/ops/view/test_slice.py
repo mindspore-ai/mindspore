@@ -631,3 +631,69 @@ def test_large_conv_mix_op():
     grad = grad_op(net)(x, weight)
     assert np.allclose(expect_output.asnumpy(), output.asnumpy(), 0.00001, 0.00001)
     assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_slice_single_op():
+    """
+    Feature: slice
+    Description: Verify the result of slice
+    Expectation: success
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return ops.slice(x, *y)
+
+    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
+    input_perm = [(0, 0, 1), (1, 2, 2)]
+    net = Net()
+    expect_output = net(input_x, input_perm).asnumpy()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
+    expect_grad = grad_op(net)(input_x, input_perm)
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    net = Net()
+    output = net(input_x, input_perm).asnumpy()
+    grad = grad_op(net)(input_x, input_perm)
+    np.testing.assert_array_equal(output, expect_output)
+    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_slice_multiple_op():
+    """
+    Feature: slice
+    Description: Verify the result of slice
+    Expectation: success
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            temp = ops.slice(x, *y)
+            temp = (temp + 1) * 2
+            return ops.slice(temp, *y)
+
+    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
+    input_perm = [(0, 0, 0), (1, 2, 2)]
+    net = Net()
+    expect_output = net(input_x, input_perm).asnumpy()
+    grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
+    expect_grad = grad_op(net)(input_x, input_perm)
+
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    net = Net()
+    output = net(input_x, input_perm).asnumpy()
+    grad = grad_op(net)(input_x, input_perm)
+    np.testing.assert_array_equal(output, expect_output)
+    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
