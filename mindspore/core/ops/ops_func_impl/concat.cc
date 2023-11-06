@@ -31,7 +31,6 @@
 
 namespace mindspore::ops {
 namespace {
-constexpr size_t kTupleInputNum = 2;
 constexpr int64_t kUnknownDiffIdx = std::numeric_limits<int64_t>().max();
 
 inline size_t NormalizeAxis(int64_t axis, size_t rank) {
@@ -148,7 +147,7 @@ BaseShapePtr ConcatFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto axis_res = GetScalarValue<int64_t>(axis_value);
 
   ShapeVector output_shape;
-  if (MS_LIKELY(input_args.size() == kTupleInputNum)) {
+  if (MS_LIKELY(!CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]))) {
     auto x_base_shape = input_args[kInputIndex0]->GetShape();
     if (MS_UNLIKELY(x_base_shape->isa<abstract::DynamicSequenceShape>())) {
       output_shape = CalOutputShapeInDynamicLenCase(x_base_shape, axis_res, primitive);

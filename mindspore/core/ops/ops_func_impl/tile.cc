@@ -69,7 +69,7 @@ BaseShapePtr TileFuncImpl::InferShape(const PrimitivePtr &primitive,
       return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
     }
     return std::make_shared<abstract::TensorShape>(
-      ShapeVector(abstract::TensorShape::kShapeDimAny, multiples_shape[0]));
+      ShapeVector(multiples_shape[0], abstract::TensorShape::kShapeDimAny));
   }
 
   // A Tensor or a Tuple should be a value known one now.
