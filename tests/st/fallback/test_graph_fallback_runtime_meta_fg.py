@@ -1163,3 +1163,26 @@ def test_getitem_with_no_script():
         return (x, y)
     res = run(Inner())
     assert res == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multitype_with_cache():
+    """
+    Feature: shift operator
+    Description: test shift operator with lists
+    Expectation: throw RuntimeError
+    """
+
+    @jit
+    def foo(x):
+        a = 2 * x
+        a = a.asnumpy()
+        b = 2 * a
+        return Tensor(b)
+
+    ret = foo(Tensor([1, 2, 3], dtype=ms.float32))
+    assert np.allclose(ret.asnumpy(), np.array([4.0, 8.0, 12.0]))
