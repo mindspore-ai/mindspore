@@ -178,7 +178,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
     }
 
     // multiple outputs
-    if (!is_dynamic_sequence && primitive->HasAttr(kOutputRealTuple)) {
+    if (!is_dynamic_sequence && primitive->HasAttr(kOutputRealTuple) && !out.empty()) {
       auto first_len = out[0];
       if (std::any_of(out.begin() + 1, out.end(), [first_len](int64_t len) { return first_len != len; })) {
         MS_LOG(EXCEPTION) << "For 'ShapeCalc', each output should have same size in dynamic length case.";

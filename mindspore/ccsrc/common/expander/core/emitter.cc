@@ -20,6 +20,8 @@
 #include <functional>
 #include <unordered_set>
 #include <utility>
+#include "include/common/utils/utils.h"
+#include "ir/anf.h"
 #include "ops/sequence_ops.h"
 #include "ops/math_ops.h"
 #include "ops/array_ops.h"
