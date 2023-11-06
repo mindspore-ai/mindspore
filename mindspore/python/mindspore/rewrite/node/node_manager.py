@@ -13,17 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree nodes manager."""
-import sys
-from typing import Optional
+from typing import Optional, Union
 import ast
 from .node import Node
 from .node_topological_manager import TopoManager
 from ..api.node_type import NodeType
 
-if sys.version_info >= (3, 9):
-    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
-else:
-    import astunparse
 
 class NodeManager:
     """
@@ -44,8 +39,12 @@ class NodeManager:
         self._inputs: [Node] = []
         # nodes of Output type
         self._returns: [Node] = []
-        # ast of ast.FunctionDef
-        self._ast_functiondef = None
+        # ast of node manager
+        # SymbolTree    -> ast.FunctionDef
+        # CallFunction  -> ast.FunctionDef
+        # ControlFlow   -> list
+        # CellContainer -> ast.Assign
+        self._node_manager_ast: Union[ast.AST, list] = None
         # name of manager
         self._manager_name = "OriginNodeManager"
 
@@ -186,13 +185,13 @@ class NodeManager:
                 tree_nodes.extend(node.get_tree_nodes())
         return tree_nodes
 
-    def set_ast_functiondef(self, ast_functiondef: ast.FunctionDef):
-        """Set _ast_functiondef."""
-        self._ast_functiondef = ast_functiondef
+    def set_manager_ast(self, node_manager_ast: Union[ast.AST, list]):
+        """Set _node_manager_ast."""
+        self._node_manager_ast = node_manager_ast
 
-    def get_ast_functiondef(self):
-        """Get _ast_functiondef."""
-        return self._ast_functiondef
+    def get_manager_ast(self):
+        """Get _node_manager_ast."""
+        return self._node_manager_ast
 
     def get_inputs(self):
         """Get _inputs"""
@@ -224,7 +223,7 @@ class NodeManager:
         node_specs = [[
             n.get_node_type(),
             n.get_name(),
-            astunparse.unparse(n.get_ast()).strip(),
+            n.get_source_code(),
             [[key, ((value[0].get_name(), value[1]) if value else ())]
              for key, value in n.get_arg_providers().items()],
             [[

@@ -19,6 +19,7 @@ from .node_manager import NodeManager
 from ..api.scoped_value import ScopedValue
 from ..api.node_type import NodeType
 from ..ast_helpers import AstModifier
+from .control_flow import ControlFlow
 
 
 class CallFunction(Node, NodeManager):
@@ -46,14 +47,18 @@ class CallFunction(Node, NodeManager):
             func_name = ScopedValue.create_naming_value(func_name)
         Node.__init__(self, NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, instance)
         NodeManager.__init__(self, stree.get_node_namer())
-        NodeManager.set_ast_functiondef(self, ast_functiondef)
         NodeManager.set_manager_name(self, func_name.value)
+        NodeManager.set_manager_ast(self, ast_functiondef)
 
     def erase_node(self, node):
         """Erase node from CallFunction."""
         NodeManager.erase_node(self, node)
         # erase asts
-        ret = AstModifier.erase_ast_from_function(self.get_ast_functiondef(), node.get_ast())
+        if isinstance(node, ControlFlow):
+            ret = AstModifier.earse_ast_of_control_flow(self.get_manager_ast().body,
+                                                        node.get_ast(), node.is_orelse)
+        else:
+            ret = AstModifier.erase_ast_from_function(self.get_manager_ast(), node.get_ast())
         if not ret:
             raise ValueError(f"erase node failed, node {node.get_name()} not in function ast tree.")
 
@@ -70,7 +75,7 @@ class CallFunction(Node, NodeManager):
         NodeManager.insert_node(self, new_node, base_node, before_node)
         if insert_to_ast:
             stree = self.get_belong_symbol_tree()
-            stree.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
+            stree.insert_to_ast_while_insert_node(new_node, base_node, before_node)
 
     def set_belong_symbol_tree(self, symbol_tree):
         """Set the symbol tree to which node belongs."""

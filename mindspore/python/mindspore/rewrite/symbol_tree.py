@@ -20,10 +20,11 @@ import sys
 import ast
 import importlib.util
 import time
+import inspect
 
 from mindspore.nn import Cell
 from mindspore import log as logger
-from .node.node import Node, TreeNode
+from .node import Node, TreeNode, ControlFlow, CallFunction
 from .api.node_type import NodeType
 from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, AstClassFinder, AstFunctionFinder
 from .api.scoped_value import ScopedValue, ValueType
@@ -274,6 +275,53 @@ class SymbolTree(Observer, Observable, NodeManager):
         get_node_handler = TransImportNode()
         get_node_handler.generic_visit(module_ast)
 
+    @staticmethod
+    def insert_to_ast_while_insert_node(new_node: Node, base_node: Node, before_node: bool):
+        """ insert_to_ast_while_insert_node. """
+        stree = new_node.get_belong_symbol_tree()
+        if not stree:
+            raise ValueError(f"When inserting node to ast, the belonging symbol tree of new_node is None.")
+        node_manager = new_node.get_node_manager()
+        if not isinstance(node_manager, (SymbolTree, CallFunction, ControlFlow)):
+            raise ValueError(f"When inserting node to ast, the node_manager of new_node {new_node.get_name()} can "
+                             f"only be one of [SymbolTree, CallFunction, ControlFlow], but get {type(node_manager)}")
+        if new_node.get_node_type() == NodeType.Input:
+            if not isinstance(node_manager, (SymbolTree, CallFunction)):
+                raise ValueError(f"Only support insert Input node into a SymbolTree or a node with type of "
+                                 f"CallFunction, but get {type(node_manager)}")
+            # insert a new input
+            node_manager.get_inputs().append(new_node)
+            ast_function: ast.FunctionDef = node_manager.get_manager_ast()
+            arg: str = new_node.get_targets()[0].value
+            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
+            AstModifier.append_arg_to_function(ast_function, ast_arg)
+        else:
+            # insert a new assign statement
+            ast_assign = new_node.get_ast()
+            if ast_assign is None:
+                func_name = stree.unique_func_name(new_node.get_name())
+                new_node.set_func_name(ScopedValue.create_naming_value(func_name, "self"))
+                ast_assign = new_node.update_ast_node()
+            if not isinstance(ast_assign, ast.Assign):
+                raise ValueError(f"Only support insert ast.Assign or Input now, but get {type(ast_assign)}")
+            # Save instance into _origin_network.
+            setattr(stree.get_origin_network(), new_node.get_name(), new_node.get_instance())
+            # Insert ast to __init__ function
+            if isinstance(new_node, TreeNode):
+                init_code = f"self.{new_node.get_name()} = " \
+                            f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
+            else:
+                init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
+            init_ast = ast.parse(init_code).body[0]
+            AstModifier.insert_ast_to_function(stree.get_init_func_ast(), init_ast)
+            # Insert ast to construct_function/class_internal_function
+            ast_base_node = base_node.get_ast() if base_node else None
+            ast_node_manager = node_manager.get_manager_ast()
+            if not ast_node_manager:
+                raise RuntimeError(f"ast_node_manager is None in node_manager {node_manager.get_manager_name()} "
+                                   "when inserting the ast.")
+            AstModifier.insert_ast_to_ast(ast_node_manager, ast_assign, ast_base_node, before_node)
+
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
@@ -333,7 +381,7 @@ class SymbolTree(Observer, Observable, NodeManager):
                                         corresponding network class.
         """
         self._root_ast = ast_node
-        NodeManager.set_ast_functiondef(self, ast_node)
+        NodeManager.set_manager_ast(self, ast_node)
 
     def get_class_ast(self):
         """
@@ -346,7 +394,7 @@ class SymbolTree(Observer, Observable, NodeManager):
 
     def set_class_ast(self, ast_node: ast.ClassDef):
         """
-        Setter of `_init_func_ast`.
+        Setter of `_class_ast`.
 
         Args:
             ast_node (ast.ClassDef): An instance of ast.ClassDef represents ast node of corresponding network class.
@@ -599,7 +647,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             NodeManager.insert_node(self, new_node, base_node, before_node)
             if insert_to_ast:
                 # update init-function-ast and construct-function-ast
-                self.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
+                self.insert_to_ast_while_insert_node(new_node, base_node, before_node)
         else:
             node_manager.insert_node(new_node, base_node, before_node, insert_to_ast)
 
@@ -782,11 +830,15 @@ class SymbolTree(Observer, Observable, NodeManager):
 
         if node_manager is self:
             NodeManager.erase_node(self, node)
-            ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
+            if isinstance(node, ControlFlow):
+                ret = AstModifier.earse_ast_of_control_flow(self._root_ast.body, node.get_ast(), node.is_orelse)
+            else:
+                ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
             if not ret:
                 raise RuntimeError(f"erase node failed, node {node.get_name()} not in function ast tree.")
         else:
             node_manager.erase_node(node)
+        node.set_belong_symbol_tree(None)
         self._deleted_node.append(node.get_name())
         return node
 
@@ -1157,42 +1209,91 @@ class SymbolTree(Observer, Observable, NodeManager):
             f.write(source.encode('utf-8'))
             f.flush()
 
-    def insert_to_ast_while_insert_node(self, new_node: Node, base_node: Node, before_node: bool,
-                                        node_manager: NodeManager):
-        """ insert_to_ast_while_insert_node. """
-        if new_node.get_node_type() == NodeType.Input:
-            # insert a new input
-            self._inputs.append(new_node)
-            ast_construct = self.get_ast_root()
-            arg: str = new_node.get_targets()[0].value
-            ast_arg = ast.arg(arg=arg, annotation=None, type_comment=None)
-            AstModifier.append_arg_to_function(ast_construct, ast_arg)
+
+    def flatten_nodes(self, node, erase_another_branch: bool = False, erase_nodes_after_return: bool = False):
+        """Flatten nodes in ControlFlow node."""
+        if not isinstance(node, ControlFlow):
+            raise ValueError(f"For flatten_nodes, the type of node can only be ControlFlow, but got {type(node)}.")
+        upper_node_manager = node.get_node_manager()
+        if isinstance(upper_node_manager, (SymbolTree, CallFunction)):
+            ast_bodies = upper_node_manager.get_manager_ast().body
+        elif isinstance(upper_node_manager, ControlFlow):
+            ast_bodies = upper_node_manager.get_manager_ast()
         else:
-            # insert a new assign statement
-            ast_assign = new_node.get_ast()
-            if ast_assign is None:
-                func_name = new_node.get_belong_symbol_tree().unique_func_name(new_node.get_name())
-                new_node.set_func_name(ScopedValue.create_naming_value(func_name, "self"))
-                ast_assign = new_node.update_ast_node()
-            if not isinstance(ast_assign, ast.Assign):
-                raise ValueError(f"Only support insert ast.Assign or Input now, but get {type(ast_assign)}")
-            # Save instance into _origin_network.
-            setattr(self._origin_network, new_node.get_name(), new_node.get_instance())
-            # Insert ast to __init__ function
-            if isinstance(new_node, TreeNode):
-                init_code = f"self.{new_node.get_name()} = " \
-                            f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
-            else:
-                init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
-            init_ast = ast.parse(init_code).body[0]
-            AstModifier.insert_assign_ast_to_function(self._init_func_ast, init_ast)
-            # Insert ast to construct_function/class_internal_function
-            ast_base_node = base_node.get_ast() if base_node else None
-            ast_functiondef = node_manager.get_ast_functiondef()
-            if not ast_functiondef:
-                raise RuntimeError(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                                   "when inserting the ast.")
-            AstModifier.insert_assign_ast_to_function(ast_functiondef, ast_assign, ast_base_node, before_node)
+            raise ValueError("For flatten_nodes, the node can only be contained in [SymbolTree, CallFunction, "
+                             f"ControlFlow], but the node is in {type(upper_node_manager)}.")
+        base_node = node.orelse_node if node.orelse_node else node.body_node
+        for n in node.nodes()[:]:
+            self.erase_node(n)
+            self.insert_node(n, base_node, False, upper_node_manager, False)
+            AstModifier.insert_ast_to_bodies(ast_bodies, n.get_ast(), base_node.get_ast(), False)
+            base_node = n
+        self.erase_node(node)
+        # remove another branch
+        if erase_another_branch:
+            if node.is_orelse:
+                self.erase_node(node.body_node)
+            elif node.orelse_node is not None:
+                self.erase_node(node.orelse_node)
+        # remove nodes after return node
+        if erase_nodes_after_return:
+            has_return = False
+            for n in upper_node_manager.nodes():
+                if has_return:
+                    logger.warning(f"Node {n.get_name()} which is behind the flatten return node is "
+                                   f"automatically erased.")
+                    self.erase_node(n)
+                elif n.get_node_type() == NodeType.Output:
+                    has_return = True
+
+    def eval_ast_result(self, ast_node: ast.AST) -> (bool, bool):
+        """
+        Eval ast_node and get result, only used in control flow node.
+        """
+        # ast.Constant can be check without eval
+        if isinstance(ast_node, ast.Constant):
+            return True, bool(ast.value)
+        # Get the module where the code of ast_node is located
+        file_path = inspect.getfile(type(self.get_origin_network()))
+        module = None
+        for _, m in sys.modules.items():
+            if hasattr(m, "__file__") and m.__file__ and os.path.normcase(m.__file__) == os.path.normcase(file_path):
+                module = m
+                break
+        if not module:
+            logger.warning("Failed to get module of ast_node.")
+            return False, False
+        # eval ast_node and get result
+        try:
+            # eval with ast make this operation free of instruction injection
+            logger.debug(f"Eval ast node: {astunparse.unparse(ast_node)}")
+            ast_expr = ast.Expression(ast_node)
+            ast_expr = ast.fix_missing_locations(ast_expr)
+            # pylint: disable=eval-used
+            result = eval(compile(ast_expr, "eval_ast_result", "eval"), {**globals(), **module.__dict__}, locals())
+        except Exception as e: # pylint: disable=broad-except
+            logger.debug(f"Cannot get result of ast_node by eval, err:{e}")
+            return False, False
+        logger.debug(f"Eval ast result success, result: {result}")
+        return True, bool(result)
+
+    def flatten_static_if_control_flow(self):
+        """
+        For static if control flow, flatten codes in branch which will be executed and erase another branch.
+        """
+        for node in self.all_nodes()[:]:
+            if not node.get_belong_symbol_tree():
+                # the node has been erased
+                continue
+            if isinstance(node, ControlFlow) and node.test_result is not None:
+                stree = node.get_belong_symbol_tree()
+                if node.test_result:
+                    stree.flatten_nodes(node.body_node, True, True)
+                else:
+                    if node.orelse_node is not None:
+                        stree.flatten_nodes(node.orelse_node, True, True)
+                    else:
+                        stree.erase_node(node.body_node)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):

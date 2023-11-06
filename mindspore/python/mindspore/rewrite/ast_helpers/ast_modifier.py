@@ -13,14 +13,44 @@
 # limitations under the License.
 # ============================================================================
 """Ast utils for create or update ast node."""
-from typing import Optional, List
+from typing import Optional, List, Union
+import sys
 import ast
-
 from ..api.scoped_value import ScopedValue, ValueType
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 
 class AstModifier(ast.NodeTransformer):
     """Ast utils for create or update ast node."""
+    @staticmethod
+    def insert_ast_to_ast(ast_container: Union[ast.AST, list], ast_node: ast.AST,
+                          index_ast: Optional[ast.AST] = None, insert_before=True):
+        """
+        Insert ast node into an ast container.
+        Only support ast.FunctionDef and ast.body with type of list yet.
+        """
+        if isinstance(ast_container, list):
+            return AstModifier.insert_ast_to_bodies(ast_container, ast_node, index_ast, insert_before)
+        if isinstance(ast_container, ast.FunctionDef):
+            return AstModifier.insert_ast_to_function(ast_container, ast_node, index_ast, insert_before)
+        raise NotImplementedError(f"Insert ast node into {type(ast_container)} is not support yet.")
+
+    @staticmethod
+    def earse_ast_of_control_flow(ast_root_body: list, ast_branch: ast.AST, is_orelse: bool):
+        """
+        Clear ast in control flow by replace ast nodes to pass.
+        """
+        if is_orelse:
+            ast_branch.orelse = []
+        else:
+            ast_branch.body = [ast.Pass()]
+        if len(ast_branch.body) == 1 and isinstance(ast_branch.body[0], ast.Pass) and not ast_branch.orelse:
+            AstModifier.erase_ast_from_bodies(ast_root_body, ast_branch)
+        return True
 
     @staticmethod
     def erase_ast_from_function(ast_func: ast.FunctionDef, to_erase: ast.AST) -> bool:
@@ -142,22 +172,22 @@ class AstModifier(ast.NodeTransformer):
             RuntimeError: If 'index_ast' is not contained in 'ast_func'.
         """
         assign = AstModifier.create_call_assign(targets, expr, args, kwargs)
-        return AstModifier.insert_assign_ast_to_function(ast_func, assign, index_ast, insert_before)
+        return AstModifier.insert_ast_to_function(ast_func, assign, index_ast, insert_before)
 
     @staticmethod
-    def insert_assign_ast_to_function(ast_func: ast.FunctionDef, ast_assign: ast.Assign,
-                                      index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
+    def insert_ast_to_function(ast_func: ast.FunctionDef, ast_node: ast.AST,
+                               index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
         """
-        Insert an ast.Assign into an ast.FunctionDef.
+        Insert an ast into an ast.FunctionDef.
 
         Args:
-            ast_func (ast.FunctionDef): Where new ast.Assign to be inserted into.
-            ast_assign (ast.Assign): An instance of ast.Assign to be inserted in.
-            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
-                be inserted into. Default is None which means append new ast.Assign to 'ast_func'.
-            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast.Assign node to be
+            ast_func (ast.FunctionDef): Where new ast to be inserted into.
+            ast_node (ast.Assign): An instance of ast.AST to be inserted in.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast node to
+                be inserted into. Default is None which means append new ast to 'ast_func'.
+            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast node to be
                 inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new
-                ast.Assign before 'index_ast'.
+                ast before 'index_ast'.
 
         Returns:
             An instance of ast.Assign which has been inserted into 'ast_func'.
@@ -170,33 +200,34 @@ class AstModifier(ast.NodeTransformer):
         if index_ast and arguments.args:
             for arg in arguments.args:
                 if id(arg) == id(index_ast):
-                    ast_func.body.insert(0, ast_assign)
+                    ast_func.body.insert(0, ast_node)
                     ast.fix_missing_locations(ast_func)
-                    return ast_assign
+                    return ast_node
         # Insert ast at position specified by index_ast in function body
-        ast_assign = AstModifier.insert_assign_ast_to_bodies(ast_func.body, ast_assign, index_ast, insert_before)
-        ast.fix_missing_locations(ast_assign)
-        return ast_assign
+        ast_node = AstModifier.insert_ast_to_bodies(ast_func.body, ast_node, index_ast, insert_before)
+        ast.fix_missing_locations(ast_node)
+        return ast_node
 
     @staticmethod
-    def insert_assign_ast_to_bodies(ast_bodies: List[ast.AST], ast_assign: ast.Assign,
-                                    index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
+    def insert_ast_to_bodies(ast_bodies: List[ast.AST], ast_node: ast.AST,
+                             index_ast: Optional[ast.AST] = None, insert_before=True) -> ast.AST:
         """Insert ast at position specified by index_ast of ast_bodies"""
         # Append ast_assign to ast_bodies when index_ast is None
         if index_ast is None:
-            ast_bodies.append(ast_assign)
-            return ast_assign
+            ast_bodies.append(ast_node)
+            return ast_node
         # Append ast_assign to ast_bodies
         for index, body in enumerate(ast_bodies):
             if id(body) == id(index_ast):
                 if not insert_before:
                     index += 1
-                ast_bodies.insert(index, ast_assign)
+                ast_bodies.insert(index, ast_node)
                 ast.fix_missing_locations(body)
                 break
         else:
-            raise ValueError("insert position is not contained in ast_bodies")
-        return ast_assign
+            raise ValueError(f"insert position ({'before' if insert_before else 'after'} "
+                             f"{astunparse.unparse(index_ast).strip()}) is not contained in ast_bodies")
+        return ast_node
 
     @staticmethod
     def append_arg_to_function(ast_func: ast.FunctionDef, ast_arg: ast.arg) -> ast.AST:

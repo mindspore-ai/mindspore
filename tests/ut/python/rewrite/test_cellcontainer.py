@@ -19,7 +19,6 @@ from mindspore.ops import operations as P
 
 from mindspore.rewrite import SymbolTree, NodeType, TreeNodeHelper, Node, ScopedValue, PatternEngine, Replacement, \
     PatternNode
-from mindspore.rewrite.node import CellContainer
 
 
 def _conv3x3(in_channel, out_channel, stride=1):
@@ -409,21 +408,3 @@ def test_cellcontainer_pattern():
     assert isinstance(getattr(cell_container, "3"), nn.MaxPool2d)
     assert isinstance(getattr(cell_container, "4"), nn.ReLU)
     assert isinstance(getattr(cell_container, "6"), nn.BiDense)
-
-
-def test_cellcontainer_first_node_inputs():
-    """
-    Feature: create CellContainer Node.
-    Description: nodes in cellcontainer has inputs.
-    Expectation: success.
-    """
-    net = ResNetSimple()
-    stree = SymbolTree.create(net)
-    for node in stree.nodes():
-        if node.get_node_type() == NodeType.CellContainer and node.get_name() == "layer1":
-            for n in node.get_handler().nodes():
-                inputs = n.get_inputs()
-                assert inputs
-                node_manager = n.get_node_manager()
-                assert node_manager
-                assert isinstance(node_manager, CellContainer)

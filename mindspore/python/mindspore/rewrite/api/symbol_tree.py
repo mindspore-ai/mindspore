@@ -479,3 +479,11 @@ class SymbolTree:
         """
         Validator.check_value_type("name", name, [str], "SymbolTree")
         return self._symbol_tree.unique_name(name)
+
+    def flatten_nodes(self, node, erase_nodes_after_return: bool = False):
+        Validator.check_value_type("node", node, [Node], "flatten_nodes")
+        Validator.check_value_type("erase_nodes_after_return", erase_nodes_after_return, [bool], "flatten_nodes")
+        return self._symbol_tree.flatten_nodes(node.get_handler(), erase_nodes_after_return)
+
+    def flatten_static_if_control_flow(self):
+        return self._symbol_tree.flatten_static_if_control_flow()

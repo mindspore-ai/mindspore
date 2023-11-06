@@ -15,6 +15,7 @@
 """CellContainer Node."""
 import ast
 from mindspore import log as logger
+from mindspore.nn import SequentialCell
 from .node import Node
 from .node_manager import NodeManager
 from ..api.scoped_value import ScopedValue
@@ -44,6 +45,7 @@ class CellContainer(Node, NodeManager):
         Node.__init__(self, NodeType.CellContainer, ast_node, targets, func_name, args, kwargs, node_name, instance)
         NodeManager.__init__(self, stree.get_node_namer())
         NodeManager.set_manager_name(self, func_name.value)
+        NodeManager.set_manager_ast(self, ast_node)
 
     def append(self, node, insert_to_ast: bool = True):
         """ Append new node to node list. """
@@ -105,13 +107,14 @@ class CellContainer(Node, NodeManager):
                 return
             setattr(stree.get_origin_network(), new_node.get_name(), new_node.get_instance())
             node_idx = self.nodes().index(base_node)
+            insert_api = "_insert" if isinstance(self.get_instance(), SequentialCell) else "insert"
             if before_node:
-                insert_code = f"{self.get_func_name()}._insert({node_idx}, self.{new_node.get_name()})"
+                insert_code = f"{self.get_func_name()}.{insert_api}({node_idx}, self.{new_node.get_name()})"
             else:
                 if base_node == tail_node:
                     insert_code = f"{self.get_func_name()}.append(self.{new_node.get_name()})"
                 else:
-                    insert_code = f"{self.get_func_name()}._insert({node_idx + 1}, self.{new_node.get_name()})"
+                    insert_code = f"{self.get_func_name()}.{insert_api}({node_idx + 1}, self.{new_node.get_name()})"
             insert_ast = ast.parse(insert_code).body[0]
             init_ast_functiondef.body.append(insert_ast)
 

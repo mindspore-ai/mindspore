@@ -20,7 +20,7 @@ import sys
 import inspect
 
 from mindspore import log as logger
-from mindspore.nn import Cell, SequentialCell
+from mindspore.nn import Cell, SequentialCell, CellList
 from mindspore.ops import Primitive
 from mindspore.rewrite.parsers.parser_register import ParserRegister, reg_parser
 from mindspore.rewrite.namespace import is_subtree, is_functional, get_functional
@@ -53,12 +53,12 @@ class AssignParser(Parser):
         return ast.Assign
 
     @staticmethod
-    def _create_scopedvalue_from_tuple_ast(node: ast.Tuple) -> ScopedValue:
+    def create_scopedvalue_from_tuple_ast(node: Union[ast.List, ast.Tuple]) -> ScopedValue:
         """
         Create ScopedValue from a tuple ast node.
 
         Args:
-            node (ast.Tuple): A tuple node.
+            node (Union[ast.List, ast.Tuple]): A list node or a tuple node.
 
         Returns:
             An instance of ScopedValue.
@@ -82,12 +82,12 @@ class AssignParser(Parser):
         return ScopedValue.create_variable_value(tuple(tuple_values))
 
     @staticmethod
-    def _create_scopedvalue(node: ast.expr) -> ScopedValue:
+    def create_scopedvalue(node: ast.AST) -> ScopedValue:
         """
         Create ScopedValue from an ast node.
 
         Args:
-            node (ast.expr): An ast node.
+            node (ast.AST): An ast node.
 
         Returns:
             An instance of ScopedValue.
@@ -105,8 +105,8 @@ class AssignParser(Parser):
                                              f"ast.Attribute, but got ast type '{type(scope).__name__}'",
                                              child_node=scope, father_node=node))
             return ScopedValue.create_naming_value(node.attr, scope.id)
-        if isinstance(node, ast.Tuple):
-            return AssignParser._create_scopedvalue_from_tuple_ast(node)
+        if isinstance(node, (ast.List, ast.Tuple)):
+            return AssignParser.create_scopedvalue_from_tuple_ast(node)
         if isinstance(node, (ast.Constant, ast.NameConstant)):
             return ScopedValue.create_variable_value(node.value)
         if isinstance(node, ast.Num):
@@ -170,28 +170,6 @@ class AssignParser(Parser):
                                      f"'{type(func).__name__}'", child_node=func, father_node=ast_call))
 
     @staticmethod
-    def _get_symbol_object(symbol_name, origin_net):
-        """
-        Get the func scope from ast.Call.
-
-        Args:
-            symbol_name (str): Func name.
-            origin_net ([nn.Cell]): Network instance.
-
-        Returns:
-            Symbol Object.
-        """
-        var_dict = origin_net.__dict__
-        for key, value in var_dict["_cells"].items():
-            if key == symbol_name:
-                return value
-
-        for key, value in var_dict["_primitives"].items():
-            if key == symbol_name:
-                return value
-        return None
-
-    @staticmethod
     def _create_kwargs(keywords: [ast.keyword]) -> {str, ScopedValue}:
         """
         Transfer ast.Call keywords to a dict of ScopedValue when creating a symbol tree node.
@@ -204,7 +182,7 @@ class AssignParser(Parser):
         """
         results = {}
         for keyword in keywords:
-            results[keyword.arg] = AssignParser._create_scopedvalue(keyword.value)
+            results[keyword.arg] = AssignParser.create_scopedvalue(keyword.value)
         return results
 
     @staticmethod
@@ -282,36 +260,6 @@ class AssignParser(Parser):
         init_func_ast.body.append(new_ast)
 
     @staticmethod
-    def _create_inputs_for_cell_container(ast_assign) -> ['Node']:
-        """Create inputs for cell container first node."""
-        call_ast_node = ast_assign.value
-        if not isinstance(call_ast_node, ast.Call):
-            raise RuntimeError(error_str(f"when creating input node for cellcontainer, value of input father ast node"
-                                         "is not ast.Call!'", child_node=call_ast_node, father_node=ast_assign))
-        first_node_inputs: ['Node'] = []
-        exist_param_name = []
-        for arg in call_ast_node.args:
-            if isinstance(arg, ast.Name):
-                param_name = arg.id
-            elif isinstance(arg, ast.arg):
-                param_name = arg.arg
-            else:
-                raise RuntimeError(error_str(f"only support ast.arg, ast.arg in arguments arg, but got "
-                                             f"'{type(arg).__name__}'", child_node=arg, father_node=call_ast_node))
-            if param_name in exist_param_name:
-                raise RuntimeError(error_str(f"Cellcontianer has duplicate input names", child_node=arg,
-                                             father_node=call_ast_node))
-            exist_param_name.append(param_name)
-            node = Node.create_input_node(arg, param_name, name=f"input_{param_name}")
-            first_node_inputs.append(node)
-
-        if call_ast_node.keywords:
-            raise RuntimeError(error_str(f"Not support keyword input for cellcontainer now.",
-                                         child_node=call_ast_node, father_node=ast_assign))
-
-        return first_node_inputs
-
-    @staticmethod
     def _update_cell_container_in_init(stree, container_name, container_idx, subnet_opt_name):
         """
         When nn.SequentialCell include sub-symboltree, the new class definition will be used to create object.
@@ -336,7 +284,6 @@ class AssignParser(Parser):
         """ parse cell container object."""
         cell_container = CellContainer(ast_assign, targets, func_scope_name, call_args, call_kwargs,
                                        op_name, stree, container_obj)
-        first_node_inputs = AssignParser._create_inputs_for_cell_container(ast_assign)
         for i, cell in enumerate(container_obj):
             cell_name = type(cell).__name__
             is_sub_tree = is_subtree(cell)
@@ -351,13 +298,6 @@ class AssignParser(Parser):
                                                        call_kwargs, cell_name)
             # add sub node to cell_container
             cell_container.append(sub_node, False)
-            # set node inputs, those input nodes are NOT inserted in container, only
-            # topological relationship is updated.
-            if i == 0:
-                for idx, arg_provider in enumerate(first_node_inputs):
-                    sub_node.set_arg_providers(idx, (arg_provider, 0))
-            else:
-                sub_node.set_arg_providers(0, (cell_container.node_list[i-1], 0))
         return cell_container
 
     @staticmethod
@@ -422,13 +362,13 @@ class AssignParser(Parser):
         Raises:
             RuntimeError: If operator instance invoked by assign is undefined.
         """
-        targets = AssignParser._get_targets(AssignParser._create_scopedvalue(ast_assign.targets[0]))
+        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
         func_name = AssignParser._get_func_name(ast_call)
         if func_name is None or func_name == "":
             raise RuntimeError("function name not exist")
         func_scope = AssignParser._get_func_scope(ast_call, node_manager)
         func_scope_name = ScopedValue.create_naming_value(func_name, func_scope)
-        call_args = [AssignParser._create_scopedvalue(arg) for arg in ast_call.args]
+        call_args = [AssignParser.create_scopedvalue(arg) for arg in ast_call.args]
         call_kwargs = AssignParser._create_kwargs(ast_call.keywords)
 
         func_inst = AssignParser._get_call_instance(func_scope, func_name, stree)
@@ -515,7 +455,7 @@ class AssignParser(Parser):
             raise TypeError("The type of parameter 'ast_op' must be one of (ast.BinOp, ast.UnaryOp, "
                             "ast.BoolOp, ast.Compare), but got ", type(ast_op))
 
-        targets = AssignParser._get_targets(AssignParser._create_scopedvalue(ast_assign.targets[0]))
+        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
         args = []
         op_type_str = type(ast_op).__name__
         op_type = ScopedValue.create_naming_value(op_type_str)
@@ -525,28 +465,83 @@ class AssignParser(Parser):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
-            args.append(AssignParser._create_scopedvalue(ast_op.left))
-            args.append(AssignParser._create_scopedvalue(ast_op.right))
+            args.append(AssignParser.create_scopedvalue(ast_op.left))
+            args.append(AssignParser.create_scopedvalue(ast_op.right))
         elif isinstance(ast_op, ast.UnaryOp):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
-            args.append(AssignParser._create_scopedvalue(ast_op.operand))
+            args.append(AssignParser.create_scopedvalue(ast_op.operand))
         elif isinstance(ast_op, ast.BoolOp):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
             ops['0'] = ScopedValue.create_naming_value(op)
             for value in ast_op.values:
-                args.append(AssignParser._create_scopedvalue(value))
+                args.append(AssignParser.create_scopedvalue(value))
         elif isinstance(ast_op, ast.Compare):
-            args.append(AssignParser._create_scopedvalue(ast_op.left))
+            args.append(AssignParser.create_scopedvalue(ast_op.left))
             for idx, ast_cmp_op in enumerate(ast_op.ops):
                 op = type(ast_cmp_op).__name__
                 name = f'{name}_{op}'
                 ops[str(idx)] = ScopedValue.create_naming_value(op)
-                args.append(AssignParser._create_scopedvalue(ast_op.comparators[idx]))
+                args.append(AssignParser.create_scopedvalue(ast_op.comparators[idx]))
         name = name.lower()
         return Node.create_mathops_node(ast_assign, targets, op_type, args, ops, name)
+
+    @staticmethod
+    def _convert_ast_constant_to_node(ast_constant: Union[ast.Constant, ast.NameConstant, ast.Num,
+                                                          ast.Bytes, ast.Str],
+                                      ast_assign: ast.Assign) -> Node:
+        """
+        Convert ast node of constant types (ast.Constant, ast.NameConstant, ast.Num, ast.Bytes, ast.Str) to
+        a symbol tree node.
+        """
+        node_name = f"{type(ast_constant).__name__.lower()}_assign"
+        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
+        call_args = [AssignParser.create_scopedvalue(ast_constant)]
+        node = Node.create_call_pass_through_method(ast_assign, targets, call_args, {}, node_name)
+        return node
+
+    @staticmethod
+    def _get_inst_and_name(ast_node: ast.Attribute, stree: SymbolTree):
+        """
+        Try to get instance object of ast_node from network.
+        """
+        if not isinstance(ast_node, ast.Attribute):
+            return None, ""
+        scope_name = astunparse.unparse(ast_node).strip()
+        scope, name = scope_name.split('.', 1)
+        if scope != 'self':
+            return None, scope_name
+        if not hasattr(stree.get_origin_network(), name):
+            return None, scope_name
+        return getattr(stree.get_origin_network(), name), scope_name
+
+    @staticmethod
+    def _list_of_cells(cell_list: list):
+        """Check if elements in the list are all cells."""
+        for item in cell_list:
+            if not isinstance(item, Cell):
+                return False
+        return True
+
+    @staticmethod
+    def _convert_ast_name_to_node(ast_node: Union[ast.Name, ast.Attribute], ast_assign: ast.Assign,
+                                  stree: SymbolTree) -> Node:
+        """
+        Convert ast node of ast.Name and ast.Attribute to a symbol tree node.
+        """
+        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
+        inst, scope_name = AssignParser._get_inst_and_name(ast_node, stree)
+        if inst is not None:
+            if isinstance(inst, CellList) or (isinstance(inst, list) and AssignParser._list_of_cells(inst)):
+                node = AssignParser.cell_container_process(ast_assign, stree, targets, scope_name, None,
+                                                           None, scope_name, inst)
+                return node
+        node_name = f"{type(ast_node).__name__.lower()}_assign"
+        call_args = [AssignParser.create_scopedvalue(ast_node)]
+        node = Node.create_call_pass_through_method(ast_assign, targets, call_args, {}, node_name)
+        return node
 
     def process(self, stree: SymbolTree, node: ast.Assign, node_manager: NodeManager):
         """
@@ -583,27 +578,19 @@ class AssignParser(Parser):
                 logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                             f"ignored as a python node now")
                 stree.try_append_python_node(node, node, node_manager)
-            elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant,
-                                    ast.Bytes, ast.Str)):
-                if isinstance(value, ast.Name):
-                    node_name = "name_assign"
-                elif isinstance(value, ast.Constant):
-                    node_name = "constant_assign"
-                elif isinstance(value, ast.Attribute):
-                    node_name = "attribute_assign"
-                else:
-                    node_name = "other_assign"
-                targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
-                call_args = [AssignParser._create_scopedvalue(value)]
-                node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
+            elif isinstance(value, (ast.Constant, ast.NameConstant, ast.Num, ast.Bytes, ast.Str)):
+                node_ = AssignParser._convert_ast_constant_to_node(value, node)
+                stree.append_origin_field(node_, node_manager)
+            elif isinstance(value, (ast.Name, ast.Attribute)):
+                node_ = AssignParser._convert_ast_name_to_node(value, node, stree)
                 stree.append_origin_field(node_, node_manager)
             elif isinstance(value, ast.Tuple):
                 if AssignParser._tuple_elts_support_scopledvalue(value):
                     # ensure that each element's type in tuple is supported by scopled value
-                    targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
+                    targets = AssignParser._get_targets(AssignParser.create_scopedvalue(node.targets[0]))
                     args = []
                     for elt in value.elts:
-                        args.append(AssignParser._create_scopedvalue(elt))
+                        args.append(AssignParser.create_scopedvalue(elt))
                     node_ = Node.create_call_method(node, targets, ScopedValue.create_naming_value("tuple"),
                                                     args, {}, "tuple")
                     stree.append_origin_field(node_, node_manager)

@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Node class define of Rewrite. See detail in Node class docstring."""
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 import ast
 import inspect
 from types import FunctionType
+import sys
 
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
@@ -28,6 +29,11 @@ from ..api.node_type import NodeType
 from ..namespace import is_subtree
 from ..ast_helpers.ast_replacer import AstReplacer
 from ..ast_creator_register import ast_creator_registry
+
+if sys.version_info >= (3, 9):
+    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
+else:
+    import astunparse
 
 PASS_THROUGH_METHOD = ScopedValue.create_naming_value("PassThrough")
 
@@ -63,7 +69,7 @@ class Node:
     """
 
     def __init__(self, node_type: NodeType, ast_node: Optional[ast.AST], targets: [ScopedValue],
-                 func_name: Optional[ScopedValue], args: [ScopedValue], kwargs: {str: ScopedValue}, name: str,
+                 func_name: Optional[ScopedValue], args: List[ScopedValue], kwargs: Dict[str, ScopedValue], name: str,
                  instance):
         """
         Constructor of Node. Rewrite recommend invoking class method of Node to instantiate an instance of Node such
@@ -77,7 +83,7 @@ class Node:
             targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
             func_name (ScopedValue, optional): An instance of ScopedValue. See detail in docstring of Node class.
             args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (Dict[str, ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
@@ -1076,6 +1082,10 @@ class Node:
         self.set_ast(ast_assign)
         return ast_assign
 
+    def get_source_code(self) -> str:
+        """Get source code of node from ast of node."""
+        return astunparse.unparse(self._ast_node).strip()
+
     def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
         """
         Merge args and kwargs to normalized args.
@@ -1345,6 +1355,27 @@ class Node:
             raise TypeError("The type of 'mathops_node' must be one of (ast.BinOp, ast.UnaryOp, "
                             "ast.BoolOp, ast.Compare), but got ", type(mathops_node))
 
+    def _sync_control_flow_args_to_ast(self):
+        """
+        Sync values from self._normalized_args to the ast node of control flow.
+        """
+        if self._ast_node is None:
+            return
+        normalized_args_num = len(self._normalized_args_keys)
+        if normalized_args_num == 0:
+            return
+        if normalized_args_num > 1:
+            raise ValueError("self._normalized_args_keys should have less than 1 elements")
+        arg_value = self._normalized_args.get(self._normalized_args_keys[0])
+        if isinstance(self._ast_node, (ast.If, ast.IfExp, ast.While)):
+            ast_arg = self._ast_node.test
+        elif isinstance(self._ast_node, ast.For):
+            ast_arg = self._ast_node.iter
+        else:
+            raise ValueError(f"For Control Flow, ast_node should be one of [ast.If, ast.IfExp, "
+                             f"ast.While, ast.For], but got {type(self._ast_node)}")
+        AstModifier.update_arg_value(arg_value, ast_arg)
+
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
         if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree, \
@@ -1356,6 +1387,8 @@ class Node:
             self._sync_call_method_args_to_ast()
         elif self._node_type == NodeType.MathOps:
             self._sync_mathops_node_args_to_ast()
+        elif self._node_type == NodeType.ControlFlow:
+            self._sync_control_flow_args_to_ast()
 
 
 ##########################################################################################################

@@ -14,23 +14,21 @@
 # ============================================================================
 """Ast optimizer for flatten recursive call."""
 
-import sys
-from typing import Any, Tuple, List
+from typing import Any, Tuple, List, Dict
 import keyword
 import ast
+import copy
 
 from mindspore import log as logger
 from ..common import error_str
-
-if sys.version_info >= (3, 9):
-    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
-else:
-    import astunparse
 
 FLATTEN_BLACK_LIST = ["set_vertex_attr",]
 
 class FlattenRecursiveStmt(ast.NodeTransformer):
     """Ast optimizer for flatten recursive call."""
+
+    # Record origin test ast, used to judge direction of static if control flow.
+    ast_if_test_cache: Dict[ast.If, ast.AST] = {}
 
     def __init__(self):
         """
@@ -46,10 +44,10 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             ast.BoolOp: ["values"],
             ast.UnaryOp: ["operand"],
             ast.Compare: ["left", "comparators"],
-            ast.If: ["test"]
+            ast.If: ["test"],
+            ast.For: ["iter"]
         }
         self._transform_functions = []
-        self._transform_if = False
         self._symbol_tree = None # Used to get unique name
 
     @staticmethod
@@ -212,14 +210,9 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             if isinstance(child, ast.Assign):
                 stmt = child.value
             elif isinstance(child, ast.If):
-                if isinstance(child.body[0], ast.Return) and not isinstance(child.test, ast.UnaryOp):
-                    if not isinstance(child.body[0].value, (ast.Name, ast.Constant)):
-                        return_val_ast = child.body[0].value
-                        return_name = self._generate_target_name(return_val_ast, target_names)
-                        new_assign_code = f"{return_name} = {astunparse.unparse(return_val_ast)}"
-                        new_assign_ast = ast.parse(new_assign_code).body[0]
-                        new_return_ast = ast.parse(f"return {return_name}").body[0]
-                        child.body = [new_assign_ast, new_return_ast]
+                # Record origin test ast, used to judge direction of static if control flow.
+                if child not in FlattenRecursiveStmt.ast_if_test_cache:
+                    FlattenRecursiveStmt.ast_if_test_cache[child] = copy.deepcopy(child.test)
                 stmt = child
             elif isinstance(child, ast.Expr):
                 stmt = child.value
@@ -239,29 +232,30 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         self._visit_ast_bodies(node.body)
         return node
 
-    def visit_If(self, node: ast.If) -> Any: # pylint: disable=invalid-name
-        """Traverse nodes in if node and flatten recursive nodes."""
-        if not self._transform_if:
-            return node
-        self._visit_ast_bodies(node.body)
-        if node.orelse:
-            self._visit_ast_bodies(node.orelse)
-        return node
-
     def transform(self, ast_root, transform_functions=None, stree=None):
         """Interface of FlattenRecursiveStmt."""
         self._transform_functions = transform_functions if transform_functions else ["construct"]
-        self._transform_if = False
         self._symbol_tree = stree
         ast_root = self.visit(ast_root)
         ast_root = ast.fix_missing_locations(ast_root)
         return ast_root
 
-    def transform_if(self, ast_if, stree=None):
+    def transform_if(self, ast_if: ast.If, stree=None):
         """Interface of FlattenRecursiveStmt."""
         self._transform_functions = []
-        self._transform_if = True
         self._symbol_tree = stree
-        ast_if = self.visit(ast_if)
+        self._visit_ast_bodies(ast_if.body)
+        if ast_if.orelse:
+            self._visit_ast_bodies(ast_if.orelse)
         ast_if = ast.fix_missing_locations(ast_if)
         return ast_if
+
+    def transform_for(self, ast_for: ast.For, stree=None):
+        """Interface of FlattenRecursiveStmt."""
+        self._transform_functions = []
+        self._symbol_tree = stree
+        self._visit_ast_bodies(ast_for.body)
+        if ast_for.orelse:
+            self._visit_ast_bodies(ast_for.orelse)
+        ast_for = ast.fix_missing_locations(ast_for)
+        return ast_for

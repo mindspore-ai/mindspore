@@ -14,4 +14,3 @@
 # ============================================================================
 """Transformers for optimizing ast."""
 from .flatten_recursive_stmt import FlattenRecursiveStmt
-from .remove_return_out_of_if import RemoveReturnOutOfIf
