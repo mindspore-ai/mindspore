@@ -4120,6 +4120,8 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
          [1. 0. 1. 0. 1. 0.]
          [1. 0. 1. 0. 1. 0.]]
     """
+    _check_is_tensor("input", input, "slice_scatter")
+    _check_is_tensor("src", src, "slice_scatter")
     input_shape = input.shape
     input_rank, index, axis = _get_slice_scatter_const(input_shape, axis, start, end, step)
 
@@ -4135,6 +4137,8 @@ def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
     for _ in builtins.range(input_rank - axis - 1):
         index_tensor = index_tensor.expand_dims(-1)
     index_tensor = index_tensor.broadcast_to(src.shape)
+    if index_tensor.dtype not in mstype.int_type:
+        index_tensor = index_tensor.astype(mstype.int64)
     return tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
 
 
@@ -4173,10 +4177,12 @@ def select_scatter(input, src, axis, index):
           [1. 1. 1.]
           [0. 0. 0.]]]
     """
+    _check_is_tensor("input", input, "select_scatter")
+    _check_is_tensor("src", src, "select_scatter")
     src = src.expand_dims(axis=axis)
     x_rank = input.ndim
     axis = axis if axis >= 0 else axis + x_rank
-    index = index if index >= 0 else index + x_rank
+    index = index if index >= 0 else index + input.shape[axis]
     return slice_scatter(input, src, axis, start=index, end=index + 1)
 
 
