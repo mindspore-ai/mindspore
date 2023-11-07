@@ -16,9 +16,10 @@ import pytest
 import numpy as np
 from mindspore import context
 from mindspore import ops
+import mindspore as ms
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
-from test_utils import get_inputs_np, get_inputs_tensor, compare
+from test_utils import get_inputs_np, get_inputs_tensor, compare, run_with_cell
 
 def eltwise_case(prim_func, expect_func, expect_grad_func, mode, inputs_np=None):
     if inputs_np is None:
@@ -59,6 +60,39 @@ def eltwise_case_vmap(prim_func, mode, inputs_np=None):
 
 def abs_func(x):
     return ops.auto_generate.abs(x)
+
+
+@run_with_cell
+def abs_infervalue_func1():
+    x = ms.Tensor(np.array([-1, 2, -3]), ms.int32)
+    return ops.auto_generate.abs(x)
+
+
+@run_with_cell
+def abs_infervalue_func2():
+    x = ms.Tensor(np.array([3, -5, 4]), ms.int32)
+    return ops.auto_generate.abs(x)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_abs_op_infervalue(context_mode):
+    """
+    Feature: Ops.
+    Description: test op abs infervalue.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    out_1 = abs_infervalue_func1()
+    expect_out_1 = np.array([1, 2, 3], dtype=np.int32)
+    assert np.allclose(out_1.asnumpy(), expect_out_1)
+    out_2 = abs_infervalue_func2()
+    expect_out_2 = np.array([3, 5, 4], dtype=np.int32)
+    assert np.allclose(out_2.asnumpy(), expect_out_2)
 
 
 @pytest.mark.level0
