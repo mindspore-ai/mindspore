@@ -136,17 +136,18 @@ ValuePtr CreateOpInstance(const OperatorAttrs &attrs, const OperatorName &op_nam
 std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const std::string &instance_name,
                                             const AnfNodePtrList &inputs, const OperatorAttrs &attrs) {
   auto op_def = mindspore::ops::GetOpDef(op_name);
-  auto new_defined = (op_def != nullptr);
+  if (op_def == nullptr) {
+    // Create old op from python for creating some attr in __init__.
+    auto prim_value = CreateOpInstance(attrs, op_name, instance_name);
+    AnfNodePtrList node_inputs = {NewValueNode(prim_value)};
+    node_inputs.insert(node_inputs.end(), inputs.begin(), inputs.end());
+    return node_inputs;
+  }
 
-  // The AllGather attrs contains group_name and group_ranks, pop group_ranks.
-  size_t attrs_num = (op_name == "AllGather" && attrs.size() == kSizeTwo) ? kSizeOne : attrs.size();
-  size_t op_inputs_num = inputs.size();
-  if (new_defined) {
-    op_inputs_num += attrs_num;
-    if (op_inputs_num != op_def->indexes_.size()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", inputs should be " << op_def->indexes_.size()
-                                 << ", but got given inputs num " << inputs.size() << " and attrs num " << attrs_num;
-    }
+  size_t op_inputs_num = inputs.size() + attrs.size();
+  if (op_inputs_num != op_def->indexes_.size()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", inputs should be " << op_def->indexes_.size()
+                               << ", but got given inputs num " << inputs.size() << " and attrs num " << attrs.size();
   }
 
   auto prim = std::make_shared<Primitive>(op_name);
@@ -161,14 +162,11 @@ std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const s
     node_inputs[i + 1] = inputs[i];
   }
 
-  for (size_t i = 0; i < attrs_num; ++i) {
+  // For new-defined op, almost all attrs are inputs now, here should insert the value as input in right position.
+  for (size_t i = 0; i < attrs.size(); ++i) {
     auto [attr_name, attr_value] = attrs[i];
-    if (new_defined) {
-      auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, attr_name, node_inputs.size());
-      node_inputs[node_input_idx] = NewValueNode(attr_value);
-    } else {
-      prim->AddAttr(attr_name, attr_value);
-    }
+    auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, attr_name, node_inputs.size());
+    node_inputs[node_input_idx] = NewValueNode(attr_value);
   }
 
   return node_inputs;
