@@ -40,6 +40,7 @@ enum FlashAttentionScoreInputIndex : size_t {
   kFlashAttentionScoreGradInputRealShiftIndex,
   kFlashAttentionScoreGradInputPaddingMaskIndex,
   kFlashAttentionScoreGradInputSoftmaxOutIndex,
+  kFlashAttentionScoreGradInputPrefixIndex,
   kFlashAttentionScoreGradInputsNum,
 };
 enum FlashAttentionScoreOutputIndex : size_t {
@@ -132,6 +133,9 @@ TuplePtr FlashAttentionScoreGradInferType(const PrimitivePtr &prim, const std::v
   (void)types2.emplace("softmax_sum", input_args[kFlashAttentionScoreGradInputSoftmaxSumIndex]->BuildType());
   if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreGradInputSoftmaxOutIndex])) {
     MS_LOG(EXCEPTION) << op_name << ": 'softmax_out' must be None currently.";
+  }
+  if (!IsOptionalInputNotPass(input_args[kFlashAttentionScoreGradInputPrefixIndex])) {
+    MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None currently.";
   }
   (void)types1.emplace("dy", input_args[kFlashAttentionScoreGradInputDyIndex]->BuildType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types1, {kFloat16, kFloat32, kBFloat16}, op_name);

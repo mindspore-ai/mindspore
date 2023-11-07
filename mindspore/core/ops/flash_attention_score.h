@@ -36,6 +36,7 @@ enum FlashAttentionScoreInputIndex : size_t {
   kFlashAttentionScoreInputDropMaskIndex,
   kFlashAttentionScoreInputRealShiftIndex,
   kFlashAttentionScoreInputPaddingMaskIndex,
+  kFlashAttentionScoreInputPrefix,
   kFlashAttentionScoreInputsNum,
 };
 enum FlashAttentionScoreOutputIndex : size_t {
@@ -51,7 +52,7 @@ class MIND_API FlashAttentionScore : public BaseOperator {
   MIND_API_BASE_MEMBER(FlashAttentionScore);
   /// \brief Constructor.
   FlashAttentionScore() : BaseOperator(kNameFlashAttentionScore) {
-    InitIOName({"query", "key", "value", "attn_mask", "drop_mask", "real_shift", "padding_mask"},
+    InitIOName({"query", "key", "value", "attn_mask", "drop_mask", "real_shift", "padding_mask", "prefix"},
                {"attention_out", "softmax_max", "softmax_sum"});
   }
 };
