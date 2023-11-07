@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/maxpool_info.h"
+#include "frontend/parallel/ops_info/avgpool_info.h"
 
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
 
+#include "ops/op_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
@@ -29,42 +30,57 @@
 
 namespace mindspore {
 namespace parallel {
-Status MaxPoolInfo::GetAttrs() {
+Status AvgPoolInfo::GetAttrs() {
   // kernel_size
-  kernel_size_ = GetTupleIntAttr(KERNEL_SIZE);
-  if (kernel_size_.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of kernel_size must be 4, but got " << kernel_size_.size();
+  auto kernel_size_value = GetArrayValueFromInputsWithCheck<int64_t>(input_value_, name_, KERNEL_SIZE);
+  if (!kernel_size_value.has_value()) {
     return FAILED;
   }
-
-  if (kernel_size_[0] != 1 || kernel_size_[1] != 1) {
-    MS_LOG(ERROR) << name_ << ": The first two elements of kernel_size must be 1, but got (" << kernel_size_[0] << ", "
-                  << kernel_size_[1] << ")";
+  kernel_size_ = kernel_size_value.value();
+  // add two 1 in front of kernel size
+  if (kernel_size_.size() != 2) {
+    MS_LOG(ERROR) << name_ << ": The size of kernel_size must be 2, but got " << kernel_size_.size();
     return FAILED;
   }
 
   // pad_mode
-  pad_mode_ = GetIntAttr(PAD_MODE);
+  auto pad_opt_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, PAD_MODE);
+  if (!pad_opt_value.has_value()) {
+    return FAILED;
+  }
+  pad_mode_ = pad_opt_value.value();
   if (pad_mode_ != POOL_PAD_MODE_VALID && pad_mode_ != POOL_PAD_MODE_SAME) {
     MS_LOG(ERROR) << name_ << ": The pad_mode value is invalid: " << pad_mode_;
     return FAILED;
   }
 
   // stride
-  stride_ = GetTupleIntAttr(STRIDES);
-  if (stride_.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of stride must be 4, but got " << stride_.size();
+  auto stride_value = GetArrayValueFromInputsWithCheck<int64_t>(input_value_, name_, STRIDES);
+  if (!stride_value.has_value()) {
     return FAILED;
   }
-
-  if (stride_[0] != 1 || stride_[1] != 1) {
-    MS_LOG(ERROR) << name_ << ": The first two elements of stride must be 1, but got (" << stride_[0] << ", "
-                  << stride_[1] << ")";
+  stride_ = stride_value.value();
+  if (stride_.size() != 2) {
+    MS_LOG(ERROR) << name_ << ": The size of stride must be 2, but got " << stride_.size();
     return FAILED;
   }
 
   // format
-  format_ = GetStringAttr(FORMAT);
+  auto format_int_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, DATA_FORMAT);
+  if (!format_int_opt.has_value()) {
+    return FAILED;
+  }
+  auto format_int = format_int_opt.value();
+  std::string format_string;
+  if (format_int == 0) {
+    format_string = "NCHW";
+  } else if (format_int == 1) {
+    format_string = "NHWC";
+  } else {
+    MS_LOG(ERROR) << name_ << ": The data format must be 0 or 1, but got " << format_int;
+    return FAILED;
+  }
+  format_ = format_string;
   if (format_ != NCHW) {
     MS_LOG(ERROR) << name_ << ": The format only support 'NCHW', but got " << format_;
     return FAILED;
@@ -76,7 +92,7 @@ Status MaxPoolInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
+Status AvgPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   MS_EXCEPTION_IF_ZERO("h_strategy", h_strategy);
   MS_EXCEPTION_IF_ZERO("w_strategy", w_strategy);
   MS_EXCEPTION_IF_ZERO("stride_[2]", stride_[2]);
@@ -132,7 +148,7 @@ Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   return SUCCESS;
 }
 
-Status MaxPoolInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status AvgPoolInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     FILTER_LOG(is_auto_parallel_) << name_ << ": Invalid strategy";
@@ -161,7 +177,7 @@ Status MaxPoolInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status MaxPoolInfo::InferDevMatrixShape() {
+Status AvgPoolInfo::InferDevMatrixShape() {
   // the strategy is (n, c, h, w)
   // the dev matrix is (n, c, h, w)
   MS_EXCEPTION_IF_NULL(strategy_);
@@ -175,7 +191,7 @@ Status MaxPoolInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status MaxPoolInfo::InferTensorMap() {
+Status AvgPoolInfo::InferTensorMap() {
   // input_strategy: (n, c, h, w)
   // output_strategy: (n, c, h, w)
   // dev_matrix: (n, c, h, w)
@@ -187,9 +203,9 @@ Status MaxPoolInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status MaxPoolInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status AvgPoolInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::vector<StrategyPtr> MaxPoolInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> AvgPoolInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
@@ -200,6 +216,6 @@ std::vector<StrategyPtr> MaxPoolInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-REGISTER(MaxPoolInfo);
+REGISTER(AvgPoolInfo);
 }  // namespace parallel
 }  // namespace mindspore

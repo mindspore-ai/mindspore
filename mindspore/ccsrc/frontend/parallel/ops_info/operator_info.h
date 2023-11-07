@@ -455,6 +455,30 @@ std::optional<std::vector<T>> GetArrayValueFromInputs(const std::vector<ValuePtr
   auto idx = ops::GetInputIndexByName(prim_name, attr_name);
   return GetArrayValueFromInputs<T>(input_value, idx);
 }
+
+template <typename T>
+std::optional<std::vector<T>> GetArrayValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value,
+                                                               const std::string &op_name,
+                                                               const std::string &attr_name) {
+  auto attr_opt = GetArrayValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
+template <typename T>
+std::optional<T> GetScalarValueFromInputsWithCheck(const std::vector<ValuePtr> &input_value, const std::string &op_name,
+                                                   const std::string &attr_name) {
+  auto attr_opt = GetScalarValueFromInputs<T>(input_value, op_name, attr_name);
+  if (!attr_opt.has_value()) {
+    MS_LOG(ERROR) << op_name << ": Don't have attribution " << attr_name;
+    return std::nullopt;
+  }
+  return attr_opt;
+}
+
 }  // namespace parallel
 }  // namespace mindspore
 

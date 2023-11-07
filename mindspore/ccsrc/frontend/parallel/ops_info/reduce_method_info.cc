@@ -392,34 +392,19 @@ Status ArgMaxWithValueInfo::InferAsLossDivisor() {
 }
 
 std::vector<int64_t> ArgmaxInfo::reduce_dim() {
-  // get axis from attribution
+  auto axis_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(EXCEPTION) << "For " << name_ << ", does not have axis attr";
+  }
   std::vector<int64_t> dim_list;
-  auto iter = attrs_.find(AXIS);
-  if (iter == attrs_.end()) {
-    MS_LOG(EXCEPTION) << name_ << ": Don't have attribution axis.";
-  }
-
-  MS_ASSERT(inputs_shape_.size() == 1);
+  auto prim_name = GetPrimNameFromInfoName(name_);
+  MS_ASSERT(ops::GetOpInputsNum(prim_name) == 3);
   auto input_dim = inputs_shape_.at(0).size();
-  MS_EXCEPTION_IF_NULL(iter->second);
-  if (iter->second->isa<ValueTuple>()) {
-    auto attr_axis = GetValue<std::vector<int64_t>>(iter->second);
-    if (attr_axis.empty()) {
-      for (size_t i = 0; i < input_dim; ++i) {
-        dim_list.push_back(SizeToLong(i));
-      }
-    } else {
-      for (auto &axis : attr_axis) {
-        axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-      }
-    }
-  } else if (iter->second->isa<Int64Imm>()) {
-    int64_t axis = GetValue<int64_t>(iter->second);
-    axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-  } else {
-    MS_LOG(EXCEPTION) << "Axis type is invalid.";
+  int64_t axis = axis_opt.value();
+  if (axis < 0) {
+    axis += SizeToLong(input_dim);
   }
-
+  dim_list.push_back(axis);
   return dim_list;
 }
 
