@@ -32,7 +32,7 @@ const AnfNodePtr LogFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr 
   constexpr auto kBaseName = "base";
   constexpr auto kScaleName = "scale";
   constexpr auto kShiftName = "shift";
-  constexpr double kDefaultValue = 1.0;
+  constexpr pyfloat kDefaultValue = 1.0;
 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);

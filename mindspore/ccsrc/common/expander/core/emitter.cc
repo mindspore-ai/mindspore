@@ -144,9 +144,9 @@ NodePtr Emitter::Exp(const NodePtr &x) {
 
 NodePtr Emitter::Log(const NodePtr &x) {
   return Emit(kLogOpName, {x},
-              {{"base", MakeValue<double>(-1.0)},
-               {"scale", MakeValue<double>(1.0)},
-               {"shift", MakeValue<double>(0.0)},
+              {{"base", MakeValue<pyfloat>(-1.0)},
+               {"scale", MakeValue<pyfloat>(1.0)},
+               {"shift", MakeValue<pyfloat>(0.0)},
                {"cust_aicpu", MakeValue(kLogOpName)}});
 }
 
