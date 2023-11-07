@@ -51,8 +51,7 @@ class KernelDecoderKvCache {
     pipe.InitBuffer(new_max_seq_len_queue, 1, CeilRound(1, divisor) * sizeof(int64_t));
     LocalTensor<int64_t> new_max_seq_len_tensor = new_max_seq_len_queue.AllocTensor<int64_t>();
     DataCopy(new_max_seq_len_tensor, new_max_seq_len_gm, CeilRound(1, divisor));
-    set_flag(PIPE_MTE2, PIPE_S, 0);
-    wait_flag(PIPE_MTE2, PIPE_S, 0);
+    pipe_barrier((pipe_t)PIPE_ALL);
     s_ = new_max_seq_len_tensor.GetValue(0);
     new_max_seq_len_queue.FreeTensor(new_max_seq_len_tensor);
 
@@ -113,13 +112,11 @@ class KernelDecoderKvCache {
     for (size_t each_core_bs_idx = 0; each_core_bs_idx < each_core_bs_num; ++each_core_bs_idx) {
       auto bs_idx = core_idx_ * former_each_core_bs_num_ + each_core_bs_idx;
       auto real_b = bs_idx / h_;
-      set_flag(PIPE_MTE2, PIPE_S, 0);
-      wait_flag(PIPE_MTE2, PIPE_S, 0);
+      pipe_barrier((pipe_t)PIPE_ALL);
       auto index = index_local_tensor.GetValue(real_b);
       size_t dst_offset = each_core_bs_idx * dst_bs_stride + index * d_;
       size_t src_offset = each_core_bs_idx * src_bs_stride;
-      set_flag(PIPE_MTE2, PIPE_MTE3, 0);
-      wait_flag(PIPE_MTE2, PIPE_MTE3, 0);
+      pipe_barrier((pipe_t)PIPE_ALL);
       DataCopy(out_gm[dst_offset], update_in_local_tensor[src_offset], d_);
     }
 

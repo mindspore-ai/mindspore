@@ -41,8 +41,7 @@ class KernelPromptKvCache {
     pipe.InitBuffer(batch_index_queue, 1, CeilRound(1, divisor) * sizeof(int64_t));
     LocalTensor<int64_t> batch_index_tensor = batch_index_queue.AllocTensor<int64_t>();
     DataCopy(batch_index_tensor, batch_index_gm, CeilRound(1, divisor));
-    set_flag(PIPE_MTE2, PIPE_S, 0);
-    wait_flag(PIPE_MTE2, PIPE_S, 0);
+    pipe_barrier((pipe_t)PIPE_ALL);
     batch_index_ = batch_index_tensor.GetValue(0);
     batch_index_queue.FreeTensor(batch_index_tensor);
   }
@@ -53,8 +52,7 @@ class KernelPromptKvCache {
     pipe.InitBuffer(new_max_seq_len_queue, 1, CeilRound(1, divisor) * sizeof(int64_t));
     LocalTensor<int64_t> new_max_seq_len_tensor = new_max_seq_len_queue.AllocTensor<int64_t>();
     DataCopy(new_max_seq_len_tensor, new_max_seq_len_gm, CeilRound(1, divisor));
-    set_flag(PIPE_MTE2, PIPE_S, 0);
-    wait_flag(PIPE_MTE2, PIPE_S, 0);
+    pipe_barrier((pipe_t)PIPE_ALL);
     s_ = new_max_seq_len_tensor.GetValue(0);
     new_max_seq_len_queue.FreeTensor(new_max_seq_len_tensor);
   }
@@ -114,8 +112,7 @@ class KernelPromptKvCache {
         DataCopy(update_in_local_tensor, update_gm, u_block_len);
         update_queue.EnQue(update_in_local_tensor);
         LocalTensor<T> update_in_local_tensor_out = update_queue.DeQue<T>();
-        set_flag(PIPE_MTE2, PIPE_MTE3, 0);
-        wait_flag(PIPE_MTE2, PIPE_MTE3, 0);
+        pipe_barrier((pipe_t)PIPE_ALL);
         DataCopy(out_gm, update_in_local_tensor_out, u_block_len);
         update_queue.FreeTensor(update_in_local_tensor_out);
       }

@@ -25,10 +25,19 @@ from mindspore.train.serialization import export
 from mindspore.ops.operations._inner_ops import DecoderKVCache
 
 
+b = 4
+h = 4
+s = 4096
+d = 32
+us = 1
+ps = s - us
+
+
 class DecoderKVCacheNet(nn.Cell):
     """
     DecoderKVCacheNet.
     """
+
     def __init__(self):
         super().__init__()
         self.add = ops.Add()
@@ -44,14 +53,14 @@ class DecoderKVCacheNet(nn.Cell):
         return sub_out
 
 
-def  np_inference(cache, update, valid_seq_len):
+def np_inference(cache, update, valid_seq_len):
     """
     np_inference
     """
     ans = cache.copy()
-    for b in range(cache.shape[0]):
-        bs_idx = valid_seq_len[b]
-        ans[b, :, bs_idx, :] = update[b, :, 0, :]
+    for b_idx in range(cache.shape[0]):
+        s_idx = valid_seq_len[b_idx]
+        ans[b_idx, :, s_idx, :] = update[b_idx, :, 0, :]
     return ans
 
 
@@ -59,13 +68,13 @@ def create_numpy_inputs():
     """
     create inputs
     """
-    cache = np.random.rand(4, 2, 4, 32).astype(np.float16)
-    update = np.random.rand(4, 2, 1, 32).astype(np.float16)
+    cache = np.random.rand(b, h, s, d).astype(np.float16)
+    update = np.random.rand(b, h, us, d).astype(np.float16)
     valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
     batch_index = np.array([1]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
-    new_max_seq_len = np.array([4]).astype(np.int64)
-    cur_max_seq_len = np.array([1]).astype(np.int64)
+    new_max_seq_len = np.array([s]).astype(np.int64)
+    cur_max_seq_len = np.array([s]).astype(np.int64)
     return (cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)
 
 
@@ -110,23 +119,28 @@ def inference_decoder_k_v_cache(mindir_model):
     """
     inference model
     """
-    cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len = create_numpy_inputs()
 
     lite_ctx1 = mslite.Context()
     lite_ctx1.target = ["ascend"]
-    lite_ctx1.ascend.device_id = 1
+    lite_ctx1.ascend.device_id = 0
     lite_ctx1.ascend.provider = "ge"
 
     model = mslite.Model()
-    model.build_from_file(mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
+    model.build_from_file(
+        mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
 
-    input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
-                                          new_max_seq_len, cur_max_seq_len))
-    mslite_output = model.predict(input_lists)
-
-    np_cache, np_update, np_valid_seq_len = create_np_inputs(cache, update, valid_seq_len)
-    expect_output = np_inference(np_cache, np_update, np_valid_seq_len)
-    assert np.allclose(mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+    for i in range(100):
+        cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, \
+            cur_max_seq_len = create_numpy_inputs()
+        input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
+                                              new_max_seq_len, cur_max_seq_len))
+        mslite_output = model.predict(input_lists)
+        np_cache, np_update, np_valid_seq_len = create_np_inputs(
+            cache, update, valid_seq_len)
+        expect_output = np_inference(np_cache, np_update, np_valid_seq_len)
+        assert np.allclose(
+            mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+        print(f"decoder_k_v_cache st {i} times: inference success.")
 
 
 def export_decoder_k_v_cache_model():
@@ -151,4 +165,4 @@ if __name__ == '__main__':
     print("decoder_k_v_cache st : export success path: ", model_path)
 
     inference_decoder_k_v_cache(model_path)
-    print("decoder_k_v_cache st : inference success.")
+    print("decoder_k_v_cache st : inference end.")

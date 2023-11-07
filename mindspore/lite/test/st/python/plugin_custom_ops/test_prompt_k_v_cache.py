@@ -25,18 +25,28 @@ from mindspore.train.serialization import export
 import mindspore.common.dtype as mstype
 from mindspore.ops.operations._inner_ops import PromptKVCache
 
+b = 4
+h = 4
+s = 4096
+d = 32
+ub = 1
+us = 3582
+ps = s - us
+
 
 class PromptKVCacheNet(nn.Cell):
     """
     PromptKVCacheNet.
     """
+
     def __init__(self, padding_mode):
         super().__init__()
         self.sub = ops.Sub()
         self.add = ops.Add()
         self.concat_dim2 = ops.Concat(axis=2)
         self.prompt_k_v_cache = PromptKVCache(padding_mode)
-        self.pad_update_zero_tensor = Parameter(ops.zeros((1, 2, 3, 32), mstype.float16))
+        self.pad_update_zero_tensor = Parameter(
+            ops.zeros((ub, h, ps, d), mstype.float16))
 
     def construct(self, cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len):
         update_pad = self.concat_dim2((update, self.pad_update_zero_tensor))
@@ -47,14 +57,14 @@ class PromptKVCacheNet(nn.Cell):
         return sub_out
 
 
-def  np_inference(cache, update, batch_index):
+def np_inference(cache, update, batch_index):
     """
     np_inference
     """
     zeros_ans = np.zeros(cache.shape, cache.dtype)
-    us = update.shape[2]
+    update_s = update.shape[2]
     cache[batch_index, :] = zeros_ans[batch_index, :]
-    cache[batch_index, :, 0:us, :] = update
+    cache[batch_index, :, 0:update_s, :] = update
     return cache
 
 
@@ -62,14 +72,15 @@ def create_numpy_inputs():
     """
     create inputs
     """
-    cache = np.zeros([4, 2, 4, 32]).astype(np.float16)
-    cache = cache + 9
-    update = np.ones([1, 2, 1, 32]).astype(np.float16)
+    cache_shape = (b, h, s, d)
+    update_shape = (ub, h, us, d)
+    cache = np.random.rand(*cache_shape).astype(np.float16)
+    update = np.random.rand(*update_shape).astype(np.float16)
     valid_seq_len = np.array([0, 1, 2, 3]).astype(np.int64)
-    batch_index = np.array([1]).astype(np.int64)
+    batch_index = np.array([2]).astype(np.int64)
     seq_len_axis = np.array([2]).astype(np.int64)
-    new_max_seq_len = np.array([4]).astype(np.int64)
-    cur_max_seq_len = np.array([1]).astype(np.int64)
+    new_max_seq_len = np.array([s]).astype(np.int64)
+    cur_max_seq_len = np.array([s]).astype(np.int64)
     return (cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len)
 
 
@@ -114,23 +125,28 @@ def inference_prompt_k_v_cache(mindir_model):
     """
     inference model
     """
-    cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, cur_max_seq_len = create_numpy_inputs()
 
     lite_ctx1 = mslite.Context()
     lite_ctx1.target = ["ascend"]
-    lite_ctx1.ascend.device_id = 1
+    lite_ctx1.ascend.device_id = 0
     lite_ctx1.ascend.provider = "ge"
 
-    input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
-                                          new_max_seq_len, cur_max_seq_len))
     model = mslite.Model()
-    model.build_from_file(mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
+    model.build_from_file(
+        mindir_model, mslite.ModelType.MINDIR, lite_ctx1, "", {})
 
-    mslite_output = model.predict(input_lists)
-
-    np_cache, np_update, batch_index = create_np_inputs(cache, update, batch_index)
-    expect_output = np_inference(np_cache, np_update, batch_index)
-    assert np.allclose(mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+    for i in range(100):
+        cache, update, valid_seq_len, batch_index, seq_len_axis, new_max_seq_len, \
+            cur_max_seq_len = create_numpy_inputs()
+        input_lists = list(create_lite_inputs(cache, update, valid_seq_len, batch_index, seq_len_axis,
+                                              new_max_seq_len, cur_max_seq_len))
+        mslite_output = model.predict(input_lists)
+        np_cache, np_update, batch_index = create_np_inputs(
+            cache, update, batch_index)
+        expect_output = np_inference(np_cache, np_update, batch_index)
+        assert np.allclose(
+            mslite_output[0].get_data_to_numpy(), expect_output, 0.001, 0.001)
+        print(f"prompt_k_v_cache st {i} times: inference success.")
 
 
 def export_prompt_k_v_cache_model():
@@ -155,4 +171,4 @@ if __name__ == '__main__':
     print("prompt_k_v_cache st : export success path: ", model_path)
 
     inference_prompt_k_v_cache(model_path)
-    print("prompt_k_v_cache st : inference success.")
+    print(f"prompt_k_v_cache st : inference end.")
