@@ -69,8 +69,9 @@ REG_ADPT_DESC(ResizeArea, kNameResizeArea, ADPT_DESC(ResizeArea))
 // ResizeBicubic
 INPUT_MAP(ResizeBicubic) = {{1, INPUT_DESC(images)}, {2, INPUT_DESC(size)}};
 ATTR_INPUT_MAP(ResizeBicubic) = {{"size", "size"}};
-ATTR_MAP(ResizeBicubic) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                           {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ResizeBicubic) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                 {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBicubic) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubic) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubic, kNameResizeBicubic, ADPT_DESC(ResizeBicubic))
 

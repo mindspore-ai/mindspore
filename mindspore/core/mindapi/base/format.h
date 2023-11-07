@@ -43,7 +43,8 @@ enum Format : int64_t {
   NWC = 16,
   NCW = 17,
   NDHWC = 18,
-  NC8HW8 = 19
+  NC8HW8 = 19,
+  FRACTAL_NZ = 20
 };
 
 inline std::string FormatEnumToString(mindspore::Format format) {
