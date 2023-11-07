@@ -288,6 +288,7 @@ void TensorPrintStdOut(const acltdtChannelHandle *) {
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
   while (true) {
+    usleep(100);
     do {
       acl_dataset = acltdtCreateDataset();
       if (acl_dataset == nullptr) {
