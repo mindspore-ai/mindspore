@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/cumprod.h"
+#include "ops/ops_func_impl/cum_sum.h"
 #include <set>
 #include "utils/check_convert_utils.h"
-#include "ops/ops_frontend_func_impl.h"
 #include "ops/op_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr CumProdFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr CumSumFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) const {
   auto x_shape = input_args[kIndex0]->GetShape();
   if (x_shape->IsDynamic()) {
     return x_shape->cast<abstract::ShapePtr>();
@@ -45,27 +45,23 @@ BaseShapePtr CumProdFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(x_shape_vec);
 }
 
-TypePtr CumProdFuncImpl::InferType(const PrimitivePtr &primitive,
-                                   const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr CumSumFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  auto prim_name = primitive->name();
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  std::set<TypePtr> valid_x_types;
+  if (is_ascend) {
+    valid_x_types = {kInt8, kUInt8, kInt32, kFloat16, kFloat32, kFloat64};
+  } else {
+    valid_x_types = common_valid_types_with_complex;
+  }
   auto x_type = input_args[kInputIndex0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_x_types, prim_name);
+  auto axis_type = input_args[kInputIndex1]->GetType();
+  const std::set<TypePtr> valid_axis_types = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTypeValid("axis", axis_type, valid_axis_types, prim_name);
   return x_type->Clone();
 }
-
-class CumProdFrontendFuncImpl : public OpFrontendFuncImpl {
- public:
-  // Do not override this interface if the op has no InferValue
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    if (input_args.empty()) {
-      return nullptr;
-    }
-    auto axis = input_args[kInputIndex1]->GetValue();
-    if (axis == nullptr) {
-      MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the 'axis' cannot be None, but got " << axis;
-    }
-    return nullptr;
-  }
-};
-
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("CumProd", CumProdFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

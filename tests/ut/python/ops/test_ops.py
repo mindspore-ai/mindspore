@@ -3337,7 +3337,7 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 2]],
         'desc_bprop': [[3, 2]]}),
     ('Cummin', {
-        'block': ops.auto_generate.Cummin(),
+        'block': ops.Cummin(axis=0),
         'desc_inputs': [[1, 3, 3, 3], 0],
         'skip': ['backward']}),
     ('ApplyFtrl', {
@@ -4190,7 +4190,7 @@ test_case_array_ops = [
         'skip': ['backward'],
     }),
     ('Cummax', {
-        'block': ops.auto_generate.Cummax(),
+        'block': ops.Cummax(axis=0),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 0],
         'skip': ['backward'],
     }),

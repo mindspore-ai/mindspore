@@ -1,5 +1,5 @@
 #operator cumprod
-cumprod:
+cum_prod:
   args:
     x:
       dtype: tensor
@@ -14,7 +14,3 @@ cumprod:
   returns:
     output:
       dtype: tensor
-  class:
-      name: CumProd
-  function:
-      name: cumprod_

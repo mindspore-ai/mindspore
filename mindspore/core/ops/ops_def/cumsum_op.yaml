@@ -1,5 +1,5 @@
 #operator cumsum
-cumsum:
+cum_sum:
   args:
     x:
       dtype: tensor
@@ -14,7 +14,3 @@ cumsum:
   returns:
     output:
       dtype: tensor
-  class:
-      name: CumSum
-  function:
-      name: cumsum_

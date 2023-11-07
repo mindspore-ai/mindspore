@@ -23,7 +23,7 @@
 #include "abstract/abstract_value.h"
 #include "include/backend/optimizer/helper.h"
 #include "ops/test_ops.h"
-#include "ops/ops_func_impl/cumsum.h"
+#include "ops/ops_func_impl/cum_sum.h"
 #include "ops/test_value_utils.h"
 
 namespace mindspore {

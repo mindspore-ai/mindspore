@@ -47,6 +47,7 @@
 "mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op"                                                           "unused-variable"
 "mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "protected-access"
 "mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "not-callable"
+"mindspore/mindspore/python/mindspore/ops/composite/math_ops.py"                                                         "unused-import"
 "mindspore/mindspore/python/mindspore/ops/primitive.py"                                                                  "assignment-from-none"
 "mindspore/mindspore/python/mindspore/ops/primitive.py"                                                                  "protected-access"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "assignment-from-none"

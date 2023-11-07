@@ -22,7 +22,7 @@ import mindspore as ms
 
 @test_utils.run_with_cell
 def cummin_forward_func(x, axis):
-    return ops.auto_generate.cummin(x, axis)
+    return ops.auto_generate.cummin_(x, axis)
 
 
 @test_utils.run_with_cell
@@ -31,7 +31,7 @@ def cummin_vmap_func(x, axis):
 
 @test_utils.run_with_cell
 def cummin_dyn_shape_func(x, axis):
-    return ops.auto_generate.cummin(x, axis)
+    return ops.auto_generate.cummin_(x, axis)
 
 
 @pytest.mark.level0

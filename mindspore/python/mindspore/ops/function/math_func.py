@@ -37,7 +37,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, mul, sin, sinh)
+from mindspore.ops.auto_generate import (minimum, mul, sin, sinh, cummax)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -6748,55 +6748,6 @@ def cummin(input, axis):
         out1 = transpose_(out1, prem)
         out2 = transpose_(out2, prem)
     return [out1, out2]
-
-
-def cummax(input, axis):
-    r"""
-    Returns a tuple (values,indices) where 'values' is the cumulative maximum value of input Tensor `input`
-    along the dimension `axis`, and `indices` is the index location of each maximum value.
-
-    .. math::
-        \begin{array}{ll} \\
-            y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
-        \end{array}
-
-    Args:
-        input (Tensor): The input Tensor, rank of `input` > 0.
-        axis (int): The dimension to do the operation over. The value of `axis` must be in the range
-            `[-input.ndim, input.ndim - 1]`.
-
-    Returns:
-        tuple [Tensor], tuple of 2 Tensors, containing the cumulative maximum of elements and the index.
-        The shape of each output tensor is the same as input `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
-        >>> output = ops.cummax(x, axis=0)
-        >>> print(output[0])
-        [[ 3.  4.  6. 10.]
-         [ 3.  6.  7. 10.]
-         [ 4.  6.  8. 10.]
-         [ 4.  6.  8. 10.]]
-        >>> print(output[1])
-        [[0 0 0 0]
-         [0 1 1 0]
-         [2 1 2 0]
-         [2 1 2 0]]
-    """
-    _cummax = _get_cache_prim(ops.Cummax)(axis=axis)
-    return _cummax(input)
 
 
 def cumsum(x, axis, dtype=None):
