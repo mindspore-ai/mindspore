@@ -202,133 +202,6 @@ Status ReduceMethod::InferForwardCommunication() {
   return SUCCESS;
 }
 
-Status ReduceMeanInfo::InferForwardCommunication() {
-  auto strategies = strategy_->GetInputDim();
-  Dimensions stra = strategies.at(0);
-  if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
-    MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
-    return SUCCESS;
-  }
-  forward_op_.clear();
-  std::vector<int64_t> dim_list = reduce_dim();
-  size_t size = stra.size();
-  // judge if the reduce dim is partitioned.
-  Shape group_creat_map;
-
-  // if repeated calculation and the repeated_calc_num_ insert to the first dimension of dev matrix,
-  // it need to handle the first dimension of map.
-  if ((dev_matrix_shape_.size() > size) && !repeated_num_in_dev_matrix_right_) {
-    group_creat_map.push_back(SizeToInt(dev_matrix_shape_.size() - size_t(1)));
-  }
-
-  for (size_t index = 0; index < size; ++index) {
-    auto pos =
-      std::find_if(dim_list.begin(), dim_list.end(), [index](const int64_t &dim) { return SizeToLong(index) == dim; });
-    if (pos != dim_list.end() && stra[index] != 1) {
-      continue;
-    }
-    group_creat_map.push_back(SizeToLong(size) - SizeToLong(index) - 1);
-  }
-
-  // if repeated calculation and the repeated_calc_num_ insert to the last dimension of dev matrix,
-  // it need to handle the group_creat_map and insert the 0 to the last dimension of the group_creat_map.
-  if (repeated_num_in_dev_matrix_right_ && (repeated_calc_num_ > 1)) {
-    for (auto &ele : group_creat_map) {
-      if (ele == MAP_NONE) {
-        continue;
-      }
-      ele += 1;
-    }
-    group_creat_map.push_back(0);
-  }
-
-  std::vector<Group> forward_group;
-  if (CreateGroupByTensorMap(group_creat_map, &forward_group) != SUCCESS) {
-    ReportError(name_ + ": Create group failed.");
-    return FAILED;
-  }
-  if (!forward_group.empty()) {
-    if ((outputs_dtype_ == nullptr) || !outputs_dtype_->isa<mindspore::TensorType>()) {
-      MS_LOG(ERROR) << name_ << ": The dtype of output is not Array";
-      return FAILED;
-    }
-
-    auto element_type = outputs_dtype_->cast<mindspore::TensorTypePtr>()->element();
-    forward_op_ = CreateReduceMeanForwardOp(forward_group, element_type);
-  }
-
-  return SUCCESS;
-}
-
-ForwardOp ReduceAnyInfo::CreateForwardOp(const std::vector<Group> &forward_group) const {
-  // Create Cast to Int32 op
-  Operator op0 = CreateCastOp(kInt32);
-
-  // Create AllReduce op
-  Operator op1 = CreateAllReduceOp(reduce_method_, forward_group[0].name());
-  std::string group_name = forward_group[0].name();
-  MS_LOG(INFO) << "The group of forward all reduce is " << group_name << ", method is " << reduce_method_;
-
-  // Create Cast to Bool op
-  Operator op2 = CreateCastOp(kBool);
-
-  ForwardOp forward_op = {op0, op1, op2};
-
-  return forward_op;
-}
-
-Status ReduceAnyInfo::InferForwardCommunication() {
-  auto strategies = strategy_->GetInputDim();
-  Dimensions stra = strategies.at(0);
-  if (cross_batch_ && IsDataParallelStrategy(stra, stage_id_)) {
-    MS_LOG(INFO) << name_ << ": cross_batch is True, don't need to InferForwardCommunication";
-    return SUCCESS;
-  }
-  forward_op_.clear();
-  std::vector<int64_t> dim_list = reduce_dim();
-  size_t size = stra.size();
-  // judge if the reduce dim is partitioned.
-  Shape group_creat_map;
-
-  // if repeated calculation and the repeated_calc_num_ insert to the first dimension of dev matrix,
-  // it need to handle the first dimension of map.
-  if ((dev_matrix_shape_.size() > size) && !repeated_num_in_dev_matrix_right_) {
-    group_creat_map.push_back(SizeToInt(dev_matrix_shape_.size() - size_t(1)));
-  }
-
-  for (size_t index = 0; index < size; ++index) {
-    auto pos =
-      std::find_if(dim_list.begin(), dim_list.end(), [index](const int64_t &dim) { return SizeToLong(index) == dim; });
-    if (pos != dim_list.end() && stra[index] != 1) {
-      continue;
-    }
-    group_creat_map.push_back(SizeToLong(size) - SizeToLong(index) - 1);
-  }
-
-  // if repeated calculation and the repeated_calc_num_ insert to the last dimension of dev matrix,
-  // it need to handle the group_creat_map and insert the 0 to the last dimension of the group_creat_map.
-  if (repeated_num_in_dev_matrix_right_ && (repeated_calc_num_ > 1)) {
-    for (auto &ele : group_creat_map) {
-      if (ele == MAP_NONE) {
-        continue;
-      }
-      ele += 1;
-    }
-    group_creat_map.push_back(0);
-  }
-
-  std::vector<Group> forward_group;
-  if (CreateGroupByTensorMap(group_creat_map, &forward_group) != SUCCESS) {
-    ReportError(name_ + ": Create group failed.");
-    return FAILED;
-  }
-  if (!forward_group.empty()) {
-    forward_op_ = CreateForwardOp(forward_group);
-  }
-
-  return SUCCESS;
-}
-
 Status ReduceMethod::InferMirrorOps() {
   mirror_ops_.clear();
   Shape input_tensor_map = inputs_tensor_map_.at(0);
@@ -824,15 +697,8 @@ Status SquareSumAllInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-REGISTER(ReduceMaxInfo);
 REGISTER(ArgMaxWithValueInfo);
 REGISTER(ArgMinWithValueInfo);
-REGISTER(ReduceMeanInfo);
-REGISTER(ReduceSumInfo);
-REGISTER(ReduceAnyInfo);
-REGISTER(ReduceMinInfo);
-REGISTER(ReduceProdInfo);
-REGISTER(ReduceAllInfo);
 REGISTER(ArgmaxInfo);
 REGISTER(ArgminInfo);
 REGISTER(SquareSumAllInfo);
