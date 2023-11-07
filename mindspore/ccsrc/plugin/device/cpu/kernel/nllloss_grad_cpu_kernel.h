@@ -57,7 +57,7 @@ class NLLLossGradCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   NLLLossStruct nllloss_param_{};
-  ops::Reduction reduction_type_;
+  MsPyEnum::Reduction reduction_type_;
   int64_t ignore_index_;
 };
 }  // namespace kernel

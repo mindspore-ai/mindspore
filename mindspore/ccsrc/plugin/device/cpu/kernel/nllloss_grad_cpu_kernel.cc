@@ -49,7 +49,7 @@ int NLLLossGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
   auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
-  reduction_type_ = static_cast<ops::Reduction>(reduction);
+  reduction_type_ = static_cast<MsPyEnum::Reduction>(reduction);
   ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
   auto logits_shape = inputs[0]->GetShapeVector();
   nllloss_param_.batch_ = LongToInt(logits_shape[0]);
@@ -89,9 +89,9 @@ bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTenso
     }
     int index = i * nllloss_param_.class_num_ + labels[i];
     float n_weight = weight[labels[i]];
-    if (reduction_type_ == ops::Reduction::SUM) {
+    if (reduction_type_ == MsPyEnum::Reduction::SUM) {
       logits_grad[index] = -loss_grad[0] * n_weight;
-    } else if (reduction_type_ == ops::Reduction::MEAN) {
+    } else if (reduction_type_ == MsPyEnum::Reduction::MEAN) {
       logits_grad[index] = -loss_grad[0] * n_weight / *total_weight;
     } else {
       logits_grad[index] = -loss_grad[i] * n_weight;

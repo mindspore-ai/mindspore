@@ -42,7 +42,7 @@ TEST_P(TestFFT, dyn_shape) {
   auto signal_ndim = param.signal_ndim == -1 ? Any->ToAbstract() : CreatePyInt(param.signal_ndim)->ToAbstract();
   auto inverse = CreateScalar(param.inverse)->ToAbstract();
   auto real = CreateScalar(param.real)->ToAbstract();
-  auto norm = CreateScalar(static_cast<int64_t>(NormMode::BACKWARD))->ToAbstract();
+  auto norm = CreateScalar(static_cast<int64_t>(MsPyEnum::NormMode::BACKWARD))->ToAbstract();
   auto onesided = CreateScalar(param.onesided)->ToAbstract();
   auto signal_sizes = param.signal_sizes->ToAbstract();
 

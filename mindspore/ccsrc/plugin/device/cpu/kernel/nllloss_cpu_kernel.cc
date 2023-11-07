@@ -48,7 +48,7 @@ int NLLLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return ret;
   }
   auto reduction = inputs[kReductionIdx]->GetValueWithCheck<int64_t>();
-  reduction_type_ = static_cast<ops::Reduction>(reduction);
+  reduction_type_ = static_cast<MsPyEnum::Reduction>(reduction);
   ignore_index_ = inputs[kIgnoreIndexIdx]->GetValueWithCheck<int64_t>();
 
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
@@ -92,15 +92,15 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
     float n_loss = -logits[index] * n_weight;
     tmp_total_weight += n_weight;
     total_loss += n_loss;
-    if (reduction_type_ == ops::Reduction::NONE) {
+    if (reduction_type_ == MsPyEnum::Reduction::NONE) {
       loss[i] = n_loss;
     }
   }
 
   *total_weight = tmp_total_weight;
-  if (reduction_type_ == ops::Reduction::SUM) {
+  if (reduction_type_ == MsPyEnum::Reduction::SUM) {
     *loss = total_loss;
-  } else if (reduction_type_ == ops::Reduction::MEAN) {
+  } else if (reduction_type_ == MsPyEnum::Reduction::MEAN) {
     *loss = total_loss / tmp_total_weight;
   }
   return true;

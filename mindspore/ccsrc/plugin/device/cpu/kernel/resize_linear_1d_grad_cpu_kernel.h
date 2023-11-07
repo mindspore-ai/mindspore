@@ -66,7 +66,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    ops::CoordinateTransformationMode coordinate_transformation_mode);
+    MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode);
 
   std::string kernel_type_{kUnknown};
   bool align_corners_{false};
@@ -76,7 +76,8 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   size_t channel_{0};
   size_t input_width_{0};
   size_t output_width_{0};
-  ops::CoordinateTransformationMode coordinate_transformation_mode_ = ops::CoordinateTransformationMode::ALIGN_CORNERS;
+  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode_ =
+    MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 

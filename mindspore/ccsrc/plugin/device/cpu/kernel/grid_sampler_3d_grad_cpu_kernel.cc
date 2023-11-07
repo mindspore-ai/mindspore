@@ -214,7 +214,7 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
         x = grid_sampler_compute_source_index_set_grad(x, x_shape_[kFour], padding_mode, align_corners_, &gx_mult);
         y = grid_sampler_compute_source_index_set_grad(y, x_shape_[kThree], padding_mode, align_corners_, &gy_mult);
         z = grid_sampler_compute_source_index_set_grad(z, x_shape_[kTwo], padding_mode, align_corners_, &gz_mult);
-        if (interpolation_mode == static_cast<int64_t>(ops::InterpolationMode::BILINEAR)) {
+        if (interpolation_mode == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
           size_t grad_ptr_NCDHW =
             n * grad_stride_[kZero] + d * grad_stride_[kTwo] + h * grad_stride_[kThree] + w * grad_stride_[kFour];
           size_t dx_ptr_NC = n * dx_stride_[kZero], x_ptr_NC = n * x_stride_[kZero];
@@ -223,7 +223,7 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
           std::vector<T> mult = {gx_mult, gy_mult, gz_mult};
           std::vector<size_t> ptr = {grad_ptr_NCDHW, x_ptr_NC, dx_ptr_NC, dgrid_ptr_NDHW};
           BilinearKernel<T>(addr, location, mult, ptr);
-        } else if (interpolation_mode == static_cast<int64_t>(ops::InterpolationMode::NEAREST)) {
+        } else if (interpolation_mode == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
           int64_t x_nearest = static_cast<int64_t>(std::round(x));
           int64_t y_nearest = static_cast<int64_t>(std::round(y));
           int64_t z_nearest = static_cast<int64_t>(std::round(z));
@@ -281,10 +281,10 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
     *grad_x = static_cast<T>(size) / kTwo;
     coord = ((coord + kOne) * size - kOne) / kTwo;
   }
-  if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::BORDER)) {
+  if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::BORDER)) {
     coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_clip;
-  } else if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::REFLECTION)) {
+  } else if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::REFLECTION)) {
     if (align_corners) {
       coord = reflect_coordinates_set_grad(coord, 0, (size - 1) * static_cast<int64_t>(kTwo), &grad_refl);
     } else {

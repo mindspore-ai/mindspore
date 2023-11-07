@@ -59,7 +59,7 @@ class ConvBiasFusionInoutTest : public ConvFusionInoutTest {
   static CNodePtr AddBias(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::string &name) {
     auto prim = std::make_unique<ops::BiasAdd>();
     MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "create BiasAdd primitivec failed");
-    prim->set_data_format(ops::PyFormat::NCHW);
+    prim->set_data_format(Format::NCHW);
     auto prim_c = prim->GetPrim();
     MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr");
     auto bias_primitive = NewValueNode(prim_c);

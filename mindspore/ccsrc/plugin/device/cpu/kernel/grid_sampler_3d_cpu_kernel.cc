@@ -117,7 +117,7 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
   auto x_ptr_NC = out_iter[kZero] * x_stride_[kZero];
   auto output_ptr_NCDHW = out_iter[kZero] * output_stride_[kZero] + out_iter[kTwo] * output_stride_[kTwo] +
                           out_iter[kThree] * output_stride_[kThree] + out_iter[kFour] * output_stride_[kFour];
-  if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::BILINEAR)) {
+  if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::BILINEAR)) {
     int64_t x_tnw = static_cast<int64_t>(std::floor(x));
     int64_t y_tnw = static_cast<int64_t>(std::floor(y));
     int64_t z_tnw = static_cast<int64_t>(std::floor(z));
@@ -176,7 +176,7 @@ void GridSampler3DCpuKernelMod::ComputeTask(T *x_addr, T *grid_addr, T *output_a
         output_addr[output_ptr_NCDHW] += x_addr[x_index] * bse;
       }
     }
-  } else if (interpolation_mode_ == static_cast<int64_t>(ops::InterpolationMode::NEAREST)) {
+  } else if (interpolation_mode_ == static_cast<int64_t>(MsPyEnum::InterpolationMode::NEAREST)) {
     int64_t x_nearest = static_cast<int64_t>(std::round(x));
     int64_t y_nearest = static_cast<int64_t>(std::round(y));
     int64_t z_nearest = static_cast<int64_t>(std::round(z));
@@ -220,9 +220,9 @@ T GridSampler3DCpuKernelMod::grid_sampler_compute_source_index(T coord, int64_t 
   } else {
     coord = ((coord + 1.f) * size - kOne) / kTwo;
   }
-  if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::BORDER)) {
+  if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::BORDER)) {
     coord = std::min(static_cast<T>(static_cast<size_t>(size) - kOne), std::max(coord, static_cast<T>(kZero)));
-  } else if (padding_mode == static_cast<int64_t>(ops::GridSamplerPaddingMode::REFLECTION)) {
+  } else if (padding_mode == static_cast<int64_t>(MsPyEnum::GridSamplerPaddingMode::REFLECTION)) {
     if (align_corners) {
       coord = reflect_coordinates(coord, static_cast<int64_t>(kZero), kTwo * (size - kOne));
     } else {

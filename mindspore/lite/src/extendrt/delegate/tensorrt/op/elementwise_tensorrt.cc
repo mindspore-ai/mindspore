@@ -26,7 +26,6 @@
 #include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"
-#include "ops/real_div.h"
 #include "ops/eltwise.h"
 
 namespace mindspore::lite {

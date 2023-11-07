@@ -58,9 +58,10 @@ int ResizeLinear1DGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   out_width_ = output_shape_[kIndex2];
 
   auto coordinate_transformation_mode = inputs.at(kIndex2)->GetValueWithCheck<int64_t>();
-  if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::ALIGN_CORNERS)) {
+  if (coordinate_transformation_mode == static_cast<int64_t>(MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS)) {
     mode_ = ResizeLinearCoordinateTransformationMode::ALIGN_CORNERS;
-  } else if (coordinate_transformation_mode == static_cast<int64_t>(ops::CoordinateTransformationMode::HALF_PIXEL)) {
+  } else if (coordinate_transformation_mode ==
+             static_cast<int64_t>(MsPyEnum::CoordinateTransformationMode::HALF_PIXEL)) {
     mode_ = ResizeLinearCoordinateTransformationMode::HALF_PIXEL;
   } else {
     MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', coordinate_transformation_mode not support now.";

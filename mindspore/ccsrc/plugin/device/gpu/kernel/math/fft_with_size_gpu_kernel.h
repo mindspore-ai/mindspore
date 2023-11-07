@@ -89,7 +89,7 @@ class FFTWithSizeGpuKernelMod : public NativeGpuKernelMod {
   int64_t rank_{1};
   bool is_inverse_{false};  // 0: forward, 1: inverse
   bool is_real_{false};
-  ops::NormMode norm_type_{ops::NormMode::BACKWARD};  // forward, backward, ortho
+  MsPyEnum::NormMode norm_type_{MsPyEnum::NormMode::BACKWARD};  // forward, backward, ortho
   // is_onesided controls whether frequency is halved when signal is real, which means is_real_ is true.
   // The default value is true. cufft does not support full freq with real signal. We use cast as a temporary solution.
   bool is_onesided_{true};

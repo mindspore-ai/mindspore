@@ -55,7 +55,7 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
   NLLLossFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NLLLossFunc>> func_list_;
   NLLLossStruct nllloss_param_{};
-  ops::Reduction reduction_type_;
+  MsPyEnum::Reduction reduction_type_;
   int64_t ignore_index_;
 };
 }  // namespace kernel

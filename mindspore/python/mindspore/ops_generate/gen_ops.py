@@ -651,10 +651,10 @@ eum_cc_header = f"""
 
 #include <cstdint>
 
-namespace mindspore::ops {{
+namespace mindspore::MsPyEnum {{
 """
 
-eum_cc_end = f"""}}  // namespace mindspore::ops
+eum_cc_end = f"""}}  // namespace mindspore::MsPyEnum
 #endif  // MINDSPORE_CORE_OPS_GEN_ENUM_DEF_
 """
 

@@ -60,7 +60,7 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
 
   template <typename T>
   CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
-    ops::CoordinateTransformationMode coordinate_transformation_mode) const;
+    MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode) const;
 
   template <typename T>
   void ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
@@ -73,7 +73,8 @@ class ResizeLinear1DCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   size_t channel_{0};
   size_t in_width_{0};
   size_t out_width_{0};
-  ops::CoordinateTransformationMode coordinate_transformation_mode_ = ops::CoordinateTransformationMode::ALIGN_CORNERS;
+  MsPyEnum::CoordinateTransformationMode coordinate_transformation_mode_ =
+    MsPyEnum::CoordinateTransformationMode::ALIGN_CORNERS;
 };
 }  // namespace mindspore::kernel
 
