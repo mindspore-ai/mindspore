@@ -1080,7 +1080,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   std::vector<Shapes> shape_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
 
-  const int concat_size = 2;
+  const int min_size = 2;
   size_t inputs_size = all_inputs.size();
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
@@ -1100,7 +1100,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       MS_LOG(INFO) << "Find parameter by ref key node" << node_pair.first;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
+               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == min_size))) {
       if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
           (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
@@ -1116,7 +1116,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       continue;
     }
     if (input_shapes.size() != 1) {
-      if (inputs_size == concat_size) {  // like concat
+      if (inputs_size == min_size || IsPrimitiveCNode(node, prim::kPrimConcat)) {
         shape_inputs = input_shapes;
         break;
       } else {
