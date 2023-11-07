@@ -73,9 +73,8 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
   if (adpt == nullptr) {
     return nullptr;
   }
-  if (!transform::SinkGraphCheck(node)) {
-    return nullptr;
-  }
+
+  bool can_sink = transform::SinkGraphCheck(node);
   auto input_map = adpt->getInputMap();
   for (auto it : input_map) {
     if (static_cast<size_t>(it.first) >= cnode->size()) {
@@ -86,6 +85,9 @@ const AnfNodePtr InputsUnifyMindIR::Process(const FuncGraphPtr &func_graph, cons
     auto abstract = input->abstract();
 
     AnfNodePtr tensor_node = input;
+    if (!can_sink && input->isa<ValueNode>()) {
+      continue;
+    }
     if (input->isa<ValueNode>()) {
       tensor_node = CreateValueTensor(func_graph, input);
     } else if (abstract->isa<abstract::AbstractScalar>()) {
