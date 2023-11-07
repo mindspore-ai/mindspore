@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <stack>
+#include <list>
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "mindspore/core/ops/structure_ops.h"
@@ -2728,6 +2729,28 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
     layout_map_ = model_parser.ParseLayout(origin_model);
   }
   return dstgraph_ptr;
+}
+
+bool MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path,
+                              FuncGraphPtr *func_graph, std::map<std::string, std::string> *user_info) {
+  mind_ir::ModelProto model;
+  auto ret = model.ParseFromArray(buffer, SizeToInt(size));
+  if (!ret) {
+    MS_LOG(ERROR) << "ParseFromArray failed.";
+    return false;
+  }
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return false;
+  }
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser, this);
+  model_parser.SetMindIRPath(mindir_path);
+  *func_graph = model_parser.Parse(model);
+  for (const auto &info : model.user_info()) {
+    user_info->insert(info);
+  }
+  return true;
 }
 
 FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path) {
