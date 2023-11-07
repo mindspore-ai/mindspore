@@ -915,3 +915,10 @@ def infer_value_for_Diag(input_x):
         return None
     ret = np.diag(input_x.asnumpy())
     return Tensor(ret)
+
+
+def infer_value_for_Range(start, limit, delat, maxlen):
+    """Infer value for Range op."""
+    if start is None or limit is None or delat is None or maxlen is None:
+        return None
+    return Tensor(np.arange(start, limit, delat))
