@@ -87,7 +87,7 @@ abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std:
     auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
     auto dim_rank = SizeToLong(dim_shape.size());
     (void)CheckAndConvertUtils::CheckInteger("rank of 'dim'", dim_rank, kEqual, 0, prim_name);
-  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
+  } else if (!CheckAndConvertUtils::IsScalar(input_args[kInputIndex1])) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', 'dim' must be int or Tensor.";
   }
 

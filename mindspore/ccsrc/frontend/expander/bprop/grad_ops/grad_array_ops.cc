@@ -427,9 +427,12 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
   if (out_shp.empty()) {
     dout = ib->ExpandDims(dout, -1);
   }
-
   int64_t axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
-  int64_t batch_dims = CheckRange(GetIntValue(batch_dims_ptr), SizeToLong(ind_shp.size()));
+  auto batch_dims = GetIntValue(batch_dims_ptr);
+  auto ind_shp_size = ind_shp.size();
+  while (batch_dims < 0) {
+    batch_dims += ind_shp_size;
+  }
 
   auto is_axis_mutable = IsMutable(axis);
   if ((!is_axis_mutable && (IsDynamicRank(x_shp) || IsDynamicRank(ind_shp) || IsDynamicRank(out_shp))) ||
@@ -440,7 +443,6 @@ NodePtrList BinopGather(BpropIRBuilder *ib) {
       auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
       dout = ib->Reshape(dout, out_shp1);
     }
-
     // Calculate perm.
     auto perms = ib->ShapeCalc(g_perms, {x, dout, indices, axis, batch_dims_tensor}, {kIndex3, kIndex4});
     const size_t perm_num = 2;

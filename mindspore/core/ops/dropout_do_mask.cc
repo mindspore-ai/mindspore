@@ -48,11 +48,11 @@ template <typename T>
 T GetAndCheckKeepProp(const AbstractBasePtr &input_arg) {
   auto value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
-  auto value_opt = GetScalarValue<int64_t>(value_ptr);
+  auto value_opt = GetArrayValue<double>(value_ptr);
   if (!value_opt.has_value()) {
     MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop must be valid";
   }
-  auto value = static_cast<T>(value_opt.value());
+  auto value = static_cast<T>(value_opt.value().ToVector()[0]);
   T min = T(0.0);
   T max = T(1.0);
   if (value < min || value > max) {
@@ -108,7 +108,6 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   MS_EXCEPTION_IF_NULL(keep_prop_value);
   auto keep_prop_type = keep_prop->GetType();
   MS_EXCEPTION_IF_NULL(keep_prop_type);
-
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
     const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->GetType(), keep_prop_valid_types, op_name);

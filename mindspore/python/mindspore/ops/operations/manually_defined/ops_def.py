@@ -904,3 +904,14 @@ def infer_value_for_Concat(input_x, axis):
     if input_x is None or None in input_x or axis is None:
         return None
     return Tensor(np.concatenate([x.asnumpy() for x in input_x], axis))
+
+
+def infer_value_for_Diag(input_x):
+    """Infer value for Diag op."""
+    if input_x is None:
+        return None
+    # do constant-folding only when x rank is 1
+    if len(input_x.shape) != 1:
+        return None
+    ret = np.diag(input_x.asnumpy())
+    return Tensor(ret)

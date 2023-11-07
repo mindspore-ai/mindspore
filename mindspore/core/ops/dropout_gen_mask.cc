@@ -88,11 +88,21 @@ ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtr 
   auto value_shape_ptr = shape_list->GetValue();
   MS_EXCEPTION_IF_NULL(value_shape_ptr);
   auto value_shape_opt = GetArrayValue<int64_t>(value_shape_ptr);
-  if (!value_shape_opt->HasUnknownValue()) {
+  if (!value_shape_opt.has_value() || value_shape_opt.value().HasUnknownValue()) {
     MS_EXCEPTION(TypeError) << "For 'DropGenMask', the value_shape should not be kAnyValue.";
   }
   auto value_shape_vec = value_shape_opt.value();
   for (size_t i = 0; i < value_shape_vec.size(); i++) {
+    auto dim_value = value_shape_vec[i];
+    if (dim_value <= 0) {
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', each dim of 'shape' must be greater than 0, but got shape[" << i << "]: " << dim_value
+                        << ".";
+    }
+
+    if (std::numeric_limits<int64_t>::max() / count / dim_value < 1) {
+      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', integer multiply integer overflow.";
+    }
     count *= value_shape_vec[i];
   }
 
