@@ -329,7 +329,7 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
     return std::thread(TensorPrint(path, acl_handle));
   };
   CreateTensorPrintThread(thread_crt);
-  TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
+  // TensorSummaryUtils::GetInstance().CreateTDTSummaryThread();
   return true;
 }
 
@@ -345,7 +345,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
     DestroyTensorPrintThread();
-    TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
+    // TensorSummaryUtils::GetInstance().DestroyTDTSummaryThread();
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));

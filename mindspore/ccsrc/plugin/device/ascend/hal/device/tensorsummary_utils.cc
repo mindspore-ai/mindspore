@@ -137,7 +137,7 @@ void TDTTensorUtils::ReceiveData(string channel_name, const acltdtChannelHandle 
       }
 
       if (ret != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "AclHandle failed to receive tensor.ret = " << ret;
+        // MS_LOG(ERROR) << "AclHandle failed to receive tensor.ret = " << ret;
         break;
       }
       const char *tensor_name = acltdtGetDatasetName(acl_dataset);
