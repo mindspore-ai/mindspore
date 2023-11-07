@@ -369,7 +369,7 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
       }
 
       // we do consider the empty sequence could only be int64_t when it's an value depended arg
-      base_type = kNumberTypeInt64;
+      base_type = kNumberTypeInt32;
       MS_LOG(DEBUG) << "Empty sequence is detected and change the base_type from kTypeUnknown to kNumberTypeInt64.";
     }
 
@@ -488,6 +488,10 @@ bool AclHelper::IsInputDtypeSupport(const std::string &kernel_name, TypeId base_
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
   MS_EXCEPTION_IF_NULL(info);
   auto input_supported_dtypes = info->input_supported_dtypes();
+  if (idx >= info->GetNumInputsOfMsOpProto()) {
+    // this branch represent input_attr_map, didn't need check
+    return true;
+  }
   if (!std::any_of(input_supported_dtypes[idx].begin(), input_supported_dtypes[idx].end(),
                    [base_type](const ::ge::DataType ge_type) { return ConvertGeType(ge_type) == base_type; })) {
     return false;

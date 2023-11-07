@@ -213,7 +213,7 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
       std::vector<int32_t> vec;
       (void)std::transform(ori_vec.begin(), ori_vec.end(), std::back_inserter(vec),
                            [](const auto &v) { return static_cast<int32_t>(v); });
-      tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, param.ori_shape);
+      tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, param.ori_shape);
       ret = memcpy_s(tensor->data_c(), tensor->Size(), vec.data(), vec.size() * sizeof(int32_t));
     } else {
       tensor = std::make_shared<tensor::Tensor>(param.data_type, param.ori_shape);
