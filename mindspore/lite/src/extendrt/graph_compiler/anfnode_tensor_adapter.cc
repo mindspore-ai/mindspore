@@ -20,6 +20,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
+#include "ops/sequence_ops.h"
 #include "utils/ms_utils_secure.h"
 
 using ShapePtr = mindspore::abstract::ShapePtr;
@@ -29,6 +30,25 @@ using AbstractSequencePtr = mindspore::abstract::AbstractSequencePtr;
 
 namespace mindspore {
 namespace lite {
+namespace {
+AbstractBasePtr GetRealAbstract(const CNodePtr &cnode) {
+  // MakeTuple infer is skipped in converter, so cnode->abstract is nullptr. The function can be deleted if MakeTuple is
+  // inferred in the converter.
+  if (!IsPrimitive(cnode->input(kIndex0), prim::kPrimMakeTuple)) {
+    return cnode->abstract();
+  }
+  std::vector<abstract::AbstractBasePtr> abstracts;
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    const auto &input = cnode->inputs()[i];
+    MSLITE_CHECK_PTR_RETURN(input, nullptr);
+    const auto &abstract = input->abstract();
+    MSLITE_CHECK_PTR_RETURN(input, abstract);
+    abstracts.emplace_back(abstract);
+  }
+  return std::make_shared<abstract::AbstractTuple>(abstracts);
+}
+}  // namespace
+
 InferTensor *TensorAdapter::Convert2Tensor(const ParameterPtr &param_node, Format format) {
   auto adapter = TensorAdapter::Create(param_node, format);
   if (adapter == nullptr) {
@@ -127,7 +147,12 @@ std::vector<InferTensor *> TensorAdapter::Convert2Tensor(const CNodePtr &cnode, 
     return {};
   }
 
-  auto tmp = TensorAdapter::CreateTensorsFromAbstract(cnode->abstract());
+  auto abstract = GetRealAbstract(cnode);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "CNode abstract is nullptr.";
+    return {};
+  }
+  auto tmp = TensorAdapter::CreateTensorsFromAbstract(abstract);
   if (tmp.empty()) {
     MS_LOG(ERROR) << "Create tensors from output abstract of cnode failed, cnode : " << cnode->fullname_with_scope();
     return {};
