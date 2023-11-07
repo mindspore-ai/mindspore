@@ -600,4 +600,10 @@ float Model::GetLearningRate() {
   }
   return impl_->GetLearningRate();
 }
+
+std::map<std::string, std::string> Model::GetUserInfo() const {
+  MS_LOG(WARNING) << "Device-side inference does not support get user info";
+  std::map<std::string, std::string> empty;
+  return empty;
+}
 }  // namespace mindspore
