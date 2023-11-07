@@ -58,22 +58,20 @@ std::string Broadcast::get_group() const {
 
 class MIND_API BroadcastInfer : public abstract::OpInferBase {
  public:
-  // This is used for backend infer by kernel tensor.
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     const std::string op_name = primitive->name();
     CheckArgsSize(op_name, input_args, 1);
-    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTuple);
     MS_EXCEPTION_IF_NULL(x);
     MS_EXCEPTION_IF_NULL(x->GetShape());
     return x->GetShape()->Clone();
   }
 
-  // This is used for backend infer by kernel tensor.
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     const std::string op_name = primitive->name();
     CheckArgsSize(op_name, input_args, 1);
-    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTensorType);
+    auto x = CheckAndConvertUtils::CheckArgsType(op_name, input_args, 0, kObjectTypeTuple);
     MS_EXCEPTION_IF_NULL(x);
     return x->GetType()->Clone();
   }

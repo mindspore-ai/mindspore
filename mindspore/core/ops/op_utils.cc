@@ -1046,8 +1046,11 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
         unknown_value_indexes.insert(i);
         continue;
       }
-
-      array_data.push_back(GetValue<T>(element));
+      if constexpr (std::is_same_v<T, float16>) {
+        MS_LOG(EXCEPTION) << "For ValueSequence, float16 type is not support!";
+      } else {
+        array_data.push_back(GetValue<T>(element));
+      }
     }
   } else if (value->isa<tensor::Tensor>()) {
     // Tensor structure: Data is stored continuously.
@@ -1075,5 +1078,6 @@ template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
 template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
+template std::optional<ArrayValue<float16>> GetArrayValue(const ValuePtr &value);
 }  // namespace ops
 }  // namespace mindspore

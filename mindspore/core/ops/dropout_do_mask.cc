@@ -40,6 +40,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "ir/kernel_tensor_value.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,11 +49,11 @@ template <typename T>
 T GetAndCheckKeepProp(const AbstractBasePtr &input_arg) {
   auto value_ptr = input_arg->GetValue();
   MS_EXCEPTION_IF_NULL(value_ptr);
-  auto value_opt = GetArrayValue<double>(value_ptr);
+  auto value_opt = GetArrayValue<T>(value_ptr);
   if (!value_opt.has_value()) {
     MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop must be valid";
   }
-  auto value = static_cast<T>(value_opt.value().ToVector()[0]);
+  auto value = value_opt.value()[0];
   T min = T(0.0);
   T max = T(1.0);
   if (value < min || value > max) {
@@ -123,13 +124,14 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
         (void)GetAndCheckKeepProp<double>(input_args[kInputIndex2]);
       }
     }
-  } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
+  } else if (CheckAndConvertUtils::IsScalar(input_args[kInputIndex2])) {
     if (keep_prop_value != nullptr) {
-      if (!keep_prop_value->isa<FloatImm>()) {
-        MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float, but got: "
-                                << keep_prop_value->ToString() << ".";
+      if (!keep_prop_value->isa<FloatImm>() && !keep_prop_value->isa<KernelTensorValue>()) {
+        MS_EXCEPTION(TypeError)
+          << "For 'DropoutDoMask', the type of 'keep_prop' must be float && KernelTensorValue, but got: "
+          << keep_prop_value->ToString() << ".";
       }
-      auto value = GetValue<float>(keep_prop_value);
+      auto value = GetScalarValue<float>(keep_prop_value).value();
       if (value < 0 || value > 1) {
         MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the 'keep_prop' must in the range [0, 1], but got: " << value
                                  << ".";
