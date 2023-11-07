@@ -26,6 +26,7 @@
 #include "ir/cell.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/jit/pi/pydef.h"
+#include "pipeline/jit/pi/graph_guard/guard_utils.h"
 
 namespace mindspore {
 namespace parse {
@@ -58,43 +59,15 @@ InferEnginePtr InferEngine::GetInstance() {
 
 InferEngine::InferEngine() {}
 
-static PyObject *g_ms_module = nullptr;
-static PyObject *g_ms_type = nullptr;
-static PyObject *g_tensor_type = nullptr;
-
-static bool InitMsModule() {
-  if (g_ms_module == nullptr) {
-    g_ms_module = PyImport_ImportModule("mindspore");
-  }
-  return g_ms_module != nullptr && g_ms_module != Py_None;
-}
-
-static bool InitMsType() {
-  if (g_ms_type == nullptr) {
-    g_ms_type = PyImport_ImportModule("mindspore.common.dtype");
-  }
-  return g_ms_type != nullptr && g_ms_type != Py_None;
-}
-
-static bool InitMsTensor() {
-  if (g_tensor_type == nullptr && InitMsModule()) {
-    g_tensor_type = PyObject_GetAttrString(g_ms_module, "Tensor");
-  }
-  return g_tensor_type != nullptr && g_tensor_type != Py_None && PyType_Check(g_tensor_type);
-}
-
 bool InferEngine::Init() {
   if (!bInit_) {
-    bInit_ = InitMsModule() && InitMsType() && InitMsTensor();
+    bInit_ = GetMsTensorType() != nullptr;
   }
   return bInit_;
 }
 
 bool InferEngine::Deinit() {
   if (bInit_) {
-    Py_XDECREF(g_tensor_type);
-    Py_XDECREF(g_ms_type);
-    Py_XDECREF(g_ms_module);
     bInit_ = false;
   }
   return bInit_;
@@ -127,7 +100,7 @@ static py::object CreateMetaTensor(const ShapeVector &shape, const mindspore::Ty
    * NOTE: here create a lazy initialized tensor, avoid allocate data
    */
   auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype->type_id(), shape);
-  py::object pytensor = py::reinterpret_borrow<py::object>(g_tensor_type);
+  py::object pytensor = py::reinterpret_borrow<py::object>(GetMsTensorType());
   return pytensor(py::cast(tensor));
 }
 
@@ -260,9 +233,10 @@ static py::object MakeObjectFromAbstract(const mindspore::abstract::BaseShapePtr
 
 static py::object MakeObjectFromPyObject(const py::object &shape_obj, const py::object &type_obj, bool *is_abstract) {
   *is_abstract = false;
-  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
+  if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) &&
+      py::isinstance<mindspore::Type>(type_obj)) {
     auto res_vec = shape_obj.cast<ShapeVector>();
-    auto res_dtype = type_obj.cast<TypePtr>();
+    auto res_dtype = type_obj.cast<mindspore::TypePtr>();
     if (res_vec.empty() && (!res_dtype->isa<TensorType>())) {
       *is_abstract = true;
       return CreateScalar(res_dtype);
@@ -288,7 +262,8 @@ static py::object MakeObjectFromPyObject(const py::object &shape_obj, const py::
     return ptr_list;
   } else if (shape_obj.is_none() && type_obj.is_none()) {
     return py::cast<py::object>(Py_None);
-  } else if (py::isinstance<Type>(type_obj) && type_obj.cast<Type *>()->isa<MonadType>()) {
+  } else if (py::isinstance<mindspore::Type>(type_obj) &&
+             type_obj.cast<mindspore::Type *>()->isa<mindspore::MonadType>()) {
     return py::cast<py::object>(nullptr);
   } else {
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << py::str(type_obj);
@@ -329,15 +304,15 @@ static bool HasTensor(py::object obj) {
   return false;
 }
 
-static AbstractBasePtrList ChangAbstractArgList(std::vector<PyObject *> args, bool *has_tensor, int *monad_count) {
+static AbstractBasePtrList ChangeAbstractArgList(std::vector<PyObject *> *args, bool *has_tensor, int *monad_count) {
   AbstractBasePtrList list;
-  for (size_t i = 0; i < args.size(); ++i) {
+  for (size_t i = 0; i < args->size(); ++i) {
     mindspore::ValuePtr converted = nullptr;
-    py::object param_obj = py::reinterpret_borrow<py::object>(args[i]);
+    py::object param_obj = py::reinterpret_borrow<py::object>((*args)[i]);
     if (IsStubTensor(param_obj)) {
       param_obj = python_adapter::CallPyObjMethod(param_obj, "stub_sync");
-      args[i] = param_obj.ptr();
-    } else if (py::isinstance<Monad>(param_obj)) {
+      (*args)[i] = param_obj.ptr();
+    } else if (py::isinstance<mindspore::Monad>(param_obj)) {
       *monad_count = *monad_count + 1;
     }
     *has_tensor = HasTensor(param_obj);
@@ -359,7 +334,7 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
   int monad_count = 0;
   bool has_tensor = false;
   std::vector<PyObject *> arglist = args;
-  AbstractBasePtrList list = ChangAbstractArgList(arglist, &has_tensor, &monad_count);
+  AbstractBasePtrList list = ChangeAbstractArgList(&arglist, &has_tensor, &monad_count);
   py::object adapter_obj = py::reinterpret_borrow<py::object>(primitive);
   mindspore::PrimitivePyAdapterPtr prim_adapter = adapter_obj.cast<mindspore::PrimitivePyAdapterPtr>();
   mindspore::PrimitivePyPtr prim = prim_adapter->attached_primitive();

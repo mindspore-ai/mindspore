@@ -53,6 +53,7 @@ GuardItemPtr GuardType(TracePtr obj);
 GuardItemPtr GuardId(TracePtr obj);
 GuardItemPtr GuardAttr(TracePtr obj);
 bool IsPyObjectEqual(PyObject *src, PyObject *dst);
+PyObject *GetMsTensorType();
 
 }  // namespace graph
 }  // namespace jit
