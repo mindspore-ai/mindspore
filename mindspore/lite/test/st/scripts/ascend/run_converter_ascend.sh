@@ -6,7 +6,7 @@ function Run_Converter() {
     tar -zxf mindspore-lite-${version}-linux-${arch}.tar.gz || exit 1
     cd ${x86_path}/mindspore-lite-${version}-linux-${arch}/ || exit 1
     cp tools/converter/converter/converter_lite ./ || exit 1
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./runtime/lib
     export LITE_HOME=$(pwd)
     echo "LITE_HOME:${LITE_HOME}"
 

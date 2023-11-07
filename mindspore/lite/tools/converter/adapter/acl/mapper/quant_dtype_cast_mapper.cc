@@ -70,6 +70,7 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
     CHECK_NULL_RETURN(dst_prim);
     dst_prim->AddAttr("scale", MakeValue(static_cast<float>(quant_param.front().scale)));
     dst_prim->AddAttr("offset", MakeValue(static_cast<float>(quant_param.front().zeroPoint)));
+    dst_prim->AddAttr(ops::kDstType, kInt8);
     MS_LOG(INFO) << cnode->fullname_with_scope() << " scale:" << quant_param.front().scale;
     MS_LOG(INFO) << cnode->fullname_with_scope() << " offset:" << quant_param.front().zeroPoint;
     if (quant_param.front().scale < 1.0) {
