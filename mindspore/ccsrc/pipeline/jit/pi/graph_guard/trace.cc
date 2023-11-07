@@ -1113,18 +1113,7 @@ void UnsupportedTrace::Detach() {
 PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace) {
   TraceContext context = {frame->f_globals, frame->f_builtins, frame->f_locals, frame->f_localsplus, frame->f_code};
   if (trace != NULL) {
-    PyObject *obj = trace->Retrieve(&context);
-    if (obj == NULL || obj == Py_None) {
-      return obj;
-    }
-    py::object py_obj = py::reinterpret_borrow<py::object>(obj);
-    if (IsStubTensor(py_obj)) {
-      py_obj = python_adapter::CallPyObjMethod(py_obj, "stub_sync");
-      Py_DECREF(obj);
-      obj = py_obj.ptr();
-      Py_INCREF(obj);
-    }
-    return obj;
+    return trace->Retrieve(&context);
   } else {
     return NULL;
   }

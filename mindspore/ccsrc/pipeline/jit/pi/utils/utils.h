@@ -144,7 +144,7 @@ class Utils {
 #endif
 class ReprRecursionScope {
  public:
-  explicit ReprRecursionScope(PyObject *v) : v_(v), stat_(Py_ReprEnter(v_)) {}
+  explicit ReprRecursionScope(PyObject *v) : v_(v), stat_(v == nullptr ? -1 : Py_ReprEnter(v)) {}
   ~ReprRecursionScope() {
     if (stat_ == 0) {
       Py_ReprLeave(v_);
