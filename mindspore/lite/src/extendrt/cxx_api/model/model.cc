@@ -459,4 +459,18 @@ Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack 
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;
 }
+
+std::map<std::string, std::string> Model::GetUserInfo() const {
+  std::map<std::string, std::string> empty;
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return empty;
+  }
+  try {
+    return impl_->GetUserInfo();
+  } catch (const std::exception &exe) {
+    MS_LOG_ERROR << "Catch exception: " << exe.what();
+    return empty;
+  }
+}
 }  // namespace mindspore

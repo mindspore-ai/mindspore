@@ -358,6 +358,11 @@ class MS_API Model {
 
   const std::shared_ptr<ModelImpl> impl() const { return impl_; }
 
+  /// \brief Obtains user info of the model.
+  ///
+  /// \return The map include all user info.
+  std::map<std::string, std::string> GetUserInfo() const;
+
  private:
   friend class Serialization;
   // api without std::string

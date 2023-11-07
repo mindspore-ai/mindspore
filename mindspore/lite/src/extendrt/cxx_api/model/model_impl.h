@@ -189,6 +189,12 @@ class ModelImpl {
   std::string GetConfig(const std::string &section, const std::string &key);
 
   static bool CheckModelSupport(DeviceType device_type, ModelType model_type);
+  void SetUserInfo(std::map<std::string, std::string> user_info) { user_info_ = user_info; }
+
+  /// \brief Obtains user info of the model.
+  ///
+  /// \return The map include all user info.
+  std::map<std::string, std::string> GetUserInfo() { return user_info_; }
 
  private:
   /// \brief Model build by buffer implementation, unified model build flow.
@@ -241,6 +247,7 @@ class ModelImpl {
   std::map<std::string, TypeId> execution_plan_;
   std::recursive_mutex mutex_;
   uint32_t graph_id_ = 0;
+  std::map<std::string, std::string> user_info_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_
