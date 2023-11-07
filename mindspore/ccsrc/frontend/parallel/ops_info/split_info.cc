@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 
 #include "frontend/parallel/ops_info/split_info.h"
 
+#include <cstdint>
 #include <string>
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
+#include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/status.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "include/common/utils/parallel_context.h"
@@ -30,10 +34,31 @@
 namespace mindspore {
 namespace parallel {
 Status SplitInfo::GetAttrs() {
+  auto axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Cannot get axis value.";
+    return FAILED;
+  }
+  auto axis = axis_opt.value();
+
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+  int dim = SizeToInt(inputs_shape_[0].size());
+  if (axis < 0) {
+    axis = axis + dim;
+  }
+  axis_ = LongToSize(axis);
+
+  inputs_shape_ = Shapes{inputs_shape_[0]};  // Truncation for Strategy check.
+  return SUCCESS;
+}
+
+Status SplitVInfo::GetAttrs() {
   int64_t axis = 0;
 
-  std::string attr_axis_name = GetSplitAxisAttrName();
-  auto axis_iter = attrs_.find(attr_axis_name);
+  auto axis_iter = attrs_.find(SPLIT_DIM);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
     if (axis_iter->second->isa<Int64Imm>()) {
@@ -95,6 +120,22 @@ Status SplitInfo::InferDevMatrixShape() {
   }
 
   dev_matrix_shape_ = stra[0];
+  return SUCCESS;
+}
+
+Status SplitInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_axis;
+  (void)mirror_ops_.emplace_back(std::move(op_for_axis));
+  OperatorVector op_for_output_num;
+  (void)mirror_ops_.emplace_back(std::move(op_for_output_num));
   return SUCCESS;
 }
 

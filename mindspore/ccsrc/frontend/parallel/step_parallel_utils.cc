@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@
 #include <string>
 #include <utility>
 
+#include "abstract/dshape.h"
 #include "base/base.h"
+#include "base/bfloat16.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/device_manager.h"
@@ -498,10 +500,15 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
       MS_EXCEPTION_IF_NULL(each_shape);
       shapes.push_back(each_shape->shape());
     }
-  } else {
+  } else if (base_shape_ptr->isa<abstract::Shape>()) {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
     shapes.push_back(shape_ptr->shape());
+  } else if (base_shape_ptr->isa<abstract::NoShape>()) {
+    shapes.push_back(Shape{});
+  } else {
+    MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " should be Tuple/List/Tensor/Scalar, but got "
+                      << base_shape_ptr->ToString() << "full name is " << node->fullname_with_scope();
   }
   return shapes;
 }

@@ -17,6 +17,7 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,19 +41,38 @@ using mindspore::tensor::Tensor;
 namespace mindspore {
 namespace parallel {
 namespace {
-size_t CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name, const std::string &attr_name,
-                                  size_t limit_size) {
+ValuePtr CreateOpPrimtiveWithAttrs(const OperatorAttrs &attrs, const OperatorName &op_name,
+                                   const std::string &instance_name) {
+  auto op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    return CreateOpInstance(attrs, op_name, instance_name);
+  }
+
+  auto prim = std::make_shared<Primitive>(op_name);
+  MS_EXCEPTION_IF_NULL(prim);
+  prim->set_instance_name(instance_name);
+  for (const auto &[name, value] : attrs) {
+    prim->set_attr(name, value);
+  }
+
+  return prim;
+}
+
+std::pair<bool, size_t> CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name,
+                                                   const std::string &attr_name, size_t limit_size) {
   auto ks_iter = op_def->indexes_.find(attr_name);
   if (ks_iter == op_def->indexes_.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", cannot find a valid index for input " << attr_name
-                               << " in operator-definition.";
+    MS_LOG(DEBUG) << "For " << op_name << ", cannot find a valid index for input " << attr_name
+                  << " in operator-definition.";
+    return std::make_pair(false, SIZE_MAX);
   }
+
   auto idx = ks_iter->second;
   auto real_idx = idx + 1;
   if (real_idx >= limit_size) {
     MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", " << idx << " is not a valid index for input " << attr_name;
   }
-  return real_idx;
+  return std::make_pair(true, real_idx);
 }
 
 std::vector<AnfNodePtr> RectifyInputsForNewCNode(const std::vector<AnfNodePtr> &inputs) {
@@ -81,7 +101,10 @@ std::vector<AnfNodePtr> RectifyInputsForNewCNode(const std::vector<AnfNodePtr> &
   std::vector<std::string> latter_erase;
   auto attrs = prim->attrs();
   for (const auto &[name, value] : attrs) {
-    auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, name, new_inputs.size());
+    auto [is_input, node_input_idx] = CheckAndGetValidIdxByOpDef(op_def, op_name, name, new_inputs.size());
+    if (!is_input) {
+      continue;
+    }
     new_inputs[node_input_idx] = NewValueNode(value);
     latter_erase.push_back(name);
   }
@@ -165,7 +188,10 @@ std::vector<AnfNodePtr> ConvertToRealInputs(const OperatorName &op_name, const s
   // For new-defined op, almost all attrs are inputs now, here should insert the value as input in right position.
   for (size_t i = 0; i < attrs.size(); ++i) {
     auto [attr_name, attr_value] = attrs[i];
-    auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, attr_name, node_inputs.size());
+    auto [is_input, node_input_idx] = CheckAndGetValidIdxByOpDef(op_def, op_name, attr_name, node_inputs.size());
+    if (!is_input) {
+      continue;
+    }
     node_inputs[node_input_idx] = NewValueNode(attr_value);
   }
 
@@ -197,7 +223,10 @@ CNodePtr CreateNewCNodeForReplace(const CNodePtr &origin_node, const PrimitivePt
     std::vector<std::string> latter_erase;
     auto attrs = new_prim->attrs();
     for (const auto &[name, value] : attrs) {
-      auto node_input_idx = CheckAndGetValidIdxByOpDef(op_def, op_name, name, inputs.size());
+      auto [is_input, node_input_idx] = CheckAndGetValidIdxByOpDef(op_def, op_name, name, inputs.size());
+      if (!is_input) {
+        continue;
+      }
       if (!inputs[node_input_idx]->isa<ValueNode>()) {
         MS_LOG(INTERNAL_EXCEPTION) << "For auto parallel, the " << (node_input_idx - 1) << " input of " << op_name
                                    << " must be a value node!";
@@ -358,22 +387,24 @@ AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
 
 AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name, const OperatorAttrs &attrs) {
   name_idx_++;
-  ValuePtr pyop_instance = CreateOpInstance(attrs, op_name, instance_name_base_ + op_name + std::to_string(name_idx_));
-  if (pyop_instance == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreateOpInstance failed";
+  ValuePtr op_prim_instance =
+    CreateOpPrimtiveWithAttrs(attrs, op_name, instance_name_base_ + op_name + std::to_string(name_idx_));
+  if (op_prim_instance == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure:" << op_name << " NewOpInst failed";
   }
-  auto value_node = NewValueNode(pyop_instance);
+  auto value_node = NewValueNode(op_prim_instance);
   return value_node->cast<AnfNodePtr>();
 }
 
 AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name) {
   name_idx_++;
   OperatorAttrs attrs;
-  ValuePtr pyop_instance = CreateOpInstance(attrs, op_name, instance_name_base_ + std::to_string(name_idx_));
-  if (pyop_instance == nullptr) {
+  ValuePtr op_prim_instance =
+    CreateOpPrimtiveWithAttrs(attrs, op_name, instance_name_base_ + std::to_string(name_idx_));
+  if (op_prim_instance == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:" << op_name << " CreateOpInstance failed";
   }
-  auto value_node = NewValueNode(pyop_instance);
+  auto value_node = NewValueNode(op_prim_instance);
   return value_node->cast<AnfNodePtr>();
 }
 }  // namespace parallel
