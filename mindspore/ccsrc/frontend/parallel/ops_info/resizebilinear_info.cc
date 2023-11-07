@@ -27,19 +27,34 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace parallel {
 // ResizeBilinear: support to split N/C/W
 // ResizeNearestNeighbor: support to split N/C/H/W if align_corners=False, support to split N/C if align_corners=True
 Status ResizeBilinearInfo::GetAttrs() {
-  size_ = GetTupleIntAttr(SIZE);
+  auto op_def = mindspore::ops::GetOpDef(GetPrimNameFromInfoName(name_));
+  if (op_def == nullptr) {
+    size_ = GetTupleIntAttr(SIZE);
+    align_corners_ = GetBoolAttr(ALIGN_CORNERS);
+  } else {
+    auto size_opt = GetArrayValueFromInputs<int64_t>(input_value_, name_, SIZE);
+    if (!size_opt.has_value()) {
+      MS_LOG(ERROR) << "For " << name_ << ", failed to get value for " << SIZE << ".";
+    }
+    size_ = size_opt.value();
+
+    auto align_corners_opt = GetScalarValueFromInputs<bool>(input_value_, name_, ALIGN_CORNERS);
+    if (!align_corners_opt.has_value()) {
+      MS_LOG(ERROR) << "For " << name_ << ", failed to get value for " << ALIGN_CORNERS << ".";
+    }
+    align_corners_ = align_corners_opt.value();
+  }
   if (size_.size() != 2) {
     MS_LOG(ERROR) << name_ << ": The size of input size must be 2, but got " << size_.size();
     return FAILED;
   }
-
-  align_corners_ = GetBoolAttr(ALIGN_CORNERS);
   MS_LOG(INFO) << name_ << ": The input size is " << size_ << ", align_corners is " << align_corners_;
 
   return SUCCESS;
@@ -113,6 +128,26 @@ Status ResizeBilinearInfo::InferDevMatrixShape() {
   slice_size_[0] = slice_size_[0] / dev_matrix_shape_[2];
   slice_size_[1] = slice_size_[1] / dev_matrix_shape_[3];
   w_dimension_shard_num_ = dev_matrix_shape_[3];
+  return SUCCESS;
+}
+
+Status ResizeBilinearInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_size;
+  OperatorVector op_for_align_corners;
+
+  if (mindspore::ops::GetOpDef(GetPrimNameFromInfoName(name_))) {
+    (void)mirror_ops_.emplace_back(std::move(op_for_size));
+    (void)mirror_ops_.emplace_back(std::move(op_for_align_corners));
+  }
+
   return SUCCESS;
 }
 
