@@ -100,7 +100,7 @@ def test_maximum_dynamic_shape():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_broadcast():
+def test_broadcast1():
     """
     Feature: maximum
     Description: Test of input

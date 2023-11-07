@@ -20,7 +20,6 @@
 #include "ops/image_ops.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/ascend_op_name.h"
-#include "ops/image_ops.h"
 
 namespace mindspore::transform {
 // ResizeNearestNeighborV2

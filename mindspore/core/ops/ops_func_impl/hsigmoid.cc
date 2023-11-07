@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/hsigmoid.h"
+#include <map>
+#include <string>
+#include <set>
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

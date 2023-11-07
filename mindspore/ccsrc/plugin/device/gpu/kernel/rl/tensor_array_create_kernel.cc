@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/rl/tensor_array_create_kernel.h"
+#include <memory>
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_tensor_array.h"
 #include "runtime/device/tensor_array_manager.h"

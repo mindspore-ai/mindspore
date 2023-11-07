@@ -37,7 +37,7 @@ def reshape_backward_func(x, shape):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
-def test_reshape(mode):
+def test_reshape_op(mode):
     """
     Feature: Ops.
     Description: test op reshape.

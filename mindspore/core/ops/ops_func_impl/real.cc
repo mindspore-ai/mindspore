@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/real.h"
+#include <memory>
 
 namespace mindspore {
 namespace ops {

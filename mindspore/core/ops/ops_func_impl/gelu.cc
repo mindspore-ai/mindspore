@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "ops/ops_func_impl/gelu.h"
-
+#include <set>
 #include "abstract/dshape.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"

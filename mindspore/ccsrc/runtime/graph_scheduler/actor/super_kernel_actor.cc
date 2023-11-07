@@ -15,6 +15,7 @@
  */
 
 #include <set>
+#include <algorithm>
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
@@ -297,6 +298,59 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   OnDebugFinish(context);
 }
 
+bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_context,
+                                                    const DeviceTensor *input_device_tensor,
+                                                    const DeviceTensorPtr &node_device_tensor, size_t i) {
+  if ((input_device_tensor->GetDeviceType() == node_device_tensor->GetDeviceType()) &&
+      AnfAlgo::IsEquivalentFormat(input_device_tensor->format(), node_device_tensor->format())) {
+    MS_LOG(DEBUG) << "Not need copy for device tensor:" << node_device_tensor << " ptr:" << node_device_tensor->GetPtr()
+                  << " index:" << i << " for actor:" << GetAID();
+    // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for
+    // supporting zero copy.
+    node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
+    MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
+                  << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
+    node_device_tensor->set_from_mem_pool(false);
+    // continue
+    return true;
+  }
+  if (device_context->GetDeviceType() != node_device_tensor->GetDeviceType()) {
+    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {node_device_tensor->device_name(), node_device_tensor->device_id()});
+    MS_EXCEPTION_IF_NULL(device_context);
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  }
+
+  if (copy_input_device_tensors_[i] == nullptr) {
+    MS_EXCEPTION_IF_NULL(node_device_tensor->kernel_tensor());
+    const auto new_kernel_tensor = node_device_tensor->kernel_tensor()->Clone();
+    MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+    new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
+    new_kernel_tensor->set_device_id(device_context->device_context_key().device_id_);
+    new_kernel_tensor->set_device_ptr(nullptr);
+
+    copy_input_device_tensors_[i] = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
+    MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
+                  << " for actor:" << GetAID();
+  }
+  auto copy_device_tensor = copy_input_device_tensors_[i];
+  MS_EXCEPTION_IF_NULL(copy_device_tensor);
+  copy_device_tensor->set_user_data(node_device_tensor->user_data());
+  copy_device_tensor->set_sync_user_data_handler(node_device_tensor->sync_user_data_handler());
+  if ((copy_device_tensor->GetPtr() == nullptr) &&
+      (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
+    MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
+                  << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
+                  << ", alloc size: " + std::to_string(copy_device_tensor->GetSize()) << "B.";
+    return true;
+  }
+  MS_LOG(DEBUG) << "Alloc memory for device tensor:" << copy_device_tensor << " ptr:" << copy_device_tensor->GetPtr()
+                << " size:" << copy_device_tensor->GetSize() << " index:" << i << " for actor:" << GetAID();
+  node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
+  node_device_tensor->set_from_mem_pool(false);
+  return false;
+}
+
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -337,53 +391,9 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
     // If the input is not a persist device address, in a heterogeneous scenario, a new device address needs to
     // be created. And set ptr to node device address to support the zero copy of graph input nodes.
     if (!node_device_tensor->is_ptr_persisted()) {
-      if ((input_device_tensor->GetDeviceType() == node_device_tensor->GetDeviceType()) &&
-          AnfAlgo::IsEquivalentFormat(input_device_tensor->format(), node_device_tensor->format())) {
-        MS_LOG(DEBUG) << "Not need copy for device tensor:" << node_device_tensor
-                      << " ptr:" << node_device_tensor->GetPtr() << " index:" << i << " for actor:" << GetAID();
-        // Set the ptr from input_device_tensor and set mem pool false to avoid memory double management for supporting
-        // zero copy.
-        node_device_tensor->set_ptr(input_device_tensor->GetMutablePtr());
-        MS_LOG(DEBUG) << "set need sync flag from:" << input_device_tensor << " to:" << node_device_tensor
-                      << " sync user data handler:" << node_device_tensor->sync_user_data_handler();
-        node_device_tensor->set_from_mem_pool(false);
+      if (CopyInputDataPersistedHandle(device_context, input_device_tensor, node_device_tensor, i)) {
         continue;
       }
-      if (device_context->GetDeviceType() != node_device_tensor->GetDeviceType()) {
-        device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-          {node_device_tensor->device_name(), node_device_tensor->device_id()});
-        MS_EXCEPTION_IF_NULL(device_context);
-        MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-      }
-
-      if (copy_input_device_tensors_[i] == nullptr) {
-        MS_EXCEPTION_IF_NULL(node_device_tensor->kernel_tensor());
-        const auto new_kernel_tensor = node_device_tensor->kernel_tensor()->Clone();
-        MS_EXCEPTION_IF_NULL(new_kernel_tensor);
-        new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
-        new_kernel_tensor->set_device_id(device_context->device_context_key().device_id_);
-        new_kernel_tensor->set_device_ptr(nullptr);
-
-        copy_input_device_tensors_[i] = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
-        MS_LOG(DEBUG) << "Create new device tensor:" << copy_input_device_tensors_[i] << " index:" << i
-                      << " for actor:" << GetAID();
-      }
-      copy_device_tensor = copy_input_device_tensors_[i];
-      MS_EXCEPTION_IF_NULL(copy_device_tensor);
-      copy_device_tensor->set_user_data(node_device_tensor->user_data());
-      copy_device_tensor->set_sync_user_data_handler(node_device_tensor->sync_user_data_handler());
-      if ((copy_device_tensor->GetPtr() == nullptr) &&
-          (!device_context->device_res_manager_->AllocateMemory(copy_device_tensor.get()))) {
-        MS_LOG(ERROR) << "Device(id:" << std::to_string(device_context->device_context_key().device_id_)
-                      << ") memory isn't enough and alloc failed, kernel name: " << GetAID()
-                      << ", alloc size: " + std::to_string(copy_device_tensor->GetSize()) << "B.";
-        continue;
-      }
-      MS_LOG(DEBUG) << "Alloc memory for device tensor:" << copy_device_tensor
-                    << " ptr:" << copy_device_tensor->GetPtr() << " size:" << copy_device_tensor->GetSize()
-                    << " index:" << i << " for actor:" << GetAID();
-      node_device_tensor->set_ptr(copy_device_tensor->GetMutablePtr());
-      node_device_tensor->set_from_mem_pool(false);
     } else {
       if (node_device_tensor->GetPtr() == nullptr) {
         MS_LOG(INFO)

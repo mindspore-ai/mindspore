@@ -17,6 +17,8 @@
 #include "transform/acl_ir/acl_helper.h"
 #include <set>
 #include <string>
+#include <map>
+#include <unordered_map>
 #include "include/api/data_type.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/math/cumprod_gpu_kernel.h"
+#include <functional>
 
 namespace mindspore {
 namespace kernel {

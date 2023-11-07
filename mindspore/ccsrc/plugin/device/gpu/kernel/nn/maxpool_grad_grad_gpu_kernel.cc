@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/maxpool_grad_grad_gpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include <string>
 #include "mindspore/core/ops/grad/max_pool_grad_grad.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"

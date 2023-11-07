@@ -24,6 +24,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

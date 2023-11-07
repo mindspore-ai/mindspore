@@ -37,7 +37,7 @@ def softmax_backward_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax(mode):
+def test_softmax_op(mode):
     """
     Feature: Ops
     Description: test op softmax

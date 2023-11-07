@@ -70,7 +70,7 @@ def test_nobroadcast():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_broadcast():
+def test_broadcast1():
     """
     Feature: Test minimum tensor api.
     Description: Test minimum tensor api for Graph modes.

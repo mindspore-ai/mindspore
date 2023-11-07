@@ -67,7 +67,7 @@ def test_net_float64():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_net_bool():
+def test_net_bool1():
     """
     Feature: Tile Op.
     Description: Tile with bool input.
