@@ -140,6 +140,7 @@ Shape mirror_group_list(const TensorLayoutPtr &layout);
 std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
+const std::string GetRegisteredOpName(const std::string &op_info_name);
 }  // namespace parallel
 }  // namespace mindspore
 

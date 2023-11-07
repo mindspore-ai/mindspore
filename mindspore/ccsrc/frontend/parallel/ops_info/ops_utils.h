@@ -173,6 +173,7 @@ constexpr char SIZE[] = "size";
 constexpr char ALIGN_CORNERS[] = "align_corners";
 constexpr char END[] = "end";
 constexpr char GROUP[] = "group";
+constexpr char RANK_SIZE[] = "rank_size";
 constexpr char FUSION[] = "fusion";
 constexpr char COMM_REUSE[] = "comm_reuse";
 constexpr char DO_MIRROR[] = "do_mirror";

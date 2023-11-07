@@ -193,6 +193,7 @@ static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, c
   } else {
     node_input = CreateInput(op, pre_node, instance_name);
   }
+
   CNodePtr new_node = func_graph->NewCNode(node_input);
   MS_EXCEPTION_IF_NULL(new_node);
   if (instance_name.find(SPLIT_SENS) == std::string::npos) {

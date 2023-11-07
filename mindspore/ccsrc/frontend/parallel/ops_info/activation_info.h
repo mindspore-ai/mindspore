@@ -133,6 +133,9 @@ class LogSoftmaxInfo : public Softmax {
                  const PrimitiveAttrs &attrs)
       : Softmax(name, inputs_shape, outputs_shape, attrs) {}
   ~LogSoftmaxInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
 };
 
 class SortInfo : public Softmax {

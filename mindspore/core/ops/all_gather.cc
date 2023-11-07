@@ -58,6 +58,9 @@ class AllGatherInfer : public abstract::OpInferBase {
     }
     auto x = CheckAndConvertUtils::CheckArgsType(prim_name, input_args, 0, kObjectTypeTensorType);
     MS_EXCEPTION_IF_NULL(x);
+    if (!primitive->HasAttr(kRankSize)) {
+      MS_LOG(EXCEPTION) << "AllGather doesn't have rank_size attr.";
+    }
     auto rank_size_ptr = primitive->GetAttr(kRankSize);
     auto rank_size = GetValue<int64_t>(rank_size_ptr);
     MS_LOG(INFO) << "For '" << prim_name << "', input rank_size : " << rank_size << ".";

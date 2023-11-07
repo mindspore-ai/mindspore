@@ -33,9 +33,11 @@ class Net(Cell):
         self.weight = Parameter(w, "w1")
         self.cum_sum = P.CumSum().shard(strategy)
         self.cum_prod = P.CumProd()
-        self.cum_max = P.Cummax(axis=-2)
-        self.cum_min = P.Cummin(axis=-2)
+        self.cum_max = P.Cummax()
+        self.cum_min = P.Cummin()
         self.reversev2 = P.ReverseV2(axis=[-2])
+        self.log_softmax = P.LogSoftmax(axis=-2)
+        self.softmax = P.Softmax(axis=-2)
         self.lgamma = P.Lgamma()
         self.trunc = P.Trunc()
 
@@ -43,11 +45,13 @@ class Net(Cell):
         out = self.add(x, self.weight)
         out = self.cum_sum(out, -2)
         out = self.cum_prod(out, -2)
-        out, _ = self.cum_max(out)
-        out, _ = self.cum_min(out)
+        out, _ = self.cum_max(out, -2)
+        out, _ = self.cum_min(out, -2)
         out = self.reversev2(out)
         out = self.lgamma(out)
         out = self.trunc(out)
+        out = self.log_softmax(out)
+        out = self.softmax(out)
         return out
 
 
@@ -70,14 +74,18 @@ def test_cum_ops():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search("CumProd", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Cummax", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Cummin", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("ReverseV2", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Lgamma", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
         elif re.search("Trunc", k) is not None:
-            assert v == [[2, 2, 1, 2], ]
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("LogSoftmax", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Softmax", k) is not None:
+            assert v == [[2, 2, 1, 2],]
