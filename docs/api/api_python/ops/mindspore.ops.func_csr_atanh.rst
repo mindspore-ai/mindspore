@@ -15,7 +15,7 @@ mindspore.ops.csr_atanh
         - **x** (CSRTensor) - CSRTensor的shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型支持：float16、float32。
 
     返回：
-        CSRTensor的数据类型与输入相同。
+        CSRTensor，数据类型与输入相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。

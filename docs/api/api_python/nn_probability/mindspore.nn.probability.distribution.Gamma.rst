@@ -32,7 +32,7 @@ mindspore.nn.probability.distribution.Gamma
         返回分布的浓度（也称为伽马分布的alpha）。
 
         返回：
-            Tensor，concentration 的值。
+            Tensor，分布的浓度。
 
     .. py:method:: rate
         :property:
@@ -40,7 +40,7 @@ mindspore.nn.probability.distribution.Gamma
         返回分布的逆尺度（也称为伽马分布的beta）。
 
         返回：
-            Tensor，rate 的值。
+            Tensor，分布的逆尺度。
 
     .. py:method:: cdf(value, concentration, rate)
 

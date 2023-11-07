@@ -20,7 +20,7 @@ mindspore.nn.GRUCell
     参数：
         - **input_size** (int) - 输入的大小。
         - **hidden_size** (int) - 隐藏状态大小。
-        - **has_bias** (bool) - cell是否有偏置项 `b_in` 和 `b_hn` 。默认值： ``True`` 。
+        - **has_bias** (bool) - cell是否有偏置项 :math:`b_{in}` 和 :math:`b_{hn}` 。默认值： ``True`` 。
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：

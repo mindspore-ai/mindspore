@@ -12,7 +12,7 @@ mindspore.ops.csr_atan
         - **x** (CSRTensor) - 数据类型支持：float16、float32。
 
     返回：
-        CSRTensor的数据类型与输入相同。
+        CSRTensor，数据类型与输入相同。
 
     异常：
         - **TypeError** - 如果 `x` 不是CSRTensor。
