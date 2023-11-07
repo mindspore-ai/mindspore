@@ -1,7 +1,7 @@
 import pytest
 from .test_cross_file_inline_func import inlinef
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
-from mindspore import jit
+from mindspore import jit, context
 
 conf = {
     "print_after_all": False,
@@ -33,8 +33,10 @@ def test_cross_file_inline_make_func():
     """
     global g
     jit_mode_pi_enable()
+    context.set_context(mode=context.PYNATIVE_MODE)
     xxxx1, yyyy1, func1 = cross_inline_make_func_test()
     jit_mode_pi_disable()
+    context.set_context(mode=context.GRAPH_MODE)
     xxxx2, yyyy2, func2 = cross_inline_make_func_test()
     jit_mode_pi_enable()
     assert xxxx1 == xxxx2 and func1() == func2() and yyyy1 == yyyy2
