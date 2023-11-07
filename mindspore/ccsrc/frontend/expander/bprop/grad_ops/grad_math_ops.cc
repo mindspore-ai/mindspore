@@ -2120,7 +2120,12 @@ REG_BPROP_BUILDER("Polygamma").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Cholesky").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
-  auto upper = ib->GetAttr<bool>("upper");
+  auto upper_input = ib->GetInput(kIndex1);
+  auto upper_input_value = upper_input->BuildValue();
+  if (upper_input_value->ContainsValueAny()) {
+    MS_EXCEPTION(ValueError) << "Input `upper` does not support variable in GRAPH_MODE currently.";
+  }
+  auto upper = GetValue<bool>(upper_input_value);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   if (upper) {

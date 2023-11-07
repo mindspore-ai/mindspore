@@ -534,43 +534,6 @@ def get_bprop_diagonal(self):
     return bprop
 
 
-@bprop_getters.register(Cholesky)
-def get_bprop_cholesky(self):
-    """Grad definition for `Cholesky` operation."""
-    choleskygrad = G.CholeskyGrad()
-
-    def bprop(x, upper, out, dout):
-        out = cholesky_transpose(out) if upper else out
-        dout = cholesky_transpose(dout) if upper else dout
-        dx = choleskygrad(out, dout)
-        return (dx, zeros_like(upper))
-
-    return bprop
-
-
-@bprop_getters.register(InplaceIndexAdd)
-def get_bprop_inplace_index_add(self):
-    """Generate bprop for InplaceIndexAdd"""
-    gather = P.Gather()
-    _axis = self.axis
-
-    def bprop(var, indices, updates, out, dout):
-        return dout, zeros_like(indices), gather(dout, indices, _axis)
-
-    return bprop
-
-
-@bprop_getters.register(P.Zeta)
-def get_bprop_zeta(self):
-    """Generate bprop for Zeta"""
-    zeta = P.Zeta()
-
-    def bprop(x, q, out, dout):
-        dq = -x * zeta(x + 1, q) * dout
-        return zeros_like(x), dq
-
-    return bprop
-
 @_primexpr
 def _fft_rank_offset(norm_shape, rank):
     """generate offset for fft with rank"""
