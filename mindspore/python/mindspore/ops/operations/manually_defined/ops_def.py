@@ -976,13 +976,6 @@ def infer_value_for_Diag(input_x):
     return Tensor(ret)
 
 
-def infer_value_for_Range(start, limit, delat, maxlen):
-    """Infer value for Range op."""
-    if start is None or limit is None or delat is None or maxlen is None:
-        return None
-    return Tensor(np.arange(start, limit, delat))
-
-
 def infer_value_for_Reshape(x, shape):
     """Infer value for Reshape op."""
     def none_in_tuple_or_list(x):
@@ -1027,3 +1020,13 @@ def infer_value_for_Reshape(x, shape):
                              f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
         out = Tensor(x.asnumpy().reshape(shape))
     return out
+
+
+def infer_value_for_Range(start_value, limit_value, delat_value):
+    """Infer the value of input for Range."""
+    if start_value is not None and limit_value is not None and delat_value is not None:
+        start = start_value.asnumpy()
+        limit = limit_value.asnumpy()
+        delat = delat_value.asnumpy()
+        return Tensor(np.arange(start, limit, delat), dtype=start_value.dtype)
+    return None

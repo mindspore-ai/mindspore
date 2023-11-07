@@ -419,7 +419,8 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
       const_args.push_back(vec);
     } else {
       // input[i]'s shape is used
-      auto abs = inputs[i]->get()->abstract();
+      auto abs = inputs[i]->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
       if (auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>(); sequence_abs != nullptr) {
         auto begin_idx = const_args.size();
         auto is_const = ops::TryGetShapeArg(sequence_abs, &const_args, &pos_idx);
