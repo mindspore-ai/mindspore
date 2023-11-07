@@ -32,7 +32,7 @@ class MIND_API ShapeCalc : public BaseOperator {
   MIND_API_BASE_MEMBER(ShapeCalc);
   ShapeCalc() : BaseOperator(kNameShapeCalc) { InitIOName({"inputs"}, {"outputs"}); }
 
-  ShapeCalcFunctorPtr get_functor() const;
+  ShapeCalcBaseFunctorPtr get_functor() const;
   std::vector<bool> get_value_depend() const;
   ShapeArray get_calc_result() const;
 };

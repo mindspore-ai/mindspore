@@ -147,11 +147,6 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::KernelTe
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
-  MS_EXCEPTION_IF_NULL(num_sample_ptr);
-  MS_EXCEPTION_IF_NULL(input_seed_ptr);
-
-  int num_sample = num_sample_ptr[0];
-  int input_seed = input_seed_ptr[0];
   int batch_size = input_shape_[0];
   int num_classes = input_shape_[input_shape_.size() - 1];
 

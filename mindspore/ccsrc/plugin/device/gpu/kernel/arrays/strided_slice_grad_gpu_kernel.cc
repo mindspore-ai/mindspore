@@ -71,7 +71,7 @@ int StridedSliceGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inpu
 template <typename T, typename S = int64_t>
 bool StridedSliceGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
                                                 const std::vector<KernelTensor *> &outputs) {
-  if (IsEmptyInput(inputs[0]->size)) {
+  if (IsEmptyInput(inputs[0]->size())) {
     return true;
   }
   T *dy = GetDeviceAddress<T>(inputs, 0);

@@ -53,7 +53,7 @@ class CustomAOTCpuKernelMod : public NativeCpuKernelMod {
   AotExtraImpl attrs_;
 
  private:
-  void SetKernelPath(const BaseOperatorPtr &base_operator);
+  void SetKernelPath();
 };
 }  // namespace kernel
 }  // namespace mindspore

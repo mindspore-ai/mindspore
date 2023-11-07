@@ -814,7 +814,6 @@ static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_
 }  // namespace
 
 bool CastCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-  MS_EXCEPTION_IF_NULL(base_operator);
   source_dtype_ = inputs[kIndex0]->dtype_id();
   target_dtype_ = outputs[kIndex0]->dtype_id();
 

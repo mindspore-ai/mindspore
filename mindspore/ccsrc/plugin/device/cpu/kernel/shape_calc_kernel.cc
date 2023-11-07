@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/shape_calc_kernel.h"
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/shape_calc.h"
 
 namespace mindspore {
 namespace kernel {

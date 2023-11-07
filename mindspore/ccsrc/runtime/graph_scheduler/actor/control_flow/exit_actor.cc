@@ -248,23 +248,6 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
   }
 }
 
-namespace {
-void SetFromMemPoolFlag(const DeviceTensorPtr &device_tensor, size_t to_index,
-                        const std::vector<std::pair<AID, DataArrow *>> &input_data_arrow_aids) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  const auto &iter =
-    std::find_if(input_data_arrow_aids.begin(), input_data_arrow_aids.end(), [to_index](const auto &pair) {
-      return pair.second != nullptr && pair.second->to_input_index_ == SizeToInt(to_index);
-    });
-  if (iter != input_data_arrow_aids.end() &&
-      iter->first.Name().find(kAnyTypeKernelActorNameSuffix) != std::string::npos) {
-    MS_LOG(DEBUG) << "Set from memory pool flag for ptr:" << device_tensor->GetPtr()
-                  << " in device address:" << device_tensor;
-    device_tensor->set_from_mem_pool(true);
-  }
-}
-}  // namespace
-
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.

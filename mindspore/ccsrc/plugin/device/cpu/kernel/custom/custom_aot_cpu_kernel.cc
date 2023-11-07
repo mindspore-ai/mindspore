@@ -41,12 +41,13 @@ CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
 #endif
 }
 
-bool CustomAOTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                 const std::vector<KernelTensor *> &outputs) {
+void CustomAOTCpuKernelMod::SetKernelPath() {
   const auto &exec_info = GetValue<std::string>(primitive_->GetAttr("func_name"));
+
   if (auto pos = exec_info.find(":"); pos != std::string::npos) {
     auto path = exec_info.substr(0, pos);
-    if (primitive_->HasAttr("path_from_env") && GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
+    if (primitive_->HasAttr("path_from_env") &&
+        GetValue<bool>(primitive_->GetAttr("path_from_env"))) {
       const char *path_in_env = std::getenv(path.c_str());
       if (path_in_env == nullptr) {
         MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, the attr path_from_env is set but the env var ["
@@ -92,10 +93,10 @@ bool CustomAOTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   }
 }
 
-bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs) {
-  kernel_name_ = base_operator->GetPrim()->name();
-  SetKernelPath(base_operator);
+bool CustomAOTCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
+                                 const std::vector<KernelTensor *> &outputs) {
+  kernel_name_ = primitive_->name();
+  SetKernelPath();
 
   for (size_t i = 0; i < inputs.size(); i++) {
     auto in_shape = inputs[i]->GetShapeVector();
