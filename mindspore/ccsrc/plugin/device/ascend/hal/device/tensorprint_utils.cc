@@ -284,10 +284,9 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
   return ret_end_thread;
 }
 
-void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
+void TensorPrintStdOut(const acltdtChannelHandle *) {
   int ret = ACL_SUCCESS;
   acltdtDataset *acl_dataset;
-
   while (true) {
     do {
       acl_dataset = acltdtCreateDataset();
@@ -298,21 +297,23 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
       }
       {
         std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
+        acltdtChannelHandle *acl_handle = AclHandle::GetInstance().Get();
+
         if (acl_handle == nullptr) {
           ret = -1;
           MS_LOG(WARNING) << "acl_handle is nullptr or has destroyed.";
           break;
         }
-        // 200 ms timeout
-        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 200);
+        // 20000 ms timeout
+        ret = acltdtReceiveTensor(acl_handle, acl_dataset, 20000);
       }
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         MS_LOG(DEBUG) << "queue is empty.";
         break;
       }
 
-      if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
-        MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
+      if (ret != ACL_SUCCESS) {
+        // MS_LOG(WARNING) << "AclHandle failed to receive tensor.ret = " << ret;
         break;
       }
       if (ConvertDataset2Tensor(acl_dataset)) {
@@ -321,12 +322,13 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && ret == ACL_SUCCESS && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Std out: AcltdtDestroyDataset failed.";
       break;
     }
 
-    if (ret != ACL_SUCCESS) {
+    if (ret != ACL_SUCCESS && ret != ACL_ERROR_RT_QUEUE_EMPTY) {
+      MS_LOG(WARNING) << "Failed to receive tensor.ret = " << ret;
       break;
     }
   }
@@ -464,15 +466,16 @@ void DestroyTensorPrintThread() {
   {
     std::unique_lock<std::mutex> lock(g_tdt_destroy_mutex_);
     aclError destroyed_status = acltdtDestroyChannel(acl_handle);
-    acl_handle = nullptr;
+    AclHandle::GetInstance().SetNull();
     if (destroyed_status != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
       return;
     }
   }
+  MS_LOG(INFO) << "Succeed destroy acl channel";
   if (channel_type == ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  MS_LOG(INFO) << "Succeed destroy acl channel";
+  MS_LOG(INFO) << "Succeed destroy tensor print thread";
 }
 }  // namespace mindspore::device::ascend
