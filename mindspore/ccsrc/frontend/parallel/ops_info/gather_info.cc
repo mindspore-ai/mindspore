@@ -1162,9 +1162,11 @@ Status GatherInfo::InferMirrorOps() {
     MS_LOG(INFO) << name_ << " : Create the mirror ops for input a success, group is " << input_a_group[0].name();
   }
 
+  OperatorVector op_for_batch_dims;
   mirror_ops_.push_back(op_for_input_a);
   mirror_ops_.push_back(op_for_input_b);
   mirror_ops_.push_back(op_for_axis);
+  mirror_ops_.push_back(op_for_batch_dims);
 
   return SUCCESS;
 }

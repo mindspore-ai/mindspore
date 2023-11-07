@@ -73,6 +73,20 @@ Status BiasAddInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status BiasAddInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_data_format;
+  (void)mirror_ops_.emplace_back(std::move(op_for_data_format));
+  return SUCCESS;
+}
+
 Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {

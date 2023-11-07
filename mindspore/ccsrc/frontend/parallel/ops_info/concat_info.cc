@@ -137,6 +137,20 @@ void ConcatInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
+Status ConcatInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_axis;
+  (void)mirror_ops_.emplace_back(std::move(op_for_axis));
+  return SUCCESS;
+}
+
 Status ConcatInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> ConcatInfo::GenerateOpStrategies(int64_t stage_id) {

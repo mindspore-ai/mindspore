@@ -42,6 +42,7 @@ class BiasAddInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status InferMirrorOps() override;
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }

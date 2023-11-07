@@ -41,6 +41,7 @@ class ConcatInfo : public OperatorInfo {
   void ReComputeBatchSplitFlagList() override;
 
  protected:
+  Status InferMirrorOps() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
