@@ -17,9 +17,9 @@ mindspore.nn.FocalLoss
         - **weight** (Union[Tensor, None]) - Focal Loss的权重，维度为1。如果为None，则不使用权重。默认值： ``None`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的加权平均值。
-          - ``"sum"``：计算输出元素的总和。
+          - ``'none'``：不应用规约方法。
+          - ``'mean'``：计算输出元素的加权平均值。
+          - ``'sum'``：计算输出元素的总和。
 
     输入：
         - **logits** (Tensor) - shape为 :math:`(N, C)` 、 :math:`(N, C, H)` 、或 :math:`(N, C, H, W)` 的Tensor，其中 :math:`C` 是分类的数量，值大于1。如果shape为 :math:`(N, C, H, W)` 或 :math:`(N, C, H)` ，则 :math:`H` 或 :math:`H` 和 :math:`W` 的乘积应与 `labels` 的相同。
@@ -33,4 +33,4 @@ mindspore.nn.FocalLoss
         - **TypeError** - `weight` 不是Tensor。
         - **ValueError** - `labels` 维度与 `logits` 不同。
         - **ValueError** - `labels` 通道不为1，且 `labels` 的shape与 `logits` 不同。
-        - **ValueError** - `reduction` 不为"mean"，"sum"，或"none"。
+        - **ValueError** - `reduction` 不为 ``'mean'`` ， ``'sum'`` ，或 ``'none'`` 。

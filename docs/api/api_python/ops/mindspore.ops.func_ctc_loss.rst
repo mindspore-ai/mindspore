@@ -15,14 +15,14 @@ mindspore.ops.ctc_loss
     参数：
         - **log_probs** (Tensor) - 输入Tensor，shape :math:`(T, N, C)` 。其中T表示输入长度，N表示批次大小，C是分类数，包含空白。
         - **targets** (Tensor) - 目标Tensor，shape :math:`(N, S)` 。其中S表示最大目标长度。
-        - **input_lengths** (Union(tuple, Tensor)) - 输入长度，shape为N的Tensor或tuple。
-        - **target_lengths** (Union(tuple, Tensor)) - 目标长度，shape为N的Tensor或tuple。
+        - **input_lengths** (Union(tuple, Tensor)) - 输入长度，shape为 :math:`(N)` 的Tensor或tuple。
+        - **target_lengths** (Union(tuple, Tensor)) - 目标长度，shape为 :math:`(N)` 的Tensor或tuple。
         - **blank** (int，可选) - 空白标签。默认值： ``0`` 。
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
-          - ``"mean"``：计算输出元素的平均值。
-          - ``"sum"``：计算输出元素的总和。
+          - ``'none'``：不应用规约方法。
+          - ``'mean'``：计算输出元素的平均值。
+          - ``'sum'``：计算输出元素的总和。
 
         - **zero_infinity** (bool，可选) - 是否设置无限损失和相关梯度为零。默认值： ``False`` 。
 
