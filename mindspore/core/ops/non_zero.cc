@@ -42,7 +42,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kNonZeroInputMinDim = 1;
-constexpr size_t kNonZeroInputMaxDim = 7;
+constexpr size_t kNonZeroInputMaxDim = 8;
 constexpr int64_t kNonZeroInputNum = 1;
 
 abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
