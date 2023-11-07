@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 template <typename T>
-void LessImpl(void *x1, void *x2, void *result, size_t size) {
+void GreaterImpl(void *x1, void *x2, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
@@ -35,20 +35,21 @@ void LessImpl(void *x1, void *x2, void *result, size_t size) {
   T *x2_data = static_cast<T *>(x2);
   auto result_data = static_cast<bool *>(result);
   for (size_t i = 0; i < size; ++i) {
-    result_data[i] = (x1_data[i] < x2_data[i]);
+    result_data[i] = (x1_data[i] > x2_data[i]);
   }
 }
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
-std::map<TypeId, Handler> less_impl_list = {
-  {kNumberTypeBool, LessImpl<bool>},     {kNumberTypeInt, LessImpl<int>},       {kNumberTypeInt8, LessImpl<int8_t>},
-  {kNumberTypeInt16, LessImpl<int16_t>}, {kNumberTypeInt32, LessImpl<int32_t>}, {kNumberTypeInt64, LessImpl<int64_t>},
-  {kNumberTypeUInt8, LessImpl<uint8_t>}, {kNumberTypeFloat, LessImpl<float>},   {kNumberTypeFloat16, LessImpl<float16>},
-  {kNumberTypeFloat32, LessImpl<float>}, {kNumberTypeFloat64, LessImpl<double>}};
+std::map<TypeId, Handler> greater_impl_list = {
+  {kNumberTypeBool, GreaterImpl<bool>},       {kNumberTypeInt, GreaterImpl<int>},
+  {kNumberTypeInt8, GreaterImpl<int8_t>},     {kNumberTypeInt16, GreaterImpl<int16_t>},
+  {kNumberTypeInt32, GreaterImpl<int32_t>},   {kNumberTypeInt64, GreaterImpl<int64_t>},
+  {kNumberTypeUInt8, GreaterImpl<uint8_t>},   {kNumberTypeFloat, GreaterImpl<float>},
+  {kNumberTypeFloat16, GreaterImpl<float16>}, {kNumberTypeFloat32, GreaterImpl<float>},
+  {kNumberTypeFloat64, GreaterImpl<double>}};
 
-class LessFrontendFuncImpl : public OpFrontendFuncImpl {
+class GreaterFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
-  // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x1 = input_args[kIndex0]->GetValue();
     auto x2 = input_args[kIndex1]->GetValue();
@@ -62,17 +63,17 @@ class LessFrontendFuncImpl : public OpFrontendFuncImpl {
 
     auto x1_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
     auto x2_shape = input_args[kIndex1]->GetShape()->GetShapeVector();
-    if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || x1_shape != x2_shape) {
+    if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || !IsMactchedShapeInferValue(x1_shape, x2_shape)) {
       return nullptr;
     }
     auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
     auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
-    less_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    greater_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };
 
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Less", LessFrontendFuncImpl);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Greater", GreaterFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

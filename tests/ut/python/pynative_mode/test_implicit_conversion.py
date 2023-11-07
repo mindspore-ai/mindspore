@@ -111,7 +111,7 @@ def test_float_tensor_and_str_add():
     y = "ok"
     with pytest.raises(RuntimeError) as er:
         ret = x + y
-    assert "RuntimeError: Failed calling Add with" in str(er.value)
+    assert "Failed calling Add with" in str(er.value)
     assert "Add()(x=Tensor, y=string)" in str(er.value)
     assert "Add()(x=<Number, Tensor>, y=<Number, Tensor>)" in str(er.value)
 

@@ -230,9 +230,9 @@ def vm_impl_any(self):
 def vm_impl_concatV2(self):
     """Generate vm_impl function for Concat"""
 
-    def vm_impl(x):
+    def vm_impl(x, axis):
         x = x.asnumpy()
-        out = vm.Concat(x, self.axis)
+        out = vm.Concat(x, axis)
         return Tensor(out)
 
     return vm_impl

@@ -71,7 +71,6 @@ std::map<TypeId, Handler> mul_impl_list = {{kNumberTypeBool, ImplMulBool<bool>},
 
 class MulFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
-  // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x1 = input_args[kIndex0]->GetValue();
     auto x2 = input_args[kIndex1]->GetValue();
@@ -85,7 +84,7 @@ class MulFrontendFuncImpl : public OpFrontendFuncImpl {
 
     auto x1_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
     auto x2_shape = input_args[kIndex1]->GetShape()->GetShapeVector();
-    if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || x1_shape != x2_shape) {
+    if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || !IsMactchedShapeInferValue(x1_shape, x2_shape)) {
       return nullptr;
     }
 

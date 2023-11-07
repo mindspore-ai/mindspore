@@ -2548,6 +2548,7 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   }
 
   auto new_cnode = fg->NewCNodeInOrder(new_inputs);
+  new_cnode->set_debug_info(cnode->debug_info());
   auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   MS_LOG(INFO) << "Convert primitive args to inputs: " << prim_->ToString() << ". node: " << cnode->DebugString()
                << ", new cnode: " << new_cnode->DebugString();

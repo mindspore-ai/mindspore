@@ -908,6 +908,63 @@ def infer_value_for_Concat(input_x, axis):
     return Tensor(np.concatenate([x.asnumpy() for x in input_x], axis))
 
 
+def infer_value_for_ReduceSum(input_x, axis, keep_dims, skip_mode):
+    """Infer value for ReduceSum op."""
+    value = None
+    if input_x is not None and axis is not None:
+        value = input_x.asnumpy()
+        if isinstance(axis, int):
+            pass
+        elif axis:
+            axis = tuple(set(axis))
+        elif axis in ((), []) and skip_mode:
+            return input_x
+        else:
+            axis = tuple(range(len(value.shape)))
+        value = np.sum(value, axis, keepdims=keep_dims)
+        value = np.array(value)
+        value = Tensor(value)
+    return value
+
+
+def infer_value_for_ReduceMax(input_x, axis, keep_dims):
+    """Infer value for ReduceMax op."""
+    value = None
+    if input_x is not None and axis is not None:
+        value = input_x.asnumpy()
+        if isinstance(axis, int):
+            pass
+        elif axis:
+            axis = tuple(set(axis))
+        elif axis in ((), []):
+            return input_x
+        else:
+            axis = tuple(range(len(value.shape)))
+        value = np.sum(value, axis, keepdims=keep_dims)
+        value = np.array(value)
+        value = Tensor(value)
+    return value
+
+
+def infer_value_for_ReduceMin(input_x, axis, keep_dims):
+    """Infer value for ReduceMin op."""
+    value = None
+    if input_x is not None and axis is not None:
+        value = input_x.asnumpy()
+        if isinstance(axis, int):
+            pass
+        elif axis:
+            axis = tuple(set(axis))
+        elif axis in ((), []):
+            return input_x
+        else:
+            axis = tuple(range(len(value.shape)))
+        value = np.sum(value, axis, keepdims=keep_dims)
+        value = np.array(value)
+        value = Tensor(value)
+    return value
+
+
 def infer_value_for_Diag(input_x):
     """Infer value for Diag op."""
     if input_x is None:

@@ -64,7 +64,8 @@ class MIND_API ScalarSummaryInfer : public abstract::OpInferBase {
 
   // This is used for backend infer by kernel tensor.
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    CheckAndConvertUtils::CheckArgsType(primitive->name(), input_args, 1, kObjectTypeTensorType);
+    // check
+    CheckAndConvertUtils::CheckSummaryParam(input_args[0], input_args[1], primitive->name());
     return kInt32;
   }
 };

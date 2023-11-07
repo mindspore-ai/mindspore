@@ -23,12 +23,12 @@
 #include "ops/op_utils.h"
 #include "utils/log_adapter.h"
 #include "abstract/abstract_value.h"
-#include "ops/ops_func_impl/div.h"
+#include "ops/ops_func_impl/real_div.h"
 
 namespace mindspore {
 namespace ops {
 template <typename T>
-void DivImpl(void *x, void *y, void *result, size_t size) {
+void RealDivImpl(void *x, void *y, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(y);
   MS_EXCEPTION_IF_NULL(result);
@@ -58,7 +58,7 @@ void DivImpl(void *x, void *y, void *result, size_t size) {
 }
 
 template <typename T>
-void ComplexDivImpl(void *x, void *y, void *result, size_t size) {
+void ComplexRealDivImpl(void *x, void *y, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(y);
   MS_EXCEPTION_IF_NULL(result);
@@ -81,7 +81,7 @@ void ComplexDivImpl(void *x, void *y, void *result, size_t size) {
   }
 }
 
-class DivFrontendFuncImpl : public OpFrontendFuncImpl {
+class RealDivFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x = input_args[kIndex0]->GetValue();
@@ -115,25 +115,25 @@ class DivFrontendFuncImpl : public OpFrontendFuncImpl {
 
  private:
   std::map<TypeId, std::function<void(void *x, void *y, void *result, size_t size)>> func_map = {
-    {kNumberTypeInt, DivImpl<int>},
-    {kNumberTypeInt8, DivImpl<int8_t>},
-    {kNumberTypeInt16, DivImpl<int16_t>},
-    {kNumberTypeInt32, DivImpl<int32_t>},
-    {kNumberTypeInt64, DivImpl<int64_t>},
-    {kNumberTypeUInt, DivImpl<u_int>},
-    {kNumberTypeUInt8, DivImpl<uint8_t>},
-    {kNumberTypeUInt16, DivImpl<uint16_t>},
-    {kNumberTypeUInt32, DivImpl<uint32_t>},
-    {kNumberTypeUInt64, DivImpl<uint64_t>},
-    {kNumberTypeFloat16, DivImpl<float16>},
-    {kNumberTypeFloat32, DivImpl<float>},
-    {kNumberTypeFloat, DivImpl<float>},
-    {kNumberTypeFloat64, DivImpl<double>},
-    {kNumberTypeDouble, DivImpl<double>},
-    {kNumberTypeComplex64, ComplexDivImpl<std::complex<float>>},
-    {kNumberTypeComplex128, ComplexDivImpl<std::complex<double>>}};
+    {kNumberTypeInt, RealDivImpl<int>},
+    {kNumberTypeInt8, RealDivImpl<int8_t>},
+    {kNumberTypeInt16, RealDivImpl<int16_t>},
+    {kNumberTypeInt32, RealDivImpl<int32_t>},
+    {kNumberTypeInt64, RealDivImpl<int64_t>},
+    {kNumberTypeUInt, RealDivImpl<u_int>},
+    {kNumberTypeUInt8, RealDivImpl<uint8_t>},
+    {kNumberTypeUInt16, RealDivImpl<uint16_t>},
+    {kNumberTypeUInt32, RealDivImpl<uint32_t>},
+    {kNumberTypeUInt64, RealDivImpl<uint64_t>},
+    {kNumberTypeFloat16, RealDivImpl<float16>},
+    {kNumberTypeFloat32, RealDivImpl<float>},
+    {kNumberTypeFloat, RealDivImpl<float>},
+    {kNumberTypeFloat64, RealDivImpl<double>},
+    {kNumberTypeDouble, RealDivImpl<double>},
+    {kNumberTypeComplex64, ComplexRealDivImpl<std::complex<float>>},
+    {kNumberTypeComplex128, ComplexRealDivImpl<std::complex<double>>}};
 };
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Div", DivFrontendFuncImpl);
 
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("RealDiv", RealDivFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

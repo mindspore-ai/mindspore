@@ -49,6 +49,26 @@ inline size_t SizeOf(const ShapeVector &shape) {
   return data_size;
 }
 
+inline bool IsOneElementShape(const ShapeVector &shape) {
+  if (shape.empty()) {
+    return true;
+  } else if (shape.size() == 1 && shape[0] == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+inline bool IsMactchedShapeInferValue(const ShapeVector &shape1, const ShapeVector &shape2) {
+  if (IsOneElementShape(shape1) && IsOneElementShape(shape2)) {
+    return true;
+  }
+  if (shape1 == shape2) {
+    return true;
+  }
+  return false;
+}
+
 inline bool IsDynamicRank(const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if (shape[i] > abstract::Shape::kShapeRankAny) {

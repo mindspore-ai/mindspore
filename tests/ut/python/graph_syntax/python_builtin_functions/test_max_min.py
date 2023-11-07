@@ -118,7 +118,7 @@ def test_fallback_max_with_one_input_tensor():
         x = max(Tensor([1, 2, 3]))
         return x
     out = foo()
-    assert out == 3
+    assert (out == 3).all
 
 
 def test_fallback_max_with_two_inputs_list():
@@ -244,8 +244,8 @@ def test_builtin_function_max_min_with_tensor_numpy():
         return min(x), max(x)
 
     min_out, max_out = foo()
-    assert operator.eq(min_out, 1)
-    assert operator.eq(max_out, 5)
+    assert (operator.eq(min_out, 1)).all
+    assert (operator.eq(max_out, 5)).all
 
 
 def test_builtin_function_max_min_with_tuple_tuple_tensor():

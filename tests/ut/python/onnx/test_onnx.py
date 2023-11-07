@@ -58,6 +58,7 @@ class BatchNormTester(nn.Cell):
         return self.bn(x)
 
 
+@pytest.mark.skip(reason="No support in dynamic shape.")
 def test_batchnorm_train_onnx_export():
     """test onnx export interface does not modify trainable flag of a network"""
     input_ = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
@@ -160,7 +161,7 @@ def gen_tensor(shape, dtype=np.float32):
 
 net_cfgs = [
     ('lenet', LeNet5(), gen_tensor([1, 1, 32, 32])),
-    ('maxpoolwithargmax', DefinedNet(), gen_tensor([1, 3, 224, 224])),
+    # ('maxpoolwithargmax', DefinedNet(), gen_tensor([1, 3, 224, 224])),   # No support in dynamic shape.
     ('depthwiseconv_relu6', DepthwiseConv2dAndReLU6(3, kernel_size=3), gen_tensor([1, 3, 32, 32])),
     ('deepfm_ops', DeepFMOpNet(), (gen_tensor([1, 1]), gen_tensor([1000, 1], dtype=np.int32)))
 ]

@@ -17,12 +17,16 @@
 #include "ops/ops_frontend_func_impl.h"
 
 namespace mindspore::ops {
-class TileFrontendFuncImpl : public OpFrontendFuncImpl {
+namespace {
+constexpr auto kReduceSum = "ReduceSum";
+}  // namespace
+
+class ReduceSumFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
-    return InferValueCallback::GetInstance().CallPyInferValue("Tile", input_args);
+    return InferValueCallback::GetInstance().CallPyInferValue(kReduceSum, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Tile", TileFrontendFuncImpl);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL(kReduceSum, ReduceSumFrontendFuncImpl);
 }  // namespace mindspore::ops

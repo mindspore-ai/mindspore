@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <complex>
+#include <limits>
 #include <map>
 #include <memory>
 #include "ops/ops_frontend_func_impl.h"
@@ -25,29 +27,26 @@
 namespace mindspore {
 namespace ops {
 template <typename T>
-void ImplMinimum(void *x1, void *x2, void *result, size_t size) {
+void LessImpl(void *x1, void *x2, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(x2);
   MS_EXCEPTION_IF_NULL(result);
   T *x1_data = static_cast<T *>(x1);
   T *x2_data = static_cast<T *>(x2);
-  auto result_data = static_cast<T *>(result);
+  auto result_data = static_cast<bool *>(result);
   for (size_t i = 0; i < size; ++i) {
-    result_data[i] = x1_data[i] < x2_data[i] ? x1_data[i] : x2_data[i];
+    result_data[i] = (x1_data[i] < x2_data[i]);
   }
 }
 
 using Handler = std::function<void(void *x1, void *x2, void *result, size_t size)>;
-std::map<TypeId, Handler> minimum_impl_list = {
-  {kNumberTypeInt8, ImplMinimum<int8_t>},     {kNumberTypeInt16, ImplMinimum<int16_t>},
-  {kNumberTypeInt32, ImplMinimum<int32_t>},   {kNumberTypeInt, ImplMinimum<int>},
-  {kNumberTypeInt64, ImplMinimum<int64_t>},   {kNumberTypeUInt, ImplMinimum<u_int>},
-  {kNumberTypeUInt8, ImplMinimum<uint8_t>},   {kNumberTypeUInt16, ImplMinimum<uint16_t>},
-  {kNumberTypeUInt32, ImplMinimum<uint32_t>}, {kNumberTypeUInt64, ImplMinimum<uint64_t>},
-  {kNumberTypeFloat16, ImplMinimum<float16>}, {kNumberTypeFloat32, ImplMinimum<float>},
-  {kNumberTypeFloat, ImplMinimum<float>},     {kNumberTypeFloat64, ImplMinimum<double>}};
+std::map<TypeId, Handler> less_impl_list = {
+  {kNumberTypeBool, LessImpl<bool>},     {kNumberTypeInt, LessImpl<int>},       {kNumberTypeInt8, LessImpl<int8_t>},
+  {kNumberTypeInt16, LessImpl<int16_t>}, {kNumberTypeInt32, LessImpl<int32_t>}, {kNumberTypeInt64, LessImpl<int64_t>},
+  {kNumberTypeUInt8, LessImpl<uint8_t>}, {kNumberTypeFloat, LessImpl<float>},   {kNumberTypeFloat16, LessImpl<float16>},
+  {kNumberTypeFloat32, LessImpl<float>}, {kNumberTypeFloat64, LessImpl<double>}};
 
-class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
+class LessFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x1 = input_args[kIndex0]->GetValue();
@@ -65,16 +64,14 @@ class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
     if (IsDynamic(x1_shape) || IsDynamic(x2_shape) || !IsMactchedShapeInferValue(x1_shape, x2_shape)) {
       return nullptr;
     }
-
+    auto type_id = x1_tensor->data_type();
     auto data_size = x1_tensor->DataSize();
-    auto dtype = x1_tensor->data_type();
-    auto result_tensor = std::make_shared<tensor::Tensor>(dtype, x1_shape);
-    MS_EXCEPTION_IF_NULL(result_tensor);
-    minimum_impl_list[dtype](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+    auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, x1_shape);
+    less_impl_list[type_id](x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
     return result_tensor;
   }
 };
 
-REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Minimum", MinimumFrontendFuncImpl);
+REGISTER_PRIMITIVE_FUNCTION_FRONTEND_FUNC_IMPL("Less", LessFrontendFuncImpl);
 }  // namespace ops
 }  // namespace mindspore
