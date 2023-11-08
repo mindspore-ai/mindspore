@@ -7263,8 +7263,12 @@ class Conv3D(Primitive):
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         validator.check_value_type("group", group, (int,), self.name)
+        validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
+        device_target = context.get_context("device_target")
         if self.out_channel % group != 0:
             raise ValueError("The argument 'group' should be divisible by 'out_channel'")
+        if device_target == "Ascend" and group != 1:
+            raise ValueError("On Ascend platform, group = 1 must be satisfied.")
 
         self.group = group
         self.add_prim_attr('groups', self.group)
