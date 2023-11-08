@@ -104,7 +104,16 @@ function Run_Benchmark() {
             fi
             echo "cfg_file: ${cfg_file}"
             if [[ ${cfg_file} =~ "ge_with_config" ]]; then
-              benchmark_config_file="${benchmark_test_path}/${model_name}.ge.config"
+              input_files=""
+              benchmark_config_file="${benchmark_test_path}/${model_name}.mindir.ge.config"
+              if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+                  input_files=${data_path}'input/'${model_name}'.mindir.bin'
+              else
+                  for i in $(seq 1 $input_num); do
+                      input_files=${input_files}${data_path}'input/'${model_name}'.mindir.bin_'$i','
+                  done
+              fi
+              output_file=${data_path}'output/'${model_name}'.mindir.out'
             fi
             benchmark_command="./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=${benchmark_device} --configFile=${benchmark_config_file}"
             echo "${benchmark_command}"
@@ -143,16 +152,15 @@ function Run_Benchmark_GE() {
     echo ${models_server_inference_cfg_file_list}
     for cfg_file in ${models_server_inference_cfg_file_list[*]}; do
         while read line; do
-            if [[ $line == \#* || $line == "" ]]; then
-              echo $line
+            line_info=${line}
+            if [[ ${line_info} == \#* || ${line_info} == "" ]]; then
+              echo ${line_info}
               continue
             fi
+            model_info=$(echo ${line_info} | awk -F ' ' '{print $1}')
             model_name=$(echo ${model_info} | awk -F ';' '{print $1}')
-            if [[ ! $model_name =~ \.mindir ]]; then
-                #skip models whose format is not mindir
-                continue
-            fi
-            cp ${models_path}"/"${model_name} $ms_models_path/${model_name}".mindir" || exit 1
+            echo "${models_path}/${model_name}.mindir"
+            cp "${models_path}/${model_name}.mindir" $ms_models_path/ || exit 1
         done <${cfg_file}
     done
     # Empty config file is allowed, but warning message will be shown
@@ -161,7 +169,6 @@ function Run_Benchmark_GE() {
         exit 0
     fi
     # add config file path for ge
-#    benchmark_config_file=${benchmark_test_path}"/graph_kernel/graph_kernel_ascend.cfg"
     Run_Benchmark
     return $?
 }
@@ -204,6 +211,7 @@ function ConfigAscend() {
     ls ${basepath}/../${config_folder}/ascend/*.config
     echo "========== config file list end =============="
     cp ${basepath}/../${config_folder}/ascend/*.config ${benchmark_test_path} || exit 1
+    cp ${basepath}/../${config_folder}/models_with_large_model_python_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
     cp ${basepath}/../${config_folder}/models_with_large_model_acl_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
     cp ${basepath}/../${config_folder}/models_with_large_model_ge_with_config_cloud_ascend.cfg ${benchmark_test_path} || exit 1
     # we do not convert ge models, because we will use benchmark to run mindir with ge backend
@@ -291,17 +299,18 @@ release_file=$(ls *-linux-*.tar.gz)
 release_file_path="$release_package_path/$release_file"
 IFS="-" read -r -a file_name_array <<<"$release_file"
 version=${file_name_array[2]}
+
+echo "installing mslite whl..."
+python3 -m pip uninstall -y mindspore_lite || exit 1
+python3 -m pip install *.whl --user
+echo "install mslite success !"
+
 echo "Running MSLite Large Model on ${backend}, release file path is $release_file_path, working dir is: $benchmark_test_path"
 cd -
 # uncompressing package file
 echo "uncompressing package file..."
 cd ${benchmark_test_path} || exit 1
 tar -zxf $release_file_path  || exit 1
-echo "installing mslite whl..."
-python3 -m pip uninstall -y mindspore_lite || exit 1
-ls
-# todo: pip insatll mindspore lite whl
-#python3 -m pip install *.whl --user
 
 # install ascend custom op for tar in 910B, now only support KVCache
 if [[ ${backend} =~ "ascend" ]]; then
@@ -355,23 +364,17 @@ if [[ ${Run_benchmark_status} != 0 ]]; then
     Print_Benchmark_Result $run_benchmark_result_file
     exit ${Run_benchmark_status}
 fi
-echo "run acl model end..."
-
-echo "run ge model...."
+echo "run acl model end, start run ge model"
 # run ge backend
-Run_Benchmark_GE &
-Run_Benchmark_GE_PID=$!
-
-wait ${Run_Benchmark_GE_PID}
+Run_Benchmark_GE
 Run_benchmark_ge_status=$?
-
+unset ASCEND_BACK_POLICY
 if [[ ${Run_benchmark_ge_status} != 0 ]]; then
     echo "Run_Benchmark_GE failed"
     cat ${run_benchmark_log_file}
     Print_Benchmark_Result $run_benchmark_result_file
     exit ${Run_benchmark_ge_status}
 fi
-
 echo "Run_Benchmark success"
 Print_Benchmark_Result $run_benchmark_result_file
 exit 0
