@@ -92,18 +92,18 @@ Int64ImmPtr ConvertInt(const py::object &obj) {
   return PyCast<int64_t, Int64Imm>(obj);
 }
 
-FP64ImmPtr ConvertFloat(const py::object &obj) {
+FP32ImmPtr ConvertFloat(const py::object &obj) {
   if (!py::isinstance<py::float_>(obj)) {
     return nullptr;
   }
-  return PyCast<double, FP64Imm>(obj);
+  return PyCast<double, FP32Imm>(obj);
 }
 
 ScalarPtr ConvertNumber(const py::object &obj) {
   if (py::isinstance<py::int_>(obj)) {
     return std::make_shared<Int64Imm>(py::cast<int64_t>(obj));
   } else if (py::isinstance<py::float_>(obj)) {
-    return std::make_shared<FP64Imm>(py::cast<double>(obj));
+    return std::make_shared<FP32Imm>(py::cast<double>(obj));
   } else if (py::isinstance<py::bool_>(obj)) {
     return std::make_shared<BoolImm>(py::cast<bool>(obj));
   }
@@ -260,7 +260,7 @@ ValueTuplePtr Parser::ToBoolList(size_t i) {
   return nullptr;
 }
 
-FP64ImmPtr Parser::ToFloat(size_t i) {
+FP32ImmPtr Parser::ToFloat(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertFloat(obj);
@@ -268,7 +268,7 @@ FP64ImmPtr Parser::ToFloat(size_t i) {
     return convert;
   }
   if (!op_arg.cast_dtype_.empty()) {
-    convert = ConvertByCastDtype(obj, op_arg)->cast<FP64ImmPtr>();
+    convert = ConvertByCastDtype(obj, op_arg)->cast<FP32ImmPtr>();
     if (convert != nullptr) {
       return convert;
     }
@@ -281,7 +281,7 @@ template <typename T>
 ValueTuplePtr Parser::ToFloatList(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
-  ValueTuplePtr convert = ConvertList<T, py::float_, FP64Imm>(obj);
+  ValueTuplePtr convert = ConvertList<T, py::float_, FP32Imm>(obj);
   if (convert != nullptr) {
     return convert;
   }

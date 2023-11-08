@@ -37,7 +37,7 @@ class Parser {
   BoolImmPtr ToBool(size_t i);
   template <typename T>
   ValueTuplePtr ToBoolList(size_t i);
-  FP64ImmPtr ToFloat(size_t i);
+  FP32ImmPtr ToFloat(size_t i);
   template <typename T>
   ValueTuplePtr ToFloatList(size_t i);
   ScalarPtr ToScalar(size_t i);

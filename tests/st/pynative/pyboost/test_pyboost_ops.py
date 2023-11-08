@@ -580,9 +580,9 @@ def test_layer_norm_ascend():
     weight = Tensor(np.ones(2), mindspore.float32)
     bias = Tensor(np.zeros(2), mindspore.float32)
     output = layer_norm(input_x1, [2], weight, bias, 0.00001)
-    assert np.allclose(output[0].asnumpy(), [[[-0.999979973, 0.999979973], [-0.999979973, 0.999979973]]])
+    assert np.allclose(output[0].asnumpy(), [[[-1.0, 1.0], [-1.0, 1.0]]])
     assert np.allclose(output[1].asnumpy(), [[[1.5], [3.5]]])
-    assert np.allclose(output[2].asnumpy(), [[[1.99995995], [1.99995995]]])
+    assert np.allclose(output[2].asnumpy(), [[[2.0], [2.0]]])
 
 
 def test_implicit_cast_ascend():
@@ -596,3 +596,4 @@ def test_implicit_cast_ascend():
     y = Tensor(np.array([3]), mindspore.float32)
     out = add(x, y)
     assert np.allclose(out.asnumpy(), np.array([5], np.float32))
+

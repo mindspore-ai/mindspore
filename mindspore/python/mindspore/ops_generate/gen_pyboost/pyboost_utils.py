@@ -69,11 +69,11 @@ def get_convert_type_str(dtype: str):
 def tuple_input_to_cpp_type(dtype: str):
     types_map = {
         'tuple[int]': 'int64_t',
-        'tuple[float]': 'double',
+        'tuple[float]': 'float',
         'tuple[bool]': 'bool',
         'tuple[tensor]': 'TensorPtr',
         'list[int]': 'int64_t',
-        'list[float]': 'double',
+        'list[float]': 'float',
         'list[bool]': 'bool',
         'list[tensor]': 'TensorPtr',
     }
@@ -85,7 +85,7 @@ def tuple_input_to_cpp_type(dtype: str):
 def number_input_to_cpp_type(dtype: str):
     types_map = {
         'int': 'int64_t',
-        'float': 'double',
+        'float': 'float',
         'bool': 'bool',
     }
     if dtype in types_map:
@@ -100,7 +100,7 @@ def get_input_dtype(dtype: str):
     # add more type here
     type_convert = {
         'int': 'Int64ImmPtr',
-        'float': 'FP64ImmPtr',
+        'float': 'FP32ImmPtr',
         'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
         'tuple[int]': 'ValueTuplePtr',
