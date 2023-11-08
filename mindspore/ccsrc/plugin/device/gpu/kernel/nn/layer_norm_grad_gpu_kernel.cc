@@ -44,7 +44,12 @@ bool LayerNormGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  epsilon_ = GetValue<float>(primitive()->GetAttr(ops::kEpsilon));
+  if (!primitive()->HasAttr(ops::kEpsilon)) {
+    MS_LOG(WARNING) << "LayerNormGrad should have attr 'epsilon'.";
+  } else {
+    epsilon_ = GetValue<float>(primitive()->GetAttr(ops::kEpsilon));
+  }
+
   return true;
 }
 

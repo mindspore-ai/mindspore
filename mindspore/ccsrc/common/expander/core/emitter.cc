@@ -98,6 +98,9 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   PrimitivePtr prim = nullptr;
   if (mindspore::ops::IsPrimitiveFunction(op_name)) {
     prim = std::make_shared<Primitive>(op_name);
+    if (!attrs.empty()) {
+      prim->SetAttrs(attrs);
+    }
   } else {
     auto &func = Emitter::primc_func_cache()[op_name];
     if (func == nullptr) {
