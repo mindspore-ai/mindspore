@@ -812,7 +812,7 @@ class Conv3d(_Conv):
             bias_init,
             data_format,
             dtype=dtype)
-        out_channels = self.out_channels
+        out_channels = self.out_channels // group
         self.conv3d = P.Conv3D(out_channel=out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -820,17 +820,33 @@ class Conv3d(_Conv):
                                pad=self.padding,
                                stride=self.stride,
                                dilation=self.dilation,
-                               group=group,
+                               group=1,
                                data_format=self.data_format)
         self.bias_add = P.BiasAdd(data_format=self.data_format)
         self.shape = P.Shape()
+        self.concat = P.Concat(1)
+        self.split_0 = P.Split(0, self.group)
+        self.split_1 = P.Split(1, self.group)
 
     def construct(self, x):
         x_shape = self.shape(x)
         _check_input_5dims(x_shape, self.cls_name)
-        out = self.conv3d(x, self.weight)
-        if self.has_bias:
-            out = self.bias_add(out, self.bias)
+        if self.group == 1:
+            out = self.conv3d(x, self.weight)
+            if self.has_bias:
+                out = self.bias_add(out, self.bias)
+        else:
+            features = self.split_1(x)
+            weights = self.split_0(self.weight)
+            outputs = ()
+            for i in range(self.group):
+                output = self.conv3d(features[i], weights[i])
+                outputs = outputs + (output,)
+            out = self.concat(outputs)
+            if self.bias is not None:
+                new_shape = [1 for _ in range(out.ndim)]
+                new_shape[1] = self.out_channels
+                out = out + self.bias.reshape(new_shape)
         return out
 
 
