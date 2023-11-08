@@ -96,12 +96,14 @@ class KernelPromptKvCache {
     int64_t former_block_us = block_us;
     int64_t tail_block_us = us - (split_us - 1) * former_block_us;
     pipe.InitBuffer(update_queue, BUFFER_NUM, former_block_us * d_ * sizeof(T));
-    int64_t u_block_len = former_block_us * d_;
+    int64_t u_block_len;
     for (int64_t i = 0; i < each_core_bs_num; ++i) {
       int64_t h_idx = core_idx_ * former_each_core_h_num_ + i;
       for (int64_t j = 0; j < split_us; ++j) {
         if (j == split_us - 1) {
           u_block_len = tail_block_us * d_;
+        } else {
+          u_block_len = former_block_us * d_;
         }
         LocalTensor<T> update_in_local_tensor = update_queue.AllocTensor<T>();
         update_gm.SetGlobalBuffer((__gm__ T *)update + h_idx * update_block_length + j * former_block_us * d_,
