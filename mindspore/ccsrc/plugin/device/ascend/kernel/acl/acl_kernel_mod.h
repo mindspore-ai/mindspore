@@ -40,8 +40,8 @@ class AclKernelMod : public KernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
-              const std::vector<KernelTensor *> &workspace, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
   void SetDeviceInfo(const std::vector<std::string> &input_device_formats,
                      const std::vector<std::string> &output_device_formats,

@@ -72,6 +72,8 @@ void CheckRtRetWithError(rtError_t error, const std::string &msg) {
     MS_LOG(ERROR) << "Rt error: " << msg << " | Error number: " << error;
   }
 }
+
+bool IsGetNextOp(const std::string &op_name) { return op_name == kGetNextOpName || op_name == kDynamicGetNextV2OpName; }
 }  // namespace
 
 namespace tdt_handle {
@@ -707,21 +709,31 @@ void WingmanQueue::Close() {
   closed_ = true;
 }
 
-std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return nullptr;
-  auto queue_name = common::AnfAlgo::GetNodeAttr<std::string>(node, "shared_name");
+std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &prim) {
+  if (!IsGetNextOp(prim->name())) return nullptr;
+  auto queue_name = GetValue<std::string>(prim->GetAttr("shared_name"));
   if (!DataQueueMgr::GetInstance().IsCreated(queue_name)) {
     return nullptr;
   }
   return DataQueueMgr::GetInstance().GetDataQueue(queue_name);
 }
 
-void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) return;
-  auto wingman = GetTdtWingManQueue(node);
+std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
+  if (!common::AnfAlgo::IsGetNextNode(node)) return nullptr;
+  return GetTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
+}
+
+void CloseTdtWingManQueue(const PrimitivePtr &prim) {
+  if (!IsGetNextOp(prim->name())) return;
+  auto wingman = GetTdtWingManQueue(prim);
   if (wingman && wingman->IsOpen()) {
     wingman->Close();
   }
+}
+
+void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
+  if (!common::AnfAlgo::IsGetNextNode(node)) return;
+  return CloseTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
 }
 
 namespace {

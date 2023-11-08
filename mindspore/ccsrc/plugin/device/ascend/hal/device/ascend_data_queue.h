@@ -153,7 +153,9 @@ class AscendHostQueue : public DataQueue {
   const uint32_t rt_mem_queue_depth_ = 128;
 };
 
+std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &prim);
 std::shared_ptr<BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
+void CloseTdtWingManQueue(const PrimitivePtr &prim);
 void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node);
 }  // namespace device
 }  // namespace mindspore

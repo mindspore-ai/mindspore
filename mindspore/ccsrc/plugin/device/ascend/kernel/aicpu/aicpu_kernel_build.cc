@@ -516,10 +516,6 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   }
 
   auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
-  if (!common::AnfAlgo::IsDynamicShape(anf_node) && op_name != kGetNextOpName) {
-    return;
-  }
-
   uint64_t ext_info_head_len = aicpu::FWKAdapter::kExtInfoHeadSize;
   std::string ext_info;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
@@ -570,7 +566,7 @@ void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
 
   MS_LOG(INFO) << "Check ext_info_len:" << ext_info_len << " ext_info_offset:" << ext_info_offset;
   // set ext info
-  kernel_mod_ptr->SetExtInfo(ext_info);
+  kernel_mod_ptr->SetExtInfo(ext_info, input_num, output_num);
 }
 
 KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
@@ -579,11 +575,21 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
-  std::shared_ptr<AicpuOpKernelMod> kernel_mod_ptr;
 
-  kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>(anf_node);
-
+  std::shared_ptr<AicpuOpKernelMod> kernel_mod_ptr = std::make_shared<AicpuOpKernelMod>();
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(anf_node);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(anf_node);
+
+  if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
+         ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
+                      << "] failed.";
+  }
+  kernel_mod_ptr->SetIsDynamicShape(common::AnfAlgo::IsDynamicShape(anf_node));
+  kernel_mod_ptr->CloseTdtWingManQueue();
+  kernel_mod_ptr->SetNodeScopeName(anf_node->fullname_with_scope());
+
   kernel_mod_ptr->SetNodeName(op_name);
   if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";
@@ -597,6 +603,12 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   if (!AicpuOpKernelLoad::GetInstance().LoadAicpuKernelSo(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Aicpu kernel so load failed. task is " << anf_node->fullname_with_scope();
+  }
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (kernel::CheckResizeCondition(cnode)) {
+    kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
   }
 
   return kernel_mod_ptr;
