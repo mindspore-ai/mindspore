@@ -1813,6 +1813,61 @@ class AfterOptARewriter : public BaseRewriter {
     return pyexecute_node;
   }
 
+  AnfNodePtr ConvertIsAndIsNot(const CNodePtr &cnode, bool is) const {
+    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    constexpr auto data_str = "__data__";
+    constexpr auto target_str = "__target__";
+    std::stringstream script_buffer;
+    script_buffer << data_str;
+    if (is) {
+      script_buffer << " is ";
+    } else {
+      script_buffer << " is not ";
+    }
+    script_buffer << target_str;
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(data_str));
+    (void)key_value_names_list.emplace_back(NewValueNode(target_str));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = cnode->inputs();
+    constexpr size_t inputs_size = 3;
+    if (node_inputs.size() != inputs_size) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The size of input to kPrimIs should be " << inputs_size << "but got "
+                                 << node_inputs.size();
+    }
+    constexpr size_t data_index = 1;
+    constexpr size_t target_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[data_index]);
+    (void)key_value_list.emplace_back(node_inputs[target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+    res->set_debug_info(cnode->debug_info());
+    return res;
+  }
+
+  AnfNodePtr ConvertIs_(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, true);
+    MS_LOG(DEBUG) << "Convert primitive Is_ to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  AnfNodePtr ConvertIsNot(const CNodePtr &cnode) const {
+    auto res = ConvertIsAndIsNot(cnode, false);
+    MS_LOG(DEBUG) << "Convert primitive IsNot to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -1848,7 +1903,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
     {prim::kPrimPrint, &ThisClass::ConvertPrint},
     {prim::kPrimFormat, &ThisClass::ConvertFormat},
-    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange}};
+    {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange},
+    {prim::kPrimIs_, &ThisClass::ConvertIs_},
+    {prim::kPrimIsNot, &ThisClass::ConvertIsNot}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
