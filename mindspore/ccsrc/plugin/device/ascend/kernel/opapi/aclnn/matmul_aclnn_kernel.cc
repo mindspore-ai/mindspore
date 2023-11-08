@@ -30,10 +30,11 @@
 namespace mindspore {
 namespace kernel {
 
-bool MMAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
-                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool MMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
+#if 0
   auto input_device = std::make_shared<device::ascend::AscendDeviceAddress>(
     inputs[0]->addr, inputs[0]->size, kOpFormat_DEFAULT, input_params_[0].data_type);
   auto input_device2 = std::make_shared<device::ascend::AscendDeviceAddress>(
@@ -59,6 +60,7 @@ bool MMAclnnKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   auto workspaces_addr = res_manager->AllocateMemory(workspace_size_list_[0]);
 
   RUN_OP_API(aclnnMatmul, stream_ptr, workspaces_addr, workspace_size_list_[0], executor_, after_launch_func_);
+#endif
   return true;
 }
 }  // namespace kernel

@@ -29,8 +29,8 @@ class MMAclnnKernelMod : public AclnnKernelMod {
   MMAclnnKernelMod() {}
   ~MMAclnnKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 };
 }  // namespace kernel
 }  // namespace mindspore

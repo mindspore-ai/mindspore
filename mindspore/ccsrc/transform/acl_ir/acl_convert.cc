@@ -498,11 +498,11 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
       continue;
     }
     MS_EXCEPTION_IF_NULL(inputs[cur_input_idx]);
-    ValuePtr ge_attr_value;
-    info->GetGeAttrValueByMsInputValue(input_idx + 1, inputs[cur_input_idx]->GetValue(), &ge_attr_value);
+    ValuePtr attr_value = inputs[cur_input_idx]->GetValue();
+    info->GetGeAttrValueByMsInputValue(input_idx + 1, &attr_value);
 
     AttrConverter attr_coverter;
-    attr_coverter.ConvertValueToRealType(ge_attr_value, attr_name, this);
+    attr_coverter.ConvertValueToRealType(attr_value, attr_name, this);
   }
   MS_LOG(DEBUG) << "Convert input to acl attr over";
 }

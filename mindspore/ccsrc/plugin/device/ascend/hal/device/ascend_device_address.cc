@@ -411,7 +411,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   // launch transdata
   GilReleaseWithCheck release_gil;
-  launch_transdata_->SetInputAddr(ptr_);
+  launch_transdata_->SetInputAddr(GetMutablePtr());
   {
     std::lock_guard<std::recursive_mutex> lock_launch(transdata_mutx);
     launch_transdata_->LaunchOpKernel();

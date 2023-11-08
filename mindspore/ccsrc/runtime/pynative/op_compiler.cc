@@ -418,7 +418,9 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
 
       auto out_func = acl_info.output_selector();
       if (out_func != nullptr) {
-        auto out_format = out_func(op_info.input_tensor[0]->data_type(), input_shapes);
+        auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+        MS_EXCEPTION_IF_NULL(tensor);
+        auto out_format = out_func(tensor->data_type(), input_shapes);
         ascend_special_info += out_format;
       }
       MS_EXCEPTION_IF_NULL(out_func);
