@@ -266,7 +266,7 @@ Status UnsortedSegmentMinInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_min, CreatInt64Imm(0)});
   auto all_gather_output = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER), expandim_output});
   auto final_output =
-    gen_g.PushBack({gen_g.NewOpInst(REDUCE_MIN), all_gather_output, CreatInt64Imm(0), CreateBoolImm(false)});
+    gen_g.PushBack({gen_g.NewOpInst(REDUCE_MIN), all_gather_output, CreateTuple({0}), CreateBoolImm(false)});
 
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(segment_min, 1),
                                                              std::make_pair(segment_min, 2)};
@@ -302,7 +302,7 @@ Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_max, CreatInt64Imm(0)});
   auto all_gather_output = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER), expandim_output});
   auto final_output =
-    gen_g.PushBack({gen_g.NewOpInst(REDUCE_MAX), all_gather_output, CreatInt64Imm(0), CreateBoolImm(false)});
+    gen_g.PushBack({gen_g.NewOpInst(REDUCE_MAX), all_gather_output, CreateTuple({0}), CreateBoolImm(false)});
 
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(segment_max, 1),
                                                              std::make_pair(segment_max, 2)};

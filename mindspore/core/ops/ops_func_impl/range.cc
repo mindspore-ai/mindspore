@@ -97,7 +97,7 @@ BaseShapePtr RangeFuncImpl::InferShape(const PrimitivePtr &primitive,
       shape_ptr = CalculateShapeSize<double>(start_value, limit_value, delta_value);
     } else {
       MS_EXCEPTION(TypeError) << "For Range, the dtype of input must be int32, int64, float32, float64, but got "
-                              << dtype->meta_type() << ".";
+                              << TypeIdToString(dtype->type_id()) << ".";
     }
   }
 

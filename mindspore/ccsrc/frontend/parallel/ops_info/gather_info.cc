@@ -169,6 +169,10 @@ Status GatherInfo::GetAttrs() {
 
     batch_dims_ = attr_iter->second->cast<Int64ImmPtr>()->value();
     MS_LOG(INFO) << name_ << ": batch dims is " << batch_dims_;
+  } else {
+    constexpr size_t batch_idx = 3;
+    MS_EXCEPTION_IF_NULL(input_value_[batch_idx]);
+    batch_dims_ = GetValue<int64_t>(input_value_[batch_idx]);
   }
 
   if (manual_split_ && (axis_ != 0)) {
@@ -542,8 +546,8 @@ Status ManualImpl::InferReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
   auto sub_node = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(index_offset_)});
-  auto gather_v2_node =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_)});
+  auto gather_v2_node = gen_g.PushBack(
+    {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), sub_node, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub_node, 2),
                                                              std::make_pair(gather_v2_node, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
