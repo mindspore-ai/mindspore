@@ -41,4 +41,6 @@ ge::Status LLMEngine::RunDecoder(const LLMReq &, const std::vector<ge::Tensor> &
 }
 
 ge::Status LLMEngine::LLMReqComplete(const LLMReq &) { return ge::GRAPH_SUCCESS; }
+ge::Status LLMEngine::PreloadPromptPrefix(const LLMReq &, const std::vector<ge::Tensor> &) { return ge::GRAPH_SUCCESS; }
+ge::Status LLMEngine::ReleasePromptPrefix(const LLMReq &) { return ge::GRAPH_SUCCESS; }
 }  // namespace llm

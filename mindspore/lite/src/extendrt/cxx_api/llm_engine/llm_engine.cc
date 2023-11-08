@@ -226,4 +226,20 @@ LLMEngineStatus LLMEngine::FetchStatus() {
   }
   return plugin_->FetchStatus();
 }
+
+Status LLMEngine::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->PreloadPromptPrefix(req, inputs);
+}
+
+Status LLMEngine::ReleasePromptPrefix(const LLMReq &req) {
+  if (plugin_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+    return kLiteError;
+  }
+  return plugin_->ReleasePromptPrefix(req);
+}
 }  // namespace mindspore

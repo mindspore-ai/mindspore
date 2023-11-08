@@ -55,6 +55,8 @@ class LLMEnginePluginBase {
   virtual Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
   virtual Status CompleteRequest(const LLMReq &req) = 0;
   virtual LLMEngineStatus FetchStatus() = 0;
+  virtual Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) = 0;
+  virtual Status ReleasePromptPrefix(const LLMReq &req) = 0;
 };
 
 extern "C" MS_API LLMEnginePluginBase *CreateLLMEnginePlugin();
