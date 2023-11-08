@@ -544,8 +544,22 @@ def _fft_rank_offset(norm_shape, rank):
 
 
 @_primexpr
+def _norm_enum_to_string(norm_mode):
+    """convert norm_mode enum to string ."""
+    norm_mode_str = ""
+    if norm_mode == 0:
+        norm_mode_str = "BACKWARD"
+    elif  norm_mode == 1:
+        norm_mode_str = "FORWARD"
+    elif norm_mode == 2:
+        norm_mode_str = "ORTHO"
+    return norm_mode_str
+
+
+@_primexpr
 def _fft_with_size_back_norm(norm_shape, norm, inverse, rank):
     """generate reverse term for fft_with_size"""
+    norm_ = 1
     if inverse is False:
         if norm == "forward":
             norm_ = 1 / _fft_rank_offset(norm_shape, rank)
@@ -633,30 +647,6 @@ def _batch_matmul_shape_decrease(matrix_shape):
 @bprop_getters.register(FFTWithSize)
 def get_bprop_fft_with_size(self):
     """Grad definition for `FFTWithSize` operation."""
-    signal_ndim = self.signal_ndim
-    inverse = self.inverse
-    real = self.real
-    norm = self.norm
-    onesided = self.onesided
-    fft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                         inverse=False,
-                         real=False,
-                         norm=norm)
-    ifft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=True,
-                          real=False,
-                          norm=norm)
-    rfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                          inverse=False,
-                          real=True,
-                          norm=norm,
-                          onesided=onesided)
-    irfft_fn = FFTWithSize(signal_ndim=signal_ndim,
-                           inverse=True,
-                           real=True,
-                           norm=norm,
-                           onesided=onesided)
-
     complex_op = P.Complex()
     to_tensor_op = P.ScalarToTensor()
     type_op = P.DType()
@@ -674,7 +664,12 @@ def get_bprop_fft_with_size(self):
     conj_op = P.Conj()
     batch_matmul_op = P.BatchMatMul()
 
-    def bprop(x, out, dout):
+    def bprop(x, signal_ndim, inverse, real, norm_enum, onesided, signal_sizes, out, dout):
+        norm = _norm_enum_to_string(norm_enum)
+        fft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=False, norm=norm)
+        ifft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=False, norm=norm)
+        rfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=True, norm=norm, onesided=onesided)
+        irfft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=True, real=True, norm=norm, onesided=onesided)
         dx = 0
         input_type = type_op(x)
         output_type = type_op(out)

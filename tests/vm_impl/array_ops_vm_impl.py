@@ -156,12 +156,28 @@ def vm_impl_fill(self):
     return vm_impl
 
 
+dtype_to_nptype_map = {
+    30: np.bool_,
+    32: np.int8,
+    33: np.int16,
+    34: np.int32,
+    35: np.int64,
+    37: np.uint8,
+    38: np.uint16,
+    39: np.uint32,
+    40: np.uint64,
+    42: np.float16,
+    43: np.float32,
+    44: np.float64
+}
+
+
 @vm_impl_getters.register(P.Eye)
 def vm_impl_eye(self):
     """Generate vm_impl function for Eye"""
 
     def vm_impl(n, m, t):
-        np_type = mstype.dtype_to_nptype(t)
+        np_type = dtype_to_nptype_map[t]
         ret = np.eye(n, m, dtype=np_type)
         return Tensor(ret)
 

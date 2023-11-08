@@ -1751,7 +1751,8 @@ REG_BPROP_BUILDER("SegmentSum").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   if (dout_type->type_id() == TypeId::kNumberTypeFloat64) {
     dout = ib->Cast(dout, kFloat32);
   }
-  return {ib->Cast(ib->Gather(dout, segment_ids, ib->Tensor(0)), dout_type), ib->OutZeros(segment_ids)};
+  return {ib->Cast(ib->Gather(dout, segment_ids, ib->EmitValue(MakeValue<int64_t>(0))), dout_type),
+          ib->OutZeros(segment_ids)};
 });
 
 REG_BPROP_BUILDER("EmbeddingLookup").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {

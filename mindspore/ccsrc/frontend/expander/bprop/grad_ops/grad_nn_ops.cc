@@ -1971,7 +1971,7 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
   grad_loss = ib->ExpandDims(grad_loss, -1);
   auto grad = ib->Mul(grad_loss, softmax_grad);
   if (ib->TupleGetItem(dout, 1) != nullptr) {
-    auto softmax = ib->Emit("Softmax", {logits}, {{"axis", MakeValue(ShapeVector{1})}});
+    auto softmax = ib->Emit("Softmax", {logits, ib->Value<ShapeVector>({1})});
     auto x = ib->ExpandDims(ib->TupleGetItem(dout, 1), 1);
     auto y = ib->ExpandDims(softmax, 2);
     auto matmul_tmp = ib->BatchMatMul(x, y);

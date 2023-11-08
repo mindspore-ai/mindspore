@@ -476,7 +476,7 @@ class NanToNumFunc(nn.Cell):
 class RandpermFunc(nn.Cell):
     def __init__(self):
         super(RandpermFunc, self).__init__()
-        self.randperm = ops.function.randperm
+        self.randperm = ops.auto_generate.randperm
 
     def construct(self, n, seed, offset, dtype):
         y = self.randperm(n, seed, offset, dtype)
@@ -4356,8 +4356,7 @@ test_case_other_ops = [
     ('Randperm', {
         'block': RandpermFunc(),
         'desc_inputs': [Tensor(np.random.randint(1, 20, (1)).astype(np.int64), mstype.int64),
-                        Tensor(np.array([0]), mstype.int64),
-                        Tensor(np.array([0]), mstype.int64), mstype.int64],
+                        0, 0, mstype.int64],
         'skip': ['backward']}),
     ('MultinomialWithReplacement', {
         'block': MultinomialWithReplacement(numsamples=3, replacement=True),
