@@ -148,7 +148,7 @@ class MIND_API LayerNormInfer : public abstract::OpInferBase {
     std::vector<TypePtr> types_list;
     bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
-      types_list = {x_type, x_type, x_type};
+      types_list = {x_type, gamma_type, beta_type};
     } else {
       types_list = {x_type, kFloat32, kFloat32};
     }
