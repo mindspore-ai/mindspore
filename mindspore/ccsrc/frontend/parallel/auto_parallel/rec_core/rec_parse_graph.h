@@ -217,7 +217,8 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
 
 std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
-                                      const std::shared_ptr<std::vector<size_t>> &index_list);
+                                      const std::shared_ptr<std::vector<size_t>> &index_list,
+                                      const bool dyn_shape_tmp_fix);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_

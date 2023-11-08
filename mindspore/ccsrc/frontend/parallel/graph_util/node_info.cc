@@ -104,8 +104,7 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
       auto input_parameter = input->cast<ParameterPtr>();
       is_parameter.push_back(ParameterRequireGrad(input_parameter));
     } else if (input->isa<CNode>() || IsValueNode<tensor::Tensor>(input) || IsValueNode<RefKey>(input)) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
@@ -211,8 +210,7 @@ std::vector<size_t> ExtractInputElementLength(const CNodePtr &node, std::vector<
       }
       inputs_type_len.push_back(GetInputsTypeLen(parameters[0]));
     } else if (input->isa<CNode>() || input->isa<Parameter>() || IsValueNode<tensor::Tensor>(input)) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
-          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+      if (IsDynamicShapeInput(node, input)) {
         MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
