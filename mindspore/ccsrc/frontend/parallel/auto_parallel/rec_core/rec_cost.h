@@ -37,8 +37,8 @@ namespace parallel {
 
 constexpr size_t BMM_COEF = 1;
 constexpr size_t REDIS_COEF = 16;
-constexpr double EXPERT_COEF = 1.5;
-constexpr size_t REPLICATE_BELOW = 350;
+constexpr double EXPERT_COEF = 0.15;
+constexpr size_t REPLICATE_BELOW = 25;
 constexpr bool ONLY_REDIST_WITH_SAME_SHAPE = true;
 constexpr size_t NUMBER_ASCEND_CORES = 32;
 constexpr size_t NDIMS = 4;
