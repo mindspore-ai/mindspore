@@ -609,6 +609,9 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   SignalGuard sg(IntHandler);
 #endif
+  // Some exception could happen after one step is completed, need to check exception at the beginning to avoid thread
+  // hanging.
+  MsException::Instance().CheckException();
 
   // Check the actor set state.
   if (actor_set->is_execution_failed_) {
