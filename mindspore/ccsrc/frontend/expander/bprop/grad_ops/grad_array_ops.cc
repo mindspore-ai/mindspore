@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <numeric>
 #include <vector>
 #include "ops/op_utils.h"
@@ -391,8 +392,7 @@ NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr 
   auto res = ib->ShapeCalc(std::make_shared<CalBatchGatherShapeCalc>(axis, batch_dims), {x});
   auto axis_dim = ib->SequenceToTensor(res[0]);
   auto limit = ib->SequenceToTensor(res[1]);
-  ShapeVector a = {};
-  auto delta = ib->Range(ib->Tensor(0, kInt64), ib->Reshape(limit, a), ib->Reshape(axis_dim, a));
+  auto delta = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(limit), ib->TensorToScalar(axis_dim));
   delta = ib->Reshape(delta, delta_reshape);
   indices_rshp = ib->Add(indices_rshp, delta);
   auto params_grad = ib->UnsortedSegmentSum(values_rshp, indices_rshp, limit);
@@ -736,10 +736,8 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(tmp, 1);
   auto res = ib->ShapeCalc(g_sort_2, {indices, top_k_input});
   auto indices_dtype = ib->GetDtype(indices);
-  ShapeVector a = {};
-  auto range_flatten_index = ib->Cast(ib->Range(ib->Tensor(0, kInt64), ib->Reshape(ib->SequenceToTensor(res[4]), a),
-                                                ib->Reshape(ib->SequenceToTensor(res[2]), a)),
-                                      indices_dtype);
+  auto range_flatten_index =
+    ib->Cast(ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[4]), ib->TensorToScalar(res[2])), indices_dtype);
   range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
   auto ind_2d = ib->Reshape(indices, res[1]);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});
@@ -1668,8 +1666,7 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto dvalue_shape = dvalue->shape();
   if (IsDynamicRank(dvalue_shape)) {
     auto dvalue_rank = ib->Shape(ib->Shape(dvalue, true), true);
-    ShapeVector shape = {};
-    auto axis_node = ib->Range(ib->Reshape(dvalue_rank, shape));
+    auto axis_node = ib->Range(ib->TensorToScalar(dvalue_rank));
     dvalue = ib->ReduceSum(bout[1], axis_node);
   } else {
     dvalue = ib->ReduceSum(bout[1]);
@@ -2078,7 +2075,7 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
      {"new_axis_mask", MakeValue<int64_t>(0)},
      {"shrink_axis_mask", MakeValue<int64_t>(0)}});
   length = ib->Cast(length, kInt64);
-  auto scatter_indices = ib->Range(ib->Reshape(length, ShapeVector()));
+  auto scatter_indices = ib->Range(ib->TensorToScalar(length));
   dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
                       {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
   dupdates = ib->Reshape(dupdates, ib->Shape(updates));

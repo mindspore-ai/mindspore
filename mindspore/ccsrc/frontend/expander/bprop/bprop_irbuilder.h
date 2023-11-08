@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_BPROP_IRBUILDER_H_
 #define MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_BPROP_IRBUILDER_H_
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <string>
@@ -70,15 +71,16 @@ class BpropIRBuilder : public Emitter {
   NodePtr DynSize(const NodePtr &node, const TypePtr &type) { return Cast(DynSize(node), type); }
   NodePtr DynSize(const NodePtr &node, TypeId type_id) { return Cast(DynSize(node), type_id); }
   NodePtr DynSize(const NodePtr &node);
-  NodePtr Range(const NodePtr &limit) { return Range(Tensor(0, kInt64), limit, Tensor(1, kInt64)); }
+  NodePtr Range(const NodePtr &limit) { return Range(Value<int64_t>(0), limit, Value<int64_t>(1)); }
   NodePtr Range(const NodePtr &start, const NodePtr &limit, const NodePtr &delta, int64_t max_len = 1000000) {
-    return Emit("Range", {start, limit, delta}, {{"maxlen", MakeValue(max_len)}});
+    return Emit("Range", {start, limit, delta, Value(max_len)});
   }
 
   NodePtr SequenceToTensor(const NodePtr &node, const TypePtr &dtype = kInt64);
   NodePtr TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype = kInt64);
   NodePtr SequenceSetItem(const NodePtr &node, const NodePtr &index, const NodePtr &value);
   NodePtr SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop, const NodePtr &step);
+  NodePtr TensorToScalar(const NodePtr &node);
 
   std::string name() const { return name_; }
   std::string GetTargetFromContext() const;

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdint>
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
@@ -398,8 +399,7 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
     auto in_shape_1d = res[0];
-    ShapeVector shape = {};
-    auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), ib->Reshape(res[1], shape), ib->Reshape(res[2], shape));
+    auto range_flatten_index = ib->Range(ib->Value<int64_t>(0), ib->TensorToScalar(res[1]), ib->TensorToScalar(res[2]));
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
     auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
@@ -926,7 +926,7 @@ REG_BPROP_BUILDER("MaxPoolGrad").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) 
     if (IsDynamic(x2_shape)) {
       auto shape = ib->Emit("Shape", {x2});
       auto res = ib->ShapeCalc(g_max_pool_grad, {x2});
-      auto batch = ib->Cast(ib->Range(res[0]), kInt32);
+      auto batch = ib->Cast(ib->Range(ib->TensorToScalar(res[0])), kInt32);
       batch = ib->Tile(ib->Reshape(batch, {-1, 1}), res[2]);
       int64_t axis = -1;
       auto gather_ind = ib->Stack({batch, ib->Reshape(ind, res[1])}, axis);
@@ -1122,12 +1122,13 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
 
   if (IsDynamic(x_shape) || IsDynamic(out_shape)) {
     auto res = ib->ShapeCalc(std::make_shared<ExtractImagePatchesShapeCalc>(ksizes_row, ksizes_col), {x, out});
-    auto x_idx = ib->Cast(ib->Range(ib->Tensor(1, kInt64), res[0], ib->Tensor(1, kInt64)), kFloat32);
+    auto x_idx =
+      ib->Cast(ib->Range(ib->Value<int64_t>(1), ib->TensorToScalar(res[0]), ib->Value<int64_t>(1)), kFloat32);
     x_idx = ib->Reshape(x_idx, res[1]);
 
     auto x_idx_patch = ib->Cast(ib->Emit("ExtractImagePatches", {x_idx, ksizes, strides, rates, padding}), kInt32);
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
-    auto out_idx = ib->Cast(ib->Range(res[2]), kInt32);
+    auto out_idx = ib->Cast(ib->Range(ib->TensorToScalar(res[2])), kInt32);
     out_idx = ib->Reshape(out_idx, res[3]);
     auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
                                           ib->Value<int64_t>(-1)});
