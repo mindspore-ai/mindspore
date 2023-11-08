@@ -2543,8 +2543,9 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
     new_inputs = ConvertArgsToInputs(prim_, getattr_inputs, fg);
   } else {
     constexpr int recursive_level = 2;
-    MS_LOG(INTERNAL_EXCEPTION) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
-                               << cnode->DebugString(recursive_level);
+    new_inputs = ConvertArgsToInputs(prim_, cnode->inputs(), fg);
+    MS_LOG(DEBUG) << "Expect a cnode with primitive `" << prim_->name() << "`, but got "
+                  << cnode->DebugString(recursive_level);
   }
 
   auto new_cnode = fg->NewCNodeInOrder(new_inputs);
