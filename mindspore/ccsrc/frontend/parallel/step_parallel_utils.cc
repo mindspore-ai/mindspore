@@ -1973,13 +1973,5 @@ std::string GetSerialNumberString(size_t number) {
   oss << number << suffix;
   return oss.str();
 }
-
-const std::string GetRegisteredOpName(const std::string &op_info_name) {
-  auto index = op_info_name.rfind("Info");
-  if (index != std::string::npos) {
-    return op_info_name.substr(0, index);
-  }
-  return "";
-}
 }  // namespace parallel
 }  // namespace mindspore

@@ -57,6 +57,7 @@ class LayerNormInfo : public OperatorInfo {
   Status CreateInputTensorMap(size_t input_index);
   Status GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();
+  Status InferMirrorOps() override;
 
  private:
   size_t begin_norm_axis_;

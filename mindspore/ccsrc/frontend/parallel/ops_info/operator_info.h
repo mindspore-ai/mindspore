@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ enum InferStrategyMode {
 
 class Edge;
 
+inline std::string GetPrimNameFromInfoName(const std::string &info_name);
+
 class OperatorInfo {
  public:
   OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs,
@@ -80,6 +82,7 @@ class OperatorInfo {
     stage_device_list_ = g_device_manager->GetDeviceListInThisStage();
     stage_device_size_ = SizeToLong(stage_device_list_.size());
     cnode_ = nullptr;
+    prim_name_ = GetPrimNameFromInfoName(this->name_);
   }
 
   virtual ~OperatorInfo() = default;
@@ -276,6 +279,7 @@ class OperatorInfo {
   }
 
   std::string name_;
+  std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
@@ -402,7 +406,7 @@ std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value);
 
 inline std::string GetPrimNameFromInfoName(const std::string &info_name) {
   auto prim_name = info_name;
-  if (auto pos = info_name.find("Info"); pos != std::string::npos) {
+  if (auto pos = info_name.rfind("Info"); pos != std::string::npos) {
     prim_name = info_name.substr(0, pos);
   }
   return prim_name;

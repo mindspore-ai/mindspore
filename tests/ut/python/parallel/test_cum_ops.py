@@ -40,6 +40,7 @@ class Net(Cell):
         self.softmax = P.Softmax(axis=-2)
         self.lgamma = P.Lgamma()
         self.trunc = P.Trunc()
+        self.elu_act = P.Elu(alpha=1.0)
 
     def construct(self, x, y):
         out = self.add(x, self.weight)
@@ -52,6 +53,7 @@ class Net(Cell):
         out = self.trunc(out)
         out = self.log_softmax(out)
         out = self.softmax(out)
+        out = self.elu_act(out)
         return out
 
 
@@ -88,4 +90,6 @@ def test_cum_ops():
         elif re.search("LogSoftmax", k) is not None:
             assert v == [[2, 2, 1, 2],]
         elif re.search("Softmax", k) is not None:
+            assert v == [[2, 2, 1, 2],]
+        elif re.search("Elu", k) is not None:
             assert v == [[2, 2, 1, 2],]

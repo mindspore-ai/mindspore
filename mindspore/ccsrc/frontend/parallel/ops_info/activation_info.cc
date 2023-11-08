@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,19 +155,41 @@ Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status Softmax::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  int64_t to_be_append = ops::GetOpInputsNum(this->prim_name_) - 1;
+  if (to_be_append <= 0) {
+    return SUCCESS;
+  }
+
+  std::vector<OperatorVector> op_vec(to_be_append);
+  (void)mirror_ops_.insert(mirror_ops_.end(), op_vec.begin(), op_vec.end());
+  return SUCCESS;
+}
+
 Status Softmax::GetAttrs() {
-  std::string op_name = GetRegisteredOpName(this->name_);
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
   std::optional<std::vector<int64_t>> axis_opt = GetArrayValueFromInputs<int64_t>(input_value_, op_name, AXIS);
 
-  if (axis_opt.has_value()) {
-    std::vector<int64_t> axis_val = axis_opt.value();
-    if (axis_val.empty()) {
-      MS_LOG(ERROR) << name_ << " axis doesn't have value.";
-      return FAILED;
-    }
-    axis_.swap(axis_val);
-    MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << " : has no axis value.";
+    return FAILED;
   }
+
+  std::vector<int64_t> axis_val = axis_opt.value();
+  if (axis_val.empty()) {
+    MS_LOG(ERROR) << name_ << " axis doesn't have value.";
+    return FAILED;
+  }
+  axis_.swap(axis_val);
+  MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
 
   if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
@@ -187,14 +209,16 @@ Status Softmax::GetAttrs() {
 }
 
 Status LogSoftmaxInfo::GetAttrs() {
-  std::string op_name = GetRegisteredOpName(this->name_);
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
   std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, AXIS);
 
-  if (axis_opt.has_value()) {
-    int64_t axis_val = axis_opt.value();
-    axis_.push_back(axis_val);
-    MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << " : has no axis value.";
+    return FAILED;
   }
+  int64_t axis_val = axis_opt.value();
+  axis_.push_back(axis_val);
+  MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
 
   if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
@@ -240,7 +264,7 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status CumOpBase::GetAttrs() {
-  std::string op_name = GetRegisteredOpName(this->name_);
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
   if (input_value_.size() != ops::GetOpInputsNum(op_name)) {
     MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size()
                   << ", GetOpInputsNum: " << ops::GetOpInputsNum(op_name);
@@ -686,7 +710,7 @@ Status L2LossInfo::InferForwardCommunication() {
 }
 
 Status CummaxInfo::GetAttrs() {
-  std::string op_name = GetRegisteredOpName(this->name_);
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
   std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, AXIS);
   if (!axis_opt.has_value()) {
     MS_LOG(ERROR) << name_ << ": The type of axis has no value.";

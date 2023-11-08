@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,6 @@ Shape mirror_group_list(const TensorLayoutPtr &layout);
 std::string GetSerialNumberString(size_t number);
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
 void UpdateMicroBatchInterleavedStatus(const std::vector<AnfNodePtr> &all_nodes);
-const std::string GetRegisteredOpName(const std::string &op_info_name);
 }  // namespace parallel
 }  // namespace mindspore
 

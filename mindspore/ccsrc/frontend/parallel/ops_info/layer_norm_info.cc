@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@
 
 #include <algorithm>
 #include <vector>
+#include <utility>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/step_parallel_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -37,19 +39,16 @@ Status LayerNormInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Init Shape failed";
     return FAILED;
   }
+  std::string op_name = GetPrimNameFromInfoName(this->name_);
 
-  auto iter = attrs_.find(BEGIN_NORM_AXIS);
-  if (iter == attrs_.end()) {
-    MS_LOG(ERROR) << name_ << ": Can not find the attr of begin norm axis";
-    return FAILED;
-  }
-  if ((iter->second == nullptr) || !iter->second->isa<Int64Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The axis type is not int64_t";
+  std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value_, op_name, BEGIN_NORM_AXIS);
+  if (!axis_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << ": Can not find the attr of begin_norm_axis.";
     return FAILED;
   }
 
   int64_t dim = SizeToLong(inputs_shape_[0].size());
-  auto axis = GetValue<int64_t>(iter->second);
+  auto axis = axis_opt.value();
   if ((axis >= dim) || (axis < -dim)) {
     MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << (-dim) << ", " << (dim - 1) << "]";
     return FAILED;
@@ -125,6 +124,25 @@ Status LayerNormInfo::InferDevMatrixShape() {
     return FAILED;
   }
   dev_matrix_shape_ = stra[0];
+  return SUCCESS;
+}
+
+Status LayerNormInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": InferMirrorOps failed.";
+    return FAILED;
+  }
+  // No need to insert mirror ops
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+
+  OperatorVector op_for_begin_norm_axis;
+  OperatorVector op_for_begin_params_axis;
+  OperatorVector op_for_epsilon;
+  (void)mirror_ops_.emplace_back(std::move(op_for_begin_norm_axis));
+  (void)mirror_ops_.emplace_back(std::move(op_for_begin_params_axis));
+  (void)mirror_ops_.emplace_back(std::move(op_for_epsilon));
   return SUCCESS;
 }
 
