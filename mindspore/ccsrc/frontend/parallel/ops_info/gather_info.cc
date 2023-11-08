@@ -952,8 +952,8 @@ Status ShardAxisImpl::InferReplaceGraph(const CNodePtr &cnode) {
   auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
   auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size_ - 1)});
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
-  auto gather_v2 =
-    gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_)});
+  auto gather_v2 = gen_g.PushBack(
+    {gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node(), minimum, CreatInt64Imm(axis_), CreatInt64Imm(0)});
   auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gather_v2});
   auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
   auto expand_dims = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), cast, CreatInt64Imm(axis_ - 1)});

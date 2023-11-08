@@ -289,7 +289,8 @@ std::vector<AnfNodePtr> ScatterNdOpsInfo::PrepareReplaceGraph() {
   auto rank_mul = gen_g_.PushBack({gen_g_.NewOpInst(MUL), div, reshape_accum_value});
   auto indices_mul = gen_g_.PushBack({gen_g_.NewOpInst(MUL), div, reshape_indices_slice});
   auto indices_sub = gen_g_.PushBack({gen_g_.NewOpInst(SUB), gen_g_.virtual_input_node(), indices_mul});
-  auto reduce_sum = gen_g_.PushBack({gen_g_.NewOpInst(REDUCE_SUM), rank_mul, CreateInt32Tensor(-1)});
+  auto reduce_sum = gen_g_.PushBack(
+    {gen_g_.NewOpInst(REDUCE_SUM), rank_mul, CreateInt32Tensor(-1), CreateBoolImm(false), CreateBoolImm(false)});
   auto sub = gen_g_.PushBack({gen_g_.NewOpInst(SUB), CreateInt32Tensor(rank_in_stage), reduce_sum});
   auto relu = gen_g_.PushBack({gen_g_.NewOpInst(RELU), sub});
   auto minimum = gen_g_.PushBack({gen_g_.NewOpInst(MINIMUM), relu, CreateInt32Tensor(delta_value)});

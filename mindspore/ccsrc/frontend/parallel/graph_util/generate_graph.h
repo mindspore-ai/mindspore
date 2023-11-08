@@ -48,6 +48,7 @@ AnfNodePtr CreateTypeInt(int64_t nbits);
 AnfNodePtr CreateTypeFloat(int64_t nbits);
 AnfNodePtr CreatInt64Imm(int64_t value);
 AnfNodePtr CreateFP32Imm(float value);
+AnfNodePtr CreateBoolImm(bool value);
 AnfNodePtr CreateInt32Tensor(int64_t value);
 AnfNodePtr CreateFP32Tensor(float value);
 AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr);

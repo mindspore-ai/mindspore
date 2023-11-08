@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "base/base.h"
 #include "include/common/utils/python_adapter.h"
@@ -297,6 +298,11 @@ AnfNodePtr CreateFP32Imm(float value) {
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
+AnfNodePtr CreateBoolImm(bool value) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<BoolImm>(value));
+  return ValuePtrToAnfNodePtr(value_ptr);
+}
+
 AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple) {
   std::vector<ValuePtr> value_list;
   (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(value_list),
@@ -375,6 +381,9 @@ Status GenerateGraph::Init(const CNodePtr &cnode) {
 
 AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
   auto new_inputs = RectifyInputsForNewCNode(inputs);
+  for (auto &input : new_inputs) {
+    MS_EXCEPTION_IF_NULL(input);  // if error raise here, check if inputs need include attrs
+  }
   CNodePtr cnode = func_graph_->NewCNode(new_inputs);  // using NewCNode to create anfnode
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
