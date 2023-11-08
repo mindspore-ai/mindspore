@@ -80,7 +80,7 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
 
-  constexpr size_t kGatherInputParamsMaxDim = 7;
+  constexpr size_t kGatherInputParamsMaxDim = 8;
   if (params_shape.size() > kGatherInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the dimension of 'input_params' should be "
                       << kGatherInputParamsMaxDim << "D or lower, but got " << params_shape.size() << ".";

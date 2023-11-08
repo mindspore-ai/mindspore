@@ -1660,37 +1660,6 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
     }
   }
 
-  // Record the internal parameter of dynamic shape kernel.
-  if ((to_actor->type_ != KernelTransformType::kCustomActor) &&
-      common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
-    AbstractActor *dynamic_shape_actor = nullptr;
-    auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
-    if (real_from_actor->type() == KernelTransformType::kAnyTypeKernelActor ||
-        AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
-      dynamic_shape_actor = real_from_actor;
-    } else {
-      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
-    }
-    MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
-    auto &internal_parameters = dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx];
-    auto repeat_it = std::find_if(internal_parameters.begin(), internal_parameters.end(),
-                                  [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
-                                    return internal_parameter == internal_parameter_weakptr.lock();
-                                  });
-    MS_LOG(DEBUG) << "Check internal parameter:" << internal_parameter->DebugString()
-                  << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
-                  << " actor:" << dynamic_shape_actor->GetAID();
-    // Any type input of graph cannot update shape, it would be fixed in any type kernel actor.
-    if (real_from_kernel_with_output_idx.first->abstract() != nullptr &&
-        (!real_from_kernel_with_output_idx.first->abstract()->isa<abstract::AbstractAny>()) &&
-        repeat_it == internal_parameters.end() && to_actor->type() != KernelTransformType::kAnyTypeKernelActor) {
-      MS_LOG(DEBUG) << "Add internal parameter:" << internal_parameter->DebugString()
-                    << " for real from node:" << real_from_kernel_with_output_idx.first->DebugString()
-                    << " actor:" << dynamic_shape_actor->GetAID();
-      (void)internal_parameters.emplace_back(internal_parameter);
-    }
-  }
-
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
     MS_EXCEPTION_IF_NULL(internal_parameter);
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid internal parameter:"
