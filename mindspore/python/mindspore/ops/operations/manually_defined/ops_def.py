@@ -25,6 +25,8 @@ from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._tracefunc import PackFunc
+from mindspore.common._utils import is_shape_unknown
+from mindspore import _checkparam as validator
 
 class ScalarDiv(Primitive):
     r"""
@@ -922,3 +924,49 @@ def infer_value_for_Range(start, limit, delat, maxlen):
     if start is None or limit is None or delat is None or maxlen is None:
         return None
     return Tensor(np.arange(start, limit, delat))
+
+
+def infer_value_for_Reshape(x, shape):
+    """Infer value for Reshape op."""
+    def none_in_tuple_or_list(x):
+        return isinstance(x, (tuple, list)) and None in x
+    # for shape is not constant
+    if shape is None or none_in_tuple_or_list(shape) or x is None:
+        return None
+
+    if isinstance(shape, (Tensor, Tensor_)):
+        validator.check_tensor_dtype_valid("shape", mstype.TensorType(shape.dtype),
+                                           [mstype.int32, mstype.int64], "Reshape")
+        shape = shape.asnumpy().tolist()
+    else:
+        validator.check_value_type("shape", shape, [tuple], "Reshape")
+        shape = list(shape)
+
+    neg_index = -1
+    dim_prod = 1
+    for i, shp_i in enumerate(shape):
+        validator.check_value_type("shape[%d]" % i, shp_i, [int], "Reshape")
+        if shp_i == -1:
+            if neg_index != -1:
+                raise ValueError(f"For 'Reshape', there can be at most one '-1' in 'input_shape', "
+                                 f"but got {shape}.")
+            neg_index = i
+        else:
+            dim_prod *= shp_i
+    out = None
+    if not is_shape_unknown(x.shape):
+        x_shp = x.shape
+        if dim_prod <= 0:
+            raise ValueError(f"For 'Reshape', the shape of 'input_x' is {x_shp}, "
+                             f"the value of 'input_shape' is {shape}. "
+                             f"The product of 'input_shape' should > 0, but got {dim_prod}.")
+        arr_prod = np.prod(x_shp)
+        if neg_index != -1:
+            shape[neg_index] = int(arr_prod // dim_prod)
+            dim_prod *= shape[neg_index]
+        if dim_prod != arr_prod:
+            raise ValueError(f"For 'Reshape', the product of the 'input_x' shape "
+                             f"should be equal to product of 'input_shape', but got product of the"
+                             f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
+        out = Tensor(x.asnumpy().reshape(shape))
+    return out
