@@ -108,6 +108,7 @@ constexpr size_t INDEX_THREE = 3;
 constexpr size_t INDEX_FOUR = 4;
 constexpr size_t INDEX_FIVE = 5;
 constexpr size_t INDEX_SIX = 6;
+constexpr int64_t INT64_TWO = 2;
 
 constexpr char AUTO_PARALLEL_FINISH_PRE_ACTION[] = "auto_parallel_finish_pre_action";
 constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
