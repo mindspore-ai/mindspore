@@ -37,10 +37,10 @@ OUTPUT_MAP(PromptFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(PromptFlashAttention, "PromptFlashAttention", ADPT_DESC(PromptFlashAttention))
 
 // IncreFlashAttention
-INPUT_MAP(IncreFlashAttention) = {{1, INPUT_DESC(query)},
-                                  {4, INPUT_DESC(atten_mask)},
-                                  {5, INPUT_DESC(padding_mask)},
-                                  {6, INPUT_DESC(actual_seq_lengths)}};
+INPUT_MAP(IncreFlashAttention) = {
+  {1, INPUT_DESC(query)},          {4, INPUT_DESC(atten_mask)},     {5, INPUT_DESC(actual_seq_lengths)},
+  {6, INPUT_DESC(padding_mask)},   {7, INPUT_DESC(dequant_scale1)}, {8, INPUT_DESC(quant_scale1)},
+  {9, INPUT_DESC(dequant_scale2)}, {10, INPUT_DESC(quant_scale2)},  {11, INPUT_DESC(quant_offset2)}};
 DYN_INPUT_MAP(IncreFlashAttention) = {{2, DYN_INPUT_DESC(key)}, {3, DYN_INPUT_DESC(value)}};
 ATTR_MAP(IncreFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<int64_t>())},
                                  {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
