@@ -86,7 +86,7 @@ std::vector<int64_t> ReduceBaseMethod::reduce_dim() {
   }
 
   auto axis_value = axis_opt.value();
-  MS_ASSERT(inputs_shape_.size() == 1);
+  MS_ASSERT(inputs_shape_.size() >= 1);
   auto x_dim = inputs_shape_.at(0).size();
   // axis is (), reduce all dim
   if (axis_value.empty()) {

@@ -17,23 +17,89 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_generate_strategy.h"
 
 #include <algorithm>
-#include <memory>
-#include <vector>
-#include <set>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <vector>
 
-#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/parameter_manager.h"
-#include "frontend/parallel/strategy.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/strategy.h"
+#include "ir/value.h"
 
 namespace mindspore {
 namespace parallel {
+namespace {
+std::optional<bool> GetKeepDimsFromAttrs(const std::shared_ptr<OperatorInfo> &op) {
+  auto keep_dims_iter = op->attrs().find(KEEP_DIMS);
+  if (keep_dims_iter == op->attrs().end()) {
+    return std::nullopt;
+  }
+  auto keep_dims_ptr = keep_dims_iter->second;
+  MS_EXCEPTION_IF_NULL(keep_dims_ptr);
+  if (!keep_dims_ptr->isa<BoolImm>()) {
+    MS_LOG(EXCEPTION) << op->name() << ": Keep_dims is not a bool.";
+  }
+  auto keepdims = keep_dims_ptr->cast<BoolImmPtr>()->value();
+  return keepdims;
+}
+
+std::optional<bool> GetKeepDimsFromInputs(const std::shared_ptr<OperatorInfo> &op) {
+  auto keep_dims_opt = GetScalarValueFromInputs<bool>(op->input_value(), op->name(), KEEP_DIMS);
+  return keep_dims_opt;
+}
+
+bool GetKeepDims(const std::shared_ptr<OperatorInfo> &op) {
+  auto keep_dims_opt = GetKeepDimsFromAttrs(op);
+  if (!keep_dims_opt.has_value()) {
+    keep_dims_opt = GetKeepDimsFromInputs(op);
+  }
+  if (!keep_dims_opt.has_value()) {
+    MS_LOG(EXCEPTION) << op->name() << ": Don't have attr keep_dims.";
+  }
+  auto keepdims = keep_dims_opt.value();
+  return keepdims;
+}
+
+Dimensions GetDimList(const std::shared_ptr<OperatorInfo> &op) {
+  Dimensions dim_list;
+  bool keep_dims = GetKeepDims(op);
+  if (keep_dims) {
+    return dim_list;
+  }
+
+  const auto &name = op->name();
+  auto dim_list_opt = GetArrayValueFromInputs<int64_t>(op->input_value(), name, AXIS);
+  if (!dim_list_opt.has_value()) {
+    MS_LOG(EXCEPTION) << "For " << name << ", failed to get value for " << AXIS << ".";
+  }
+
+  dim_list = dim_list_opt.value();
+  auto x_dim = op->inputs_shape()[0].size();
+  // axis is (), reduce all dim
+  if (dim_list.empty()) {
+    for (size_t i = 0; i < x_dim; ++i) {
+      dim_list.push_back(SizeToLong(i));
+    }
+  } else {
+    auto AxisCorrectFunc = [x_dim](const int64_t axis) {
+      if (axis < 0) {
+        return axis + SizeToLong(x_dim);
+      }
+      return axis;
+    };
+    std::transform(dim_list.begin(), dim_list.end(), dim_list.begin(), AxisCorrectFunc);
+  }
+  return dim_list;
+}
+}  // namespace
+
 size_t OpNameToId(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const std::shared_ptr<OperatorInfo> &op) {
   for (size_t i = 0; i < ops.size(); ++i) {
     if (ops[i]->name() == op->name()) {
@@ -1250,48 +1316,6 @@ Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<Ope
     s_Squeeze.push_back(strategy[LongToSize(stra_dim_list[i])]);
   }
   return s_Squeeze;
-}
-
-bool GetKeepDims(const std::shared_ptr<OperatorInfo> &op) {
-  bool keepdims = false;
-  auto keep_dims_iter = op->attrs().find(KEEP_DIMS);
-  if (keep_dims_iter == op->attrs().end()) {
-    MS_LOG(EXCEPTION) << op->name() << ": Don't have attr keep_dims.";
-  }
-  MS_EXCEPTION_IF_NULL(keep_dims_iter->second);
-  if (!keep_dims_iter->second->isa<BoolImm>()) {
-    MS_LOG(EXCEPTION) << op->name() << ": Keep_dims is not a bool.";
-  }
-  keepdims = keep_dims_iter->second->cast<BoolImmPtr>()->value();
-  return keepdims;
-}
-
-Dimensions GetDimList(const std::shared_ptr<OperatorInfo> &op) {
-  Dimensions dim_list;
-  bool keep_dims = GetKeepDims(op);
-  if (keep_dims != false) {
-    return dim_list;
-  }
-  auto input_value = op->input_value();
-  auto input_dim = op->inputs_shape()[0].size();
-  if (input_value.back()->isa<ValueTuple>()) {
-    auto attr_axis = GetValue<std::vector<int64_t>>(input_value.back());
-    if (attr_axis.empty()) {
-      for (size_t i = 0; i < input_dim; i++) {
-        dim_list.push_back(SizeToLong(i));
-      }
-    } else {
-      for (auto &axis : attr_axis) {
-        axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-      }
-    }
-  } else if (input_value.back()->isa<Int64Imm>()) {
-    int64_t axis = GetValue<int64_t>(input_value.back());
-    axis < 0 ? dim_list.push_back(axis + SizeToLong(input_dim)) : dim_list.push_back(axis);
-  } else {
-    MS_LOG(EXCEPTION) << "Failure: Axis type is invalid.";
-  }
-  return dim_list;
 }
 
 Dimensions ModifyStrategyIfReduceIncoming(const std::shared_ptr<OperatorInfo> &op, Dimensions strategy) {
