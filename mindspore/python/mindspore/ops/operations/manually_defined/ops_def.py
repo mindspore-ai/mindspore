@@ -1022,11 +1022,8 @@ def infer_value_for_Reshape(x, shape):
     return out
 
 
-def infer_value_for_Range(start_value, limit_value, delat_value):
+def infer_value_for_Range(start_value, limit_value, delta_value, maxlen):
     """Infer the value of input for Range."""
-    if start_value is not None and limit_value is not None and delat_value is not None:
-        start = start_value.asnumpy()
-        limit = limit_value.asnumpy()
-        delat = delat_value.asnumpy()
-        return Tensor(np.arange(start, limit, delat), dtype=start_value.dtype)
+    if start_value is not None and limit_value is not None and delta_value is not None:
+        return Tensor(np.arange(start_value, limit_value, delta_value))
     return None
