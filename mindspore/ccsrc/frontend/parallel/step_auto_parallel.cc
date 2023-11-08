@@ -491,7 +491,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
     auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
 
-    auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueId() + prim->name());
     if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
@@ -509,7 +509,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                      << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
-        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), current_op_ptr));
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId() + prim->name(), current_op_ptr));
         continue;
       }
       bool is_last_nodes = IsPrimitiveCNode(cnode, prim::kPrimVirtualOutput);
@@ -530,7 +530,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
-      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), operator_info));
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId() + prim->name(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         (void)ops_in_a_loop_.insert(operator_info->name());
@@ -608,7 +608,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
 
     // Find the operatorInfo if it exists
-    auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy() + prim->name());
     if (search_cnode == from_cnode_to_info.cend()) {
       size_t loop_index = 0;
       bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
@@ -627,7 +627,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                      << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
-        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), current_op_ptr));
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy() + prim->name(), current_op_ptr));
         continue;
       }
       // In this case, the corresponding OperatorInfo is not created, create the new one.
@@ -648,7 +648,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                    << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
-      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy() + prim->name(), operator_info));
       if (single_loop && is_in_loop) {
         operators_in_forloop.push_back(operator_info);
         (void)ops_in_a_loop_.insert(operator_info->name());
