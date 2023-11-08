@@ -148,7 +148,7 @@ class MIND_API ShapeCalcInfer : public abstract::OpInferBase {
         }
       } else {
         // Value depended, try to get value from input abstract.
-        if (TryGetValueArg(abs, &args, &pos_idx)) {
+        if (!TryGetValueArg(abs, &args, &pos_idx)) {
           (void)unknown_inputs.insert(i);
         }
       }

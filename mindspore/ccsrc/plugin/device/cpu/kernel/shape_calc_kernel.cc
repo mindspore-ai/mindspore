@@ -36,7 +36,7 @@ int ShapeCalcCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     return ret;
   }
 
-  if (primitive_->HasAttr(ops::kAttrCalcResult)) {
+  if (!primitive_->HasAttr(ops::kAttrCalcResult)) {
     MS_LOG(ERROR) << "For ShapeCalc, the calc result should be get here.";
     return KRET_RESIZE_FAILED;
   }
