@@ -60,10 +60,6 @@ TensorStorageInfoPtrList ReshapeCalcImpl(const PrimitivePtr &prim, const tensor:
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   const auto &old_shape = old_tensor_info->old_shape;
   auto storage_offset = old_tensor_info->old_offset;
-  if (!IsContiguous(old_shape, old_tensor_info->old_strides)) {
-    return {};
-  }
-
   const auto &new_shape = ReshapeUpdateShape(old_shape, shape);
   const auto &new_strides = GetOriStrides(new_shape);
   auto new_storage_info =
@@ -80,8 +76,7 @@ TensorStorageInfoPtrList ReshapeCalc(const PrimitivePtr &prim, const std::vector
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto ori_storage_info = input_tensor->storage_info();
   if (ori_storage_info != nullptr && !ori_storage_info->is_contiguous) {
-    MS_LOG(EXCEPTION) << "input tensor:" << input_tensor->ToString()
-                      << " is not contiguous, storage info:" << ori_storage_info->ToString();
+    return {};
   }
 
   auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
