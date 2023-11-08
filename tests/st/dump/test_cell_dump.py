@@ -76,8 +76,6 @@ def run_multi_layer_train(is_set_dump):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_cell_dump():
@@ -121,8 +119,6 @@ def test_ascend_cell_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_not_cell_dump():
@@ -156,8 +152,6 @@ def test_ascend_not_cell_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_cell_empty_dump():
@@ -186,8 +180,6 @@ def test_ascend_cell_empty_dump():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_cell_dump_set_enable_false():
@@ -231,8 +223,6 @@ class OperateSymbolNet(Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ascend_cell_dump_with_operate_symbol():

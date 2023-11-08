@@ -76,8 +76,6 @@ def test_maximum_grad_gpu():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_maximum_grad_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

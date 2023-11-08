@@ -66,8 +66,6 @@ def test_sequence_in_with_irregular_sequence_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_in_with_irregular_sequence_3():
     """
@@ -379,8 +377,6 @@ def test_sequence_compare_with_operation_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_compare_with_operation_3():
     """
@@ -516,8 +512,6 @@ def test_sequence_count_with_operation_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_count_with_operation_3():
     """
@@ -537,8 +531,6 @@ def test_sequence_count_with_operation_3():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_count_with_operation_4():
     """
@@ -638,8 +630,6 @@ def test_sequence_index_with_operation_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_index_with_operation_3():
     """
@@ -873,8 +863,6 @@ def test_sequence_getitem_with_slice():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_getitem_with_slice_2():
     """
@@ -943,8 +931,6 @@ def test_sequence_ops_with_grad_2():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sequence_ops_with_grad_3():
     """

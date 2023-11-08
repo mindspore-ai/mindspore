@@ -97,8 +97,6 @@ def test_tensor_copy_slices_bprop():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_ascend_graph():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -106,8 +104,6 @@ def test_tensor_copy_slices_ascend_graph():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_tensor_copy_slices_ascend_pynative():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")

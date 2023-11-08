@@ -47,8 +47,6 @@ def check_fusion_op_in_ir(ir_dir):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ub_fusion_success():
     """

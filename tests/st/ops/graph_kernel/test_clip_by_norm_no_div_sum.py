@@ -60,8 +60,6 @@ def test_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_clip_by_norm_no_div_sum_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

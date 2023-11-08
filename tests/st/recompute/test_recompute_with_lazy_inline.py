@@ -50,8 +50,6 @@ def run_testcase(testcase_name, expect_memory_usage):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_recompute():
     """
@@ -63,8 +61,6 @@ def test_recompute_cell_recompute():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_op_recompute1():
     """
@@ -76,8 +72,6 @@ def test_recompute_op_recompute1():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_op_recompute2():
     """
@@ -89,8 +83,6 @@ def test_recompute_op_recompute2():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_and_op_recompute1():
     """
@@ -102,8 +94,6 @@ def test_recompute_cell_and_op_recompute1():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_recompute_cell_and_op_recompute2():
     """

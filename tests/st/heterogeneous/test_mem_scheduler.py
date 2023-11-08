@@ -157,8 +157,6 @@ def test_lenet_manual_offload():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_1024_batch_size_resnet():
     """
