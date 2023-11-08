@@ -34,7 +34,9 @@ class MIND_API IncreFlashAttention : public BaseOperator {
   MIND_API_BASE_MEMBER(IncreFlashAttention);
   /// \brief Constructor.
   IncreFlashAttention() : BaseOperator(kNameIncreFlashAttention) {
-    InitIOName({"query", "key", "value", "atten_mask"}, {"attention_out"});
+    InitIOName({"query", "key", "value", "atten_mask", "actual_seq_lengths", "padding_mask", "dequant_scale1",
+                "quant_scale1", "dequant_scale2", "quant_scale2", "quant_offset2"},
+               {"attention_out"});
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IncreFlashAttention for the inputs.
 
