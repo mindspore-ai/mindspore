@@ -317,7 +317,9 @@ void SetUserData(DeviceAddress *device_address, const UserDataPtr &user_data) {
 
   device_address->set_user_data(user_data);
   const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
-  MS_EXCEPTION_IF_NULL(user_data_type);
+  if (user_data_type == nullptr) {
+    return;
+  }
   if (*user_data_type == UserDataType::kUserTypeHashTable) {
 #if CUDA_VERSION > 11000 && defined(__linux__)
     auto key_type = user_data->get<TypeId>(kHashTableKeyType);

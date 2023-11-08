@@ -394,6 +394,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       if (CopyInputDataPersistedHandle(device_context, input_device_tensor, node_device_tensor, i)) {
         continue;
       }
+      copy_device_tensor = copy_input_device_tensors_[i];
     } else {
       if (node_device_tensor->GetPtr() == nullptr) {
         MS_LOG(INFO)
