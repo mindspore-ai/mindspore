@@ -181,16 +181,26 @@ void ExpandKernelAttr(const CNodePtr &kernel_node, kernel::KernelAttr *kernel_at
   }
   size_t all_same_input_num = kernel_attr->GetAllSameInputNum();  // default 0; else >=1 when allsame=true
   size_t standalone_input_num = attr_num - all_same_input_num;
+  bool is_group_allsame = kernel_attr->GetGroupAllSame();
   // Only support one dynamic input like Concat or
   // many dynamic input but each input has same number like DynamicStitch
   std::string format = kOpFormat_DEFAULT;
   std::vector<DataType> attr_list;
   size_t each_attr_input_num = (input_num - standalone_input_num) / (all_same_input_num == 0 ? 1 : all_same_input_num);
   // Deal with allsame==True
-  for (size_t i = 0; i < all_same_input_num; ++i) {
-    TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
-    for (size_t j = 0; j < each_attr_input_num; ++j) {
-      (void)attr_list.emplace_back(DataType(input_dtype, format));
+  if (is_group_allsame) {
+    for (size_t i = 0; i < each_attr_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < all_same_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
+    }
+  } else {
+    for (size_t i = 0; i < all_same_input_num; ++i) {
+      TypeId input_dtype = kernel_attr->GetInputAttr(i).dtype;
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        (void)attr_list.emplace_back(DataType(input_dtype, format));
+      }
     }
   }
   // Deal with the rest attrs

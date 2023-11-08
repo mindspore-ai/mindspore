@@ -157,7 +157,7 @@ class BACKEND_EXPORT KernelAttr {
                            const std::string &formatt = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &object_type, const TypeId &ms_type,
                             const std::string &formatt = kOpFormat_DEFAULT);
-  KernelAttr &AddAllSameAttr(bool all_same, size_t all_same_input_num = 1);
+  KernelAttr &AddAllSameAttr(bool all_same, size_t all_same_input_num = 1, bool group_allsame = false);
   KernelAttr &AddSkipCheckAttr(bool skip_check);
   KernelAttr &AddRealTuple(const bool &is_real_tuple);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
@@ -168,6 +168,7 @@ class BACKEND_EXPORT KernelAttr {
   bool GetAllSame() const { return all_same_; }
   bool GetSkipCheck() const { return skip_check_; }
   const bool &GetRealTuple() const { return is_real_tuple_; }
+  bool GetGroupAllSame() const { return is_group_allsame_; }
   size_t GetAllSameInputNum() const { return all_same_input_num_; }
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
@@ -188,6 +189,7 @@ class BACKEND_EXPORT KernelAttr {
   bool all_same_{false};
   bool skip_check_{false};
   bool is_real_tuple_{false};
+  bool is_group_allsame_{false};
   size_t all_same_input_num_{0};
 
   // The map between kernel's output and input ref relationship.
@@ -235,6 +237,9 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
   const std::vector<TypeId> &type_ids);
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
+
+BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, std::vector<mindspore::TypeId> &input_types,
+                                             const KernelAttr &cur_kernel_attr);
 
 template <typename Derived>
 class MatchKernelHelper {

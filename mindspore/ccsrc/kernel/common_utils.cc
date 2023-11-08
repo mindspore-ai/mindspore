@@ -431,8 +431,9 @@ KernelAttr &KernelAttr::AddOutputAttr(const TypeId &ms_type, const std::string &
   return *this;
 }
 
-KernelAttr &KernelAttr::AddAllSameAttr(bool all_same, size_t all_same_input_num) {
+KernelAttr &KernelAttr::AddAllSameAttr(bool all_same, size_t all_same_input_num, bool group_allsame) {
   all_same_ = all_same;
+  is_group_allsame_ = group_allsame;
   if (all_same_input_num < 1) {
     MS_LOG(EXCEPTION) << "Allsame attr must >= 1, but get " << all_same_input_num;
   }
@@ -564,28 +565,42 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
   return std::make_pair(false, 0);
 }
 
-bool CheckAttrForAllSameInput(const KernelAttr &kernel_attr, const KernelAttr &cur_kernel_attr) {
-  auto input_num = kernel_attr.GetInputSize();
+bool CheckAttrForAllSameInput(const size_t input_num, std::vector<mindspore::TypeId> &input_types,
+                              const KernelAttr &cur_kernel_attr) {
   auto cur_input_num = cur_kernel_attr.GetInputSize();
+  bool is_group_allsame = cur_kernel_attr.GetGroupAllSame();
   size_t cur_all_same_input_num = cur_kernel_attr.GetAllSameInputNum();  // default 0; else >=1 when allsame=true
   size_t cur_standalone_input_num = cur_input_num - cur_all_same_input_num;
   size_t each_attr_input_num =
     (input_num - cur_standalone_input_num) / (cur_all_same_input_num == 0 ? 1 : cur_all_same_input_num);
   // deal with allsame inputs
-  for (size_t i = 0; i < cur_all_same_input_num; ++i) {
-    for (size_t j = 0; j < each_attr_input_num; ++j) {
-      auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
-      auto start = j + i * each_attr_input_num;
-      if (kernel_attr.GetInputAttr(start).dtype != dtype && kernel_attr.GetInputAttr(start).dtype != kTypeUnknown) {
-        return true;
+  if (is_group_allsame) {
+    for (size_t i = 0; i < each_attr_input_num; ++i) {
+      for (size_t j = 0; j < cur_all_same_input_num; ++j) {
+        auto dtype = cur_kernel_attr.GetInputAttr(j).dtype;
+        auto start = j + i * cur_all_same_input_num;
+        if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+          return true;
+        }
+      }
+    }
+  } else {
+    for (size_t i = 0; i < cur_all_same_input_num; ++i) {
+      for (size_t j = 0; j < each_attr_input_num; ++j) {
+        auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
+        auto start = j + i * each_attr_input_num;
+        if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
+          return true;
+        }
       }
     }
   }
+
   // deal with the rest except allsame inputs
   for (size_t i = cur_all_same_input_num; i < cur_standalone_input_num; ++i) {
     auto dtype = cur_kernel_attr.GetInputAttr(i).dtype;
     auto start = each_attr_input_num * cur_all_same_input_num + i;
-    if (kernel_attr.GetInputAttr(start).dtype != dtype && kernel_attr.GetInputAttr(start).dtype != kTypeUnknown) {
+    if (input_types[start] != dtype && input_types[start] != kTypeUnknown) {
       return true;
     }
   }
@@ -608,8 +623,11 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
     if (!cur_kernel_attr.GetAllSame() && (input_num != cur_input_num || output_num != cur_output_num)) {
       continue;
     }
+    std::vector<mindspore::TypeId> input_types;
+    (void)std::transform(kernel_attr.input_type().begin(), kernel_attr.input_type().end(),
+                         std::back_inserter(input_types), [](const DataType &Dtype) { return Dtype.dtype; });
 
-    bool mis_match = CheckAttrForAllSameInput(kernel_attr, cur_kernel_attr);
+    bool mis_match = CheckAttrForAllSameInput(input_num, input_types, cur_kernel_attr);
 
     if (mis_match) {
       continue;
