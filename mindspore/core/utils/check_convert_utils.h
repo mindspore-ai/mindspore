@@ -455,6 +455,7 @@ class MS_CORE_API CheckAndConvertUtils {
                                            const std::string &prim_name);
   static int64_t GetAndCheckFormat(const ValuePtr &value);
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
+  static size_t GetRemoveUMonadAbsNum(const AbstractBasePtrList &abs_list);
   static void CheckInputArgs(const std::vector<AbstractBasePtr> &input_args, const CompareEnum compare_operator,
                              const int64_t match_value, const std::string &prim_name);
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
