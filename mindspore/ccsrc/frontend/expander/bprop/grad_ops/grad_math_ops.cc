@@ -16,11 +16,11 @@
 #include <unordered_set>
 
 #include "frontend/expander/bprop/bprop_irbuilder.h"
-#include "include/common/utils/utils.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
-#include "utils/ms_context.h"
+#include "include/common/utils/utils.h"
 #include "ir/functor.h"
 #include "ops/math_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList AddnGradFunc(BpropIRBuilder *ib) {
@@ -1217,7 +1217,8 @@ REG_BPROP_BUILDER("ReduceProd").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     return {dout, ib->OutZeros(axis)};
   }
   auto res = ib->ShapeCalc(g_reduce_prod, {x, axis}, {1});
-  auto grad = ib->GetAttr<bool>("keep_dims") ? dout : ib->Reshape(dout, res[0]);
+  auto keep_dims_value = GetValue<bool>(keep_dims->BuildValue());
+  auto grad = keep_dims_value ? dout : ib->Reshape(dout, res[0]);
   grad = ib->BroadcastTo(grad, x);
 
   auto permuted = ib->Transpose(x, res[2]);
@@ -1241,7 +1242,7 @@ REG_BPROP_BUILDER("ReduceMax").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMax', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
+    auto dx = MinOrMaxGrad(ib, x, axis, keep_dims, out, dout);
     return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
   }
 });
@@ -1256,7 +1257,7 @@ REG_BPROP_BUILDER("ReduceMin").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'ReduceMin', gradient not support for complex type currently.";
   } else {
-    auto dx = MinOrMaxGrad(ib, x, axis, out, dout);
+    auto dx = MinOrMaxGrad(ib, x, axis, keep_dims, out, dout);
     return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
   }
 });

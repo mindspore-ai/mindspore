@@ -537,11 +537,12 @@ NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const
   return ib->BroadcastTo(grad, x);
 }
 
-NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &out,
-                     const NodePtr &dout) {
+NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                     const NodePtr &out, const NodePtr &dout) {
   auto y = out;
   auto grad = dout;
-  if (!ib->GetAttr<bool>("keep_dims")) {
+  auto keepdims = GetValue<bool>(keep_dims->BuildValue());
+  if (!keepdims) {
     auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
     y = ib->Reshape(out, output_shape_kept_dims);
     grad = ib->Reshape(dout, output_shape_kept_dims);
