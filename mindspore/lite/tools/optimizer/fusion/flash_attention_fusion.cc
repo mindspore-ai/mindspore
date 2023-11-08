@@ -915,7 +915,7 @@ CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(
   incre_flash_attention_prim->AddAttr("scale_value", api::MakeValue(scale_value));
   incre_flash_attention_prim->AddAttr("num_key_value_heads", api::MakeValue(num_key_value_heads));
 
-  std::vector<int64_t> dyn_input_sizes = {-1, 1, 1, -1, -1, -1};
+  std::vector<int64_t> dyn_input_sizes = {-1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1};
   incre_flash_attention_prim->AddAttr("dyn_input_sizes", api::MakeValue(dyn_input_sizes));
 
   MS_LOG(INFO) << "num heads: " << num_heads << ", input layout: BNSD, scale value: " << scale_value
