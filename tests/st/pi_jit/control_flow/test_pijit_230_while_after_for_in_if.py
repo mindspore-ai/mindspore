@@ -15,7 +15,7 @@
 """ test PIJit control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, jit
+from mindspore import Tensor, jit, context
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -43,6 +43,7 @@ def test_while_after_for_in_if_1():
         z = z + y
         return y + z
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func2301()
     assert res == 11
 
@@ -74,6 +75,7 @@ def test_while_after_for_in_if_2():
             z = z - y
         return x, y, z
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     res_x, res_y, res_z = func2302()
     assert res_x == 2
     assert res_y == 4
@@ -103,6 +105,7 @@ def test_while_after_for_in_if_3():
             y -= Tensor(x[0])
         return y
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func2303()
     assert (res.asnumpy() == [-3, -4]).all()
 
@@ -133,5 +136,6 @@ def test_while_after_for_in_if_4():
             y.append(z)
         return Tensor(y)
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     res = func2304()
     assert (res.asnumpy() == [1, 2, 3, 4, 6]).all()

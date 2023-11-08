@@ -8,7 +8,6 @@ from mindspore import context, jit
 from mindspore.common.parameter import Parameter
 import pytest
 
-context.set_context(mode=context.PYNATIVE_MODE)
 grad_all = C.GradOperation(get_all=True)
 
 class Grad(nn.Cell):
@@ -49,6 +48,7 @@ def test_while_true_break():
                 out = self.add(out, out)
             return out
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     t = np.array([1]).astype(np.int32)
     y = Tensor([1], mstype.int32)
     x = Tensor([5], mstype.int32)

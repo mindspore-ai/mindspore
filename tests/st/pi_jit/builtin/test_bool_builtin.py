@@ -1,20 +1,7 @@
 import pytest
 import numpy as onp
 from mindspore import Tensor, jit, context
-
-
-def match_array(actual, expected, error=0, err_msg=''):
-    if isinstance(actual, (int, bool)):
-        actual = onp.asarray(actual)
-
-    if isinstance(expected, (int, bool)):
-        expected = onp.asarray(expected)
-
-    if error > 0:
-        onp.testing.assert_almost_equal(
-            actual, expected, decimal=error, err_msg=err_msg)
-    else:
-        onp.testing.assert_equal(actual, expected, err_msg=err_msg)
+from ..share.utils import match_array
 
 
 @jit(mode="PIJit")
