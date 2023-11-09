@@ -618,7 +618,8 @@ void AnyTypeKernelActor::FetchGraphOutput(OpContext<DeviceTensor> *const context
 
           const auto &graph_output_kernel_tensor = graph_output_data->data_->kernel_tensor();
           MS_EXCEPTION_IF_NULL(graph_output_kernel_tensor);
-          const auto &fallback_kernel_tensor = graph_output_kernel_tensor->Clone();
+          const auto &fallback_kernel_tensor =
+            graph_output_kernel_tensor->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
           MS_EXCEPTION_IF_NULL(fallback_kernel_tensor);
           fallback_kernel_tensor->set_device_ptr(nullptr);
           fallback_device_tensors_[index] =

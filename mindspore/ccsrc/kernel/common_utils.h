@@ -238,7 +238,7 @@ BACKEND_EXPORT std::vector<KernelObjectType> TypeIdToKernelObjectTypeForTupleUnf
 BACKEND_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &object_type);
 BACKEND_EXPORT bool IsTupleNestedOutputKernelAttr(const kernel::KernelAttr &kernel_attr);
 
-BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, std::vector<mindspore::TypeId> &input_types,
+BACKEND_EXPORT bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
                                              const KernelAttr &cur_kernel_attr);
 
 template <typename Derived>

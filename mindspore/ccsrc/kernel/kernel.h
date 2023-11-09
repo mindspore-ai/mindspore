@@ -434,7 +434,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
     device_synchronizer_ = device_synchronizer;
   }
 
-  std::shared_ptr<KernelTensor> Clone() { return std::make_shared<KernelTensor>(*this); }
+  std::shared_ptr<AbstractBase> Clone() const override { return std::make_shared<KernelTensor>(*this); }
 
   // The following member methods are required by the old KernelTensor.
   KernelTensor &operator=(const KernelTensor &copy_tensor) {

@@ -323,7 +323,8 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const DeviceContext *device_
 
   if (copy_input_device_tensors_[i] == nullptr) {
     MS_EXCEPTION_IF_NULL(node_device_tensor->kernel_tensor());
-    const auto new_kernel_tensor = node_device_tensor->kernel_tensor()->Clone();
+    const auto new_kernel_tensor =
+      node_device_tensor->kernel_tensor()->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
     MS_EXCEPTION_IF_NULL(new_kernel_tensor);
     new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);
     new_kernel_tensor->set_device_id(device_context->device_context_key().device_id_);

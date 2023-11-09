@@ -598,7 +598,7 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   // Create new device address from cached device device address.
   const auto &kernel_tensor = cached_device_address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto new_kernel_tensor = kernel_tensor->Clone();
+  auto new_kernel_tensor = kernel_tensor->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
   new_kernel_tensor->set_device_ptr(nullptr);
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
