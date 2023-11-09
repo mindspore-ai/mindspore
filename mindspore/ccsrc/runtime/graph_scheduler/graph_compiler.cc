@@ -882,28 +882,26 @@ void GraphCompiler::GetParamAndOutputIndex(
 void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
                                             const std::map<KernelWithIndex, TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                                            const std::vector<TensorPtr> &graph_inputs,
-                                            InputTensorInfo *const input_tensor_info) {
+                                            const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info) {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_tensor_info);
+  session_->GetOpInputTensors(kernel, op_output, parameter_index, graph_inputs, input_info);
 }
 
 TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
                                                        const std::map<KernelWithIndex, TensorPtr> &op_output,
                                                        const std::map<AnfNodePtr, size_t> &parameter_index,
                                                        const std::vector<TensorPtr> &graph_inputs,
-                                                       InputTensorInfo *const input_tensor_info, size_t input_index) {
+                                                       InputInfo *const input_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(session_);
-  return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_tensor_info,
-                                           input_index);
+  return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_info, input_index);
 }
 
-void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputInfo &input_info,
                                                    bool use_dynamic_shape_process,
                                                    session::BackendOpRunInfoPtr *op_run_info,
                                                    const GraphOutputInfo *const graph_output_info) {
   MS_EXCEPTION_IF_NULL(session_);
-  *op_run_info = session_->GetSingleOpRunInfo(kernel, tensor_info, graph_output_info);
+  *op_run_info = session_->GetSingleOpRunInfo(kernel, input_info, graph_output_info);
   (*op_run_info)->base_op_run_info.use_dynamic_shape_process = use_dynamic_shape_process;
 }
 

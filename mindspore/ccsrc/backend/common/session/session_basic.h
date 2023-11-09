@@ -78,9 +78,9 @@ struct BackendOpRunInfo {
 };
 using BackendOpRunInfoPtr = std::shared_ptr<BackendOpRunInfo>;
 
-struct InputTensorInfo {
-  std::vector<tensor::TensorPtr> input_tensors;
-  std::vector<int64_t> input_tensors_mask;
+struct InputInfo {
+  std::vector<ValuePtr> input_values;
+  std::vector<int64_t> input_masks;
   std::set<KernelWithIndex> input_kernel;
 };
 
@@ -253,9 +253,9 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
   // create graph output for RunOp
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) const;
 
-  BackendOpRunInfoPtr GetSingleOpRunInfo(const CNodePtr &cnode, const InputTensorInfo &tensor_info,
+  BackendOpRunInfoPtr GetSingleOpRunInfo(const CNodePtr &cnode, const InputInfo &input_info,
                                          const GraphOutputInfo *const graph_output_info) const;
-  tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const;
+  ValuePtr GetValueNodeOutput(const AnfNodePtr &node, size_t output_index) const;
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,
                                              const std::vector<tensor::TensorPtr> &graph_inputs) const;
@@ -263,12 +263,12 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
                                          const std::map<KernelWithIndex, tensor::TensorPtr> &op_output) const;
   void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                          const std::map<AnfNodePtr, size_t> &parameter_index,
-                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info) const;
+                         const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info) const;
   tensor::TensorPtr GetOpInputTensorByIndex(const CNodePtr &cnode,
                                             const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                                            const std::vector<tensor::TensorPtr> &graph_inputs,
-                                            InputTensorInfo *input_tensor_info, size_t input_index) const;
+                                            const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info,
+                                            size_t input_index) const;
 
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list) const;
   std::vector<uint32_t> GetAllReduceSplitIndex();

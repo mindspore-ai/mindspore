@@ -373,8 +373,7 @@ namespace {
 ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &parent_node,
                             const AnfNodePtr &input_node, const std::map<KernelWithIndex, TensorPtr> &op_output,
                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
-                            size_t input_index) {
+                            const std::vector<TensorPtr> &graph_inputs, InputInfo *input_info, size_t input_index) {
   if (!IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
     auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
     MS_EXCEPTION_IF_NULL(real_input);
@@ -384,7 +383,7 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
         value = TensorListToSparseTensor(real_input->abstract(), graph_inputs);
       } else {
         value = graph_compiler->GetSingleOpInputTensorByIndex(parent_node, op_output, parameter_index, graph_inputs,
-                                                              input_tensor_info, input_index);
+                                                              input_info, input_index);
       }
       MS_EXCEPTION_IF_NULL(value);
     } else {
@@ -401,8 +400,8 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
   std::vector<ValuePtr> args_tuple;
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto input = cnode->inputs()[i];
-    auto value = GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs,
-                                    input_tensor_info, i - 1);
+    auto value =
+      GetInputofBpropCut(graph_compiler, cnode, input, op_output, parameter_index, graph_inputs, input_info, i - 1);
     MS_EXCEPTION_IF_NULL(value);
     (void)args_tuple.emplace_back(value);
   }
@@ -430,8 +429,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
                        const CNodePtr &front_cnode, const CNodePtr &backend_cnode,
                        const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                        const std::map<AnfNodePtr, size_t> &parameter_index,
-                       const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
-                       VectorRef *args) {
+                       const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info, VectorRef *args) {
   MS_EXCEPTION_IF_NULL(front_cnode);
   MS_EXCEPTION_IF_NULL(backend_cnode);
   MS_EXCEPTION_IF_NULL(graph_compiler);
@@ -451,7 +449,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
       value = GetFrontArgByParameter(origin_paramters, front_args, front_input_node);
     } else {
       value = GetInputofBpropCut(graph_compiler, backend_cnode, input_node, op_output_map, parameter_index,
-                                 graph_inputs, input_tensor_info, index - 1);
+                                 graph_inputs, input_info, index - 1);
     }
     MS_EXCEPTION_IF_NULL(value);
     (void)args->emplace_back(value);
@@ -498,7 +496,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
                         const KernelGraphPtr &graph, const CNodePtr &kernel,
                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output_map,
                         const std::map<AnfNodePtr, size_t> &parameter_index,
-                        const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
+                        const std::vector<tensor::TensorPtr> &graph_inputs, InputInfo *input_info,
                         VectorRef *op_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(kernel);
@@ -529,7 +527,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
   if (prim->name() == kBpropCutOpName) {
     VectorRef args;
     GetControlOpInput(graph_compiler, origin_paramters, front_args, cnode, kernel, op_output_map, parameter_index,
-                      graph_inputs, input_tensor_info, &args);
+                      graph_inputs, input_info, &args);
     py::gil_scoped_acquire acquire;
     BaseRef out = python_adapter::PyAdapterCallback::RunPrimitivePyHookFunction(prim, args);
     // Convert pyobject output to tensor.
@@ -808,23 +806,23 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     GilReleaseWithCheck gil_release;
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
-      InputTensorInfo input_tensor_info;
+      InputInfo input_info;
       VectorRef op_outputs;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
         WaitTaskFinish();
         const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
         RunControlOperator(graph_compiler_, origin_parameters, args, graph, kernel, op_output_map, parameter_index,
-                           inputs[graph_index], &input_tensor_info, &op_outputs);
+                           inputs[graph_index], &input_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
       } else if (common::AnfAlgo::HasNodeAttr(kAttrJitCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
-                                                 &input_tensor_info);
+                                                 &input_info);
         VectorRef input_args;
-        (void)std::transform(input_tensor_info.input_tensors.begin(), input_tensor_info.input_tensors.end(),
+        (void)std::transform(input_info.input_values.begin(), input_info.input_values.end(),
                              std::back_inserter(input_args.elements_),
-                             [](tensor::TensorPtr &tensor) { return std::move(tensor); });
+                             [](ValuePtr &value) { return std::move(value); });
 
         RunMsGradGraph(kernel, input_args, &op_outputs);
         WaitTaskFinish();
@@ -832,8 +830,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         auto is_dynamic = common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, kernel);
         session::BackendOpRunInfoPtr op_run_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
-                                                 &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, is_dynamic, &op_run_info,
+                                                 &input_info);
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_info, is_dynamic, &op_run_info,
                                                         &graph_output_info);
         if (is_dynamic) {
           op_run_info->op_prim = std::make_shared<Primitive>(*op_run_info->op_prim);
@@ -844,7 +842,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
         }
       }
 
-      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
+      graph_compiler_->UpdateRefCount(input_info.input_kernel, &cnode_ref_count, &op_output_map);
 
       graph_output_info.graph_output_tensors.clear();
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);

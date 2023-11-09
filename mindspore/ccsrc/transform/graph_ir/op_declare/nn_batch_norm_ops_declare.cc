@@ -78,9 +78,7 @@ INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},      {2, INPUT_DESC(x)}
 INPUT_ATTR_MAP(BatchNormGrad) = {{7, ATTR_DESC(is_training, AnyTraits<bool>())},
                                  {8, ATTR_DESC(epsilon, AnyTraits<float>())},
                                  {9, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())}};
-ATTR_MAP(BatchNormGrad) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-                           {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
-                           {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
+ATTR_MAP(BatchNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchNormGrad) = {{0, OUTPUT_DESC(x_backprop)},
                              {1, OUTPUT_DESC(scale_backprop)},
                              {2, OUTPUT_DESC(offset_backprop)},
