@@ -485,16 +485,14 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
         class_name = get_op_name(operator_name, operator_data.get('class'))
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         opdef_cc = f"""\n{class_name}FuncImpl g{class_name}FuncImpl;""" + \
-                   f"""\nOpDef g{class_name} = {{\n  .name_ = "{class_name}",""" + \
-                   f"""\n  .args_ =
-    {{"""
-        cc_index_str = f"""\n  .indexes_ =
-    {{"""
+                   f"""\nOpDef g{class_name} = {{\n  /*.name_=*/"{class_name}",""" + \
+                   f"""\n  /*.args_=*/ {{"""
+        cc_index_str = f"""\n  /*.indexes_ =*/ {{"""
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
 
+        # Process inputs.
         for i, (arg_name, arg_info) in enumerate(args.items()):
-            cc_index_str += f"""
-      {{"{arg_name}", {i}}},"""
+            cc_index_str += f"""\n    {{"{arg_name}", {i}}},"""
             dtype = arg_info.get('dtype')
             cc_dtype_str = 'DT_' + dtype.replace('[', '_').replace(']', '').upper()
 
@@ -508,23 +506,23 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
                 ', '.join('DT_' + type.replace('[', '_').replace(']', '').upper() for type in
                           (ct.strip() for ct in type_cast.split(",")))
 
-            opdef_cc += f"""
-      {{.arg_name_ = "{arg_name}", .arg_dtype_ = {cc_dtype_str}, .as_init_arg_ = {init_flag}, .arg_handler_ = "{arg_handler_str}", .cast_dtype_ = {{{type_cast_str}}}}},"""
-        opdef_cc += f"""\n    }},"""
-        opdef_cc += f"""\n  .returns_ =
-    {{"""
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{arg_name}", /*.arg_dtype_=*/{cc_dtype_str}, """ + \
+                        f"""/*.as_init_arg_=*/{init_flag}, /*.arg_handler_=*/"{arg_handler_str}", """ + \
+                        f"""/*.cast_dtype_ =*/{{{type_cast_str}}}}},"""
+        opdef_cc += f"""\n  }},"""
+        opdef_cc += f"""\n  /* .returns_ = */ {{"""
 
+        # Process outputs.
         for return_name, return_info in returns.items():
             return_dtype = return_info.get('dtype')
             cc_return_type_str = 'DT_' + return_dtype.replace('[', '_').replace(']', '').upper()
-            opdef_cc += f"""
-      {{.arg_name_ = "{return_name}", .arg_dtype_ = {cc_return_type_str}}},"""
-        opdef_cc += f"""\n    }},"""
+            opdef_cc += f"""\n    {{/*.arg_name_=*/"{return_name}", /*.arg_dtype_=*/{cc_return_type_str}}},"""
+        opdef_cc += f"""\n  }},"""
 
-        cc_index_str += f"""\n    }},"""
+        cc_index_str += f"""\n  }},"""
         opdef_cc += cc_index_str
 
-        cc_func_impl_str = f"""\n  .func_impl_ = g{class_name}FuncImpl,"""
+        cc_func_impl_str = f"""\n  /*.func_impl_=*/g{class_name}FuncImpl,"""
         opdef_cc += cc_func_impl_str
         opdef_cc += f"""\n}};\n"""
         gen_cc_code += opdef_cc
