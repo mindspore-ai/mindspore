@@ -354,7 +354,7 @@ class CustomCallback(Callback):
         assert np.allclose(self.except_loss[cb_params.cur_step_num - 1], loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_pynative_tasksink():

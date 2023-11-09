@@ -79,19 +79,27 @@ function(add_ops_info_target)
   install(FILES ${OPINFO_OUTPUT} DESTINATION ${OPINFO_INSTALL_DIR})
 endfunction()
 
+function(add_ops_compile_options OP_TYPE)
+  cmake_parse_arguments(OP_COMPILE "" "OP_TYPE" "COMPUTE_UNIT;OPTIONS" ${ARGN})
+  file(APPEND ${ASCEND_AUTOGEN_PATH}/${CUSTOM_COMPILE_OPTIONS}
+      "${OP_TYPE},${OP_COMPILE_COMPUTE_UNIT},${OP_COMPILE_OPTIONS}\n")
+endfunction()
+
 function(add_ops_impl_target)
   cmake_parse_arguments(
     OPIMPL "" "TARGET;OPS_INFO;IMPL_DIR;OUT_DIR;INSTALL_DIR"
     "OPS_BATCH;OPS_ITERATE" ${ARGN})
   add_custom_command(
     OUTPUT ${OPIMPL_OUT_DIR}/.impl_timestamp
-    COMMAND mkdir -p ${OPIMPL_OUT_DIR}/dynamic
+    COMMAND mkdir -m 700 -p ${OPIMPL_OUT_DIR}/dynamic
     COMMAND mkdir -p ${OPIMPL_INSTALL_DIR}
     COMMAND
       ${ASCEND_PYTHON_EXECUTABLE}
       ${PROJECT_SOURCE_DIR}/cmake/util/ascendc_impl_build.py ${OPIMPL_OPS_INFO}
       \"${OPIMPL_OPS_BATCH}\" \"${OPIMPL_OPS_ITERATE}\" ${OPIMPL_IMPL_DIR}
       ${OPIMPL_OUT_DIR}/dynamic
+      ${ASCEND_AUTOGEN_PATH}
+
     COMMAND rm -rf ${OPIMPL_OUT_DIR}/.impl_timestamp
     COMMAND touch ${OPIMPL_OUT_DIR}/.impl_timestamp
     DEPENDS ${OPIMPL_OPS_INFO}
@@ -101,80 +109,6 @@ function(add_ops_impl_target)
   if(${ENABLE_SOURCE_PACKAGE})
     install(DIRECTORY ${OPIMPL_OUT_DIR}/dynamic
             DESTINATION ${OPIMPL_INSTALL_DIR})
-  endif()
-endfunction()
-
-function(add_ops_replay_targets)
-  cmake_parse_arguments(
-    OPREPLAY "" "OPS_INFO;COMPUTE_UNIT;IMPL_DIR;OUT_DIR;INSTALL_DIR"
-    "OPS_BATCH;OPS_ITERATE" ${ARGN})
-  # ccec compile options
-  set(ccec_base_opts
-      -c
-      -O2
-      --cce-aicore-only
-      -mllvm
-      -cce-aicore-function-stack-size=16000
-      -mllvm
-      -cce-aicore-record-overflow=false
-      -std=c++17)
-  set(ccec_extopts_ascend310p --cce-aicore-arch=dav-m200 -mllvm
-                              -cce-aicore-fp-ceiling=2)
-  set(ccec_extopts_ascend910 --cce-aicore-arch=dav-c100)
-  set(ccec_extopts_ascend910b --cce-aicore-arch=dav-c220-cube)
-  file(MAKE_DIRECTORY ${OPREPLAY_OUT_DIR})
-  execute_process(
-    COMMAND
-      ${ASCEND_PYTHON_EXECUTABLE}
-      ${PROJECT_SOURCE_DIR}/cmake/util/ascendc_replay_build.py
-      ${OPREPLAY_OPS_INFO} "${OPREPLAY_OPS_BATCH}" "${OPREPLAY_OPS_ITERATE}"
-      ${OPREPLAY_IMPL_DIR} ${OPREPLAY_OUT_DIR} ${OPREPLAY_COMPUTE_UNIT})
-  file(GLOB replay_kernel_entries ${OPREPLAY_OUT_DIR}/*.cce)
-  if(NOT "${replay_kernel_entries}x" STREQUAL "x")
-    foreach(replay_kernel_file ${replay_kernel_entries})
-      get_filename_component(replay_kernel_file_name "${replay_kernel_file}"
-                              NAME)
-      string(REPLACE "_entry.cce" "" op_kerne_name ${replay_kernel_file_name})
-      file(GLOB replay_lib_src ${OPREPLAY_OUT_DIR}/${op_kerne_name}*.cpp)
-      set(OP_TILING_DATA_H_PATH
-          ${OPREPLAY_OUT_DIR}/${op_kerne_name}_tiling_data.h)
-      add_library(replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT} SHARED
-                  ${replay_lib_src})
-      if(EXISTS ${OP_TILING_DATA_H_PATH})
-        target_compile_options(replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT}
-                                PRIVATE -include ${OP_TILING_DATA_H_PATH})
-      endif()
-      target_compile_definitions(
-        replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT}
-        PRIVATE ${op_kerne_name}=${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT})
-      target_compile_options(replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT}
-                              PRIVATE -D__ASCENDC_REPLAY__)
-      target_link_libraries(
-        replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT}
-        PRIVATE intf_pub tikreplaylib::${OPREPLAY_COMPUTE_UNIT} register)
-      add_custom_command(
-        OUTPUT
-          ${OPREPLAY_OUT_DIR}/${op_kerne_name}_entry_${OPREPLAY_COMPUTE_UNIT}.o
-        COMMAND
-          ccec ${ccec_base_opts} ${ccec_extopts_${OPREPLAY_COMPUTE_UNIT}}
-          ${replay_kernel_file} -o
-          ${OPREPLAY_OUT_DIR}/${op_kerne_name}_entry_${OPREPLAY_COMPUTE_UNIT}.o
-        DEPENDS ${replay_kernel_file})
-      add_custom_target(
-        replay_kernel_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT} ALL
-        DEPENDS
-          ${OPREPLAY_OUT_DIR}/${op_kerne_name}_entry_${OPREPLAY_COMPUTE_UNIT}.o)
-      install(
-        TARGETS replay_${op_kerne_name}_${OPREPLAY_COMPUTE_UNIT}
-        LIBRARY
-          DESTINATION
-            packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_replay)
-      install(
-        FILES
-          ${OPREPLAY_OUT_DIR}/${op_kerne_name}_entry_${OPREPLAY_COMPUTE_UNIT}.o
-        DESTINATION
-          packages/vendors/${vendor_name}/op_impl/ai_core/tbe/op_replay)
-    endforeach()
   endif()
 endfunction()
 
