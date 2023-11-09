@@ -169,7 +169,7 @@ void KernelTensor::CalculateMemSize() {
     size_ = element_size_in_bytes_;
   } else {
     // If shape_vector_ is a dynamic shape, size_ will be 0.
-    size_t element_num = shape_vector_.empty() ? 0 : SizeOf(shape_vector_);
+    size_t element_num = SizeOf(shape_vector_);
     size_ = element_num * element_size_in_bytes_;
   }
 }
