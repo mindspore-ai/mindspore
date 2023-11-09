@@ -21,6 +21,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "plugin/device/ascend/hal/device/ascend_pin_mem_pool.h"
 #include "include/transform/graph_ir/utils.h"
 
 namespace mindspore {
@@ -40,9 +41,9 @@ void GeAllocator::Free(::ge::MemBlock *block) {
 }
 
 void GeDeviceResManager::Initialize() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   if (IsEnableRefMode()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     runtime_instance_ = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance_);
@@ -52,6 +53,11 @@ void GeDeviceResManager::Initialize() {
     mem_manager_ = runtime_instance_->GetMemoryManager();
   } else {
     mem_manager_ = std::make_shared<cpu::CPUMemoryManager>();
+  }
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    swap_manager_ = std::make_shared<SwapManager>(kDefaultStreamIndex, &AscendMemoryPool::GetInstance(),
+                                                  &AscendPinMemPool::GetInstance());
+    MS_LOG(INFO) << "Swap manager Initialize success.";
   }
   MS_EXCEPTION_IF_NULL(mem_manager_);
 }
@@ -81,8 +87,14 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   if (runtime_instance_ != nullptr) {
     runtime_instance_->SetContext();
   }
-  void *device_ptr =
-    mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), address->need_recycle());
+  void *device_ptr;
+  if (swap_manager_ != nullptr) {
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
+  } else {
+    device_ptr =
+      mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), address->need_recycle());
+  }
+
   if (!device_ptr) {
     return false;
   }
@@ -94,6 +106,9 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 
 void *GeDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (swap_manager_ != nullptr) {
+    return swap_manager_->AllocDeviceMemory(size);
+  }
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
@@ -117,6 +132,14 @@ void GeDeviceResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t 
 }
 
 std::vector<void *> GeDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  if (swap_manager_ != nullptr) {
+    std::vector<size_t> align_size_list;
+    for (size_t size : size_list) {
+      auto align_size = device::MemoryManager::GetCommonAlignSize(size);
+      align_size_list.emplace_back(align_size);
+    }
+    return swap_manager_->AllocDeviceContinuousMem(align_size_list);
+  }
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
