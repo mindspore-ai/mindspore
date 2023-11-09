@@ -21,7 +21,7 @@ from mindspore.ops import split, interpolate
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax, sqrt, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square, range
 from mindspore.ops.auto_generate.gen_pyboost_func import pow as pyboost_pow
 from mindspore.ops.auto_generate.gen_pyboost_func import sum as pyboost_sum
 import mindspore
@@ -688,3 +688,21 @@ def test_square_ascend():
     input_x1 = Tensor(np.array([1, 2]).astype(np.float32))
     output = square(input_x1)
     assert np.allclose(output.asnumpy(), [1, 4])
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_range_ascend():
+    """
+    Feature: test cast operator
+    Description: test range run by pyboost
+    Expectation: success
+    """
+    context.set_context(device_target="Ascend")
+    start = Tensor(0, mindspore.int32)
+    end = Tensor(10, mindspore.int32)
+    step = Tensor(4, mindspore.int32)
+    output = range(start, end, step)
+    assert np.allclose(output.asnumpy(), [0, 4, 8])

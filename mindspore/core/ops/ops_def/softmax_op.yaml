@@ -1,6 +1,5 @@
 #operator softmax
 softmax:
-<<<<<<< HEAD
     args:
         logits:
             dtype: tensor

@@ -326,3 +326,12 @@ Square:
     mode: normal
   Ascend:
     mode: customize
+
+Range:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: normal
+    cube: False

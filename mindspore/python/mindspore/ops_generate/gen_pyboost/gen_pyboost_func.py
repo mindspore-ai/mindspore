@@ -384,6 +384,8 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         prim_name_str = op_proto.class_name
+        if prim_name_str not in pyboost_yaml_data.keys():
+            continue
         operator_name = op_proto.operator_name
         if operator_name.endswith('ext'):
             operator_name = operator_name[:-4]
@@ -453,6 +455,7 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data, pyboost_yaml_data):
         desc = operator_desc.get("description")
         op_desc_dict[operator_name] = desc
     gen_py += template.PYBOOST_PY_FUNC_HEADEAR
+    func_def = None
     for operator_name, operator_data in op_yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         if op_proto.class_name in pyboost_yaml_data.keys():

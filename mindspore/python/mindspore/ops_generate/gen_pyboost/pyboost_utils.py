@@ -34,6 +34,7 @@ def get_index(index: int):
         7: 'kIndex7',
         8: 'kIndex8',
         9: 'kIndex9',
+        10: 'kIndex10',
     }
     if index in index_map:
         return index_map[index]

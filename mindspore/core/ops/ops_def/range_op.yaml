@@ -16,3 +16,6 @@ range:
     returns:
         output:
             dtype: tensor
+    pyboost: True
+
+
