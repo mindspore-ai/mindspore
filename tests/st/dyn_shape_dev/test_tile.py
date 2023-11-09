@@ -23,6 +23,7 @@ from mindspore import ops
 from mindspore import Tensor
 import mindspore as ms
 
+ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 def tile_func(x, multiplies):
     return ops.operations.manually_defined.tile(x, multiplies)

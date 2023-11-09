@@ -20,6 +20,7 @@ import test_utils
 from mindspore import ops
 import mindspore as ms
 
+ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def cos_forward_func(x):

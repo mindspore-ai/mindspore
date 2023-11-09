@@ -19,6 +19,7 @@ import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
 
+ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def sin_forward_func(x):

@@ -20,6 +20,7 @@ from mindspore import ops
 from mindspore.ops.auto_generate.gen_ops_def import _relu6_grad
 import test_utils
 
+ms.context.set_context(ascend_config={"precision_mode": "force_fp32"})
 
 @test_utils.run_with_cell
 def relu6_grad_func(dy, x):
