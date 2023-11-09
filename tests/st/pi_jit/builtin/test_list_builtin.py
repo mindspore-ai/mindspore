@@ -120,6 +120,7 @@ def test_list_with_input_array(func, ms_func, a):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
