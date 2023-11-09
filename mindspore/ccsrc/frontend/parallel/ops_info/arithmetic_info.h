@@ -42,6 +42,7 @@ class ArithmeticBase : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status BaseCheckStrategy(const StrategyPtr &strategy);
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
@@ -351,6 +352,7 @@ class MaskedFillInfo : public ArithmeticBase {
   Status GetAttrs() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
 
  private:
   size_t input_size_ = 0;
