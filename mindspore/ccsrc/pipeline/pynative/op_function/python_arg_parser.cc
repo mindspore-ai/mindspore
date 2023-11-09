@@ -47,7 +47,7 @@ std::string CTypeToPythonType(const OP_DTYPE &type) {
   return convert_map[type];
 }
 
-ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpArg &op_arg) {
+ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg) {
   for (auto &cast_dtype : op_arg.cast_dtype_) {
     auto convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
     if (convert_func == nullptr) {

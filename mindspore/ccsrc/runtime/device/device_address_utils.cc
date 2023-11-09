@@ -813,17 +813,14 @@ std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateInputTensorAddre
   return result;
 }
 
-device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context,
-                                                                       const tensor::TensorPtr &tensor,
-                                                                       const std::string &output_name,
-                                                                       std::string format, bool need_ret_address) {
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, const tensor::TensorPtr &tensor,
+                                                   const std::string &output_name, std::string format) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_context);
 
   auto addr = tensor->device_address();
   if (addr != nullptr) {
-    // If need_ret_address is false, no need to dynamic_pointer_cast
-    return need_ret_address ? std::dynamic_pointer_cast<device::DeviceAddress>(addr) : nullptr;
+    return;
   }
 
   auto tensor_size = LongToSize(tensor->data().nbytes());
@@ -835,7 +832,6 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateOutputTensorAddress(const Dev
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   MS_LOG(DEBUG) << "output_name:" << output_name << " ptr:" << device_address->GetPtr();
-  return device_address;
 }
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const DeviceContext *device_context,

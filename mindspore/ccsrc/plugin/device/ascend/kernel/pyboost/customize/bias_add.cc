@@ -23,9 +23,8 @@ bool BiasAddAscendLaunch(const PrimitivePtr &primitive, const tensor::TensorPtr 
   auto input_x_address =
     runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, input_x, "input_x", true);
   auto bias_address = runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, bias, "bias", true);
-  auto output_address =
-    runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output", "", true);
-
+  runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, output, "output");
+  auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());
   MS_EXCEPTION_IF_NULL(input_x_address);
   MS_EXCEPTION_IF_NULL(bias_address);
   MS_EXCEPTION_IF_NULL(output_address);

@@ -249,7 +249,9 @@ MaskedFill:
   GPU:
     mode: normal
   Ascend:
-    mode: customize
+    mode: normal
+    cube: False
+    aclnn: aclnnInplaceMaskedFillTensor
 
 Minimum:
   CPU:

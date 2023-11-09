@@ -19,12 +19,13 @@ from .pyboost_utils import convert_python_func_name_to_c
 
 
 class Arg:
-    def __init__(self, arg_name, arg_dtype, type_cast=[], as_init_arg=False, init=None):
+    def __init__(self, arg_name, arg_dtype, type_cast=[], as_init_arg=False, init=None, inplace=''):
         self.arg_name = arg_name
         self.arg_dtype = arg_dtype
         self.type_cast = type_cast
         self.as_init_arg = as_init_arg
         self.init = init
+        self.inplace = inplace
 
 
 class OpProto:
@@ -80,8 +81,11 @@ class OpProto:
             class_name = yaml['class']['name']
         return_args = []
         for return_name in return_dict.keys():
+            inplace = ''
+            if 'inplace' in return_dict[return_name]:
+                inplace = return_dict[return_name]['inplace']
             dtype = return_dict[return_name]['dtype']
-            arg = Arg(return_name, dtype)
+            arg = Arg(return_name, dtype, inplace=inplace)
             return_args.append(arg)
         op_proto = OpProto()
         op_proto.update_data(op_name, op_args, return_args, class_name)

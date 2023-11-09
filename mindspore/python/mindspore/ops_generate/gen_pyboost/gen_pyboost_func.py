@@ -70,7 +70,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                            proto_operator_name, call_args_type,
                                            call_args_str, op_outputs, call_outputs, call_args_with_type,
                                            cpp_func_return, call_args_after_convert, const_number_convert,
-                                           value_tuple_convert, need_malloc_tensors):
+                                           value_tuple_convert, need_malloc_tensors, inplace_process):
     """ generate_pyboost_ascend_op_source_code """
     # PyBoost ascend op source generate
     call_args_tensor = []
@@ -90,6 +90,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
     op_name_str = prim_name_str
     cube_math_type = ''
     get_cube_math_type = ''
+    real_output = ', ' + op_outputs
     if prim_name_str.endswith('Ext'):
         op_name_str = prim_name_str[:-3]
     if operator_name.endswith('ext'):
@@ -102,6 +103,9 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
             aclnn_name = op_desc['aclnn']
         else:
             aclnn_name = 'aclnn' + op_name_str
+        if inplace_process != '':
+            real_output = ''
+
         call_impl = template.PYBOOST_ASCEND_CALL_TEMPLATE.replace(aclnn_name=aclnn_name,
                                                                   call_args=call_args_str,
                                                                   call_tensors=call_args_tensor,
@@ -112,13 +116,15 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
                                                                   cube_math_type=cube_math_type,
                                                                   aclnn_call_args=call_args_after_convert,
                                                                   return_values=call_outputs,
-                                                                  outputs=op_outputs)
+                                                                  outputs=real_output,
+                                                                  inplace_process=inplace_process)
     elif op_desc['mode'] == 'customize':
         call_impl = template.PYBOOST_CUSTOMIZE_CALL_TEMPLATE.replace(op_name=op_name_str,
                                                                      call_args=call_args_str,
                                                                      call_tensors=call_args_tensor,
                                                                      )
-        customize_include = "#include \"plugin/device/ascend/kernel/pyboost/customize/{}.h\"".format(operator_name.lower())
+        customize_include = "#include \"plugin/device/ascend/kernel/pyboost/customize/{}.h\"".format(
+            operator_name.lower())
     elif op_desc['mode'] == 'view':
         call_impl = template.PYBOOST_VIEW_CALL_TEMPLATE.replace(op_name=prim_name_str,
                                                                 call_args=call_args_str,
@@ -316,6 +322,21 @@ def generate_pyboost_functions(work_path, yaml_data):
         f.write(pyboost_func_file)
 
 
+def generate_inplace_process_cpp_code(op_proto):
+    """ generate_ref_process_cpp_code """
+    inplace_process = f'// RefOps update output by input tensor\n'
+    has_ref = False
+    for index, return_obj in enumerate(op_proto.returns):
+        if return_obj.inplace == '':
+            continue
+        has_ref = True
+        inplace_process += f'outputs_[{index}]->set_device_address({return_obj.inplace}_tensor->device_address());\n'
+    if has_ref:
+        return inplace_process
+    else:
+        return ''
+
+
 def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
     """
     Generate pyboost op cpp code from yaml.
@@ -372,6 +393,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
 
         cpp_func_return = generate_pyboost_op_func_return_type(op_proto)
         op_outputs, call_func_outputs = generate_pyboost_outputs(op_proto)
+        inplace_process = generate_inplace_process_cpp_code(op_proto)
 
         generate_pyboost_base_op_header_code(work_path, op_name_str, operator_name, call_args_with_type,
                                              cpp_func_return)
@@ -381,7 +403,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
                                                operator_name, op_proto.operator_name, call_args_type, call_args_str,
                                                op_outputs, call_func_outputs, call_args_with_type, cpp_func_return,
                                                call_args_after_convert, const_number_convert, value_tuple_convert,
-                                               need_malloc_tensors)
+                                               need_malloc_tensors, inplace_process)
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_operator_names)
 
 

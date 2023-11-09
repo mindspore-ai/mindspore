@@ -115,7 +115,8 @@ PYBOOST_VIEW_CALL_TEMPLATE = CppTemplate.load_from_file(
 
 PYBOOST_CUSTOMIZE_CALL_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template/pyboost_ascend_customize_call_template.tpl'))
+                 './mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/template'
+                 '/pyboost_ascend_customize_call_template.tpl'))
 
 PYBOOST_PY_FUNC_HEADEAR = ("""
 from mindspore.ops._primitive_cache import _get_cache_prim
