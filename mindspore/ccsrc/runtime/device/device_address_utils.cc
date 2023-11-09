@@ -240,13 +240,14 @@ mindspore::HashSet<mindspore::AnfNodePtr> FetchValueNodesNeedDevicePtr(const Ker
     }
     auto args = op_def->args_;
     if (input_num != args.size()) {
-      MS_LOG(DEBUG) << "Node " << op_name << ", has " << input_num << " inputs, but has " << args.size()
-                    << " inputs in op_def, it means allsame input";
       int input_with_init_args = std::count_if(args.begin(), args.end(), [](auto arg) { return arg.as_init_arg_; });
       size_t total = input_num - IntToSize(input_with_init_args);
       for (size_t i = 0; i < total; i++) {
-        (void)nodes.insert(node->input(i));
+        (void)nodes.insert(common::AnfAlgo::GetInputNode(node, i));
       }
+      MS_LOG(DEBUG) << "Node " << op_name << ", has " << input_num << " inputs, but has " << args.size()
+                    << " inputs in op_def, it means allsame input, input with init args number: "
+                    << input_with_init_args;
       continue;
     }
     for (size_t i = 0; i < input_num; i++) {
