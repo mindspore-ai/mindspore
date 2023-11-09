@@ -107,7 +107,7 @@ class ArrayValue {
     size_t element_size = size();
     oss << "{ ";
     for (size_t i = 0; i < element_size; i++) {
-      oss << !IsValueUnknown(i) ? std::to_string(data_[i]) : "ValueUnknown";
+      oss << (!IsValueUnknown(i) ? std::to_string(data_[i]) : "ValueUnknown");
       if (i < element_size - 1) {
         oss << ", ";
       }

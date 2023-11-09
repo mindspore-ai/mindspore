@@ -17,6 +17,7 @@ Generate operator definition from ops.yaml
 """
 import os
 import re
+import shutil
 import pathlib
 import gen_utils
 from gen_utils import py_licence_str, cc_license_str, check_change_and_replace_file, merge_files, safe_load_yaml
@@ -313,7 +314,7 @@ class {class_name}(Primitive):\n"""
             primitive_code += ", " + f"""{', '.join(init_args_with_default) if init_args_with_default else ''}"""
         call_args = []
         for name in inputs_args:
-            call_args.append(f"""{name}={inputs_default[name]}""" if name  in inputs_default else name)
+            call_args.append(f"""{name}={inputs_default[name]}""" if name in inputs_default else name)
         primitive_code += f"""):
 {init_code}
 
@@ -701,10 +702,12 @@ def generate_enum_files(work_path):
     py_enum_func, py_enum_def, cc_enum_def = generate_enum_code(yaml_str)
 
     src_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/arg_handler.py')
-    dst_arg_handler_path = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py')
-    tmp_dst_arg_handler_path = os.path.join(work_path,
-                                            'mindspore/python/mindspore/ops/auto_generate/tmp_gen_arg_handler.py')
-    os.system(f'cp {src_arg_handler_path} {tmp_dst_arg_handler_path}')
+    dst_arg_handler_dir = os.path.join(work_path, 'mindspore/python/mindspore/ops/auto_generate')
+    dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'gen_arg_handler.py')
+    tmp_dst_arg_handler_path = os.path.join(dst_arg_handler_dir, 'tmp_gen_arg_handler.py')
+    if not os.path.exists(dst_arg_handler_dir):
+        os.makedirs(dst_arg_handler_dir)
+    shutil.copy(src_arg_handler_path, tmp_dst_arg_handler_path)
     with open(tmp_dst_arg_handler_path, 'a') as py_file:
         py_file.write(py_enum_func)
     check_change_and_replace_file(dst_arg_handler_path, tmp_dst_arg_handler_path)
@@ -760,4 +763,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except Exception as e:
+        print("Auto generate failed, err info:", e)
+        raise e

@@ -51,7 +51,8 @@ cc_license_str = f"""/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */"""
-
+import shutil
+import os
 
 def get_type_str(type_str):
     """
@@ -102,9 +103,9 @@ def check_change_and_replace_file(last_file_path, tmp_file_path):
     tmp_md5 = get_file_md5(tmp_file_path)
 
     if last_md5 == tmp_md5:
-        os.system(f'rm {tmp_file_path}')
+        os.remove(tmp_file_path)
     else:
-        os.system(f'mv {tmp_file_path} {last_file_path}')
+        os.rename(tmp_file_path, last_file_path)
 
 
 def merge_files_to_one_file(file_paths, merged_file_path):
@@ -114,7 +115,7 @@ def merge_files_to_one_file(file_paths, merged_file_path):
     merged_content = ''
     file_paths.sort()
     for file_path in file_paths:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', errors='ignore') as file:
             merged_content += file.read()
             merged_content += '\n'
     one_file = open(merged_file_path, 'w')

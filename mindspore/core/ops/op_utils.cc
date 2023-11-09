@@ -1007,7 +1007,6 @@ template std::optional<uint8_t> GetScalarValue(const ValuePtr &value);
 template std::optional<double> GetScalarValue(const ValuePtr &value);
 template std::optional<float> GetScalarValue(const ValuePtr &value);
 template std::optional<bool> GetScalarValue(const ValuePtr &value);
-template std::optional<std::string> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
