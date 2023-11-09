@@ -87,17 +87,17 @@ int ReduceImpl(void *cdata, int task_id, float l, float r) {
 }
 
 int CopyReduceyInputToOutput(ReduceStruct *reduce) {
-  int total_size = GetSize(reduce->base_.in_[FIRST_INPUT]);
-  NNACL_CHECK_FALSE(total_size == 0, NNACL_REDUCE_INPUT_SHAPE_SIZE_INVALID);
-  int block_size = UP_DIV(total_size, reduce->base_.thread_nr_);
-  int tmp_thread_num = UP_DIV(total_size, block_size);
+  int total_num = GetElementNum(reduce->base_.in_[FIRST_INPUT]);
+  NNACL_CHECK_FALSE(total_num == 0, NNACL_REDUCE_INPUT_SHAPE_SIZE_INVALID);
+  int block_num = UP_DIV(total_num, reduce->base_.thread_nr_);
+  int tmp_thread_num = UP_DIV(total_num, block_num);
   NNACL_CHECK_FALSE(tmp_thread_num == 0, NNACL_REDUCE_INPUT_SHAPE_SIZE_INVALID);
 
   ReshapeStruct reshape_struct;
   reshape_struct.base_.in_ = reduce->base_.in_;
   reshape_struct.base_.out_ = reduce->base_.out_;
-  reshape_struct.block_size_ = block_size;
-  reshape_struct.total_size_ = total_size;
+  reshape_struct.block_num_ = block_num;
+  reshape_struct.total_num_ = total_num;
   reshape_struct.base_.thread_nr_ = tmp_thread_num;
   return reduce->base_.env_->ParallelLaunch(reduce->base_.env_->thread_pool_, ParallelReshape, &reshape_struct,
                                             tmp_thread_num);
