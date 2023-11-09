@@ -20,7 +20,7 @@ import math
 import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import context, log as logger
+from mindspore import context, ops, log as logger
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
@@ -36,7 +36,7 @@ from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.common._decorator import deprecated
 
-__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold', 'Tril', 'Triu',
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Fold', 'Unfold', 'Tril', 'Triu',
            'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer', 'Dropout1d',
            'Dropout2d', 'Dropout3d', 'Upsample', 'Roll', 'Identity', 'Unflatten']
 
@@ -1005,6 +1005,84 @@ class ResizeBilinear(Cell):
         resize_bilinear = P.ResizeBilinear(
             shape, align_corners, self.half_pixel_centers)
         return resize_bilinear(x)
+
+
+class Fold(Cell):
+    r"""
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    Consider a batched input tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)` ,
+    where :math:`N` is the batch dimension, :math:`C \times \prod(\text{kernel_size})` is the
+    total number of values within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+    locations each containing a `C`-channeled vector), and :math:`L` is the total number of such blocks:
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    where :math:`d` is over all spatial dimensions.
+
+    Therefore, `output_size` is the spatial shape of the large containing tensor of the sliding local blocks.
+
+    The `dilation`, `padding` and `stride` arguments specify how the sliding blocks are retrieved.
+
+    .. warning::
+        - The input must be a 3-dimensional Tensor with shape
+          :math:`(N, C \times \prod(\text{kernel_size}), L)` .
+        - The output must be a 4-dimensional Tensor with shape
+          :math:`(N, C, output\_size[0], output\_size[1], ...)` .
+
+    Inputs:
+        3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
+
+    Args:
+        output_size (Tensor): 1D tensor with `2` elements of data type int.
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]], optional): The size of the dilation, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+        padding (Union[int, tuple[int], list[int]], optional): The size of the padding, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``0`` .
+        stride (Union[int, tuple[int], list[int]], optional): The size of the stride, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: ``1`` .
+
+    Outputs:
+        A Tensor, with same type as `input` . And its shape is as described above.
+
+    Raises:
+        TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
+        ValueError: If `kernel_size`, `dilation`, `stride` value is not
+            greater than zero or elements number more than `2`.
+        ValueError: If `padding` value is less than zero or elements number more than `2`.
+        ValueError: If `input.shape[1] != kernel_size[0] * kernel_size[1]`
+        ValueError: If `input.shape[2]` does not match the calculated number of sliding blocks.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor(input_data=np.random.rand(16, 64, 25), dtype=mstype.float32)
+        >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+        >>> fold_op = nn.Fold(output_size, [2, 2], [2, 2], [2, 2], [2, 2])
+        >>> output = fold_op(x)
+        >>> print(output.shape)
+        (16, 16, 8, 8)
+    """
+    def __init__(self, output_size, kernel_size, dilation=1, padding=0, stride=1):
+        """Initialize Fold."""
+        super(Fold, self).__init__()
+        self.output_size = output_size
+        self.kernel_size = kernel_size
+        self.dilation = dilation
+        self.padding = padding
+        self.stride = stride
+
+    def construct(self, input):
+        output = ops.fold(input, self.output_size, self.kernel_size, self.dilation, self.padding, self.stride)
+        return output
 
 
 class Unfold(Cell):

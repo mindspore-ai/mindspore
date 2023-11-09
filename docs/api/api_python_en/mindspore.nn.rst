@@ -70,6 +70,7 @@ Convolutional Layer
     mindspore.nn.Conv2dTranspose
     mindspore.nn.Conv3d
     mindspore.nn.Conv3dTranspose
+    mindspore.nn.Fold
     mindspore.nn.Unfold
 
 Recurrent Layer

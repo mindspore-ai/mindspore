@@ -70,6 +70,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Conv2dTranspose
     mindspore.nn.Conv3d
     mindspore.nn.Conv3dTranspose
+    mindspore.nn.Fold
     mindspore.nn.Unfold
 
 循环神经网络层
