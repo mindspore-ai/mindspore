@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
+#include "external/llm_engine.h"
 namespace llm {
 LLMEngine::~LLMEngine() {}
 
