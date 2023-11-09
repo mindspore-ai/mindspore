@@ -90,7 +90,7 @@ class Net(nn.Cell):
                                           (bsz, self.head_num, seq_len, -1))
         else:
             drop_mask_bits = None
-        return self.fa_op(query, key, value, attn_mask, drop_mask_bits, None, None)
+        return self.fa_op(query, key, value, attn_mask, drop_mask_bits, None, None, None)
 
 
 @pytest.mark.parametrize('keep_prob', [0.9, 1.0])
