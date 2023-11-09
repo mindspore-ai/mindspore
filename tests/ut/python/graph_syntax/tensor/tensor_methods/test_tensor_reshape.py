@@ -86,5 +86,5 @@ def test_reshape_error_1():
             return self.value.reshape((1, 2, 3.5))
 
     net = Net()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         net()
