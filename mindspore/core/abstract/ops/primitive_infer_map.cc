@@ -156,7 +156,6 @@ std::set<int64_t> GetValueDependArgIndices(const CNodePtr &cnode) {
   }
   auto prim_name = primitive->name();
   std::set<int64_t> ori = {};
-
   auto op_infer_opt = GetPrimitiveInferImpl(primitive);
   if (!op_infer_opt.has_value()) {
     // some operator will be mapped to new operator on Ascend like GatherV2, however they use same Infer information

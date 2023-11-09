@@ -111,7 +111,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     shape[0] *= LongToSize(rank_size);
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {shape}, concat.get());
 
-    std::vector<int64_t> dyn_input_size{rank_size};
+    std::vector<int64_t> dyn_input_size{rank_size, -1};
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
     auto kernel_build_info = GenerateKernelBuildInfo(concat, output_info, inputs_size, i);
     AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, concat.get());

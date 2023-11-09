@@ -152,7 +152,17 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   // Make a Concat CNode.
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.end());
-  concat_input.push_back(NewValueNode(MakeValue<int64_t>(concat_dim)));
+
+  auto kernel_graph = graph->cast<std::shared_ptr<session::KernelGraph>>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  // axis
+  auto axis_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(concat_dim), kInt64);
+  ValueNodePtr axis_node = std::make_shared<ValueNode>(MakeValue<int64_t>(concat_dim));
+  axis_node->set_abstract(axis_abs);
+  axis_node = kernel_graph->NewValueNode(axis_node);
+  kernel_graph->AddValueNodeToGraph(axis_node);
+
+  concat_input.push_back(axis_node);
   auto concat = graph->NewCNode(concat_input);
   MS_EXCEPTION_IF_NULL(concat);
 
@@ -167,7 +177,7 @@ CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all,
   single_shape[LongToSize(concat_dim)] *= split_count;
   common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
                                               {single_shape}, concat.get());
-  std::vector<int64_t> dyn_input_size{split_count};
+  std::vector<int64_t> dyn_input_size{split_count, -1};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
   return concat;
 }
