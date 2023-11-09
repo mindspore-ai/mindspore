@@ -2088,7 +2088,7 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   return buf.str();
 }
 
-abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+abstract::AbstractBasePtr AnfAlgo::FrontendGetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
   if (abstract == nullptr) {
@@ -2096,10 +2096,7 @@ abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node
   }
 
   // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
-  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node) ||
-      (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
-       (mindspore::session::AnfRuntimeAlgorithm::GetOutputKernelObjectType(node, 0) ==
-        kernel::KernelObjectType::TUPLE))) {
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node)) {
     MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
                                "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
     return abstract;

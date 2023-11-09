@@ -45,6 +45,7 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/super_bar.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
@@ -911,7 +912,7 @@ std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAb
     shape = abs->GetShape();
     type = abs->GetType();
   } else {
-    const auto &abs = common::AnfAlgo::GetNodeAbstractByIndex(node, output_idx);
+    const auto &abs = AnfAlgo::GetNodeAbstractByIndex(node, output_idx);
     MS_EXCEPTION_IF_NULL(abs);
     shape = abs->GetShape();
     type = abs->GetType();
@@ -2488,5 +2489,33 @@ bool AnfRuntimeAlgorithm::NeedEraseCache(const PrimitivePtr &prim) {
   auto random_cache_value = prim->GetAttr(kRandomCache);
   MS_EXCEPTION_IF_NULL(random_cache_value);
   return !GetValue<bool>(random_cache_value);
+}
+
+abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abstract = node->abstract();
+  if (abstract == nullptr) {
+    return abstract;
+  }
+
+  // Return output abstract directly for : 1.not sequence type, 2.dynamic sequence type, 3.real tuple/list type.
+  if (!abstract->isa<abstract::AbstractSequence>() || common::AnfAlgo::IsDynamicSequence(node) ||
+      (node->isa<CNode>() && !mindspore::AnfAlgo::GetOutputKernelObjectTypes(node).empty() &&
+       (mindspore::session::AnfRuntimeAlgorithm::GetOutputKernelObjectType(node, 0) ==
+        kernel::KernelObjectType::TUPLE))) {
+    MS_EXCEPTION_IF_CHECK_FAIL((index == 0),
+                               "Cannot get " + std::to_string(index) + " child abstract from " + abstract->ToString());
+    return abstract;
+  }
+
+  // Return element abstract by index for tuple type.
+  const auto &abstract_tuple = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  const auto &elements = abstract_tuple->elements();
+  if (elements.size() <= index) {
+    const auto sub_abstract = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), index);
+    return sub_abstract;
+  }
+  return elements[index];
 }
 }  // namespace mindspore::session

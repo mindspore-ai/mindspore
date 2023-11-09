@@ -50,7 +50,7 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
 void DeviceAddressUtils::CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
                                                             size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto &abstract_base = common::AnfAlgo::GetNodeAbstractByIndex(node, index);
+  const auto &abstract_base = AnfAlgo::GetNodeAbstractByIndex(node, index);
   if (!abstract_base->isa<abstract::AbstractMapTensor>()) {
     MS_LOG(EXCEPTION) << "Parameter:" << node->DebugString() << " is not a map tensor type.";
   }
@@ -126,7 +126,7 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
     MS_EXCEPTION_IF_NULL(real_device_context);
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
-      const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(item, index);
+      const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(item, index);
       if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
         CreateDeviceAddressByMapTensorNode(real_device_context, item, index);
         continue;
@@ -358,7 +358,7 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
 
       const auto &real_device_context = device::FetchRealDeviceContext(kernel, device_context);
       MS_EXCEPTION_IF_NULL(real_device_context);
-      const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(kernel, i);
+      const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(kernel, i);
       if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
         CreateDeviceAddressByMapTensorNode(real_device_context, kernel, i);
         continue;

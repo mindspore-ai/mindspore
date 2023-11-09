@@ -275,7 +275,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     return tensor;
   }
 
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
+  const auto &abstract = AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
   if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
     return AnfAlgo::CreateMapTensor(output_node, output_index);
   }
