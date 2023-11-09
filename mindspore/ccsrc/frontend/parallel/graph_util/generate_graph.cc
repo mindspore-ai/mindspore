@@ -59,23 +59,6 @@ ValuePtr CreateOpPrimtiveWithAttrs(const OperatorAttrs &attrs, const OperatorNam
   return prim;
 }
 
-std::pair<bool, size_t> CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name,
-                                                   const std::string &attr_name, size_t limit_size) {
-  auto ks_iter = op_def->indexes_.find(attr_name);
-  if (ks_iter == op_def->indexes_.end()) {
-    MS_LOG(DEBUG) << "For " << op_name << ", cannot find a valid index for input " << attr_name
-                  << " in operator-definition.";
-    return std::make_pair(false, SIZE_MAX);
-  }
-
-  auto idx = ks_iter->second;
-  auto real_idx = idx + 1;
-  if (real_idx >= limit_size) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", " << idx << " is not a valid index for input " << attr_name;
-  }
-  return std::make_pair(true, real_idx);
-}
-
 std::vector<AnfNodePtr> RectifyInputsForNewCNode(const std::vector<AnfNodePtr> &inputs) {
   if (inputs.size() <= 1) {
     MS_LOG(INTERNAL_EXCEPTION) << "For NewCNode, the inputs should not less than two!";
@@ -117,6 +100,24 @@ std::vector<AnfNodePtr> RectifyInputsForNewCNode(const std::vector<AnfNodePtr> &
   return new_inputs;
 }
 }  // namespace
+
+std::pair<bool, size_t> CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name,
+                                                   const std::string &attr_name, size_t limit_size) {
+  auto ks_iter = op_def->indexes_.find(attr_name);
+  if (ks_iter == op_def->indexes_.end()) {
+    MS_LOG(DEBUG) << "For " << op_name << ", cannot find a valid index for input " << attr_name
+                  << " in operator-definition.";
+    return std::make_pair(false, SIZE_MAX);
+  }
+
+  auto idx = ks_iter->second;
+  auto real_idx = idx + 1;
+  if (real_idx >= limit_size) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For " << op_name << ", " << idx << " is not a valid index for input " << attr_name;
+  }
+  return std::make_pair(true, real_idx);
+}
+
 const char *GetOpPythonPath(const char *op_name) {
   static const py::module inner_mod = py::module::import(INNER_OP_PATH);
   if (py::hasattr(inner_mod, op_name)) {

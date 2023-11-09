@@ -21,9 +21,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "ops/op_def.h"
 #include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
@@ -32,6 +34,8 @@
 namespace mindspore {
 namespace parallel {
 const char USING_HASH_NAME[] = "USING_HASH_NAME";
+std::pair<bool, size_t> CheckAndGetValidIdxByOpDef(const ops::OpDefPtr &op_def, const std::string &op_name,
+                                                   const std::string &attr_name, size_t limit_size);
 // Get the operator's path where the operator has be defined
 const char *GetOpPythonPath(const char *op_name);
 

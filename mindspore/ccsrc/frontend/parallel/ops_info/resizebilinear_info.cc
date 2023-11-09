@@ -25,6 +25,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
 #include "ops/op_utils.h"
@@ -186,6 +187,14 @@ void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
   }
   for (auto &cnode : cnodes_) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto op_def = mindspore::ops::GetOpDef(prim->name());
+    if (op_def != nullptr) {
+      auto [is_input, node_input_idx] = CheckAndGetValidIdxByOpDef(op_def, prim->name(), SIZE, cnode->size());
+      if (is_input) {
+        cnode->set_input(node_input_idx, NewValueNode(MakeValue(slice_size_)));
+        continue;
+      }
+    }
     prim->set_attr(SIZE, MakeValue(slice_size_));
   }
 }
