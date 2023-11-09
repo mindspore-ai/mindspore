@@ -2968,7 +2968,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // set the shape for optimizer's clone tensor
   SetClonedTensorShapeForOptimizer(root);
 
-  HandleAdaFactorOpt(root);
+  HandleAdaFactorOpt(root, all_nodes, manager);
 
   InsertUniformRealForTaggedNodes(manager, all_nodes);
 
