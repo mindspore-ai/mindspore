@@ -158,7 +158,7 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   auto output_size_ptr = input_args[kInputIndex1];
   MS_EXCEPTION_IF_NULL(output_size_ptr);
   auto output_size_value = GetShapeValue(primitive, output_size_ptr);
-  if (IsValueKnown(output_size_ptr->BuildValue()) &&
+  if (IsValueKnown(output_size_ptr->GetValue()) &&
       std::any_of(output_size_value.begin(), output_size_value.end(), [](auto x) { return x < 0; })) {
     MS_EXCEPTION(ValueError) << "For 'Col2Im', the value of 'output_size' must not be negative, but got ["
                              << output_size_value[kIndex0] << ", " << output_size_value[kIndex1] << "].";
