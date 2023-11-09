@@ -57,6 +57,7 @@ class FlashAttention(Cell):
             Default True
         alibi(bool): This parameter indicates whether the flashattention supports the Alibi.
             Default: False
+        use_mha(bool): Using MHA if True, only take effect under 910B. Default: False.
 
 
     Inputs:
@@ -102,7 +103,8 @@ class FlashAttention(Cell):
                  mp=1,
                  high_precision=False,
                  have_attention_mask_batch=True,
-                 alibi=False
+                 alibi=False,
+                 use_mha=False
                  ):
         super(FlashAttention, self).__init__()
 
@@ -133,17 +135,24 @@ class FlashAttention(Cell):
             self.zeros_like = ops.ZerosLike().shard(((dp, mp, 1, 1),))
             self.zeros = ops.Zeros()
             self.attn_expand_dims = ops.ExpandDims().shard(((dp, 1, 1),))
-            fa_strategies = ((dp, 1, mp),
-                             (dp, 1, mp),
-                             (dp, 1, mp),
-                             (dp, 1, 1, 1))
+            if use_mha:
+                fa_strategies = ((dp, mp, 1, 1),
+                                 (dp, 1, 1, 1),
+                                 (dp, 1, 1, 1),
+                                 (dp, 1, 1, 1))
+            else:
+                fa_strategies = ((dp, mp, 1, 1),
+                                 (dp, mp, 1, 1),
+                                 (dp, mp, 1, 1),
+                                 (dp, 1, 1, 1))
             if dropout_rate > 1e-5:
                 fa_strategies += ((dp, mp, 1, 1),)
             self.flash_attention = FlashAttentionScore(head_num=head_num, pre_tokens=prev_block_num,
                                                        next_tokens=next_block_num,
                                                        keep_prob=1 - dropout_rate,
                                                        scale_value=1. / scaling_constant,
-                                                       inner_precise=0 if high_precision else 1).shard(fa_strategies)
+                                                       inner_precise=0 if high_precision else 1,
+                                                       input_layout="BNSD").shard(fa_strategies)
 
         self.dropout_rate = dropout_rate
         if self.dropout_rate > 1e-5:
@@ -212,17 +221,17 @@ class FlashAttention(Cell):
         :return: output          [bsz, head_num, seq_len, head_dim]
         """
         bsz, head_num, seq_len, head_dim = query.shape
-        _, k_head_num, k_seq_len, _ = key.shape
-        _, v_head_num, v_seq_len, _ = value.shape
-        if head_num != k_head_num or head_num != v_head_num:
-            raise ValueError(
-                "the head_num of query, key and value must be the same, "
-                "If different head_num are used, users need to change themselves to be same by tile.")
-        if seq_len % 16 != 0 or k_seq_len % 16 != 0 or k_seq_len != v_seq_len:
-            raise ValueError(
-                "query, key, value seq_len must be a multiple of 16, and key seq_len, value seq_len must be the same.")
-
         if self.is_910A:
+            _, k_head_num, k_seq_len, _ = key.shape
+            _, v_head_num, v_seq_len, _ = value.shape
+            if head_num != k_head_num or head_num != v_head_num:
+                raise ValueError(
+                    "the head_num of query, key and value must be the same, "
+                    "If different head_num are used, users need to change themselves to be same by tile.")
+            if seq_len % 16 != 0 or k_seq_len % 16 != 0 or k_seq_len != v_seq_len:
+                raise ValueError(
+                    "query, key, value seq_len must be a multiple of 16, "
+                    "and the seq_len between key and value must be equal.")
             # 910A -- FlashAttentionPrimtive
             if head_dim > 304:
                 raise ValueError(
@@ -246,9 +255,6 @@ class FlashAttention(Cell):
             else:
                 drop_mask_bits = None
             # (B, N, S, D) -> (B, S, H)
-            query = self.reshape(self.transpose_4d_pre(query, (0, 2, 1, 3)), (bsz, seq_len, -1))
-            key = self.reshape(self.transpose_4d_pre(key, (0, 2, 1, 3)), (bsz, seq_len, -1))
-            value = self.reshape(self.transpose_4d_pre(value, (0, 2, 1, 3)), (bsz, seq_len, -1))
             attn_mask = self.attn_expand_dims(attn_mask, 1)
             output, _, _ = self.flash_attention(query,
                                                 key,
@@ -258,6 +264,5 @@ class FlashAttention(Cell):
                                                 None,
                                                 None,
                                                 None)
-            output = self.transpose_4d_post(self.reshape(output, (bsz, seq_len, head_num, head_dim)), (0, 2, 1, 3))
 
         return output
