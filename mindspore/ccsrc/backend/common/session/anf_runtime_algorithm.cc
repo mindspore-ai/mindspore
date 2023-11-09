@@ -45,7 +45,6 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/super_bar.h"
-#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::session {
 using abstract::AbstractTensor;
