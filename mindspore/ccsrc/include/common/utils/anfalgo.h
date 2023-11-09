@@ -300,7 +300,7 @@ class COMMON_EXPORT AnfAlgo {
   static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
 
   static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
-  static const abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
+  static abstract::AbstractBasePtr GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index);
 
   // Get jit level from func_graph
   static std::string GetJitLevel(const FuncGraphPtr &func_graph);
