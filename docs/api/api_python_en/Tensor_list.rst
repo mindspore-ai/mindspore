@@ -87,6 +87,7 @@
     mindspore.Tensor.clip
     mindspore.Tensor.col2im
     mindspore.Tensor.conj
+    mindspore.Tensor.conj_physical
     mindspore.Tensor.contiguous
     mindspore.Tensor.copy
     mindspore.Tensor.copysign

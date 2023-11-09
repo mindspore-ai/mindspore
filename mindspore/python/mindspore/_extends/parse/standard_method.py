@@ -4030,6 +4030,13 @@ def conj(input):
     return F.conj(input)
 
 
+def conj_physical(input):
+    r"""
+    Computes complex conjugate of the input element-wise.
+    """
+    return ops.conj_physical(input)
+
+
 def cross(input, other, dim=None):
     r"""
     Computes the cross product of input vectors in specified dimension.

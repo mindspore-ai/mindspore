@@ -429,6 +429,7 @@ Reduction函数
     mindspore.ops.svd
     mindspore.ops.slogdet
     mindspore.ops.trace
+    mindspore.ops.tensordot
     mindspore.ops.tensor_dot
     mindspore.ops.vander
     mindspore.ops.vdot
@@ -520,6 +521,7 @@ Array操作
     mindspore.ops.column_stack
     mindspore.ops.concat
     mindspore.ops.conj
+    mindspore.ops.conj_physical
     mindspore.ops.count_nonzero
     mindspore.ops.deepcopy
     mindspore.ops.diag

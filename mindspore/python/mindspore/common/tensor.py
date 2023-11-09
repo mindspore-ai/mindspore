@@ -3929,6 +3929,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('conj')(self)
 
+    def conj_physical(self):
+        r"""
+        For details, please refer to :func:`mindspore.ops.conj_physical`.
+        """
+        return tensor_operator_registry.get('conj_physical')(self)
+
     def count_nonzero(self, axis=(), keep_dims=False, dtype=mstype.int32):
         r"""
         For details, please refer to :func:`mindspore.ops.count_nonzero`.

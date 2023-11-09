@@ -10692,6 +10692,43 @@ def conj(input):
     return conj_(input)
 
 
+def conj_physical(input):
+    """
+    Returns a tensor of complex numbers that are the complex conjugate of each element in input.
+    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+
+    The complex conjugate returned by this operation is of the form a - bj.
+
+    If `input` is not a complex number, it returns itself.
+
+    Args:
+        input (Tensor): The input tensor to compute to.
+
+    Returns:
+        Tensor, has the same dtype as the `input`.
+
+    Raises:
+        TypeError: If the `input` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
+        >>> output = ops.conj_physical(x)
+        >>> print(output)
+        (1.3-0.4j)
+    """
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For conj_physical, input must be Tensor, but got {type(input)}.")
+    if input.dtype == mstype.bool_:
+        return input
+    return conj_(input)
+
+
 def cross(input, other, dim=None):
     r"""
     Computes the cross product of `input` and `other` in dimension `dim`.
@@ -12704,6 +12741,52 @@ def _calc_new_shape(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
+def tensordot(a, b, dims=2):
+    """
+    Dot multiply Tensor `a` and `b` on the specified `dims` .
+
+    Args:
+        a (Tensor): First input tensor.
+        b (Tensor): Second input tensor.
+        dims (Union[int, tuple(tuple(int)), list(list(int))], optional): Specify `a` and `b` calculation
+            axes. `dims` can be a single value or a tuple or list of length 2. When `dims` is a tuple or
+            list with a length of 2, the first member of `dims` is the dimensions selected for `a` , and the second
+            member is the dimensions selected for `b` . The dimensions selected in both inputs
+            must match each other. The number of dimensions specified by `a` and `b` must be the same,
+            and the values must be within the range of the dimensions of `a` and `b` .
+            When dims is the value of ``N``, the last ``N`` dimensions of `a` and
+            the first ``N`` dimensions of `b` are dotted. Default: ``2`` .
+
+            - :math:`dims=0` leads to outer product.
+            - :math:`dims=1` is the same as :math:`dims=((1,),(0,))` where both `a` and `b` are 2D.
+            - :math:`dims=2` is the same as :math:`dims=((1,2),(0,1))` where both `a` and `b` are 3D.
+
+    Returns:
+        Tensor, the shape of the output tensor is :math:`(N + M)`, where :math:`N` and :math:`M` are the free axes not
+        contracted in both inputs.
+
+    Raises:
+        TypeError: If `a` or `b` is not a Tensor.
+        TypeError: If `dims` is not one of the following: int, tuple, list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
+        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
+        >>> output = ops.tensordot(input_x1, input_x2, ((0,1),(1,2)))
+        >>> print(output)
+        [[2. 2. 2.]
+         [2. 2. 2.]
+         [2. 2. 2.]]
+    """
+    return tensor_dot(a, b, dims)
+
+
 def tensor_dot(x1, x2, axes):
     """
     Computation of Tensor contraction on arbitrary axes between tensors `a` and `b`.
@@ -13479,6 +13562,7 @@ __all__ = [
     'cholesky_inverse',
     'cholesky_solve',
     'conj',
+    'conj_physical',
     'cosine_similarity',
     'cov',
     'cross',
@@ -13522,6 +13606,7 @@ __all__ = [
     'ifftn',
     'count_nonzero',
     'tensor_dot',
+    'tensordot',
     'vecdot',
     'dot',
     'batch_dot',
