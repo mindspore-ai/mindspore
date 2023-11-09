@@ -29,7 +29,6 @@ namespace ops {
 namespace {
 constexpr int64_t x_min_rank = 2;
 constexpr int64_t x_max_rank = 5;
-inline bool IsShapeSizeOutOfRange(int64_t size) { return (size > x_max_rank || size < x_min_rank); }
 
 void CheckShapeValid(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
