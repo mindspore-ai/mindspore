@@ -1180,7 +1180,8 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
     cast_ = P.Cast()
     low_ = Tensor(low, mstype.int32)
     high_ = Tensor(high, mstype.int32)
-    output = rand_op(size, low_, high_)
+    size_ = Tensor(size, mstype.int32)
+    output = rand_op(size_, low_, high_)
     return cast_(output, dtype)
 
 
