@@ -293,7 +293,7 @@ OnnxNodeRegistrar g_onnxAsinParser("Asin", new OnnxAsinParser());
 OnnxNodeRegistrar g_onnxAsinhParser("Asinh", new OnnxAsinhParser());
 OnnxNodeRegistrar g_onnxCosParser("Cos", new OnnxCosParser());
 OnnxNodeRegistrar g_onnxCoshParser("Cosh", new OnnxCoshParser());
-OnnxNodeRegistrar g_onnxACosParser("ACos", new OnnxACosParser());
+OnnxNodeRegistrar g_onnxACosParser("Acos", new OnnxACosParser());
 OnnxNodeRegistrar g_onnxAcoshParser("Acosh", new OnnxAcoshParser());
 OnnxNodeRegistrar g_onnxTanParser("Tan", new OnnxTanParser());
 OnnxNodeRegistrar g_onnxAtanParser("Atan", new OnnxAtanParser());

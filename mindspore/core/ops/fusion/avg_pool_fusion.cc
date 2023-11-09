@@ -85,5 +85,6 @@ ActivationType AvgPoolFusion::get_activation_type() const {
 }
 
 MIND_API_OPERATOR_IMPL(AvgPoolFusion, BaseOperator);
+REGISTER_PRIMITIVE_C(kNameAvgPoolFusion, AvgPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

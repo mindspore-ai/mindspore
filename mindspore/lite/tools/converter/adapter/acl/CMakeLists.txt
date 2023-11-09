@@ -29,7 +29,7 @@ set(ACL_SRC ${ACL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/acl_pass.cc)
 
 set(ENABLE_ACL on)
 set(MODE_ASCEND_ACL off)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/graph_ir _mindspore_transform_graph_ir_obj)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deprecated_graph_ir _mindspore_transform_graph_ir_obj)
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mslite_shared_lib)
 
 
