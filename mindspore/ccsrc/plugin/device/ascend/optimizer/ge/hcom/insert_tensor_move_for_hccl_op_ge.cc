@@ -107,10 +107,6 @@ bool InsertTensorMoveForHcclOpGe::NeedInsertTensorMoveForSpecialCase(const AnfNo
   if (kNeedInsertTensorMoveOpSet.find(common::AnfAlgo::GetCNodeName(real_input)) != kNeedInsertTensorMoveOpSet.end()) {
     return true;
   }
-  // when input is communication node
-  if (common::AnfAlgo::IsCommunicationOp(real_input)) {
-    return true;
-  }
 
   return false;
 }
