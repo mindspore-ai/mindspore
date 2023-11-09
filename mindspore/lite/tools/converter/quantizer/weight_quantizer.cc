@@ -24,6 +24,7 @@
 #include "mindspore/core/ops/conv_pool_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -211,7 +212,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     int preferred_dim;
     // For MOE Linear, the preferred dim is get by the batch_matmul node, which is followed by gather node.
     if (ascend_backend_ && dequant_strategy_ == ON_THE_FLY && opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
-      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimFFN};
       if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
         MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
                      << cnode->fullname_with_scope() << " dont need weight quant";
@@ -365,7 +366,7 @@ int WeightQuantizer::InsertAscendDequantNode(const FuncGraphPtr &func_graph, con
     int axis;
     // For MOE Linear, the preferred dim is get by the batch_matmul node, which is followed by gather node.
     if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
-      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul};
+      auto support_gather_followed_primitive_types = {prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimFFN};
       if (!CheckFollowedNodeInSet(func_graph, cnode, support_gather_followed_primitive_types)) {
         MS_LOG(INFO) << "In Ascend ON_THE_FLY quant mode, The Gather followed cnode is not BatchMatMul or MatMul, "
                      << cnode->fullname_with_scope() << " dont need weight quant";
@@ -489,12 +490,13 @@ int WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   std::set<PrimitivePtr> support_primitive_types;
   std::set<PrimitivePtr> per_layer_primitive_types;
   if (ascend_backend_) {
-    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimGather};
+    support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul, prim::kPrimGather,
+                               prim::kPrimFFN};
     if (per_channel_) {
       per_layer_primitive_types = {};
     } else {
       per_layer_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimMatMul, prim::kPrimBatchMatMul,
-                                   prim::kPrimGather};
+                                   prim::kPrimGather, prim::kPrimFFN};
     }
   } else if (param_->weightQuantParam.quant_strategy == quant::GPTQ_ALGORITHM) {
     support_primitive_types = {prim::kPrimMatMulFusion, prim::kPrimBatchMatMul, prim::kPrimMatMul};
