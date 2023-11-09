@@ -38,10 +38,11 @@ Status AvgPoolInfo::GetAttrs() {
   }
   kernel_size_ = kernel_size_value.value();
   // add two 1 in front of kernel size
-  if (kernel_size_.size() != 2) {
+  if (kernel_size_.size() != kSizeTwo) {
     MS_LOG(ERROR) << name_ << ": The size of kernel_size must be 2, but got " << kernel_size_.size();
     return FAILED;
   }
+  kernel_size_.insert(kernel_size_.begin(), kSizeTwo, 1);
 
   // pad_mode
   auto pad_opt_value = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, PAD_MODE);
@@ -60,10 +61,11 @@ Status AvgPoolInfo::GetAttrs() {
     return FAILED;
   }
   stride_ = stride_value.value();
-  if (stride_.size() != 2) {
+  if (stride_.size() != kSizeTwo) {
     MS_LOG(ERROR) << name_ << ": The size of stride must be 2, but got " << stride_.size();
     return FAILED;
   }
+  stride_.insert(stride_.begin(), kSizeTwo, 1);
 
   // format
   auto format_int_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, DATA_FORMAT);
