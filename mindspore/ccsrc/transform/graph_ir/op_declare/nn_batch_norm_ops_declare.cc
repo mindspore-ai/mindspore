@@ -32,9 +32,7 @@ INPUT_ATTR_MAP(BatchNorm) = {
   {7, ATTR_DESC(epsilon, AnyTraits<float>())},
   {9, ATTR_DESC(data_format, AnyTraits<GEDataFormat>())},
 };
-ATTR_MAP(BatchNorm) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
-                       {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
+ATTR_MAP(BatchNorm) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {1, OUTPUT_DESC(batch_mean)},
                          {2, OUTPUT_DESC(batch_variance)},

@@ -19,7 +19,7 @@ from __future__ import division
 from math import log
 import numpy as np
 from mindspore.ops import signature as sig
-from mindspore.ops.primitive import Primitive, prim_attr_register
+from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_register
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
@@ -544,7 +544,7 @@ class BatchNorm(Primitive):
                                             sig.sig_rw.RW_WRITE,
                                             dtype=sig.sig_dtype.T3))
 
-    @prim_attr_register
+    @prim_arg_register
     def __init__(self,
                  is_training=False,
                  epsilon=1e-5,

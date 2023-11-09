@@ -59,7 +59,6 @@ AnfNodePtr BuildBatchNormGrad(const PatternMap &m, const AnfNodePtr &new_node) {
                  AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 3UL),
                  AnfAlgo::GetPrevNodeOutputDetailShape(bn_grad_node, 4UL)};
   common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, new_bn_grad.get());
-  common::AnfAlgo::CopyNodeAttrs(bn_grad_node, new_bn_grad);
   common::AnfAlgo::SetNodeAttr(kAttrUnifyIRPassed, MakeValue(true), new_bn_grad);
   return new_bn_grad;
 }

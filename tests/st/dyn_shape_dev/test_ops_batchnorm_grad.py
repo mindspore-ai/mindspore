@@ -38,6 +38,7 @@ def batch_norm_grad_backward_func(dout, x, scale, mean, variance, reserve):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_grad_forward(mode):
     """
@@ -45,9 +46,6 @@ def test_bn_grad_forward(mode):
     Description: test BatchNormGrad.
     Expectation: expect correct result.
     """
-    if mode == context.PYNATIVE_MODE:
-        # There are still some problems in ascend acl.
-        return
     context.set_context(mode=mode)
     dout = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
     x = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))

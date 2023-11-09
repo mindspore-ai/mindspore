@@ -19,6 +19,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ge/*.cc"
         "./ge_backend_optimization.cc"
         "./ge_optimization.cc"
+        "./get_value_helper.cc"
         "./backend_common_unify_mindir.cc"
         "./format_type/insert_cast.cc"
         "./format_type/set_fracz_group_attr.cc"
