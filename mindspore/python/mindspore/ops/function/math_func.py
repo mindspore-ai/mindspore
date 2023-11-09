@@ -10393,7 +10393,7 @@ def trapezoid_tensor(y, x, dim):
     return dotrapezoid_tensor(y, dx, dim)
 
 
-def trapezoid(y, dx, dim):
+def _trapezoid(y, dx, dim):
     if y.shape[dim] == 0:
         return zeros_like_except(y, dim)
     return dotrapezoid(y, dx, dim)
@@ -10418,6 +10418,16 @@ def select_(feat, dim, index):
 
 def trapz(y, x=None, *, dx=1.0, dim=-1):
     r"""
+    Alias for :func:`mindspore.ops.trapezoid` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return trapezoid(y, x, dx=dx, dim=dim)
+
+
+def trapezoid(y, x=None, *, dx=None, dim=-1):
+    r"""
     Integrates `y(x)` along given dim using trapezoidal rule.
     By default x-dim distances between points will be 1.0,
     alternatively they can be provided with `x` array or with `dx` scalar.
@@ -10435,7 +10445,7 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
 
     Keyword Args:
         dx (float, optional): The spacing between sample points when `x` is None. If `x` is specified,
-            `dx` does not take effect. Default: ``1.0`` .
+            `dx` does not take effect. If it is ``None``, the value is considered as ``1.0``. Default: ``None`` .
         dim (int, optional): The dim along which to integrate. Default: ``-1`` .
 
     Returns:
@@ -10459,25 +10469,25 @@ def trapz(y, x=None, *, dx=1.0, dim=-1):
         >>> from mindspore import Tensor, ops
         >>> y = Tensor(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]]).astype(np.float32))
         >>> x = Tensor(np.array([[1, 2, 3], [1, 3, 5], [1, 4, 7]]).astype(np.float32))
-        >>> output = ops.trapz(y, x)
+        >>> output = ops.trapezoid(y, x)
         >>> print(output)
         [2. 4. 6.]
     """
-
+    dx = 1.0 if dx is None else dx
     if not isinstance(y, (Tensor, Tensor_)):
-        raise TypeError(f"For `trapz`, the input `y` must be Tensor, but get {type(y)}.")
+        raise TypeError(f"For `trapezoid`, the input `y` must be Tensor, but get {type(y)}.")
     if not isinstance(dx, float):
-        raise TypeError(f"For `trapz`, the input `dx` must be float, but get f{type(dx)}.")
+        raise TypeError(f"For `trapezoid`, the input `dx` must be float, but get f{type(dx)}.")
     if not isinstance(dim, int):
-        raise TypeError(f"For `trapz`, the input `dim` must be int, but get {type(dim)}.")
+        raise TypeError(f"For `trapezoid`, the input `dim` must be int, but get {type(dim)}.")
     if not _check_is_float(y.dtype):
         y = P.Cast()(y, mstype.float32)
     _check_dim_in_range(dim, y.ndim)
     dim = dim + y.ndim if dim < 0 else dim
     if x is None:
-        return trapezoid(y, dx, dim)
+        return _trapezoid(y, dx, dim)
     if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError(f"For `trapz`, the input `x` must be Tensor, but get {type(x)}.")
+        raise TypeError(f"For `trapezoid`, the input `x` must be Tensor, but get {type(x)}.")
     x = P.Cast()(x, mstype.float32)
     return trapezoid_tensor(y, x, dim)
 
@@ -11245,6 +11255,58 @@ def polygamma(n, input):
         [ 0.37446456 15.49884838]
     """
     return poly_gamma_(n, input)
+
+
+def isin(elements, test_elements, *, assume_unique=False, invert=False):
+    r"""
+    Compute whether each element in `elements` is present in `test_elements` using broadcasting only on `elements`.
+
+    Args:
+        elements (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        test_elements (Union[int, float, bool, list, tuple, Tensor]): The values against
+            which to test each value of `elements`.
+        assume_unique (bool, optional): Whether to assume that the elements in `test_elements` is unique.
+            If true, assumes `test_elements` contain unique elements, which can speed up the calculation.
+            Default: ``False``.
+        invert (boole, optional): If True, the values in the returned array are
+            inverted, as if calculating `elements` not in `test_elements`. Default: ``False`` .
+
+    Returns:
+        Returns a boolean Tensor of the same shape as `elements` that is True where an element of
+        `elements` is in `test_elements` and False otherwise.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.ops as ops
+        >>> elements = ms.Tensor([[0, 2], [4, 6]])
+        >>> test_elements = [1, 2, 4, 8]
+        >>> mask = ops.isin(elements, test_elements)
+        >>> print(mask)
+        [[False  True]
+        [ True False]]
+        >>> mask = ops.isin(elements, test_elements, invert=True)
+        >>> print(mask)
+        [[ True False]
+        [False  True]]
+
+    """
+    if not isinstance(elements, Tensor):
+        elements = Tensor(elements)
+    if not isinstance(test_elements, Tensor):
+        test_elements = Tensor(test_elements)
+    ar1 = ops.expand_dims(elements.ravel(), -1)
+    ar2 = test_elements.ravel()
+    if not assume_unique:
+        ar2, _ = ops.unique(ar2)
+    included = ops.equal(ar1, ar2).astype(mstype.float32)
+    res = ops.reduce_sum(included, -1).astype(mstype.bool_)
+    if invert:
+        res = ops.logical_not(res)
+    res = res.reshape_as(elements)
+    return res
 
 
 def isinf(input):
@@ -12704,6 +12766,54 @@ def tensor_dot(x1, x2, axes):
     return final_result
 
 
+def vdot(input, other):
+    r"""
+    Compute the dot product of two 1D vectors along the dimension.
+
+    The formula of calculation is as follows.
+    :math:`\bar{x_{i}}` represents the conjugate for complex vectors, and it is the raw value for real vectors.
+
+    .. math::
+
+        \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
+
+    Args:
+        input (Tensor): The first input, must be 1D, if complex, uses its conjugate.
+        other (Tensor): The second input, must be 1D.
+
+    Returns:
+        Tensor, the result of vdot.
+
+    Raises:
+        TypeError: If `input` or `other` is not a Tensor.
+        RunTimeError: If `input` or `other` is not a 1D Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Note:
+        Currently, complex numbers are not supported on GPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import ops
+        >>> x1 = ms.Tensor([2., 3.])
+        >>> y1 = ms.Tensor([4., 5.])
+        >>> out = ops.vdot(x1, y1)
+        >>> print(out)
+        23.0
+        >>> x2 = ms.Tensor([1 - 2j, 3 + 4j])
+        >>> y2 = ms.Tensor([2 + 2j, 3 - 4j])
+        >>> out = ops.vdot(x2, y2)
+        >>> print(out)
+        (-9-18j)
+    """
+    if ops.rank(input) != 1 or ops.rank(other) != 1:
+        raise RuntimeError(f"For vdot, 'input' and 'other' must be 1D, but got 'input' {ops.rank(input)}D "
+                           f"and 'other' {ops.rank(other)}D.")
+    return vecdot(input, other)
+
+
 def vecdot(x, y, *, axis=-1):
     r"""
     Calculates the dot product of two batches of vectors across the specified dimension.
@@ -13331,6 +13441,7 @@ __all__ = [
     'view_as_real',
     'vstack',
     'vander',
+    'vdot',
     'row_stack',
     'var',
     'var_mean',
@@ -13358,6 +13469,7 @@ __all__ = [
     'baddbmm',
     'bmm',
     'trapz',
+    'trapezoid',
     'cholesky',
     'cholesky_inverse',
     'cholesky_solve',
@@ -13373,6 +13485,7 @@ __all__ = [
     'greater_equal',
     'igamma',
     'igammac',
+    'isin',
     'isinf',
     'logical_xor',
     'imag',

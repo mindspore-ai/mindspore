@@ -1043,6 +1043,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return self
 
+    def vdot(self, other):
+        """
+        For details, please refer to :func:`mindspore.ops.vdot`.
+        """
+        return tensor_operator_registry.get('vdot')(self, other)
+
+
     def contiguous(self):
         """
         Converts a Tensor into a continuous-memory Tensor that contains the same data as the original Tensor.

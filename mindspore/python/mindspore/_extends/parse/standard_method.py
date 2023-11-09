@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import dtype as mstype
+from mindspore import ops
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common import mutable
 import mindspore.common._monad as monad
@@ -2878,6 +2879,13 @@ def view_as(input, other):
     if not isinstance(other, (Tensor, Tensor_)):
         raise TypeError(f"For view_as, the input other must be a Tensor, but got {type(other)}")
     return F.reshape(input, other.shape)
+
+
+def vdot(input, other):
+    """
+    For details, please refer to :func:`mindspore.ops.vdot`.
+    """
+    return ops.vdot(input, other)
 
 
 def bitwise_and(x, y):

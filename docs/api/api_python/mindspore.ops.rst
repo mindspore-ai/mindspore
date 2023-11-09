@@ -253,6 +253,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.i0
     mindspore.ops.inv
     mindspore.ops.invert
+    mindspore.ops.isin
     mindspore.ops.lcm
     mindspore.ops.ldexp
     mindspore.ops.lerp
@@ -299,6 +300,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.tan
     mindspore.ops.tanhshrink
     mindspore.ops.trapz
+    mindspore.ops.trapezoid
     mindspore.ops.tril_indices
     mindspore.ops.triu_indices
     mindspore.ops.true_divide
@@ -429,6 +431,7 @@ Reduction函数
     mindspore.ops.trace
     mindspore.ops.tensor_dot
     mindspore.ops.vander
+    mindspore.ops.vdot
     mindspore.ops.vecdot
 
 谱函数

@@ -253,6 +253,7 @@ Element-wise Operations
     mindspore.ops.i0
     mindspore.ops.inv
     mindspore.ops.invert
+    mindspore.ops.isin
     mindspore.ops.lcm
     mindspore.ops.ldexp
     mindspore.ops.lerp
@@ -299,6 +300,7 @@ Element-wise Operations
     mindspore.ops.tan
     mindspore.ops.tanhshrink
     mindspore.ops.trapz
+    mindspore.ops.trapezoid
     mindspore.ops.tril_indices
     mindspore.ops.triu_indices
     mindspore.ops.true_divide
@@ -429,6 +431,7 @@ Linear Algebraic Functions
     mindspore.ops.trace
     mindspore.ops.tensor_dot
     mindspore.ops.vander
+    mindspore.ops.vdot
     mindspore.ops.vecdot
 
 Spectral Functions

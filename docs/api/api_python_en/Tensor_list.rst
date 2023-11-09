@@ -340,6 +340,7 @@
     mindspore.Tensor.unsorted_segment_prod
     mindspore.Tensor.unsqueeze
     mindspore.Tensor.var
+    mindspore.Tensor.vdot
     mindspore.Tensor.view
     mindspore.Tensor.view_as
     mindspore.Tensor.where

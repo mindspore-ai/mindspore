@@ -202,6 +202,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"broadcast_to", std::string("broadcast_to")},                      // P.BroadcastTo
        {"view", std::string("view")},                                      // C.view
        {"view_as", std::string("view_as")},                                // view_as()
+       {"vdot", std::string("vdot")},                                      // vdot()
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
        {"__setitem__", prim::kPrimArraySetItem},                           // P.array_setitem,
