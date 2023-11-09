@@ -95,7 +95,6 @@ class ReciprocalFrontendFuncImpl : public OpFrontendFuncImpl {
     {kNumberTypeInt16, ImplReciprocal<int16_t>},
     {kNumberTypeInt32, ImplReciprocal<int32_t>},
     {kNumberTypeInt64, ImplReciprocal<int64_t>},
-    {kNumberTypeUInt, ImplReciprocal<u_int>},
     {kNumberTypeUInt8, ImplReciprocal<uint8_t>},
     {kNumberTypeUInt16, ImplReciprocal<uint16_t>},
     {kNumberTypeUInt32, ImplReciprocal<uint32_t>},

@@ -120,7 +120,6 @@ class DivFrontendFuncImpl : public OpFrontendFuncImpl {
     {kNumberTypeInt16, DivImpl<int16_t>},
     {kNumberTypeInt32, DivImpl<int32_t>},
     {kNumberTypeInt64, DivImpl<int64_t>},
-    {kNumberTypeUInt, DivImpl<u_int>},
     {kNumberTypeUInt8, DivImpl<uint8_t>},
     {kNumberTypeUInt16, DivImpl<uint16_t>},
     {kNumberTypeUInt32, DivImpl<uint32_t>},

@@ -120,7 +120,6 @@ class RealDivFrontendFuncImpl : public OpFrontendFuncImpl {
     {kNumberTypeInt16, RealDivImpl<int16_t>},
     {kNumberTypeInt32, RealDivImpl<int32_t>},
     {kNumberTypeInt64, RealDivImpl<int64_t>},
-    {kNumberTypeUInt, RealDivImpl<u_int>},
     {kNumberTypeUInt8, RealDivImpl<uint8_t>},
     {kNumberTypeUInt16, RealDivImpl<uint16_t>},
     {kNumberTypeUInt32, RealDivImpl<uint32_t>},

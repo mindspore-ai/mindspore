@@ -42,11 +42,10 @@ std::map<TypeId, Handler> less_equal_impl_list = {
   {kNumberTypeBool, ImplLessEqual<bool>},       {kNumberTypeInt8, ImplLessEqual<int8_t>},
   {kNumberTypeInt16, ImplLessEqual<int16_t>},   {kNumberTypeInt32, ImplLessEqual<int32_t>},
   {kNumberTypeInt, ImplLessEqual<int>},         {kNumberTypeInt64, ImplLessEqual<int64_t>},
-  {kNumberTypeUInt, ImplLessEqual<u_int>},      {kNumberTypeUInt8, ImplLessEqual<uint8_t>},
-  {kNumberTypeUInt16, ImplLessEqual<uint16_t>}, {kNumberTypeUInt32, ImplLessEqual<uint32_t>},
-  {kNumberTypeUInt64, ImplLessEqual<uint64_t>}, {kNumberTypeFloat16, ImplLessEqual<float16>},
-  {kNumberTypeFloat32, ImplLessEqual<float>},   {kNumberTypeFloat, ImplLessEqual<float>},
-  {kNumberTypeFloat64, ImplLessEqual<double>}};
+  {kNumberTypeUInt8, ImplLessEqual<uint8_t>},   {kNumberTypeUInt16, ImplLessEqual<uint16_t>},
+  {kNumberTypeUInt32, ImplLessEqual<uint32_t>}, {kNumberTypeUInt64, ImplLessEqual<uint64_t>},
+  {kNumberTypeFloat16, ImplLessEqual<float16>}, {kNumberTypeFloat32, ImplLessEqual<float>},
+  {kNumberTypeFloat, ImplLessEqual<float>},     {kNumberTypeFloat64, ImplLessEqual<double>}};
 
 class LessEqualFrontendFuncImpl : public OpFrontendFuncImpl {
  public:

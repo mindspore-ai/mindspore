@@ -41,11 +41,11 @@ using Handler = std::function<void(void *x1, void *x2, void *result, size_t size
 std::map<TypeId, Handler> minimum_impl_list = {
   {kNumberTypeInt8, ImplMinimum<int8_t>},     {kNumberTypeInt16, ImplMinimum<int16_t>},
   {kNumberTypeInt32, ImplMinimum<int32_t>},   {kNumberTypeInt, ImplMinimum<int>},
-  {kNumberTypeInt64, ImplMinimum<int64_t>},   {kNumberTypeUInt, ImplMinimum<u_int>},
-  {kNumberTypeUInt8, ImplMinimum<uint8_t>},   {kNumberTypeUInt16, ImplMinimum<uint16_t>},
-  {kNumberTypeUInt32, ImplMinimum<uint32_t>}, {kNumberTypeUInt64, ImplMinimum<uint64_t>},
-  {kNumberTypeFloat16, ImplMinimum<float16>}, {kNumberTypeFloat32, ImplMinimum<float>},
-  {kNumberTypeFloat, ImplMinimum<float>},     {kNumberTypeFloat64, ImplMinimum<double>}};
+  {kNumberTypeInt64, ImplMinimum<int64_t>},   {kNumberTypeUInt8, ImplMinimum<uint8_t>},
+  {kNumberTypeUInt16, ImplMinimum<uint16_t>}, {kNumberTypeUInt32, ImplMinimum<uint32_t>},
+  {kNumberTypeUInt64, ImplMinimum<uint64_t>}, {kNumberTypeFloat16, ImplMinimum<float16>},
+  {kNumberTypeFloat32, ImplMinimum<float>},   {kNumberTypeFloat, ImplMinimum<float>},
+  {kNumberTypeFloat64, ImplMinimum<double>}};
 
 class MinimumFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
