@@ -2088,7 +2088,7 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   return buf.str();
 }
 
-const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
+const abstract::AbstractBasePtr AnfAlgo::GetNodeAbstractByIndex(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
   if (abstract == nullptr) {
@@ -2109,7 +2109,7 @@ const abstract::AbstractBasePtr &AnfAlgo::GetNodeAbstractByIndex(const AnfNodePt
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   const auto &elements = abstract_tuple->elements();
   if (elements.size() <= index) {
-    const auto &sub_abstract = FetchAbstractByIndex(node->abstract(), index);
+    const auto sub_abstract = FetchAbstractByIndex(node->abstract(), index);
     return sub_abstract;
   }
   return elements[index];
