@@ -71,6 +71,30 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
+  bool is_ptq_quant = (param->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
+                       param->fullQuantParam.target_device == lite::quant::ASCEND) ||
+                      (param->commonQuantParam.quant_type == lite::quant::QUANT_WEIGHT &&
+                       param->weightQuantParam.dequant_strategy == lite::quant::ON_THE_FLY);
+  if (is_ptq_quant) {
+    return true;
+  }
+  // Check if the model contains fakequant nodes
+  const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto op_name = cnode->fullname_with_scope();
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(primitive);
+    for (const auto &type : fake_quant_types) {
+      if (opt::CheckPrimitiveType(cnode, type)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+}  // namespace
 FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
   auto impl = func_graph->impl();
   return std::dynamic_pointer_cast<FuncGraph>(impl);
@@ -315,29 +339,6 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
       }
     }
   }
-}
-
-bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
-  bool is_ptq_quant = (param->commonQuantParam.quant_type == lite::quant::QUANT_ALL &&
-                       param->fullQuantParam.target_device == lite::quant::ASCEND) ||
-                      (param->commonQuantParam.quant_type == lite::quant::QUANT_WEIGHT &&
-                       param->weightQuantParam.dequant_strategy == lite::quant::ON_THE_FLY);
-  if (is_ptq_quant) {
-    return true;
-  }
-  // Check if the model contains fakequant nodes
-  const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    auto op_name = cnode->fullname_with_scope();
-    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    CHECK_NULL_RETURN(primitive);
-    for (const auto &type : fake_quant_types) {
-      if (opt::CheckPrimitiveType(cnode, type)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {

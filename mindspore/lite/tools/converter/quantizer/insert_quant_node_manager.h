@@ -58,9 +58,9 @@ class InsertQuantNodeManager {
 
   int InsertFSEDecodeNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index, TypeId dst_dtype);
 
-  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool holder = false);
 
-  int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool holder = false);
 
   int InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
                                 TypeId src_dtype, TypeId dst_dtype, int axis, const std::string &ascend_backend);
@@ -75,7 +75,8 @@ class InsertQuantNodeManager {
   CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
  private:
-  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index);
+  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                            bool holder = false);
 
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
