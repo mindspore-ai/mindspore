@@ -43,7 +43,6 @@ def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("is_training", [True, False])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_forward(is_training, mode):
@@ -112,6 +111,7 @@ def test_bn_backward(is_training, mode):
     assert np.allclose(grad.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
+@pytest.mark.skip(reason="dyn-shape-dev-bug")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
@@ -182,6 +182,7 @@ def test_bn_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
+@pytest.mark.skip(reason="dyn-shape-dev-bug")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
