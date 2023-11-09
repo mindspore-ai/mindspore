@@ -977,7 +977,7 @@ std::optional<T> GetScalarValue(const ValuePtr &value) {
 
 // Specialization for std::string type.
 template <>
-std::optional<std::string> GetScalarValue(const ValuePtr &value) {
+MS_CORE_API std::optional<std::string> GetScalarValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<ValueAny>()) {
     return std::nullopt;
@@ -996,17 +996,17 @@ std::optional<std::string> GetScalarValue(const ValuePtr &value) {
   return GetValue<std::string>(value);
 }
 
-template std::optional<int64_t> GetScalarValue(const ValuePtr &value);
-template std::optional<int32_t> GetScalarValue(const ValuePtr &value);
-template std::optional<int16_t> GetScalarValue(const ValuePtr &value);
-template std::optional<int8_t> GetScalarValue(const ValuePtr &value);
-template std::optional<uint64_t> GetScalarValue(const ValuePtr &value);
-template std::optional<uint32_t> GetScalarValue(const ValuePtr &value);
-template std::optional<uint16_t> GetScalarValue(const ValuePtr &value);
-template std::optional<uint8_t> GetScalarValue(const ValuePtr &value);
-template std::optional<double> GetScalarValue(const ValuePtr &value);
-template std::optional<float> GetScalarValue(const ValuePtr &value);
-template std::optional<bool> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int64_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int32_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int16_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<int8_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint64_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint32_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint16_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<uint8_t> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<double> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<float> GetScalarValue(const ValuePtr &value);
+template MS_CORE_API std::optional<bool> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
 template <typename T>
