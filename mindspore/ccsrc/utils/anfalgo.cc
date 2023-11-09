@@ -2142,13 +2142,15 @@ bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
     }
     return false;
   };
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &inputs = cnode->inputs();
-  bool is_all_inputs_mutable_scalar = std::all_of(
-    inputs.begin(), inputs.end(), [is_mutable_scalar_func](const auto &iter) { return is_mutable_scalar_func(iter); });
   bool is_output_mutable_scalar = is_mutable_scalar_func(node);
-  return is_all_inputs_mutable_scalar || is_output_mutable_scalar;
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!is_mutable_scalar_func(cnode->input(kRealInputIndexInDepend))) {
+      return false;
+    }
+  }
+  return is_output_mutable_scalar;
 }
 
 bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {
