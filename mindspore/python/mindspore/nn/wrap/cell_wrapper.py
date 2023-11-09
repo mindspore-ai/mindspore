@@ -723,7 +723,7 @@ class GradAccumulationCell(Cell):
 
 def _pipeline_clear_grad(accu_grad, grad):
     accu_grad = F.depend(accu_grad, grad)
-    zeros = F.tensor_mul(accu_grad, 0.0)
+    zeros = F.zeros_like(accu_grad)
     return F.assign(accu_grad, zeros)
 
 
