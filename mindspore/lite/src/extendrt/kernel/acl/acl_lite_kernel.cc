@@ -35,13 +35,13 @@ AclLiteKernel::AclLiteKernel(std::shared_ptr<mindspore::kernel::KernelMod> kerne
 }
 
 int AclLiteKernel::Prepare() {
-  bool ret = kernel_mod_->Init_(this->base_operator_, inputs_, outputs_);
+  bool ret = kernel_mod_->Init(inputs_, outputs_);
   return ret ? ReSize() : RET_ERROR;
 }
 
 int AclLiteKernel::ReSize() {
   // acl custom kernel last input is om data, do not pass to resize
-  std::vector<KernelTensorPtr> kernel_inputs;
+  std::vector<KernelTensor *> kernel_inputs;
   kernel_inputs.assign(inputs_.begin(), inputs_.end() - 1);
 
   return kernel_mod_->Resize(kernel_inputs, outputs_);
@@ -88,7 +88,7 @@ int AclLiteKernel::InferShape() {
 }
 
 int AclLiteKernel::Run() {
-  AddressPtrList workspace;
+  std::vector<kernel::KernelTensor *> workspace;
   if (in_tensors_.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Given inputs size " << in_tensors_.size() << " != graph inputs size " << inputs_.size();
     return kLiteError;

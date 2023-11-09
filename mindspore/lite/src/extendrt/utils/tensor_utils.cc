@@ -182,9 +182,12 @@ std::vector<mindspore::kernel::AddressPtr> CloudTensorUtils::LiteTensorToAddress
   return address_list;
 }
 
-kernel::KernelTensorPtr CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor) {
+kernel::KernelTensor *CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite::Tensor *lite_tensor) {
   kernel::AddressPtr address = LiteTensorToAddressPtr(lite_tensor);
-  kernel::KernelTensorPtr kernel_tensor_ptr = std::make_shared<kernel::KernelTensor>();
+  kernel::KernelTensor *kernel_tensor_ptr = new (std::nothrow) kernel::KernelTensor();
+  if (kernel_tensor_ptr == nullptr) {
+    return kernel_tensor_ptr;
+  }
   kernel_tensor_ptr->SetData(address);
   kernel_tensor_ptr->SetFormat(lite_tensor->format());
 
@@ -204,9 +207,9 @@ kernel::KernelTensorPtr CloudTensorUtils::LiteTensorToKernelTensorPtr(const lite
   return kernel_tensor_ptr;
 }
 
-std::vector<kernel::KernelTensorPtr> CloudTensorUtils::LiteTensorToKernelTensorPtrVec(
+std::vector<kernel::KernelTensor *> CloudTensorUtils::LiteTensorToKernelTensorPtrVec(
   const std::vector<lite::Tensor *> &lite_tensors) {
-  std::vector<kernel::KernelTensorPtr> kernel_tensor_list;
+  std::vector<kernel::KernelTensor *> kernel_tensor_list;
 
   for (auto lite_tensor : lite_tensors) {
     if (lite_tensor == nullptr) {

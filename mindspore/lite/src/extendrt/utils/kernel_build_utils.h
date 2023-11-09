@@ -33,7 +33,7 @@ namespace mindspore {
 namespace infer {
 using kernel::DataType;
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
-void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensorPtr> &inputs);
+void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensor *> &inputs);
 }  // namespace infer
 }  // namespace mindspore
 

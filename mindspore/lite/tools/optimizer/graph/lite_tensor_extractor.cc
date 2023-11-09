@@ -147,7 +147,7 @@ TensorPtr GetCNodeTensorListVarInput(const lite::DataInfo &data_info) {
 
 TensorPtr CreateTensorFromData(const lite::DataInfo &data_info, const bool &has_inferred,
                                const mindspore::Format &format) {
-  if (data_info.data_type_ == kObjectTypeTensorType) {
+  if (data_info.data_type_ == static_cast<int>(kObjectTypeTensorType)) {
     auto tensor = GetCNodeTensorListVarInput(data_info);
     MS_CHECK_TRUE_MSG(tensor != nullptr, nullptr, "tensor is nullptr.");
     tensor->set_format((Format)(format));
@@ -286,7 +286,7 @@ int LiteTensorExtractor::GetCNodeConstInput(const CNodePtr &cnode, const size_t 
 }
 
 int LiteTensorExtractor::GetCNodeVarInput(const CNodePtr &cnode, const size_t &index,
-                                          const converter::FmkType &fmk_type, std::vector<TensorPtr> *var_ms_inputs) {
+                                          std::vector<TensorPtr> *var_ms_inputs) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr.");
   MS_CHECK_TRUE_MSG(var_ms_inputs != nullptr, RET_ERROR, "var_ms_inputs is nullptr.");
   if (!utils::isa<CNodePtr>(cnode->input(index))) {
@@ -424,7 +424,7 @@ int LiteTensorExtractor::GetCNodeInputTensors(const CNodePtr &cnode, std::vector
   for (size_t i = 1; i < cnode->size(); ++i) {
     if (utils::isa<CNodePtr>(cnode->input(i))) {
       std::vector<TensorPtr> var_inputs;
-      if (GetCNodeVarInput(cnode, i, fmk_type, &var_inputs) != RET_OK) {
+      if (GetCNodeVarInput(cnode, i, &var_inputs) != RET_OK) {
         MS_LOG(ERROR) << "get var inputs failed.";
         cnode->set_inputs(origin_inputs);
         return RET_ERROR;

@@ -20,9 +20,8 @@
 #include "kernel/kernel.h"
 
 namespace mindspore::kernel {
-KernelErrorCode KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+KernelErrorCode KernelMod::Resize(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &outputs) {
   return KRET_OK;
 }
 }  // namespace mindspore::kernel

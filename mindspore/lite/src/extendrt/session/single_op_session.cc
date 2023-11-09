@@ -134,19 +134,19 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
   }
 }
 
-std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
+std::tuple<kernel::KernelModPtr, LiteKernelArgs> SingleOpInferSession::BuildCustomAscendKernelImpl(
   const CNodePtr &cnode) {
   auto kernel_name = lite::kNameCustomAscend;
   std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
   if (kernel_mod == nullptr) {
     MS_LOG(ERROR) << "Kernel mod is nullptr, kernel name: " << kernel_name;
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
   kernel_mod->SetDevicedId(device_id_);
 
   auto make_kernel_tensor = [](TypeId type_id, const ShapeVector &shape) {
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>();
+    auto kernel_tensor = new (std::nothrow) kernel::KernelTensor();
     kernel_tensor->SetShape(std::make_shared<abstract::Shape>(shape));
     kernel_tensor->SetType(TypeIdToType(kObjectTypeTensorType));
     auto base = std::make_shared<mindspore::abstract::AbstractTensor>(TypeIdToType(type_id),
@@ -157,14 +157,14 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
     return kernel_tensor;
   };
 
-  kernel::KernelArgs args;
+  LiteKernelArgs args;
   BaseOperatorPtr op;
   if (!FuncGraphUtils::GetCNodeOperator(cnode, &op)) {
     MS_LOG(ERROR) << "Failed to create operator for cnode " << cnode->fullname_with_scope();
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   std::vector<tensor::TensorPtr> tensor_cache;
-  std::map<AnfWithOutIndex, kernel::KernelTensorPtr> kernel_tensor_map;
+  std::map<AnfWithOutIndex, kernel::KernelTensor *> kernel_tensor_map;
   std::vector<AnfWithOutIndex> inputs;
   std::vector<AnfWithOutIndex> outputs;
   FuncGraphUtils::GetCNodeInputsOutputs(cnode, &inputs, &outputs);
@@ -183,7 +183,7 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
   }
   for (size_t i = 0; i < outputs.size(); i++) {
     auto &output = outputs[i];
-    kernel::KernelTensorPtr kernel_tensor;
+    auto kernel_tensor = new (std::nothrow) kernel::KernelTensor();
     auto it = kernel_tensor_map.find(output);
     if (it != kernel_tensor_map.end()) {  // use input as output
       kernel_tensor = it->second;
@@ -195,25 +195,25 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
     args.outputs.push_back(kernel_tensor);
   }
   SetCustomAscendOpAttrs(op);
-  auto ret = kernel_mod->Init_(op, args.inputs, args.outputs);
+  auto ret = kernel_mod->Init(op->GetPrim(), args.inputs, args.outputs);
   MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
   if (!ret) {
     MS_LOG(ERROR) << "kernel init failed " << kernel_name;
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
   if (is_multi_model_sharing_mem_prepare_) {
     MS_LOG(INFO) << "is multi model sharing mem prepare";
-    return std::make_tuple(nullptr, kernel::KernelArgs{});
+    return std::make_tuple(nullptr, LiteKernelArgs{});
   }
-  // remove const input, OM graph data input
-  args.inputs = kernel_mod->GetInputs();
-  args.outputs = kernel_mod->GetOutputs();
+  if (args.inputs.size() > 0) {
+    args.inputs.pop_back();
+  }
   return std::make_tuple(kernel_mod, args);
 }
 
 Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   kernel::KernelModPtr kernel_mod;
-  kernel::KernelArgs args;
+  LiteKernelArgs args;
   std::tie(kernel_mod, args) = BuildCustomAscendKernelImpl(cnode);
   if (is_multi_model_sharing_mem_prepare_) {
     MS_LOG(INFO) << "using ascend workspace sharing.";
@@ -440,7 +440,7 @@ Status SingleOpInferSession::RunGraph(uint32_t, const std::vector<tensor::Tensor
     return ret;
   }
   try {
-    std::vector<kernel::AddressPtr> ignore_datas;
+    std::vector<kernel::KernelTensor *> ignore_datas;
     if (!kernel_mod_->Launch(ignore_datas, ignore_datas, ignore_datas, nullptr)) {
       MS_LOG(ERROR) << "Failed to launch kernel";
       return kLiteError;

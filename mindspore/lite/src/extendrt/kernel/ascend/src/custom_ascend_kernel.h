@@ -36,32 +36,31 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   CustomAscendKernelMod();
   ~CustomAscendKernelMod() override;
 
-  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Finalize() override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
   std::vector<KernelAttr> GetOpSupport() override { return {}; }
 
  private:
-  void RecordInputDataIndex(const std::vector<KernelTensorPtr> &inputs);
-  AclModelOptionsPtr GenAclOptions(const BaseOperatorPtr &base_operator);
+  void RecordInputDataIndex(const std::vector<KernelTensor *> &inputs);
+  AclModelOptionsPtr GenAclOptions();
   void UpdateInputKernelTensorInfo();
   void UpdateOutputKernelTensorInfo();
-  bool OnNewInputShapes(const std::vector<KernelTensorPtr> &new_shapes);
+  bool OnNewInputShapes(const std::vector<KernelTensor *> &new_shapes);
 
   bool load_model_;
   AclModelOptionsPtr acl_options_;
   ModelInferPtr model_infer_;
   size_t input_data_idx_;
   bool is_multi_model_sharing_mem_prepare_ = false;
+  std::vector<KernelTensor *> inputs_;
+  std::vector<KernelTensor *> outputs_;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel

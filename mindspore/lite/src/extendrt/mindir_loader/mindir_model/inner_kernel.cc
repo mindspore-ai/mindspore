@@ -25,15 +25,14 @@ int InnerKernel::Prepare() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
-  return this->kernel_mod_->Init_(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
-                                                                         : mindspore::lite::RET_ERROR;
+  return this->kernel_mod_->Init(inputs, outputs) ? mindspore::lite::RET_OK : mindspore::lite::RET_ERROR;
 }
 
 int InnerKernel::Execute() {
-  auto inputs = CloudTensorUtils::LiteTensorToAddressPtrVec(this->in_tensors_);
-  auto outputs = CloudTensorUtils::LiteTensorToAddressPtrVec(this->out_tensors_);
+  auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->in_tensors_);
+  auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
-  std::vector<AddressPtr> workspace;
+  std::vector<kernel::KernelTensor *> workspace;
 
   return this->kernel_mod_->Launch(inputs, workspace, outputs, nullptr) ? mindspore::lite::RET_OK
                                                                         : mindspore::lite::RET_ERROR;
@@ -44,7 +43,6 @@ int InnerKernel::ReSize() {
   auto inputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->in_tensors_);
   auto outputs = CloudTensorUtils::LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
-  return this->kernel_mod_->Init_(this->base_operator_, inputs, outputs) ? mindspore::lite::RET_OK
-                                                                         : mindspore::lite::RET_ERROR;
+  return this->kernel_mod_->Init(inputs, outputs) ? mindspore::lite::RET_OK : mindspore::lite::RET_ERROR;
 }
 }  // namespace mindspore::kernel
