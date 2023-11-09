@@ -60,11 +60,18 @@ class BACKEND_EXPORT Op {
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
   void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
-
+  template <typename T>
+  AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
+    if (!t.has_value()) {
+      return kNone->ToAbstract();
+    }
+    return t.value()->ToAbstract();
+  }
+  AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
   template <typename... T>
   inline void InferOutput(T &...args) {
     input_abs_.clear();
-    (input_abs_.emplace_back(args->ToAbstract()), ...);
+    (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     auto eval_impl = abstract::GetPrimitiveInferImpl(primitive_);
     output_abs_ = eval_impl->InferShapeAndType(nullptr, primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);

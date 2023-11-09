@@ -78,6 +78,15 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
   return t;
 }
 
+std::optional<tensor::TensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast(
+  const FrontendOpRunInfoPtr &op_run_info, const std::optional<tensor::TensorPtr> &t, size_t index) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  if (!t.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(SetTensorMixPrecisionCast(op_run_info, t.value(), index));
+}
+
 ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
                                                          const ValueSequencePtr &v_seq, size_t index) {
   MS_EXCEPTION_IF_NULL(op_run_info);

@@ -36,7 +36,7 @@ class PyBoostCastOperation : public CastBaseOperation {
   ~PyBoostCastOperation() = default;
 
   template <typename... InputArgs>
-  auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &... input_args) {
+  auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &...input_args) {
     // Mixed precision conversion tensors which has cast dtype
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);
@@ -147,6 +147,16 @@ class PyBoostCastOperation : public CastBaseOperation {
   }
 
   template <typename Item>
+  void GetDstType(const FrontendOpRunInfoPtr &op_run_info,
+                  const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
+                  mindspore::HashMap<SignatureEnumDType, TypeId> *dst_type, const std::optional<Item> &v) const {
+    if (!v.has_value()) {
+      return;
+    }
+    GetDstType(op_run_info, type_indexes, dst_type, v.value());
+  }
+
+  template <typename Item>
   Item DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                        const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, size_t index, const Item &t) const {
@@ -189,6 +199,17 @@ class PyBoostCastOperation : public CastBaseOperation {
     return DoAutoCast(op_run_info, it->second, t);
   }
 
+  template <typename Item>
+  std::optional<Item> DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
+                                      const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
+                                      const std::vector<SignatureEnumDType> &dtypes, size_t index,
+                                      const std::optional<Item> &t) const {
+    if (!t.has_value()) {
+      return std::nullopt;
+    }
+    return std::make_optional(DoSignatureCast(op_run_info, dst_type, dtypes, index, t.value()));
+  }
+
   template <class Item>
   bool IsValueTypeInvalid(const Item &v) const {
     MS_EXCEPTION_IF_NULL(v);
@@ -206,6 +227,8 @@ class PyBoostCastOperation : public CastBaseOperation {
                                const tensor::TensorPtr &t) const;
   tensor::TensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &t,
                                               size_t index);
+  std::optional<tensor::TensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                             const std::optional<tensor::TensorPtr> &t, size_t index);
   ValuePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &v_seq,
                                      size_t index);
 };

@@ -519,6 +519,13 @@ TensorPtr Common::StubNodeToTensor(const ValuePtr &v) {
   MS_LOG(EXCEPTION) << "It should be stub tensor, but got " << v->ToString();
 }
 
+std::optional<tensor::TensorPtr> Common::StubNodeToTensorOptional(const std::optional<ValuePtr> &value) {
+  if (!value.has_value()) {
+    return std::nullopt;
+  }
+  return std::make_optional(StubNodeToTensor(value.value()));
+}
+
 ValueTuplePtr Common::StubNodeToValueTuple(const ValuePtr &v) {
   if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);

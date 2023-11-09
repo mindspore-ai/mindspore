@@ -306,6 +306,13 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   return acl_tensor;
 }
 
+inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+  if (value.has_value()) {
+    return ConvertType(value.value());
+  }
+  return nullptr;
+}
+
 inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
   if (int_array.empty()) {
     MS_LOG(ERROR) << "int array is empty!";

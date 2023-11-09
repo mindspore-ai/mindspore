@@ -428,6 +428,9 @@ def test_conv2d_ascend():
     pyboost_out = conv2d(inputs, filters, padding=1, bias=bias)
     old_out = ops.conv2d(inputs, filters, pad_mode="pad", padding=1, bias=bias)
     assert np.allclose(pyboost_out.asnumpy(), old_out.asnumpy(), 0.003, 0.003)
+    pyboost_out = conv2d(inputs, filters, padding=1)
+    old_out = ops.conv2d(inputs, filters, pad_mode="pad", padding=1)
+    assert np.allclose(pyboost_out.asnumpy(), old_out.asnumpy(), 0.003, 0.003)
 
 
 @pytest.mark.level1

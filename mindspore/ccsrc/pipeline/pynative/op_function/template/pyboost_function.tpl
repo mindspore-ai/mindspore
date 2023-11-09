@@ -1,9 +1,9 @@
 py::object ${func_name}(const py::args &args) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   auto op_run_info = PyNativeAlgo::PyBoost::Init(args);
-  static Parser parser(ops::${op_def_name});
+  static Converter converter(ops::${op_def_name});
   py::list input_args = args[kIndex1];
-  parser.Parse(input_args);
+  converter.Parse(input_args);
   ${parser_body}
 
   auto top_type = PredictOutType(op_run_info);
@@ -21,13 +21,13 @@ py::object ${func_name}(const py::args &args) {
       op->set_primitive(op_run_info->op_grad_info->op_prim);
 
       // Do mixed precision and implicit cast
-      auto [${real_inputs}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs(op_run_info, ${call_args});
+      auto [${cast_args}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs(op_run_info, ${call_args});
 
       // Run op
-      (void)op->Call(${real_inputs});
-
+      (void)op->Call(${cast_args});
+      ${optional_to_value}
       // Update op and op_run_info by op outputs
-      PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${real_inputs}}, op_run_info);
+      PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${grad_args}}, op_run_info);
 
       // Do auto grad
       if (op_run_info->requires_grad) {

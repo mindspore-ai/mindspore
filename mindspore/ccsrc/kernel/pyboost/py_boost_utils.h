@@ -29,6 +29,7 @@ kernel::AddressPtrList CreateWorkspaceAddressForPyboostOp(std::vector<size_t> wo
 tensor::TensorPtr BACKEND_EXPORT ScalarToTensor(const ScalarPtr &scalar, const TypePtr &type);
 tensor::TensorPtr BACKEND_EXPORT ContiguousTensor(const tensor::TensorPtr &input_tensor);
 
+
 template <typename... Args>
 void PrepareOpInputs(DeviceContext *device_context, Args... args) {
   [&]() { (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, args, "input"), ...); }();

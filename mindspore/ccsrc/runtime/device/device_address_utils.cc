@@ -802,6 +802,15 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const Devi
   return need_ret_address ? device_address : nullptr;
 }
 
+device::DeviceAddressPtr DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context,
+                                                         const std::optional<tensor::TensorPtr> &val,
+                                                         const std::string &input_name, bool need_ret_address) {
+  if (!val.has_value()) {
+    return nullptr;
+  }
+  return CreateInputTensorAddress(device_context, val.value(), input_name);
+}
+
 std::vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateInputTensorAddress(
   const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors, const std::string &input_name,
   bool need_ret_address) {

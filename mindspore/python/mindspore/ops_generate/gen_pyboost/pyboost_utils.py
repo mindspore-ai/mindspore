@@ -40,12 +40,12 @@ def get_index(index: int):
     raise TypeError(f"""Unsupported index {index} for index map.""")
 
 
-def get_convert_type_str(dtype: str):
+def get_convert_type_str(dtype: str, optional):
     """
     Convert type
     """
     # add more type here
-    type_convert = {
+    native_type_convert = {
         'int': 'ToInt',
         'float': 'ToFloat',
         'bool': 'ToBool',
@@ -61,8 +61,18 @@ def get_convert_type_str(dtype: str):
         'tensor': 'ToTensor',
         'type': 'ToDtype',
     }
-    if dtype in type_convert:
-        return type_convert[dtype]
+    optional_type_convert = {
+        'int': 'ToIntOptional',
+        'float': 'ToFloatOptional',
+        'number': 'ToScalarOptional',
+        'tensor': 'ToTensorOptional',
+    }
+    if optional:
+        if dtype in optional_type_convert:
+            return optional_type_convert[dtype]
+        raise TypeError(f"""Unsupported convert optional type {dtype} for args.""")
+    elif dtype in native_type_convert:
+        return native_type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")
 
 
@@ -93,7 +103,7 @@ def number_input_to_cpp_type(dtype: str):
     return None
 
 
-def get_input_dtype(dtype: str):
+def get_input_dtype(dtype: str, optional):
     """
     Convert type
     """
@@ -114,6 +124,18 @@ def get_input_dtype(dtype: str):
         'tensor': 'TensorPtr',
         'type': 'TypePtr',
     }
+    optional_type_convert = {
+        'int': 'std::optional<Int64ImmPtr>',
+        'float': 'std::optional<FP32ImmPtr>',
+        'bool': 'std::optional<BoolImmPtr>',
+        'number': 'std::optional<ScalarPtr>',
+        'tensor': 'std::optional<TensorPtr>',
+        'type': 'std::optional<TypePtr>',
+    }
+    if optional:
+        if dtype in optional_type_convert:
+            return optional_type_convert[dtype]
+        raise TypeError(f"""Unsupported convert optional type {dtype} for args.""")
     if dtype in type_convert:
         return type_convert[dtype]
     raise TypeError(f"""Unsupported convert type {dtype} for args.""")

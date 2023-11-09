@@ -16,7 +16,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "pipeline/pynative/forward/forward.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "pipeline/pynative/op_function/python_arg_parser.h"
+#include "pipeline/pynative/op_function/converter.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "pipeline/pynative/predict_out_type_map.h"

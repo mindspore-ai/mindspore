@@ -35,7 +35,7 @@ std::vector<int64_t> ExpandVector(const std::vector<int64_t> &value, const size_
 
 tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                                    const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
-                                   const tensor::TensorPtr &bias_tensor, const ValueTuplePtr &stride,
+                                   const std::optional<tensor::TensorPtr> &bias_tensor, const ValueTuplePtr &stride,
                                    const ValueTuplePtr &padding, const ValueTuplePtr &dilation,
                                    const Int64ImmPtr &groups, const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
@@ -50,7 +50,6 @@ tensor::TensorPtr Conv2DAscendCall(const PrimitivePtr &primitive, const device::
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "outputs is empty";
   }
-
   auto cube_math_type = GetCubeMathType();
   EXEC_NPU_CMD(aclnnConvolution, stream_ptr, input_tensor, weight_tensor, bias_tensor, expand_stride, expand_padding,
                expand_dilation, transposed, output_padding, groups_value, outputs[0], cube_math_type);

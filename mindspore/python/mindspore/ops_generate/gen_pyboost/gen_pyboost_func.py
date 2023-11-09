@@ -75,7 +75,7 @@ def generate_pyboost_ascend_op_source_code(work_path, pyboost_yaml_data, prim_na
     # PyBoost ascend op source generate
     call_args_tensor = []
     for type, arg_name in zip(call_args_type, call_args_str):
-        if type == "TensorPtr":
+        if type == "TensorPtr" or type == "std::optional<TensorPtr>":
             call_args_tensor.append(arg_name)
 
     malloc_inputs = ''
@@ -249,10 +249,11 @@ def generate_parser_func(op_proto: OpProto) -> str:
     :param op_proto:
     :return: str
     """
-    convert_template = CppTemplate("auto $arg_name = parser.${convert_func}($arg_index);\n")
+    convert_template = CppTemplate("auto $arg_name = converter.${convert_func}($arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
-        convert_type_str = get_convert_type_str(arg.arg_dtype)
+        is_optional = (arg.as_init_arg and str(arg.init) == 'None')
+        convert_type_str = get_convert_type_str(arg.arg_dtype, is_optional)
         parser_func_str += convert_template.replace(arg_name=arg.arg_name, convert_func=convert_type_str,
                                                     arg_index=pyboost_utils.get_index(index))
     return parser_func_str
@@ -280,30 +281,64 @@ def generate_pyboost_functions(work_path, yaml_data):
         parser_body_str = generate_parser_func(op_proto)
 
         convert_to_tensor_template = CppTemplate(
-            "auto ${arg_name}_tensor = PyNativeAlgo::Common::StubNodeToTensor(${arg_name});\n")
+            "auto ${output} = PyNativeAlgo::Common::StubNodeToTensor(${input});\n")
+        convert_to_tensor_optional_template = CppTemplate(
+            "auto ${output} = PyNativeAlgo::Common::StubNodeToTensorOptional(${input});\n")
         convert_to_tensor_list_template = CppTemplate(
-            "auto ${arg_name}_tensor_list = PyNativeAlgo::Common::StubNodeToValueTuple(${arg_name});\n")
+            "auto ${output} = PyNativeAlgo::Common::StubNodeToValueTuple(${input});\n")
+
+        grad_args_str = []
         call_args_str = []
-        real_inputs_str = []
+        cast_args_str = []
         convert_stub_str = ''
+        optional_to_value_str = ''
         for op_arg in op_proto.op_args:
+            grad_arg = ''
             call_arg = ''
+            cast_arg = ''
             if pyboost_utils.is_tensor(op_arg):
-                call_arg = op_arg.arg_name + "_tensor"
-                convert_stub_str += convert_to_tensor_template.replace(arg_name=op_arg.arg_name)
+                if op_arg.as_init_arg and str(op_arg.init) == 'None':
+                    convert_stub_output_name = op_arg.arg_name + '_optional'
+                    convert_stub_str += convert_to_tensor_optional_template.replace(output=convert_stub_output_name,
+                                                                                    input=op_arg.arg_name)
+                    cast_output = 'cast_' + convert_stub_output_name
+                    convert_optional_to_value_template = CppTemplate(
+                        "auto ${output} = PyNativeAlgo::PyBoost::OptionalToValue(${input});\n")
+                    convert_optional_to_value_name = op_arg.arg_name + "_value"
+                    optional_to_value_str += convert_optional_to_value_template.replace(input=cast_output,
+                                                                                        output=convert_optional_to_value_name)
+                    call_arg = convert_stub_output_name
+                    grad_arg = convert_optional_to_value_name
+                    cast_arg = cast_output
+                else:
+                    convert_stub_output_name = op_arg.arg_name + "_tensor"
+                    convert_stub_str += convert_to_tensor_template.replace(input=op_arg.arg_name,
+                                                                           output=convert_stub_output_name)
+                    call_arg = convert_stub_output_name
+                    grad_arg = "cast_" + convert_stub_output_name
+                    cast_arg = grad_arg
             elif pyboost_utils.is_tensor_list(op_arg):
-                call_arg = op_arg.arg_name + "_tensor_list"
-                convert_stub_str += convert_to_tensor_list_template.replace(arg_name=op_arg.arg_name)
+                convert_stub_output_name = op_arg.arg_name + "_tensor_list"
+                convert_stub_str += convert_to_tensor_list_template.replace(input=op_arg.arg_name,
+                                                                            output=convert_stub_output_name)
+                call_arg = convert_stub_output_name
+                grad_arg = "cast_" + convert_stub_output_name
+                cast_arg = grad_arg
             else:
                 call_arg = op_arg.arg_name
+                grad_arg = "cast_" + op_arg.arg_name
+                cast_arg = grad_arg
+            grad_args_str.append(grad_arg)
             call_args_str.append(call_arg)
-            real_inputs_str.append("real_" + call_arg)
+            cast_args_str.append(cast_arg)
         pyboost_func_str += template.PYBOOST_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                        op_def_name=op_def_name_str,
                                                                        parser_body=parser_body_str, op_name=op_name_str,
                                                                        convert_stub=convert_stub_str,
+                                                                       optional_to_value=optional_to_value_str,
                                                                        call_args=call_args_str,
-                                                                       real_inputs=real_inputs_str,
+                                                                       grad_args=grad_args_str,
+                                                                       cast_args=cast_args_str,
                                                                        op_args=op_args_str)
         pyboost_func_str = pyboost_func_str + template.NEW_LINE + template.NEW_LINE
         pyboost_func_pybind_def += template.REGISTER_DEFINE_TEMPLATE.replace(
@@ -371,8 +406,10 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data, pyboost_yaml_data):
             else:
                 call_arg = op_arg.arg_name
             call_args_str.append(call_arg)
-            call_args_type.append(get_input_dtype(op_arg.arg_dtype))
-
+            is_optional = False
+            if op_arg.as_init_arg and str(op_arg.init) == 'None':
+                is_optional = True
+            call_args_type.append(get_input_dtype(op_arg.arg_dtype, is_optional))
             if number_input_to_cpp_type(op_arg.arg_dtype):
                 call_args_after_convert.append(call_arg + "_imm")
                 const_number_convert.append(get_const_number_convert(call_arg, op_arg.arg_dtype))

@@ -54,6 +54,9 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                                            const tensor::TensorPtr &tensor,
                                                            const std::string &input_name,
                                                            bool need_ret_address = false);
+  static device::DeviceAddressPtr CreateInputTensorAddress(const DeviceContext *device_context,
+                                                           const std::optional<tensor::TensorPtr> &val,
+                                                           const std::string &input_name, bool need_ret_address = false);
   static std::vector<device::DeviceAddressPtr> CreateInputTensorAddress(const DeviceContext *device_context,
                                                                         const std::vector<tensor::TensorPtr> &tensors,
                                                                         const std::string &input_name,

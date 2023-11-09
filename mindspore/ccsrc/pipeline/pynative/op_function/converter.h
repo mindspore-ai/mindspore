@@ -23,11 +23,12 @@
 #include "ops/op_def.h"
 namespace mindspore {
 namespace pynative {
-class Parser {
+class Converter {
  public:
-  explicit Parser(const ops::OpDef &op_def);
+  explicit Converter(const ops::OpDef &op_def);
   void Parse(py::list args);
   ValuePtr ToTensor(size_t i);
+  std::optional<ValuePtr> ToTensorOptional(size_t i);
   template <typename T>
   ValueTuplePtr ToTensorList(size_t i);
   Int64ImmPtr ToInt(size_t i);

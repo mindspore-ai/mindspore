@@ -19,7 +19,7 @@ from .pyboost_utils import convert_python_func_name_to_c
 
 
 class Arg:
-    def __init__(self, arg_name, arg_dtype, type_cast=[], as_init_arg=False, init=None, inplace=''):
+    def __init__(self, arg_name, arg_dtype, type_cast=[], as_init_arg=False, init=-1, inplace=''):
         self.arg_name = arg_name
         self.arg_dtype = arg_dtype
         self.type_cast = type_cast

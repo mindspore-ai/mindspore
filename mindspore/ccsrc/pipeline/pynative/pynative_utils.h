@@ -60,6 +60,7 @@ struct Common {
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static TensorPtr StubNodeToTensor(const ValuePtr &value);
+  static std::optional<tensor::TensorPtr> StubNodeToTensorOptional(const std::optional<ValuePtr> &value);
   static ValueTuplePtr StubNodeToValueTuple(const ValuePtr &v);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
@@ -121,12 +122,24 @@ struct PyBoost {
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
                               const FrontendOpRunInfoPtr &op_run_info);
+  template <typename T>
+  static ValuePtr OptionalToValue(const std::optional<T> &val) {
+    if (!val.has_value()) {
+      return kNone;
+    }
+    return val.value();
+  }
+
+  template <typename T>
+  static T OptionalToValue(const T &val) {
+    return val;
+  }
 
   template <typename... T>
   static auto SetPyBoostCastForInputs(const FrontendOpRunInfoPtr &op_run_info, T... t) {
     MS_EXCEPTION_IF_NULL(op_run_info);
     // For auto grad use
-    op_run_info->op_grad_info->input_value = {t...};
+    op_run_info->op_grad_info->input_value = {OptionalToValue(t)...};
     op_run_info->input_size = sizeof...(t);
     if (op_run_info->base_op_run_info.op_name == kCast) {
       return std::make_tuple(t...);

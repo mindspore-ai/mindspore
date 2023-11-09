@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pipeline/pynative/op_function/python_arg_parser.h"
+#include "pipeline/pynative/op_function/converter.h"
 #include <unordered_map>
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
@@ -120,9 +120,9 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Parser::Parser(const ops::OpDef &op_def) { op_def_ = op_def; }
+Converter::Converter(const ops::OpDef &op_def) { op_def_ = op_def; }
 
-void Parser::Parse(py::list python_args) {
+void Converter::Parse(py::list python_args) {
   python_args_ = &python_args;
   if (op_def_.args_.size() != python_args.size()) {
     MS_LOG(EXCEPTION) << "For operator " << op_def_.name_ << ", it requires " << op_def_.args_.size()
@@ -130,7 +130,7 @@ void Parser::Parse(py::list python_args) {
   }
 }
 
-ValuePtr Parser::ToTensor(size_t i) {
+ValuePtr Converter::ToTensor(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto tensor = parse::ConvertTensor(obj);
@@ -147,8 +147,16 @@ ValuePtr Parser::ToTensor(size_t i) {
   return nullptr;
 }
 
+std::optional<ValuePtr> Converter::ToTensorOptional(size_t i) {
+  const py::object &obj = (*python_args_)[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(std::move(ToTensor(i)));
+}
+
 template <typename T>
-ValueTuplePtr Parser::ToTensorList(size_t i) {
+ValueTuplePtr Converter::ToTensorList(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto val_seq = parse::ConvertSequence<py::tuple, ValueTuple, parse::ConvertTensor>(obj);
@@ -166,7 +174,7 @@ ValueTuplePtr Parser::ToTensorList(size_t i) {
   return nullptr;
 }
 
-Int64ImmPtr Parser::ToInt(size_t i) {
+Int64ImmPtr Converter::ToInt(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertInt(obj);
@@ -183,7 +191,7 @@ Int64ImmPtr Parser::ToInt(size_t i) {
   return nullptr;
 }
 
-std::optional<Int64ImmPtr> Parser::ToIntOptional(size_t i) {
+std::optional<Int64ImmPtr> Converter::ToIntOptional(size_t i) {
   const py::object &obj = (*python_args_)[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
@@ -192,7 +200,7 @@ std::optional<Int64ImmPtr> Parser::ToIntOptional(size_t i) {
 }
 
 template <typename T>
-ValueTuplePtr Parser::ToIntList(size_t i) {
+ValueTuplePtr Converter::ToIntList(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::int_, Int64Imm>(obj);
@@ -209,7 +217,7 @@ ValueTuplePtr Parser::ToIntList(size_t i) {
   return nullptr;
 }
 
-BoolImmPtr Parser::ToBool(size_t i) {
+BoolImmPtr Converter::ToBool(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertBool(obj);
@@ -227,7 +235,7 @@ BoolImmPtr Parser::ToBool(size_t i) {
 }
 
 template <typename T>
-ValueTuplePtr Parser::ToBoolList(size_t i) {
+ValueTuplePtr Converter::ToBoolList(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::bool_, BoolImm>(obj);
@@ -244,7 +252,7 @@ ValueTuplePtr Parser::ToBoolList(size_t i) {
   return nullptr;
 }
 
-FP32ImmPtr Parser::ToFloat(size_t i) {
+FP32ImmPtr Converter::ToFloat(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertFloat(obj);
@@ -262,7 +270,7 @@ FP32ImmPtr Parser::ToFloat(size_t i) {
 }
 
 template <typename T>
-ValueTuplePtr Parser::ToFloatList(size_t i) {
+ValueTuplePtr Converter::ToFloatList(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   ValueTuplePtr convert = ConvertList<T, py::float_, FP32Imm>(obj);
@@ -279,7 +287,7 @@ ValueTuplePtr Parser::ToFloatList(size_t i) {
   return nullptr;
 }
 
-ScalarPtr Parser::ToScalar(size_t i) {
+ScalarPtr Converter::ToScalar(size_t i) {
   const auto &op_arg = op_def_.args_[i];
   const py::object &obj = (*python_args_)[i];
   auto convert = ConvertNumber(obj);
@@ -296,7 +304,7 @@ ScalarPtr Parser::ToScalar(size_t i) {
   return nullptr;
 }
 
-TypePtr Parser::ToDtype(size_t i) {
+TypePtr Converter::ToDtype(size_t i) {
   const py::object &obj = (*python_args_)[i];
   if (!py::isinstance<mindspore::Type>(obj)) {
     MS_LOG(EXCEPTION) << "Get arg is not mindspore type " << py::str(obj);
@@ -304,7 +312,7 @@ TypePtr Parser::ToDtype(size_t i) {
   return obj.cast<TypePtr>();
 }
 
-py::object Parser::Wrap(const TensorPtr &tensor) {
+py::object Converter::Wrap(const TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedWait()) {
     py::gil_scoped_release release;
@@ -315,21 +323,21 @@ py::object Parser::Wrap(const TensorPtr &tensor) {
   return v[0];
 }
 
-void Parser::ThrowException(size_t i) {
+void Converter::ThrowException(size_t i) {
   MS_LOG(EXCEPTION) << "For op " << op_def_.name_ << ", the " << i << "th arg dtype is not right!"
                     << "expect dtype: " << CTypeToPythonType(op_def_.args_[i].arg_dtype_)
                     << "but got dtype: " << py::type((*python_args_)[i]);
 }
 
 // Declare template to compile corresponding method.
-template ValueTuplePtr Parser::ToTensorList<py::tuple>(size_t i);
-template ValueTuplePtr Parser::ToTensorList<py::list>(size_t i);
-template ValueTuplePtr Parser::ToIntList<py::tuple>(size_t i);
-template ValueTuplePtr Parser::ToIntList<py::list>(size_t i);
-template ValueTuplePtr Parser::ToBoolList<py::tuple>(size_t i);
-template ValueTuplePtr Parser::ToBoolList<py::list>(size_t i);
-template ValueTuplePtr Parser::ToFloatList<py::tuple>(size_t i);
-template ValueTuplePtr Parser::ToFloatList<py::list>(size_t i);
+template ValueTuplePtr Converter::ToTensorList<py::tuple>(size_t i);
+template ValueTuplePtr Converter::ToTensorList<py::list>(size_t i);
+template ValueTuplePtr Converter::ToIntList<py::tuple>(size_t i);
+template ValueTuplePtr Converter::ToIntList<py::list>(size_t i);
+template ValueTuplePtr Converter::ToBoolList<py::tuple>(size_t i);
+template ValueTuplePtr Converter::ToBoolList<py::list>(size_t i);
+template ValueTuplePtr Converter::ToFloatList<py::tuple>(size_t i);
+template ValueTuplePtr Converter::ToFloatList<py::list>(size_t i);
 
 }  // namespace pynative
 }  // namespace mindspore
