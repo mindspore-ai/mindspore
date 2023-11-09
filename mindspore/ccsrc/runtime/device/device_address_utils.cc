@@ -728,7 +728,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &kernel_tensor = old_device_address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto new_kernel_tensor = kernel_tensor->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
+  auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
 
   new_kernel_tensor->set_device_name(device_context->device_context_key().device_name_);

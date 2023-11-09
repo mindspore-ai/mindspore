@@ -1800,7 +1800,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
       MS_EXCEPTION_IF_NULL(pre_device_tensor);
 
       const auto &pre_kernel_tensor = pre_device_tensor->kernel_tensor();
-      const auto new_kernel_tensor = pre_kernel_tensor->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
+      const auto new_kernel_tensor = pre_kernel_tensor->CloneKernelTensor();
       MS_EXCEPTION_IF_NULL(new_kernel_tensor);
       new_kernel_tensor->set_device_name(to_device_context->device_context_key().device_name_);
       new_kernel_tensor->set_device_id(to_device_context->device_context_key().device_id_);

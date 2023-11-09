@@ -288,7 +288,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     const auto &kernel_tensor = input_device_tensor->kernel_tensor();
     MS_EXCEPTION_IF_NULL(kernel_tensor);
-    auto new_kernel_tensor = kernel_tensor->Clone()->cast<std::shared_ptr<kernel::KernelTensor>>();
+    auto new_kernel_tensor = kernel_tensor->CloneKernelTensor();
     MS_EXCEPTION_IF_NULL(new_kernel_tensor);
     new_kernel_tensor->set_device_ptr(nullptr);
     DeviceTensorPtr new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(new_kernel_tensor);
