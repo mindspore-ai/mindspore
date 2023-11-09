@@ -366,7 +366,7 @@ TEST_F(KernelExecutorTest, TestConcat) {
                                  0.0001));
 }
 
-TEST_F(KernelExecutorTest, TestConv2D) {
+TEST_F(KernelExecutorDropTest, TestConv2D) {
   auto op = std::make_shared<ops::Conv2D>();
   op->set_out_channel(32);
   op->set_kernel_size({3, 3});
@@ -388,7 +388,7 @@ TEST_F(KernelExecutorTest, TestConv2D) {
   ASSERT_EQ(outputs[0].Shape(), shape);
 }
 
-TEST_F(KernelExecutorTest, TestConv2DTranspose) {
+TEST_F(KernelExecutorDropTest, TestConv2DTranspose) {
   auto op = std::make_shared<ops::Conv2DTranspose>();
   op->set_in_channel(32);
   op->set_out_channel(32);
