@@ -19,7 +19,8 @@
 #include "mindspore/ccsrc/transform/graph_ir/transform_util.h"
 #include "mindspore/lite/src/extendrt/utils/tensor_utils.h"
 #include "mindspore/lite/src/common/common.h"
-#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_mock.h"
+#include "common/ge_common/ge_inner_error_codes.h"
+#include "external/llm_engine.h"
 
 #define LLM_RUN_ASYNC
 
@@ -45,6 +46,7 @@ class LLMEnginePlugin : public LLMEnginePluginBase {
   Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
   Status InitInputOptions(const std::vector<LLMEngineModelInfo> &model_infos);
   void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
+  Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
 };
 
 LLMEnginePluginBase *CreateLLMEnginePlugin() { return new LLMEnginePlugin(); }
@@ -223,11 +225,11 @@ Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor
     if (ge_status == ge::GRAPH_SUCCESS) {
       *outputs = ge_outputs;
       is_finished = true;
-    } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT_LITE) {
+    } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
       MS_LOG(WARNING) << "RunPromptAsync or RunDecoderAsync failed, receive LLM_WAIT_PROC_TIMEOUT";
       callback_status = kLiteLLMWaitProcessTimeOut;
-    } else if (ge_status == ge::LLM_NOT_RECV_KV_CACHE_LITE) {
-      MS_LOG(WARNING) << "RunPromptAsync or RunDecoderAsync failed, receive LLM_NOT_RECV_KV_CACHE";
+    } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
+      MS_LOG(WARNING) << "RunPromptAsync or RunDecoderAsync failed, receive LLM_KV_CACHE_NOT_EXIST";
       callback_status = kLiteLLMKVCacheNotExist;
     } else {
       MS_LOG(ERROR) << "RunPromptAsync or RunDecoderAsync failed, status: " << ge_status;
@@ -279,13 +281,7 @@ void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) c
   llm_req.SetDecoderClusterId(req.decoder_cluster_id);
 }
 
-Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
-                                std::vector<MSTensor> *outputs) {
-  if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
-  std::vector<::ge::Tensor> ge_inputs;
+Status LLMEnginePlugin::MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs) {
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
     MS_LOG(INFO) << "Input " << i << " shape " << input.Shape() << ", datatype " << input.DataType();
@@ -303,7 +299,22 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
       MS_LOG(ERROR) << "Failed to call ge::Tensor SetData(uint8_t*, size, DeleteFunc), data size " << input.DataSize();
       return kLiteError;
     }
-    ge_inputs.emplace_back(tensor);
+    ge_inputs->emplace_back(tensor);
+  }
+  return kSuccess;
+}
+
+Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
+                                std::vector<MSTensor> *outputs) {
+  if (llm_engine_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
+    return kLiteError;
+  }
+  std::vector<::ge::Tensor> ge_inputs;
+  auto ret = MSTensorToGeTensor(inputs, &ge_inputs);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Failed to transform MSTensor to Ge Tensor";
+    return ret;
   }
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
@@ -311,7 +322,7 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
                << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
                << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId();
   std::vector<::ge::Tensor> ge_outputs;
-  auto ret = Run(&llm_req, ge_inputs, &ge_outputs);
+  ret = Run(&llm_req, ge_inputs, &ge_outputs);
   if (ret != kSuccess) {
     return ret;
   }
