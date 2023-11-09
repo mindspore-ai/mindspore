@@ -47,7 +47,7 @@ bool AclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std
 
 void AclnnKernelMod::RunOp(const std::string &op_type, void *stream_ptr, const std::vector<KernelTensor *> &workspace) {
   if (workspace_size_list_.empty()) {
-    RUN_OP_API(op_type, stream_ptr, nullptr, 0, executor_, after_launch_func_);
+    RUN_OP_API_ASYNC(op_type, nullptr, 0, executor_, stream_ptr, release_func_);
   } else {
     if (workspace.empty()) {
       MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
@@ -57,15 +57,15 @@ void AclnnKernelMod::RunOp(const std::string &op_type, void *stream_ptr, const s
       MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
                         << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
     }
-    RUN_OP_API(op_type, stream_ptr, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_,
-               after_launch_func_);
+    RUN_OP_API_ASYNC(op_type, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr,
+                     release_func_);
   }
 }
 
-void AclnnKernelMod::RunOpAsync(const std::string &op_type, void *stream_ptr,
-                                const std::vector<KernelTensor *> &workspace) {
+void AclnnKernelMod::RunOpSync(const std::string &op_type, void *stream_ptr,
+                               const std::vector<KernelTensor *> &workspace) {
   if (workspace_size_list_.empty()) {
-    RUN_OP_API_SYNC(op_type, stream_ptr, nullptr, 0, executor_);
+    RUN_OP_API_SYNC(op_type, nullptr, 0, executor_, stream_ptr);
   } else {
     if (workspace.empty()) {
       MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
@@ -75,7 +75,7 @@ void AclnnKernelMod::RunOpAsync(const std::string &op_type, void *stream_ptr,
       MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
                         << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
     }
-    RUN_OP_API_SYNC(op_type, stream_ptr, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_);
+    RUN_OP_API_SYNC(op_type, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr);
   }
 }
 
@@ -87,13 +87,13 @@ void AclnnKernelMod::UpdateWorkspace(const uint64_t workspace_size) {
   }
 }
 
-void AclnnKernelMod::ParseGenExecutor(const std::tuple<aclOpExecutor *, CallBackFunc> &args) {
-  executor_ = std::get<0>(args);
+void AclnnKernelMod::ParseGenExecutor(const std::tuple<uint64_t, aclOpExecutor *, CallBackFunc> &args) {
+  executor_ = std::get<1>(args);
   if (executor_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's generate!";
   }
-  after_launch_func_ = std::get<1>(args);
-  if (after_launch_func_ == nullptr) {
+  release_func_ = std::get<2>(args);
+  if (release_func_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Please check op api's call back func!";
   }
 }

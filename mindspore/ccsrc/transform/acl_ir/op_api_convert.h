@@ -28,7 +28,6 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore::transform {
-
 // Api data struct.
 typedef struct aclOpExecutor aclOpExecutor;
 typedef struct aclTensor aclTensor;
@@ -77,7 +76,7 @@ inline void *GetOpApiLibHandler(const std::string &lib_path) {
 }
 
 inline void *GetOpApiFunc(const char *api_name) {
-  std::string cust_path = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
+  static auto cust_path = common::GetEnv("ASCEND_CUSTOM_OPP_PATH");
   if (!cust_path.empty()) {
     auto cust_lib_path = cust_path + GetCustOpApiLibName();
     static auto cust_handler = GetOpApiLibHandler(cust_lib_path);
@@ -89,8 +88,8 @@ inline void *GetOpApiFunc(const char *api_name) {
     }
   }
 
-  auto ascend_path = device::ascend::GetAscendPath();
-  std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
+  static auto ascend_path = device::ascend::GetAscendPath();
+  static const std::vector<std::string> depend_libs = {"libdummy_tls.so", "libnnopbase.so"};
   for (const auto &dep_lib : depend_libs) {
     (void)GetOpApiLibHandler(ascend_path + "lib64/" + dep_lib);
   }
@@ -244,7 +243,7 @@ T ConvertType(T value) {
 }
 
 template <typename... Ts>
-constexpr auto ConvertTypes(const Ts &... args) {
+constexpr auto ConvertTypes(Ts &... args) {
   return std::make_tuple(ConvertType(args)...);
 }
 

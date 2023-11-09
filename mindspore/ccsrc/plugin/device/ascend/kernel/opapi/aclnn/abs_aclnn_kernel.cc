@@ -33,8 +33,8 @@ constexpr size_t kOutputIndex = 0;
 
 void AbsAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  auto workspace_size = GEN_WORKSPACE(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]);
-  UpdateWorkspace(workspace_size);
+  auto return_value = GEN_EXECUTOR(aclnnAbs, inputs[kInputIndex], outputs[kOutputIndex]);
+  UpdateWorkspace(std::get<0>(return_value));
 }
 
 bool AbsAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
