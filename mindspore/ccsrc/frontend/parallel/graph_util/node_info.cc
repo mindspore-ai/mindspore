@@ -65,10 +65,6 @@ AnfNodePtr GetRealInput(const AnfNodePtr &input) {
   return res;
 }
 
-inline bool IsMakeSequence(const AnfNodePtr &node) {
-  return AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST);
-}
-
 // Given the node, return whether each input is a parameter or a output of a operator.
 // The returned boolean vector should be the same order of the inputs, thus its implementation
 // is closely consistent with ExtractShape() in step_parallel.cc
@@ -76,8 +72,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
   std::vector<bool> is_parameter;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   // input is a ValueList or ValueTuple, then all inputs are not parameter.
-  if ((node_inputs.size() >= kMinInputSize) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     std::vector<ValuePtr> inputs_seq;
     if (IsValueNode<ValueList>(node_inputs[1])) {
       inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
@@ -95,7 +91,8 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     }
     return std::vector<bool>(inputs_seq_tensor_size, false);
   }
-  if ((node_inputs.size() >= kMinInputSize) && IsMakeSequence(node_inputs[1])) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsMakeSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
@@ -122,8 +119,8 @@ std::string ExtractInputParameterNameByNode(const CNodePtr &node) {
   std::string param_name = "";
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   // input is a ValueList or ValueTuple, then all inputs are not parameter.
-  if ((node_inputs.size() >= kMinInputSize) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
@@ -231,8 +228,8 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   std::vector<size_t> inputs_type_len;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
 
-  if ((node_inputs.size() >= kMinInputSize) &&
-      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsValueSequence(node_inputs[1])) {
     std::vector<ValuePtr> inputs_seq;
     if (IsValueNode<ValueList>(node_inputs[1])) {
       inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
@@ -250,7 +247,8 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
     return inputs_type_len;
   }
 
-  if ((node_inputs.size() >= kMinInputSize) && IsMakeSequence(node_inputs[1])) {
+  if ((node_inputs.size() == kMinInputSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      IsMakeSequence(node_inputs[1])) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
 

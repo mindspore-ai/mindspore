@@ -66,8 +66,6 @@ namespace mindspore {
 namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
-// the input is tuple or list
-static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN};
 const uint32_t MAX_BFS_DEPTH = 7;
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
@@ -1006,18 +1004,24 @@ static bool CheckInsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &no
     return true;
   }
   constexpr size_t kSingleArgCNodeSize = 2;
-  if ((node->inputs().size() == kSingleArgCNodeSize) && (IsValueNode<ValueSequence>(node->input(1)))) {
+  if ((node->inputs().size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
+      (IsValueNode<ValueSequence>(node->input(1)))) {
     MS_LOG(INFO) << "Input is ValueList, skip it.";
     return false;
   }
 
-  if ((node->inputs().size() == kSingleArgCNodeSize) &&
+  if ((node->inputs().size() == kSingleArgCNodeSize || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) &&
       (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return false;
   }
+  auto valid_mirror_ops_num = mirror_ops.size();
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    valid_mirror_ops_num =
+      std::count_if(mirror_ops.begin(), mirror_ops.end(), [](OperatorVector op) -> bool { return !op.empty(); });
+  }
 
-  if (mirror_ops.size() != node_size - 1) {
+  if (valid_mirror_ops_num != node_size - 1) {
     MS_LOG(EXCEPTION) << "For " << node->fullname_with_scope() << ", the Mirrorops's size is wrong! mirror_ops size is "
                       << mirror_ops.size() << ", node_size is " << (node_size - 1);
   }
