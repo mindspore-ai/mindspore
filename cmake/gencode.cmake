@@ -1,5 +1,5 @@
 if("${PYTHON_EXECUTABLE}" STREQUAL "")
-    set(PYTHON_EXECUTABLE "python3")
+    set(PYTHON_EXECUTABLE "python")
 else()
     set(PYTHON_EXECUTABLE "${PYTHON_EXECUTABLE}")
 endif()
