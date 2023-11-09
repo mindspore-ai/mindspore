@@ -7,8 +7,9 @@ approvers:
 - HulkTang
 - hwcaifubi
 - liujunzhu
-- liangxhao
-- zong-shuai
-- panzhihui1
 - reku1997
 
+reviewers:
+
+options:
+    no_parent_owners: true
