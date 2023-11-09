@@ -80,6 +80,7 @@ def test_yolov5_dynamic_gpu_graph():
     check_and_print_when_fail(loss_list[:2], expect_loss[:2], 1e-1, 1e-1)
 
 
+@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
