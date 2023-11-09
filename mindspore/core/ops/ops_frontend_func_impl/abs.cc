@@ -40,11 +40,13 @@ class AbsFrontendFuncImpl : public OpFrontendFuncImpl {
   // Do not override this interface if the op has no InferValue
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto x = input_args[kIndex0]->GetValue();
-    if (x == nullptr || x->isa<ValueAny>()) {
+    if (x == nullptr || x->ContainsValueAny()) {
       return nullptr;
     }
     auto x_tensor = x->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(x_tensor);
+    if (x_tensor == nullptr) {
+      return nullptr;
+    }
 
     auto x_shape = input_args[kIndex0]->GetShape()->GetShapeVector();
     if (IsDynamic(x_shape)) {

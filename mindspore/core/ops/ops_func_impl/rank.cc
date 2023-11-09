@@ -41,7 +41,7 @@ class RankFrontendFuncImpl : public OpFrontendFuncImpl {
     }
     auto input_shape_vec = x_abs->GetShape()->GetShapeVector();
     if (IsDynamicRank(input_shape_vec)) {
-      return kValueAny;
+      return nullptr;
     }
     auto x_shape_rank = SizeToLong(input_shape_vec.size());
     ValuePtr res = MakeValue(x_shape_rank);

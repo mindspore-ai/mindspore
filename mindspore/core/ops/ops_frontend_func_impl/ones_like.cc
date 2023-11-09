@@ -29,9 +29,12 @@ class OnesLikeFrontendFuncImpl : public OpFrontendFuncImpl {
     auto shape = input_args[input_index]->GetShape()->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     auto shape_vec = shape->shape();
+    if (IsDynamic(shape_vec)) {
+      return nullptr;
+    }
     auto tensor_ptr = TensorConstructUtils::CreateOnesTensor(type, shape_vec, true);
     if (tensor_ptr == nullptr) {
-      return kValueAny;
+      return nullptr;
     }
     return tensor_ptr;
   }

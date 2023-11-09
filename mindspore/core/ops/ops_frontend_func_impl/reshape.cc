@@ -15,12 +15,20 @@
  */
 
 #include "ops/ops_frontend_func_impl.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore::ops {
 class ReshapeFrontendFuncImpl : public OpFrontendFuncImpl {
  public:
   // Do not override this interface if the op has no InferValue
-  ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
+  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    if (input_args.size() != 2) {
+      return nullptr;
+    }
+    if (!IsValueKnown(input_args[1]->BuildValue())) {
+      return nullptr;
+    }
     return InferValueCallback::GetInstance().CallPyInferValue("Reshape", input_args);
   }
 };
