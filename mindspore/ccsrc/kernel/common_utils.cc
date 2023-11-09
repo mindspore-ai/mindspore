@@ -565,7 +565,7 @@ std::pair<bool, size_t> MatchMultiDynamicKernelAttr(const KernelAttr &kernel_att
   return std::make_pair(false, 0);
 }
 
-bool CheckAttrForAllSameInput(const size_t input_num, std::vector<mindspore::TypeId> &input_types,
+bool CheckAttrForAllSameInput(const size_t input_num, const std::vector<mindspore::TypeId> &input_types,
                               const KernelAttr &cur_kernel_attr) {
   auto cur_input_num = cur_kernel_attr.GetInputSize();
   bool is_group_allsame = cur_kernel_attr.GetGroupAllSame();
