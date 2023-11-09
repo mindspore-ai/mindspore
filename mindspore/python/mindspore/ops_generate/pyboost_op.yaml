@@ -316,3 +316,11 @@ Cat:
   Ascend:
     mode: normal
     cube: False
+
+Square:
+  CPU:
+    mode: normal
+  GPU:
+    mode: normal
+  Ascend:
+    mode: customize

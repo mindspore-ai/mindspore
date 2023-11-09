@@ -8,3 +8,5 @@ square:
             dtype: tensor
     function:
         name: square_
+    pyboost: True
+

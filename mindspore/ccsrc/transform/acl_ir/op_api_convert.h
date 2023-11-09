@@ -333,12 +333,10 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     converter.ConvertValue(value, AttrDeclType<bool>(), &acl_scalar);
   } else if (value->isa<Int64Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int64_t>(), &acl_scalar);
-  } else if (value->isa<FP64Imm>()) {
+  } else if (value->isa<FP32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
-    converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
-  } else if (value->isa<StringImm>()) {
-    converter.ConvertValue(value, AttrDeclType<std::string>(), &acl_scalar);
+    converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
   } else {
     MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
   }
