@@ -46,6 +46,7 @@ if(ENABLE_D OR ENABLE_ACL)
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/outfeed_ops.h")
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn_pooling_ops.h")
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn_norm.h")
+    list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/selection.h")
     #append custom op
     list(APPEND OPS_INC_LIST ${CUSTOM_OPS_INC_LIST})
     set(OPS_PROTO_OBJECTS)
