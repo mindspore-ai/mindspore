@@ -155,15 +155,14 @@ bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
   if (common::AnfAlgo::IsDynamicRankNode(node)) {
     return false;
   }
-  bool enable_dynshape_expander = (common::GetEnv("MS_DEV_ENABLE_DYNSHAPE_EXPANDER") == "on") &&
-                                  GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+
   std::vector<PrimitivePtr> expand_ops_dyn = {prim::kPrimReLU, prim::kPrimReluGrad, prim::kPrimBiasAdd,
                                               prim::kPrimBiasAddGrad, prim::kPrimDropout};
 
   bool dyn_can_expand_op = std::any_of(expand_ops_dyn.begin(), expand_ops_dyn.end(),
                                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   // the dyn shape node can be expanded
-  return enable_dynshape_expander && dyn_can_expand_op;
+  return (GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion && dyn_can_expand_op);
 }
 
 ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {
