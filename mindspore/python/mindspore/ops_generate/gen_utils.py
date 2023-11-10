@@ -16,7 +16,6 @@
 Generate operator utils function
 """
 import os
-import shutil
 import glob
 import hashlib
 import yaml
