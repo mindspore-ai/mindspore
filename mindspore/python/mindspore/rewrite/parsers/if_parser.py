@@ -20,8 +20,7 @@ from .parser import Parser
 from .parser_register import ParserRegister, reg_parser
 from ..node import NodeManager, ControlFlow
 from ..ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
-from .assign_parser import AssignParser
-from ..ast_helpers import AstFinder
+from ..ast_helpers import AstFinder, AstConverter
 
 
 class IfParser(Parser):
@@ -47,7 +46,7 @@ class IfParser(Parser):
         ast_if = FlattenRecursiveStmt().transform_if(node, stree)
         # parse ast codes of if branch into ControlFlow Node
         try:
-            args = [AssignParser.create_scopedvalue(node.test),]
+            args = [AstConverter.create_scopedvalue(node.test),]
         except RuntimeError:
             args = []
         if_node = ControlFlow("if_node", ast_if, False, args, stree)

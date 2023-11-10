@@ -18,6 +18,7 @@ import ast
 from .node import Node
 from .node_topological_manager import TopoManager
 from ..api.node_type import NodeType
+from ..api.scoped_value import ScopedValue
 
 
 class NodeManager:
@@ -208,6 +209,18 @@ class NodeManager:
     def get_manager_name(self):
         """Get _manager_name"""
         return self._manager_name
+
+    def on_update_arg(self, node: Node, arg_idx: int, old_arg: ScopedValue, new_arg: ScopedValue):
+        """
+        Update node topological when node arg is modified.
+        """
+        self._topo_mgr.on_update_arg(node, arg_idx, old_arg, new_arg)
+
+    def on_update_arg_by_node(self, dst_node: Node, arg_idx: int, src_node: Node, out_idx: int):
+        """
+        Update node topological when node arg is modified by another node.
+        """
+        self._topo_mgr.on_update_arg_by_node(dst_node, arg_idx, src_node, out_idx)
 
     def dump(self, title="") -> str:
         """

@@ -28,12 +28,12 @@ def error_str(reason: str, child_node: ast.expr = None, father_node: ast.expr = 
     output_estr += reason
     if child_node:
         output_estr += "\n" + "-" * 100 + "\n"
-        output_estr += astunparse.unparse(child_node)
-        output_estr += "-" * 100 + "\n"
+        output_estr += astunparse.unparse(child_node).strip()
+        output_estr += "\n" + "-" * 100 + "\n"
         if father_node:
-            output_estr += "\nin\n"
+            output_estr += "in"
     if father_node:
-        output_estr += "-" * 100 + "\n"
-        output_estr += astunparse.unparse(father_node)
-        output_estr += "-" * 100 + "\n"
+        output_estr += "\n" + "-" * 100 + "\n"
+        output_estr += astunparse.unparse(father_node).strip()
+        output_estr += "\n" + "-" * 100 + "\n"
     return output_estr

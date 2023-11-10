@@ -20,7 +20,6 @@ import ast
 import copy
 
 from mindspore import log as logger
-from ..common import error_str
 
 FLATTEN_BLACK_LIST = ["set_vertex_attr",]
 
@@ -64,6 +63,21 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
         if func_name and func_name in FLATTEN_BLACK_LIST:
             return True
         return False
+
+    @staticmethod
+    def _flatten_continuous_assign(ast_body: List[ast.AST]):
+        """
+        Flatten ast.Assign with continuous targets.
+        """
+        for pos, ast_node in enumerate(ast_body):
+            if not isinstance(ast_node, ast.Assign):
+                continue
+            if not len(ast_node.targets) > 1:
+                continue
+            for idx, ast_target in enumerate(ast_node.targets[:-1]):
+                new_assign = ast.Assign(targets=[ast_target], value=ast_node.targets[idx + 1])
+                ast_body.insert(pos + idx + 1, new_assign)
+            ast_node.targets = [ast_node.targets[-1]]
 
     def _generate_target_name(self, node: ast.AST, target_names):
         """Generate unique target name."""
@@ -167,57 +181,43 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                     results.append(new_node)
         return results
 
-    def _save_target_names(self, target_names, ast_body: List[ast.AST]):
+    def _save_target_names(self, ast_body: List[ast.AST]):
         """Saving target names in ast_body before getting unique names."""
+        target_names = []
         for child in ast_body:
-            if isinstance(child, (ast.Assign, ast.Expr)):
-                child_value = child.value
-            else:
-                child_value = child
-            if not self._flatten_table.get(type(child_value)):
-                continue
-
             if not isinstance(child, ast.Assign):
                 continue
             targets = child.targets
             for target in targets:
-                if not isinstance(target, (ast.Name, ast.Tuple, ast.List)):
-                    raise RuntimeError(
-                        error_str(f"currently only support ast.Name targets, but got ast type "
-                                  f"'{type(target).__name__}'", child_node=target, father_node=child))
-                if isinstance(target, ast.Name):
-                    target_name = target.id
-                    if target_name not in target_names:
-                        target_names.append(target_name)
+                if isinstance(target, ast.Name) and target.id not in target_names:
+                    target_names.append(target.id)
                 elif isinstance(target, (ast.Tuple, ast.List)):
-                    for elt in target.elts:
-                        if not isinstance(elt, ast.Name):
-                            raise RuntimeError(
-                                error_str(f"currently only support ast.Name in ast.Tuple, "
-                                          f"but got ast type '{type(elt).__name__}'", child_node=elt,
-                                          father_node=child))
-                        target_name = elt.id
-                        if target_name not in target_names:
-                            target_names.append(target_name)
+                    # get target names from list recursively
+                    ast_queue = [target.elts,]
+                    while ast_queue:
+                        elt = ast_queue.pop()
+                        if isinstance(elt, ast.Name) and elt.id not in target_names:
+                            target_names.append(elt.id)
+                        elif isinstance(elt, (ast.Tuple, ast.List)):
+                            ast_queue.extend(elt.elts)
+                        elif isinstance(elt, (list, tuple)):
+                            ast_queue.extend(elt)
+        return target_names
 
     def _visit_ast_bodies(self, ast_body: List[ast.AST]):
         """Traverse nodes in ast_body and flatten nodes recursive."""
-        target_names = []
-        self._save_target_names(target_names, ast_body)
+        # Flatten continuous assign statements in ast_body
+        FlattenRecursiveStmt._flatten_continuous_assign(ast_body)
+        # save target names, used when create new assign ast node
+        target_names = self._save_target_names(ast_body)
         index = len(ast_body) - 1
         while index >= 0:
             child = ast_body[index]
-            if isinstance(child, ast.Assign):
-                stmt = child.value
-            elif isinstance(child, ast.If):
-                # Record origin test ast, used to judge direction of static if control flow.
-                if child not in FlattenRecursiveStmt.ast_if_test_cache:
-                    FlattenRecursiveStmt.ast_if_test_cache[child] = copy.deepcopy(child.test)
-                stmt = child
-            elif isinstance(child, ast.Expr):
-                stmt = child.value
-            else:
-                stmt = child
+            # Record origin test ast, used to judge direction of static if control flow.
+            if isinstance(child, ast.If) and child not in FlattenRecursiveStmt.ast_if_test_cache:
+                FlattenRecursiveStmt.ast_if_test_cache[child] = copy.deepcopy(child.test)
+
+            stmt = child.value if isinstance(child, (ast.Assign, ast.Expr)) else child
             results = self._flatten_statement(stmt, target_names)
             if results:
                 for result in reversed(results):

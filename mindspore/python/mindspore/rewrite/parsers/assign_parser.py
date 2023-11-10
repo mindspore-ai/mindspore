@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Assign in construct function to node of SymbolTree."""
-from typing import Union
+from typing import Union, List
 import os
 import ast
 import sys
@@ -30,10 +30,10 @@ from mindspore.rewrite.node.node_manager import NodeManager
 from mindspore.rewrite.node.call_function import CallFunction
 from mindspore.rewrite.node.cell_container import CellContainer
 from mindspore.rewrite.parsers.parser import Parser
-from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
+from mindspore.rewrite.api.scoped_value import ScopedValue
 from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder
 from mindspore.rewrite.ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
-from mindspore.rewrite.ast_helpers import AstReplacer
+from mindspore.rewrite.ast_helpers import AstReplacer, AstConverter
 from ..common import error_str
 
 if sys.version_info >= (3, 9):
@@ -51,71 +51,6 @@ class AssignParser(Parser):
     def target(self):
         """Parse target type."""
         return ast.Assign
-
-    @staticmethod
-    def create_scopedvalue_from_tuple_ast(node: Union[ast.List, ast.Tuple]) -> ScopedValue:
-        """
-        Create ScopedValue from a tuple ast node.
-
-        Args:
-            node (Union[ast.List, ast.Tuple]): A list node or a tuple node.
-
-        Returns:
-            An instance of ScopedValue.
-
-        Raises:
-            RuntimeError: Only support ast.Constant as elts of ast.Tuple.
-        """
-        tuple_elts = node.elts
-        tuple_values = []
-        for tuple_elt in tuple_elts:
-            if not isinstance(tuple_elt, (ast.Constant, ast.Name, ast.Attribute)):
-                raise RuntimeError(error_str(f"Only support ast.Constant or ast.Name as elts of ast.Tuple, "
-                                             f"but got ast type {type(tuple_elt).__name__}",
-                                             child_node=tuple_elt, father_node=node))
-            if isinstance(tuple_elt, ast.Constant):
-                tuple_values.append(tuple_elt.value)
-            elif isinstance(tuple_elt, ast.Name):
-                tuple_values.append(tuple_elt.id)
-            elif isinstance(tuple_elt, ast.Attribute):
-                tuple_values.append("".join([tuple_elt.value.id, '.', tuple_elt.attr]))
-        return ScopedValue.create_variable_value(tuple(tuple_values))
-
-    @staticmethod
-    def create_scopedvalue(node: ast.AST) -> ScopedValue:
-        """
-        Create ScopedValue from an ast node.
-
-        Args:
-            node (ast.AST): An ast node.
-
-        Returns:
-            An instance of ScopedValue.
-
-        Raises:
-            RuntimeError: Value of target of ast.Assign should be an ast.Name when target is an ast.Attribute.
-            RuntimeError: Type of input node is unsupported.
-        """
-        if isinstance(node, ast.Name):
-            return ScopedValue.create_naming_value(node.id)
-        if isinstance(node, ast.Attribute):
-            scope = node.value
-            if not isinstance(scope, ast.Name):
-                raise RuntimeError(error_str(f"value of target of ast.Assign should be a ast.Name when target is a "
-                                             f"ast.Attribute, but got ast type '{type(scope).__name__}'",
-                                             child_node=scope, father_node=node))
-            return ScopedValue.create_naming_value(node.attr, scope.id)
-        if isinstance(node, (ast.List, ast.Tuple)):
-            return AssignParser.create_scopedvalue_from_tuple_ast(node)
-        if isinstance(node, (ast.Constant, ast.NameConstant)):
-            return ScopedValue.create_variable_value(node.value)
-        if isinstance(node, ast.Num):
-            return ScopedValue.create_variable_value(node.n)
-        if isinstance(node, (ast.Str, ast.Bytes)):
-            return ScopedValue.create_variable_value(node.s)
-        raise RuntimeError(error_str(f"only support (ast.Name, ast.Attribute, ast.Tuple, ast.Constant, ast.Num"
-                                     f"ast.Str, ast.Bytes to argument), but got ast type '{type(node).__name__}'",
-                                     father_node=node))
 
     @staticmethod
     def _get_func_name(ast_call: ast.Call) -> str:
@@ -170,6 +105,13 @@ class AssignParser(Parser):
                                      f"'{type(func).__name__}'", child_node=func, father_node=ast_call))
 
     @staticmethod
+    def _create_targets(ast_target: ast.AST) -> List[ScopedValue]:
+        """Get targets from ast node."""
+        ast_target_elems = AstConverter.get_ast_target_elems(ast_target)
+        targets = [AstConverter.create_scopedvalue(ast_node) for ast_node in ast_target_elems]
+        return targets
+
+    @staticmethod
     def _create_kwargs(keywords: [ast.keyword]) -> {str, ScopedValue}:
         """
         Transfer ast.Call keywords to a dict of ScopedValue when creating a symbol tree node.
@@ -182,7 +124,7 @@ class AssignParser(Parser):
         """
         results = {}
         for keyword in keywords:
-            results[keyword.arg] = AssignParser.create_scopedvalue(keyword.value)
+            results[keyword.arg] = AstConverter.create_scopedvalue(keyword.value)
         return results
 
     @staticmethod
@@ -211,22 +153,6 @@ class AssignParser(Parser):
                 return value
         # Instance is of other type.
         return None
-
-    @staticmethod
-    def _get_targets(all_targets: ScopedValue) -> [Union[ScopedValue, str]]:
-        """Get targets from tuple or single value."""
-        targets: [Union[ScopedValue, str]] = []
-        if all_targets.type == ValueType.TupleValue:
-            for single_target in all_targets.value:
-                if not isinstance(single_target, ScopedValue) and not isinstance(single_target.value, str):
-                    raise RuntimeError(f"For MindSpore Rewrite, only support str target in tuple, but got type "
-                                       f"{type(single_target).__name__}")
-                if single_target.type == ValueType.ConstantValue and isinstance(single_target.value, str):
-                    single_target.type = ValueType.NamingValue
-                targets.append(single_target)
-        else:
-            targets.append(all_targets)
-        return targets
 
     @staticmethod
     def _update_field_in_init(func_scope, func_name, stree: SymbolTree, sub_tree: SymbolTree) -> bool:
@@ -362,13 +288,13 @@ class AssignParser(Parser):
         Raises:
             RuntimeError: If operator instance invoked by assign is undefined.
         """
-        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
+        targets = AssignParser._create_targets(ast_assign.targets[0])
         func_name = AssignParser._get_func_name(ast_call)
         if func_name is None or func_name == "":
             raise RuntimeError("function name not exist")
         func_scope = AssignParser._get_func_scope(ast_call, node_manager)
         func_scope_name = ScopedValue.create_naming_value(func_name, func_scope)
-        call_args = [AssignParser.create_scopedvalue(arg) for arg in ast_call.args]
+        call_args = [AstConverter.create_scopedvalue(arg) for arg in ast_call.args]
         call_kwargs = AssignParser._create_kwargs(ast_call.keywords)
 
         func_inst = AssignParser._get_call_instance(func_scope, func_name, stree)
@@ -455,38 +381,33 @@ class AssignParser(Parser):
             raise TypeError("The type of parameter 'ast_op' must be one of (ast.BinOp, ast.UnaryOp, "
                             "ast.BoolOp, ast.Compare), but got ", type(ast_op))
 
-        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
+        targets = AssignParser._create_targets(ast_assign.targets[0])
         args = []
         op_type_str = type(ast_op).__name__
         op_type = ScopedValue.create_naming_value(op_type_str)
-        ops = {}
         name = op_type_str
         if isinstance(ast_op, ast.BinOp):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
-            ops['0'] = ScopedValue.create_naming_value(op)
-            args.append(AssignParser.create_scopedvalue(ast_op.left))
-            args.append(AssignParser.create_scopedvalue(ast_op.right))
+            args.append(AstConverter.create_scopedvalue(ast_op.left))
+            args.append(AstConverter.create_scopedvalue(ast_op.right))
         elif isinstance(ast_op, ast.UnaryOp):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
-            ops['0'] = ScopedValue.create_naming_value(op)
-            args.append(AssignParser.create_scopedvalue(ast_op.operand))
+            args.append(AstConverter.create_scopedvalue(ast_op.operand))
         elif isinstance(ast_op, ast.BoolOp):
             op = type(ast_op.op).__name__
             name = f'{name}_{op}'
-            ops['0'] = ScopedValue.create_naming_value(op)
             for value in ast_op.values:
-                args.append(AssignParser.create_scopedvalue(value))
+                args.append(AstConverter.create_scopedvalue(value))
         elif isinstance(ast_op, ast.Compare):
-            args.append(AssignParser.create_scopedvalue(ast_op.left))
+            args.append(AstConverter.create_scopedvalue(ast_op.left))
             for idx, ast_cmp_op in enumerate(ast_op.ops):
                 op = type(ast_cmp_op).__name__
                 name = f'{name}_{op}'
-                ops[str(idx)] = ScopedValue.create_naming_value(op)
-                args.append(AssignParser.create_scopedvalue(ast_op.comparators[idx]))
+                args.append(AstConverter.create_scopedvalue(ast_op.comparators[idx]))
         name = name.lower()
-        return Node.create_mathops_node(ast_assign, targets, op_type, args, ops, name)
+        return Node.create_mathops_node(ast_assign, targets, op_type, args, name)
 
     @staticmethod
     def _convert_ast_constant_to_node(ast_constant: Union[ast.Constant, ast.NameConstant, ast.Num,
@@ -497,8 +418,8 @@ class AssignParser(Parser):
         a symbol tree node.
         """
         node_name = f"{type(ast_constant).__name__.lower()}_assign"
-        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
-        call_args = [AssignParser.create_scopedvalue(ast_constant)]
+        targets = AssignParser._create_targets(ast_assign.targets[0])
+        call_args = [AstConverter.create_scopedvalue(ast_constant)]
         node = Node.create_call_pass_through_method(ast_assign, targets, call_args, {}, node_name)
         return node
 
@@ -531,7 +452,7 @@ class AssignParser(Parser):
         """
         Convert ast node of ast.Name and ast.Attribute to a symbol tree node.
         """
-        targets = AssignParser._get_targets(AssignParser.create_scopedvalue(ast_assign.targets[0]))
+        targets = AssignParser._create_targets(ast_assign.targets[0])
         inst, scope_name = AssignParser._get_inst_and_name(ast_node, stree)
         if inst is not None:
             if isinstance(inst, CellList) or (isinstance(inst, list) and AssignParser._list_of_cells(inst)):
@@ -539,7 +460,7 @@ class AssignParser(Parser):
                                                            None, scope_name, inst)
                 return node
         node_name = f"{type(ast_node).__name__.lower()}_assign"
-        call_args = [AssignParser.create_scopedvalue(ast_node)]
+        call_args = [AstConverter.create_scopedvalue(ast_node)]
         node = Node.create_call_pass_through_method(ast_assign, targets, call_args, {}, node_name)
         return node
 
@@ -558,15 +479,16 @@ class AssignParser(Parser):
             node_manager (NodeManager): NodeManager those asts belong to.
 
         Raises:
-            RuntimeError: Only support one target in assign now.
             RuntimeError: Unsupported node type in construct function.
         """
 
         targets = node.targets
+        if len(targets) != 1:
+            logger.info(error_str(f"Continuous assignment statement(e.g. 'a = b = 1') is not supported now.",
+                                  child_node=node))
+            stree.try_append_python_node(node, node, node_manager)
+            return
         try:
-            if len(targets) != 1:
-                raise RuntimeError(
-                    error_str(f"only support one target in assign now.", targets, node))
             value = node.value
             if isinstance(value, ast.Call):
                 node_ = self._convert_ast_call_to_node(value, node, stree, node_manager)
@@ -587,10 +509,10 @@ class AssignParser(Parser):
             elif isinstance(value, ast.Tuple):
                 if AssignParser._tuple_elts_support_scopledvalue(value):
                     # ensure that each element's type in tuple is supported by scopled value
-                    targets = AssignParser._get_targets(AssignParser.create_scopedvalue(node.targets[0]))
+                    targets = AssignParser._create_targets(node.targets[0])
                     args = []
                     for elt in value.elts:
-                        args.append(AssignParser.create_scopedvalue(elt))
+                        args.append(AstConverter.create_scopedvalue(elt))
                     node_ = Node.create_call_method(node, targets, ScopedValue.create_naming_value("tuple"),
                                                     args, {}, "tuple")
                     stree.append_origin_field(node_, node_manager)

@@ -65,7 +65,7 @@ class TopoManager(Observable):
             for user in node.get_target_users(index):
                 user[0].set_arg_providers(user[1], ())
         # Update new_target node's target_users dict & new user nodes' arg_providers dict
-        node.get_target_users().clear()
+        node.get_target_users(index).clear()
         provider = TopoManager._get_value_provider(node, new_target)
         if provider:
             TopoManager._update_target_users_by_node(node, index, provider)

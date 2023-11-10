@@ -14,7 +14,7 @@
 # ============================================================================
 """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
 import inspect
-from typing import Union, Dict
+from typing import Dict
 import ast
 from mindspore import log as logger
 from mindspore.nn import Cell
@@ -22,93 +22,15 @@ from mindspore._extends.parse.namespace import CellNamespace
 from ..symbol_tree import SymbolTree
 from .parser import Parser
 from .parser_register import ParserRegister, reg_parser
-from ..ast_helpers import AstReplacer
-from ..common import error_str
+from ..ast_helpers import AstReplacer, AstConverter
 from ..parsers.module_parser import ModuleParser
 from ..node.node_manager import NodeManager
-
-
-class AstScopeChecker:
-    """
-    Check scope of ast node meets the constraints recursively.
-
-    Args:
-        scope_constraints (str): A string represents constraints of scope.
-    """
-
-    def __init__(self, scope_constraints: str):
-        self._scope = scope_constraints
-
-    def check(self, node: ast.AST) -> bool:
-        """
-        Check scope of `node` meets the constraints recursively.
-
-        Args:
-            node (ast.AST): A ast.AST node to be checked.
-
-        Returns:
-            A bool represents if input `node` meets constraints.
-        """
-        if isinstance(node, ast.Compare):
-            return self._check_compare(node)
-        if isinstance(node, ast.Attribute):
-            return self._check_attribute(node)
-        if isinstance(node, ast.Name):
-            return False
-        if isinstance(node, ast.BoolOp):
-            return self._check_bool(node)
-        if isinstance(node, ast.UnaryOp):
-            return self._check_unary(node)
-        if isinstance(node, ast.Call):
-            return self._check_call(node)
-        if isinstance(node, (ast.Constant, ast.NameConstant, ast.Bytes, ast.Str, ast.Num)):
-            return True
-        raise RuntimeError(error_str(f"only support (ast.Compare, ast.Attribute, ast.Name, ast.BoolOp, ast.UnaryOp"
-                                     f"ast.Call, ast.Constant, ast.NameConstant, ast.Bytes, ast.Str, ast.Num"
-                                     f") as test check, but got ast type '{type(node).__name__}'", father_node=node))
-
-    def _check_attribute(self, node: ast.Attribute):
-        """Check an ast.Attribute meets the constraints recursively."""
-        if not isinstance(node.value, ast.Name):
-            return False
-        if node.value.id != self._scope:
-            return False
-        return True
-
-    def _check_compare(self, node: ast.Compare):
-        """Check an ast.Compare meets the constraints recursively."""
-        left = node.left
-        for comparator in node.comparators:
-            if not self.check(comparator):
-                return False
-        return self.check(left)
-
-    def _check_bool(self, node: ast.BoolOp):
-        """Check an ast.BoolOp meets the constraints recursively."""
-        for value in node.values:
-            if not self.check(value):
-                return False
-        return True
-
-    def _check_call(self, node: ast.Call):
-        """Check an ast.Call meets the constraints recursively."""
-        for arg in node.args:
-            if not self.check(arg):
-                return False
-        for kwarg in node.keywords:
-            if not self.check(kwarg):
-                return False
-        return self.check(node.func)
-
-    def _check_unary(self, node: ast.UnaryOp):
-        """Check an ast.UnaryOp meets the constraints recursively."""
-        return self.check(node.operand)
 
 
 class ClassDefParser(Parser):
     """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
 
-    # a denied_function_decorator_list which is registered by user
+    # List of denied function decorators
     denied_function_decorator_list = []
     # Entry function of the forward computation process
     entry_function = "construct"
@@ -171,15 +93,6 @@ class ClassDefParser(Parser):
         ast.fix_missing_locations(ast_init_fn)
 
     @staticmethod
-    def get_ast_name(ast_node: Union[ast.Name, ast.Attribute]) -> str:
-        """Get ast id name"""
-        if isinstance(ast_node, ast.Name):
-            return ast_node.id
-        if isinstance(ast_node, ast.Attribute):
-            return ast_node.attr
-        return ""
-
-    @staticmethod
     def _process_class_variables(stree: SymbolTree, function_defs: list):
         """Process class variables of class, only used in child class."""
         init_func_ast = stree.get_init_func_ast()
@@ -214,7 +127,7 @@ class ClassDefParser(Parser):
         """Process father class."""
         father_classes: Dict[int, str] = {}
         for idx, base in enumerate(node.bases):
-            father_class_name = ClassDefParser.get_ast_name(base)
+            father_class_name = AstConverter.get_ast_name(base)
             if not father_class_name:
                 continue
             father_classes[idx] = father_class_name

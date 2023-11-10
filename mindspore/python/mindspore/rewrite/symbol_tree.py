@@ -888,7 +888,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             raise RuntimeError("Node is not belong to current SymbolTree: ", node)
 
         new_arg, old_arg = node.set_arg(arg, index)
-        self._topo_mgr.on_update_arg(node, index, old_arg, new_arg)
+        node.get_node_manager().on_update_arg(node, index, old_arg, new_arg)
 
     def set_node_arg_by_node(self, dst_node: Union[Node, str], arg_idx: int, src_node: Union[Node, str],
                              out_idx: Optional[int] = None):
@@ -925,7 +925,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             raise RuntimeError("out_idx out of range: ", out_idx)
         new_arg = targets[out_idx]
         real_dst_node.set_arg(new_arg, arg_idx)
-        self._topo_mgr.on_update_arg_by_node(real_dst_node, arg_idx, real_src_node, out_idx)
+        real_dst_node.get_node_manager().on_update_arg_by_node(real_dst_node, arg_idx, real_src_node, out_idx)
 
     def unique_name(self, name: str):
         """Get a unique name in the symboltree"""

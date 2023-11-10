@@ -28,7 +28,9 @@ from ..api.scoped_value import ScopedValue, ValueType
 from ..api.node_type import NodeType
 from ..namespace import is_subtree
 from ..ast_helpers.ast_replacer import AstReplacer
+from ..ast_helpers.ast_converter import AstConverter
 from ..ast_creator_register import ast_creator_registry
+from ..common import error_str
 
 if sys.version_info >= (3, 9):
     import ast as astunparse # pylint: disable=reimported, ungrouped-imports
@@ -204,8 +206,7 @@ class Node:
 
     @classmethod
     def create_mathops_node(cls, ast_node: ast.AST, targets: [ScopedValue],
-                            op_type: ScopedValue, args: [ScopedValue],
-                            ops: {str: list}, name: str = ""):
+                            op_type: ScopedValue, args: [ScopedValue], name: str = ""):
         """
         Class method of Node. Instantiate an instance of node whose type is `MathOps` .
         A mathops node is used to represent a node with mathematical operations, such as
@@ -220,13 +221,11 @@ class Node:
             op_type (ScopedValue): The type of ast_node.value saved by string. A ScopedValue with NamingValue type.
             args (list[ScopedValue]): Values participating in the mathematical operations. All values are saved
                 sequentially in the list.
-            ops (dict[str:ScopedValue]): Operators participating in the mathematical operations. All operators are
-                saved sequentially in the dict, and keys are numbers in string format, such as {'0':'add', '1':'sub'}.
             name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
                 Name of node also used as field name in network class. The format of mathops node name
                 is 'AstNodeName_AstOpName_n'.
         """
-        return cls(NodeType.MathOps, ast_node, targets, op_type, args, ops, name, None)
+        return cls(NodeType.MathOps, ast_node, targets, op_type, args, None, name, None)
 
     @staticmethod
     def create_assign_node(targets, func_name, args, kwargs):
@@ -1164,25 +1163,23 @@ class Node:
             return
         assign_ast = self._ast_node
         if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+            raise TypeError(error_str(f"assign_ast should be ast.Assign, but got: {type(assign_ast)}",
+                                      father_node=assign_ast))
         # update targets
-        targets_ast = assign_ast.targets
-        if isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast[0].elts):
-            raise RuntimeError("self._targets should have the same length as targets_ast's elts")
-        if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
-            raise RuntimeError("self._targets should have targets_ast same length")
-        for i, _ in enumerate(self._targets):
+        target_ast_elems = AstConverter.get_ast_target_elems(assign_ast.targets[0])
+        if len(self._targets) != len(target_ast_elems):
+            raise RuntimeError(error_str(f"The number of targets should be {len(target_ast_elems)}, "
+                                         f"but got {len(self._targets)}", father_node=assign_ast))
+        for i, target_ast in enumerate(target_ast_elems):
             target = self._targets[i]
-            target_ast = targets_ast[0]
             if isinstance(target_ast, ast.Name):
                 target_ast.id = target.value
-            elif isinstance(target_ast, ast.Tuple):
-                if not isinstance(target_ast.elts[i], ast.Name):
-                    raise TypeError("target should be ast.Name, got:", type(target_ast.elts[i]))
-                target_ast.elts[i].id = target.value
+            elif isinstance(target_ast, ast.Attribute):
+                target_ast.value = ast.Name(id=target.scope, ctx=ast.Load())
+                target_ast.attr = target.value
             else:
-                raise TypeError("target_ast should be ast.Name or ast.Tuple, got: ", type(target_ast))
-            target_ast.id = target.value
+                raise TypeError(error_str(f"target_ast should be ast.Name or ast.Attribute, "
+                                          f"but got: {type(target_ast)}", father_node=assign_ast))
         ast.fix_missing_locations(assign_ast)
 
     def _sync_call_cell_args_to_ast(self):

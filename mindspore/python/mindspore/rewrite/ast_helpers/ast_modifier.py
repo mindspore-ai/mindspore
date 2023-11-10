@@ -516,7 +516,7 @@ class AstModifier(ast.NodeTransformer):
         """
         if not isinstance(src_argument, ScopedValue):
             raise TypeError("src_argument should be ScopedValue, got: ", type(src_argument))
-        if isinstance(dst_ast, (ast.Constant, ast.Num, ast.Str)):
+        if isinstance(dst_ast, (ast.Constant, ast.Num, ast.Str, ast.NameConstant)):
             AstModifier.update_arg_value_constant(src_argument, dst_ast)
             return
         if isinstance(dst_ast, ast.Name):
@@ -552,7 +552,7 @@ class AstModifier(ast.NodeTransformer):
         """Update 'arg_value' of type constant by 'input_argument'"""
         if src_argument.type != ValueType.ConstantValue:
             raise RuntimeError("src_argument should be a ConstantValue, got:", str(src_argument.type))
-        if isinstance(dst_ast, ast.Constant):
+        if isinstance(dst_ast, (ast.Constant, ast.NameConstant)):
             dst_ast.value = src_argument.value
             return
         if isinstance(dst_ast, ast.Num):

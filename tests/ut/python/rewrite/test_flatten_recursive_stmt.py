@@ -17,6 +17,8 @@ import inspect
 
 from mindspore.nn import Cell, Conv2d, BatchNorm2d, ReLU
 from mindspore.rewrite.ast_transformers.flatten_recursive_stmt import FlattenRecursiveStmt
+from mindspore.rewrite import SymbolTree
+from mindspore.ops import operations as P
 
 
 class Network(Cell):
@@ -62,3 +64,45 @@ def test_flatten():
     ast_construct_func = ast_class.body[1]
     assert isinstance(ast_construct_func, ast.FunctionDef)
     assert len(ast_construct_func.body) == 17
+
+
+class SubNet(Cell):
+    """Sample cell which returns multiple features."""
+    def __init__(self):
+        """Init."""
+        super().__init__()
+        self.conv = Conv2d(1, 10, 3)
+
+    def construct(self, x):
+        """Construct."""
+        c1 = self.conv(x)
+        c2 = self.conv(c1)
+        c3 = self.conv(c2)
+        return c1, c2, c3
+
+
+class NetMultiTargetsWithTupleTargets(Cell):
+    """Test cls for multiple targets."""
+    def __init__(self):
+        """Init."""
+        super().__init__()
+        self.subnet = SubNet()
+        self.add = P.Add()
+
+    def construct(self, x):
+        """Construct."""
+        add_var_2, (add_var_1, (add_var,)) = self.subnet(x)
+        x = self.add(self.add(add_var_1, add_var), add_var_2)
+        return x
+
+def test_multi_targets_with_tuple_targets():
+    """
+    Feature: Test flatten codes with multi tuple-targets.
+    Description: Test flatten codes with multi tuple-targets.
+    Expectation: Success.
+    """
+    net = NetMultiTargetsWithTupleTargets()
+    stree = SymbolTree.create(net)
+    codes = stree.get_code()
+    assert codes.count("add_var_3 = self.add(add_var_1, add_var)") == 1
+    assert codes.count("x = self.add(add_var_3, add_var_2)") == 1
