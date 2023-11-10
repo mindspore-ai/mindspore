@@ -36,7 +36,7 @@ class MIND_API FlashAttentionScoreGrad : public BaseOperator {
   /// \brief Constructor.
   FlashAttentionScoreGrad() : BaseOperator(kNameFlashAttentionScoreGrad) {
     InitIOName({"query", "key", "value", "attn_mask", "attention_in", "softmax_max", "softmax_sum", "dy", "drop_mask",
-                "real_shift", "padding_mask", "softmax_out"},
+                "real_shift", "padding_mask", "softmax_out", "prefix"},
                {"dq", "dk", "dv"});
   }
 };
