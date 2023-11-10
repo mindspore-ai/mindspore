@@ -25,6 +25,7 @@
 
 #ifdef PRIMITIVE_WRITEABLE
 #include "mindspore/core/utils/check_convert_utils.h"
+#include "mindspore/core/mindapi/ir/value.h"
 #include "schema/inner/model_generated.h"
 #include "schema/inner/ops_types_generated.h"
 #endif
@@ -78,7 +79,7 @@
   op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
 #define OP_ATTR_RAW(dstkey, dsttype, srckey, srctype) \
   op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
-#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue) \
+#define OP_LONG_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue) \
   op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(" = ").append(#dstvalue).append(";\n");
 #define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey) \
   op_def.append("    ").append(#dstkey).append(": ").append(#dsttype).append(";\n");
@@ -121,11 +122,11 @@
     schema_op->dstkey = static_cast<dsttype>(GetValue<srctype>(op->GetAttr(#srckey))); \
   }
 
-#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue)             \
-  if (op->GetAttr(#srckey) != nullptr) {                                               \
-    schema_op->dstkey = static_cast<dsttype>(GetValue<srctype>(op->GetAttr(#srckey))); \
-  } else {                                                                             \
-    schema_op->dstkey = dstvalue;                                                      \
+#define OP_LONG_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue) \
+  if (op->GetAttr(#srckey) != nullptr) {                                        \
+    schema_op->dstkey = GetValue<int64_t>(op->GetAttr(#srckey));                \
+  } else {                                                                      \
+    schema_op->dstkey = dstvalue;                                               \
   }
 
 #define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey)                              \
@@ -139,7 +140,7 @@
 #define OP_ATTR_VEC2D(key, type)
 #define OP_ATTR_ENUM_SRC(dstkey, dsttype, srckey, srctype)
 #define OP_ATTR_RAW(dstkey, dsttype, srckey, srctype)
-#define OP_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue)
+#define OP_LONG_ATTR_RAW_WITH_VALUE(dstkey, dsttype, srckey, srctype, dstvalue)
 #define OP_ATTR_RAW_VEC(dstkey, dsttype, srckey)
 #endif
 

@@ -580,7 +580,7 @@ OP_SCHEMA_DEF(FftImag)
 OP_SCHEMA_DEF_END(FftImag)
 
 OP_SCHEMA_DEF(Flatten)
-OP_ATTR_RAW_WITH_VALUE(axis, long, axis, long, 1)
+OP_LONG_ATTR_RAW_WITH_VALUE(axis, long, axis, long, 1)
 OP_SCHEMA_DEF_END(Flatten)
 
 OP_SCHEMA_DEF(FlattenGrad)
@@ -833,10 +833,10 @@ OP_SCHEMA_DEF(Rank)
 OP_SCHEMA_DEF_END(Rank)
 
 OP_SCHEMA_DEF(Range)
-OP_ATTR_RAW_WITH_VALUE(d_type, long, d_type, long, 0)
-OP_ATTR_RAW_WITH_VALUE(start, long, start, long, 0)
-OP_ATTR_RAW_WITH_VALUE(limit, long, limit, long, 0)
-OP_ATTR_RAW_WITH_VALUE(delta, long, delta, long, 1)
+OP_LONG_ATTR_RAW_WITH_VALUE(d_type, long, d_type, long, 0)
+OP_LONG_ATTR_RAW_WITH_VALUE(start, long, start, long, 0)
+OP_LONG_ATTR_RAW_WITH_VALUE(limit, long, limit, long, 0)
+OP_LONG_ATTR_RAW_WITH_VALUE(delta, long, delta, long, 1)
 OP_SCHEMA_DEF_END(Range)
 
 OP_SCHEMA_DEF(Reciprocal)

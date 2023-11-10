@@ -14,26 +14,13 @@ if(MSLITE_ENABLE_CONVERTER)
     set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
     set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tools)
     set(CCSRC_SRC
-            ${CCSRC_DIR}/kernel/kernel.cc
-            ${CCSRC_DIR}/kernel/kernel_factory.cc
-            ${CCSRC_DIR}/kernel/common_utils.cc
-            ${CCSRC_DIR}/kernel/framework_utils.cc
-            ${CCSRC_DIR}/kernel/kernel_build_info.cc
-            ${CCSRC_DIR}/kernel/oplib/oplib.cc
-            ${CCSRC_DIR}/kernel/oplib/super_bar.cc
-            ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
             ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
             ${CCSRC_DIR}/backend/common/optimizer/visitor.cc
             ${CCSRC_DIR}/backend/common/optimizer/graph_optimizer.cc
-            ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
-            ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
-            ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
             ${CCSRC_DIR}/backend/operator/ops_backend_infer_function.cc
-            ${CCSRC_DIR}/runtime/hardware/device_type.cc
-            ${CCSRC_DIR}/runtime/device/kernel_info.cc
-            ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
-            ${CCSRC_DIR}/runtime/device/kernel_runtime_manager.cc
-            ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
+            ${CCSRC_DIR}/kernel/kernel_factory.cc
+            ${CCSRC_DIR}/kernel/format_utils.cc
+            ${CCSRC_DIR}/utils/convert_utils.cc
             )
 
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
@@ -43,12 +30,27 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${CCSRC_DIR}/common/profiler.cc
                 ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
                 ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
+                ${CCSRC_DIR}/kernel/kernel.cc
                 ${CCSRC_DIR}/kernel/ops_utils.cc
+                ${CCSRC_DIR}/kernel/common_utils.cc
+                ${CCSRC_DIR}/kernel/framework_utils.cc
                 ${CCSRC_DIR}/kernel/philox_random.cc
+                ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
+                ${CCSRC_DIR}/kernel/kernel_build_info.cc
+                ${CCSRC_DIR}/kernel/oplib/oplib.cc
                 ${CCSRC_DIR}/kernel/kernel_get_value.cc
+                ${CCSRC_DIR}/kernel/oplib/super_bar.cc
+                ${CCSRC_DIR}/runtime/device/kernel_info.cc
                 ${CCSRC_DIR}/runtime/graph_scheduler/actor/actor_common.cc
+                ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
+                ${CCSRC_DIR}/runtime/hardware/device_type.cc
+                ${CCSRC_DIR}/runtime/device/kernel_runtime_manager.cc
                 ${CCSRC_DIR}/runtime/hardware/device_context_manager.cc
+                ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
                 ${CCSRC_DIR}/utils/comm_manager.cc
+                ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
+                ${CCSRC_DIR}/backend/common/session/kernel_graph.cc
+                ${CCSRC_DIR}/backend/common/session/anf_runtime_algorithm.cc
                 ${SRC_DIR}/extendrt/utils/tensor_utils.cc
                 )
     endif()
@@ -56,7 +58,6 @@ if(MSLITE_ENABLE_CONVERTER)
     if(NOT WIN32)
         set(CCSRC_SRC ${CCSRC_SRC}
                 ${CCSRC_DIR}/utils/anfalgo.cc
-                ${CCSRC_DIR}/utils/convert_utils.cc
                 ${CCSRC_DIR}/utils/utils.cc
                 ${CCSRC_DIR}/utils/parallel_context.cc
                 )
@@ -108,4 +109,5 @@ if(MSLITE_ENABLE_CONVERTER)
         add_dependencies(ccsrc_src_mid mindspore-lite-proto)
     endif()
     target_compile_definitions(ccsrc_src_mid PRIVATE BACKEND_DLL)
+    target_compile_definitions(ccsrc_src_mid PRIVATE COMMON_DLL)
 endif()

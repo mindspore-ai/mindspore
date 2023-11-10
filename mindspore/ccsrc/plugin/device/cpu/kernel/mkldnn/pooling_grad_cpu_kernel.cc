@@ -22,6 +22,7 @@
 #include "kernel/ops_utils.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {

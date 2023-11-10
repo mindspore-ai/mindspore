@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/format_utils.h"
 #include "kernel/oplib/oplib.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "ops/array_op_name.h"

@@ -20,7 +20,7 @@
 #include <functional>
 #include <iterator>
 #include <numeric>
-#include "kernel/common_utils.h"
+#include "kernel/format_utils.h"
 
 namespace mindspore {
 namespace kernel {

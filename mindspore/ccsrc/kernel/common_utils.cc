@@ -31,6 +31,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "ir/graph_utils.h"
 #include "kernel/oplib/oplib.h"
+#include "kernel/format_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "nlohmann/json.hpp"
 #include "ops/array_op_name.h"
@@ -740,46 +741,6 @@ KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   return GetKernelAttrFromBuildInfo(build_info);
-}
-
-const std::map<std::string, Format> format_relation_map = {{"DefaultFormat", Format::DEFAULT_FORMAT},
-                                                           {"NCHW", Format::NCHW},
-                                                           {"NHWC", Format::NHWC},
-                                                           {"NHWC4", Format::NHWC4},
-                                                           {"HWKC", Format::HWKC},
-                                                           {"HWCK", Format::HWCK},
-                                                           {"KCHW", Format::KCHW},
-                                                           {"CKHW", Format::CKHW},
-                                                           {"KHWC", Format::KHWC},
-                                                           {"CHWK", Format::CHWK},
-                                                           {"HW", Format::HW},
-                                                           {"HW4", Format::HW4},
-                                                           {"NC", Format::NC},
-                                                           {"NC4", Format::NC4},
-                                                           {"NC4HW4", Format::NC4HW4},
-                                                           {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
-                                                           {"NCDHW", Format::NCDHW},
-                                                           {"NWC", Format::NWC},
-                                                           {"NCW", Format::NCW},
-                                                           {"NDHWC", Format::NDHWC}};
-
-Format GetFormatFromStrToEnum(const std::string &format_str) {
-  auto iter = format_relation_map.find(format_str);
-  if (iter != format_relation_map.end()) {
-    return iter->second;
-  }
-  MS_LOG(DEBUG) << "The data format " << format_str << " can not be converted to enum.";
-  return Format::DEFAULT_FORMAT;
-}
-
-std::string GetFormatFromEnumToStr(Format format) {
-  std::string format_str = kOpFormat_DEFAULT;
-  auto iter = std::find_if(format_relation_map.begin(), format_relation_map.end(),
-                           [format](auto item) { return item.second == format; });
-  if (iter != format_relation_map.end()) {
-    return iter->first;
-  }
-  return format_str;
 }
 
 // Delete after KernelMod rectified.
