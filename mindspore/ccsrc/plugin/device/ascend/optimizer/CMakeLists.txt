@@ -53,7 +53,6 @@ list(REMOVE_ITEM MS_OPTIMIZER_910B
         "ge/convert_attr_to_input.cc"
         "ge/convert_resize_nearest_neighbor_x_dtype.cc"
         "ge/batchnorm_transform.cc"
-        "ge/avg_pool_grad_for_ge.cc"
         )
 
 set_property(SOURCE ${_PREACTIVATE_SRC_LIST} ${MS_OPTIMIZER_910B} PROPERTY COMPILE_DEFINITIONS

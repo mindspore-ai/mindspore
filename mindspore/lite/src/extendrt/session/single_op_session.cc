@@ -147,6 +147,8 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
 
   auto make_kernel_tensor = [](TypeId type_id, const ShapeVector &shape) {
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>();
+    kernel_tensor->SetShape(std::make_shared<abstract::Shape>(shape));
+    kernel_tensor->SetType(TypeIdToType(kObjectTypeTensorType));
     auto base = std::make_shared<mindspore::abstract::AbstractTensor>(TypeIdToType(type_id),
                                                                       std::make_shared<abstract::Shape>(shape));
     kernel::TensorInfo tensor_info;
