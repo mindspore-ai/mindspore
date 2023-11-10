@@ -33,6 +33,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fission/batch_norm_grad_infer_fission.cc"
         "./ir_fission/bn_split.cc"
         "./ir_fission/bn_grad_split.cc"
+        "./ir_fission/lp_norm_fission.cc"
         "./ir_fusion/batchnorm_to_bninfer.cc"
         "./ir_fission/ascend_convert_tuple_input_to_dynamic_input.cc"
         "./ir_fusion/batchnormgrad_to_bninfergrad.cc"
