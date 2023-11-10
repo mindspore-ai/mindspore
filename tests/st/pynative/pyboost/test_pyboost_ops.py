@@ -21,9 +21,10 @@ from mindspore.ops import split, interpolate
 from mindspore import ops
 from mindspore.ops.auto_generate.gen_pyboost_func import baddbmm, transpose, view, bmm, exp, erf, silu, sin, cos, \
     cast, add, sub, softmax_, sqrt_, stack, split_tensor, split_with_size, matmul, conv2d, gather, broadcast_to, \
-    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square_, range
+    maximum, minimum, greater_equal, less, unsqueeze, masked_fill, layer_norm, mean, cat, square_
 from mindspore.ops.auto_generate.gen_pyboost_func import pow as pyboost_pow
 from mindspore.ops.auto_generate.gen_pyboost_func import sum as pyboost_sum
+from mindspore.ops.auto_generate.gen_pyboost_func import range as pyboost_range
 import mindspore
 
 
@@ -670,7 +671,7 @@ def test_interpolate_ascend():
     np.random.seed(1)
     x = Tensor(np.ones(shape=[1, 3, 3]), mindspore.float32)
     expect_out = Tensor(np.ones(shape=[1, 3, 5]), mindspore.float32)
-    pyboost_out = interpolate(x, size=(5, ), mode='nearest')
+    pyboost_out = interpolate(x, size=(5,), mode='nearest')
     assert np.allclose(pyboost_out.asnumpy(), expect_out.asnumpy(), 0.0001, 0.0001)
 
 
@@ -701,8 +702,8 @@ def test_range_ascend():
     Expectation: success
     """
     context.set_context(device_target="Ascend")
-    start = Tensor(0, mindspore.int32)
-    end = Tensor(10, mindspore.int32)
-    step = Tensor(4, mindspore.int32)
-    output = range(start, end, step)
+    start = 0.0
+    end = 10.0
+    step = 4.0
+    output = pyboost_range(start, end, step)
     assert np.allclose(output.asnumpy(), [0, 4, 8])

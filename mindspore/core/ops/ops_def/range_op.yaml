@@ -16,7 +16,3 @@ range:
     returns:
         output:
             dtype: tensor
-    dispatch:
-        enable: True
-
-

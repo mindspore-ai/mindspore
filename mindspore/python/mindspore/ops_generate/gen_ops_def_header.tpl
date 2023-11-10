@@ -16,5 +16,6 @@
 #include "ops/op_def.h"
 
 namespace mindspore::ops {
+MS_EXPORT extern std::unordered_map<std::string, OpDefPtr> gOpDefTable;
 ${extern_variable}
 }// namespace mindspore::ops

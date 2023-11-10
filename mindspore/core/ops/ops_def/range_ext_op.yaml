@@ -1,0 +1,17 @@
+#operator range_ext
+range_ext:
+  args:
+    start:
+      dtype: number
+    end:
+      dtype: number
+    step:
+      dtype: number
+      init: 1.0
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+
+

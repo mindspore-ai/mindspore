@@ -374,12 +374,12 @@ def generate_inplace_process_cpp_code(op_proto):
     inplace_process = f'// RefOps update output by input tensor\n'
     has_ref = False
     for index, return_obj in enumerate(op_proto.returns):
-        if return_obj.inplace == '':
-            continue
-        has_ref = True
-        inplace_process += f"op->device_sync_promises()[{index}]->SetValue(" \
-                           f"std::make_shared<pynative::DeviceAddressFutureData>(" \
-                           f"{return_obj.inplace}_tensor->device_address(), nullptr));"
+        if return_obj.inplace != '':
+            inplace_process += f'op->device_sync_promises()[{index}]->SetValue(' \
+                               f'std::make_shared<pynative::DeviceAddressFutureData>(' \
+                               f'{return_obj.inplace}_tensor->device_address(), nullptr)); '
+            has_ref = True
+            break
     if has_ref:
         return inplace_process
     return ''

@@ -62,7 +62,7 @@ struct OpInputArg {
 struct OpOutputArg {
   std::string arg_name_;
   OP_DTYPE arg_dtype_;
-  std::string inplace_input_name_;
+  int64_t inplace_input_index_;
 };
 
 struct OpDef {
