@@ -32,6 +32,8 @@ namespace graph {
 typedef enum _TraceType {
   Unknown = 0,
   Global,
+  Deref,
+  Closure,
   BuiltIn,
   Local,
   Param,
