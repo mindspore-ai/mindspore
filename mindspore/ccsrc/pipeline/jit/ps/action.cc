@@ -225,6 +225,24 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
     });
   resource->SetResult(kOutput, run);
 }
+
+FuncGraphPtr ConstructGraphForEval(const CNodePtr &node, const abstract::AbstractBasePtrList &args_abs) {
+  auto function_node = node->input(0);
+  auto function = GetValueNode(function_node);
+  MS_EXCEPTION_IF_NULL(function);
+  auto func_abs = function->ToAbstract();
+  if (!func_abs->isa<abstract::AbstractFunction>()) {
+    MS_LOG(EXCEPTION) << "The value : " << function->ToString() << " is not a callable object.";
+  }
+  // construct a function graph.
+  auto infer_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(function)};
+  std::transform(args_abs.begin(), args_abs.end(), std::back_inserter(inputs),
+                 [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
+  auto infer_node = infer_graph->NewCNode(inputs);
+  infer_graph->set_return(infer_node);
+  return infer_graph;
+}
 }  // namespace
 using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
@@ -233,23 +251,22 @@ using mindspore::abstract::AnalysisContextPtr;
 // Whether this process in a MindSpore cluster.
 static bool is_cluster_initialized = false;
 
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
-                                         const abstract::AbstractBasePtrList &args_abs, bool clear) {
+abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_abs, bool is_load_resoure,
+                                         bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
   py::gil_scoped_acquire gil;
-  auto engine = resource->engine();
   MS_EXCEPTION_IF_NULL(engine);
-  if (clear || resource->is_load()) {
-    auto manager = resource->manager();
+  if (clear || is_load_resoure) {
+    auto manager = engine->func_graph_manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
     static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
-
       // Handle previous inferred value for CNode if is loaded from MindIR
-      if (resource->is_load()) {
-        // If the primitive is not defined in front end, keep the inferred value loaded from MindIR.
+      // If the primitive is not defined in front end, keep the inferred value loaded from MindIR.
+      if (is_load_resoure) {
         auto primitive = GetCNodePrimitive(node);
         if (primitive != nullptr) {
           auto is_load = primitive->GetAttr("is_load");
@@ -284,13 +301,21 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const Func
   return res;
 }
 
-FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
+abstract::AnalysisResult AbstractAnalyze(const CNodePtr &cnode, const abstract::AbstractBasePtrList &args_abs,
+                                         bool clear) {
+  auto infer_graph = ConstructGraphForEval(cnode, args_abs);
+  auto manager = Manage(infer_graph, true);
+  auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
+  return AbstractAnalyze(engine, infer_graph, args_abs, false, clear);
+}
+
+FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context) {
-  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(engine);
   MS_LOG(DEBUG) << "ProgramSpecialize start";
-  abstract::ProgramSpecializer specializer(resource->engine());
+  abstract::ProgramSpecializer specializer(engine);
   FuncGraphPtr result = specializer.Run(func_graph, context);
-  auto manager = resource->manager();
+  auto manager = engine->func_graph_manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->KeepRoots({result});
   specializer.SpecializeCNodeInput0FuncGraph();
@@ -302,14 +327,15 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
                          const abstract::AbstractBasePtrList &args_abs) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Renormalize start";
+  auto engine = resource->engine();
 #ifdef ENABLE_PROFILE
   double t1 = GetTime();
 #endif
-  abstract::AnalysisResult result = AbstractAnalyze(resource, func_graph, args_abs, true);
+  abstract::AnalysisResult result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
 #endif
-  auto res = ProgramSpecialize(resource, func_graph, result.context);
+  auto res = ProgramSpecialize(engine, func_graph, result.context);
   resource->set_func_graph(res);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
@@ -320,6 +346,37 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   MS_LOG(DEBUG) << "Renormalize end";
 
   return res;
+}
+
+CNodePtr Renormalize(const CNodePtr &node, const abstract::AbstractBasePtrList &args_abs) {
+  auto infer_graph = ConstructGraphForEval(node, args_abs);
+  auto manager = Manage(infer_graph, true);
+  auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
+#ifdef ENABLE_PROFILE
+  double t1 = GetTime();
+#endif
+  auto res = AbstractAnalyze(engine, infer_graph, args_abs, false);
+#ifdef ENABLE_PROFILE
+  double t2 = GetTime();
+#endif
+
+  auto spec_graph = ProgramSpecialize(engine, infer_graph, res.context);
+#ifdef ENABLE_PROFILE
+  double t3 = GetTime();
+  MsProfile::StatTime("renormalize.infer", t2 - t1);
+  MsProfile::StatTime("renormalize.specialize", t3 - t2);
+#endif
+  // Set the renormalized graph to the origin call node
+  auto ori_inputs = node->inputs();
+  ori_inputs.at(0) = NewValueNode(spec_graph);
+  auto ori_graph = node->func_graph();
+  if (ori_graph != nullptr) {
+    auto spec_node = ori_graph->NewCNode(ori_inputs);
+    spec_node->set_abstract(spec_graph->return_node()->abstract());
+    return spec_node;
+  }
+  node->set_abstract(spec_graph->return_node()->abstract());
+  return node;
 }
 
 void SetMindIRLoadFlag(const ResourcePtr &resource) {
@@ -809,11 +866,12 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   engine->set_check_side_effect(true);
   // Analyze
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 0);
-  AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
+  AnalysisResult result =
+    AbstractAnalyze(resource->engine(), resource->func_graph(), GetArgsAbs(resource), resource->is_load());
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 1);
   // Specialize
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 0);
-  FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
+  FuncGraphPtr new_fg = ProgramSpecialize(resource->engine(), result.context->func_graph(), result.context);
   (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 1);
   // Update the top func graph with the specialized graph.
   parse::Parser::UpdateTopFuncGraph(new_fg);
