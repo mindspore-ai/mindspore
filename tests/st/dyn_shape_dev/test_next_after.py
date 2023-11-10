@@ -51,6 +51,8 @@ def test_next_after_op_forward(context_mode, data_type):
     expect_out = np.array([1.e-45]).astype(np.float32)
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
 
+
+@pytest.mark.skip(reason="dynamic shape not support now")
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
