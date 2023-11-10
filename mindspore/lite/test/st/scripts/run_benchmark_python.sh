@@ -6,7 +6,7 @@ function Run_python_ST() {
   whl_path=$2
   model_path=$3
   in_data_path=$4
-  model_hiai_path=$in_data_path
+#  model_hiai_path=$in_data_path
   cfg_file_list=$5
   target=$6
   suffix=".mindir"
