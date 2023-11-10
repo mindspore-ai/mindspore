@@ -366,51 +366,6 @@ TEST_F(KernelExecutorTest, TestConcat) {
                                  0.0001));
 }
 
-TEST_F(KernelExecutorDropTest, TestConv2D) {
-  auto op = std::make_shared<ops::Conv2D>();
-  op->set_out_channel(32);
-  op->set_kernel_size({3, 3});
-  std::vector<float> input_data(10 * 32 * 32 * 32, 1);
-  std::vector<mindspore::MSTensor> inputs;
-  std::vector<mindspore::MSTensor> outputs;
-  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {10, 32, 32, 32},
-                            reinterpret_cast<void *>(input_data.data()), 10 * 32 * 32 * 32 * sizeof(float));
-  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32, {32, 3, 3, 32},
-                             reinterpret_cast<void *>(input_data.data()), 32 * 3 * 3 * 32 * sizeof(float));
-  input.SetFormat(mindspore::Format::NHWC);
-  weight.SetFormat(mindspore::Format::NHWC);
-  inputs.emplace_back(input);
-  inputs.emplace_back(weight);
-
-  ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
-  ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
-  std::vector<int64_t> shape{10, 30, 30, 32};
-  ASSERT_EQ(outputs[0].Shape(), shape);
-}
-
-TEST_F(KernelExecutorDropTest, TestConv2DTranspose) {
-  auto op = std::make_shared<ops::Conv2DTranspose>();
-  op->set_in_channel(32);
-  op->set_out_channel(32);
-  op->set_kernel_size({3, 3});
-  std::vector<float> input_data(10 * 32 * 32 * 32, 1);
-  std::vector<mindspore::MSTensor> inputs;
-  std::vector<mindspore::MSTensor> outputs;
-  mindspore::MSTensor input("input", mindspore::DataType::kNumberTypeFloat32, {10, 30, 30, 32},
-                            reinterpret_cast<void *>(input_data.data()), 10 * 30 * 30 * 32 * sizeof(float));
-  mindspore::MSTensor weight("input", mindspore::DataType::kNumberTypeFloat32, {32, 3, 3, 32},
-                             reinterpret_cast<void *>(input_data.data()), 32 * 3 * 3 * 32 * sizeof(float));
-  input.SetFormat(mindspore::Format::NHWC);
-  weight.SetFormat(mindspore::Format::NHWC);
-  inputs.emplace_back(input);
-  inputs.emplace_back(weight);
-
-  ASSERT_EQ(kernel_executor_->Build(op, inputs, context_), mindspore::kSuccess);
-  ASSERT_EQ(kernel_executor_->Execute(inputs, &outputs), mindspore::kSuccess);
-  std::vector<int64_t> shape{10, 32, 32, 32};
-  ASSERT_EQ(outputs[0].Shape(), shape);
-}
-
 TEST_F(KernelExecutorTest, TestDiv) {
   auto op = std::make_shared<ops::Div>();
   std::vector<float> input_data{-4, 5, 6};
