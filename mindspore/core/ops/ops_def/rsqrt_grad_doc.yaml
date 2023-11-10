@@ -3,7 +3,7 @@ rsqrt_grad:
         Computes gradients for the Rsqrt.
 
             Args:
-                y_backprop (Tensor): Input gradients tensor,　has the same dtype and shape as `x`.
+                y_backprop (Tensor): Input gradients tensor, has the same dtype and shape as `x`.
                 x (Tensor): Origin input tensor.
 
             Returns:

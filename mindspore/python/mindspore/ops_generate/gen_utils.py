@@ -105,6 +105,7 @@ def check_change_and_replace_file(last_file_path, tmp_file_path):
     if last_md5 == tmp_md5:
         os.remove(tmp_file_path)
     else:
+        os.remove(last_file_path)
         os.rename(tmp_file_path, last_file_path)
 
 
@@ -115,7 +116,7 @@ def merge_files_to_one_file(file_paths, merged_file_path):
     merged_content = ''
     file_paths.sort()
     for file_path in file_paths:
-        with open(file_path, 'r', errors='ignore') as file:
+        with open(file_path, 'r') as file:
             merged_content += file.read()
             merged_content += '\n'
     one_file = open(merged_file_path, 'w')
