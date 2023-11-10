@@ -278,6 +278,17 @@ class Context:
             self._context.append_device_info(self.cpu)
         self._target = target
 
+    @property
+    def group_info_file(self):
+        """Get communication group info file for distributed inference."""
+        return self._context.group_info_file
+
+    @group_info_file.setter
+    def group_info_file(self, group_info_file):
+        """Set communication group info file for distributed inference."""
+        check_isinstance("group_info_file", group_info_file, str)
+        self._context.group_info_file = group_info_file
+
 
 class _InnerContext:
     """_InnerContext is used to bind Python API(Context) to C++ API(Context)."""
@@ -344,6 +355,17 @@ class _InnerContext:
         """Append one user-defined target device info to the context."""
         check_isinstance("target", target, _Target)
         self._inner_context.append_device_info(target._device_info)
+
+    @property
+    def group_info_file(self):
+        """Get communication group info file for distributed inference."""
+        return self._inner_context.get_group_info_file()
+
+    @group_info_file.setter
+    def group_info_file(self, group_info_file):
+        """Set communication group info file for distributed inference."""
+        check_isinstance("group_info_file", group_info_file, str)
+        self._inner_context.set_group_info_file(group_info_file)
 
 
 class _Target:
