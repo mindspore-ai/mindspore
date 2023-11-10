@@ -233,6 +233,7 @@ class SqrtCost : public CastCost {
 using TanhCost = SqrtCost;
 using EluCost = SqrtCost;
 using ReLUCost = SqrtCost;
+using SiLUCost = SqrtCost;
 using identityCost = SqrtCost;
 using SigmoidCost = SqrtCost;
 using ReciprocalCost =
