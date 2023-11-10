@@ -41,7 +41,7 @@ BaseShapePtr ResizeNearestNeighborFuncImpl::InferShape(const PrimitivePtr &primi
     output_shape.insert(output_shape.end(), x_shape.begin(), x_shape.begin() + size_size);
   }
 
-  auto size_ptr = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  auto size_ptr = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!size_ptr.has_value()) {
     output_shape.push_back(abstract::TensorShape::kShapeDimAny);
     output_shape.push_back(abstract::TensorShape::kShapeDimAny);

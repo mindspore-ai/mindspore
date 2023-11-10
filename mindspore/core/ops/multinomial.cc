@@ -83,17 +83,17 @@ abstract::ShapePtr MultinomialInferShape(const PrimitivePtr &primitive,
   } else if (CheckAndConvertUtils::IsTensor(input_args[1])) {
     auto num_samples_value_ptr = input_args[1]->GetValue();
     MS_EXCEPTION_IF_NULL(num_samples_value_ptr);
-    if (!num_samples_value_ptr->ContainsValueAny()) {
+    if (!num_samples_value_ptr->isa<ValueAny>()) {
       auto num_samples_type = input_args[1]->GetType()->cast<TensorTypePtr>();
       MS_EXCEPTION_IF_NULL(num_samples_type);
       if (num_samples_type->element()->type_id() == kNumberTypeInt64) {
-        auto num_samples_opt = GetArrayValue<int64_t>(num_samples_value_ptr);
+        auto num_samples_opt = GetArrayValue<int64_t>(input_args[1]);
         if (!num_samples_opt.has_value()) {
           MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the num_samples must be valid";
         }
         num_samples_val = num_samples_opt.value()[0];
       } else if (num_samples_type->element()->type_id() == kNumberTypeInt32) {
-        auto num_samples_opt = GetArrayValue<int32_t>(num_samples_value_ptr);
+        auto num_samples_opt = GetArrayValue<int32_t>(input_args[1]);
         if (!num_samples_opt.has_value()) {
           MS_EXCEPTION(TypeError) << "For '" << prim_name << "' the num_samples must be valid";
         }

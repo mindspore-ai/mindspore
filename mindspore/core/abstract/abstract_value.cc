@@ -1198,6 +1198,10 @@ ValuePtr AbstractSequence::ElementsBuildValue() const {
       continue;
     }
     element_value = element->BuildValue();
+    MS_EXCEPTION_IF_NULL(element_value);
+    if (element_value->isa<ValueAny>()) {
+      return kValueAny;
+    }
     element_value_list.push_back(element_value);
   }
   return std::make_shared<T>(element_value_list);

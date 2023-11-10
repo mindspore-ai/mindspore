@@ -85,14 +85,14 @@ abstract::ShapePtr HammingWindowInferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> out_shape;
     int64_t length_value = 0;
     switch (input_type_value) {
-      WINDOW_LENGTH_CASE(kNumberTypeInt8, int8_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeInt16, int16_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeInt32, int32_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeInt64, int64_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt8, uint8_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt16, uint16_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt32, uint32_t, length_value, value)
-      WINDOW_LENGTH_CASE(kNumberTypeUInt64, uint64_t, length_value, value)
+      WINDOW_LENGTH_CASE(kNumberTypeInt8, int8_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeInt16, int16_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeInt32, int32_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeInt64, int64_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeUInt8, uint8_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeUInt16, uint16_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeUInt32, uint32_t, length_value, input_args[0])
+      WINDOW_LENGTH_CASE(kNumberTypeUInt64, uint64_t, length_value, input_args[0])
       default: {
         MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                                 << "', the dtype of 'length' should be integer data type, but got "

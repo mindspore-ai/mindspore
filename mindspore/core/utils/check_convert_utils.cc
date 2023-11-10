@@ -1285,10 +1285,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
 std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string &arg_name, const AbstractBasePtr &abs,
                                                               const std::string &prim_name) {
   std::vector<int64_t> result{};
-  MS_EXCEPTION_IF_NULL(abs);
-  auto abs_value = abs->GetValue();
-  MS_EXCEPTION_IF_NULL(abs_value);
-  if (!ops::IsValueKnown(abs_value)) {
+  if (!ops::IsValueKnown(abs)) {
     MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the value of  [" << arg_name
                              << "] is unknown, please handle this case before calling this function.";
   }
@@ -1298,14 +1295,14 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
       return result;
     }
     if (type_list.front()->type_id() == kNumberTypeInt64) {
-      const auto &arr_value = ops::GetArrayValue<int64_t>(abs_value);
+      const auto &arr_value = ops::GetArrayValue<int64_t>(abs);
       if (arr_value->HasUnknownValue()) {
         MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
                                  << ", please handle this case before calling this function.";
       }
       result = arr_value->ToVector();
     } else if (type_list.front()->type_id() == kNumberTypeInt32) {
-      const auto &arr_value = ops::GetArrayValue<int>(abs_value);
+      const auto &arr_value = ops::GetArrayValue<int>(abs);
       if (arr_value->HasUnknownValue()) {
         MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], there are unknown values in the " << arg_name
                                  << ", please handle this case before calling this function.";
@@ -1323,10 +1320,10 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
     auto data_type = abs->GetType();
     MS_EXCEPTION_IF_NULL(data_type);
     if (data_type->type_id() == kNumberTypeInt64) {
-      const auto &val = ops::GetScalarValue<int64_t>(abs_value);
+      const auto &val = ops::GetScalarValue<int64_t>(abs->GetValue());
       result.push_back(val.value());
     } else if (data_type->type_id() == kNumberTypeInt32) {
-      const auto &val = ops::GetScalarValue<int>(abs_value);
+      const auto &val = ops::GetScalarValue<int>(abs->GetValue());
       result.push_back(val.value());
     } else {
       MS_EXCEPTION(TypeError) << "For primitive[" << prim_name << "], when the " << arg_name

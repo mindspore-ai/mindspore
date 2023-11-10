@@ -51,7 +51,8 @@ namespace {
 constexpr auto op_name = "RangeV2";
 
 template <typename T>
-int64_t RangeV2CalculateShape(const ValuePtr start_ptr, const ValuePtr limit_ptr, const ValuePtr delta_ptr) {
+int64_t RangeV2CalculateShape(const AbstractBasePtr &start_ptr, const AbstractBasePtr limit_ptr,
+                              const AbstractBasePtr delta_ptr) {
   auto start_array = GetArrayValue<T>(start_ptr);
   auto limit_array = GetArrayValue<T>(limit_ptr);
   auto delta_array = GetArrayValue<T>(delta_ptr);
@@ -91,33 +92,30 @@ int64_t RangeV2CalculateShape(const ValuePtr start_ptr, const ValuePtr limit_ptr
 abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive->GetAttr(kMaxLen));
+  auto start = input_args[kInputIndex0];
+  auto limit = input_args[kInputIndex1];
+  auto delta = input_args[kInputIndex2];
   // support dynamic rank
-  auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
-  auto limit_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShape())[kShape];
+  auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start->GetShape())[kShape];
+  auto limit_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(limit->GetShape())[kShape];
+  auto delta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(delta->GetShape())[kShape];
   if (IsDynamicRank(start_shape) || IsDynamicRank(limit_shape) || IsDynamicRank(delta_shape)) {
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
   int64_t shape_size = abstract::Shape::kShapeDimAny;
-  auto start_value = input_args[kInputIndex0]->GetValue();
-  auto limit_value = input_args[kInputIndex1]->GetValue();
-  auto delta_value = input_args[kInputIndex2]->GetValue();
-  MS_EXCEPTION_IF_NULL(start_value);
-  MS_EXCEPTION_IF_NULL(limit_value);
-  MS_EXCEPTION_IF_NULL(delta_value);
 
-  bool is_compile = (IsNoneOrAnyValue(start_value) && IsNoneOrAnyValue(limit_value) && IsNoneOrAnyValue(delta_value));
+  bool is_compile = !IsValueKnown(start) || !IsValueKnown(limit) || !IsValueKnown(delta);
   // not in compile, need inferShape
   if (!is_compile) {
     auto dtype = CheckAndConvertUtils::GetTensorInputType(op_name, input_args, kInputIndex0);
     if (IsSameType(dtype, kInt) || IsSameType(dtype, kInt32)) {
-      shape_size = RangeV2CalculateShape<int32_t>(start_value, limit_value, delta_value);
+      shape_size = RangeV2CalculateShape<int32_t>(start, limit, delta);
     } else if (IsSameType(dtype, kInt64)) {
-      shape_size = RangeV2CalculateShape<int64_t>(start_value, limit_value, delta_value);
+      shape_size = RangeV2CalculateShape<int64_t>(start, limit, delta);
     } else if (IsSameType(dtype, kFloat) || IsSameType(dtype, kFloat32)) {
-      shape_size = RangeV2CalculateShape<float>(start_value, limit_value, delta_value);
+      shape_size = RangeV2CalculateShape<float>(start, limit, delta);
     } else if (IsSameType(dtype, kFloat64)) {
-      shape_size = RangeV2CalculateShape<double>(start_value, limit_value, delta_value);
+      shape_size = RangeV2CalculateShape<double>(start, limit, delta);
     } else {
       MS_EXCEPTION(TypeError) << "For RangeV2, the dtype of input must be int32, int64, float32, float64, but got "
                               << dtype->meta_type() << ".";

@@ -131,7 +131,7 @@ BaseShapePtr FFTWithSizeFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   /* get signal_sizes value */
-  auto signal_sizes_v = GetArrayValue<int64_t>(input_args[kInputIndex6]->GetValue());
+  auto signal_sizes_v = GetArrayValue<int64_t>(input_args[kInputIndex6]);
   if (!signal_sizes_v.has_value()) {
     return std::make_shared<abstract::TensorShape>(y_shape);
   }

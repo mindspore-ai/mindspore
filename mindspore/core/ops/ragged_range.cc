@@ -51,7 +51,8 @@ namespace mindspore {
 namespace ops {
 namespace {
 template <typename T>
-int64_t CalculateShape(const ValuePtr starts_ptr, const ValuePtr limits_ptr, const ValuePtr deltas_ptr, int64_t nrows) {
+int64_t CalculateShape(const AbstractBasePtr starts_ptr, const AbstractBasePtr limits_ptr,
+                       const AbstractBasePtr deltas_ptr, int64_t nrows) {
   auto starts_ptr_opt = GetArrayValue<T>(starts_ptr);
   auto limits_ptr_opt = GetArrayValue<T>(limits_ptr);
   auto deltas_ptr_opt = GetArrayValue<T>(deltas_ptr);
@@ -117,12 +118,9 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
   const int64_t max_length = GetValue<int64_t>(max_length_ptr);
   if (input_args[0]->GetType()->object_type() == kObjectTypeTensorType && !input_args[0]->GetValue()->isa<ValueAny>() &&
       !input_args[0]->GetValue()->isa<None>()) {
-    auto starts_value_ptr = input_args[0]->GetValue();
-    MS_EXCEPTION_IF_NULL(starts_value_ptr);
-    auto limits_value_ptr = input_args[1]->GetValue();
-    MS_EXCEPTION_IF_NULL(limits_value_ptr);
-    auto deltas_value_ptr = input_args[kInputIndex2]->GetValue();
-    MS_EXCEPTION_IF_NULL(deltas_value_ptr);
+    auto starts_value_ptr = input_args[0];
+    auto limits_value_ptr = input_args[1];
+    auto deltas_value_ptr = input_args[kInputIndex2];
     auto dtype_ptr = input_args[0]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(dtype_ptr);
     auto dtype = dtype_ptr->element()->type_id();

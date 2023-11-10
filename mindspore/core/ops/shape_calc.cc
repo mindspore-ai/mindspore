@@ -62,7 +62,7 @@ bool TryGetValueArg(const AbstractBasePtr &abs, ShapeArray *args, std::vector<st
     }
   } else if (value_ptr->isa<tensor::Tensor>() || value_ptr->isa<KernelTensorValue>() ||
              value_ptr->isa<ValueSequeue>()) {
-    auto shape_value_optional = ops::GetArrayValue<int64_t>(value_ptr);
+    auto shape_value_optional = ops::GetArrayValue<int64_t>(abs);
     if (shape_value_optional.has_value()) {
       auto shape_array_value = shape_value_optional.value();
       if (!shape_array_value.HasUnknownValue()) {

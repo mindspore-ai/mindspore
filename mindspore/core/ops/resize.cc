@@ -173,7 +173,7 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
   size_t h_index = size_shape[0] == kSize2 ? 0 : kFormatNCHWIndexH;
   size_t w_index = size_shape[0] == kSize2 ? 1 : kFormatNCHWIndexW;
   if (tensor_type == kInt32) {
-    const auto &data_opt = GetArrayValue<int32_t>(shape_value);
+    const auto &data_opt = GetArrayValue<int32_t>(shape_abstract);
     if (!CheckArrayValueValid(data_opt, new_height, new_width)) {
       return;
     }
@@ -181,7 +181,7 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
     *new_height = IntToLong(data_array[h_index]);
     *new_width = IntToLong(data_array[w_index]);
   } else if (tensor_type == kFloat32) {
-    auto data_opt = GetArrayValue<float>(shape_value);
+    auto data_opt = GetArrayValue<float>(shape_abstract);
     if (!CheckArrayValueValid(data_opt, new_height, new_width)) {
       return;
     }

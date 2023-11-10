@@ -69,15 +69,12 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For RandomGamma, the input tensor must be a 1-D tensor.";
   }
 
-  auto input_shape_value_ptr = input_args[kInputIndex0]->GetValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-
   auto shape_type_element = input_args[kInputIndex0]->GetType()->cast<TensorTypePtr>()->element();
   MS_EXCEPTION_IF_NULL(shape_type_element);
   ShapeVector shape_vec;
 
   if (shape_type_element->type_id() == kNumberTypeInt32) {
-    auto shape_value_opt = GetArrayValue<int32_t>(input_shape_value_ptr);
+    auto shape_value_opt = GetArrayValue<int32_t>(input_args[kInputIndex0]);
     if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
       ShapeVector out_shape = {-2};
       return std::make_shared<abstract::Shape>(out_shape);
@@ -91,7 +88,7 @@ abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vec
       }
     }
   } else if (shape_type_element->type_id() == kNumberTypeInt64) {
-    auto shape_value_opt = GetArrayValue<int64_t>(input_shape_value_ptr);
+    auto shape_value_opt = GetArrayValue<int64_t>(input_args[kInputIndex0]);
     if (!shape_value_opt.has_value() || shape_value_opt.value().HasUnknownValue()) {
       ShapeVector out_shape = {-2};
       return std::make_shared<abstract::Shape>(out_shape);

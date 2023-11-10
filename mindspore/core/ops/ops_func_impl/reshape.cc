@@ -29,9 +29,7 @@ BaseShapePtr ReshapeFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
 
-  auto shape_value = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(shape_value);
-  auto shape_array_opt = GetArrayValue<int64_t>(shape_value);
+  auto shape_array_opt = GetArrayValue<int64_t>(input_args[1]);
   if (!shape_array_opt.has_value()) {
     if (shape_shape->isa<abstract::SequenceShape>()) {
       auto seq_shape = shape_shape->cast<abstract::SequenceShapePtr>();

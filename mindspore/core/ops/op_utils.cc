@@ -276,7 +276,7 @@ bool CheckAndGetAxisValue(const std::vector<abstract::AbstractBasePtr> &input_ar
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto input_value = input_args[kInputIndex1]->GetValue();
   if (input_value->isa<KernelTensorValue>()) {
-    auto value_opt = GetArrayValue<int64_t>(input_value);
+    auto value_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
     auto value_array = value_opt.value();
     *axis_value = value_array.ToVector();
   }
@@ -881,14 +881,6 @@ TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std
   return y_type;
 }
 
-bool IsValueKnown(const ValuePtr &value) {
-  if (value->ContainsValueAny() || value->isa<None>()) {
-    return false;
-  }
-
-  return true;
-}
-
 std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
   MS_EXCEPTION_IF_NULL(op_prim);
   std::set<int64_t> depend_list;
@@ -1017,8 +1009,6 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
   }
 
   std::vector<T> array_data;
-  std::set<size_t> unknown_value_indexes;
-
   if (value->isa<KernelTensorValue>()) {
     auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();
     MS_EXCEPTION_IF_NULL(kernel_tensor_value);
@@ -1041,9 +1031,7 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
       const auto &element = element_values[i];
       MS_EXCEPTION_IF_NULL(element);
       if (element->isa<ValueAny>() || element->isa<None>()) {
-        array_data.push_back(static_cast<T>(0));
-        unknown_value_indexes.insert(i);
-        continue;
+        return std::nullopt;
       }
       if constexpr (std::is_same_v<T, float16>) {
         MS_LOG(EXCEPTION) << "For ValueSequence, float16 type is not support!";
@@ -1061,22 +1049,71 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
   } else {
     MS_LOG(EXCEPTION) << "Failed to get array value, expect sequence or tensor type, but got: " << value->type_name();
   }
-
-  return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::move(unknown_value_indexes));
+  return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::set<size_t>());
 }
 
-template std::optional<ArrayValue<int64_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<int32_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<int16_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<int8_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<uint64_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<uint32_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<uint16_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
-template std::optional<ArrayValue<float16>> GetArrayValue(const ValuePtr &value);
+template <typename T>
+std::optional<ArrayValue<T>> GetArrayValue(const AbstractBasePtr &abs_base) {
+  MS_EXCEPTION_IF_NULL(abs_base);
+  auto value = abs_base->GetValue();
+  // If value is constant or is value sequence with some constant elements.
+  if (!value->isa<ValueAny>()) {
+    return GetArrayValue<T>(value);
+  }
+
+  // If value is ValueAny, need check whether abstract is AbstractSequence, it is in frontend.
+  std::vector<T> array_data;
+  std::set<size_t> unknown_value_indexes;
+  if (abs_base->isa<abstract::AbstractSequence>()) {
+    auto abs_sequence = abs_base->cast<abstract::AbstractSequencePtr>();
+    if (abs_sequence->dynamic_len()) {
+      return std::nullopt;
+    }
+    for (size_t i = 0; i < abs_sequence->size(); ++i) {
+      auto elem_value = abs_sequence->elements()[i]->GetValue();
+      if (elem_value->isa<ValueAny>() || elem_value->isa<None>()) {
+        array_data.push_back(static_cast<T>(0));
+        (void)unknown_value_indexes.insert(i);
+        continue;
+      }
+      if constexpr (std::is_same_v<T, float16>) {
+        MS_LOG(EXCEPTION) << "For ValueSequence, float16 type is not support!";
+      } else {
+        array_data.push_back(GetValue<T>(elem_value));
+      }
+    }
+    return std::optional<ArrayValue<T>>(std::in_place, std::move(array_data), std::move(unknown_value_indexes));
+  }
+  // Only abstract sequence with ValueAny need to handle, other situation just return nullopt.
+  return std::nullopt;
+}
+
+template MS_CORE_API std::optional<ArrayValue<int64_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<int32_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<int16_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<int8_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<uint64_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<uint32_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<uint16_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<uint8_t>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<double>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<float>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<bool>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<std::string>> GetArrayValue(const ValuePtr &value);
+template MS_CORE_API std::optional<ArrayValue<float16>> GetArrayValue(const ValuePtr &value);
+
+template MS_CORE_API std::optional<ArrayValue<int64_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<int32_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<int16_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<int8_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<uint64_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<uint32_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<uint16_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<uint8_t>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<double>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<float>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<bool>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<std::string>> GetArrayValue(const AbstractBasePtr &abs_base);
+template MS_CORE_API std::optional<ArrayValue<float16>> GetArrayValue(const AbstractBasePtr &abs_base);
 }  // namespace ops
 }  // namespace mindspore

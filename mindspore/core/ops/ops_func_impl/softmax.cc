@@ -38,7 +38,7 @@ TypePtr SoftmaxFuncImpl::InferType(const PrimitivePtr &primitive,
 
 int32_t SoftmaxFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) const {
-  auto axis_value_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  auto axis_value_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   if (MS_UNLIKELY((!axis_value_opt.has_value()) || IsDynamicRank(x_shape))) {
     return OP_CHECK_RETRY;

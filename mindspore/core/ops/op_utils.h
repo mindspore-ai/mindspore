@@ -131,6 +131,10 @@ template <typename T>
 MS_CORE_API std::optional<T> GetScalarValue(const ValuePtr &value);
 
 // This interface is only used to convert values of type Sequence or Tensor to std::vector.
+// Input can be AbstractTensor/AbstractSequence from frontend or KernelTensor from backend.
+template <typename T>
+MS_CORE_API std::optional<ArrayValue<T>> GetArrayValue(const AbstractBasePtr &abs_base);
+
 template <typename T>
 MS_CORE_API std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value);
 
@@ -269,7 +273,15 @@ T GetScalarCastValue(const std::string &op_name, const ValuePtr &elem);
 
 TypePtr HighPriorityType(const TypePtr &x_type, const TypePtr &y_type, const std::string &op_name);
 
-bool IsValueKnown(const ValuePtr &value);
+inline bool IsValueKnown(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  return !value->isa<ValueAny>() && !value->isa<None>();
+}
+
+inline bool IsValueKnown(const AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  return IsValueKnown(abs->GetValue());
+}
 
 MS_CORE_API size_t GetInputIndexByName(const std::string &op_name, const std::string &input_name);
 MS_CORE_API size_t GetOpInputsNum(const std::string &op_name);

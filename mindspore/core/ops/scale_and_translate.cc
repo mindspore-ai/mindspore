@@ -93,18 +93,12 @@ abstract::ShapePtr ScaleAndTranslateInferShape(const PrimitivePtr &primitive,
                                            prim_name);
   // check scale greater than zero
   auto scale_abs = input_args[kInputIndex2];
-  auto scale_v = scale_abs->GetValue();
-  MS_EXCEPTION_IF_NULL(scale_v);
-  if (!scale_v->isa<ValueAny>() && !scale_v->isa<None>()) {
-    if (scale_v == nullptr) {
-      MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
-                               << " value is nullptr.";
-    }
+  if (IsValueKnown(scale_abs)) {
     if (!CheckAndConvertUtils::IsTensor(scale_abs)) {
       MS_EXCEPTION(ValueError) << "For primitive[" << prim_name << "], the input argument[scale]"
-                               << " must be a tensor, but got " << scale_v->ToString();
+                               << " must be a tensor, but got " << scale_abs->ToString();
     }
-    std::vector<float> scale_value = GetArrayValue<float>(scale_v).value().ToVector();
+    std::vector<float> scale_value = GetArrayValue<float>(scale_abs).value().ToVector();
     (void)CheckAndConvertUtils::CheckPositiveVectorExcludeZero("scale", scale_value, prim_name);
   }
   //  infer resized_images's shape

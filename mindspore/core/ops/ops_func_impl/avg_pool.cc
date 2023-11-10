@@ -91,7 +91,7 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
   ShapeValueDType in_h;
   ShapeValueDType in_w;
   mindspore::Format format = static_cast<mindspore::Format>(format_opt.value());
-  if (format == NCHW) {
+  if (format == mindspore::Format::NCHW) {
     channel = in_shape[kInputIndex1];
     in_h = in_shape[kInputIndex2];
     in_w = in_shape[kInputIndex3];
@@ -102,18 +102,18 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   // Step3. Get and check kernel_size, strides and pad_mode value.
-  auto kernel_size_value = input_args[kInputIndex1]->GetValue();
-  auto strides_value = input_args[kInputIndex2]->GetValue();
-  auto pad_mode_value = input_args[kInputIndex3]->GetValue();
+  auto kernel_size = input_args[kInputIndex1];
+  auto strides = input_args[kInputIndex2];
+  auto pad_mode_abs = input_args[kInputIndex3];
 
-  auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size_value);
-  auto strides_array_opt = GetArrayValue<int64_t>(strides_value);
-  auto pad_mode_opt = GetScalarValue<int64_t>(pad_mode_value);
+  auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size);
+  auto strides_array_opt = GetArrayValue<int64_t>(strides);
+  auto pad_mode_opt = GetScalarValue<int64_t>(pad_mode_abs->GetValue());
 
   // If any of the above values is ValueAny, return a dynamic shape, only the Batch and Channel dimension can be
   // inferred.
   if (!kernel_size_array_opt.has_value() || !strides_array_opt.has_value() || !pad_mode_opt.has_value()) {
-    if (format == NHWC) {
+    if (format == mindspore::Format::NHWC) {
       ShapeVector dyn_output{batch, abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, channel};
       return std::make_shared<abstract::Shape>(std::move(dyn_output));
     }
@@ -203,10 +203,10 @@ int32_t AvgPoolFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   }
 
   // Step2: Check kernel_size and strides valid.
-  auto kernel_size_value = input_args[kInputIndex1]->GetValue();
-  auto strides_value = input_args[kInputIndex2]->GetValue();
-  auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size_value);
-  auto strides_array_opt = GetArrayValue<int64_t>(strides_value);
+  auto kernel_size = input_args[kInputIndex1]->GetValue();
+  auto strides = input_args[kInputIndex2]->GetValue();
+  auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size);
+  auto strides_array_opt = GetArrayValue<int64_t>(strides);
   if (MS_UNLIKELY(!kernel_size_array_opt.has_value() || !strides_array_opt.has_value())) {
     check_status = OP_CHECK_RETRY;
   } else {

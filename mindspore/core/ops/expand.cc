@@ -50,9 +50,8 @@ namespace {
 template <typename T>
 std::vector<int64_t> ExpandInferOutShape(std::vector<int64_t> output_shape, std::vector<int64_t> x_shape,
                                          const int64_t x_shape_size, const int64_t shape_size,
-                                         const ValuePtr shape_tensor_value, int64_t max_length,
-                                         const string prim_name) {
-  auto input_shape_opt = GetArrayValue<T>(shape_tensor_value);
+                                         const AbstractBasePtr &shape, int64_t max_length, const string &prim_name) {
+  auto input_shape_opt = GetArrayValue<T>(shape);
   const auto &input_shape = input_shape_opt.value();
   int64_t shape_m = 1;
   if (shape_size >= x_shape_size) {
@@ -103,8 +102,8 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
     return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
   }
 
-  auto shape_tensor_value = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(shape_tensor_value);
+  auto shape_input = input_args[1];
+  MS_EXCEPTION_IF_NULL(shape_input);
   auto shape_ptr = std::make_shared<abstract::Shape>(shape_shape);
   auto shape_v = shape_ptr->shape();
 
@@ -126,13 +125,13 @@ abstract::ShapePtr ExpandInferShape(const PrimitivePtr &primitive, const std::ve
   if (!input_args[1]->GetValue()->isa<ValueAny>() && !input_args[1]->GetValue()->isa<None>()) {
     std::vector<int64_t> output_shape;
     if (shape_type_element->type_id() == kNumberTypeInt16) {
-      output_shape = ExpandInferOutShape<int16_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
+      output_shape = ExpandInferOutShape<int16_t>(output_shape, x_shape, x_shape_size, shape_size, shape_input,
                                                   max_length, prim_name);
     } else if (shape_type_element->type_id() == kNumberTypeInt32) {
-      output_shape = ExpandInferOutShape<int32_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
+      output_shape = ExpandInferOutShape<int32_t>(output_shape, x_shape, x_shape_size, shape_size, shape_input,
                                                   max_length, prim_name);
     } else if (shape_type_element->type_id() == kNumberTypeInt64) {
-      output_shape = ExpandInferOutShape<int64_t>(output_shape, x_shape, x_shape_size, shape_size, shape_tensor_value,
+      output_shape = ExpandInferOutShape<int64_t>(output_shape, x_shape, x_shape_size, shape_size, shape_input,
                                                   max_length, prim_name);
     }
     return std::make_shared<abstract::Shape>(output_shape);

@@ -83,11 +83,9 @@ ShapeVector CalDynamicOutputShape(const PrimitivePtr &primitive, const ValuePtrL
   return shape;
 }
 
-ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtr shape_list) {
+ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtr &shape_list) {
   int64_t count = 1;
-  auto value_shape_ptr = shape_list->GetValue();
-  MS_EXCEPTION_IF_NULL(value_shape_ptr);
-  auto value_shape_opt = GetArrayValue<int64_t>(value_shape_ptr);
+  auto value_shape_opt = GetArrayValue<int64_t>(shape_list);
   if (!value_shape_opt.has_value() || value_shape_opt.value().HasUnknownValue()) {
     MS_EXCEPTION(TypeError) << "For 'DropGenMask', the value_shape should not be kAnyValue.";
   }

@@ -108,7 +108,7 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
   bool is_axis_known = false;
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
     // the axis from bprop may be a tensor.
-    auto axis_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]->GetValue());
+    auto axis_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]);
     if (MS_LIKELY(axis_opt.has_value() && !axis_opt.value().HasUnknownValue())) {
       MS_CHECK_VALUE(axis_opt.value().size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                                      "axis size", axis_opt.value().size(), kEqual, 1, primitive));

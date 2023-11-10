@@ -47,9 +47,7 @@ namespace ops {
 namespace {
 template <typename T>
 T GetAndCheckKeepProp(const AbstractBasePtr &input_arg) {
-  auto value_ptr = input_arg->GetValue();
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  auto value_opt = GetArrayValue<T>(value_ptr);
+  auto value_opt = GetArrayValue<T>(input_arg);
   if (!value_opt.has_value()) {
     MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the keep_prop must be valid";
   }

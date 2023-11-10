@@ -37,10 +37,7 @@ BaseShapePtr ResizeLinear1DFuncImpl::InferShape(const PrimitivePtr &primitive,
     output_shape[kDim1] = x_shape_vec[kDim1];
   }
 
-  MS_EXCEPTION_IF_NULL(input_args[1]);
-  auto size_value = input_args[1]->GetValue();
-  MS_EXCEPTION_IF_NULL(size_value);
-  auto size_array_opt = GetArrayValue<int64_t>(size_value);
+  auto size_array_opt = GetArrayValue<int64_t>(input_args[1]);
   if (!size_array_opt.has_value()) {
     return std::make_shared<abstract::Shape>(output_shape);
   }

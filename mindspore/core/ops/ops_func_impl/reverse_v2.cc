@@ -34,7 +34,7 @@ int32_t ReverseV2FuncImpl::CheckValidation(const PrimitivePtr &primitive,
   MS_CHECK_VALUE(x_rank <= kMaxRank,
                  CheckAndConvertUtils::FormatCheckIntegerMsg("rank of x", x_rank, kLessEqual, kMaxRank, primitive));
 
-  const auto &axis_opt = GetArrayValue<int64_t>(input_args[kIndex1]->GetValue());
+  const auto &axis_opt = GetArrayValue<int64_t>(input_args[kIndex1]);
   if (MS_UNLIKELY(!axis_opt.has_value())) {
     return OP_CHECK_RETRY;
   }
