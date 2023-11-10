@@ -583,8 +583,8 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
 
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
          ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
-                      << "] failed.";
+    MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aicpu kernel op["
+                      << anf_node->fullname_with_scope() << "] failed.";
   }
   kernel_mod_ptr->SetIsDynamicShape(common::AnfAlgo::IsDynamicShape(anf_node));
   kernel_mod_ptr->CloseTdtWingManQueue();

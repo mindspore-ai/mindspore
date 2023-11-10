@@ -30,8 +30,11 @@
 
 namespace mindspore::hccl {
 // return graph ptr to keep reference count
-std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr &anf_node, HcclDataType datatype);
+std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const PrimitivePtr &prim,
+                                                                const std::vector<KernelTensor *> &inputs,
+                                                                const std::vector<KernelTensor *> &outputs,
+                                                                HcclDataType datatype);
 HcclTaskInfo ParseDomiTask(const ge::OpDescPtr &op, const domi::TaskDef &task_def);
-std::string GetGeNodeName(const CNodePtr &cnode);
+std::string GetGeNodeName(const PrimitivePtr &prim);
 }  // namespace mindspore::hccl
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_CONVERTER_H

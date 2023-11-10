@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                    const std::vector<AddressPtr> &, void *stream_ptr) {
+bool HcomAllBroadCastKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                    const std::vector<KernelTensor *> &, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomAllBroadCast launch";
   if (inputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "BroadCast param is empty";
@@ -30,7 +30,7 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs, const
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(
-    inputs[0]->addr, hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
+    inputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], root_id_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
     return false;

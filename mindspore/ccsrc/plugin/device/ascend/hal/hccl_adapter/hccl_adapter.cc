@@ -274,48 +274,15 @@ bool HcclAdapter::FinalizeHccl() {
   return true;
 }
 
-bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
-                          std::vector<HcclTaskInfo> *task_info_lists) const {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(task_info_lists);
-  MS_LOG(INFO) << "Start generate task for hccl node " << node->DebugString();
-  auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);
-  MS_EXCEPTION_IF_NULL(ge_node);
-  auto op = ge_node->GetOpDesc();
-  MS_EXCEPTION_IF_NULL(op);
-
-  MS_LOG(INFO) << "Start to call CalcOpRunningParam";
-  MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
-  ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
-    return false;
-  }
-  MS_LOG(INFO) << "Start to call GenerateTask";
-  ge::RunContext unused_ctx;
-  std::vector<domi::TaskDef> domi_tasks;
-  ret = ops_kernel_builder_->GenerateTask(*ge_node, unused_ctx, domi_tasks);
-  if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder GenerateTask failed, ret = " << ret;
-    return false;
-  }
-
-  task_info_lists->clear();
-  std::transform(domi_tasks.begin(), domi_tasks.end(), std::back_inserter(*task_info_lists),
-                 [&op](const domi::TaskDef &task_def) -> HcclTaskInfo { return ParseDomiTask(op, task_def); });
-  MS_LOG(INFO) << "Generate task for node " << node->DebugString() << " success.";
-  ge_graph.reset();
-  return true;
-}
-
-int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) const {
-  MS_EXCEPTION_IF_NULL(node);
+int64_t HcclAdapter::CalcWorkspaceSize(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
+                                       const std::vector<KernelTensor *> &outputs, HcclDataType datatype) const {
+  MS_EXCEPTION_IF_NULL(prim);
   if (ops_kernel_builder_ == nullptr) {
     MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Hccl ops kernel builder is null, may not be inited. "
                          "Please call HCCL init() first.";
   }
-  MS_LOG(INFO) << "Start calc workspace size for hccl node " << node->DebugString() << " ,dtype is " << datatype;
-  auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);
+  MS_LOG(INFO) << "Start calc workspace size for hccl node " << prim->name() << " ,dtype is " << datatype;
+  auto [ge_node, ge_graph] = GenerateStubGeNode(prim, inputs, outputs, datatype);
   MS_EXCEPTION_IF_NULL(ge_node);
   auto op = ge_node->GetOpDesc();
   MS_EXCEPTION_IF_NULL(op);
@@ -332,19 +299,12 @@ int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType data
     MS_LOG(EXCEPTION) << "Unexpected workspace size " << workspace_sizes.size() << ", which should be 1.";
   }
   int64_t workspace_size = workspace_sizes[0];
-  MS_LOG(INFO) << "Node " << node->DebugString() << " workspace size is " << workspace_size;
+  MS_LOG(INFO) << "Node " << prim->name() << " workspace size is " << workspace_size;
   ge_graph.reset();
   return workspace_size;
 }
 
 void *HcclAdapter::GetHcclOpsKernelInfoStore() const { return ops_kernel_info_store_.get(); }
-
-std::string HcclAdapter::GetHcclType(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  return GetGeNodeName(cnode);
-}
 
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
                                       aclrtStream stream, HcclComm hccl_comm) const {

@@ -25,17 +25,14 @@
 namespace mindspore::kernel {
 class HcomAllToAllKernel : public HcclKernel {
  public:
-  HcomAllToAllKernel();
-  ~HcomAllToAllKernel() override;
-  bool Init(const AnfNodePtr &anf_node) override;
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              void *) override;
-  const std::vector<size_t> &GetOutputSizeList() const override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  HcomAllToAllKernel() = default;
+  ~HcomAllToAllKernel() override = default;
+  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  protected:
-  void UpdateOutputSizeList() override;
+  HcclDataType GetHcclDataType() const override { return data_type_; }
   void CalLoopSize() override {}
 
  private:

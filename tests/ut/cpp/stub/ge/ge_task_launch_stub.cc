@@ -37,10 +37,9 @@ HcclResult HcclAdapter::HcclGetWorldRankFromGroupRank(const std::string &, uint3
 HcclResult HcclAdapter::HcclGetGroupRankFromWorldRank(uint32_t, const std::string &, uint32_t *) const {
   return HCCL_SUCCESS;
 }
-bool HcclAdapter::GenTask(const AnfNodePtr &, HcclDataType, std::vector<HcclTaskInfo> *) const { return true; }
-int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &, HcclDataType) const { return 0; }
+int64_t HcclAdapter::CalcWorkspaceSize(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
+                            const std::vector<KernelTensor *> &outputs, HcclDataType datatype) const { return 0; }
 void *HcclAdapter::GetHcclOpsKernelInfoStore() const { return nullptr; }
-std::string HcclAdapter::GetHcclType(const AnfNodePtr &) { return ""; }
 HcclResult HcclAdapter::HcclBroadcast(void *, uint64_t, HcclDataType, uint32_t, aclrtStream, HcclComm) const {
   return HCCL_SUCCESS;
 }

@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomReceiveKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HcomReceiveKernel::Launch(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &,
+                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcomReceive launch";
   if (outputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid HcomReceive outputs size or data type size (" << outputs.size() << ", "
@@ -29,8 +29,8 @@ bool HcomReceiveKernel::Launch(const std::vector<AddressPtr> &, const std::vecto
   }
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclRecv(outputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                                               src_rank_, stream_ptr, comm_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclRecv(outputs[0]->device_ptr(), hccl_count_,
+                                                               hccl_data_type_list_[0], src_rank_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomReceive failed, ret:" << hccl_result;
     return false;

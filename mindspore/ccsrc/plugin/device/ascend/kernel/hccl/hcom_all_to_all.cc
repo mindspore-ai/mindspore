@@ -27,12 +27,8 @@ using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInf
 using mindspore::ge::model_runner::HcclTaskInfo;
 
 namespace mindspore::kernel {
-HcomAllToAllKernel::HcomAllToAllKernel() {}
-
-HcomAllToAllKernel::~HcomAllToAllKernel() {}
-
-bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool HcomAllToAllKernel::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_LOG(DEBUG) << "HcclAllToAll launch";
   if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
     MS_LOG(ERROR) << "Invalid AllToAll input, output or data type size (" << inputs.size() << ", " << outputs.size()
@@ -43,8 +39,8 @@ bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->addr, outputs[0]->addr, params_,
-                                                                   data_type_, stream_ptr, comm_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->device_ptr(), outputs[0]->device_ptr(),
+                                                                   params_, data_type_, stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllToAll failed, ret:" << hccl_result;
     return false;
@@ -52,19 +48,17 @@ bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   return true;
 }
 
-bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
-  bool ret = HcclKernel::Init(anf_node);
-  if (!ret) {
-    return ret;
+bool HcomAllToAllKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (!HcclKernel::Init(inputs, outputs)) {
+    return false;
   }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::HasNodeAttr(kAttrNeedDropInput, cnode)) {
-    need_drop_input_ = common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrNeedDropInput);
+
+  if (primitive_->HasAttr(kAttrNeedDropInput)) {
+    need_drop_input_ = GetValue<bool>(primitive_->GetAttr(kAttrNeedDropInput));
   }
 
   if (hccl_data_type_list_.empty()) {
-    auto recv_type = common::AnfAlgo::GetNodeAttr<TypePtr>(anf_node, kAttrRecvType);
+    auto recv_type = GetValue<TypePtr>(primitive_->GetAttr(kAttrRecvType));
     MS_EXCEPTION_IF_NULL(recv_type);
     data_type_ = HcomUtil::ConvertHcclType(recv_type->type_id());
   } else {
@@ -73,15 +67,16 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-    mutable_workspace_size_list_ = {
-      LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node, data_type_))};
+    workspace_size_list_ = {
+      LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(primitive_, inputs, outputs, data_type_))};
   }
   uint32_t rank_size = 0;
   if (!CommManager::GetInstance().GetRankSize(group_, &rank_size)) {
     MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group_ << " failed.";
   }
-  hccl::AllToAllvCalcParam calc(cnode, rank_size);
-  calc.CalcOpParam();
+
+  hccl::AllToAllvCalcParam calc(primitive_, rank_size);
+  calc.CalcOpParam(inputs, outputs);
   std::transform(calc.GetSendCounts().begin(), calc.GetSendCounts().end(), std::back_inserter(params_.sendcounts),
                  [](int64_t elem) { return static_cast<uint64_t>(elem); });
   std::transform(calc.GetSendDispls().begin(), calc.GetSendDispls().end(), std::back_inserter(params_.sdispls),
@@ -90,117 +85,9 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
                  [](int64_t elem) { return static_cast<uint64_t>(elem); });
   std::transform(calc.GetRecvDispls().begin(), calc.GetRecvDispls().end(), std::back_inserter(params_.rdispls),
                  [](int64_t elem) { return static_cast<uint64_t>(elem); });
+
   return true;
 }
 
-const std::vector<size_t> &HcomAllToAllKernel::GetOutputSizeList() const {
-  if (!mutable_output_size_list_.empty()) {
-    return mutable_output_size_list_;
-  }
-  size_t size = 0;
-  for (size_t i = 0; i < hccl_kernel_output_shape_list_.size(); ++i) {
-    if (!HcomUtil::GetHcclOpSize(data_type_, hccl_kernel_output_shape_list_[i], &size)) {
-      MS_LOG(EXCEPTION) << "AllToAllv get output size failed.";
-    }
-    mutable_output_size_list_.push_back(size);
-  }
-  return mutable_output_size_list_;
-}
-
-void HcomAllToAllKernel::UpdateOutputSizeList() {
-  auto anf_node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(anf_node);
-  size_t size = 0;
-  hccl_kernel_output_shape_list_.clear();
-  mutable_output_size_list_.clear();
-  if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
-    MS_LOG(EXCEPTION) << "GetKernelOutputShape fail!";
-  }
-
-  for (size_t i = 0; i < hccl_kernel_output_shape_list_.size(); ++i) {
-    if (!HcomUtil::GetHcclOpSize(data_type_, hccl_kernel_output_shape_list_[i], &size)) {
-      MS_LOG(EXCEPTION) << "AllToAllv get output size failed in Update stage";
-    }
-    mutable_output_size_list_.push_back(size);
-  }
-}
-
-std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPtr> &inputs,
-                                                     const std::vector<AddressPtr> &workspace,
-                                                     const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
-  auto anf_node = anf_node_.lock();
-  if (!anf_node) {
-    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
-  }
-
-  stream_id_ = stream_id;
-  void *input_data_addr = inputs.empty() ? nullptr : inputs.at(0)->addr;
-  void *output_data_addr = outputs.empty() ? nullptr : outputs.at(0)->addr;
-
-  // if send empty, remove the input that added for depend
-  if (need_drop_input_) {
-    input_data_addr = nullptr;
-  }
-
-  std::vector<uint8_t> private_def;
-  std::vector<hccl::HcclTaskInfo> task_info;
-  bool ret = hccl::HcclAdapter::GetInstance().GenTask(anf_node, data_type_, &task_info);
-  if (!ret) {
-    MS_LOG(EXCEPTION) << "Gen Task for " << anf_node->DebugString() << " failed.";
-  }
-
-  std::vector<TaskInfoPtr> results;
-  for (auto &task : task_info) {
-    MS_LOG(INFO) << "AlltoAll Task : stream_id=" << stream_id << ", count=" << hccl_count_ << ", root_id=" << root_id_
-                 << ", op_type=" << static_cast<int>(op_type_) << ", data_type=" << static_cast<int>(data_type_)
-                 << ", workspace_size=" << task.workspace_size << ", stream_num=" << task.stream_num
-                 << ", private_def_size=" << task.private_def.size();
-
-    private_def.resize(task.private_def.size());
-    auto sec_ret = memcpy_s(private_def.data(), private_def.size(), task.private_def.data(), task.private_def.size());
-    if (sec_ret != EOK) {
-      MS_LOG(EXCEPTION) << "Set data memcpy_s failed, ret = " << sec_ret;
-    }
-
-    void *workspace_addr = nullptr;
-    if (task.workspace_size != 0) {
-      if (workspace.empty()) {
-        MS_LOG(EXCEPTION) << "Workspace size list of " << anf_node->DebugString() << " is empty";
-      }
-      MS_EXCEPTION_IF_NULL(workspace.at(0));
-      workspace_addr = workspace.at(0)->addr;
-    }
-
-    HcclTaskInfoPtr hcclTaskInfo =
-      std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
-                                     output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
-                                     private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
-                                     hccl_count_, root_id_, op_type_, data_type_, group_, NeedDump());
-    hcclTaskInfo->set_output_num(outputs.size());
-    hcclTaskInfo->set_hccl_kernel_output_shape_list(hccl_kernel_output_shape_list_);
-    auto cnode = anf_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    hcclTaskInfo->set_graph_id(AnfAlgo::GetGraphId(cnode.get()));
-    FuncGraphPtr f_graph = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(f_graph);
-    auto kernel_graph = f_graph->cast<KernelGraphPtr>();
-    auto input_ctrl_tensors = kernel_graph->device_loop_control_tensors();
-    hcclTaskInfo->set_device_loop_ctrl_tensors(input_ctrl_tensors);
-    std::vector<std::vector<int64_t>> hccl_output_infer_shape_list;
-    if (!HcomUtil::GetKernelOutputInferShape(anf_node, &hccl_output_infer_shape_list)) {
-      MS_LOG(ERROR) << "GetKernelOutputInferShape fail!";
-    }
-    hcclTaskInfo->set_hccl_host_output_shape_list(hccl_output_infer_shape_list);
-    for (size_t j = 0; j < outputs.size(); j++) {
-      auto address = AnfAlgo::GetOutputAddr(cnode, j);
-      hcclTaskInfo->add_output_addr(address->GetPtr());
-      hcclTaskInfo->add_output_size_list(address->GetSize());
-      hcclTaskInfo->add_data_format(AnfAlgo::GetOutputFormat(anf_node, j));
-    }
-    (void)results.emplace_back(hcclTaskInfo);
-  }
-
-  return results;
-}
 MS_HCCL_REG_KERNEL(AllToAllv, HcomAllToAllKernel);
 }  // namespace mindspore::kernel

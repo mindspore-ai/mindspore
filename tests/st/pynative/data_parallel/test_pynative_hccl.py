@@ -58,7 +58,6 @@ def train_allreduce_8p(q, device_id, device_num):
     output = net(Tensor(input_x, mstype.float32))
     q.put(np.allclose(output.asnumpy(), except_output))
 
-@pytest.mark.skip(reason="dyn-shape-dev-bug")
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

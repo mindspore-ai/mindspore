@@ -103,8 +103,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_send) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {{1}}, {type_}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {}, {}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 0}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({0, 0}));
@@ -126,8 +128,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_only_recv) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {}, {}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}}, {type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 0}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 0}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({1, 1}));
@@ -150,8 +154,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send) {
                                       recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {}, {}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 1, 1, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 0, 128, 256}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({0, 0, 0, 0}));
@@ -174,8 +180,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_2) {
     CreateAllToAllvNode(graph, CreateInputs(graph, {{1}, {1}}, {type_, type_}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {}, {}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 1, 0, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 0, 128, 128}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({0, 0, 0, 0}));
@@ -197,8 +205,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_exchange) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {{1}}, {type_}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}}, {type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 0}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({0, 1}));
@@ -220,8 +230,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_send_to_self) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {{1}}, {type_}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}}, {type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({1, 0}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 128}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({1, 0}));
@@ -244,8 +256,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_to_all) {
                                       send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}, {1}, {1}}, {type_, type_, type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({1, 1, 1, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 128, 256, 384}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({1, 1, 1, 1}));
@@ -268,8 +282,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_all_in_all_in_wrong_orde
                                       send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}, {1}, {1}}, {type_, type_, type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({1, 1, 1, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 128, 256, 384}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({1, 1, 1, 1}));
@@ -292,8 +308,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_4p_only_send_in_wrong_order
                                       recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {}, {}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_NO_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_NO_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
   EXPECT_EQ(calc.GetSendCounts(), std::vector<int64_t>({0, 1, 1, 1}));
   EXPECT_EQ(calc.GetSendDispls(), std::vector<int64_t>({0, 128, 256, 0}));
   EXPECT_EQ(calc.GetRecvCounts(), std::vector<int64_t>({0, 0, 0, 0}));
@@ -312,8 +330,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {}, {}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}}, {type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_ANY_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_ANY_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
 }
 
 /// Feature: AllToAllvCalcParam
@@ -328,8 +348,10 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_invalid_rank_id_2) {
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {}, {}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}}, {type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_ANY_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_ANY_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
 }
 
 /// Feature: AllToAllvCalcParam
@@ -344,7 +366,9 @@ TEST_F(TestHcclAdapter, test_all_to_all_v_calc_param_2p_wrong_order_and_invalid_
   auto alltoall = CreateAllToAllvNode(graph, CreateInputs(graph, {}, {}), send_rank_ids, recv_rank_ids);
   ASSERT_TRUE(alltoall != nullptr);
   ASSERT_NO_THROW(SetOutputs(alltoall, {{1}, {1}}, {type_, type_}));
-  AllToAllvCalcParam calc(alltoall, rank_size);
-  ASSERT_ANY_THROW(calc.CalcOpParam());
+  AllToAllvCalcParam calc(common::AnfAlgo::GetCNodePrimitive(alltoall), rank_size);
+  std::vector<KernelTensor *> input_kernel_tensors = AnfAlgo::GetOrCreateAllInputKernelTensors(alltoall);
+  std::vector<KernelTensor *> output_kernel_tensors = AnfAlgo::GetOrCreateAllOutputKernelTensors(alltoall);
+  ASSERT_ANY_THROW(calc.CalcOpParam(input_kernel_tensors, output_kernel_tensors));
 }
 }  // namespace mindspore::hccl
