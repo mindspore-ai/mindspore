@@ -53,7 +53,7 @@ def test_unstack_single_op():
         np.testing.assert_array_equal(expect_output.asnumpy(), output.asnumpy())
 
     for expect_grad, grad in zip(expect_grad_tuple, grad_tuple):
-        assert np.allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)
+        np.testing.assert_allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -90,4 +90,4 @@ def test_unstack_multiple_op():
         np.testing.assert_array_equal(expect_output.asnumpy(), output.asnumpy())
 
     for expect_grad, grad in zip(expect_grad_tuple, grad_tuple):
-        assert np.allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)
+        np.testing.assert_allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)

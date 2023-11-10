@@ -30,7 +30,8 @@ class TestViewBroadcastTo : public TestView {
 TEST_F(TestViewBroadcastTo, func) {
   auto prim = std::make_shared<Primitive>("BroadcastTo");
 
-  auto input_perm = MakeValue(std::vector<int64_t>({2, 1, 4}));
+  std::vector<int64_t> perm_data({2, 1, 4});
+  auto input_perm = MakeValue(perm_data);
   prim->AddAttr(kShape, input_perm);
 
   std::vector<int64_t> tensor_data = {1, 2, 3, 4};
@@ -38,11 +39,14 @@ TEST_F(TestViewBroadcastTo, func) {
   input_tensor->set_shape({1, 4});
 
   auto storage_list = BroadCastToCalc(prim, std::vector<ValuePtr>({input_tensor}));
+  std::vector<int64_t> expect_shape({2, 1, 4});
+  std::vector<int64_t> expect_strides({0, 4, 1});
+  size_t expect_size = 1;
 
-  ASSERT_EQ(storage_list.size(), 1);
+  ASSERT_EQ(storage_list.size(), expect_size);
   ASSERT_FALSE(storage_list[0]->is_contiguous);
-  ASSERT_TRUE(storage_list[0]->shape == std::vector<int64_t>({2, 1, 4}));
-  ASSERT_TRUE(storage_list[0]->strides == std::vector<int64_t>({0, 4, 1}));
+  ASSERT_TRUE(storage_list[0]->shape == expect_shape);
+  ASSERT_TRUE(storage_list[0]->strides == expect_strides);
 }
 
 /// Feature: BroadcastTo strides calculator
@@ -66,19 +70,25 @@ TEST_F(TestViewBroadcastTo, BroadDim) {
 
   std::vector<ValuePtr> inputs{input_tensor};
   auto storage_list = BroadCastToCalc(prim, inputs);
-  ASSERT_EQ(storage_list.size(), 1);
+  std::vector<int64_t> expect_shape({2, 1, 2, 3});
+  std::vector<int64_t> expect_strides({0, 6, 3, 1});
+  size_t expect_size = 1;
+  ASSERT_EQ(storage_list.size(), expect_size);
   ASSERT_FALSE(storage_list[0]->is_contiguous);
-  ASSERT_TRUE(storage_list[0]->shape == std::vector<int64_t>({2, 1, 2, 3}));
-  ASSERT_TRUE(storage_list[0]->strides == std::vector<int64_t>({0, 6, 3, 1}));
+  ASSERT_TRUE(storage_list[0]->shape == expect_shape);
+  ASSERT_TRUE(storage_list[0]->strides == expect_strides);
 
-  input_perm = MakeValue(std::vector<int64_t>({3, 2, 3}));
+  std::vector<int64_t> perm_data({3, 2, 3});
+  input_perm = MakeValue(perm_data);
   prim->AddAttr(kShape, input_perm);
 
   storage_list = BroadCastToCalc(prim, inputs);
-  ASSERT_EQ(storage_list.size(), 1);
+  std::vector<int64_t> expect_shape_2({3, 2, 3});
+  std::vector<int64_t> expect_strides_2({0, 3, 1});
+  ASSERT_EQ(storage_list.size(), expect_size);
   ASSERT_FALSE(storage_list[0]->is_contiguous);
-  ASSERT_TRUE(storage_list[0]->shape == std::vector<int64_t>({3, 2, 3}));
-  ASSERT_TRUE(storage_list[0]->strides == std::vector<int64_t>({0, 3, 1}));
+  ASSERT_TRUE(storage_list[0]->shape == expect_shape_2);
+  ASSERT_TRUE(storage_list[0]->strides == expect_strides_2);
 }
 }  // namespace ops
 }  // namespace mindspore

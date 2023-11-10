@@ -27,34 +27,6 @@ class TestViewSplit : public TestView {
 /// Feature: Split strides calculator
 /// Description: Test view Split strides calculator is right
 /// Expectation: success
-TEST_F(TestViewSplit, ErrorInputs) {
-  auto prim = std::make_shared<Primitive>("Split");
-  std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
-  auto input_tensor = std::make_shared<tensor::Tensor>(tensor_data, kInt64);
-  input_tensor->set_shape({1, 2, 3});
-
-  /* error sections */
-  int64_t input_p = 2;
-  auto input_perm = MakeValue(input_p);
-  auto input_axis = MakeValue(input_p);
-  prim->AddAttr(kAxis, input_axis);
-  prim->AddAttr(kOutputNum, input_perm);
-  auto storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor}));
-  ASSERT_TRUE(storage_list.size() == 0);
-
-  /* error size */
-  int64_t perm_1 = -1;
-  input_perm = MakeValue(perm_1);
-  input_axis = MakeValue(input_p);
-  prim->AddAttr(kAxis, input_axis);
-  prim->AddAttr(kOutputNum, input_perm);
-  storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor}));
-  ASSERT_TRUE(storage_list.size() == 0);
-}
-
-/// Feature: Split strides calculator
-/// Description: Test view Split strides calculator is right
-/// Expectation: success
 TEST_F(TestViewSplit, SplitFunction) {
   auto prim = std::make_shared<Primitive>("Split");
   std::vector<int64_t> tensor_data = {1, 2, 3, 4, 5, 6};
@@ -65,9 +37,7 @@ TEST_F(TestViewSplit, SplitFunction) {
   int64_t axis_1 = 1;
   auto input_perm = MakeValue(perm_1);
   auto input_axis = MakeValue(axis_1);
-  prim->AddAttr(kAxis, input_axis);
-  prim->AddAttr(kOutputNum, input_perm);
-  auto storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor}));
+  auto storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor, input_axis, input_perm}));
   std::vector<int64_t> expect_shape({1, 1, 3});
   std::vector<int64_t> expect_strides({6, 3, 1});
   size_t expect_offset_1 = 0;
@@ -87,9 +57,7 @@ TEST_F(TestViewSplit, SplitFunction) {
   int64_t axis_2 = 0;
   input_perm = MakeValue(perm_2);
   input_axis = MakeValue(axis_2);
-  prim->AddAttr(kAxis, input_axis);
-  prim->AddAttr(kOutputNum, input_perm);
-  storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor}));
+  storage_list = SplitCalc(prim, std::vector<ValuePtr>({input_tensor, input_axis, input_perm}));
   std::vector<int64_t> expect_shape_2({1, 2, 3});
   std::vector<int64_t> expect_strides_2({6, 3, 1});
   size_t expect_size_2 = 1;

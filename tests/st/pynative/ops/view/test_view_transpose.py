@@ -49,7 +49,7 @@ def test_transpose_single_op():
     output = net(input_x, input_perm).asnumpy()
     grad = grad_op(net)(input_x, input_perm)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level1
@@ -83,4 +83,4 @@ def test_transpose_multiple_op():
     output = net(input_x, input_perm).asnumpy()
     grad = grad_op(net)(input_x, input_perm)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)

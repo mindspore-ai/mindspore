@@ -49,12 +49,12 @@ void SliceInputsCheck(const std::vector<int64_t> &tensor_shape, const std::vecto
 }
 
 TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSplitInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
-      !inputs[1]->isa<ValueSequence>() || !inputs[2]->isa<ValueSequence>()) {
+  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>() ||
+      !inputs[kInputIndex1]->isa<ValueSequence>() || !inputs[kInputIndex2]->isa<ValueSequence>()) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
 
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto input_type = input_tensor->Dtype();
   (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_complex_and_bool,
@@ -65,8 +65,8 @@ TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<V
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
 
-  auto begin = GetValue<std::vector<int64_t>>(inputs[1]);
-  auto size = GetValue<std::vector<int64_t>>(inputs[2]);
+  auto begin = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
+  auto size = GetValue<std::vector<int64_t>>(inputs[kInputIndex2]);
   SliceInputsCheck(old_shape, begin, size);
 
   auto new_shape = size;

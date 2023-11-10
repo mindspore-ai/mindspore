@@ -53,8 +53,8 @@ def test_squeeze_single_op():
     grad_2 = grad_op(net)(ms_tensor, 1)
     np.testing.assert_array_equal(output_1, expect_output_1)
     np.testing.assert_array_equal(output_2, expect_output_2)
-    assert np.allclose(grad_1[0].asnumpy(), expect_grad_1[0].asnumpy(), 0.00001, 0.00001)
-    assert np.allclose(grad_2[0].asnumpy(), expect_grad_2[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad_1[0].asnumpy(), expect_grad_1[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad_2[0].asnumpy(), expect_grad_2[0].asnumpy(), 0.00001, 0.00001)
 
 
 @pytest.mark.level0
@@ -88,4 +88,4 @@ def test_squeeze_multiple_op():
     output = net(ms_tensor, 1).asnumpy()
     grad = grad_op(net)(ms_tensor, 1)
     np.testing.assert_array_equal(output, expect_output)
-    assert np.allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)

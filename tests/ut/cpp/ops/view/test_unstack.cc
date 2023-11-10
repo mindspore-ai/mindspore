@@ -41,7 +41,7 @@ TEST_F(TestViewUnstack, View) {
   inputs_unstack_size.push_back(input_axis);
   ASSERT_TRUE(UnstackCalc(prim, inputs_unstack_size).empty());
 
-   // test nullptr
+  // test nullptr
   std::vector<ValuePtr> inputs_unstack_null;
   auto nullinput_tensor = nullptr;
   inputs_unstack_null.push_back(nullinput_tensor);
@@ -57,8 +57,9 @@ TEST_F(TestViewUnstack, View) {
   prim->AddAttr(kAxis, input_axis);
   auto storage_info_vec = UnstackCalc(prim, inputs_unstack);
   std::vector<int64_t> expect_shape({1, 5});
+  size_t expect_size = 2;
 
-  ASSERT_TRUE(storage_info_vec.size() == 2);
+  ASSERT_TRUE(storage_info_vec.size() == expect_size);
 
   for (TensorStorageInfoPtr storage_info : storage_info_vec) {
     ASSERT_TRUE(storage_info->is_contiguous);
@@ -66,12 +67,13 @@ TEST_F(TestViewUnstack, View) {
   }
 
   // test is_contiguous
-  axis_data = 2;
-  input_axis = MakeValue(axis_data);
+  int64_t axis_data_2 = 2;
+  input_axis = MakeValue(axis_data_2);
   prim->AddAttr(kAxis, input_axis);
   storage_info_vec = UnstackCalc(prim, inputs_unstack);
   std::vector<int64_t> expect_shape_2({2, 1});
-  ASSERT_TRUE(storage_info_vec.size() == 5);
+  size_t expect_size_2 = 5;
+  ASSERT_TRUE(storage_info_vec.size() == expect_size_2);
   for (TensorStorageInfoPtr storage_info : storage_info_vec) {
     ASSERT_FALSE(storage_info->is_contiguous);
     ASSERT_TRUE(storage_info->shape == expect_shape_2);

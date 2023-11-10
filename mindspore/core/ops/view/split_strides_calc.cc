@@ -20,35 +20,30 @@
 #include "ops/view/split_strides_calc.h"
 
 namespace {
-constexpr size_t kSplitInputsNum = 1;
+constexpr size_t kSplitInputsNum = 3;
 }
 
 namespace mindspore::ops {
 void SplitInputsCheck(const int64_t &output_num, const int64_t &axis, const std::vector<int64_t> &tensor_shape) {
   if (output_num <= 0) {
     MS_EXCEPTION(ValueError) << "For Split, the output_num is invalid.";
+    return;
   }
 
-  if (tensor_shape[axis] % output_num != 0) {
+  if ((size_t)axis < tensor_shape.size() && tensor_shape[axis] % output_num != 0) {
     MS_EXCEPTION(ValueError) << "For Split, the tensor_shape is invalid.";
   }
 }
 
 TensorStorageInfoPtrList SplitCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSplitInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
+  if (CheckInputsNull(inputs, kSplitInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
 
-  auto axis_ptr = prim->GetAttr(kAxis);
-  MS_EXCEPTION_IF_NULL(axis_ptr);
-  auto axis = GetValue<int64_t>(axis_ptr);
-
-  auto output_num_ptr = prim->GetAttr(kOutputNum);
-  MS_EXCEPTION_IF_NULL(output_num_ptr);
-  auto output_num = GetValue<int64_t>(output_num_ptr);
-
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
+  auto axis = GetValue<int64_t>(inputs[kInputIndex1]);
+  auto output_num = GetValue<int64_t>(inputs[kInputIndex2]);
   auto input_type = input_tensor->Dtype();
   (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_complex_and_bool,
                                              prim->name());
