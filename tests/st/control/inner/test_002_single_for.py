@@ -287,5 +287,5 @@ def test_single_for_with_not_iterable_object():
             ret = ret + i
         return ret
 
-    with pytest.raises(TypeError, match="object of type 'int' has no len()"):
+    with pytest.raises(AttributeError, match="'Int' object has no attribute '__len__'"):
         control_flow_for_with_not_iterable_object()

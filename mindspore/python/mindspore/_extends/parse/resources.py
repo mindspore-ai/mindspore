@@ -134,7 +134,7 @@ convert_object_map = {
     # system function
     T.abs:          Primitive('inner_abs'),
     T.round:        Primitive('inner_round'),
-    T.len:          Primitive('inner_len'),
+    T.len:          M.ms_len,
     T.bool_:        M.bool_,
     T.map:          C.Map(),
     T.filter:       M.filter_,

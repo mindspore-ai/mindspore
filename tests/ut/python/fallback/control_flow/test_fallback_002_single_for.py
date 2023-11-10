@@ -154,9 +154,9 @@ def test_single_for_wrong_xs():
             y += i
         return Tensor(y)
 
-    with pytest.raises(TypeError) as info:
+    with pytest.raises(AttributeError) as info:
         control_flow_for()
-    assert "object of type 'int' has no len()" in str(info.value)
+    assert "'Int' object has no attribute '__len__'" in str(info.value)
 
 
 def test_single_for_wrong_xs_2():
@@ -173,6 +173,6 @@ def test_single_for_wrong_xs_2():
             y += i
         return Tensor(y)
 
-    with pytest.raises(TypeError) as info:
+    with pytest.raises(AttributeError) as info:
         control_flow_for()
-    assert "object of type 'int' has no len()" in str(info.value)
+    assert "'Int' object has no attribute '__len__'" in str(info.value)
