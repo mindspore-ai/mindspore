@@ -105,7 +105,8 @@ def check_change_and_replace_file(last_file_path, tmp_file_path):
     if last_md5 == tmp_md5:
         os.remove(tmp_file_path)
     else:
-        os.remove(last_file_path)
+        if os.path.exists(last_file_path):
+            os.remove(last_file_path)
         os.rename(tmp_file_path, last_file_path)
 
 
