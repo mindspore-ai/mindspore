@@ -3,13 +3,13 @@ real:
         Returns a Tensor that is the real part of the input. If input is real, it is returned unchanged.
 
             Args:
-                input (Tensor) – The input tensor to compute to.
+                input (Tensor): The input tensor to compute to.
 
             Returns:
                 Tensor, the shape is the same as the input.
 
             Raises:
-                TypeError – If input is not a Tensor.
+                TypeError: If input is not a Tensor.
 
             Supported Platforms:
                 ``Ascend`` ``GPU`` ``CPU``
