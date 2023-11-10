@@ -288,3 +288,19 @@ def test_list_comprehension_with_iter_list_3():
     assert res[0] == 11
     assert res[1] == 12
     assert res[2] == 13
+
+
+def test_list_comprehension_with_sring():
+    """
+    Feature: Graph isinstance.
+    Description: Graph list comprehension syntax with list as iteration object.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo():
+        a = "abcdef"
+        return tuple([i for i in a])
+
+    res = foo()
+    assert res == ('a', 'b', 'c', 'd', 'e', 'f')

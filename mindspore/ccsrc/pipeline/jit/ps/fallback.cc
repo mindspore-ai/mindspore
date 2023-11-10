@@ -236,6 +236,18 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
   return interpreted_cnode;
 }
 
+CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &script_text,
+                                const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
+                                const NodeDebugInfoPtr &debug_info) {
+  auto script = std::make_shared<parse::Script>(script_text);
+  auto script_node = NewValueNode(script);
+  parse::PyObjectWrapperPtr global_dict_wrapper = std::make_shared<parse::InterpretedObject>(global_dict_obj);
+  auto global_dict_node = NewValueNode(global_dict_wrapper);
+  auto node = fg->NewCNode({NewValueNode(prim::kPrimPyInterpret), script_node, global_dict_node, local_dict_node});
+  node->set_debug_info(debug_info);
+  return node;
+}
+
 CNodePtr CreatePyInterpretCNodeInOrder(const FuncGraphPtr &fg, const std::string &script_text,
                                        const py::object &global_dict_obj, const AnfNodePtr &local_dict_node,
                                        const NodeDebugInfoPtr &debug_info) {
@@ -851,6 +863,37 @@ py::object GetPyObjectFromNode(const AnfNodePtr &node) {
   return *node->user_data<py::object>(py_obj_str);
 }
 
+// Convert node to pyinterpret with specific function name.
+//    ConvertCNodeToPyInterpretForPrim(prim(x1, x2), func_name)
+//    --->
+//    PyInterpret("func_name(__input1__, __input2__)", global_dict, {"__input1__": x1, "__input2__": x2})
+AnfNodePtr ConvertCNodeToPyInterpretForPrim(const CNodePtr &cnode, const string &name) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  std::stringstream script_buffer;
+  script_buffer << name << "(";
+  const auto &inputs = cnode->inputs();
+  std::vector<AnfNodePtr> keys_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  std::vector<AnfNodePtr> values_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    const auto &internal_arg = fallback::ConvertRealStrToUnicodeStr(name, index);
+    script_buffer << internal_arg << ", ";
+    auto key_node = NewValueNode(std::make_shared<StringImm>(internal_arg));
+    auto value_node = inputs[index];
+    (void)keys_tuple_node_inputs.emplace_back(key_node);
+    (void)values_tuple_node_inputs.emplace_back(value_node);
+  }
+  script_buffer << ")";
+  const std::string &script = script_buffer.str();
+  auto keys_tuple_node = fg->NewCNodeInOrder(keys_tuple_node_inputs);
+  auto values_tuple_node = fg->NewCNodeInOrder(values_tuple_node_inputs);
+  auto local_dict_node = fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeDict), keys_tuple_node, values_tuple_node});
+  auto pyinterpret_node = CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node, cnode->debug_info());
+  MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyinterpret_node->DebugString();
+  return pyinterpret_node;
+}
+
 // Convert some CNode to PyExectue, eg:
 // isinstance(xxx.asnumpy(), np.ndarray)  -- > PyExectue("isinstance(arg1, arg2)", local_keys, local_values)
 AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name) {
@@ -878,10 +921,41 @@ AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &n
   auto keys_tuple_node = fg->NewCNodeInOrder(keys_tuple_node_inputs);
   auto values_tuple_node = fg->NewCNodeInOrder(values_tuple_node_inputs);
   auto pyexecute_node =
-    fallback::CreatePyExecuteCNodeInOrder(fg, script_node, keys_tuple_node, values_tuple_node, cnode->debug_info());
+    CreatePyExecuteCNodeInOrder(fg, script_node, keys_tuple_node, values_tuple_node, cnode->debug_info());
   MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-  pyexecute_node->set_debug_info(cnode->debug_info());
   return pyexecute_node;
+}
+
+AnfNodePtr ConvertGetAttrNodeToPyInterpret(const FuncGraphPtr &fg, const CNodePtr &cnode, const std::string &name) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(fg);
+  const std::unordered_map<std::string, std::string> internal_attr_map = {
+    {"__ms_iter__", "tuple"},
+    {"__ms_next__", "__import__('mindspore').common._utils._jit_fallback_next_func"},
+    {"__ms_hasnext__", "__import__('mindspore').common._utils._jit_fallback_has_next_func"}};
+  auto iter = internal_attr_map.find(name);
+  if (iter == internal_attr_map.end()) {
+    return ConvertCNodeToPyInterpretForPrim(cnode, "getattr");
+  }
+  AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  std::stringstream script_buffer;
+  script_buffer << iter->second << "(";
+
+  const std::string data_str = "__data__";
+  script_buffer << data_str << ")";
+  (void)local_key_inputs.emplace_back(NewValueNode(data_str));
+  constexpr size_t data_index = 1;
+  (void)local_value_inputs.emplace_back(cnode->input(data_index));
+
+  const auto &script = script_buffer.str();
+  auto local_key_node = fg->NewCNode(local_key_inputs);
+  auto local_value_node = fg->NewCNode(local_value_inputs);
+  auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+
+  auto ret = CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node, cnode->debug_info());
+  MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << ret->DebugString();
+  return ret;
 }
 
 AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_inputs,
@@ -932,8 +1006,7 @@ AnfNodePtr GeneratePyInterpretNodeFromMetaFuncGraph(const FuncGraphPtr &func_gra
 
   // Generate PyInterpret node with
   auto local_dict = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), key_value_name_tuple, key_value_tuple});
-  auto res =
-    CreatePyInterpretCNodeInOrder(func_graph, script_str, py::dict(), local_dict, key_value_name_tuple->debug_info());
+  auto res = CreatePyInterpretCNode(func_graph, script_str, py::dict(), local_dict, key_value_name_tuple->debug_info());
   MS_LOG(DEBUG) << "Generate PyInterpret node: " << res->DebugString();
   return res;
 }

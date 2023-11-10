@@ -2349,12 +2349,12 @@ def ms_iter(xs):
 
 def ms_next(it):
     """Implementation of `next`."""
-    return it.__ms_next__()
+    return it.__ms_next__
 
 
 def hasnext(it):
     """Implementation of `hasnext`."""
-    return it.__ms_hasnext__()
+    return it.__ms_hasnext__
 
 
 @constexpr
@@ -3528,6 +3528,16 @@ def array_next(xs):
 
 def array_hasnext(xs):
     """Whether the array is empty or not."""
+    return len(xs) > 0
+
+
+def str_next(xs):
+    """Next string."""
+    return xs[0], xs[1:]
+
+
+def str_hasnext(xs):
+    """Whether the string is empty or not."""
     return len(xs) > 0
 
 
