@@ -398,19 +398,16 @@ NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, int64_t a
   return Gather(params, indices, Tensor(axis, kInt64), batch_dims);
 }
 
-NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
-                               const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
-  std::vector<bool> is_value_depend(inputs.size(), false);
-  for (auto idx : value_depend) {
-    is_value_depend[LongToSize(idx)] = true;
-  }
-
-  // Try to get all const input shapes or values, and call the shape calc function when success.
+std::tuple<bool, ShapeArray, std::vector<std::vector<size_t>>> GetConstInputs(const NodePtrList &inputs,
+                                                                              const std::vector<bool> &is_value_depend,
+                                                                              const ShapeValidFunc &valid_func) {
   bool all_const = true;
   ShapeArray const_args;
   std::vector<std::vector<size_t>> pos_idx;
+
   for (size_t i = 0; i < inputs.size(); ++i) {
     MS_EXCEPTION_IF_NULL(inputs[i]);
+
     if (is_value_depend[i]) {
       // input[i]'s value is used
       auto [success, vec] = GetIntList(inputs[i]);
@@ -424,9 +421,11 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
       // input[i]'s shape is used
       auto abs = inputs[i]->abstract();
       MS_EXCEPTION_IF_NULL(abs);
+
       if (auto sequence_abs = abs->cast<abstract::AbstractSequencePtr>(); sequence_abs != nullptr) {
         auto begin_idx = const_args.size();
         auto is_const = ops::TryGetShapeArg(sequence_abs, &const_args, &pos_idx);
+
         if (is_const) {
           for (size_t j = begin_idx; j < const_args.size(); ++j) {
             is_const = valid_func ? valid_func(j, const_args[j]) : !IsDynamic(const_args[j]);
@@ -453,6 +452,21 @@ NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const Nod
     }
   }
 
+  return std::make_tuple(all_const, const_args, pos_idx);
+}
+
+NodePtrList Emitter::ShapeCalc(const ShapeCalcBaseFunctorPtr &functor, const NodePtrList &inputs,
+                               const std::vector<int64_t> &value_depend, const ShapeValidFunc &valid_func) {
+  std::vector<bool> is_value_depend(inputs.size(), false);
+  for (auto idx : value_depend) {
+    is_value_depend[LongToSize(idx)] = true;
+  }
+
+  bool all_const;
+  ShapeArray const_args;
+  std::vector<std::vector<size_t>> pos_idx;
+  // Try to get all const input shapes or values, and call the shape calc function when success.
+  std::tie(all_const, const_args, pos_idx) = GetConstInputs(inputs, is_value_depend, valid_func);
   NodePtrList res;
   // all inputs are static-shape tensors,
   if (all_const) {

@@ -112,6 +112,34 @@ bool IsTensorSequence(const py::object &arg) {
   return false;
 }
 
+void InferShapeAndValueFromPython(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list,
+                                  const bool &need_infer_value, AbstractBasePtr *infer_res, ValuePtr *val) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(infer_res);
+  MS_EXCEPTION_IF_NULL(val);
+  py::gil_scoped_acquire acquire;
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  auto py_infer_args = PreparePyInputs(abs_list);
+  if ((*infer_res) == nullptr) {
+    auto py_infer_result = prim_py->RunInfer(py_infer_args);
+    (*infer_res) = abstract::PyInferRes2Abstract(prim_py, py_infer_result);
+  }
+  MS_EXCEPTION_IF_NULL((*infer_res));
+  if (need_infer_value && py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
+    py::tuple py_vals(py_infer_args.size());
+    for (size_t i = 0; i < py_infer_args.size(); ++i) {
+      py_vals[i] = py_infer_args[i][ATTR_VALUE];
+    }
+    py::object py_ret = prim_py->RunInferValue(py_vals);
+    if (!py::isinstance<py::none>(py_ret)) {
+      bool converted = parse::ConvertData(py_ret, val, false, (*infer_res)->BuildType());
+      if (!converted) {
+        MS_LOG(EXCEPTION) << "Convert data failed";
+      }
+    }
+  }
+}
+
 std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
                                                         const bool &need_infer_value) {
   AbstractBasePtr infer_res = nullptr;
@@ -147,27 +175,7 @@ std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim
 
   // Python InferShape and InferValue.
   if ((infer_res == nullptr || need_infer_value) && !IsHasValue(val)) {
-    py::gil_scoped_acquire acquire;
-    auto prim_py = prim->cast<PrimitivePyPtr>();
-    auto py_infer_args = PreparePyInputs(abs_list);
-    if (infer_res == nullptr) {
-      auto py_infer_result = prim_py->RunInfer(py_infer_args);
-      infer_res = abstract::PyInferRes2Abstract(prim_py, py_infer_result);
-    }
-    MS_EXCEPTION_IF_NULL(infer_res);
-    if (need_infer_value && py::hasattr(prim_py->GetPyObj(), PY_PRIM_METHOD_INFER_VALUE)) {
-      py::tuple py_vals(py_infer_args.size());
-      for (size_t i = 0; i < py_infer_args.size(); ++i) {
-        py_vals[i] = py_infer_args[i][ATTR_VALUE];
-      }
-      py::object py_ret = prim_py->RunInferValue(py_vals);
-      if (!py::isinstance<py::none>(py_ret)) {
-        bool converted = parse::ConvertData(py_ret, &val, false, infer_res->BuildType());
-        if (!converted) {
-          MS_LOG(EXCEPTION) << "Convert data failed";
-        }
-      }
-    }
+    InferShapeAndValueFromPython(prim, abs_list, need_infer_value, &infer_res, &val);
   }
   return {infer_res, val};
 }

@@ -82,14 +82,11 @@ Status BatchNormInfo::GetAttrs() {
     return FAILED;
   }
 
-  if (inputs_shape_[0].size() == 2) {
-    input_is_4d_ = false;
-  } else if (inputs_shape_[0].size() == 4) {
-    input_is_4d_ = true;
-  } else {
-    MS_LOG(ERROR) << name_ << ": The size of input[0]'shape must be 2 or 4, but got " << inputs_shape_[0].size();
+  if (inputs_shape_[0].size() != 2 && inputs_shape_[0].size() != 4) {
+    MS_LOG(ERROR) << name_ << ": The size of input[0]'s shape must be 2 or 4, but got " << inputs_shape_[0].size();
     return FAILED;
   }
+  input_is_4d_ = (inputs_shape_[0].size() == 4);
 
   MS_LOG(INFO) << name_ << ": The is_traing is " << is_training_ << ", epsilon is " << epsilon_ << ", momentum is "
                << momentum_ << ", data format is " << format_;
