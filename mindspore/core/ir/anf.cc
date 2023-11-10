@@ -628,7 +628,8 @@ std::string ValueNode::fullname_with_scope() {
   }
 
   MS_EXCEPTION_IF_NULL(scope());
-  fullname_with_scope_ = scope()->name() + "/" + "data-" + id_generator::get_id(shared_from_base<ValueNode>());
+  fullname_with_scope_ = scope()->name() + "/" + "data-";
+  fullname_with_scope_ += id_generator::get_id(fullname_with_scope_);
   return fullname_with_scope_;
 }
 
@@ -852,14 +853,13 @@ SeenNum NewSeenGeneration() {
 namespace id_generator {
 static mindspore::HashMap<std::string, int> node_ids;
 static int offset = 0;
-std::string get_id(const AnfNodePtr &node) {
-  auto type_name = node->type_name();
-  if (node_ids.find(type_name) == node_ids.end()) {
-    node_ids[type_name] = 0;
+std::string get_id(const string &scope_front_info) {
+  if (node_ids.find(scope_front_info) == node_ids.end()) {
+    node_ids[scope_front_info] = 0;
   } else {
-    node_ids[type_name]++;
+    node_ids[scope_front_info]++;
   }
-  std::string base_id = std::to_string(node_ids[type_name]);
+  std::string base_id = std::to_string(node_ids[scope_front_info]);
   // The id with offset means the user called reset_id_with_offset() and expect the operated id generated from 0 with an
   // identified offset.
   if (offset != 0) {
