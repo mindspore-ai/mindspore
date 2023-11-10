@@ -16,6 +16,7 @@
 Generate operator utils function
 """
 import os
+import shutil
 import glob
 import hashlib
 import yaml
@@ -51,8 +52,7 @@ cc_license_str = f"""/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */"""
-import shutil
-import os
+
 
 def get_type_str(type_str):
     """
